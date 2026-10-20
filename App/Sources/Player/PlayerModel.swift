@@ -79,6 +79,7 @@ final class PlayerModel: ObservableObject {
 
     let renderView: MPVRenderView
     let pip = PiPManager()
+    nonisolated let pipState = PiPStateBox()
     private lazy var sw = MPVSoftwareRenderer(output: pip.makeSink())
     private(set) var client: MPVClient?
 
@@ -729,11 +730,13 @@ extension PlayerModel: MPVClientDelegate {
             saveHistory()
         case "duration":
             duration = value.double ?? 0
+            pipState.duration = duration
             pip.invalidate()
             maybeRequestSegments()
             updateNowPlaying()
         case "pause":
             paused = value.bool ?? false
+            pipState.paused = paused
             pip.updatePlayback(position: position, rate: paused ? 0 : speed)
             pip.invalidate()
             updateNowPlaying()
@@ -796,57 +799,86 @@ extension PlayerModel: MPVClientDelegate {
 
 // MARK: - PiP
 
+/// Runs `body` synchronously when already on the main thread (needed for
+/// renderer switching during the PiP transition), otherwise hops to main.
+private func onMain(_ body: @escaping @MainActor () -> Void) {
+    if Thread.isMainThread {
+        MainActor.assumeIsolated { body() }
+    } else {
+        DispatchQueue.main.async { body() }
+    }
+}
+
 extension PlayerModel: PiPManagerDelegate {
     nonisolated func pipWillStart() {
-        MainActor.assumeIsolated {
-            isPiPActive = true
-            pipRestoring = false
-            switchToSoftware()
+        onMain { [weak self] in
+            guard let self else { return }
+            self.isPiPActive = true
+            self.pipRestoring = false
+            self.switchToSoftware()
         }
     }
 
     nonisolated func pipDidStart() {}
 
     nonisolated func pipDidStop() {
-        MainActor.assumeIsolated {
-            isPiPActive = false
+        onMain { [weak self] in
+            guard let self else { return }
+            self.isPiPActive = false
             if UIApplication.shared.applicationState == .background {
-                if mode == .sw { sw.detach() }
-                mode = .none
-                pendingGL = true
-                if let c = client {
-                    vidBeforeBackground = vidBeforeSwitch
+                if self.mode == .sw { self.sw.detach() }
+                self.mode = .none
+                self.pendingGL = true
+                if let c = self.client {
+                    self.vidBeforeBackground = self.vidBeforeSwitch
                     c.set("vid", "no")
                 }
-                if !pipRestoring { setPaused(true) }
+                if !self.pipRestoring { self.setPaused(true) }
             } else {
-                switchToGL()
+                self.switchToGL()
             }
-            pipRestoring = false
+            self.pipRestoring = false
         }
     }
 
     nonisolated func pipFailed(_ error: Error) {
-        MainActor.assumeIsolated {
-            isPiPActive = false
-            showToast("PiP failed: \(error.localizedDescription)")
-            if mode == .sw { switchToGL() }
+        let message = error.localizedDescription
+        onMain { [weak self] in
+            guard let self else { return }
+            self.isPiPActive = false
+            self.showToast("PiP failed: \(message)")
+            if self.mode == .sw { self.switchToGL() }
         }
     }
 
     nonisolated func pipRestoreUI(_ completion: @escaping (Bool) -> Void) {
-        MainActor.assumeIsolated { pipRestoring = true }
+        onMain { [weak self] in self?.pipRestoring = true }
         completion(true)
     }
 
     nonisolated func pipSetPlaying(_ playing: Bool) {
-        MainActor.assumeIsolated { setPaused(!playing) }
+        onMain { [weak self] in self?.setPaused(!playing) }
     }
 
     nonisolated func pipSkip(by seconds: Double) {
-        MainActor.assumeIsolated { seek(by: seconds) }
+        onMain { [weak self] in self?.seek(by: seconds) }
     }
 
-    nonisolated var pipIsPaused: Bool { MainActor.assumeIsolated { paused } }
-    nonisolated var pipDuration: Double { MainActor.assumeIsolated { duration } }
+    nonisolated var pipIsPaused: Bool { pipState.paused }
+    nonisolated var pipDuration: Double { pipState.duration }
+}
+
+/// Thread-safe snapshot read by AVKit's playback delegate callbacks.
+final class PiPStateBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _paused = false
+    private var _duration: Double = 0
+    var paused: Bool {
+        get { lock.lock(); defer { lock.unlock() }; return _paused }
+        set { lock.lock(); _paused = newValue; lock.unlock() }
+    }
+    var duration: Double {
+        get { lock.lock(); defer { lock.unlock() }; return _duration }
+        set { lock.lock(); _duration = newValue; lock.unlock() }
+    }
 }

@@ -99,6 +99,8 @@ final class MPVRenderView: UIView {
     /// Frees the render context. Blocks until mpv has released the VO.
     func detach() {
         renderQueue.sync {
+            // Nothing to free: avoid touching GL at all (may be backgrounded).
+            guard renderContext != nil || fbo != 0 || blitter != nil else { return }
             EAGLContext.setCurrent(eagl)
             if let ctx = renderContext {
                 mpv_render_context_set_update_callback(ctx, nil, nil)
@@ -119,7 +121,7 @@ final class MPVRenderView: UIView {
     func setRenderingAllowed(_ allowed: Bool) {
         renderQueue.sync {
             renderingAllowed = allowed
-            if !allowed, EAGLContext.current() === eagl || renderContext != nil {
+            if !allowed, renderContext != nil {
                 EAGLContext.setCurrent(eagl)
                 glFinish()
                 EAGLContext.setCurrent(nil)

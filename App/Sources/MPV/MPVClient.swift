@@ -224,7 +224,8 @@ final class MPVClient {
     // MARK: Event loop
 
     private func startEventThread() {
-        let t = Thread { [unowned self] in self.eventLoop() }
+        // Strong capture: the client stays alive until mpv has shut down.
+        let t = Thread { self.eventLoop() }
         t.name = "mpv.events"
         t.qualityOfService = .userInitiated
         eventThread = t
