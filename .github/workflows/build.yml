@@ -74,8 +74,15 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build > build.log 2>&1 || {
-              echo "::group::Errors"; grep -E "error:" build.log | sort -u | head -200; echo "::endgroup::"
-              tail -80 build.log
+              grep -E "error:|fatal error|ld: |Undefined symbol|clang: error" build.log | sed "s#$GITHUB_WORKSPACE/##g" | awk '!seen[$0]++' | head -400 > errors.txt
+              [ -s errors.txt ] || tail -60 build.log > errors.txt
+              cat errors.txt
+              # Surface errors as annotations (readable via the checks API).
+              split -l 40 errors.txt err_chunk_
+              for f in err_chunk_*; do
+                msg=$(sed -e 's/%/%25/g' "$f" | awk '{printf "%s%%0A", $0}')
+                echo "::error title=Build errors ($f)::$msg"
+              done
               exit 1
             }
           grep -c "warning:" build.log || true
