@@ -1,0 +1,120 @@
+name: Build IPA
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  LIBMPV_URL: https://github.com/libmpv-ios/mpv-ios/releases/download/v0.1.2/Libmpv.xcframework.zip
+  LIBMPV_SHA256: ea5ca804e19167072493a3e2fc4c003c2eaec84dc123bb62248932c71a891807
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          [ -z "$XC" ] && XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          echo "Using $XC"
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+
+      - name: Cache libmpv
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: Vendor/Libmpv.xcframework
+          key: libmpv-${{ env.LIBMPV_SHA256 }}
+
+      - name: Download libmpv (mpv + FFmpeg + libass + libplacebo + Lua)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p Vendor
+          curl -fsSL -o /tmp/libmpv.zip "$LIBMPV_URL"
+          echo "$LIBMPV_SHA256  /tmp/libmpv.zip" | shasum -a 256 -c -
+          ditto -x -k /tmp/libmpv.zip Vendor/
+          ls Vendor/Libmpv.xcframework
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+
+      - name: Set version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="1.0.0"
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          xcodebuild \
+            -project GlassPlayer.xcodeproj \
+            -scheme GlassPlayer \
+            -sdk iphoneos \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build > build.log 2>&1 || {
+              echo "::group::Errors"; grep -E "error:" build.log | sort -u | head -200; echo "::endgroup::"
+              tail -80 build.log
+              exit 1
+            }
+          grep -c "warning:" build.log || true
+
+      - name: Package unsigned IPA
+        run: |
+          APP=$(find build/Build/Products -type d -name "GlassPlayer.app" -path "*iphoneos*" | head -1)
+          test -n "$APP"
+          file "$APP/GlassPlayer"
+          mkdir -p ipa/Payload
+          cp -R "$APP" ipa/Payload/
+          (cd ipa && zip -qry "../GlassPlayer-$VERSION.ipa" Payload)
+          ls -lh GlassPlayer-*.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GlassPlayer-${{ env.VERSION }}-${{ github.run_number }}
+          path: GlassPlayer-*.ipa
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log-${{ github.run_number }}
+          path: build.log
+          if-no-files-found: ignore
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES_FILE=$(mktemp)
+          if [ -f "docs/release-notes/${GITHUB_REF_NAME}.md" ]; then
+            cp "docs/release-notes/${GITHUB_REF_NAME}.md" "$NOTES_FILE"
+          else
+            echo "GlassPlayer ${GITHUB_REF_NAME}" > "$NOTES_FILE"
+          fi
+          gh release create "$GITHUB_REF_NAME" GlassPlayer-*.ipa \
+            --title "GlassPlayer ${GITHUB_REF_NAME}" \
+            --notes-file "$NOTES_FILE" || \
+          gh release upload "$GITHUB_REF_NAME" GlassPlayer-*.ipa --clobber

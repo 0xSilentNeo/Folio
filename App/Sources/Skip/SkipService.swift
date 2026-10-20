@@ -1,0 +1,199 @@
+import Foundation
+
+struct SkipSegment: Identifiable, Hashable {
+    enum Kind: String { case recap, intro, outro, preview
+
+        var label: String {
+            switch self {
+            case .recap: return "Skip Recap"
+            case .intro: return "Skip Intro"
+            case .outro: return "Skip Outro"
+            case .preview: return "Skip Preview"
+            }
+        }
+        var chapterTitle: String {
+            switch self {
+            case .recap: return "Recap"
+            case .intro: return "Opening"
+            case .outro: return "Ending"
+            case .preview: return "Preview"
+            }
+        }
+    }
+    var id: String { "\(kind.rawValue)-\(start)" }
+    let kind: Kind
+    let start: Double
+    let end: Double
+    let source: String
+}
+
+/// Finds OP/ED/recap/preview ranges:
+///   1. chapters already in the file (named Opening/OP/Ending/ED/...)
+///   2. AniSkip (has start AND end; keyed by MyAnimeList id)
+///   3. Open Anime Timestamps (start times only; keyed by AniDB id)
+/// IDs come from the item's hint or AniList title search + ids.moe mapping.
+actor SkipService {
+    static let shared = SkipService()
+
+    private var oatCache: [String: Any]?
+    private var oatFetched: Date?
+    private var idCache: [String: AnimeHint] = [:]
+    private let session: URLSession = {
+        let c = URLSessionConfiguration.default
+        c.timeoutIntervalForRequest = 15
+        return URLSession(configuration: c)
+    }()
+
+    // MARK: Chapters
+
+    static func segments(fromChapters chapters: [(title: String, time: Double)], duration: Double) -> [SkipSegment] {
+        var out: [SkipSegment] = []
+        for (i, ch) in chapters.enumerated() {
+            let t = ch.title.lowercased().trimmingCharacters(in: .whitespaces)
+            let end = i + 1 < chapters.count ? chapters[i + 1].time : duration
+            guard end > ch.time else { continue }
+            let kind: SkipSegment.Kind?
+            if t.range(of: #"^(op|opening|intro|oped)\b|^opening|\bopening\b|^op\s?\d|^intro"#, options: .regularExpression) != nil {
+                kind = .intro
+            } else if t.range(of: #"^(ed|ending|outro|credits)\b|^ending|\bending\b|^ed\s?\d|credits"#, options: .regularExpression) != nil {
+                kind = .outro
+            } else if t.range(of: #"recap|previously"#, options: .regularExpression) != nil {
+                kind = .recap
+            } else if t.range(of: #"preview|next episode|^pv\b"#, options: .regularExpression) != nil {
+                kind = .preview
+            } else {
+                kind = nil
+            }
+            if let kind { out.append(SkipSegment(kind: kind, start: ch.time, end: end, source: "Chapters")) }
+        }
+        return out
+    }
+
+    // MARK: Online lookup
+
+    func lookup(hint: AnimeHint, duration: Double, oatLength: Double) async -> [SkipSegment] {
+        guard let episode = hint.episode, episode > 0 else { return [] }
+        let ids = await resolveIDs(hint)
+        if let mal = ids.malId {
+            let s = await aniSkip(malId: mal, episode: episode, duration: duration)
+            if !s.isEmpty { return s }
+        }
+        if let anidb = ids.anidbId {
+            let s = await oat(anidbId: anidb, episode: episode, duration: duration, length: oatLength)
+            if !s.isEmpty { return s }
+        }
+        return []
+    }
+
+    private func resolveIDs(_ hint: AnimeHint) async -> AnimeHint {
+        var h = hint
+        if h.malId != nil && h.anidbId != nil { return h }
+        let key = "\(h.anilistId ?? 0)|\(h.kitsuId ?? 0)|\(h.malId ?? 0)|\(h.title ?? "")"
+        if let cached = idCache[key] { return cached }
+
+        if h.anilistId == nil && h.kitsuId == nil && h.malId == nil, let title = h.title, !title.isEmpty {
+            if let found = await aniListSearch(title) {
+                h.anilistId = found.0
+                h.malId = h.malId ?? found.1
+            }
+        }
+        // ids.moe fills in AniDB (and MAL if missing).
+        var path: String?
+        if let al = h.anilistId { path = "anilist/\(al)" }
+        else if let k = h.kitsuId { path = "kitsu/\(k)" }
+        else if let m = h.malId { path = "myanimelist/\(m)" }
+        if let path, let url = URL(string: "https://ids.moe/\(path)"),
+           let obj = await json(url) as? [String: Any] {
+            if h.anidbId == nil { h.anidbId = obj["anidb"] as? Int }
+            if h.malId == nil { h.malId = obj["myanimelist"] as? Int }
+            if h.anilistId == nil { h.anilistId = obj["anilist"] as? Int }
+        }
+        idCache[key] = h
+        return h
+    }
+
+    private func aniListSearch(_ title: String) async -> (Int, Int?)? {
+        guard let url = URL(string: "https://graphql.anilist.co") else { return nil }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        let body: [String: Any] = [
+            "query": "query($s:String){Media(search:$s,type:ANIME){id idMal}}",
+            "variables": ["s": title],
+        ]
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        guard let result = try? await session.data(for: req),
+              let obj = try? JSONSerialization.jsonObject(with: result.0) as? [String: Any],
+              let media = (obj["data"] as? [String: Any])?["Media"] as? [String: Any],
+              let id = media["id"] as? Int else { return nil }
+        return (id, media["idMal"] as? Int)
+    }
+
+    private func aniSkip(malId: Int, episode: Int, duration: Double) async -> [SkipSegment] {
+        var comps = URLComponents(string: "https://api.aniskip.com/v2/skip-times/\(malId)/\(episode)")!
+        comps.queryItems = ["op", "ed", "recap", "mixed-op", "mixed-ed"].map { URLQueryItem(name: "types", value: $0) }
+            + [URLQueryItem(name: "episodeLength", value: String(Int(duration.rounded())))]
+        guard let url = comps.url, let obj = await json(url) as? [String: Any],
+              (obj["found"] as? Bool) == true,
+              let results = obj["results"] as? [[String: Any]] else { return [] }
+        var out: [SkipSegment] = []
+        for r in results {
+            guard let iv = r["interval"] as? [String: Any],
+                  let s = (iv["startTime"] as? NSNumber)?.doubleValue,
+                  let e = (iv["endTime"] as? NSNumber)?.doubleValue,
+                  let type = r["skipType"] as? String else { continue }
+            var start = s, end = e
+            // Rescale if AniSkip's episode length differs noticeably.
+            if let len = (r["episodeLength"] as? NSNumber)?.doubleValue, len > 0, duration > 0, abs(len - duration) > 3 {
+                let k = duration / len
+                start *= k; end *= k
+            }
+            let kind: SkipSegment.Kind
+            switch type {
+            case "op", "mixed-op": kind = .intro
+            case "ed", "mixed-ed": kind = .outro
+            case "recap": kind = .recap
+            default: continue
+            }
+            out.append(SkipSegment(kind: kind, start: start, end: end, source: "AniSkip"))
+        }
+        return out.sorted { $0.start < $1.start }
+    }
+
+    private func oat(anidbId: Int, episode: Int, duration: Double, length: Double) async -> [SkipSegment] {
+        if oatCache == nil || (oatFetched.map { Date().timeIntervalSince($0) > 86400 } ?? true) {
+            guard let url = URL(string: "https://raw.githubusercontent.com/jonbarrow/open-anime-timestamps/master/timestamps.json"),
+                  let obj = await json(url, timeout: 60) as? [String: Any] else { return [] }
+            oatCache = obj
+            oatFetched = Date()
+        }
+        guard let entries = oatCache?[String(anidbId)] as? [[String: Any]] else { return [] }
+        // Merge all sources for this episode, first valid value wins.
+        var recap = -1.0, op = -1.0, ed = -1.0, pv = -1.0
+        for e in entries where (e["episode_number"] as? NSNumber)?.intValue == episode {
+            func v(_ k: String) -> Double { (e[k] as? NSNumber)?.doubleValue ?? -1 }
+            if recap < 0 { recap = v("recap_start") }
+            if op < 0 { op = v("opening_start") }
+            if ed < 0 { ed = v("ending_start") }
+            if pv < 0 { pv = v("preview_start") }
+        }
+        let marks = [recap, op, ed, pv].filter { $0 >= 0 }.sorted()
+        func next(after t: Double) -> Double { marks.first { $0 > t } ?? (duration > 0 ? duration : t + length) }
+        var out: [SkipSegment] = []
+        if recap >= 0 { out.append(SkipSegment(kind: .recap, start: recap, end: next(after: recap), source: "OAT")) }
+        if op >= 0 { out.append(SkipSegment(kind: .intro, start: op, end: min(op + length, next(after: op)), source: "OAT")) }
+        if ed >= 0 { out.append(SkipSegment(kind: .outro, start: ed, end: min(ed + length, next(after: ed)), source: "OAT")) }
+        if pv >= 0, duration > pv { out.append(SkipSegment(kind: .preview, start: pv, end: duration, source: "OAT")) }
+        return out.filter { $0.end > $0.start }
+    }
+
+    private func json(_ url: URL, timeout: TimeInterval = 15) async -> Any? {
+        var req = URLRequest(url: url)
+        req.timeoutInterval = timeout
+        req.setValue("GlassPlayer/1.0", forHTTPHeaderField: "User-Agent")
+        guard let result = try? await session.data(for: req),
+              (result.1 as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? false else { return nil }
+        return try? JSONSerialization.jsonObject(with: result.0)
+    }
+}
