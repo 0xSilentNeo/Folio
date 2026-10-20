@@ -11,6 +11,13 @@ mkdir -p Vendor
 rm -rf Vendor/Frameworks
 if curl -fsSL -o /tmp/engine.zip "https://github.com/$REPO/releases/download/$TAG/GlassPlayerEngine.zip"; then
   ditto -x -k /tmp/engine.zip Vendor/
+  # Older engine zips shipped without FFmpeg: add MPVKit's GPL FFmpeg (same n9.0.2).
+  for lib in avcodec avdevice avfilter avformat avutil swresample swscale; do
+    [ -d "Vendor/Frameworks/Lib$lib.xcframework" ] && continue
+    echo "adding Lib$lib from MPVKit"
+    curl -fsSL -o "/tmp/Lib$lib.zip" "https://github.com/mpvkit/MPVKit/releases/download/1.1.0-n9.0.2/Lib$lib-GPL.xcframework.zip"
+    ditto -x -k "/tmp/Lib$lib.zip" Vendor/Frameworks/
+  done
   echo "ENGINE=$TAG" | tee Vendor/engine.txt
 else
   echo "::warning::Engine release $TAG not found; using stock MPVKit frameworks (no Lua scripting)"
