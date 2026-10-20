@@ -413,7 +413,7 @@ struct ShadersView: View {
                     Button("Turn all off", role: .destructive) { active = []; MPVFiles.activeShaderNames = [] }
                 }
             } header: { Text("Installed — tap to toggle, order = apply order") } footer: {
-                Text("Active shaders apply to every video and can be switched per video from the player's Shaders menu. Compute shaders are not supported (OpenGL ES 3.0).")
+                Text("Active shaders apply to every video and can be switched per video from the player's Shaders menu. Compute shaders need the Metal renderer (default).")
             }
 
             Section("Download") {

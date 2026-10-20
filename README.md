@@ -8,8 +8,10 @@
 
 ## Features
 
-**Playback engine — libmpv**
+**Playback engine — libmpv on Metal**
 - Plays anything mpv/FFmpeg can: MKV, HEVC/AV1/VP9, 10-bit, ASS/SSA subtitles with embedded fonts, PGS, multi-audio, HLS/DASH, RTSP, SMB/FTP/SFTP URLs
+- gpu-next renderer on Metal (libplacebo via MoltenVK): Dolby Vision (libdovi), HDR10/HLG with HDR output on EDR screens, compute shaders. OpenGL ES remains as a fallback renderer.
+- Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X decoded to 5.1/7.1 for AirPlay/HDMI, Spatial Audio on AirPods
 - VideoToolbox hardware decoding with automatic copy-back fallback
 - Your own `mpv.conf`, `input.conf`, `script-opts/` — edited in-app or via the Files app
 - **External Lua scripts**: drop `.lua` files (or folders with `main.lua`) into `mpv/scripts`, import them, or install from a URL. Toggle each one on/off.
@@ -73,19 +75,19 @@ Scripts that need network access should use mpv's own stream loading, or let Gla
 
 ### Shaders
 
-Rendering uses OpenGL ES 3.0, so shaders with `//!COMPUTE` passes won't load. Anime4K, FSRCNNX, KrigBilateral, SSimSuperRes and adaptive-sharpen are fragment shaders and work.
+The default Metal renderer runs any mpv user shader, including compute passes. The OpenGL ES fallback renderer can't run `//!COMPUTE` shaders.
 
 ## Building
 
 Every push to `main` builds an unsigned IPA in GitHub Actions. To publish a release, bump the number in `VERSION` (optionally add `docs/release-notes/vX.Y.Z.md`) and push: CI creates the tag and the GitHub release with the IPA attached.
 
+The playback engine (libmpv + FFmpeg + libplacebo + MoltenVK + LuaJIT) is built by the **Build engine** workflow from [MPVKit](https://github.com/mpvkit/MPVKit)'s toolchain with the patches in `engine/`, and published as an `engine-N` release that the app build downloads.
+
 Local build (macOS + Xcode 16 or later):
 
 ```sh
 brew install xcodegen
-mkdir -p Vendor
-curl -L -o /tmp/libmpv.zip https://github.com/libmpv-ios/mpv-ios/releases/download/v0.1.2/Libmpv.xcframework.zip
-ditto -x -k /tmp/libmpv.zip Vendor/
+scripts/fetch-engine.sh      # downloads Vendor/Frameworks and writes Vendor/engine.xcconfig
 xcodegen generate
 open GlassPlayer.xcodeproj
 ```
@@ -93,7 +95,7 @@ open GlassPlayer.xcodeproj
 ## Credits & license
 
 - [mpv](https://mpv.io) and [FFmpeg](https://ffmpeg.org), [libass](https://github.com/libass/libass), [libplacebo](https://code.videolan.org/videolan/libplacebo)
-- Prebuilt libmpv for iOS from [libmpv-ios/mpv-ios](https://github.com/libmpv-ios/mpv-ios) (Apache-2.0); its research notes informed the render and PiP approach
+- Engine build system and moltenvk context from [MPVKit](https://github.com/mpvkit/MPVKit) (LGPL/GPL); [libmpv-ios/mpv-ios](https://github.com/libmpv-ios/mpv-ios) research notes informed the PiP approach
 - [AniSkip](https://aniskip.com), [Open Anime Timestamps](https://github.com/jonbarrow/open-anime-timestamps), [ids.moe](https://ids.moe), [AniList](https://anilist.co)
 - [Anime4K](https://github.com/bloc97/Anime4K), [FSRCNNX](https://github.com/igv/FSRCNN-TensorFlow)
 - Addon protocol by [Stremio](https://github.com/Stremio/stremio-addon-sdk)
