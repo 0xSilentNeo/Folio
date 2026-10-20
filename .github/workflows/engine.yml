@@ -1,0 +1,75 @@
+name: Build engine
+
+# Builds libmpv for iOS with MPVKit's toolchain (mpv + FFmpeg + libplacebo
+# + MoltenVK + libdovi), adds LuaJIT and GlassPlayer's patches, and publishes
+# the xcframeworks as release "engine-<engine/VERSION>". The app build
+# downloads that release.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["engine/**", ".github/workflows/engine.yml"]
+
+permissions:
+  contents: write
+
+env:
+  MPVKIT_SHA: d9194243bdc68b87d8989376ab52aee7da6c8e0b
+
+jobs:
+  engine:
+    runs-on: macos-15
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          [ -z "$XC" ] && XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+
+      - name: Tools
+        run: brew install meson ninja pkg-config nasm glslang || true
+
+      - name: Fetch MPVKit
+        run: |
+          git clone https://github.com/mpvkit/MPVKit.git mpvkit
+          cd mpvkit && git checkout "$MPVKIT_SHA"
+
+      - name: Patch
+        run: bash engine/patch-mpvkit.sh mpvkit
+
+      - name: Build libmpv + FFmpeg (iOS, GPL)
+        run: |
+          cd mpvkit
+          make build platform=ios enable-gpl > ../engine-build.log 2>&1 || {
+            tail -120 ../engine-build.log > ../errors.txt
+            grep -E "error|Error|ERROR|failed" ../engine-build.log | tail -60 >> ../errors.txt || true
+            cat ../errors.txt
+            cd .. && split -l 40 errors.txt err_chunk_
+            for f in err_chunk_*; do
+              msg=$(sed -e 's/%/%25/g' "$f" | awk '{printf "%s%%0A", $0}')
+              echo "::error title=Engine build ($f)::$msg"
+            done
+            exit 1
+          }
+          tail -20 ../engine-build.log
+
+      - name: Collect frameworks
+        run: bash engine/collect.sh mpvkit out
+
+      - name: Publish engine release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="engine-$(tr -d '[:space:]' < engine/VERSION)"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" GlassPlayerEngine.zip --clobber
+          else
+            gh release create "$TAG" GlassPlayerEngine.zip --prerelease \
+              --title "Engine $TAG" \
+              --notes "libmpv (mpv v0.41 + LuaJIT) with FFmpeg n9.0.2 (GPL), libplacebo, MoltenVK, libdovi — built from MPVKit $MPVKIT_SHA with GlassPlayer patches. Used by the app build; not an app release."
+          fi
