@@ -77,7 +77,7 @@ Rendering uses OpenGL ES 3.0, so shaders with `//!COMPUTE` passes won't load. An
 
 ## Building
 
-Every push to `main` builds an unsigned IPA in GitHub Actions (artifact). Tags `v*` publish a release.
+Every push to `main` builds an unsigned IPA in GitHub Actions. To publish a release, bump the number in `VERSION` (optionally add `docs/release-notes/vX.Y.Z.md`) and push: CI creates the tag and the GitHub release with the IPA attached.
 
 Local build (macOS + Xcode 16 or later):
 
