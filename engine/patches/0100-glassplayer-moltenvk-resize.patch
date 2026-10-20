@@ -1,6 +1,6 @@
 --- a/video/out/vulkan/context_moltenvk.m
 +++ b/video/out/vulkan/context_moltenvk.m
-@@ -83,6 +83,17 @@
+@@ -83,6 +83,19 @@
  
  static int moltenvk_control(struct ra_ctx *ctx, int *events, int request, void *arg)
  {
@@ -11,8 +11,10 @@
 +    if (request == VOCTRL_CHECK_EVENTS && p && p->layer) {
 +        CGSize s = p->layer.drawableSize;
 +        int w = (int)s.width, h = (int)s.height;
-+        if (w > 1 && h > 1 && (w != ctx->vo->dwidth || h != ctx->vo->dheight))
-+            *events |= VO_EVENT_RESIZE;
++        if (w > 1 && h > 1 && (w != ctx->vo->dwidth || h != ctx->vo->dheight)) {
++            if (ra_vk_ctx_resize(ctx, w, h))
++                *events |= VO_EVENT_RESIZE;
++        }
 +        return VO_TRUE;
 +    }
      return VO_NOTIMPL;

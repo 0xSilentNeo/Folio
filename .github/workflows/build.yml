@@ -10,10 +10,6 @@ on:
 permissions:
   contents: write
 
-env:
-  LIBMPV_URL: https://github.com/libmpv-ios/mpv-ios/releases/download/v0.1.2/Libmpv.xcframework.zip
-  LIBMPV_SHA256: ea5ca804e19167072493a3e2fc4c003c2eaec84dc123bb62248932c71a891807
-
 jobs:
   build:
     runs-on: macos-15
@@ -28,21 +24,8 @@ jobs:
           sudo xcode-select -s "$XC/Contents/Developer"
           xcodebuild -version
 
-      - name: Cache libmpv
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: Vendor/Libmpv.xcframework
-          key: libmpv-${{ env.LIBMPV_SHA256 }}
-
-      - name: Download libmpv (mpv + FFmpeg + libass + libplacebo + Lua)
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p Vendor
-          curl -fsSL -o /tmp/libmpv.zip "$LIBMPV_URL"
-          echo "$LIBMPV_SHA256  /tmp/libmpv.zip" | shasum -a 256 -c -
-          ditto -x -k /tmp/libmpv.zip Vendor/
-          ls Vendor/Libmpv.xcframework
+      - name: Fetch engine (libmpv + FFmpeg + libplacebo + MoltenVK)
+        run: bash scripts/fetch-engine.sh
 
       - name: Generate Xcode project
         run: |
@@ -118,6 +101,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v$VERSION"
+          if grep -q "mpvkit-stock" Vendor/engine.txt; then
+            echo "::warning::Built with the stock engine (no Lua); not publishing a release."
+            exit 0
+          fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             if [[ "$GITHUB_REF" == refs/tags/* ]]; then
               gh release upload "$TAG" GlassPlayer-*.ipa --clobber

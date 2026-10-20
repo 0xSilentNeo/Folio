@@ -81,6 +81,12 @@ final class MPVClient {
         mpv_set_option_string(handle, name, value)
     }
 
+    @discardableResult
+    func setOption(_ name: String, int64 value: Int64) -> Int32 {
+        var v = value
+        return mpv_set_option(handle, name, MPV_FORMAT_INT64, &v)
+    }
+
     func initialize(logLevel: String = "info") throws {
         mpv_request_log_messages(handle, logLevel)
         let r = mpv_initialize(handle)

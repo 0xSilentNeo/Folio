@@ -4,14 +4,9 @@ import SwiftUI
 /// UI-only state for the player screen.
 @MainActor
 final class PlayerUIState: ObservableObject {
-    enum Panel: String, Identifiable {
-        case tracks, speed, chapters, shaders, commands, video, info
-        var id: String { rawValue }
-    }
-
     @Published var controlsVisible = true
     @Published var locked = false
-    @Published var panel: Panel?
+    @Published var showInfo = false
     @Published var scrubbing = false
     @Published var scrubTime: Double?
     @Published var gestureHUD: GestureHUD?
@@ -39,7 +34,7 @@ final class PlayerUIState: ObservableObject {
     func scheduleHide(after seconds: Double = 4) {
         hideWork?.cancel()
         let w = DispatchWorkItem { [weak self] in
-            guard let self, self.panel == nil, !self.scrubbing, !self.showConsole else { return }
+            guard let self, !self.showInfo, !self.scrubbing, !self.showConsole else { return }
             withAnimation(.easeOut(duration: 0.25)) { self.controlsVisible = false }
         }
         hideWork = w
@@ -69,12 +64,14 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
         view.backgroundColor = .black
         rootView.onRotationLock = { [weak self] locked in self?.setRotationLocked(locked) }
         rootView.onClose = { [weak self] in self?.closePlayer() }
-        model.start()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         becomeFirstResponder()
+        // Start once the video surface has its real size (the Metal
+        // swapchain is created from it).
+        model.start()
         if UserDefaults.standard.bool(forKey: SettingsKey.landscapeOnOpen), UIDevice.current.userInterfaceIdiom == .phone {
             requestOrientation(.landscape)
         }
@@ -215,11 +212,29 @@ enum PlayerPresenter {
     static func play(queue: [MediaItem], index: Int) {
         guard let model = PlayerModel(queue: queue.map { $0.preparedForPlayback() }, startIndex: index) else { return }
         let vc = PlayerViewController(model: model)
-        guard let top = topViewController() else { return }
+        present(vc, attempt: 0)
+    }
+
+    /// Presents as soon as nothing else is mid-transition. Opening a file
+    /// from the document picker, the share sheet or a cold launch from the
+    /// Files app all call in while another presentation is still animating,
+    /// which UIKit silently refuses.
+    private static func present(_ vc: PlayerViewController, attempt: Int) {
+        guard attempt < 40 else { return }
+        func retry() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { present(vc, attempt: attempt + 1) }
+        }
+        guard let top = topViewController(), top.view.window != nil else { return retry() }
+        if top.isBeingPresented || top.isBeingDismissed || top.transitionCoordinator != nil {
+            return retry()
+        }
         if let existing = top as? PlayerViewController {
             existing.closePlayer()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { topViewController()?.present(vc, animated: true) }
-            return
+            return retry()
+        }
+        if top is UIDocumentPickerViewController || top is UIActivityViewController {
+            top.dismiss(animated: true)
+            return retry()
         }
         top.present(vc, animated: true)
     }

@@ -14,6 +14,7 @@ final class SampleBufferView: UIView {
 protocol PiPManagerDelegate: AnyObject {
     func pipWillStart()
     func pipDidStart()
+    func pipWillStop()
     func pipDidStop()
     func pipFailed(_ error: Error)
     func pipRestoreUI(_ completion: @escaping (Bool) -> Void)
@@ -144,6 +145,9 @@ extension PiPManager: AVPictureInPictureControllerDelegate {
     func pictureInPictureController(_ c: AVPictureInPictureController, failedToStartPictureInPictureWithError error: Error) {
         isActive = false
         delegate?.pipFailed(error)
+    }
+    func pictureInPictureControllerWillStopPictureInPicture(_ c: AVPictureInPictureController) {
+        delegate?.pipWillStop()
     }
     func pictureInPictureControllerDidStopPictureInPicture(_ c: AVPictureInPictureController) {
         isActive = false

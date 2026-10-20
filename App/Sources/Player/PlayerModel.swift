@@ -3,6 +3,7 @@ import UIKit
 import AVFoundation
 import MediaPlayer
 import Combine
+import CoreVideo
 
 struct MediaTrack: Identifiable, Hashable {
     let id: Int
@@ -10,25 +11,101 @@ struct MediaTrack: Identifiable, Hashable {
     let title: String?
     let lang: String?
     let codec: String?
+    let profile: String?
     let selected: Bool
     let external: Bool
     let isDefault: Bool
     let channels: String?
+    let channelCount: Int?
+    let dvProfile: Int?
+    let width: Int?
+    let height: Int?
 
+    var languageName: String? {
+        guard let lang, !lang.isEmpty else { return nil }
+        return Locale.current.localizedString(forLanguageCode: lang) ?? lang.uppercased()
+    }
+
+    /// Menu title, e.g. "English · Dolby TrueHD Atmos 7.1".
     var label: String {
         var parts: [String] = []
-        if let title, !title.isEmpty { parts.append(title) }
-        if let lang, !lang.isEmpty { parts.append(Locale.current.localizedString(forLanguageCode: lang) ?? lang.uppercased()) }
+        if let languageName { parts.append(languageName) }
+        if let title, !title.isEmpty, title.lowercased() != languageName?.lowercased() { parts.append(title) }
         if parts.isEmpty { parts.append("Track \(id)") }
         return parts.joined(separator: " · ")
     }
+
     var detail: String {
         var parts: [String] = []
-        if let codec { parts.append(codec.uppercased()) }
-        if let channels, !channels.isEmpty { parts.append(channels) }
+        switch type {
+        case "audio":
+            parts.append(AudioFormat.name(codec: codec, profile: profile))
+            if let ch = AudioFormat.channelLayout(channels: channels, count: channelCount) { parts.append(ch) }
+        case "video":
+            if let dv = dvProfile, dv > 0 { parts.append("Dolby Vision P\(dv)") }
+            if let codec { parts.append(codec.uppercased()) }
+            if let w = width, let h = height, w > 0 { parts.append("\(w)×\(h)") }
+        default:
+            if let codec { parts.append(AudioFormat.subtitleName(codec)) }
+        }
         if external { parts.append("External") }
         if isDefault { parts.append("Default") }
         return parts.joined(separator: " · ")
+    }
+}
+
+enum AudioFormat {
+    static func name(codec: String?, profile: String?) -> String {
+        let c = (codec ?? "").lowercased()
+        let p = profile ?? ""
+        let atmos = p.localizedCaseInsensitiveContains("atmos")
+        switch c {
+        case "eac3": return atmos ? "Dolby Digital Plus · Atmos" : "Dolby Digital Plus"
+        case "ac3": return "Dolby Digital"
+        case "truehd", "mlp": return atmos ? "Dolby TrueHD · Atmos" : "Dolby TrueHD"
+        case "dts", "dca":
+            if p.contains("DTS:X") { return p.contains("IMAX") ? "DTS:X IMAX" : "DTS:X" }
+            if p.contains("MA") { return "DTS-HD MA" }
+            if p.contains("HRA") { return "DTS-HD HRA" }
+            if p.contains("Express") { return "DTS Express" }
+            if p.contains("ES") { return "DTS-ES" }
+            return "DTS"
+        case "aac": return p.contains("HE") ? "HE-AAC" : "AAC"
+        case "flac": return "FLAC"
+        case "opus": return "Opus"
+        case "alac": return "ALAC"
+        case "mp3": return "MP3"
+        case "vorbis": return "Vorbis"
+        default:
+            if c.hasPrefix("pcm") { return "PCM" }
+            return c.isEmpty ? "Audio" : c.uppercased()
+        }
+    }
+
+    static func channelLayout(channels: String?, count: Int?) -> String? {
+        if let n = count, n > 0 {
+            switch n {
+            case 1: return "Mono"
+            case 2: return "Stereo"
+            case 6: return "5.1"
+            case 8: return "7.1"
+            default: return "\(n) ch"
+            }
+        }
+        guard let channels, !channels.isEmpty else { return nil }
+        return channels.replacingOccurrences(of: "(side)", with: "")
+    }
+
+    static func subtitleName(_ codec: String) -> String {
+        switch codec.lowercased() {
+        case "ass", "ssa": return "ASS"
+        case "subrip", "srt": return "SRT"
+        case "hdmv_pgs_subtitle", "pgssub": return "PGS"
+        case "dvd_subtitle", "dvdsub": return "VobSub"
+        case "webvtt": return "WebVTT"
+        case "mov_text": return "TX3G"
+        default: return codec.uppercased()
+        }
     }
 }
 
@@ -38,26 +115,32 @@ struct MediaChapter: Identifiable, Hashable {
     let time: Double
 }
 
+/// High-frequency playback state, split out so position ticks only
+/// re-render the time labels and seek bar — not the whole player UI.
 @MainActor
-final class PlayerModel: ObservableObject {
-    // MARK: Published state
+final class PlaybackClock: ObservableObject {
     @Published var position: Double = 0
     @Published var duration: Double = 0
+    @Published var cacheAhead: Double = 0
+}
+
+@MainActor
+final class PlayerModel: ObservableObject {
+    // MARK: Published (low-frequency) state
     @Published var paused = false
     @Published var buffering = false
-    @Published var cacheAhead: Double = 0
     @Published var speed: Double = 1
     @Published var mediaTitle: String = ""
     @Published var tracks: [MediaTrack] = []
     @Published var chapters: [MediaChapter] = []
     @Published var currentChapter: Int = -1
-    @Published var aid = "auto"
     @Published var sid = "auto"
     @Published var subDelay: Double = 0
     @Published var audioDelay: Double = 0
     @Published var videoSize: CGSize = .zero
     @Published var hwdecCurrent = ""
-    @Published var volume: Double = 100
+    @Published var videoFormat = ""          // "Dolby Vision", "HDR10", "HLG", "SDR"
+    @Published var audioOut = ""
     @Published var ended = false
     @Published var errorMessage: String?
     @Published var isPiPActive = false
@@ -71,48 +154,87 @@ final class PlayerModel: ObservableObject {
     @Published var aspectOverride = "no"
     @Published var queueIndex: Int
     @Published var holdSpeedActive = false
+    @Published var holdSpeed: Double = UserDefaults.standard.double(forKey: SettingsKey.holdSpeedValue) {
+        didSet { UserDefaults.standard.set(holdSpeed, forKey: SettingsKey.holdSpeedValue) }
+    }
+    @Published var holdEnabled: Bool = UserDefaults.standard.bool(forKey: SettingsKey.holdToSpeed) {
+        didSet { UserDefaults.standard.set(holdEnabled, forKey: SettingsKey.holdToSpeed) }
+    }
+
+    let clock = PlaybackClock()
+    /// Unthrottled position for logic (skip markers, history).
+    private(set) var position: Double = 0
+    var duration: Double { clock.duration }
 
     let queue: [MediaItem]
     var item: MediaItem { queue[queueIndex] }
     var hasNext: Bool { queueIndex + 1 < queue.count }
     var hasPrevious: Bool { queueIndex > 0 }
 
-    let renderView: MPVRenderView
+    // MARK: Rendering
+    enum Renderer { case metal, gl }
+    let renderer: Renderer
+    let videoView: UIView
+    private let metalView: MetalVideoView?
+    private let glView: MPVRenderView?
     let pip = PiPManager()
     nonisolated let pipState = PiPStateBox()
     private lazy var sw = MPVSoftwareRenderer(output: pip.makeSink())
-    private(set) var client: MPVClient?
+    weak var videoContainer: UIView?
 
-    private enum RenderMode { case gl, sw, none }
-    private var mode: RenderMode = .none
-    private var vidBeforeSwitch: String?
-    private var vidBeforeBackground: String?
-    private var appActive = true
-    private var pendingGL = false
+    private(set) var client: MPVClient?
+    private enum Mode { case main, sw, none }
+    private var mode: Mode = .none
+    private var vidSaved: String?
+    private var videoOffForBackground = false
+    private var pendingMain = false
     private var pipRestoring = false
+    private var awaitingFirstFrameAfterPiP = false
+
+    private var snapshotTimer: Timer?
+    private let snapshotQueue = DispatchQueue(label: "glassplayer.snapshot", qos: .utility)
+    private var snapshotPool: CVPixelBufferPool?
+    private var snapshotPoolSize = (0, 0)
+
     private var scopedURL: URL?
     private var lastHistorySave = Date.distantPast
+    private var lastPiPSync = Date.distantPast
     private var autoSkipped: Set<String> = []
     private var segmentsRequested = false
     private var fileLoaded = false
     private var observers: [NSObjectProtocol] = []
     private var toastWork: DispatchWorkItem?
     private var speedBeforeHold: Double = 1
+    private var started = false
     private var closed = false
     var onClose: (() -> Void)?
 
     private let defaults = UserDefaults.standard
 
     init?(queue: [MediaItem], startIndex: Int = 0) {
-        guard !queue.isEmpty, let view = MPVRenderView.make() else { return nil }
+        guard !queue.isEmpty else { return nil }
         self.queue = queue
         self.queueIndex = min(max(0, startIndex), queue.count - 1)
-        self.renderView = view
+        if UserDefaults.standard.string(forKey: SettingsKey.renderer) == "gl", let gl = MPVRenderView.make() {
+            renderer = .gl
+            glView = gl
+            metalView = nil
+            videoView = gl
+        } else {
+            let mv = MetalVideoView()
+            renderer = .metal
+            metalView = mv
+            glView = nil
+            videoView = mv
+        }
     }
 
     // MARK: Lifecycle
 
+    /// Called once the player view is on screen with its final size.
     func start() {
+        guard !started else { return }
+        started = true
         configureAudioSession()
         guard let c = MPVClient() else {
             errorMessage = "Could not create the mpv player."
@@ -129,18 +251,18 @@ final class PlayerModel: ObservableObject {
         client = c
         observe(c)
 
-        do {
-            try renderView.attach(to: c)
-            mode = .gl
-        } catch {
-            errorMessage = "Video output failed: \(error.localizedDescription)"
+        if let glView {
+            do { try glView.attach(to: c) } catch {
+                errorMessage = "Video output failed: \(error.localizedDescription)"
+            }
         }
+        mode = .main
 
         if defaults.bool(forKey: SettingsKey.pipEnabled), PiPManager.isSupported {
             pip.delegate = self
             pip.onPossibleChanged = { [weak self] in self?.isPiPPossible = $0 }
             pip.setUp(autoStart: defaults.bool(forKey: SettingsKey.pipAuto))
-            renderView.setPiPFeed(pip.makeSink())
+            startPiPFeed()
         }
 
         registerLifecycle()
@@ -157,10 +279,11 @@ final class PlayerModel: ObservableObject {
         observers.forEach { NotificationCenter.default.removeObserver($0) }
         observers = []
         tearDownRemoteCommands()
+        stopPiPFeed()
+        snapshotQueue.sync {}
         pip.tearDown()
-        renderView.setPiPFeed(nil)
         if mode == .sw { sw.detach() }
-        renderView.detach()
+        glView?.detach()
         mode = .none
         let scoped = scopedURL
         scopedURL = nil
@@ -171,18 +294,31 @@ final class PlayerModel: ObservableObject {
         client = nil
         UIApplication.shared.isIdleTimerDisabled = false
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
         onClose?()
     }
 
     private func applyOptions(_ c: MPVClient) {
-        c.setOption("vo", "libmpv")
-        c.setOption("gpu-api", "opengl")
-        c.setOption("opengl-es", "yes")
+        switch renderer {
+        case .metal:
+            c.setOption("wid", int64: metalView!.wid)
+            c.setOption("vo", "gpu-next")
+            c.setOption("gpu-api", "vulkan")
+            c.setOption("gpu-context", "moltenvk")
+            let edr = UIScreen.main.potentialEDRHeadroom > 1.0
+            if defaults.bool(forKey: SettingsKey.hdrOutput) && edr {
+                // HDR / Dolby Vision passthrough to the EDR display.
+                c.setOption("target-colorspace-hint", "yes")
+            }
+        case .gl:
+            c.setOption("vo", "libmpv")
+            c.setOption("gpu-api", "opengl")
+            c.setOption("opengl-es", "yes")
+        }
         switch defaults.string(forKey: SettingsKey.hwdec) ?? "auto" {
         case "copy": c.setOption("hwdec", "videotoolbox-copy")
         case "no": c.setOption("hwdec", "no")
-        // The copy fallback is what makes the CPU (PiP) renderer work with
-        // hardware decoding: zero-copy interop only exists for OpenGL.
+        // Copy fallback lets the CPU (PiP) renderer keep hardware decoding.
         default: c.setOption("hwdec", "videotoolbox,videotoolbox-copy")
         }
         c.setOption("config", "yes")
@@ -205,6 +341,10 @@ final class PlayerModel: ObservableObject {
         c.setOption("demuxer-max-back-bytes", "\(max(16, cacheMB / 3))MiB")
         c.setOption("demuxer-readahead-secs", "60")
         c.setOption("network-timeout", "30")
+        c.setOption("hr-seek-framedrop", "yes")
+        // Audio: multichannel PCM out (AirPlay / HDMI surround, Spatial Audio on AirPods).
+        c.setOption("ao", "avfoundation,audiounit")
+        c.setOption("audio-channels", defaults.bool(forKey: SettingsKey.surroundAudio) ? "auto" : "stereo")
         c.setOption("sub-auto", "fuzzy")
         c.setOption("embeddedfonts", "yes")
         c.setOption("sub-fonts-dir", MPVFiles.fontsDir.path)
@@ -235,13 +375,15 @@ final class PlayerModel: ObservableObject {
         c.observe("chapter-list/count", .int)
         c.observe("chapter", .int)
         c.observe("aid", .string)
+        c.observe("vid", .string)
         c.observe("sid", .string)
         c.observe("sub-delay", .double)
         c.observe("audio-delay", .double)
         c.observe("dwidth", .int)
         c.observe("dheight", .int)
         c.observe("hwdec-current", .string)
-        c.observe("volume", .double)
+        c.observe("video-params/gamma", .string)
+        c.observe("audio-out-params/channels", .string)
         c.observe("demuxer-cache-duration", .double)
         c.observe("panscan", .double)
     }
@@ -260,7 +402,8 @@ final class PlayerModel: ObservableObject {
         fileLoaded = false
         isLoading = true
         position = 0
-        duration = item.durationHint ?? 0
+        clock.position = 0
+        clock.duration = item.durationHint ?? 0
         tracks = []
         chapters = []
         mediaTitle = item.displayTitle
@@ -326,12 +469,18 @@ final class PlayerModel: ObservableObject {
             guard let id = c.int(p + "id"), let type = c.string(p + "type") else { continue }
             list.append(MediaTrack(
                 id: Int(id), type: type, title: c.string(p + "title"), lang: c.string(p + "lang"),
-                codec: c.string(p + "codec"), selected: c.flag(p + "selected") ?? false,
+                codec: c.string(p + "codec"), profile: c.string(p + "codec-profile"),
+                selected: c.flag(p + "selected") ?? false,
                 external: c.flag(p + "external") ?? false, isDefault: c.flag(p + "default") ?? false,
-                channels: type == "audio" ? c.string(p + "demux-channels") : nil
+                channels: type == "audio" ? c.string(p + "demux-channels") : nil,
+                channelCount: type == "audio" ? c.int(p + "demux-channel-count").map(Int.init) : nil,
+                dvProfile: type == "video" ? c.int(p + "dolby-vision-profile").map(Int.init) : nil,
+                width: type == "video" ? c.int(p + "demux-w").map(Int.init) : nil,
+                height: type == "video" ? c.int(p + "demux-h").map(Int.init) : nil
             ))
         }
         tracks = list
+        updateVideoFormat()
     }
 
     func refreshChapters() {
@@ -350,18 +499,24 @@ final class PlayerModel: ObservableObject {
     func selectTrack(_ type: String, id: Int?) {
         let prop = type == "audio" ? "aid" : type == "sub" ? "sid" : "vid"
         client?.set(prop, id.map(String.init) ?? "no")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in self?.refreshTracks() }
     }
 
     func addSubtitle(url: URL) {
         let scoped = url.startAccessingSecurityScopedResource()
-        // Copy so mpv can read it after the security scope ends.
         let dest = FileManager.default.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
         try? FileManager.default.removeItem(at: dest)
         try? FileManager.default.copyItem(at: url, to: dest)
         if scoped { url.stopAccessingSecurityScopedResource() }
         client?.command(["sub-add", dest.path, "select"])
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.refreshTracks() }
+    }
+
+    private func updateVideoFormat() {
+        let gamma = client?.string("video-params/gamma") ?? ""
+        let dv = tracks.first { $0.type == "video" && $0.selected }?.dvProfile ?? 0
+        if dv > 0 { videoFormat = "Dolby Vision" }
+        else if gamma == "pq" { videoFormat = "HDR10" }
+        else if gamma == "hlg" { videoFormat = "HLG" }
+        else { videoFormat = gamma.isEmpty ? "" : "SDR" }
     }
 
     // MARK: Transport
@@ -374,22 +529,28 @@ final class PlayerModel: ObservableObject {
 
     func seek(by seconds: Double) {
         client?.command(["seek", String(seconds), "relative+exact"])
-        showToast(seconds >= 0 ? "+\(Int(seconds))s" : "\(Int(seconds))s")
     }
 
     func seek(to seconds: Double, exact: Bool = true) {
         client?.command(["seek", String(max(0, seconds)), exact ? "absolute+exact" : "absolute+keyframes"])
     }
 
-    func setSpeed(_ s: Double) {
-        client?.set("speed", s)
+    /// Live preview while scrubbing: fast keyframe seeks, throttled.
+    private var lastScrubSeek = Date.distantPast
+    func scrub(to seconds: Double) {
+        clock.position = seconds
+        guard Date().timeIntervalSince(lastScrubSeek) > 0.12 else { return }
+        lastScrubSeek = Date()
+        client?.command(["seek", String(max(0, seconds)), "absolute+keyframes"])
     }
 
+    func setSpeed(_ s: Double) { client?.set("speed", s) }
+
     func beginHoldSpeed() {
-        guard defaults.bool(forKey: SettingsKey.holdToSpeed), !paused, !holdSpeedActive else { return }
+        guard holdEnabled, !paused, !holdSpeedActive else { return }
         speedBeforeHold = speed
         holdSpeedActive = true
-        setSpeed(defaults.double(forKey: SettingsKey.holdSpeedValue))
+        setSpeed(holdSpeed)
     }
 
     func endHoldSpeed() {
@@ -398,9 +559,11 @@ final class PlayerModel: ObservableObject {
         setSpeed(speedBeforeHold)
     }
 
-    func setVolume(_ v: Double) { client?.set("volume", min(130, max(0, v))) }
+    func setVolume(_ v: Double) { client?.set("volume", min(150, max(0, v))) }
+    var volume: Double { client?.double("volume") ?? 100 }
     func setSubDelay(_ v: Double) { client?.set("sub-delay", v) }
     func setAudioDelay(_ v: Double) { client?.set("audio-delay", v) }
+    func setSubScale(_ v: Double) { client?.set("sub-scale", v) }
 
     func toggleZoom() {
         client?.set("panscan", zoomToFill ? 0.0 : 1.0)
@@ -439,8 +602,7 @@ final class PlayerModel: ObservableObject {
     func setShaders(_ names: [String]) {
         MPVFiles.activeShaderNames = names
         activeShaders = names
-        let paths = MPVFiles.activeShaderPaths
-        client?.set("glsl-shaders", paths.joined(separator: ":"))
+        client?.set("glsl-shaders", MPVFiles.activeShaderPaths.joined(separator: ":"))
         showToast(names.isEmpty ? "Shaders off" : "\(names.count) shader\(names.count == 1 ? "" : "s") on")
     }
 
@@ -482,7 +644,7 @@ final class PlayerModel: ObservableObject {
 
         var hint = item.anime ?? AnimeHint()
         if hint.title == nil || hint.episode == nil {
-            let name = item.resolvedURL.map { $0.lastPathComponent.removingPercentEncoding ?? $0.lastPathComponent } ?? item.title
+            let name = item.resolvedURL?.lastPathComponent ?? item.title
             let parsed = TitleParser.parse(TitleParser.isMedia(name) ? name : item.title)
             if hint.title == nil { hint.title = parsed.title }
             if hint.episode == nil { hint.episode = parsed.episode }
@@ -496,7 +658,6 @@ final class PlayerModel: ObservableObject {
             await MainActor.run {
                 guard let self, self.item.id == key, !found.isEmpty else { return }
                 self.segments = found
-                self.showToast("Found \(found.count) skip marker\(found.count == 1 ? "" : "s") (\(found[0].source))")
                 if self.defaults.bool(forKey: SettingsKey.skipInjectChapters), self.chapters.isEmpty {
                     self.injectChapters(found)
                 }
@@ -514,7 +675,6 @@ final class PlayerModel: ObservableObject {
             if s.end < nextStart - 1, s.end < duration - 1 { marks.append(("Episode", s.end)) }
         }
         client?.setChapters(marks)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in self?.refreshChapters() }
     }
 
     private func updateActiveSegment() {
@@ -535,14 +695,71 @@ final class PlayerModel: ObservableObject {
         }
     }
 
+    // MARK: PiP frame feed (keeps the PiP layer showing the current picture)
+
+    private func startPiPFeed() {
+        guard defaults.bool(forKey: SettingsKey.pipEnabled), PiPManager.isSupported else { return }
+        switch renderer {
+        case .gl:
+            glView?.setPiPFeed(pip.makeSink())
+        case .metal:
+            snapshotTimer?.invalidate()
+            let t = Timer(timeInterval: 3, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.takeSnapshot() }
+            }
+            RunLoop.main.add(t, forMode: .common)
+            snapshotTimer = t
+        }
+    }
+
+    private func stopPiPFeed() {
+        snapshotTimer?.invalidate()
+        snapshotTimer = nil
+        glView?.setPiPFeed(nil)
+    }
+
+    private func takeSnapshot() {
+        guard renderer == .metal, mode == .main, fileLoaded, !isPiPActive,
+              UIApplication.shared.applicationState == .active, let c = client else { return }
+        let sink = pip.makeSink()
+        snapshotQueue.async { [weak self] in
+            guard !c.isShutDown else { return }
+            var w: Int32 = 0, h: Int32 = 0
+            guard let bytes = gp_screenshot_bgra(c.handle, 640, &w, &h) else { return }
+            defer { free(bytes) }
+            guard let pb = self?.makePixelBuffer(bytes, Int(w), Int(h)) else { return }
+            sink(pb)
+        }
+    }
+
+    nonisolated private func makePixelBuffer(_ bytes: UnsafeMutablePointer<UInt8>, _ w: Int, _ h: Int) -> CVPixelBuffer? {
+        var pbOut: CVPixelBuffer?
+        let attrs: [String: Any] = [kCVPixelBufferIOSurfacePropertiesKey as String: [String: Any]()]
+        CVPixelBufferCreate(kCFAllocatorDefault, w, h, kCVPixelFormatType_32BGRA, attrs as CFDictionary, &pbOut)
+        guard let pb = pbOut else { return nil }
+        CVPixelBufferLockBaseAddress(pb, [])
+        defer { CVPixelBufferUnlockBaseAddress(pb, []) }
+        guard let dst = CVPixelBufferGetBaseAddress(pb) else { return nil }
+        let dstStride = CVPixelBufferGetBytesPerRow(pb)
+        for y in 0..<h {
+            memcpy(dst + y * dstStride, bytes + y * w * 4, w * 4)
+        }
+        return pb
+    }
+
     // MARK: Renderer switching (PiP)
 
     private func switchToSoftware() {
-        guard mode == .gl, let c = client else { return }
-        let vid = c.string("vid")
-        if let vid, vid != "no" { vidBeforeSwitch = vid }
-        renderView.setPiPFeed(nil)
-        renderView.detach()
+        guard mode == .main, let c = client else { return }
+        if let vid = c.string("vid"), vid != "no" { vidSaved = vid }
+        stopPiPFeed()
+        snapshotQueue.sync {}
+        switch renderer {
+        case .gl:
+            glView?.detach()
+        case .metal:
+            c.set("vid", "no")          // tear down the Metal VO first
+        }
         do {
             sw.setVideoSize(width: Int(videoSize.width), height: Int(videoSize.height))
             try sw.attach(to: c)
@@ -551,30 +768,39 @@ final class PlayerModel: ObservableObject {
             mode = .none
             showToast("PiP renderer failed")
         }
+        if renderer == .metal { c.set("vo", "libmpv") }
         c.set("vid", "no")
-        c.set("vid", vidBeforeSwitch ?? "auto")
+        c.set("vid", vidSaved ?? "auto")
     }
 
-    private func switchToGL() {
+    private func switchToMain() {
         guard let c = client else { return }
-        if mode == .sw { sw.detach() }
-        do {
-            try renderView.attach(to: c)
-            mode = .gl
-        } catch {
-            mode = .none
-            errorMessage = "Video output failed: \(error.localizedDescription)"
-            return
-        }
-        renderView.setRenderingAllowed(true)
-        if defaults.bool(forKey: SettingsKey.pipEnabled) {
-            renderView.setPiPFeed(pip.makeSink())
-        }
-        let vid = vidBeforeBackground ?? vidBeforeSwitch ?? "auto"
-        vidBeforeBackground = nil
         c.set("vid", "no")
-        c.set("vid", vid)
-        pendingGL = false
+        if mode == .sw { sw.detach() }
+        switch renderer {
+        case .metal:
+            c.set("vo", "gpu-next")
+        case .gl:
+            do { try glView?.attach(to: c) } catch {
+                mode = .none
+                errorMessage = "Video output failed: \(error.localizedDescription)"
+                return
+            }
+            glView?.setRenderingAllowed(true)
+        }
+        mode = .main
+        pendingMain = false
+        videoOffForBackground = false
+        c.set("vid", vidSaved ?? "auto")
+        startPiPFeed()
+    }
+
+    /// While PiP hands back to the main renderer, keep the (correctly
+    /// sized) PiP layer on top so the restore animation never shows a
+    /// stretched or black frame.
+    private func setPiPLayerOnTop(_ onTop: Bool) {
+        guard let container = videoContainer else { return }
+        if onTop { container.bringSubviewToFront(pip.view) } else { container.sendSubviewToBack(pip.view) }
     }
 
     // MARK: App lifecycle
@@ -594,21 +820,22 @@ final class PlayerModel: ObservableObject {
         })
         observers.append(nc.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] note in
             guard let raw = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
-                  AVAudioSession.RouteChangeReason(rawValue: raw) == .oldDeviceUnavailable else { return }
-            MainActor.assumeIsolated { self?.setPaused(true) }
+                  let reason = AVAudioSession.RouteChangeReason(rawValue: raw) else { return }
+            MainActor.assumeIsolated {
+                if reason == .oldDeviceUnavailable { self?.setPaused(true) }
+                if reason == .newDeviceAvailable || reason == .oldDeviceUnavailable { self?.updateOutputChannels() }
+            }
         })
     }
 
     private func didEnterBackground() {
-        appActive = false
         saveHistory(force: true)
-        guard mode == .gl else { return }
-        renderView.setRenderingAllowed(false)
-        guard !isPiPActive, let c = client else { return }
+        guard mode == .main, !isPiPActive, let c = client else { return }
+        if renderer == .gl { glView?.setRenderingAllowed(false) }
         if defaults.bool(forKey: SettingsKey.backgroundAudio) {
-            let vid = c.string("vid")
-            if let vid, vid != "no" {
-                vidBeforeBackground = vid
+            if let vid = c.string("vid"), vid != "no" {
+                vidSaved = vid
+                videoOffForBackground = true
                 c.set("vid", "no")
             }
         } else {
@@ -617,23 +844,31 @@ final class PlayerModel: ObservableObject {
     }
 
     private func didBecomeActive() {
-        appActive = true
-        if pendingGL {
-            switchToGL()
-            return
-        }
-        guard mode == .gl else { return }
-        renderView.setRenderingAllowed(true)
-        if let vid = vidBeforeBackground, let c = client {
-            vidBeforeBackground = nil
-            c.set("vid", vid)
+        if pendingMain { switchToMain(); return }
+        guard mode == .main else { return }
+        if renderer == .gl { glView?.setRenderingAllowed(true) }
+        if videoOffForBackground, let c = client {
+            videoOffForBackground = false
+            c.set("vid", vidSaved ?? "auto")
         }
     }
 
     private func configureAudioSession() {
         let s = AVAudioSession.sharedInstance()
         try? s.setCategory(.playback, mode: .moviePlayback, policy: .longFormVideo)
+        if defaults.bool(forKey: SettingsKey.surroundAudio) {
+            // Lets iOS spatialise 5.1/7.1 output (AirPods) and pass it to
+            // multichannel routes (AirPlay receivers, HDMI).
+            try? s.setSupportsMultichannelContent(true)
+        }
         try? s.setActive(true)
+        updateOutputChannels()
+    }
+
+    private func updateOutputChannels() {
+        guard defaults.bool(forKey: SettingsKey.surroundAudio) else { return }
+        let s = AVAudioSession.sharedInstance()
+        try? s.setPreferredOutputNumberOfChannels(s.maximumOutputNumberOfChannels)
     }
 
     // MARK: Now Playing / remote commands
@@ -649,8 +884,9 @@ final class PlayerModel: ObservableObject {
         add(cc.playCommand) { [weak self] _ in self?.setPaused(false); return .success }
         add(cc.pauseCommand) { [weak self] _ in self?.setPaused(true); return .success }
         add(cc.togglePlayPauseCommand) { [weak self] _ in self?.togglePause(); return .success }
-        cc.skipForwardCommand.preferredIntervals = [NSNumber(value: defaults.integer(forKey: SettingsKey.seekStep))]
-        cc.skipBackwardCommand.preferredIntervals = [NSNumber(value: defaults.integer(forKey: SettingsKey.seekStep))]
+        let step = NSNumber(value: defaults.integer(forKey: SettingsKey.seekStep))
+        cc.skipForwardCommand.preferredIntervals = [step]
+        cc.skipBackwardCommand.preferredIntervals = [step]
         add(cc.skipForwardCommand) { [weak self] e in
             self?.seek(by: (e as? MPSkipIntervalCommandEvent)?.interval ?? 10); return .success
         }
@@ -712,6 +948,11 @@ extension PlayerModel: MPVClientDelegate {
             }
         case .playbackRestart:
             buffering = false
+            if awaitingFirstFrameAfterPiP {
+                awaitingFirstFrameAfterPiP = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in self?.setPiPLayerOnTop(false) }
+            }
+            if renderer == .metal { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.takeSnapshot() } }
         case .videoReconfig:
             break
         case .clientMessage(let args):
@@ -724,13 +965,19 @@ extension PlayerModel: MPVClientDelegate {
     private func handleProperty(_ name: String, _ value: MPVValue) {
         switch name {
         case "time-pos":
-            position = value.double ?? 0
+            let p = value.double ?? 0
+            position = p
+            // Publish at most ~4x per second (skips SwiftUI work per frame).
+            if abs(p - clock.position) >= 0.25 || p < clock.position { clock.position = p }
             updateActiveSegment()
-            pip.updatePlayback(position: position, rate: paused ? 0 : speed)
+            if Date().timeIntervalSince(lastPiPSync) > 1 {
+                lastPiPSync = Date()
+                pip.updatePlayback(position: p, rate: paused ? 0 : speed)
+            }
             saveHistory()
         case "duration":
-            duration = value.double ?? 0
-            pipState.duration = duration
+            clock.duration = value.double ?? 0
+            pipState.duration = clock.duration
             pip.invalidate()
             maybeRequestSegments()
             updateNowPlaying()
@@ -741,7 +988,7 @@ extension PlayerModel: MPVClientDelegate {
             pip.invalidate()
             updateNowPlaying()
             UIApplication.shared.isIdleTimerDisabled = !paused
-            if paused { saveHistory(force: true) }
+            if paused { saveHistory(force: true); takeSnapshot() }
         case "paused-for-cache":
             buffering = value.bool ?? false
         case "seeking":
@@ -753,33 +1000,36 @@ extension PlayerModel: MPVClientDelegate {
             updateNowPlaying()
         case "media-title":
             if let t = value.string, !t.isEmpty, item.title.isEmpty { mediaTitle = t }
-        case "track-list/count":
+        case "track-list/count", "aid", "vid":
             refreshTracks()
         case "chapter-list/count":
             refreshChapters()
         case "chapter":
             currentChapter = Int(value.int ?? -1)
-        case "aid":
-            aid = value.string ?? "no"
         case "sid":
             sid = value.string ?? "no"
+            refreshTracks()
         case "sub-delay":
             subDelay = value.double ?? 0
         case "audio-delay":
             audioDelay = value.double ?? 0
         case "dwidth", "dheight":
             let w = client?.int("dwidth") ?? 0, h = client?.int("dheight") ?? 0
-            videoSize = CGSize(width: Int(w), height: Int(h))
+            let size = CGSize(width: Int(w), height: Int(h))
+            if size != videoSize { videoSize = size }
             if w > 0, h > 0 {
-                renderView.setVideoAspect(Double(w) / Double(h))
+                glView?.setVideoAspect(Double(w) / Double(h))
                 sw.setVideoSize(width: Int(w), height: Int(h))
             }
         case "hwdec-current":
             hwdecCurrent = value.string ?? ""
-        case "volume":
-            volume = value.double ?? 100
+        case "video-params/gamma":
+            updateVideoFormat()
+        case "audio-out-params/channels":
+            audioOut = value.string ?? ""
         case "demuxer-cache-duration":
-            cacheAhead = value.double ?? 0
+            let v = value.double ?? 0
+            if abs(v - clock.cacheAhead) > 1 { clock.cacheAhead = v }
         case "panscan":
             zoomToFill = (value.double ?? 0) > 0.5
         default:
@@ -821,6 +1071,10 @@ extension PlayerModel: PiPManagerDelegate {
 
     nonisolated func pipDidStart() {}
 
+    nonisolated func pipWillStop() {
+        onMain { [weak self] in self?.setPiPLayerOnTop(true) }
+    }
+
     nonisolated func pipDidStop() {
         onMain { [weak self] in
             guard let self else { return }
@@ -828,14 +1082,17 @@ extension PlayerModel: PiPManagerDelegate {
             if UIApplication.shared.applicationState == .background {
                 if self.mode == .sw { self.sw.detach() }
                 self.mode = .none
-                self.pendingGL = true
-                if let c = self.client {
-                    self.vidBeforeBackground = self.vidBeforeSwitch
-                    c.set("vid", "no")
-                }
+                self.pendingMain = true
+                self.client?.set("vid", "no")
                 if !self.pipRestoring { self.setPaused(true) }
             } else {
-                self.switchToGL()
+                self.awaitingFirstFrameAfterPiP = true
+                self.switchToMain()
+                // Fallback in case no playback-restart arrives (paused video).
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+                    self?.awaitingFirstFrameAfterPiP = false
+                    self?.setPiPLayerOnTop(false)
+                }
             }
             self.pipRestoring = false
         }
@@ -847,7 +1104,8 @@ extension PlayerModel: PiPManagerDelegate {
             guard let self else { return }
             self.isPiPActive = false
             self.showToast("PiP failed: \(message)")
-            if self.mode == .sw { self.switchToGL() }
+            self.setPiPLayerOnTop(false)
+            if self.mode == .sw { self.switchToMain() }
         }
     }
 

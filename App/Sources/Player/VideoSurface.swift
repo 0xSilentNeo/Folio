@@ -13,7 +13,8 @@ struct VideoSurface: UIViewRepresentable {
         let v = ContainerView()
         v.backgroundColor = .black
         v.install(model.pip.view)
-        v.install(model.renderView)
+        v.install(model.videoView)
+        model.videoContainer = v
         context.coordinator.attach(to: v)
         return v
     }
@@ -74,7 +75,7 @@ struct VideoSurface: UIViewRepresentable {
         }
 
         @objc private func singleTap(_ g: UITapGestureRecognizer) {
-            if ui.panel != nil { withAnimation(.easeOut(duration: 0.2)) { ui.panel = nil }; return }
+            if ui.showInfo { ui.showInfo = false; return }
             if ui.showConsole { ui.showConsole = false; return }
             withAnimation(.easeOut(duration: 0.2)) { ui.toggleControls() }
         }
@@ -102,15 +103,10 @@ struct VideoSurface: UIViewRepresentable {
                 model.beginHoldSpeed()
                 if model.holdSpeedActive {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    let s = UserDefaults.standard.double(forKey: SettingsKey.holdSpeedValue)
-                    ui.gestureHUD = .init(icon: "forward.fill", text: String(format: "%gx", s))
                 }
             case .ended, .cancelled, .failed:
                 longPressActive = false
-                if model.holdSpeedActive {
-                    model.endHoldSpeed()
-                    ui.gestureHUD = nil
-                }
+                if model.holdSpeedActive { model.endHoldSpeed() }
             default: break
             }
         }
@@ -140,6 +136,7 @@ struct VideoSurface: UIViewRepresentable {
                     let delta = Double(t.x / max(v.bounds.width, 1)) * range
                     let target = min(max(0, panStartValue + delta), model.duration)
                     ui.scrubTime = target
+                    model.scrub(to: target)
                     let sign = delta >= 0 ? "+" : "-"
                     ui.gestureHUD = .init(icon: delta >= 0 ? "forward" : "backward",
                                           text: "\(PlayerModel.format(target))  (\(sign)\(PlayerModel.format(abs(delta))))",
@@ -149,7 +146,7 @@ struct VideoSurface: UIViewRepresentable {
                     (v.window?.windowScene?.screen ?? UIScreen.main).brightness = CGFloat(value)
                     ui.gestureHUD = .init(icon: "sun.max.fill", text: "\(Int(value * 100))%", progress: value)
                 case .volume:
-                    let value = min(130, max(0, panStartValue - Double(t.y / (v.bounds.height * 0.8)) * 100))
+                    let value = min(150, max(0, panStartValue - Double(t.y / (v.bounds.height * 0.8)) * 100))
                     model.setVolume(value)
                     ui.gestureHUD = .init(icon: value == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill",
                                           text: "\(Int(value))%", progress: min(1, value / 100))

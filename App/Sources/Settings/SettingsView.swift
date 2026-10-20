@@ -2,24 +2,132 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
-    @AppStorage(SettingsKey.hwdec) private var hwdec = "auto"
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    row("Playback", "play.rectangle", .pink) { PlaybackSettings() }
+                    row("Subtitles & Audio", "captions.bubble", .orange) { SubtitleAudioSettings() }
+                    row("Skip Intro", "forward.end", .purple) { SkipSettings() }
+                }
+                Section {
+                    row("Scripts", "chevron.left.forwardslash.chevron.right", .blue) { ScriptsView() }
+                    row("Shaders", "wand.and.stars", .indigo) { ShadersView() }
+                    row("mpv Config", "slider.horizontal.3", .teal) { MPVConfigSettings() }
+                }
+                Section {
+                    row("Advanced", "gearshape.2", .gray) { AdvancedSettings() }
+                }
+                Section {
+                    HStack {
+                        Text("GlassPlayer")
+                        Spacer()
+                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
+                            .foregroundStyle(.secondary)
+                    }
+                } footer: {
+                    Text("Your mpv folder is in Files → On My iPhone → GlassPlayer → mpv.")
+                }
+            }
+            .navigationTitle("Settings")
+        }
+    }
+
+    private func row<D: View>(_ title: String, _ icon: String, _ color: Color, @ViewBuilder destination: @escaping () -> D) -> some View {
+        NavigationLink(destination: destination) {
+            Label {
+                Text(title)
+            } icon: {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 28, height: 28)
+                    .background(color.gradient, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            }
+        }
+    }
+}
+
+struct PlaybackSettings: View {
     @AppStorage(SettingsKey.resumePlayback) private var resume = true
-    @AppStorage(SettingsKey.defaultSpeed) private var defaultSpeed = 1.0
-    @AppStorage(SettingsKey.seekStep) private var seekStep = 10
     @AppStorage(SettingsKey.autoplayNext) private var autoplayNext = true
     @AppStorage(SettingsKey.backgroundAudio) private var backgroundAudio = true
+    @AppStorage(SettingsKey.landscapeOnOpen) private var landscapeOnOpen = true
+    @AppStorage(SettingsKey.seekStep) private var seekStep = 10
+    @AppStorage(SettingsKey.defaultSpeed) private var defaultSpeed = 1.0
     @AppStorage(SettingsKey.holdToSpeed) private var holdToSpeed = true
     @AppStorage(SettingsKey.holdSpeedValue) private var holdSpeedValue = 2.0
-    @AppStorage(SettingsKey.cacheMB) private var cacheMB = 150
-    @AppStorage(SettingsKey.landscapeOnOpen) private var landscapeOnOpen = true
     @AppStorage(SettingsKey.pipEnabled) private var pipEnabled = true
     @AppStorage(SettingsKey.pipAuto) private var pipAuto = true
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle("Resume where I left off", isOn: $resume)
+                Toggle("Play next file automatically", isOn: $autoplayNext)
+                Toggle("Open in landscape", isOn: $landscapeOnOpen)
+                Toggle("Keep audio playing in background", isOn: $backgroundAudio)
+            }
+            Section("Gestures") {
+                Picker("Skip / double-tap", selection: $seekStep) {
+                    ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
+                }
+                Toggle("Hold to speed up", isOn: $holdToSpeed)
+                if holdToSpeed {
+                    Picker("Hold speed", selection: $holdSpeedValue) {
+                        ForEach([1.5, 2.0, 2.5, 3.0, 4.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
+                    }
+                }
+                Picker("Default speed", selection: $defaultSpeed) {
+                    ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
+                }
+            }
+            Section {
+                Toggle("Picture in Picture", isOn: $pipEnabled)
+                Toggle("Start automatically when leaving", isOn: $pipAuto).disabled(!pipEnabled)
+            } header: { Text("Picture in Picture") }
+        }
+        .navigationTitle("Playback")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct SubtitleAudioSettings: View {
     @AppStorage(SettingsKey.subLangs) private var subLangs = "eng,en"
     @AppStorage(SettingsKey.audioLangs) private var audioLangs = "jpn,ja,eng,en"
     @AppStorage(SettingsKey.subScale) private var subScale = 1.0
     @AppStorage(SettingsKey.subBold) private var subBold = true
     @AppStorage(SettingsKey.subBox) private var subBox = false
     @AppStorage(SettingsKey.subPos) private var subPos = 100
+    @AppStorage(SettingsKey.surroundAudio) private var surround = true
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("Subtitle languages", text: $subLangs).textInputAutocapitalization(.never).autocorrectionDisabled()
+                TextField("Audio languages", text: $audioLangs).textInputAutocapitalization(.never).autocorrectionDisabled()
+            } header: { Text("Preferred languages") } footer: { Text("Comma-separated codes, e.g. eng,en or jpn,ja.") }
+            Section("Subtitle style") {
+                LabeledContent("Size") {
+                    Slider(value: $subScale, in: 0.5...2.5, step: 0.05).frame(maxWidth: 180)
+                    Text("\(Int(subScale * 100))%").monospacedDigit().frame(width: 48, alignment: .trailing)
+                }
+                Stepper("Position  \(subPos)", value: $subPos, in: 50...150)
+                Toggle("Bold", isOn: $subBold)
+                Toggle("Background box", isOn: $subBox)
+            }
+            Section {
+                Toggle("Surround & Spatial Audio", isOn: $surround)
+            } header: { Text("Audio") } footer: {
+                Text("Plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't rendered.")
+            }
+        }
+        .navigationTitle("Subtitles & Audio")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct SkipSettings: View {
     @AppStorage(SettingsKey.skipEnabled) private var skipEnabled = true
     @AppStorage(SettingsKey.skipAutoIntro) private var autoIntro = false
     @AppStorage(SettingsKey.skipAutoOutro) private var autoOutro = false
@@ -28,105 +136,89 @@ struct SettingsView: View {
     @AppStorage(SettingsKey.skipUseChapters) private var useChapters = true
     @AppStorage(SettingsKey.skipInjectChapters) private var injectChapters = true
     @AppStorage(SettingsKey.skipOATLength) private var oatLength = 90.0
-    @AppStorage(SettingsKey.flipVideo) private var flipVideo = false
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle("Show Skip button", isOn: $skipEnabled)
+            } footer: {
+                Text("Uses chapters in the file, otherwise AniSkip and Open Anime Timestamps (anime).")
+            }
+            if skipEnabled {
+                Section("Skip automatically") {
+                    Toggle("Intro", isOn: $autoIntro)
+                    Toggle("Outro / credits", isOn: $autoOutro)
+                    Toggle("Recap", isOn: $autoRecap)
+                    Toggle("Preview", isOn: $autoPreview)
+                }
+                Section {
+                    Toggle("Use file chapters", isOn: $useChapters)
+                    Toggle("Add found markers as chapters", isOn: $injectChapters)
+                    Stepper("OAT segment length  \(Int(oatLength)) s", value: $oatLength, in: 60...150, step: 5)
+                } header: { Text("Sources") } footer: {
+                    Text("Added chapters are visible to Lua scripts. Open Anime Timestamps only has start times, so the length is assumed.")
+                }
+            }
+        }
+        .navigationTitle("Skip Intro")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct MPVConfigSettings: View {
+    var body: some View {
+        List {
+            NavigationLink { ConfigEditorView(url: MPVFiles.mpvConf, title: "mpv.conf") } label: { Label("mpv.conf", systemImage: "doc.text") }
+            NavigationLink { ConfigEditorView(url: MPVFiles.inputConf, title: "input.conf") } label: { Label("input.conf", systemImage: "keyboard") }
+            NavigationLink { ScriptOptsView() } label: { Label("script-opts", systemImage: "slider.horizontal.below.square.filled.and.square") }
+            NavigationLink { CommandsEditorView() } label: { Label("Player commands", systemImage: "command") }
+            NavigationLink { LogView() } label: { Label("Last playback log", systemImage: "text.alignleft") }
+        }
+        .navigationTitle("mpv Config")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct AdvancedSettings: View {
+    @AppStorage(SettingsKey.renderer) private var renderer = "metal"
+    @AppStorage(SettingsKey.hdrOutput) private var hdr = true
+    @AppStorage(SettingsKey.hwdec) private var hwdec = "auto"
+    @AppStorage(SettingsKey.cacheMB) private var cacheMB = 150
     @AppStorage(SettingsKey.logLevel) private var logLevel = "info"
+    @AppStorage(SettingsKey.flipVideo) private var flipVideo = false
     @State private var confirmClear = false
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("mpv") {
-                    NavigationLink { ScriptsView() } label: { Label("Scripts", systemImage: "chevron.left.forwardslash.chevron.right") }
-                    NavigationLink { ShadersView() } label: { Label("Shaders", systemImage: "wand.and.stars") }
-                    NavigationLink { CommandsEditorView() } label: { Label("Commands", systemImage: "command") }
-                    NavigationLink { ConfigEditorView(url: MPVFiles.mpvConf, title: "mpv.conf") } label: { Label("mpv.conf", systemImage: "doc.text") }
-                    NavigationLink { ConfigEditorView(url: MPVFiles.inputConf, title: "input.conf") } label: { Label("input.conf", systemImage: "keyboard") }
-                    NavigationLink { ScriptOptsView() } label: { Label("script-opts", systemImage: "slider.horizontal.3") }
-                    NavigationLink { LogView() } label: { Label("Last playback log", systemImage: "text.alignleft") }
+        Form {
+            Section {
+                Picker("Renderer", selection: $renderer) {
+                    Text("Metal").tag("metal")
+                    Text("OpenGL ES (compatibility)").tag("gl")
                 }
-
-                Section {
-                    Picker("Hardware decoding", selection: $hwdec) {
-                        Text("Auto (VideoToolbox)").tag("auto")
-                        Text("VideoToolbox (copy)").tag("copy")
-                        Text("Off (software)").tag("no")
-                    }
-                    Toggle("Resume where I left off", isOn: $resume)
-                    Toggle("Autoplay next file", isOn: $autoplayNext)
-                    Toggle("Keep playing audio in background", isOn: $backgroundAudio)
-                    Toggle("Rotate to landscape on open", isOn: $landscapeOnOpen)
-                    Picker("Double-tap / skip step", selection: $seekStep) {
-                        ForEach([5, 10, 15, 30, 45, 60, 90], id: \.self) { Text("\($0) s").tag($0) }
-                    }
-                    Picker("Default speed", selection: $defaultSpeed) {
-                        ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { Text(String(format: "%gx", $0)).tag($0) }
-                    }
-                    Toggle("Hold to speed up", isOn: $holdToSpeed)
-                    if holdToSpeed {
-                        Picker("Hold speed", selection: $holdSpeedValue) {
-                            ForEach([1.5, 2.0, 2.5, 3.0, 4.0], id: \.self) { Text(String(format: "%gx", $0)).tag($0) }
-                        }
-                    }
-                    Stepper("Network cache: \(cacheMB) MB", value: $cacheMB, in: 32...1024, step: 32)
-                } header: { Text("Playback") } footer: {
-                    Text("Options in mpv.conf override these.")
+                Toggle("HDR output", isOn: $hdr).disabled(renderer != "metal")
+                Picker("Hardware decoding", selection: $hwdec) {
+                    Text("Auto").tag("auto")
+                    Text("Copy-back").tag("copy")
+                    Text("Off").tag("no")
                 }
-
-                Section {
-                    Toggle("Picture in Picture", isOn: $pipEnabled)
-                    Toggle("Start PiP when leaving the app", isOn: $pipAuto).disabled(!pipEnabled)
-                } header: { Text("Picture in Picture") } footer: {
-                    Text("iOS doesn't allow GPU rendering in the background, so during PiP mpv switches to its CPU renderer (shaders pause; very high bitrates may stutter).")
-                }
-
-                Section {
-                    TextField("Preferred subtitle languages", text: $subLangs).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    TextField("Preferred audio languages", text: $audioLangs).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    VStack(alignment: .leading) {
-                        Text("Subtitle size: \(Int(subScale * 100))%")
-                        Slider(value: $subScale, in: 0.5...2.5, step: 0.05).tint(Theme.accent)
-                    }
-                    Stepper("Subtitle position: \(subPos)", value: $subPos, in: 50...150)
-                    Toggle("Bold subtitles", isOn: $subBold)
-                    Toggle("Background box", isOn: $subBox)
-                } header: { Text("Subtitles & audio") } footer: {
-                    Text("Comma-separated language codes, e.g. eng,en or jpn,ja. Put extra fonts in mpv/fonts.")
-                }
-
-                Section {
-                    Toggle("Detect intro / outro", isOn: $skipEnabled)
-                    if skipEnabled {
-                        Toggle("Use chapters in the file", isOn: $useChapters)
-                        Toggle("Add found markers as chapters", isOn: $injectChapters)
-                        Toggle("Auto-skip intro", isOn: $autoIntro)
-                        Toggle("Auto-skip outro / credits", isOn: $autoOutro)
-                        Toggle("Auto-skip recap", isOn: $autoRecap)
-                        Toggle("Auto-skip preview", isOn: $autoPreview)
-                        Stepper("OAT opening/ending length: \(Int(oatLength)) s", value: $oatLength, in: 60...150, step: 5)
-                    }
-                } header: { Text("Skip intro") } footer: {
-                    Text("Looks up anime via AniList → ids.moe, then AniSkip (exact start/end) with Open Anime Timestamps as fallback (start times only, so the length above is assumed). Added chapters are visible to your Lua scripts too.")
-                }
-
-                Section("Advanced") {
-                    Picker("Log level", selection: $logLevel) {
-                        ForEach(["warn", "info", "v", "debug"], id: \.self) { Text($0).tag($0) }
-                    }
-                    Toggle("Flip video vertically (fix upside-down output)", isOn: $flipVideo)
-                    Button("Clear watch history", role: .destructive) { confirmClear = true }
-                }
-
-                Section("About") {
-                    LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–")
-                    LabeledContent("Engine", value: "libmpv · FFmpeg · libass · libplacebo")
-                    Text("mpv folder: Files app → On My iPhone → GlassPlayer → mpv")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
+            } header: { Text("Video") } footer: {
+                Text("Metal uses libplacebo: Dolby Vision, HDR tone mapping and compute shaders. OpenGL ES is the fallback if a device has trouble.")
             }
-            .navigationTitle("Settings")
-            .confirmationDialog("Clear all history and resume positions?", isPresented: $confirmClear, titleVisibility: .visible) {
-                Button("Clear", role: .destructive) { HistoryStore.shared.clear() }
+            Section("Network") {
+                Stepper("Cache  \(cacheMB) MB", value: $cacheMB, in: 32...1024, step: 32)
             }
+            Section("Troubleshooting") {
+                Picker("Log level", selection: $logLevel) {
+                    ForEach(["warn", "info", "v", "debug"], id: \.self) { Text($0).tag($0) }
+                }
+                if renderer == "gl" { Toggle("Flip video (OpenGL)", isOn: $flipVideo) }
+                Button("Clear watch history", role: .destructive) { confirmClear = true }
+            }
+        }
+        .navigationTitle("Advanced")
+        .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog("Clear all history and resume positions?", isPresented: $confirmClear, titleVisibility: .visible) {
+            Button("Clear", role: .destructive) { HistoryStore.shared.clear() }
         }
     }
 }

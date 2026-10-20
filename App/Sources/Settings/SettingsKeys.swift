@@ -39,6 +39,9 @@ enum SettingsKey {
     static let activeShaders = "activeShaders"
     static let scriptCommands = "scriptCommands"
     static let flipVideo = "flipVideo"
+    static let renderer = "renderer"            // "metal" | "gl"
+    static let hdrOutput = "hdrOutput"
+    static let surroundAudio = "surroundAudio"
     static let logLevel = "logLevel"
 
     // Library
@@ -75,6 +78,9 @@ enum SettingsKey {
             skipInjectChapters: true,
             skipOATLength: 90,
             flipVideo: false,
+            renderer: "metal",
+            hdrOutput: true,
+            surroundAudio: true,
             logLevel: "info",
             cleanTitles: true,
             showOnlyMedia: false,

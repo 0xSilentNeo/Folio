@@ -16,4 +16,9 @@ const char *gp_render_api_sw(void);
 /// "chapter-list". Returns the mpv error code.
 int gp_set_chapters(mpv_handle *mpv, int count, const char *const *titles, const double *times);
 
+/// Grabs the current video frame (no OSD/subs) via "screenshot-raw video",
+/// scaled down (nearest neighbour) to at most max_w pixels wide, as BGRA with
+/// opaque alpha. Returns a malloc'd buffer (stride = w*4) or NULL.
+unsigned char *gp_screenshot_bgra(mpv_handle *mpv, int max_w, int *out_w, int *out_h);
+
 #endif
