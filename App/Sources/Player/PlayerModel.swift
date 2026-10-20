@@ -103,7 +103,7 @@ final class PlayerModel: ObservableObject {
     private let defaults = UserDefaults.standard
 
     init?(queue: [MediaItem], startIndex: Int = 0) {
-        guard !queue.isEmpty, let view = MPVRenderView() else { return nil }
+        guard !queue.isEmpty, let view = MPVRenderView.make() else { return nil }
         self.queue = queue
         self.queueIndex = min(max(0, startIndex), queue.count - 1)
         self.renderView = view

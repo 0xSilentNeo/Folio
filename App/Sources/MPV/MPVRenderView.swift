@@ -37,8 +37,12 @@ final class MPVRenderView: UIView {
 
     private static var advancedControl: Int32 = 1
 
-    init?() {
-        guard let ctx = EAGLContext(api: .openGLES3) ?? EAGLContext(api: .openGLES2) else { return nil }
+    static func make() -> MPVRenderView? {
+        guard let ctx = EAGLContext(api: .openGLES3) else { return nil }
+        return MPVRenderView(context: ctx)
+    }
+
+    private init(context ctx: EAGLContext) {
         eagl = ctx
         super.init(frame: .zero)
         backgroundColor = .black
