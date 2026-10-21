@@ -11,16 +11,17 @@ final class PlayerUIState: ObservableObject {
     @Published var showInfo = false
     @Published var panel: Panel?
     @Published var showStats = false
+    @Published var showTune = false
     var menuOpen = false
 
     func toggle(_ p: Panel) {
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.74)) { panel = panel == p ? nil : p }
+        panel = panel == p ? nil : p          // PlayerScreen animates the mounted panel explicitly
         if panel == nil { scheduleHide() } else { showControls(autoHide: false) }
     }
 
     func closePanel() {
         guard panel != nil else { return }
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.86)) { panel = nil }
+        panel = nil
         scheduleHide()
     }
     @Published var scrubbing = false
@@ -52,7 +53,7 @@ final class PlayerUIState: ObservableObject {
     func scheduleHide(after seconds: Double = 4) {
         hideWork?.cancel()
         let w = DispatchWorkItem { [weak self] in
-            guard let self, !self.showInfo, !self.scrubbing, !self.showConsole, !self.menuOpen, self.panel == nil else { return }
+            guard let self, !self.showInfo, !self.showStats, !self.showTune, !self.scrubbing, !self.showConsole, !self.menuOpen, self.panel == nil else { return }
             withAnimation(.easeOut(duration: 0.25)) { self.controlsVisible = false }
         }
         hideWork = w

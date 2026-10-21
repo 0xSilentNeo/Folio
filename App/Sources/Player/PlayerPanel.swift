@@ -13,9 +13,10 @@ struct PlayerPanel: View {
 
     @State private var contentHeight: CGFloat = 0
     @MainActor static var lastHeights: [String: CGFloat] = [:]
+    @ObservedObject private var tune = UITune.shared
 
     var body: some View {
-        let width = compact ? size.width - 40 : min(340, size.width * 0.42)
+        let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
         let bottom = compact ? 128.0 : 70.0
         let maxH = size.height - bottom - max(safe.top, 8) - 52   // keep clear of the close / PiP row
         VStack(spacing: 0) {
@@ -24,6 +25,7 @@ struct PlayerPanel: View {
                 Spacer(minLength: 0)
                 ScrollView {
                     content.padding(14)
+                        .dynamicTypeSize(tune.typeSize)
                         .background(GeometryReader { g in
                             Color.clear.preference(key: HeightKey.self, value: g.size.height)
                         })
@@ -171,7 +173,7 @@ struct SegmentPicker<T: Hashable>: View {
                 .animation(.easeOut(duration: 0.18), value: moving)
                 HStack(spacing: 0) {
                     ForEach(Array(options.enumerated()), id: \.offset) { i, o in
-                        Text(o.1).font(.subheadline.weight(.semibold)).fixedSize()
+                        Text(o.1).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
                             .frame(width: segW, height: 32)
                             .contentShape(Rectangle())
                             .onTapGesture { select(i) }
@@ -190,7 +192,8 @@ struct SegmentPicker<T: Hashable>: View {
                     .onEnded { _ in dragX = nil; settleSoon() }
             )
         }
-        .frame(width: segmentWidth * CGFloat(n), height: 32)
+        .frame(maxWidth: segmentWidth * CGFloat(n))
+        .frame(height: 32)
         .padding(3)
         .background(.white.opacity(0.12), in: Capsule())
     }
@@ -355,6 +358,10 @@ struct SettingsPanelContent: View {
             PanelLink(icon: "info.circle", title: "Media info") {
                 ui.closePanel()
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.84)) { ui.showInfo = true }
+            }
+            PanelLink(icon: "slider.horizontal.below.square.filled.and.square", title: "Tune UI", subtitle: "Sizes and animation, live") {
+                ui.closePanel()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.84)) { ui.showTune = true }
             }
             Menu {
                 ForEach(ScriptCommandStore.all) { c in Button(c.name) { model.run(command: c.command) } }

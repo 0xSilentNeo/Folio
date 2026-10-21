@@ -12,6 +12,12 @@ struct PlayerScreen: View {
     var onRotationLock: (Bool) -> Void = { _ in }
 
     @State private var showSubtitlePicker = false
+    @ObservedObject private var tune = UITune.shared
+    // The panel stays mounted while it animates; `open` drives scale/opacity
+    // explicitly (property animation cannot silently skip like a transition).
+    @State private var mounted: PlayerUIState.Panel?
+    @State private var open = false
+    @State private var switchWork: DispatchWorkItem?
 
     var body: some View {
         GeometryReader { geo in
@@ -66,6 +72,29 @@ struct PlayerScreen: View {
                 if let error = model.errorMessage { errorView(error) }
                 if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
 
+                if let mounted {
+                    PlayerPanel(kind: mounted, model: model, ui: ui, size: geo.size, safe: geo.safeAreaInsets, compact: compact,
+                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
+                        .id(mounted)
+                        .scaleEffect(open ? 1 : tune.startScale, anchor: panelAnchor(mounted, compact: compact))
+                        .opacity(open ? 1 : 0)
+                        .blur(radius: open || !tune.blur ? 0 : 14)
+                        .allowsHitTesting(open)
+                }
+                if ui.showTune {
+                    TuneCard(ui: ui).transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
+                }
+                if ui.showStats || ui.showInfo {
+                    MediaCard(model: model, ui: ui)
+                        .transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
+                }
+                if let toast = model.toast, ui.gestureHUD == nil, !model.holdSpeedActive {
+                    topPill(Text(toast), top: geo.safeAreaInsets.top + (ui.controlsVisible ? 56 : 0))
+                }
+
+                if let error = model.errorMessage { errorView(error) }
+                if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
+
                 if let panel = ui.panel {
                     // Each panel kind is its own view (id), so switching panels is a
                     // close + open rather than a crossfade that can leave a ghost.
@@ -84,7 +113,7 @@ struct PlayerScreen: View {
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD != nil)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD?.kind)
             .animation(.spring(response: 0.42, dampingFraction: 0.84), value: ui.showStats || ui.showInfo)
-            .animation(.spring(response: 0.55, dampingFraction: 0.74), value: ui.panel)
+            .animation(.spring(response: 0.4, dampingFraction: 0.84), value: ui.showTune)
             .animation(.easeOut(duration: 0.18), value: model.toast)
             .animation(.easeOut(duration: 0.18), value: model.holdSpeedActive)
         }
@@ -93,11 +122,49 @@ struct PlayerScreen: View {
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
         .onAppear { ui.scheduleHide() }
+        .onChange(of: ui.panel, initial: true) { _, p in panelChanged(p) }
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
         .fileImporter(isPresented: $showSubtitlePicker, allowedContentTypes: [.item]) { result in
             if case .success(let url) = result { model.addSubtitle(url: url) }
+        }
+    }
+
+    // MARK: Panel animation
+
+    /// Where a panel grows from: roughly its button in the bottom-right pill.
+    private func panelAnchor(_ p: PlayerUIState.Panel, compact: Bool) -> UnitPoint {
+        switch p {
+        case .tracks: return UnitPoint(x: 0.6, y: 1.05)
+        case .settings: return UnitPoint(x: 0.8, y: 1.05)
+        case .nowPlaying: return UnitPoint(x: 1.0, y: 1.05)
+        }
+    }
+
+    private func panelChanged(_ p: PlayerUIState.Panel?) {
+        switchWork?.cancel()
+        if let p {
+            if let m = mounted, m != p, open {
+                // Switching: shrink the old one, then grow the new one.
+                withAnimation(.easeIn(duration: 0.14)) { open = false }
+                let w = DispatchWorkItem {
+                    mounted = p
+                    DispatchQueue.main.async { withAnimation(tune.openSpring) { open = true } }
+                }
+                switchWork = w
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: w)
+            } else {
+                mounted = p
+                // Mount closed first, animate on the next run loop so the start state renders.
+                DispatchQueue.main.async { withAnimation(tune.openSpring) { open = true } }
+            }
+            dlog("ui", "panel open \(p.rawValue) spring=\(String(format: "%.2f/%.2f", tune.response, tune.damping)) from \(tune.startScale)")
+        } else {
+            withAnimation(tune.closeSpring) { open = false }
+            let w = DispatchWorkItem { if ui.panel == nil { mounted = nil } }
+            switchWork = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: w)
         }
     }
 
@@ -286,8 +353,8 @@ struct TimeBar: View {
         }
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity)
-        .frame(height: 46)
-        .glass(cornerRadius: 23, interactive: true)
+        .frame(height: UITune.shared.pillHeight)
+        .glass(cornerRadius: UITune.shared.pillHeight / 2, interactive: true)
     }
 }
 
@@ -452,10 +519,11 @@ struct GlassIcon: View {
 struct GlassGroup<Content: View>: View {
     @ViewBuilder var content: Content
     var body: some View {
+        let h = UITune.shared.pillHeight
         HStack(spacing: 0) { content }
             .padding(.horizontal, 4)
-            .frame(height: 46)
-            .glass(cornerRadius: 23, interactive: true)
+            .frame(height: h)
+            .glass(cornerRadius: h / 2, interactive: true)
     }
 }
 
@@ -472,7 +540,7 @@ struct PillIcon: View {
             Image(systemName: icon)
                 .font(.system(size: size, weight: .semibold))
                 .contentTransition(.symbolEffect(.replace))
-                .frame(width: 46, height: 46)
+                .frame(width: UITune.shared.pillHeight, height: UITune.shared.pillHeight)
                 .background(active ? Color.white.opacity(0.2) : Color.clear, in: Circle())
                 .contentShape(Circle())
         }
