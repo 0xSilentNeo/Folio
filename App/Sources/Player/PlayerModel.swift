@@ -333,6 +333,7 @@ final class PlayerModel: ObservableObject {
         c.setOption("config-dir", MPVFiles.configDir.path)
         c.setOption("load-scripts", "yes")
         c.setOption("osc", "no")
+        c.setOption("load-stats-overlay", "no")   // the app has its own live stats card
         c.setOption("ytdl", "no")
         c.setOption("input-default-bindings", "yes")
         c.setOption("terminal", "no")
@@ -610,21 +611,25 @@ final class PlayerModel: ObservableObject {
     }
     func setPaused(_ p: Bool) { client?.set("pause", p) }
 
+    // Seeks are queued asynchronously: a synchronous mpv_command waits for
+    // the core, which on a network file can take long enough to freeze the
+    // button that was tapped.
     func seek(by seconds: Double) {
-        client?.command(["seek", String(seconds), "relative+exact"])
+        _ = client?.commandAsync(["seek", String(seconds), "relative+exact"])
     }
 
     func seek(to seconds: Double, exact: Bool = true) {
-        client?.command(["seek", String(max(0, seconds)), exact ? "absolute+exact" : "absolute+keyframes"])
+        _ = client?.commandAsync(["seek", String(max(0, seconds)), exact ? "absolute+exact" : "absolute+keyframes"])
     }
 
-    /// Live preview while scrubbing: fast keyframe seeks, throttled.
+    /// Live preview while scrubbing: the video jumps to the nearest keyframe
+    /// as the finger moves (throttled), so the main screen shows where you are.
     private var lastScrubSeek = Date.distantPast
     func scrub(to seconds: Double) {
         clock.position = seconds
-        guard Date().timeIntervalSince(lastScrubSeek) > 0.12 else { return }
+        guard Date().timeIntervalSince(lastScrubSeek) > 0.1 else { return }
         lastScrubSeek = Date()
-        client?.command(["seek", String(max(0, seconds)), "absolute+keyframes"])
+        _ = client?.commandAsync(["seek", String(max(0, seconds)), "absolute+keyframes"])
     }
 
     func setSpeed(_ s: Double) { client?.set("speed", s) }
@@ -666,8 +671,10 @@ final class PlayerModel: ObservableObject {
     func skip(_ segment: SkipSegment) {
         seek(to: segment.end)
         autoSkipped.insert(segment.id)
+        skipSuppressedUntil = Date().addingTimeInterval(3)   // position still reads "inside" until the seek lands
         activeSegment = nil
     }
+    private var skipSuppressedUntil = Date.distantPast
 
     func jump(to chapter: MediaChapter) { seek(to: chapter.time) }
 
@@ -776,6 +783,7 @@ final class PlayerModel: ObservableObject {
     }
 
     private func updateActiveSegment() {
+        guard Date() >= skipSuppressedUntil else { return }
         let seg = segments.first { position >= $0.start && position < $0.end - 0.5 }
         if seg != activeSegment { activeSegment = seg }
         guard let seg, !autoSkipped.contains(seg.id) else { return }

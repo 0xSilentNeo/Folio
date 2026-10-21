@@ -6,7 +6,7 @@ struct HomeView: View {
     @ObservedObject private var local = LocalMediaStore.shared
     @State private var showOpenURL = false
     @State private var addServer = false
-    @State private var showPicker = false
+    @State private var showAddFiles = false
 
     var body: some View {
         NavigationStack {
@@ -30,15 +30,38 @@ struct HomeView: View {
             .refreshable { local.refresh() }
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
-            .fileImporter(isPresented: $showPicker, allowedContentTypes: FileOpener.mediaTypes, allowsMultipleSelection: false) { result in
-                switch result {
-                case .success(let urls):
-                    dlog("open", "fileImporter returned \(urls.count) url(s)")
-                    FileOpener.open(urls)
-                case .failure(let e):
-                    dlog("open/error", "fileImporter failed: \(e.localizedDescription)")
-                }
-            }
+            .sheet(isPresented: $showAddFiles) { addFilesSheet }
+        }
+    }
+
+    /// The Files browser, zooming out of the button that opened it (iOS 18+).
+    @ViewBuilder
+    private var addFilesSheet: some View {
+        if #available(iOS 18.0, *) {
+            AddFilesPicker { showAddFiles = false }
+                .navigationTransition(.zoom(sourceID: "addfiles", in: zoomNS))
+                .ignoresSafeArea()
+        } else {
+            AddFilesPicker { showAddFiles = false }.ignoresSafeArea()
+        }
+    }
+
+    @ViewBuilder
+    private func addFilesButton(large: Bool) -> some View {
+        let label = HStack(spacing: 8) {
+            Image(systemName: "plus").font(.system(size: large ? 16 : 14, weight: .bold))
+            Text("Add files").font(.system(size: large ? 17 : 15, weight: .semibold, design: .rounded))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, large ? 24 : 16)
+        .frame(height: large ? 52 : 40)
+        .glass(cornerRadius: large ? 26 : 20, interactive: true)
+        if #available(iOS 18.0, *) {
+            Button { showAddFiles = true } label: { label }
+                .buttonStyle(PressStyle())
+                .matchedTransitionSource(id: "addfiles", in: zoomNS)
+        } else {
+            Button { showAddFiles = true } label: { label }.buttonStyle(PressStyle())
         }
     }
 
@@ -52,8 +75,7 @@ struct HomeView: View {
             }
             Spacer()
             Menu {
-                Button { showPicker = true } label: { Label("Open file", systemImage: "folder") }
-                Button { FileOpener.importCopyAndPlay() } label: { Label("Import a copy", systemImage: "square.and.arrow.down") }
+                Button { showAddFiles = true } label: { Label("Add files", systemImage: "folder.badge.plus") }
                 Button { showOpenURL = true } label: { Label("Open URL", systemImage: "link") }
                 Button { pasteAndPlay() } label: { Label("Paste & play", systemImage: "doc.on.clipboard") }
                 Divider()
@@ -124,8 +146,9 @@ struct HomeView: View {
         VStack(spacing: 10) {
             Image(systemName: "film.stack").font(.system(size: 34, weight: .light)).foregroundStyle(Theme.accent)
             Text("Your library is empty").font(.headline)
-            Text("Tap **+** to open a file or paste a link, share a video to GlassPlayer from the Files app, or copy videos into\n**Files → On My iPhone → GlassPlayer → Media**.\nWebDAV servers like Real-Debrid live under Network.")
+            Text("Add videos from the Files app, paste a link with **+**, or copy files into\n**Files → On My iPhone → GlassPlayer → Media**.\nWebDAV servers like Real-Debrid live under Network.")
                 .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            addFilesButton(large: true).padding(.top, 10)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, margin + 10)

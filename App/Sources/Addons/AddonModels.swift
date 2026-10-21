@@ -170,6 +170,12 @@ struct MetaVideo: Codable, Hashable, Identifiable {
     var released: String?
     var thumbnail: String?
     var overview: String?
+    var rating: String?
+    var imdbId: String?
+
+    init(id: String, title: String?, season: Int?, episode: Int?) {
+        self.id = id; self.title = title; self.season = season; self.episode = episode
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -180,9 +186,11 @@ struct MetaVideo: Codable, Hashable, Identifiable {
         released = c.flexString(.released)
         thumbnail = c.flexString(.thumbnail)
         overview = c.flexString(.overview) ?? c.flexString(.description)
+        rating = c.flexString(.rating)
+        imdbId = c.flexString(.imdbId)
     }
 
-    enum CodingKeys: String, CodingKey { case id, title, name, season, episode, number, released, thumbnail, overview, description }
+    enum CodingKeys: String, CodingKey { case id, title, name, season, episode, number, released, thumbnail, overview, description, rating, imdbId }
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
@@ -193,6 +201,8 @@ struct MetaVideo: Codable, Hashable, Identifiable {
         try c.encodeIfPresent(released, forKey: .released)
         try c.encodeIfPresent(thumbnail, forKey: .thumbnail)
         try c.encodeIfPresent(overview, forKey: .overview)
+        try c.encodeIfPresent(rating, forKey: .rating)
+        try c.encodeIfPresent(imdbId, forKey: .imdbId)
     }
 
     var label: String {
@@ -217,6 +227,11 @@ struct MetaItem: Codable, Hashable, Identifiable {
     var videos: [MetaVideo]?
     /// Chart position (IMDb Top 250); not part of the addon protocol.
     var rank: Int?
+    // Extra facts from the built-in IMDb source.
+    var cast: [String]?
+    var director: [String]?
+    var contentRating: String?
+    var countries: [String]?
 
     init(id: String, type: String, name: String, poster: String?, description: String?, releaseInfo: String?, imdbRating: String?, genres: [String]?, rank: Int? = nil) {
         self.id = id; self.type = type; self.name = name; self.poster = poster; self.description = description
@@ -238,10 +253,16 @@ struct MetaItem: Codable, Hashable, Identifiable {
         runtime = c.flexString(.runtime)
         genres = c.flexStrings(.genres) ?? c.flexStrings(.genre)
         videos = try? c.decodeIfPresent([MetaVideo].self, forKey: .videos)
+        rank = c.flexInt(.rank)
+        cast = c.flexStrings(.cast)
+        director = c.flexStrings(.director)
+        contentRating = c.flexString(.contentRating)
+        countries = c.flexStrings(.countries)
     }
 
     enum CodingKeys: String, CodingKey {
         case id, type, name, poster, posterShape, background, logo, description, releaseInfo, year, imdbRating, runtime, genres, genre, videos
+        case rank, cast, director, contentRating, countries
     }
 
     func encode(to encoder: Encoder) throws {
@@ -259,6 +280,11 @@ struct MetaItem: Codable, Hashable, Identifiable {
         try c.encodeIfPresent(runtime, forKey: .runtime)
         try c.encodeIfPresent(genres, forKey: .genres)
         try c.encodeIfPresent(videos, forKey: .videos)
+        try c.encodeIfPresent(rank, forKey: .rank)
+        try c.encodeIfPresent(cast, forKey: .cast)
+        try c.encodeIfPresent(director, forKey: .director)
+        try c.encodeIfPresent(contentRating, forKey: .contentRating)
+        try c.encodeIfPresent(countries, forKey: .countries)
     }
 
     var isAnime: Bool {

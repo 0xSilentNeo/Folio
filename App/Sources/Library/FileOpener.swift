@@ -3,37 +3,6 @@ import SwiftUI
 import UniformTypeIdentifiers
 import AVFoundation
 
-/// UIKit document picker (more reliable than SwiftUI's fileImporter when the
-/// player has to be presented right after the picker closes).
-@MainActor
-final class DocumentPicker: NSObject, UIDocumentPickerDelegate {
-    static let shared = DocumentPicker()
-    private var completion: (([URL]) -> Void)?
-
-    func present(types: [UTType], multiple: Bool = false, asCopy: Bool = false, completion: @escaping ([URL]) -> Void) {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: asCopy)
-        picker.allowsMultipleSelection = multiple
-        picker.shouldShowFileExtensions = true
-        picker.delegate = self
-        self.completion = completion
-        guard let top = PlayerPresenter.topViewController() else { dlog("open/error", "no view controller to present picker"); return }
-        dlog("open", "presenting document picker from \(type(of: top))")
-        top.present(picker, animated: true)
-    }
-
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        dlog("open", "picker returned \(urls.count) url(s)")
-        let cb = completion
-        completion = nil
-        cb?(urls)
-    }
-
-    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        dlog("open", "picker cancelled")
-        completion = nil
-    }
-}
-
 /// Opens files coming from the picker, "Open in GlassPlayer" or the share
 /// sheet: keeps the security scope, makes sure iCloud/provider files are
 /// downloaded, then starts playback.
@@ -41,33 +10,37 @@ final class DocumentPicker: NSObject, UIDocumentPickerDelegate {
 enum FileOpener {
     static let mediaTypes: [UTType] = [.movie, .video, .audiovisualContent, .audio, .item]
 
-    /// Single selection on purpose: with multiple selection iOS only ticks
-    /// the file you tap and waits for an "Open" button, which reads as
-    /// "nothing happens".
-    static func pickAndPlay() {
-        DocumentPicker.shared.present(types: mediaTypes, multiple: false) { urls in
-            open(urls)
-        }
-    }
-
-    /// Import mode: iOS copies the file into our sandbox first. Slower for
-    /// big files but works with every provider and never needs scopes.
-    static func importCopyAndPlay() {
-        DocumentPicker.shared.present(types: mediaTypes, multiple: false, asCopy: true) { urls in
-            guard let src = urls.first else { return }
-            let dest = MPVFiles.mediaDir.appendingPathComponent(src.lastPathComponent)
-            try? FileManager.default.removeItem(at: dest)
+    /// Files chosen in import mode (iOS copied them into our sandbox already):
+    /// move them into Documents/Media so they appear in the library. One
+    /// file starts playing straight away.
+    static func addFiles(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        var added: [URL] = []
+        for src in urls {
+            var dest = MPVFiles.mediaDir.appendingPathComponent(src.lastPathComponent)
+            if FileManager.default.fileExists(atPath: dest.path) {
+                // Same name already in the library: keep the existing file if it's
+                // the same size, otherwise store the new one next to it.
+                let a = (try? FileManager.default.attributesOfItem(atPath: dest.path)[.size] as? Int) ?? -1
+                let b = (try? FileManager.default.attributesOfItem(atPath: src.path)[.size] as? Int) ?? -2
+                if a == b { try? FileManager.default.removeItem(at: src); added.append(dest); continue }
+                let base = dest.deletingPathExtension().lastPathComponent, ext = dest.pathExtension
+                var n = 2
+                repeat { dest = MPVFiles.mediaDir.appendingPathComponent("\(base) \(n).\(ext)"); n += 1 } while FileManager.default.fileExists(atPath: dest.path)
+            }
             do {
                 try FileManager.default.moveItem(at: src, to: dest)
-                dlog("open", "imported copy to Media: \(dest.lastPathComponent)")
-                LocalMediaStore.shared.refresh()
-                var m = MediaItem(url: dest.path, title: TitleParser.clean(dest.lastPathComponent), source: .local)
-                m.historyKey = dest.path
-                PlayerPresenter.play(m)
+                added.append(dest)
+                dlog("open", "added to Media: \(dest.lastPathComponent)")
             } catch {
-                dlog("open/error", "import move failed: \(error.localizedDescription)")
-                open([src])
+                dlog("open/error", "add failed for \(src.lastPathComponent): \(error.localizedDescription)")
             }
+        }
+        LocalMediaStore.shared.refresh()
+        if added.count == 1, let f = added.first, TitleParser.isMedia(f.lastPathComponent) {
+            var m = MediaItem(url: f.path, title: TitleParser.clean(f.lastPathComponent), source: .local)
+            m.historyKey = f.path
+            PlayerPresenter.play(m)
         }
     }
 
@@ -234,5 +207,41 @@ final class ThumbLoader: ObservableObject {
     private func set(_ img: UIImage, _ key: String) {
         Self.cache.setObject(img, forKey: key as NSString)
         withAnimation(.easeOut(duration: 0.25)) { image = img }
+    }
+}
+
+/// The Files browser as a SwiftUI view (so it can be presented in a sheet
+/// with a zoom transition). Import mode: iOS copies the picked files into
+/// our sandbox, which works with every provider regardless of how the app
+/// was signed; `FileOpener.addFiles` then moves them into the library.
+struct AddFilesPicker: UIViewControllerRepresentable {
+    var onDone: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(onDone: onDone) }
+
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: FileOpener.mediaTypes, asCopy: true)
+        picker.allowsMultipleSelection = true
+        picker.shouldShowFileExtensions = true
+        picker.delegate = context.coordinator
+        dlog("open", "add-files picker shown")
+        return picker
+    }
+
+    func updateUIViewController(_ vc: UIDocumentPickerViewController, context: Context) {}
+
+    final class Coordinator: NSObject, UIDocumentPickerDelegate {
+        let onDone: () -> Void
+        init(onDone: @escaping () -> Void) { self.onDone = onDone }
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            dlog("open", "add-files picker returned \(urls.count) file(s)")
+            onDone()
+            // Let the sheet finish dismissing before the player window appears.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { FileOpener.addFiles(urls) }
+        }
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            dlog("open", "add-files picker cancelled")
+            onDone()
+        }
     }
 }

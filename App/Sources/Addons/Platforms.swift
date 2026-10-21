@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Streaming-service catalogs (what's on Netflix, Prime Video, Max, Disney+…)
 /// from the public "Streaming Catalogs" Stremio addon. Items carry IMDb ids,
-/// so details and streams come from Cinemeta and your stream addons.
+/// so details come from IMDb and streams from your stream addons.
 struct StreamingPlatform: Identifiable, Hashable {
     let id: String
     let name: String
@@ -78,7 +78,8 @@ enum PlatformCatalogs {
 
 // MARK: - Discover
 
-/// Browse filters for the main grid (Cinemeta: popular / top rated / new).
+/// Browse filters for the main grid. Data comes from IMDb (built in) or,
+/// when a key is set, TMDB.
 @MainActor
 final class BrowseModel: ObservableObject {
     enum Sort: String, CaseIterable, Identifiable {
@@ -87,12 +88,15 @@ final class BrowseModel: ObservableObject {
         var title: String { self == .trending ? "Trending" : self == .topRated ? "Top Rated" : "New" }
         var footnote: String? {
             if TMDB.enabled { return self == .topRated ? "TMDB top rated" : self == .trending ? "TMDB trending this week" : nil }
-            return self == .topRated ? "IMDb Top 250, as rated by IMDb users" : nil
+            switch self {
+            case .trending: return "IMDb Most Popular (MOVIEmeter)"
+            case .topRated: return "IMDb Top 250, as rated by IMDb users"
+            case .new: return nil
+            }
         }
-        var catalog: String { self == .trending ? "top" : self == .topRated ? "imdbRating" : "year" }
+        var imdb: IMDbSource.Sort { self == .trending ? .trending : self == .topRated ? .topRated : .new }
     }
-    static let genres = ["Action", "Adventure", "Animation", "Anime", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy",
-                         "History", "Horror", "Music", "Mystery", "Romance", "Sci-Fi", "Sport", "Thriller", "War", "Western"]
+    static var genres: [String] { IMDbSource.genres }
     static let years: [String] = (0..<30).map { String(Calendar.current.component(.year, from: Date()) - $0) }
 
     @Published var sort: Sort = .trending { didSet { reload() } }
@@ -101,57 +105,42 @@ final class BrowseModel: ObservableObject {
     @Published var year: String = BrowseModel.years[0] { didSet { if sort == .new { reload() } } }
     @Published var metas: [MetaItem] = []
     @Published var loading = false
+    @Published var failed = false
     private var exhausted = false
     private var generation = 0
-
-    private var addon: InstalledAddon? {
-        AddonStore.shared.addons.first { $0.transportURL == AddonStore.cinemeta } ?? AddonStore.shared.addons.first { $0.manifest.id == "com.linvo.cinemeta" }
-    }
-
     private var task: Task<Void, Never>?
 
     func reload() {
         task?.cancel()
         generation += 1          // anything still in flight is stale now
-        metas = []; exhausted = false; loading = false
-        task = Task { await loadMore() }
+        metas = []; exhausted = false; failed = false
+        loading = true           // keep the spinner up through the gap, no empty-state flash
+        task = Task { await load(initial: true) }
     }
 
-    func loadMore() async {
-        guard !loading, !exhausted else { return }
+    func loadMore() async { await load(initial: false) }
+
+    private func load(initial: Bool) async {
+        if !initial { guard !loading, !exhausted else { return } }
         generation += 1
         let gen = generation
         loading = true
         defer { if gen == generation { loading = false } }
-        if sort == .topRated && !TMDB.enabled {
-            // IMDb's chart, filtered by genre locally; falls back to Cinemeta.
-            let chart = await IMDbCharts.top(type: type)
-            guard gen == generation else { return }
-            if !chart.isEmpty {
-                metas = chart.filter { m in genre.map { g in (m.genres ?? []).contains { $0.caseInsensitiveCompare(g) == .orderedSame } } ?? true }
-                exhausted = true
-                return
-            }
-        }
-        guard let addon else { return }
-        guard let cat = addon.manifest.catalogs.first(where: { $0.id == sort.catalog && $0.type == type }) else { return }
-        var extra: [String: String] = [:]
-        if sort == .new { extra["genre"] = year } else if let genre { extra["genre"] = genre == "Anime" ? "Animation" : genre }
-        if !metas.isEmpty { extra["skip"] = String(metas.count) }
         if TMDB.enabled {
             let page = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: metas.count / 20 + 1)
             guard gen == generation else { return }
-            if page.isEmpty { exhausted = true }
+            if page.isEmpty { exhausted = true; failed = metas.isEmpty && page.isEmpty && !Task.isCancelled && TMDB.lastError }
             let known = Set(metas.map(\.id))
             metas += page.filter { !known.contains($0.id) }
             return
         }
-        let page = (try? await AddonAPI.catalog(addon, cat, extra: extra)) ?? []
+        // IMDb lists come whole (100–250 items); nothing to page.
+        guard initial || metas.isEmpty else { exhausted = true; return }
+        let list = await IMDbSource.browse(sort: sort.imdb, type: type, genre: genre, year: year)
         guard gen == generation else { return }
-        let known = Set(metas.map(\.id))
-        let fresh = page.filter { !known.contains($0.id) }
-        if fresh.isEmpty { exhausted = true }
-        metas += fresh
+        metas = list
+        exhausted = true
+        failed = list.isEmpty
     }
 }
 
@@ -188,8 +177,15 @@ struct DiscoverView: View {
                         .padding(.horizontal, margin)
                         if browse.loading && !browse.metas.isEmpty { ProgressView().frame(maxWidth: .infinity) }
                         if !browse.loading && browse.metas.isEmpty {
-                            Text(store.addons.isEmpty ? "Install Cinemeta in Addons to browse." : "Nothing here.")
-                                .foregroundStyle(.secondary).padding(.horizontal, margin)
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(browse.failed ? "IMDb didn't answer." : "Nothing here.").foregroundStyle(.secondary)
+                                if browse.failed {
+                                    Text("Check the connection, then pull to retry. The diagnostics log (Settings → Advanced) records the HTTP status.")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                    Button("Retry") { browse.reload() }.buttonStyle(.bordered).tint(Theme.accent)
+                                }
+                            }
+                            .padding(.horizontal, margin)
                         }
                     }
                     .padding(.top, 6)
@@ -200,8 +196,8 @@ struct DiscoverView: View {
             .background(HomeBackdrop().ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
             .safeAreaInset(edge: .bottom) { filterBar }
-            .task { if browse.metas.isEmpty { await browse.loadMore() } }
-            .onChange(of: store.addons.count) { _, _ in if browse.metas.isEmpty { browse.reload() } }
+            .task { if browse.metas.isEmpty { browse.reload() } }
+            .refreshable { browse.reload() }
             .sheet(isPresented: $showPlatformSettings) { PlatformSettingsView() }
         }
     }

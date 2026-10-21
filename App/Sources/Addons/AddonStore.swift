@@ -89,9 +89,12 @@ final class AddonStore: ObservableObject {
            let list = try? JSONDecoder().decode([InstalledAddon].self, from: data) {
             addons = list
         }
-        if !UserDefaults.standard.bool(forKey: "addonsSeeded") {
+        // 1.6: metadata is built in (IMDb); the Cinemeta catalog addon that
+        // earlier versions installed automatically is removed once.
+        if !UserDefaults.standard.bool(forKey: "cinemetaRemoved") {
+            UserDefaults.standard.set(true, forKey: "cinemetaRemoved")
             UserDefaults.standard.set(true, forKey: "addonsSeeded")
-            Task { try? await install(Self.cinemeta) }
+            addons.removeAll { $0.transportURL == Self.cinemeta || $0.manifest.id == "com.linvo.cinemeta" }
         }
     }
 

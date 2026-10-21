@@ -1,4 +1,6 @@
 import SwiftUI
+import MediaPlayer
+import AVFoundation
 import UIKit
 
 /// Hosts the PiP sample-buffer layer (behind) and the mpv GL view (front),
@@ -128,7 +130,8 @@ struct VideoSurface: UIViewRepresentable {
                     panStartValue = Double(v.window?.windowScene?.screen.brightness ?? UIScreen.main.brightness)
                 } else {
                     panMode = .volume
-                    panStartValue = model.volume
+                    SystemVolume.attach(to: v.window)
+                    panStartValue = Double(SystemVolume.current)
                 }
             case .changed:
                 switch panMode {
@@ -139,18 +142,20 @@ struct VideoSurface: UIViewRepresentable {
                     ui.scrubTime = target
                     model.scrub(to: target)
                     let sign = delta >= 0 ? "+" : "-"
-                    ui.gestureHUD = .init(icon: delta >= 0 ? "forward" : "backward",
-                                          text: "\(PlayerModel.format(target))  (\(sign)\(PlayerModel.format(abs(delta))))",
-                                          progress: target / model.duration, kind: .seek)
+                    setHUD(.init(icon: delta >= 0 ? "forward" : "backward",
+                                 text: "\(PlayerModel.format(target))  (\(sign)\(PlayerModel.format(abs(delta))))",
+                                 progress: target / model.duration, kind: .seek))
                 case .brightness:
-                    let value = min(1, max(0, panStartValue - Double(t.y / (v.bounds.height * 0.8))))
+                    let value = min(1, max(0, panStartValue - Double(t.y / (v.bounds.height * 0.7))))
                     (v.window?.windowScene?.screen ?? UIScreen.main).brightness = CGFloat(value)
-                    ui.gestureHUD = .init(icon: value < 0.34 ? "sun.min.fill" : "sun.max.fill", text: "\(Int(value * 100))%", progress: value, kind: .brightness)
+                    setHUD(.init(icon: value < 0.34 ? "sun.min.fill" : "sun.max.fill", text: "\(Int(value * 100))%", progress: value, kind: .brightness))
                 case .volume:
-                    let value = min(150, max(0, panStartValue - Double(t.y / (v.bounds.height * 0.8)) * 100))
-                    model.setVolume(value)
-                    ui.gestureHUD = .init(icon: value == 0 ? "speaker.slash.fill" : value < 40 ? "speaker.wave.1.fill" : value < 90 ? "speaker.wave.2.fill" : "speaker.wave.3.fill",
-                                          text: "\(Int(value))%", progress: min(1, value / 150), kind: .volume)
+                    // Device volume, 0–100 %, like the hardware buttons (mpv's own
+                    // volume stays at 100 so nothing is scaled in software).
+                    let value = min(1, max(0, panStartValue - Double(t.y / (v.bounds.height * 0.7))))
+                    SystemVolume.set(Float(value))
+                    setHUD(.init(icon: value == 0 ? "speaker.slash.fill" : value < 0.34 ? "speaker.wave.1.fill" : value < 0.67 ? "speaker.wave.2.fill" : "speaker.wave.3.fill",
+                                 text: "\(Int(value * 100))%", progress: value, kind: .volume))
                 case .none: break
                 }
             case .ended, .cancelled:
@@ -159,8 +164,8 @@ struct VideoSurface: UIViewRepresentable {
                 }
                 ui.scrubbing = false
                 ui.scrubTime = nil
+                hideHUD(after: panMode == .seek ? 0.5 : 0.9)
                 panMode = .none
-                hideHUD(after: 0.8)
             default: break
             }
         }
@@ -172,18 +177,57 @@ struct VideoSurface: UIViewRepresentable {
         }
 
         private func flashHUD(icon: String, text: String) {
-            ui.gestureHUD = .init(icon: icon, text: text)
+            setHUD(.init(icon: icon, text: text))
             hideHUD(after: 0.7)
+        }
+
+        /// First appearance springs in; later updates only move the value.
+        private func setHUD(_ hud: PlayerUIState.GestureHUD) {
+            hudWork?.cancel()
+            if ui.gestureHUD == nil || ui.gestureHUD?.kind != hud.kind {
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) { ui.gestureHUD = hud }
+            } else {
+                ui.gestureHUD = hud
+            }
         }
 
         private func hideHUD(after seconds: Double) {
             hudWork?.cancel()
             let w = DispatchWorkItem { [weak self] in
                 guard let self, !self.ui.scrubbing, !self.model.holdSpeedActive else { return }
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { self.ui.gestureHUD = nil }
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { self.ui.gestureHUD = nil }
             }
             hudWork = w
             DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: w)
         }
+    }
+}
+
+
+/// Device output volume, set the way the hardware buttons do (through
+/// MPVolumeView's slider — the only public way to change it).
+@MainActor
+enum SystemVolume {
+    private static let view: MPVolumeView = {
+        let v = MPVolumeView(frame: CGRect(x: -3000, y: -3000, width: 10, height: 10))
+        v.alpha = 0.01
+        v.isUserInteractionEnabled = false
+        return v
+    }()
+    private static var slider: UISlider? { view.subviews.compactMap { $0 as? UISlider }.first }
+
+    static func attach(to window: UIWindow?) {
+        guard let window, view.superview !== window else { return }
+        view.removeFromSuperview()
+        window.addSubview(view)
+        view.layoutIfNeeded()
+    }
+
+    static var current: Float { AVAudioSession.sharedInstance().outputVolume }
+
+    static func set(_ value: Float) {
+        guard let slider else { return }
+        slider.value = value
+        slider.sendActions(for: .valueChanged)
     }
 }

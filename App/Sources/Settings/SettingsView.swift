@@ -683,17 +683,33 @@ struct DiagnosticsView: View {
 
 struct DiscoverSettings: View {
     @AppStorage("tmdbApiKey") private var tmdbKey = ""
+    @AppStorage(IMDbSource.Key.language) private var language = "en-US"
+    @AppStorage(IMDbSource.Key.minVotes) private var minVotes = 25000
+    @AppStorage(IMDbSource.Key.animeJapan) private var animeJapan = true
     @State private var showPlatforms = false
+    @State private var cleared = false
+
     var body: some View {
         Form {
+            Section {
+                TextField("Language (e.g. en-US, de-DE, ja-JP)", text: $language)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                Picker("Top Rated: minimum votes", selection: $minVotes) {
+                    ForEach([1000, 5000, 10000, 25000, 50000, 100000], id: \.self) { Text($0.formatted()).tag($0) }
+                }
+                Toggle("Anime = animation from Japan", isOn: $animeJapan)
+                Button(cleared ? "Cache cleared" : "Clear IMDb cache") { IMDbSource.clearCache(); cleared = true }.disabled(cleared)
+            } header: { Text("IMDb (built in)") } footer: {
+                Text("Titles, posters, synopses, ratings, charts and episode lists are read from IMDb's own pages — the same numbers you see on imdb.com. Trending is IMDb's Most Popular list; Top Rated is the Top 250 (with a genre: IMDb's user-rating ranking with at least the chosen number of votes). Language changes titles and synopses where IMDb has translations.")
+            }
             Section {
                 SecureField("TMDB API key (v3)", text: $tmdbKey)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                 if !tmdbKey.isEmpty {
-                    Label("Discover uses TMDB (trending, top rated, new, genres)", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.footnote)
+                    Label("Discover uses TMDB instead of IMDb", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.footnote)
                 }
-            } header: { Text("Source") } footer: {
-                Text("Without a key, Discover uses Cinemeta for Trending/New and IMDb's Top 250 chart for Top Rated. With your own free TMDB key (themoviedb.org → Settings → API) it uses TMDB, the same database Infuse uses, including proper Anime filtering.")
+            } header: { Text("TMDB (optional)") } footer: {
+                Text("Optional alternative source (the database Infuse uses). Free for personal use with your own key; leave empty to use IMDb.")
             }
             Section {
                 Button("Streaming services…") { showPlatforms = true }

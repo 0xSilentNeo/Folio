@@ -15,8 +15,8 @@ struct PlayerPanel: View {
     @MainActor static var lastHeights: [String: CGFloat] = [:]
 
     var body: some View {
-        let width = compact ? size.width - 32 : min(400, size.width * 0.46)
-        let bottom = compact ? 150.0 : 84.0
+        let width = compact ? size.width - 40 : min(400, size.width * 0.46)
+        let bottom = compact ? 132.0 : 74.0
         let maxH = size.height - bottom - safe.top - 16
         VStack(spacing: 0) {
             Spacer(minLength: 0)
@@ -35,11 +35,12 @@ struct PlayerPanel: View {
                 .frame(width: width)
                 .frame(height: min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxH))
                 .glass(cornerRadius: 28)
-                .padding(.trailing, compact ? 16 : max(16, min(max(safe.leading, safe.trailing), 48)))
+                .padding(.trailing, 20)
                 .padding(.bottom, bottom)
             }
         }
         .foregroundStyle(.white)
+        .ignoresSafeArea(.container, edges: .horizontal)
     }
 
     @ViewBuilder

@@ -45,15 +45,15 @@ struct PlayerScreen: View {
                 if model.holdSpeedActive {
                     topPill(Label(String(format: "%g×", model.holdSpeed), systemImage: "forward.fill"), top: geo.safeAreaInsets.top)
                 }
-                if let hud = ui.gestureHUD {
-                    switch hud.kind {
-                    case .brightness, .volume:
-                        LevelHUD(hud: hud, top: geo.safeAreaInsets.top)
-                            .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .top)))
-                    default:
-                        GestureHUDView(hud: hud).allowsHitTesting(false)
-                            .transition(.opacity.combined(with: .scale(scale: 0.9)))
-                    }
+                if let hud = ui.gestureHUD, hud.kind == .brightness || hud.kind == .volume {
+                    LevelHUD(hud: hud, top: geo.safeAreaInsets.top)
+                        .id("levelhud")
+                        .transition(.opacity.combined(with: .scale(scale: 0.85, anchor: .top)))
+                }
+                if let hud = ui.gestureHUD, hud.kind != .brightness && hud.kind != .volume {
+                    GestureHUDView(hud: hud).allowsHitTesting(false)
+                        .id("gesturehud")
+                        .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
                 if ui.showStats { StatsOverlay(model: model, ui: ui).transition(.opacity) }
                 if let toast = model.toast, ui.gestureHUD == nil, !model.holdSpeedActive {
@@ -74,7 +74,8 @@ struct PlayerScreen: View {
                 }
             }
             .animation(.easeOut(duration: 0.18), value: ui.controlsVisible)
-            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: ui.gestureHUD)
+            .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD != nil)
+            .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD?.kind)
             .animation(.easeOut(duration: 0.2), value: ui.showStats)
             .animation(.easeOut(duration: 0.18), value: model.toast)
             .animation(.easeOut(duration: 0.18), value: model.holdSpeedActive)
@@ -96,7 +97,9 @@ struct PlayerScreen: View {
 
     @ViewBuilder
     private func controls(_ geo: GeometryProxy, compact: Bool) -> some View {
-        let side = max(14, min(max(geo.safeAreaInsets.leading, geo.safeAreaInsets.trailing) * 0.5, 30))
+        // Like Outplayer: the pills span the screen, 20 pt from the physical
+        // edges, ignoring the horizontal safe area (the notch sits higher).
+        let side: CGFloat = 20
         VStack(spacing: 0) {
             HStack {
                 GlassIcon("xmark", size: 17) { onClose() }
@@ -110,10 +113,10 @@ struct PlayerScreen: View {
                 }
             }
             .padding(.horizontal, side)
-            .padding(.top, 6)
+            .padding(.top, geo.safeAreaInsets.top > 0 ? 4 : 10)
             Spacer()
             if compact {
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     TimeBar(model: model, ui: ui, clock: model.clock)
                     HStack {
                         transportPill
@@ -121,10 +124,10 @@ struct PlayerScreen: View {
                         panelPill
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, side)
                 .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 4 : 12)
             } else {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     transportPill
                     TimeBar(model: model, ui: ui, clock: model.clock)
                     panelPill
@@ -134,6 +137,7 @@ struct PlayerScreen: View {
             }
         }
         .foregroundStyle(.white)
+        .ignoresSafeArea(.container, edges: .horizontal)
     }
 
     private var step: Int { max(1, UserDefaults.standard.integer(forKey: SettingsKey.seekStep)) }
@@ -141,20 +145,20 @@ struct PlayerScreen: View {
 
     private var transportPill: some View {
         GlassGroup {
-            PillIcon("gobackward.\(stepIcon)", size: 19) { model.seek(by: -Double(step)) }
-            PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 23) {
+            PillIcon("gobackward.\(stepIcon)", size: 18) { model.seek(by: -Double(step)) }
+            PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 21) {
                 model.togglePause()
                 ui.showControls()
             }
-            PillIcon("goforward.\(stepIcon)", size: 19) { model.seek(by: Double(step)) }
+            PillIcon("goforward.\(stepIcon)", size: 18) { model.seek(by: Double(step)) }
         }
     }
 
     private var panelPill: some View {
         GlassGroup {
-            PillIcon("switch.2", size: 18, active: ui.panel == .tracks) { ui.toggle(.tracks) }
-            PillIcon("slider.horizontal.3", size: 18, active: ui.panel == .settings) { ui.toggle(.settings) }
-            PillIcon("list.bullet", size: 18, active: ui.panel == .nowPlaying) { ui.toggle(.nowPlaying) }
+            PillIcon("switch.2", size: 17, active: ui.panel == .tracks) { ui.toggle(.tracks) }
+            PillIcon("slider.horizontal.3", size: 17, active: ui.panel == .settings) { ui.toggle(.settings) }
+            PillIcon("list.bullet", size: 17, active: ui.panel == .nowPlaying) { ui.toggle(.nowPlaying) }
         }
     }
 
@@ -207,15 +211,18 @@ struct PlayerScreen: View {
                         .font(.subheadline.weight(.bold))
                         .padding(.horizontal, 16).padding(.vertical, 11)
                         .glass(cornerRadius: 20, interactive: true)
+                        .padding(10)                     // generous hit area; a miss must not reach the video
+                        .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressStyle())
                     .foregroundStyle(.white)
                 }
-                .padding(.trailing, max(20, geo.safeAreaInsets.trailing + 8))
-                .padding(.bottom, ui.controlsVisible ? (geo.size.width < 640 ? 132 : 72) : 30)
+                .padding(.trailing, 10)
+                .padding(.bottom, ui.controlsVisible ? (geo.size.width < 640 ? 112 : 58) : 20)
             }
-            .transition(.opacity)
-            .animation(.easeOut(duration: 0.2), value: model.activeSegment)
+            .ignoresSafeArea(.container, edges: .horizontal)
+            .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottomTrailing)))
+            .animation(.spring(response: 0.3, dampingFraction: 0.85), value: model.activeSegment)
         }
     }
 
@@ -259,20 +266,20 @@ struct TimeBar: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(PlayerModel.format(ui.scrubTime ?? clock.position))
-                .font(.footnote.monospacedDigit().weight(.semibold))
-                .frame(minWidth: 40, alignment: .leading)
+                .font(.caption.monospacedDigit().weight(.semibold))
+                .frame(minWidth: 38, alignment: .leading)
             SeekTrack(model: model, ui: ui, clock: clock)
             Button { ui.showRemaining.toggle() } label: {
                 Text(ui.showRemaining ? "-" + PlayerModel.format(max(0, clock.duration - (ui.scrubTime ?? clock.position))) : PlayerModel.format(clock.duration))
-                    .font(.footnote.monospacedDigit().weight(.semibold))
-                    .frame(minWidth: 40, alignment: .trailing)
+                    .font(.caption.monospacedDigit().weight(.semibold))
+                    .frame(minWidth: 38, alignment: .trailing)
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 14)
         .frame(maxWidth: .infinity)
-        .frame(height: 52)
-        .glass(cornerRadius: 26, interactive: true)
+        .frame(height: 46)
+        .glass(cornerRadius: 23, interactive: true)
     }
 }
 
@@ -290,7 +297,7 @@ struct SeekTrack: View {
             let shown = ui.scrubTime ?? clock.position
             let frac = min(1, max(0, shown / d))
             let cacheFrac = min(1, max(0, (clock.position + clock.cacheAhead) / d))
-            let h: CGFloat = dragging ? 8 : 5
+            let h: CGFloat = dragging ? 7 : 4
             let chapterTimes = model.chapters.dropFirst().map(\.time).filter { $0 > 0 && $0 < d }
 
             ZStack(alignment: .leading) {
@@ -329,8 +336,8 @@ struct SeekTrack: View {
                         .offset(x: w * min(1, m.time / d) - 3.5, y: -(h / 2 + 7))
                 }
                 Circle().fill(.white)
-                    .frame(width: dragging ? 18 : 12, height: dragging ? 18 : 12)
-                    .offset(x: w * frac - (dragging ? 9 : 6))
+                    .frame(width: dragging ? 16 : 10, height: dragging ? 16 : 10)
+                    .offset(x: w * frac - (dragging ? 8 : 5))
                 if dragging {
                     ScrubBubble(time: shown, chapter: prefs.showChapterTitle ? chapterTitle(at: shown) : nil)
                         .fixedSize()
@@ -338,7 +345,7 @@ struct SeekTrack: View {
                         .allowsHitTesting(false)
                 }
             }
-            .frame(height: 52)
+            .frame(height: 46)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -359,7 +366,7 @@ struct SeekTrack: View {
             )
             .animation(.easeOut(duration: 0.12), value: dragging)
         }
-        .frame(height: 52)
+        .frame(height: 46)
     }
 
     private func chapterTitle(at t: Double) -> String? {
@@ -432,32 +439,24 @@ struct GlassIcon: View {
     }
 }
 
-/// A row of round glass buttons that blend into one pill (Liquid Glass
-/// container on iOS 26, a single glass pill elsewhere). Each button is its
-/// own glass element, so it gets the system's press highlight.
+/// One glass pill holding a row of buttons (the Outplayer look). The pill is
+/// static; each button presses with the same spring as the Home "+" button.
 struct GlassGroup<Content: View>: View {
     @ViewBuilder var content: Content
     var body: some View {
-        #if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            GlassEffectContainer(spacing: 12) {
-                HStack(spacing: 2) { content }
-            }
-        } else {
-            HStack(spacing: 2) { content }.padding(.horizontal, 4).frame(height: 52).glass(cornerRadius: 26, interactive: true)
-        }
-        #else
-        HStack(spacing: 2) { content }.padding(.horizontal, 4).frame(height: 52).glass(cornerRadius: 26, interactive: true)
-        #endif
+        HStack(spacing: 0) { content }
+            .padding(.horizontal, 4)
+            .frame(height: 46)
+            .glass(cornerRadius: 23, interactive: true)
     }
 }
 
 struct PillIcon: View {
     let icon: String
-    var size: CGFloat = 20
+    var size: CGFloat = 18
     var active = false
     let action: () -> Void
-    init(_ icon: String, size: CGFloat = 20, width: CGFloat = 50, active: Bool = false, action: @escaping () -> Void) {
+    init(_ icon: String, size: CGFloat = 18, width: CGFloat = 46, active: Bool = false, action: @escaping () -> Void) {
         self.icon = icon; self.size = size; self.active = active; self.action = action
     }
     var body: some View {
@@ -465,19 +464,18 @@ struct PillIcon: View {
             Image(systemName: icon)
                 .font(.system(size: size, weight: .semibold))
                 .contentTransition(.symbolEffect(.replace))
-                .frame(width: 52, height: 52)
-                .background(active ? Color.white.opacity(0.22) : Color.clear, in: Circle())
-                .glassCircle()
+                .frame(width: 46, height: 46)
+                .background(active ? Color.white.opacity(0.2) : Color.clear, in: Circle())
                 .contentShape(Circle())
         }
-        .buttonStyle(PressStyle(scale: 0.86))
+        .buttonStyle(PressStyle(scale: 0.82))
         .foregroundStyle(.white)
     }
 }
 
-/// iOS-style level indicator: a slim horizontal glass capsule at the top
-/// centre (icon, then a bar that fills with the level), like the system
-/// volume HUD in landscape.
+/// Level indicator in the style of the system volume HUD: a horizontal
+/// capsule at the top centre, dark track, white fill, the icon inside the
+/// leading end. No text. Scales in and out.
 struct LevelHUD: View {
     let hud: PlayerUIState.GestureHUD
     let top: CGFloat
@@ -485,41 +483,53 @@ struct LevelHUD: View {
     var body: some View {
         let level = min(1, max(0, hud.progress ?? 0))
         VStack {
-            HStack(spacing: 10) {
-                Image(systemName: hud.icon)
-                    .font(.system(size: 13, weight: .semibold))
-                    .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 18)
+            ZStack(alignment: .leading) {
+                Capsule().fill(.black.opacity(0.45))
+                    .background(.ultraThinMaterial, in: Capsule())
                 GeometryReader { g in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(.white.opacity(0.2))
-                        Capsule().fill(.white).frame(width: g.size.width * level)
-                    }
+                    Capsule().fill(.white).frame(width: max(g.size.height, g.size.width * level))
+                        .animation(.interactiveSpring(response: 0.18, dampingFraction: 0.9), value: level)
                 }
-                .frame(width: 150, height: 7)
-                .animation(.spring(response: 0.25, dampingFraction: 0.9), value: level)
+                Image(systemName: hud.icon)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(level > 0.07 ? Color.black : Color.white)
+                    .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 22, height: 22)
+                    .padding(.leading, 2)
             }
-            .padding(.horizontal, 14).padding(.vertical, 11)
-            .glass(cornerRadius: 20)
-            .padding(.top, top + 10)
+            .frame(width: 214, height: 24)
+            .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
+            .padding(.top, top + 12)
             Spacer()
         }
-        .foregroundStyle(.white)
         .allowsHitTesting(false)
     }
 }
 
+/// Centre indicator for seeks: icon, target time and a slim position strip.
+/// The video underneath already shows the frame being scrubbed to.
 struct GestureHUDView: View {
     let hud: PlayerUIState.GestureHUD
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: hud.icon).font(.system(size: 24, weight: .semibold))
+            Image(systemName: hud.icon).font(.system(size: 22, weight: .semibold))
+                .contentTransition(.symbolEffect(.replace))
             Text(hud.text).font(.subheadline.monospacedDigit().weight(.semibold))
-            if let p = hud.progress { ProgressView(value: min(1, max(0, p))).tint(.white).frame(width: 120) }
+                .contentTransition(.numericText())
+            if let p = hud.progress {
+                GeometryReader { g in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(.white.opacity(0.25))
+                        Capsule().fill(.white).frame(width: g.size.width * min(1, max(0, p)))
+                    }
+                }
+                .frame(width: 140, height: 4)
+            }
         }
         .foregroundStyle(.white)
         .padding(.horizontal, 20).padding(.vertical, 14)
         .glass(cornerRadius: 18)
+        .animation(.easeOut(duration: 0.12), value: hud.text)
     }
 }
 

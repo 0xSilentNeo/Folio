@@ -21,7 +21,9 @@ enum ScriptCommandStore {
         get {
             guard let data = UserDefaults.standard.data(forKey: SettingsKey.scriptCommands),
                   let list = try? JSONDecoder().decode([ScriptCommand].self, from: data) else { return defaults }
-            return list
+            // mpv's stats.lua overlay is disabled (the app has a live stats card);
+            // drop the entry older versions saved for it.
+            return list.filter { !$0.command.contains("stats/display-stats") }
         }
         set {
             UserDefaults.standard.set(try? JSONEncoder().encode(newValue), forKey: SettingsKey.scriptCommands)

@@ -3,7 +3,7 @@ import UIKit
 
 /// Title metadata (poster, backdrop, synopsis, episode art) resolved from a
 /// file name, the way Infuse does it: parse the release name, look the
-/// title up (Cinemeta — IMDb/TMDB data without an API key), cache forever.
+/// title up on IMDb (built-in source, no key), cache forever.
 struct MediaMeta: Codable, Hashable {
     var id: String
     var type: String
@@ -29,7 +29,6 @@ actor MetadataService {
 
     private struct Entry: Codable { var meta: MediaMeta?; var date: Date }
     private var cache: [String: Entry] = [:]
-    private var seriesCache: [String: MetaItem] = [:]
     private var inflight: [String: Task<MediaMeta?, Never>] = [:]
     private let file: URL
     private var dirty = false
@@ -62,19 +61,10 @@ actor MetadataService {
             guard let item = await search(title: p.title, year: p.year, type: type) else { continue }
             var meta = MediaMeta(id: item.id, type: item.type, name: item.name, poster: item.poster, background: item.background,
                                  logo: item.logo, description: item.description, year: item.releaseInfo, rating: item.imdbRating, genres: item.genres)
-            if type == "series", let ep = p.episode {
-                if let full = await seriesMeta(item.id) {
-                    meta.background = meta.background ?? full.background
-                    meta.description = full.description ?? meta.description
-                    let season = p.season ?? 1
-                    let video = (full.videos ?? []).first { $0.season == season && $0.episode == ep }
-                        ?? (full.videos ?? []).first { $0.episode == ep && (p.season == nil) }
-                    if let video {
-                        meta.episodeTitle = video.title
-                        meta.episodeThumb = video.thumbnail
-                        meta.episodeOverview = video.overview
-                    }
-                }
+            if type == "series", let ep = p.episode, let video = await episode(of: item.id, season: p.season, episode: ep) {
+                meta.episodeTitle = video.title
+                meta.episodeThumb = video.thumbnail
+                meta.episodeOverview = video.overview
             }
             return meta
         }
@@ -82,12 +72,8 @@ actor MetadataService {
     }
 
     private func search(title: String, year: Int?, type: String) async -> MetaItem? {
-        let q = title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? title
-        guard let url = URL(string: "https://v3-cinemeta.strem.io/catalog/\(type)/top/search=\(q).json") else { return nil }
-        var req = URLRequest(url: url); req.timeoutInterval = 12
-        guard let r = try? await URLSession.shared.data(for: req),
-              let res = try? JSONDecoder().decode(AddonAPI.CatalogResponse.self, from: r.0),
-              let metas = res.metas, !metas.isEmpty else { return nil }
+        let metas = await IMDbSource.search(title).filter { $0.type == type }
+        guard !metas.isEmpty else { return nil }
         let norm = { (s: String) in s.lowercased().filter { $0.isLetter || $0.isNumber } }
         let want = norm(title)
         func score(_ m: MetaItem) -> Int {
@@ -98,18 +84,22 @@ actor MetadataService {
             return s
         }
         let best = metas.max { score($0) < score($1) }
-        guard let best, score(best) >= 30 else { return nil }
+        guard var best, score(best) >= 30 else { return nil }
+        // Suggestion results carry no synopsis or rating; the title page does.
+        if let full = await IMDbSource.details(id: best.id, type: type) {
+            best.description = full.description
+            best.imdbRating = full.imdbRating
+            best.genres = full.genres
+            best.background = full.background ?? best.background
+            best.poster = full.poster ?? best.poster
+        }
         return best
     }
 
-    private func seriesMeta(_ id: String) async -> MetaItem? {
-        if let m = seriesCache[id] { return m }
-        guard let url = URL(string: "https://v3-cinemeta.strem.io/meta/series/\(id).json") else { return nil }
-        var req = URLRequest(url: url); req.timeoutInterval = 15
-        guard let r = try? await URLSession.shared.data(for: req),
-              let res = try? JSONDecoder().decode(AddonAPI.MetaResponse.self, from: r.0), let m = res.meta else { return nil }
-        seriesCache[id] = m
-        return m
+    private func episode(of id: String, season: Int?, episode: Int) async -> MetaVideo? {
+        let s = season ?? 1
+        let eps = await IMDbSource.episodes(id: id, season: s)
+        return eps.first { $0.episode == episode }
     }
 
     private func save() {

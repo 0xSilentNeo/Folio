@@ -77,8 +77,9 @@ struct PosterCard: View {
                 }
                 .shadow(color: .black.opacity(0.4), radius: 6, y: 3)
             Text(meta.name).font(.caption.weight(.medium)).lineLimit(1).frame(width: width, alignment: .leading)
-            if let r = meta.rank != nil ? meta.imdbRating.map { "IMDb \($0)" } : meta.releaseInfo {
-                Text(r).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+            let sub = [meta.imdbRating.map { "★ \($0)" }, meta.releaseInfo].compactMap { $0 }.joined(separator: " · ")
+            if !sub.isEmpty {
+                Text(sub).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
             }
         }
     }
@@ -162,9 +163,16 @@ struct MetaDetailView: View {
     let sourceAddon: InstalledAddon?
     @State private var meta: MetaItem?
     @State private var season: Int = 1
+    @State private var seasons: [Int] = []
+    @State private var episodes: [MetaVideo] = []
+    @State private var loadingEpisodes = false
     @ObservedObject private var history = HistoryStore.shared
 
     private var m: MetaItem { meta ?? preview }
+    private var resolvedID: String { meta?.id ?? preview.id }
+    private var usesIMDb: Bool { resolvedID.hasPrefix("tt") }
+    private var allSeasons: [Int] { usesIMDb ? seasons : m.seasons }
+    private var allVideos: [MetaVideo] { usesIMDb ? episodes : (m.videos ?? []) }
 
     var body: some View {
         ScrollView {
@@ -180,7 +188,7 @@ struct MetaDetailView: View {
                     if let g = m.genres, !g.isEmpty {
                         Text(g.prefix(4).joined(separator: " · ")).font(.subheadline).foregroundStyle(.secondary)
                     }
-                    if m.type == "movie" || (m.videos ?? []).isEmpty {
+                    if m.type == "movie" || (allVideos.isEmpty && allSeasons.isEmpty && !loadingEpisodes) {
                         NavigationLink {
                             StreamsView(meta: m, video: nil)
                         } label: {
@@ -193,12 +201,19 @@ struct MetaDetailView: View {
                     if let d = m.description {
                         Text(d).font(.callout).foregroundStyle(.white.opacity(0.85))
                     }
+                    if let c = m.cast, !c.isEmpty {
+                        Text("Cast: " + c.prefix(6).joined(separator: ", ")).font(.caption).foregroundStyle(.secondary)
+                    }
+                    if let d = m.director, !d.isEmpty {
+                        Text((m.type == "series" ? "Created by: " : "Directed by: ") + d.prefix(3).joined(separator: ", ")).font(.caption).foregroundStyle(.secondary)
+                    }
                 }
                 .padding(.horizontal, 16)
 
-                if let videos = m.videos, !videos.isEmpty, m.type != "movie" {
-                    episodes(videos)
+                if m.type != "movie" && (!allVideos.isEmpty || !allSeasons.isEmpty) {
+                    episodeList(allVideos)
                 }
+                if loadingEpisodes && allVideos.isEmpty { ProgressView().frame(maxWidth: .infinity).padding() }
             }
             .padding(.bottom, 30)
         }
@@ -212,12 +227,34 @@ struct MetaDetailView: View {
                 guard let imdb = await TMDB.imdbID(for: preview) else { return }
                 id = imdb
             }
-            guard let addon = AddonStore.shared.metaAddon(type: preview.type, id: id, preferred: sourceAddon) else { return }
-            if var full = try? await AddonAPI.meta(addon, type: preview.type, id: id) {
-                if full.poster == nil { full.poster = preview.poster }
-                meta = full
+            if id.hasPrefix("tt") {
+                if var full = await IMDbSource.details(id: id, type: preview.type) {
+                    if full.poster == nil { full.poster = preview.poster }
+                    if full.background == nil { full.background = preview.background }
+                    if full.type == "movie" && preview.type == "series" { full.type = "series" }
+                    meta = full
+                } else {
+                    var p = preview; p.id = id; meta = p
+                }
+                if m.type != "movie" {
+                    loadingEpisodes = true
+                    seasons = await IMDbSource.seasons(id: id)
+                    if let first = seasons.first { season = first } else { loadingEpisodes = false }
+                }
+            } else {
+                guard let addon = AddonStore.shared.metaAddon(type: preview.type, id: id, preferred: sourceAddon) else { return }
+                if var full = try? await AddonAPI.meta(addon, type: preview.type, id: id) {
+                    if full.poster == nil { full.poster = preview.poster }
+                    meta = full
+                }
+                if let first = meta?.seasons.first { season = first }
             }
-            if let first = meta?.seasons.first { season = first }
+        }
+        .task(id: season) {
+            guard usesIMDb, m.type != "movie", !seasons.isEmpty else { return }
+            loadingEpisodes = true
+            let eps = await IMDbSource.episodes(id: resolvedID, season: season)
+            if !Task.isCancelled { episodes = eps; loadingEpisodes = false }
         }
     }
 
@@ -244,12 +281,12 @@ struct MetaDetailView: View {
     }
 
     @ViewBuilder
-    private func episodes(_ videos: [MetaVideo]) -> some View {
+    private func episodeList(_ videos: [MetaVideo]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            if m.seasons.count > 1 {
+            if allSeasons.count > 1 {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
-                        ForEach(m.seasons, id: \.self) { s in
+                        ForEach(allSeasons, id: \.self) { s in
                             Button { season = s } label: {
                                 Text(s == 0 ? "Specials" : "Season \(s)").font(.subheadline.weight(.semibold))
                                     .padding(.horizontal, 14).padding(.vertical, 8)
@@ -262,7 +299,7 @@ struct MetaDetailView: View {
                 }
             }
             LazyVStack(spacing: 10) {
-                ForEach(videos.filter { m.seasons.isEmpty || $0.season == season }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }) { v in
+                ForEach(videos.filter { allSeasons.isEmpty || $0.season == season }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }) { v in
                     NavigationLink { StreamsView(meta: m, video: v) } label: { EpisodeRow(video: v, entry: history.entry(for: "addon:\(v.id)")) }
                         .buttonStyle(.plain)
                 }
@@ -296,6 +333,9 @@ struct EpisodeRow: View {
                 Text(episodeTitle)
                     .font(.subheadline.weight(.semibold)).lineLimit(2)
                 if let o = video.overview { Text(o).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
+                if video.rating != nil || video.released != nil {
+                    Text([video.rating.map { "★ \($0)" }, video.released].compactMap { $0 }.joined(separator: " · ")).font(.caption2).foregroundStyle(.secondary)
+                }
                 if let entry, entry.isFinished {
                     Label("Watched", systemImage: "checkmark.circle.fill").font(.caption2).foregroundStyle(Theme.accent)
                 }
@@ -452,7 +492,7 @@ struct StreamRow: View {
 
 struct AddonSearchView: View {
     @State private var query = ""
-    struct SearchResult: Identifiable { let id: String; let title: String; let addon: InstalledAddon; let metas: [MetaItem] }
+    struct SearchResult: Identifiable { let id: String; let title: String; let addon: InstalledAddon?; let metas: [MetaItem] }
     @State private var results: [SearchResult] = []
     @State private var searching = false
     @State private var task: Task<Void, Never>?
@@ -494,6 +534,9 @@ struct AddonSearchView: View {
         searching = true
         results = []
         task = Task {
+            let imdb = await IMDbSource.search(q)
+            if Task.isCancelled { return }
+            if !imdb.isEmpty { results.append(SearchResult(id: "imdb", title: "IMDb", addon: nil, metas: imdb)) }
             let targets = AddonStore.shared.addons.flatMap { a in a.manifest.catalogs.filter(\.supportsSearch).map { (a, $0) } }
             await withTaskGroup(of: (String, String, InstalledAddon, [MetaItem]).self) { tg in
                 for (a, c) in targets {
@@ -537,7 +580,7 @@ struct AddonsManagerView: View {
                 if let error { Text(error).font(.caption).foregroundStyle(.orange) }
                 Button("Paste from clipboard") { url = UIPasteboard.general.string ?? "" }
             } header: { Text("Add addon") } footer: {
-                Text("Works with Stremio-protocol addons (Cinemeta, Torrentio/Comet/MediaFusion with your debrid key, OpenSubtitles, Kitsu/anime catalogs…). Configure an addon on its website, then paste the manifest link here. Only direct HTTP(S) streams can play; raw torrents need a debrid-configured addon.")
+                Text("Works with Stremio-protocol addons (Torrentio/Comet/MediaFusion with your debrid key, OpenSubtitles, Kitsu/anime catalogs…). Configure an addon on its website, then paste the manifest link here. Only direct HTTP(S) streams can play; raw torrents need a debrid-configured addon. Titles, posters and ratings come from IMDb; addons only need to provide streams.")
             }
             Section("Installed") {
                 ForEach(store.addons) { a in
@@ -567,11 +610,6 @@ struct AddonsManagerView: View {
                     }
                 }
                 .onMove { store.move(from: $0, to: $1) }
-            }
-            if !store.addons.contains(where: { $0.transportURL == AddonStore.cinemeta }) {
-                Section {
-                    Button("Install Cinemeta (movie & series catalogs)") { Task { try? await store.install(AddonStore.cinemeta) } }
-                }
             }
         }
         .navigationTitle("Addons")

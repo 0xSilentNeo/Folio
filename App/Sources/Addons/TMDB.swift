@@ -2,14 +2,16 @@ import Foundation
 
 /// Optional TMDB source for Discover (what Infuse uses). Enabled when the
 /// user adds their own API key in Settings → Discover. Items keep their
-/// TMDB id and are resolved to an IMDb id when opened, so Cinemeta
-/// details and stream addons keep working.
+/// TMDB id and are resolved to an IMDb id when opened, so IMDb details
+/// and stream addons keep working.
 enum TMDB {
     static var apiKey: String {
         get { UserDefaults.standard.string(forKey: "tmdbApiKey")?.trimmingCharacters(in: .whitespaces) ?? "" }
         set { UserDefaults.standard.set(newValue, forKey: "tmdbApiKey") }
     }
     static var enabled: Bool { !apiKey.isEmpty }
+    /// True when the last request failed (bad key, offline).
+    static var lastError = false
     static let image = "https://image.tmdb.org/t/p/"
 
     private static var genreCache: [String: [String: Int]] = [:]
@@ -25,8 +27,10 @@ enum TMDB {
         guard let r = try? await URLSession.shared.data(for: req),
               (r.1 as? HTTPURLResponse)?.statusCode == 200 else {
             dlog("tmdb/error", "request failed: \(path)")
+            lastError = true
             return nil
         }
+        lastError = false
         return try? JSONSerialization.jsonObject(with: r.0) as? [String: Any]
     }
 
@@ -83,7 +87,7 @@ enum TMDB {
         }
     }
 
-    /// IMDb id for a tmdb:ID item (needed for Cinemeta details and streams).
+    /// IMDb id for a tmdb:ID item (needed for details and streams).
     static func imdbID(for meta: MetaItem) async -> String? {
         guard meta.id.hasPrefix("tmdb:"), let num = meta.id.split(separator: ":").last else { return nil }
         let t = meta.type == "series" ? "tv" : "movie"
