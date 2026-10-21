@@ -173,12 +173,23 @@ final class StatsModel: ObservableObject {
 
 struct StatsOverlay: View {
     @ObservedObject var model: PlayerModel
+    @ObservedObject var ui: PlayerUIState
     @StateObject private var stats = StatsModel()
 
     var body: some View {
         VStack {
             HStack {
                 VStack(alignment: .leading, spacing: 5) {
+                    HStack {
+                        Text("Live stats").font(.system(size: 12, weight: .bold)).foregroundStyle(.white.opacity(0.8))
+                        Spacer()
+                        Button { ui.showStats = false } label: {
+                            Image(systemName: "xmark").font(.system(size: 11, weight: .bold))
+                                .frame(width: 26, height: 26).background(.white.opacity(0.15), in: Circle())
+                        }
+                        .buttonStyle(PressStyle())
+                    }
+                    .padding(.bottom, 4)
                     ForEach(stats.lines) { l in
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text(l.id).foregroundStyle(.white.opacity(0.55)).frame(width: 82, alignment: .leading)
@@ -195,7 +206,6 @@ struct StatsOverlay: View {
             }
             Spacer()
         }
-        .allowsHitTesting(false)
         .onAppear { stats.start(model.client) }
         .onDisappear { stats.stop() }
     }

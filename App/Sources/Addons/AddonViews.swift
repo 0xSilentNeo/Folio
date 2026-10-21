@@ -206,8 +206,17 @@ struct MetaDetailView: View {
         .ignoresSafeArea(edges: .top)
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            guard meta == nil, let addon = AddonStore.shared.metaAddon(type: preview.type, id: preview.id, preferred: sourceAddon) else { return }
-            meta = try? await AddonAPI.meta(addon, type: preview.type, id: preview.id)
+            guard meta == nil else { return }
+            var id = preview.id
+            if id.hasPrefix("tmdb:") {
+                guard let imdb = await TMDB.imdbID(for: preview) else { return }
+                id = imdb
+            }
+            guard let addon = AddonStore.shared.metaAddon(type: preview.type, id: id, preferred: sourceAddon) else { return }
+            if var full = try? await AddonAPI.meta(addon, type: preview.type, id: id) {
+                if full.poster == nil { full.poster = preview.poster }
+                meta = full
+            }
             if let first = meta?.seasons.first { season = first }
         }
     }
@@ -546,10 +555,12 @@ struct AddonsManagerView: View {
                     }
                     .swipeActions {
                         Button(role: .destructive) { store.remove(a) } label: { Label("Remove", systemImage: "trash") }
-                        Button {
-                            if let u = URL(string: a.baseURL + "/configure") { openURL(u) }
-                        } label: { Label("Configure", systemImage: "gear") }
-                        .tint(.gray)
+                        if a.manifest.configurable {
+                            Button {
+                                if let u = URL(string: a.baseURL + "/configure") { openURL(u) }
+                            } label: { Label("Configure", systemImage: "gear") }
+                            .tint(.gray)
+                        }
                     }
                     .contextMenu {
                         Button { UIPasteboard.general.string = a.transportURL } label: { Label("Copy manifest URL", systemImage: "doc.on.doc") }

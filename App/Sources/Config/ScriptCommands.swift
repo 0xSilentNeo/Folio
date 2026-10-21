@@ -11,7 +11,6 @@ struct ScriptCommand: Codable, Identifiable, Hashable {
 
 enum ScriptCommandStore {
     static let defaults: [ScriptCommand] = [
-        ScriptCommand(name: "Stats overlay", command: "script-binding stats/display-stats-toggle"),
         ScriptCommand(name: "Cycle deband", command: "cycle deband"),
         ScriptCommand(name: "Show playlist", command: "show-text ${playlist} 4000"),
         ScriptCommand(name: "Cycle subtitle style", command: "cycle-values sub-ass-override force yes"),

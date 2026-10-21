@@ -10,8 +10,8 @@ final class DocumentPicker: NSObject, UIDocumentPickerDelegate {
     static let shared = DocumentPicker()
     private var completion: (([URL]) -> Void)?
 
-    func present(types: [UTType], multiple: Bool = false, completion: @escaping ([URL]) -> Void) {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: false)
+    func present(types: [UTType], multiple: Bool = false, asCopy: Bool = false, completion: @escaping ([URL]) -> Void) {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: asCopy)
         picker.allowsMultipleSelection = multiple
         picker.shouldShowFileExtensions = true
         picker.delegate = self
@@ -47,6 +47,27 @@ enum FileOpener {
     static func pickAndPlay() {
         DocumentPicker.shared.present(types: mediaTypes, multiple: false) { urls in
             open(urls)
+        }
+    }
+
+    /// Import mode: iOS copies the file into our sandbox first. Slower for
+    /// big files but works with every provider and never needs scopes.
+    static func importCopyAndPlay() {
+        DocumentPicker.shared.present(types: mediaTypes, multiple: false, asCopy: true) { urls in
+            guard let src = urls.first else { return }
+            let dest = MPVFiles.mediaDir.appendingPathComponent(src.lastPathComponent)
+            try? FileManager.default.removeItem(at: dest)
+            do {
+                try FileManager.default.moveItem(at: src, to: dest)
+                dlog("open", "imported copy to Media: \(dest.lastPathComponent)")
+                LocalMediaStore.shared.refresh()
+                var m = MediaItem(url: dest.path, title: TitleParser.clean(dest.lastPathComponent), source: .local)
+                m.historyKey = dest.path
+                PlayerPresenter.play(m)
+            } catch {
+                dlog("open/error", "import move failed: \(error.localizedDescription)")
+                open([src])
+            }
         }
     }
 

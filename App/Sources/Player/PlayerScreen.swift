@@ -48,14 +48,14 @@ struct PlayerScreen: View {
                 if let hud = ui.gestureHUD {
                     switch hud.kind {
                     case .brightness, .volume:
-                        EdgeLevelHUD(hud: hud, size: geo.size, safe: geo.safeAreaInsets)
-                            .transition(.opacity.combined(with: .scale(scale: 0.85)))
+                        LevelHUD(hud: hud, top: geo.safeAreaInsets.top)
+                            .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .top)))
                     default:
                         GestureHUDView(hud: hud).allowsHitTesting(false)
                             .transition(.opacity.combined(with: .scale(scale: 0.9)))
                     }
                 }
-                if ui.showStats { StatsOverlay(model: model).transition(.opacity) }
+                if ui.showStats { StatsOverlay(model: model, ui: ui).transition(.opacity) }
                 if let toast = model.toast, ui.gestureHUD == nil, !model.holdSpeedActive {
                     topPill(Text(toast), top: geo.safeAreaInsets.top + (ui.controlsVisible ? 56 : 0))
                 }
@@ -96,7 +96,7 @@ struct PlayerScreen: View {
 
     @ViewBuilder
     private func controls(_ geo: GeometryProxy, compact: Bool) -> some View {
-        let side = max(16, min(max(geo.safeAreaInsets.leading, geo.safeAreaInsets.trailing), 48))
+        let side = max(14, min(max(geo.safeAreaInsets.leading, geo.safeAreaInsets.trailing) * 0.5, 30))
         VStack(spacing: 0) {
             HStack {
                 GlassIcon("xmark", size: 17) { onClose() }
@@ -140,28 +140,22 @@ struct PlayerScreen: View {
     private var stepIcon: Int { [5, 10, 15, 30, 45, 60, 75, 90].contains(step) ? step : 10 }
 
     private var transportPill: some View {
-        HStack(spacing: 4) {
-            PillIcon("gobackward.\(stepIcon)", size: 20) { model.seek(by: -Double(step)) }
-            PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 24, width: 54) {
+        GlassGroup {
+            PillIcon("gobackward.\(stepIcon)", size: 19) { model.seek(by: -Double(step)) }
+            PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 23) {
                 model.togglePause()
                 ui.showControls()
             }
-            PillIcon("goforward.\(stepIcon)", size: 20) { model.seek(by: Double(step)) }
+            PillIcon("goforward.\(stepIcon)", size: 19) { model.seek(by: Double(step)) }
         }
-        .padding(.horizontal, 4)
-        .frame(height: 52)
-        .glass(cornerRadius: 26, interactive: true)
     }
 
     private var panelPill: some View {
-        HStack(spacing: 2) {
+        GlassGroup {
             PillIcon("switch.2", size: 18, active: ui.panel == .tracks) { ui.toggle(.tracks) }
             PillIcon("slider.horizontal.3", size: 18, active: ui.panel == .settings) { ui.toggle(.settings) }
             PillIcon("list.bullet", size: 18, active: ui.panel == .nowPlaying) { ui.toggle(.nowPlaying) }
         }
-        .padding(.horizontal, 4)
-        .frame(height: 52)
-        .glass(cornerRadius: 26, interactive: true)
     }
 
     // MARK: Overlays
@@ -218,7 +212,7 @@ struct PlayerScreen: View {
                     .foregroundStyle(.white)
                 }
                 .padding(.trailing, max(20, geo.safeAreaInsets.trailing + 8))
-                .padding(.bottom, ui.controlsVisible ? (geo.size.width < 640 ? 136 : 76) : 30)
+                .padding(.bottom, ui.controlsVisible ? (geo.size.width < 640 ? 132 : 72) : 30)
             }
             .transition(.opacity)
             .animation(.easeOut(duration: 0.2), value: model.activeSegment)
@@ -438,58 +432,77 @@ struct GlassIcon: View {
     }
 }
 
+/// A row of round glass buttons that blend into one pill (Liquid Glass
+/// container on iOS 26, a single glass pill elsewhere). Each button is its
+/// own glass element, so it gets the system's press highlight.
+struct GlassGroup<Content: View>: View {
+    @ViewBuilder var content: Content
+    var body: some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            GlassEffectContainer(spacing: 12) {
+                HStack(spacing: 2) { content }
+            }
+        } else {
+            HStack(spacing: 2) { content }.padding(.horizontal, 4).frame(height: 52).glass(cornerRadius: 26, interactive: true)
+        }
+        #else
+        HStack(spacing: 2) { content }.padding(.horizontal, 4).frame(height: 52).glass(cornerRadius: 26, interactive: true)
+        #endif
+    }
+}
+
 struct PillIcon: View {
     let icon: String
     var size: CGFloat = 20
-    var width: CGFloat = 50
     var active = false
     let action: () -> Void
     init(_ icon: String, size: CGFloat = 20, width: CGFloat = 50, active: Bool = false, action: @escaping () -> Void) {
-        self.icon = icon; self.size = size; self.width = width; self.active = active; self.action = action
+        self.icon = icon; self.size = size; self.active = active; self.action = action
     }
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: size, weight: .semibold))
                 .contentTransition(.symbolEffect(.replace))
-                .frame(width: width, height: 44)
-                .background(active ? Color.white.opacity(0.18) : Color.clear, in: Capsule())
-                .contentShape(Rectangle())
+                .frame(width: 52, height: 52)
+                .background(active ? Color.white.opacity(0.22) : Color.clear, in: Circle())
+                .glassCircle()
+                .contentShape(Circle())
         }
-        .buttonStyle(PressStyle(scale: 0.85))
+        .buttonStyle(PressStyle(scale: 0.86))
         .foregroundStyle(.white)
     }
 }
 
-/// iOS-style level indicator: a slim vertical glass capsule at the screen
-/// edge (left = brightness, right = volume) that fills with the level.
-struct EdgeLevelHUD: View {
+/// iOS-style level indicator: a slim horizontal glass capsule at the top
+/// centre (icon, then a bar that fills with the level), like the system
+/// volume HUD in landscape.
+struct LevelHUD: View {
     let hud: PlayerUIState.GestureHUD
-    let size: CGSize
-    let safe: EdgeInsets
+    let top: CGFloat
 
     var body: some View {
         let level = min(1, max(0, hud.progress ?? 0))
-        let h = min(180, size.height * 0.4)
-        HStack {
-            if hud.kind == .volume { Spacer() }
-            VStack(spacing: 8) {
-                GeometryReader { g in
-                    ZStack(alignment: .bottom) {
-                        Capsule().fill(.white.opacity(0.18))
-                        Capsule().fill(.white).frame(height: g.size.height * level)
-                    }
-                }
-                .frame(width: 8, height: h)
-                .animation(.spring(response: 0.25, dampingFraction: 0.9), value: level)
+        VStack {
+            HStack(spacing: 10) {
                 Image(systemName: hud.icon)
                     .font(.system(size: 13, weight: .semibold))
                     .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 18)
+                GeometryReader { g in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(.white.opacity(0.2))
+                        Capsule().fill(.white).frame(width: g.size.width * level)
+                    }
+                }
+                .frame(width: 150, height: 7)
+                .animation(.spring(response: 0.25, dampingFraction: 0.9), value: level)
             }
-            .padding(.vertical, 14).padding(.horizontal, 12)
-            .glass(cornerRadius: 22)
-            .padding(.horizontal, max(18, (hud.kind == .volume ? safe.trailing : safe.leading) + 8))
-            if hud.kind == .brightness { Spacer() }
+            .padding(.horizontal, 14).padding(.vertical, 11)
+            .glass(cornerRadius: 20)
+            .padding(.top, top + 10)
+            Spacer()
         }
         .foregroundStyle(.white)
         .allowsHitTesting(false)

@@ -9,6 +9,7 @@ struct SettingsView: View {
                     row("Playback", "play.rectangle", .pink) { PlaybackSettings() }
                     row("Subtitles & Audio", "captions.bubble", .orange) { SubtitleAudioSettings() }
                     row("Skip Intro", "forward.end", .purple) { SkipSettings() }
+                    row("Discover", "sparkles.tv", .cyan) { DiscoverSettings() }
                 }
                 Section {
                     row("Scripts", "chevron.left.forwardslash.chevron.right", .blue) { ScriptsView() }
@@ -676,5 +677,31 @@ struct DiagnosticsView: View {
             let s = (try? String(contentsOf: Diagnostics.shared.appLog, encoding: .utf8)) ?? ""
             tail = s.split(separator: "\n").suffix(80).joined(separator: "\n")
         }
+    }
+}
+
+
+struct DiscoverSettings: View {
+    @AppStorage("tmdbApiKey") private var tmdbKey = ""
+    @State private var showPlatforms = false
+    var body: some View {
+        Form {
+            Section {
+                SecureField("TMDB API key (v3)", text: $tmdbKey)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                if !tmdbKey.isEmpty {
+                    Label("Discover uses TMDB (trending, top rated, new, genres)", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.footnote)
+                }
+            } header: { Text("Source") } footer: {
+                Text("Without a key, Discover uses Cinemeta for Trending/New and IMDb's Top 250 chart for Top Rated. With your own free TMDB key (themoviedb.org → Settings → API) it uses TMDB, the same database Infuse uses, including proper Anime filtering.")
+            }
+            Section {
+                Button("Streaming services…") { showPlatforms = true }
+                NavigationLink("Addons") { AddonsManagerView() }
+            }
+        }
+        .navigationTitle("Discover")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPlatforms) { PlatformSettingsView() }
     }
 }

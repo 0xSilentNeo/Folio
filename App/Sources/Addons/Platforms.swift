@@ -85,10 +85,13 @@ final class BrowseModel: ObservableObject {
         case trending, topRated, new
         var id: String { rawValue }
         var title: String { self == .trending ? "Trending" : self == .topRated ? "Top Rated" : "New" }
-        var footnote: String? { self == .topRated ? "IMDb Top 250, as rated by IMDb users" : nil }
+        var footnote: String? {
+            if TMDB.enabled { return self == .topRated ? "TMDB top rated" : self == .trending ? "TMDB trending this week" : nil }
+            return self == .topRated ? "IMDb Top 250, as rated by IMDb users" : nil
+        }
         var catalog: String { self == .trending ? "top" : self == .topRated ? "imdbRating" : "year" }
     }
-    static let genres = ["Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy",
+    static let genres = ["Action", "Adventure", "Animation", "Anime", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy",
                          "History", "Horror", "Music", "Mystery", "Romance", "Sci-Fi", "Sport", "Thriller", "War", "Western"]
     static let years: [String] = (0..<30).map { String(Calendar.current.component(.year, from: Date()) - $0) }
 
@@ -105,9 +108,13 @@ final class BrowseModel: ObservableObject {
         AddonStore.shared.addons.first { $0.transportURL == AddonStore.cinemeta } ?? AddonStore.shared.addons.first { $0.manifest.id == "com.linvo.cinemeta" }
     }
 
+    private var task: Task<Void, Never>?
+
     func reload() {
-        metas = []; exhausted = false
-        Task { await loadMore() }
+        task?.cancel()
+        generation += 1          // anything still in flight is stale now
+        metas = []; exhausted = false; loading = false
+        task = Task { await loadMore() }
     }
 
     func loadMore() async {
@@ -115,8 +122,8 @@ final class BrowseModel: ObservableObject {
         generation += 1
         let gen = generation
         loading = true
-        defer { loading = false }
-        if sort == .topRated {
+        defer { if gen == generation { loading = false } }
+        if sort == .topRated && !TMDB.enabled {
             // IMDb's chart, filtered by genre locally; falls back to Cinemeta.
             let chart = await IMDbCharts.top(type: type)
             guard gen == generation else { return }
@@ -129,8 +136,16 @@ final class BrowseModel: ObservableObject {
         guard let addon else { return }
         guard let cat = addon.manifest.catalogs.first(where: { $0.id == sort.catalog && $0.type == type }) else { return }
         var extra: [String: String] = [:]
-        if sort == .new { extra["genre"] = year } else if let genre { extra["genre"] = genre }
+        if sort == .new { extra["genre"] = year } else if let genre { extra["genre"] = genre == "Anime" ? "Animation" : genre }
         if !metas.isEmpty { extra["skip"] = String(metas.count) }
+        if TMDB.enabled {
+            let page = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: metas.count / 20 + 1)
+            guard gen == generation else { return }
+            if page.isEmpty { exhausted = true }
+            let known = Set(metas.map(\.id))
+            metas += page.filter { !known.contains($0.id) }
+            return
+        }
         let page = (try? await AddonAPI.catalog(addon, cat, extra: extra)) ?? []
         guard gen == generation else { return }
         let known = Set(metas.map(\.id))

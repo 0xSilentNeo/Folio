@@ -87,10 +87,32 @@ struct AddonManifest: Codable, Hashable {
     var catalogs: [Catalog]
     var resources: [Resource]
     var idPrefixes: [String]?
+    var configurable: Bool = false
+
+    enum CodingKeys: String, CodingKey { case id, version, name, description, logo, types, catalogs, resources, idPrefixes, behaviorHints, configurable }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encodeIfPresent(version, forKey: .version)
+        try c.encode(name, forKey: .name)
+        try c.encodeIfPresent(description, forKey: .description)
+        try c.encodeIfPresent(logo, forKey: .logo)
+        try c.encode(types, forKey: .types)
+        try c.encode(catalogs, forKey: .catalogs)
+        try c.encode(resources, forKey: .resources)
+        try c.encodeIfPresent(idPrefixes, forKey: .idPrefixes)
+        try c.encode(configurable, forKey: .configurable)
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
+        if let hints = try? c.decodeIfPresent([String: FlexBool].self, forKey: .behaviorHints) {
+            configurable = hints["configurable"]?.value ?? false
+        } else if let f = try? c.decodeIfPresent(Bool.self, forKey: .configurable) {
+            configurable = f
+        }
         version = c.flexString(.version)
         name = (try? c.decode(String.self, forKey: .name)) ?? id
         description = c.flexString(.description)
@@ -113,6 +135,19 @@ struct AddonManifest: Codable, Hashable {
     }
 
     func has(resource: String) -> Bool { resources.contains { $0.name == resource } }
+}
+
+/// JSON bool that may arrive as a string or number.
+struct FlexBool: Codable, Hashable {
+    var value: Bool
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if let b = try? c.decode(Bool.self) { value = b }
+        else if let i = try? c.decode(Int.self) { value = i != 0 }
+        else if let s = try? c.decode(String.self) { value = ["true", "1", "yes"].contains(s.lowercased()) }
+        else { value = false }
+    }
+    func encode(to encoder: Encoder) throws { var c = encoder.singleValueContainer(); try c.encode(value) }
 }
 
 struct InstalledAddon: Codable, Identifiable, Hashable {

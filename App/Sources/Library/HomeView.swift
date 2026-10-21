@@ -6,6 +6,7 @@ struct HomeView: View {
     @ObservedObject private var local = LocalMediaStore.shared
     @State private var showOpenURL = false
     @State private var addServer = false
+    @State private var showPicker = false
 
     var body: some View {
         NavigationStack {
@@ -29,6 +30,15 @@ struct HomeView: View {
             .refreshable { local.refresh() }
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
+            .fileImporter(isPresented: $showPicker, allowedContentTypes: FileOpener.mediaTypes, allowsMultipleSelection: false) { result in
+                switch result {
+                case .success(let urls):
+                    dlog("open", "fileImporter returned \(urls.count) url(s)")
+                    FileOpener.open(urls)
+                case .failure(let e):
+                    dlog("open/error", "fileImporter failed: \(e.localizedDescription)")
+                }
+            }
         }
     }
 
@@ -42,7 +52,8 @@ struct HomeView: View {
             }
             Spacer()
             Menu {
-                Button { FileOpener.pickAndPlay() } label: { Label("Open file", systemImage: "folder") }
+                Button { showPicker = true } label: { Label("Open file", systemImage: "folder") }
+                Button { FileOpener.importCopyAndPlay() } label: { Label("Import a copy", systemImage: "square.and.arrow.down") }
                 Button { showOpenURL = true } label: { Label("Open URL", systemImage: "link") }
                 Button { pasteAndPlay() } label: { Label("Paste & play", systemImage: "doc.on.clipboard") }
                 Divider()
@@ -113,7 +124,7 @@ struct HomeView: View {
         VStack(spacing: 10) {
             Image(systemName: "film.stack").font(.system(size: 34, weight: .light)).foregroundStyle(Theme.accent)
             Text("Your library is empty").font(.headline)
-            Text("Tap **+** to open a file or paste a link, or copy videos into\n**Files → On My iPhone → GlassPlayer → Media**.\nWebDAV servers like Real-Debrid live under Network.")
+            Text("Tap **+** to open a file or paste a link, share a video to GlassPlayer from the Files app, or copy videos into\n**Files → On My iPhone → GlassPlayer → Media**.\nWebDAV servers like Real-Debrid live under Network.")
                 .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
