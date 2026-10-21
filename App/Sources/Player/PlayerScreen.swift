@@ -131,7 +131,7 @@ struct PlayerScreen: View {
                     }
                 }
                 .padding(.trailing, max(20, geo.safeAreaInsets.trailing + 8))
-                .padding(.bottom, ui.controlsVisible ? 108 : 30)
+                .padding(.bottom, ui.controlsVisible ? 124 : 30)
             }
             .transition(.opacity)
             .animation(.easeOut(duration: 0.2), value: model.activeSegment)
@@ -194,10 +194,11 @@ struct PlayerControls: View {
                 Spacer()
                 centerControls
                 Spacer()
-                VStack(spacing: 4) {
-                    TimeBar(model: model, ui: ui, clock: clock)
+                VStack(spacing: 6) {
                     bottomRow
+                    TimeBar(model: model, ui: ui, clock: clock)
                 }
+                .padding(.bottom, 4)
             }
             .padding(.horizontal, max(14, min(max(safe.leading, safe.trailing), 48)))
             .padding(.top, 4)
@@ -274,10 +275,18 @@ struct PlayerControls: View {
                 model.toggleZoom()
             }
             Spacer()
-            SubtitleMenu(model: model, onLoadSubtitle: onLoadSubtitle)
-            AudioMenu(model: model)
-            SpeedMenu(model: model)
-            MoreMenu(model: model, ui: ui)
+            MenuButton(icon: "captions.bubble", size: 18, ui: ui) {
+                PlayerMenus.subtitles(model, onLoad: onLoadSubtitle)
+            }
+            .frame(width: 44, height: 44)
+            MenuButton(icon: "waveform", size: 17, ui: ui) { PlayerMenus.audio(model) }
+                .frame(width: 44, height: 44)
+            MenuButton(icon: "gauge.with.dots.needle.67percent",
+                       text: model.speed == 1 ? nil : String(format: "%g×", (model.speed * 100).rounded() / 100),
+                       size: 17, ui: ui) { PlayerMenus.speed(model) }
+                .frame(width: 44, height: 44)
+            MenuButton(icon: "ellipsis.circle", size: 18, ui: ui) { PlayerMenus.more(model, ui: ui) }
+                .frame(width: 44, height: 44)
             if model.hasNext {
                 Glyph("forward.end.fill", size: 17) { model.playNext() }
             }
@@ -285,32 +294,38 @@ struct PlayerControls: View {
     }
 }
 
-/// Position-driven part of the controls; the only view that re-renders
-/// while playing.
+/// Liquid Glass progress capsule: times, buffered range, chapter markers
+/// (style/colour from SeekBarPrefs), skip segments and your own markers.
+/// The only part of the controls that re-renders while playing.
 struct TimeBar: View {
     @ObservedObject var model: PlayerModel
     @ObservedObject var ui: PlayerUIState
     @ObservedObject var clock: PlaybackClock
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Text(PlayerModel.format(ui.scrubTime ?? clock.position))
-                .font(.caption.monospacedDigit().weight(.medium))
-                .frame(minWidth: 42, alignment: .leading)
-            SeekBar(model: model, ui: ui, clock: clock)
+                .font(.caption.monospacedDigit().weight(.semibold))
+                .frame(minWidth: 40, alignment: .leading)
+            SeekTrack(model: model, ui: ui, clock: clock)
             Button { ui.showRemaining.toggle() } label: {
                 Text(ui.showRemaining ? "-" + PlayerModel.format(max(0, clock.duration - (ui.scrubTime ?? clock.position))) : PlayerModel.format(clock.duration))
-                    .font(.caption.monospacedDigit().weight(.medium))
-                    .frame(minWidth: 42, alignment: .trailing)
+                    .font(.caption.monospacedDigit().weight(.semibold))
+                    .frame(minWidth: 40, alignment: .trailing)
             }
+            .buttonStyle(.plain)
         }
+        .padding(.horizontal, 16)
+        .frame(height: 46)
+        .glass(cornerRadius: 23, interactive: true)
     }
 }
 
-struct SeekBar: View {
+struct SeekTrack: View {
     @ObservedObject var model: PlayerModel
     @ObservedObject var ui: PlayerUIState
     @ObservedObject var clock: PlaybackClock
+    @ObservedObject private var prefs = SeekBarPrefs.shared
     @State private var dragging = false
 
     var body: some View {
@@ -320,24 +335,64 @@ struct SeekBar: View {
             let shown = ui.scrubTime ?? clock.position
             let frac = min(1, max(0, shown / d))
             let cacheFrac = min(1, max(0, (clock.position + clock.cacheAhead) / d))
-            let h: CGFloat = dragging ? 7 : 4
+            let h: CGFloat = dragging ? 8 : 5
+            let chapterTimes = model.chapters.dropFirst().map(\.time).filter { $0 > 0 && $0 < d }
+
             ZStack(alignment: .leading) {
-                Capsule().fill(.white.opacity(0.22)).frame(height: h)
-                Capsule().fill(.white.opacity(0.32)).frame(width: w * cacheFrac, height: h)
-                ForEach(model.segments) { s in
-                    Rectangle().fill(Theme.accent.opacity(0.5))
-                        .frame(width: max(2, w * (s.end - s.start) / d), height: h)
-                        .offset(x: w * s.start / d)
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(.white.opacity(0.22))
+                    Rectangle().fill(.white.opacity(0.30)).frame(width: w * cacheFrac)
+                    if prefs.showSkipSegments {
+                        ForEach(model.segments) { s in
+                            Rectangle().fill(Theme.accent.opacity(0.55))
+                                .frame(width: max(2, w * (s.end - s.start) / d))
+                                .offset(x: w * s.start / d)
+                        }
+                    }
+                    Rectangle().fill(.white).frame(width: w * frac)
                 }
-                Capsule().fill(.white).frame(width: w * frac, height: h)
-                ForEach(model.chapters.dropFirst()) { ch in
-                    Rectangle().fill(.black.opacity(0.6)).frame(width: 2, height: h)
-                        .offset(x: w * ch.time / d - 1)
+                .frame(height: h)
+                .mask {
+                    if prefs.markerStyle == "segments" && !chapterTimes.isEmpty {
+                        SegmentMask(times: chapterTimes, duration: d, gap: 3)
+                    } else {
+                        Capsule()
+                    }
                 }
-                Circle().fill(.white).frame(width: dragging ? 18 : 11, height: dragging ? 18 : 11)
-                    .offset(x: w * frac - (dragging ? 9 : 5.5))
+
+                if prefs.markerStyle == "ticks" {
+                    ForEach(chapterTimes, id: \.self) { t in
+                        Capsule().fill(prefs.color.opacity(0.9))
+                            .frame(width: 2, height: h + 8)
+                            .offset(x: w * t / d - 1)
+                    }
+                } else if prefs.markerStyle == "dots" {
+                    ForEach(chapterTimes, id: \.self) { t in
+                        Circle().fill(prefs.color)
+                            .frame(width: 5, height: 5)
+                            .offset(x: w * t / d - 2.5, y: -(h / 2 + 6))
+                    }
+                }
+
+                ForEach(model.userMarkers) { m in
+                    Rectangle().fill(Color.yellow)
+                        .frame(width: 7, height: 7)
+                        .rotationEffect(.degrees(45))
+                        .offset(x: w * min(1, m.time / d) - 3.5, y: -(h / 2 + 7))
+                }
+
+                Circle().fill(.white)
+                    .frame(width: dragging ? 18 : 12, height: dragging ? 18 : 12)
+                    .offset(x: w * frac - (dragging ? 9 : 6))
+
+                if dragging {
+                    ScrubBubble(time: shown, chapter: prefs.showChapterTitle ? chapterTitle(at: shown) : nil)
+                        .fixedSize()
+                        .offset(x: min(max(w * frac - 60, -10), w - 110), y: -46)
+                        .allowsHitTesting(false)
+                }
             }
-            .frame(height: 32)
+            .frame(height: 46)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -360,191 +415,48 @@ struct SeekBar: View {
             )
             .animation(.easeOut(duration: 0.12), value: dragging)
         }
-        .frame(height: 32)
+        .frame(height: 46)
+    }
+
+    private func chapterTitle(at t: Double) -> String? {
+        if let m = model.userMarkers.last(where: { abs($0.time - t) < 3 }) { return m.title }
+        return model.chapters.last(where: { $0.time <= t + 0.01 })?.title
     }
 }
 
-// MARK: - Menus
-
-struct SubtitleMenu: View {
-    @ObservedObject var model: PlayerModel
-    let onLoadSubtitle: () -> Void
-
-    var body: some View {
-        Menu {
-            Picker("Subtitles", selection: Binding<Int>(
-                get: { model.tracks("sub").first(where: \.selected)?.id ?? -1 },
-                set: { model.selectTrack("sub", id: $0 < 0 ? nil : $0) }
-            )) {
-                Text("Off").tag(-1)
-                ForEach(model.tracks("sub")) { t in
-                    Text(t.label + (t.detail.isEmpty ? "" : "  ·  " + t.detail)).tag(t.id)
-                }
-            }
-            .pickerStyle(.inline)
-            Menu {
-                Button("+0.1 s") { model.setSubDelay(model.subDelay + 0.1) }
-                Button("−0.1 s") { model.setSubDelay(model.subDelay - 0.1) }
-                Button("+1 s") { model.setSubDelay(model.subDelay + 1) }
-                Button("−1 s") { model.setSubDelay(model.subDelay - 1) }
-                Button("Reset") { model.setSubDelay(0) }
-            } label: {
-                Label(String(format: "Delay  %+.1f s", model.subDelay), systemImage: "timer")
-            }
-            .menuActionDismissBehavior(.disabled)
-            Menu {
-                ForEach([0.75, 1.0, 1.25, 1.5, 1.75, 2.0], id: \.self) { s in
-                    Button("\(Int(s * 100))%") { model.setSubScale(s) }
-                }
-            } label: { Label("Size", systemImage: "textformat.size") }
-            Button { onLoadSubtitle() } label: { Label("Load from Files…", systemImage: "folder") }
-        } label: {
-            GlyphLabel("captions.bubble", size: 18)
-        }
-    }
-}
-
-struct AudioMenu: View {
-    @ObservedObject var model: PlayerModel
+/// Track split into rounded segments at chapter boundaries.
+struct SegmentMask: View {
+    let times: [Double]
+    let duration: Double
+    let gap: CGFloat
 
     var body: some View {
-        Menu {
-            Picker("Audio", selection: Binding<Int>(
-                get: { model.tracks("audio").first(where: \.selected)?.id ?? -1 },
-                set: { model.selectTrack("audio", id: $0 < 0 ? nil : $0) }
-            )) {
-                ForEach(model.tracks("audio")) { t in
-                    Text(t.label + "  ·  " + t.detail).tag(t.id)
+        GeometryReader { g in
+            let edges = [0.0] + times.map { $0 / duration } + [1.0]
+            ZStack(alignment: .leading) {
+                ForEach(0..<(edges.count - 1), id: \.self) { i in
+                    let x0 = g.size.width * edges[i] + (i == 0 ? 0 : gap / 2)
+                    let x1 = g.size.width * edges[i + 1] - (i == edges.count - 2 ? 0 : gap / 2)
+                    Capsule().frame(width: max(1, x1 - x0)).offset(x: x0)
                 }
-                Text("Off").tag(-1)
-            }
-            .pickerStyle(.inline)
-            Menu {
-                Button("+50 ms") { model.setAudioDelay(model.audioDelay + 0.05) }
-                Button("−50 ms") { model.setAudioDelay(model.audioDelay - 0.05) }
-                Button("Reset") { model.setAudioDelay(0) }
-            } label: {
-                Label(String(format: "Delay  %+.0f ms", model.audioDelay * 1000), systemImage: "timer")
-            }
-            .menuActionDismissBehavior(.disabled)
-            if !model.audioOut.isEmpty {
-                Text("Output: \(AudioFormat.channelLayout(channels: model.audioOut, count: nil) ?? model.audioOut)")
-            }
-        } label: {
-            GlyphLabel("waveform", size: 17)
-        }
-    }
-}
-
-struct SpeedMenu: View {
-    @ObservedObject var model: PlayerModel
-    private let speeds: [Double] = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0]
-    private let holdSpeeds: [Double] = [1.5, 2.0, 2.5, 3.0, 4.0]
-
-    var body: some View {
-        Menu {
-            Picker("Speed", selection: Binding<Double>(
-                get: { speeds.min(by: { abs($0 - model.speed) < abs($1 - model.speed) }) ?? 1 },
-                set: { model.setSpeed($0) }
-            )) {
-                ForEach(speeds, id: \.self) { s in Text(s == 1 ? "Normal" : String(format: "%g×", s)).tag(s) }
-            }
-            .pickerStyle(.inline)
-            Section("Hold to speed up") {
-                Toggle("Press and hold video", isOn: $model.holdEnabled)
-                Picker("Hold speed", selection: $model.holdSpeed) {
-                    ForEach(holdSpeeds, id: \.self) { s in Text(String(format: "%g×", s)).tag(s) }
-                }
-                .pickerStyle(.menu)
-            }
-        } label: {
-            if model.speed != 1 {
-                Text(String(format: "%g×", (model.speed * 100).rounded() / 100))
-                    .font(.footnote.weight(.bold))
-                    .frame(width: 44, height: 44)
-            } else {
-                GlyphLabel("gauge.with.dots.needle.67percent", size: 17)
             }
         }
     }
 }
 
-struct MoreMenu: View {
-    @ObservedObject var model: PlayerModel
-    @ObservedObject var ui: PlayerUIState
-    private let aspects: [(String, String)] = [("Auto", "no"), ("16:9", "16:9"), ("4:3", "4:3"), ("2.35:1", "2.35:1"), ("1:1", "1:1")]
+struct ScrubBubble: View {
+    let time: Double
+    let chapter: String?
 
     var body: some View {
-        Menu {
-            if !model.chapters.isEmpty {
-                Menu {
-                    ForEach(model.chapters) { ch in
-                        Button { model.jump(to: ch) } label: {
-                            Text(ch.title + "  " + PlayerModel.format(ch.time))
-                            if ch.id == model.currentChapter { Image(systemName: "checkmark") }
-                        }
-                    }
-                } label: { Label("Chapters", systemImage: "list.bullet") }
-            }
-            Menu {
-                Picker("Aspect", selection: Binding(get: { model.aspectOverride }, set: { model.setAspect($0) })) {
-                    ForEach(aspects, id: \.1) { a in Text(a.0).tag(a.1) }
-                }
-                Divider()
-                Button("Deband on/off") { model.run(command: "cycle deband") }
-                Button("Deinterlace on/off") { model.run(command: "cycle deinterlace") }
-                Button("Rotate 90°") { model.run(command: "cycle-values video-rotate 90 180 270 0") }
-            } label: { Label("Video", systemImage: "aspectratio") }
-            shadersMenu
-            commandsMenu
-            Button { model.screenshot() } label: { Label("Screenshot", systemImage: "camera") }
-            Button { ui.showInfo = true } label: { Label("Media info", systemImage: "info.circle") }
-        } label: {
-            GlyphLabel("ellipsis.circle", size: 18)
+        VStack(spacing: 2) {
+            if let chapter { Text(chapter).font(.caption2.weight(.semibold)).lineLimit(1) }
+            Text(PlayerModel.format(time)).font(.caption.monospacedDigit().weight(.bold))
         }
-    }
-
-    private var shadersMenu: some View {
-        let files = MPVFiles.shaders()
-        return Menu {
-            Button { model.setShaders([]) } label: {
-                Text("Off")
-                if model.activeShaders.isEmpty { Image(systemName: "checkmark") }
-            }
-            ForEach(ShaderPresets.available(files: files), id: \.name) { p in
-                Button { model.setShaders(p.shaders) } label: {
-                    Text(p.name)
-                    if model.activeShaders == p.shaders { Image(systemName: "checkmark") }
-                }
-            }
-            if !files.isEmpty {
-                Section("Individual") {
-                    ForEach(files, id: \.self) { f in
-                        let name = f.lastPathComponent
-                        Toggle(name, isOn: Binding(
-                            get: { model.activeShaders.contains(name) },
-                            set: { on in
-                                var list = model.activeShaders
-                                if on { list.append(name) } else { list.removeAll { $0 == name } }
-                                model.setShaders(list)
-                            }
-                        ))
-                    }
-                }
-            } else {
-                Text("Add shaders in Settings → mpv")
-            }
-        } label: { Label("Shaders", systemImage: "wand.and.stars") }
-    }
-
-    private var commandsMenu: some View {
-        Menu {
-            ForEach(ScriptCommandStore.all) { c in
-                Button(c.name) { model.run(command: c.command) }
-            }
-            Divider()
-            Button { ui.showConsole = true } label: { Label("Run mpv command…", systemImage: "terminal") }
-        } label: { Label("Commands", systemImage: "command") }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 12).padding(.vertical, 6)
+        .frame(maxWidth: 220)
+        .glass(cornerRadius: 14)
     }
 }
 
@@ -579,7 +491,6 @@ struct GlyphLabel: View {
         Image(systemName: icon)
             .font(.system(size: size, weight: .semibold))
             .foregroundStyle(.white)
-            .shadow(color: .black.opacity(0.45), radius: 3)
             .frame(width: box, height: box)
             .contentShape(Rectangle())
     }

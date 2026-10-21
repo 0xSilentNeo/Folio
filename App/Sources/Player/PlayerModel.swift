@@ -154,6 +154,7 @@ final class PlayerModel: ObservableObject {
     @Published var aspectOverride = "no"
     @Published var queueIndex: Int
     @Published var holdSpeedActive = false
+    @Published var userMarkers: [UserMarker] = []
     @Published var holdSpeed: Double = UserDefaults.standard.double(forKey: SettingsKey.holdSpeedValue) {
         didSet { UserDefaults.standard.set(holdSpeed, forKey: SettingsKey.holdSpeedValue) }
     }
@@ -281,6 +282,7 @@ final class PlayerModel: ObservableObject {
         tearDownRemoteCommands()
         stopPiPFeed()
         snapshotQueue.sync {}
+        captureThumbnail()
         pip.tearDown()
         if mode == .sw { sw.detach() }
         glView?.detach()
@@ -406,6 +408,7 @@ final class PlayerModel: ObservableObject {
         clock.duration = item.durationHint ?? 0
         tracks = []
         chapters = []
+        userMarkers = MarkerStore.shared.markers(for: item.id)
         mediaTitle = item.displayTitle
 
         if let old = scopedURL { old.stopAccessingSecurityScopedResource(); scopedURL = nil }
@@ -479,7 +482,7 @@ final class PlayerModel: ObservableObject {
                 height: type == "video" ? c.int(p + "demux-h").map(Int.init) : nil
             ))
         }
-        tracks = list
+        if list != tracks { tracks = list }
         updateVideoFormat()
     }
 
@@ -491,7 +494,7 @@ final class PlayerModel: ObservableObject {
             let title = c.string("chapter-list/\(i)/title") ?? "Chapter \(i + 1)"
             list.append(MediaChapter(id: i, title: title, time: t))
         }
-        chapters = list
+        if list != chapters { chapters = list }
     }
 
     func tracks(_ type: String) -> [MediaTrack] { tracks.filter { $0.type == type } }
@@ -587,6 +590,21 @@ final class PlayerModel: ObservableObject {
     }
 
     func jump(to chapter: MediaChapter) { seek(to: chapter.time) }
+
+    func addMarker() {
+        let t = position
+        var list = userMarkers
+        list.append(UserMarker(time: t, title: "Marker \(list.count + 1) · \(Self.format(t))"))
+        list.sort { $0.time < $1.time }
+        userMarkers = list
+        MarkerStore.shared.set(list, for: item.id)
+        showToast("Marker added at \(Self.format(t))")
+    }
+
+    func removeMarker(_ m: UserMarker) {
+        userMarkers.removeAll { $0.id == m.id }
+        MarkerStore.shared.set(userMarkers, for: item.id)
+    }
 
     @discardableResult
     func run(command: String) -> Bool {
@@ -716,6 +734,15 @@ final class PlayerModel: ObservableObject {
         snapshotTimer?.invalidate()
         snapshotTimer = nil
         glView?.setPiPFeed(nil)
+    }
+
+    /// Saves the current frame as the Continue Watching thumbnail.
+    private func captureThumbnail() {
+        guard fileLoaded, mode == .main, let c = client, !c.isShutDown else { return }
+        var w: Int32 = 0, h: Int32 = 0
+        guard let bytes = gp_screenshot_bgra(c.handle, 640, &w, &h) else { return }
+        defer { free(bytes) }
+        ThumbnailStore.save(bgra: bytes, width: Int(w), height: Int(h), key: item.id)
     }
 
     private func takeSnapshot() {
@@ -944,7 +971,11 @@ extension PlayerModel: MPVClientDelegate {
         case .endFile(let reason, let error):
             if reason == MPVEndReason.error {
                 isLoading = false
-                errorMessage = "Playback failed: \(String(cString: mpv_error_string(error)))"
+                var msg = "Playback failed: \(String(cString: mpv_error_string(error)))"
+                if let u = item.resolvedURL, u.isFileURL, !FileManager.default.isReadableFile(atPath: u.path) {
+                    msg += "\n\niOS didn't grant access to this file (\(u.lastPathComponent)). Open it again from Files, or copy it into GlassPlayer → Media."
+                }
+                errorMessage = msg
             }
         case .playbackRestart:
             buffering = false

@@ -99,6 +99,7 @@ struct LocalFolderView: View {
         .navigationTitle(title)
         .onAppear(perform: reload)
         .refreshable { reload() }
+        .onReceive(LocalMediaStore.shared.$files) { _ in reload() }
     }
 
     private func reload() {

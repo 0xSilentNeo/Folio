@@ -65,11 +65,7 @@ struct RootView: View {
                 tab = 3
                 return
             }
-            _ = url.startAccessingSecurityScopedResource()
-            var m = MediaItem(url: url.path, title: TitleParser.clean(url.lastPathComponent), source: .local)
-            m.bookmark = try? url.bookmarkData()
-            m.historyKey = "file:" + url.lastPathComponent
-            PlayerPresenter.play(m)
+            FileOpener.open([url])
             return
         }
         // glassplayer://play?url=<encoded>  or  glassplayer://addon?url=<manifest>

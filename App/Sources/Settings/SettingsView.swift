@@ -49,6 +49,7 @@ struct SettingsView: View {
 }
 
 struct PlaybackSettings: View {
+    @ObservedObject private var bar = SeekBarPrefs.shared
     @AppStorage(SettingsKey.resumePlayback) private var resume = true
     @AppStorage(SettingsKey.autoplayNext) private var autoplayNext = true
     @AppStorage(SettingsKey.backgroundAudio) private var backgroundAudio = true
@@ -81,6 +82,16 @@ struct PlaybackSettings: View {
                 Picker("Default speed", selection: $defaultSpeed) {
                     ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
                 }
+            }
+            Section("Progress bar") {
+                Picker("Chapter markers", selection: $bar.markerStyle) {
+                    Text("Ticks").tag("ticks"); Text("Dots").tag("dots"); Text("Segments").tag("segments"); Text("Hidden").tag("none")
+                }
+                Picker("Marker colour", selection: $bar.markerColor) {
+                    Text("White").tag("white"); Text("Pink").tag("accent"); Text("Yellow").tag("yellow"); Text("Cyan").tag("cyan")
+                }
+                Toggle("Chapter name while scrubbing", isOn: $bar.showChapterTitle)
+                Toggle("Show skip segments", isOn: $bar.showSkipSegments)
             }
             Section {
                 Toggle("Picture in Picture", isOn: $pipEnabled)

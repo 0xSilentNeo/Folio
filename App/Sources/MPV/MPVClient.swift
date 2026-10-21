@@ -88,7 +88,8 @@ final class MPVClient {
     }
 
     func initialize(logLevel: String = "info") throws {
-        mpv_request_log_messages(handle, logLevel)
+        // Logs go to mpv's log-file; don't ferry every line to the main thread.
+        mpv_request_log_messages(handle, "no")
         let r = mpv_initialize(handle)
         guard r >= 0 else { throw MPVClientError(code: r) }
         startEventThread()
@@ -243,7 +244,7 @@ final class MPVClient {
             guard let ev = mpv_wait_event(handle, -1) else { continue }
             let e = ev.pointee
             if e.event_id == MPV_EVENT_NONE { continue }
-            if let mapped = Self.map(e) {
+            if let mapped = Self.map(e), shouldDeliver(mapped) {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
                     self.delegate?.mpvClient(self, didReceive: mapped)
@@ -258,6 +259,27 @@ final class MPVClient {
         stateLock.unlock()
         mpv_terminate_destroy(handle)
         DispatchQueue.main.async { completion?() }
+    }
+
+    // Coalesce high-frequency properties on the event thread so the main
+    // thread isn't woken for every video frame.
+    private var lastTimePos = -1.0
+    private var lastCache = -1.0
+
+    private func shouldDeliver(_ event: MPVEvent) -> Bool {
+        guard case .property(let name, let value) = event else { return true }
+        switch name {
+        case "time-pos":
+            guard let v = value.double else { return true }
+            if v < lastTimePos || abs(v - lastTimePos) >= 0.2 { lastTimePos = v; return true }
+            return false
+        case "demuxer-cache-duration":
+            guard let v = value.double else { return true }
+            if abs(v - lastCache) >= 1 { lastCache = v; return true }
+            return false
+        default:
+            return true
+        }
     }
 
     private static func map(_ e: mpv_event) -> MPVEvent? {

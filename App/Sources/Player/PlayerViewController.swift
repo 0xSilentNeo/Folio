@@ -7,6 +7,7 @@ final class PlayerUIState: ObservableObject {
     @Published var controlsVisible = true
     @Published var locked = false
     @Published var showInfo = false
+    var menuOpen = false
     @Published var scrubbing = false
     @Published var scrubTime: Double?
     @Published var gestureHUD: GestureHUD?
@@ -34,7 +35,7 @@ final class PlayerUIState: ObservableObject {
     func scheduleHide(after seconds: Double = 4) {
         hideWork?.cancel()
         let w = DispatchWorkItem { [weak self] in
-            guard let self, !self.showInfo, !self.scrubbing, !self.showConsole else { return }
+            guard let self, !self.showInfo, !self.scrubbing, !self.showConsole, !self.menuOpen else { return }
             withAnimation(.easeOut(duration: 0.25)) { self.controlsVisible = false }
         }
         hideWork = w
