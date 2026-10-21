@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     var body: some View {
-        NavigationStack {
+        Group {
             List {
                 Section {
                     row("Playback", "play.rectangle", .pink) { PlaybackSettings() }
@@ -219,7 +219,8 @@ struct AdvancedSettings: View {
                 Stepper("Cache  \(cacheMB) MB", value: $cacheMB, in: 32...1024, step: 32)
             }
             Section("Troubleshooting") {
-                Picker("Log level", selection: $logLevel) {
+                NavigationLink { DiagnosticsView() } label: { Label("Diagnostics & report", systemImage: "stethoscope") }
+                Picker("mpv log level", selection: $logLevel) {
                     ForEach(["warn", "info", "v", "debug"], id: \.self) { Text($0).tag($0) }
                 }
                 if renderer == "gl" { Toggle("Flip video (OpenGL)", isOn: $flipVideo) }
@@ -627,5 +628,53 @@ struct LogView: View {
             let l = $0.lowercased()
             return l.contains("[e]") || l.contains("[w]") || l.contains("error") || l.contains("fail") || l.contains("lua")
         }.joined(separator: "\n")
+    }
+}
+
+
+struct DiagnosticsView: View {
+    @State private var tail = ""
+    @State private var report: URL?
+    @State private var making = false
+
+    var body: some View {
+        List {
+            Section {
+                if let report {
+                    ShareLink(item: report) { Label("Share report (.zip)", systemImage: "square.and.arrow.up") }
+                } else {
+                    Button {
+                        making = true
+                        DispatchQueue.global(qos: .userInitiated).async {
+                            let r = Diagnostics.shared.makeReport()
+                            DispatchQueue.main.async { report = r; making = false }
+                        }
+                    } label: {
+                        HStack { Label("Prepare report", systemImage: "doc.zipper"); Spacer(); if making { ProgressView() } }
+                    }
+                }
+            } footer: {
+                Text("The report bundles the app log, the last mpv log, crash and hang records and your settings. Passwords, tokens and WebDAV links are removed before anything is written.")
+            }
+            Section("Recent app log") {
+                Text(tail.isEmpty ? "No entries yet." : tail)
+                    .font(.system(size: 11, design: .monospaced))
+                    .textSelection(.enabled)
+            }
+            Section {
+                Button("Clear logs", role: .destructive) {
+                    for f in [Diagnostics.shared.appLog, Diagnostics.shared.crashLog, Diagnostics.shared.hangLog, Diagnostics.shared.metricLog] {
+                        try? FileManager.default.removeItem(at: f)
+                    }
+                    tail = ""
+                }
+            }
+        }
+        .navigationTitle("Diagnostics")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            let s = (try? String(contentsOf: Diagnostics.shared.appLog, encoding: .utf8)) ?? ""
+            tail = s.split(separator: "\n").suffix(80).joined(separator: "\n")
+        }
     }
 }

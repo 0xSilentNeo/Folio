@@ -61,7 +61,7 @@ struct CatalogRow: View {
 
 struct PosterCard: View {
     let meta: MetaItem
-    var width: CGFloat = 118
+    var width: CGFloat? = 118
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {

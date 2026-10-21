@@ -2,8 +2,9 @@ import SwiftUI
 import AVKit
 import UniformTypeIdentifiers
 
-/// Minimal Outplayer-style player chrome: plain white glyphs over soft
-/// gradients, native menus for everything else.
+/// Player chrome: close / PiP at the top, three Liquid Glass pills at the
+/// bottom (transport · progress · panels) and panels that grow out of
+/// their buttons. Only `TimeBar` re-renders while a video plays.
 struct PlayerScreen: View {
     @ObservedObject var model: PlayerModel
     @ObservedObject var ui: PlayerUIState
@@ -14,6 +15,7 @@ struct PlayerScreen: View {
 
     var body: some View {
         GeometryReader { geo in
+            let compact = geo.size.width < 640
             ZStack {
                 Color.black.ignoresSafeArea()
                 VideoSurface(model: model, ui: ui).ignoresSafeArea()
@@ -27,15 +29,13 @@ struct PlayerScreen: View {
                     .allowsHitTesting(false)
                 }
 
-                if (model.buffering || model.isLoading) && model.errorMessage == nil && !(ui.controlsVisible && !ui.locked) {
+                if (model.buffering || model.isLoading) && model.errorMessage == nil {
                     ProgressView().controlSize(.large).tint(.white).allowsHitTesting(false)
+                        .offset(y: ui.controlsVisible && !ui.locked ? -10 : 0)
                 }
 
                 if ui.controlsVisible && !ui.locked {
-                    PlayerControls(model: model, ui: ui, clock: model.clock, safe: geo.safeAreaInsets,
-                                   onClose: onClose, onRotationLock: onRotationLock,
-                                   onLoadSubtitle: { showSubtitlePicker = true })
-                        .transition(.opacity)
+                    controls(geo, compact: compact).transition(.opacity)
                 }
 
                 if ui.locked && ui.controlsVisible { lockedOverlay.transition(.opacity) }
@@ -43,36 +43,23 @@ struct PlayerScreen: View {
                 skipButton(geo)
 
                 if model.holdSpeedActive {
-                    VStack {
-                        Label(String(format: "%g×", model.holdSpeed), systemImage: "forward.fill")
-                            .font(.subheadline.weight(.semibold))
-                            .padding(.horizontal, 14).padding(.vertical, 7)
-                            .background(.black.opacity(0.55), in: Capsule())
-                            .padding(.top, geo.safeAreaInsets.top + 18)
-                        Spacer()
-                    }
-                    .foregroundStyle(.white)
-                    .allowsHitTesting(false)
-                    .transition(.opacity)
+                    topPill(Label(String(format: "%g×", model.holdSpeed), systemImage: "forward.fill"), top: geo.safeAreaInsets.top)
                 }
-
                 if let hud = ui.gestureHUD { GestureHUDView(hud: hud).allowsHitTesting(false) }
-
                 if let toast = model.toast, ui.gestureHUD == nil, !model.holdSpeedActive {
-                    VStack {
-                        Text(toast).font(.footnote.weight(.semibold))
-                            .padding(.horizontal, 14).padding(.vertical, 7)
-                            .background(.black.opacity(0.6), in: Capsule())
-                            .padding(.top, geo.safeAreaInsets.top + (ui.controlsVisible ? 64 : 18))
-                        Spacer()
-                    }
-                    .foregroundStyle(.white)
-                    .allowsHitTesting(false)
-                    .transition(.opacity)
+                    topPill(Text(toast), top: geo.safeAreaInsets.top + (ui.controlsVisible ? 56 : 0))
                 }
 
                 if let error = model.errorMessage { errorView(error) }
                 if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
+
+                if let panel = ui.panel {
+                    PlayerPanel(kind: panel, model: model, ui: ui, size: geo.size, safe: geo.safeAreaInsets, compact: compact,
+                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.55, anchor: .bottomTrailing).combined(with: .opacity),
+                            removal: .scale(scale: 0.7, anchor: .bottomTrailing).combined(with: .opacity)))
+                }
                 if ui.showInfo { InfoCard(model: model, ui: ui).transition(.opacity) }
                 if ui.showConsole {
                     ConsoleBar(model: model, ui: ui).transition(.move(edge: .bottom).combined(with: .opacity))
@@ -83,15 +70,104 @@ struct PlayerScreen: View {
             .animation(.easeOut(duration: 0.18), value: model.holdSpeedActive)
         }
         .preferredColorScheme(.dark)
+        .tint(Theme.accent)
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
         .onAppear { ui.scheduleHide() }
         .onChange(of: model.paused) { _, paused in
-            if paused { ui.showControls(autoHide: false) } else { ui.scheduleHide() }
+            if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
         .fileImporter(isPresented: $showSubtitlePicker, allowedContentTypes: [.item]) { result in
             if case .success(let url) = result { model.addSubtitle(url: url) }
         }
+    }
+
+    // MARK: Controls
+
+    @ViewBuilder
+    private func controls(_ geo: GeometryProxy, compact: Bool) -> some View {
+        let side = max(16, min(max(geo.safeAreaInsets.leading, geo.safeAreaInsets.trailing), 48))
+        VStack(spacing: 0) {
+            HStack {
+                GlassIcon("xmark", size: 17) { onClose() }
+                Spacer()
+                if PiPManager.isSupported && UserDefaults.standard.bool(forKey: SettingsKey.pipEnabled) {
+                    GlassIcon(model.isPiPActive ? "pip.exit" : "pip.enter", size: 17) {
+                        model.isPiPActive ? model.stopPiP() : model.startPiP()
+                    }
+                    .opacity(model.isPiPPossible || model.isPiPActive ? 1 : 0.35)
+                    .disabled(!model.isPiPPossible && !model.isPiPActive)
+                }
+            }
+            .padding(.horizontal, side)
+            .padding(.top, 6)
+            Spacer()
+            if compact {
+                VStack(spacing: 10) {
+                    TimeBar(model: model, ui: ui, clock: model.clock)
+                    HStack {
+                        transportPill
+                        Spacer()
+                        panelPill
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 4 : 12)
+            } else {
+                HStack(spacing: 12) {
+                    transportPill
+                    TimeBar(model: model, ui: ui, clock: model.clock)
+                    panelPill
+                }
+                .padding(.horizontal, side)
+                .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 2 : 12)
+            }
+        }
+        .foregroundStyle(.white)
+    }
+
+    private var step: Int { max(1, UserDefaults.standard.integer(forKey: SettingsKey.seekStep)) }
+    private var stepIcon: Int { [5, 10, 15, 30, 45, 60, 75, 90].contains(step) ? step : 10 }
+
+    private var transportPill: some View {
+        HStack(spacing: 4) {
+            PillIcon("gobackward.\(stepIcon)", size: 22) { model.seek(by: -Double(step)) }
+            PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 26, width: 60) {
+                model.togglePause()
+                ui.showControls()
+            }
+            PillIcon("goforward.\(stepIcon)", size: 22) { model.seek(by: Double(step)) }
+        }
+        .padding(.horizontal, 6)
+        .frame(height: 60)
+        .glass(cornerRadius: 30, interactive: true)
+    }
+
+    private var panelPill: some View {
+        HStack(spacing: 2) {
+            PillIcon("switch.2", size: 20, active: ui.panel == .tracks) { ui.toggle(.tracks) }
+            PillIcon("slider.horizontal.3", size: 20, active: ui.panel == .settings) { ui.toggle(.settings) }
+            PillIcon("list.bullet", size: 20, active: ui.panel == .nowPlaying) { ui.toggle(.nowPlaying) }
+        }
+        .padding(.horizontal, 6)
+        .frame(height: 60)
+        .glass(cornerRadius: 30, interactive: true)
+    }
+
+    // MARK: Overlays
+
+    private func topPill<V: View>(_ content: V, top: CGFloat) -> some View {
+        VStack {
+            content
+                .font(.footnote.weight(.semibold))
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .glass(cornerRadius: 18)
+                .padding(.top, top + 14)
+            Spacer()
+        }
+        .foregroundStyle(.white)
+        .allowsHitTesting(false)
+        .transition(.opacity)
     }
 
     private var lockedOverlay: some View {
@@ -103,9 +179,10 @@ struct PlayerScreen: View {
             } label: {
                 Label("Unlock", systemImage: "lock.fill")
                     .font(.subheadline.weight(.semibold))
-                    .padding(.horizontal, 18).padding(.vertical, 11)
-                    .background(.black.opacity(0.55), in: Capsule())
+                    .padding(.horizontal, 18).padding(.vertical, 12)
+                    .glass(cornerRadius: 22, interactive: true)
             }
+            .buttonStyle(.plain)
             .foregroundStyle(.white)
             .padding(.bottom, 36)
         }
@@ -113,7 +190,7 @@ struct PlayerScreen: View {
 
     @ViewBuilder
     private func skipButton(_ geo: GeometryProxy) -> some View {
-        if let seg = model.activeSegment, !ui.locked {
+        if let seg = model.activeSegment, !ui.locked, ui.panel == nil {
             VStack {
                 Spacer()
                 HStack {
@@ -124,14 +201,14 @@ struct PlayerScreen: View {
                             Image(systemName: "chevron.right.2")
                         }
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 16).padding(.vertical, 10)
-                        .background(.white, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
+                        .padding(.horizontal, 16).padding(.vertical, 11)
+                        .glass(cornerRadius: 20, interactive: true)
                     }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white)
                 }
                 .padding(.trailing, max(20, geo.safeAreaInsets.trailing + 8))
-                .padding(.bottom, ui.controlsVisible ? 124 : 30)
+                .padding(.bottom, ui.controlsVisible ? (geo.size.width < 640 ? 150 : 84) : 30)
             }
             .transition(.opacity)
             .animation(.easeOut(duration: 0.2), value: model.activeSegment)
@@ -146,11 +223,11 @@ struct PlayerScreen: View {
                 Button("Retry") { model.load(model.item) }.buttonStyle(.borderedProminent).tint(Theme.accent)
                 Button("Close") { onClose() }.buttonStyle(.bordered)
             }
-            Text("Details: Settings → mpv → Last playback log").font(.caption).foregroundStyle(.white.opacity(0.5))
+            Text("Details: Settings → Advanced → Diagnostics").font(.caption).foregroundStyle(.white.opacity(0.5))
         }
         .padding(22)
         .frame(maxWidth: 400)
-        .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 20))
+        .glass(cornerRadius: 24)
         .foregroundStyle(.white)
     }
 
@@ -163,140 +240,13 @@ struct PlayerScreen: View {
             Button("Close") { onClose() }.buttonStyle(.bordered)
         }
         .padding(14)
-        .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 18))
+        .glass(cornerRadius: 20)
         .offset(y: 90)
     }
 }
 
-// MARK: - Controls
+// MARK: - Progress pill
 
-struct PlayerControls: View {
-    @ObservedObject var model: PlayerModel
-    @ObservedObject var ui: PlayerUIState
-    let clock: PlaybackClock
-    let safe: EdgeInsets
-    let onClose: () -> Void
-    let onRotationLock: (Bool) -> Void
-    let onLoadSubtitle: () -> Void
-
-    var body: some View {
-        ZStack {
-            VStack(spacing: 0) {
-                LinearGradient(colors: [.black.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom).frame(height: 120)
-                Spacer()
-                LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .top, endPoint: .bottom).frame(height: 170)
-            }
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
-
-            VStack(spacing: 0) {
-                topBar
-                Spacer()
-                centerControls
-                Spacer()
-                VStack(spacing: 6) {
-                    bottomRow
-                    TimeBar(model: model, ui: ui, clock: clock)
-                }
-                .padding(.bottom, 4)
-            }
-            .padding(.horizontal, max(14, min(max(safe.leading, safe.trailing), 48)))
-            .padding(.top, 4)
-            .padding(.bottom, safe.bottom > 0 ? 0 : 8)
-        }
-        .foregroundStyle(.white)
-    }
-
-    // MARK: Top
-
-    private var topBar: some View {
-        HStack(alignment: .center, spacing: 6) {
-            Glyph("xmark", size: 18) { onClose() }
-            VStack(alignment: .leading, spacing: 1) {
-                Text(model.item.displayTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
-                if !subtitleLine.isEmpty {
-                    Text(subtitleLine).font(.caption2).foregroundStyle(.white.opacity(0.65)).lineLimit(1)
-                }
-            }
-            Spacer(minLength: 8)
-            if PiPManager.isSupported && UserDefaults.standard.bool(forKey: SettingsKey.pipEnabled) {
-                Glyph(model.isPiPActive ? "pip.exit" : "pip.enter") {
-                    model.isPiPActive ? model.stopPiP() : model.startPiP()
-                }
-                .opacity(model.isPiPPossible || model.isPiPActive ? 1 : 0.35)
-                .disabled(!model.isPiPPossible && !model.isPiPActive)
-            }
-            AirPlayButton().frame(width: 40, height: 40)
-        }
-    }
-
-    private var subtitleLine: String {
-        var parts: [String] = []
-        if let s = model.item.subtitle, !s.isEmpty { parts.append(s) }
-        else if let ch = model.chapters.first(where: { $0.id == model.currentChapter }) { parts.append(ch.title) }
-        if !model.videoFormat.isEmpty, model.videoFormat != "SDR" { parts.append(model.videoFormat) }
-        if let a = model.tracks.first(where: { $0.type == "audio" && $0.selected }),
-           a.profile?.localizedCaseInsensitiveContains("atmos") == true {
-            parts.append("Atmos")
-        }
-        return parts.joined(separator: " · ")
-    }
-
-    // MARK: Center
-
-    private var centerControls: some View {
-        HStack(spacing: 52) {
-            Glyph("gobackward.\(stepIcon)", size: 28) { model.seek(by: -Double(step)) }
-            Glyph(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 44, box: 72) {
-                model.togglePause()
-                ui.showControls()
-            }
-            Glyph("goforward.\(stepIcon)", size: 28) { model.seek(by: Double(step)) }
-        }
-    }
-
-    private var step: Int { max(1, UserDefaults.standard.integer(forKey: SettingsKey.seekStep)) }
-    private var stepIcon: Int { [5, 10, 15, 30, 45, 60, 75, 90].contains(step) ? step : 10 }
-
-    // MARK: Bottom
-
-    private var bottomRow: some View {
-        HStack(spacing: 4) {
-            Glyph("lock.open", size: 17) {
-                ui.locked = true
-                ui.showControls()
-            }
-            Glyph(ui.rotationLocked ? "lock.rotation" : "rotate.right", size: 17) {
-                ui.rotationLocked.toggle()
-                onRotationLock(ui.rotationLocked)
-                model.showToast(ui.rotationLocked ? "Rotation locked" : "Rotation unlocked")
-            }
-            Glyph(model.zoomToFill ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right", size: 16) {
-                model.toggleZoom()
-            }
-            Spacer()
-            MenuButton(icon: "captions.bubble", size: 18, ui: ui) {
-                PlayerMenus.subtitles(model, onLoad: onLoadSubtitle)
-            }
-            .frame(width: 44, height: 44)
-            MenuButton(icon: "waveform", size: 17, ui: ui) { PlayerMenus.audio(model) }
-                .frame(width: 44, height: 44)
-            MenuButton(icon: "gauge.with.dots.needle.67percent",
-                       text: model.speed == 1 ? nil : String(format: "%g×", (model.speed * 100).rounded() / 100),
-                       size: 17, ui: ui) { PlayerMenus.speed(model) }
-                .frame(width: 44, height: 44)
-            MenuButton(icon: "ellipsis.circle", size: 18, ui: ui) { PlayerMenus.more(model, ui: ui) }
-                .frame(width: 44, height: 44)
-            if model.hasNext {
-                Glyph("forward.end.fill", size: 17) { model.playNext() }
-            }
-        }
-    }
-}
-
-/// Liquid Glass progress capsule: times, buffered range, chapter markers
-/// (style/colour from SeekBarPrefs), skip segments and your own markers.
-/// The only part of the controls that re-renders while playing.
 struct TimeBar: View {
     @ObservedObject var model: PlayerModel
     @ObservedObject var ui: PlayerUIState
@@ -305,19 +255,19 @@ struct TimeBar: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(PlayerModel.format(ui.scrubTime ?? clock.position))
-                .font(.caption.monospacedDigit().weight(.semibold))
-                .frame(minWidth: 40, alignment: .leading)
+                .font(.subheadline.monospacedDigit().weight(.semibold))
+                .frame(minWidth: 44, alignment: .leading)
             SeekTrack(model: model, ui: ui, clock: clock)
             Button { ui.showRemaining.toggle() } label: {
                 Text(ui.showRemaining ? "-" + PlayerModel.format(max(0, clock.duration - (ui.scrubTime ?? clock.position))) : PlayerModel.format(clock.duration))
-                    .font(.caption.monospacedDigit().weight(.semibold))
-                    .frame(minWidth: 40, alignment: .trailing)
+                    .font(.subheadline.monospacedDigit().weight(.semibold))
+                    .frame(minWidth: 44, alignment: .trailing)
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 16)
-        .frame(height: 46)
-        .glass(cornerRadius: 23, interactive: true)
+        .padding(.horizontal, 18)
+        .frame(height: 60)
+        .glass(cornerRadius: 30, interactive: true)
     }
 }
 
@@ -362,37 +312,28 @@ struct SeekTrack: View {
 
                 if prefs.markerStyle == "ticks" {
                     ForEach(chapterTimes, id: \.self) { t in
-                        Capsule().fill(prefs.color.opacity(0.9))
-                            .frame(width: 2, height: h + 8)
-                            .offset(x: w * t / d - 1)
+                        Capsule().fill(prefs.color.opacity(0.9)).frame(width: 2, height: h + 8).offset(x: w * t / d - 1)
                     }
                 } else if prefs.markerStyle == "dots" {
                     ForEach(chapterTimes, id: \.self) { t in
-                        Circle().fill(prefs.color)
-                            .frame(width: 5, height: 5)
-                            .offset(x: w * t / d - 2.5, y: -(h / 2 + 6))
+                        Circle().fill(prefs.color).frame(width: 5, height: 5).offset(x: w * t / d - 2.5, y: -(h / 2 + 6))
                     }
                 }
-
                 ForEach(model.userMarkers) { m in
-                    Rectangle().fill(Color.yellow)
-                        .frame(width: 7, height: 7)
-                        .rotationEffect(.degrees(45))
+                    Rectangle().fill(Color.yellow).frame(width: 7, height: 7).rotationEffect(.degrees(45))
                         .offset(x: w * min(1, m.time / d) - 3.5, y: -(h / 2 + 7))
                 }
-
                 Circle().fill(.white)
                     .frame(width: dragging ? 18 : 12, height: dragging ? 18 : 12)
                     .offset(x: w * frac - (dragging ? 9 : 6))
-
                 if dragging {
                     ScrubBubble(time: shown, chapter: prefs.showChapterTitle ? chapterTitle(at: shown) : nil)
                         .fixedSize()
-                        .offset(x: min(max(w * frac - 60, -10), w - 110), y: -46)
+                        .offset(x: min(max(w * frac - 60, -10), w - 110), y: -54)
                         .allowsHitTesting(false)
                 }
             }
-            .frame(height: 46)
+            .frame(height: 60)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -404,9 +345,7 @@ struct SeekTrack: View {
                         model.scrub(to: t)
                     }
                     .onEnded { v in
-                        if clock.duration > 0 {
-                            model.seek(to: min(1, max(0, v.location.x / w)) * clock.duration)
-                        }
+                        if clock.duration > 0 { model.seek(to: min(1, max(0, v.location.x / w)) * clock.duration) }
                         dragging = false
                         ui.scrubbing = false
                         ui.scrubTime = nil
@@ -415,7 +354,7 @@ struct SeekTrack: View {
             )
             .animation(.easeOut(duration: 0.12), value: dragging)
         }
-        .frame(height: 46)
+        .frame(height: 60)
     }
 
     private func chapterTitle(at t: Double) -> String? {
@@ -424,12 +363,10 @@ struct SeekTrack: View {
     }
 }
 
-/// Track split into rounded segments at chapter boundaries.
 struct SegmentMask: View {
     let times: [Double]
     let duration: Double
     let gap: CGFloat
-
     var body: some View {
         GeometryReader { g in
             let edges = [0.0] + times.map { $0 / duration } + [1.0]
@@ -447,7 +384,6 @@ struct SegmentMask: View {
 struct ScrubBubble: View {
     let time: Double
     let chapter: String?
-
     var body: some View {
         VStack(spacing: 2) {
             if let chapter { Text(chapter).font(.caption2.weight(.semibold)).lineLimit(1) }
@@ -460,39 +396,45 @@ struct ScrubBubble: View {
     }
 }
 
-// MARK: - Glyphs
+// MARK: - Buttons
 
-struct Glyph: View {
+struct GlassIcon: View {
     let icon: String
-    var size: CGFloat = 20
-    var box: CGFloat = 44
+    var size: CGFloat = 18
     let action: () -> Void
-
-    init(_ icon: String, size: CGFloat = 20, box: CGFloat = 44, action: @escaping () -> Void) {
-        self.icon = icon; self.size = size; self.box = box; self.action = action
-    }
-
+    init(_ icon: String, size: CGFloat = 18, action: @escaping () -> Void) { self.icon = icon; self.size = size; self.action = action }
     var body: some View {
-        Button(action: action) { GlyphLabel(icon, size: size, box: box) }
-            .buttonStyle(.plain)
+        Button(action: action) {
+            Image(systemName: icon).font(.system(size: size, weight: .semibold))
+                .frame(width: 46, height: 46)
+                .glassCircle()
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.white)
     }
 }
 
-struct GlyphLabel: View {
+struct PillIcon: View {
     let icon: String
-    var size: CGFloat
-    var box: CGFloat
-
-    init(_ icon: String, size: CGFloat = 20, box: CGFloat = 44) {
-        self.icon = icon; self.size = size; self.box = box
+    var size: CGFloat = 20
+    var width: CGFloat = 50
+    var active = false
+    let action: () -> Void
+    init(_ icon: String, size: CGFloat = 20, width: CGFloat = 50, active: Bool = false, action: @escaping () -> Void) {
+        self.icon = icon; self.size = size; self.width = width; self.active = active; self.action = action
     }
-
     var body: some View {
-        Image(systemName: icon)
-            .font(.system(size: size, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: box, height: box)
-            .contentShape(Rectangle())
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: size, weight: .semibold))
+                .contentTransition(.symbolEffect(.replace))
+                .frame(width: width, height: 48)
+                .background(active ? Color.white.opacity(0.18) : Color.clear, in: Capsule())
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.white)
     }
 }
 
@@ -502,13 +444,11 @@ struct GestureHUDView: View {
         VStack(spacing: 8) {
             Image(systemName: hud.icon).font(.system(size: 24, weight: .semibold))
             Text(hud.text).font(.subheadline.monospacedDigit().weight(.semibold))
-            if let p = hud.progress {
-                ProgressView(value: min(1, max(0, p))).tint(.white).frame(width: 120)
-            }
+            if let p = hud.progress { ProgressView(value: min(1, max(0, p))).tint(.white).frame(width: 120) }
         }
         .foregroundStyle(.white)
         .padding(.horizontal, 20).padding(.vertical, 14)
-        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 16))
+        .glass(cornerRadius: 18)
     }
 }
 

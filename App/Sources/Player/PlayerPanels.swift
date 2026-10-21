@@ -103,7 +103,7 @@ struct ConsoleBar: View {
             var h = historyRaw.split(separator: "\n").map(String.init).filter { $0 != cmd }
             h.insert(cmd, at: 0)
             historyRaw = h.prefix(20).joined(separator: "\n")
-            model.showToast("✓ \(cmd)")
+            model.showToast("Ran: \(cmd)")
             text = ""
         }
     }

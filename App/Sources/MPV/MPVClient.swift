@@ -126,6 +126,20 @@ final class MPVClient {
         }
     }
 
+    // MARK: Background reads
+
+    /// Property reads take the mpv core lock and can wait on the playback
+    /// thread; batch them here instead of on the main thread.
+    private let queryQueue = DispatchQueue(label: "mpv.query", qos: .userInitiated)
+
+    func query<T>(_ work: @escaping (MPVClient) -> T, then completion: @escaping @MainActor (T) -> Void) {
+        queryQueue.async { [self] in
+            guard !isShutDown else { return }
+            let result = work(self)
+            DispatchQueue.main.async { completion(result) }
+        }
+    }
+
     // MARK: Properties
 
     @discardableResult

@@ -208,6 +208,7 @@ final class PlayerModel: ObservableObject {
     private var speedBeforeHold: Double = 1
     private var started = false
     private var closed = false
+    private var loadStarted = Date()
     var onClose: (() -> Void)?
 
     private let defaults = UserDefaults.standard
@@ -237,7 +238,9 @@ final class PlayerModel: ObservableObject {
         guard !started else { return }
         started = true
         configureAudioSession()
+        dlog("player", "start renderer=\(renderer)")
         guard let c = MPVClient() else {
+            dlog("player/error", "mpv_create failed")
             errorMessage = "Could not create the mpv player."
             return
         }
@@ -275,6 +278,7 @@ final class PlayerModel: ObservableObject {
     func close() {
         guard !closed else { return }
         closed = true
+        dlog("player", "close at \(Self.format(position))")
         saveHistory(force: true)
         HistoryStore.shared.flush()
         observers.forEach { NotificationCenter.default.removeObserver($0) }
@@ -360,8 +364,46 @@ final class PlayerModel: ObservableObject {
         }
         c.setOption("sub-pos", String(defaults.integer(forKey: SettingsKey.subPos)))
         c.setOption("speed", String(defaults.double(forKey: SettingsKey.defaultSpeed)))
-        let shaders = MPVFiles.activeShaderPaths
-        if !shaders.isEmpty { c.setOption("glsl-shaders", shaders.joined(separator: ":")) }
+        let shaders = Anime4K.currentShaderList()
+        if !shaders.isEmpty { c.setOption("glsl-shaders", shaders) }
+        if defaults.bool(forKey: SettingsKey.enhancedQuality) {
+            for (k, v) in EnhancedQuality.options { c.setOption(k, v) }
+        }
+        c.setOption("volume-max", "200")
+        let boost = defaults.integer(forKey: SettingsKey.audioBoost)
+        if boost > 0 { c.setOption("volume", String(100 + boost)) }
+        dlog("player", "mpv options applied renderer=\(renderer) hwdec=\(defaults.string(forKey: SettingsKey.hwdec) ?? "auto") anime4k=\(Anime4K.mode.rawValue)/\(Anime4K.quality.rawValue) enhanced=\(defaults.bool(forKey: SettingsKey.enhancedQuality))")
+    }
+
+    // MARK: Quality toggles (live)
+
+    @Published var enhancedQuality: Bool = UserDefaults.standard.bool(forKey: SettingsKey.enhancedQuality) {
+        didSet {
+            UserDefaults.standard.set(enhancedQuality, forKey: SettingsKey.enhancedQuality)
+            for (k, v) in (enhancedQuality ? EnhancedQuality.options : EnhancedQuality.defaults) { client?.set(k, v) }
+        }
+    }
+    @Published var anime4kMode: Anime4KMode = Anime4K.mode {
+        didSet { Anime4K.mode = anime4kMode; applyShaderList() }
+    }
+    @Published var anime4kQuality: Anime4KQuality = Anime4K.quality {
+        didSet { Anime4K.quality = anime4kQuality; applyShaderList() }
+    }
+    @Published var audioBoost: Int = UserDefaults.standard.integer(forKey: SettingsKey.audioBoost) {
+        didSet {
+            UserDefaults.standard.set(audioBoost, forKey: SettingsKey.audioBoost)
+            client?.set("volume", Double(100 + audioBoost))
+        }
+    }
+    @Published var playbackMode: String = UserDefaults.standard.string(forKey: SettingsKey.playbackMode) ?? "playlist" {
+        didSet {
+            UserDefaults.standard.set(playbackMode, forKey: SettingsKey.playbackMode)
+            client?.set("loop-file", playbackMode == "loop" ? "inf" : "no")
+        }
+    }
+
+    private func applyShaderList() {
+        client?.set("glsl-shaders", Anime4K.currentShaderList())
     }
 
     private func observe(_ c: MPVClient) {
@@ -408,6 +450,7 @@ final class PlayerModel: ObservableObject {
         clock.duration = item.durationHint ?? 0
         tracks = []
         chapters = []
+        loadStarted = Date()
         userMarkers = MarkerStore.shared.markers(for: item.id)
         mediaTitle = item.displayTitle
 
@@ -433,7 +476,8 @@ final class PlayerModel: ObservableObject {
             opts.append("start=\(Int(entry.position))")
             showToast("Resuming from \(Self.format(entry.position))")
         }
-        c.command(["loadfile", item.mpvPath, "replace", "-1", opts.joined(separator: ",")])
+        let r = c.command(["loadfile", item.mpvPath, "replace", "-1", opts.joined(separator: ",")])
+        dlog("player", "loadfile \(item.mpvPath) source=\(item.source) opts=\(opts) -> \(r)")
         updateNowPlaying()
     }
 
@@ -451,6 +495,7 @@ final class PlayerModel: ObservableObject {
 
     private func onFileLoaded() {
         guard let c = client else { return }
+        dlog("player", "file loaded in \(String(format: "%.0f", Date().timeIntervalSince(loadStarted) * 1000)) ms")
         fileLoaded = true
         isLoading = false
         refreshTracks()
@@ -464,37 +509,53 @@ final class PlayerModel: ObservableObject {
 
     // MARK: Tracks / chapters
 
+    private var tracksRefreshPending = false
+
     func refreshTracks() {
-        guard let c = client, let n = c.int("track-list/count") else { return }
-        var list: [MediaTrack] = []
-        for i in 0..<Int(n) {
-            let p = "track-list/\(i)/"
-            guard let id = c.int(p + "id"), let type = c.string(p + "type") else { continue }
-            list.append(MediaTrack(
-                id: Int(id), type: type, title: c.string(p + "title"), lang: c.string(p + "lang"),
-                codec: c.string(p + "codec"), profile: c.string(p + "codec-profile"),
-                selected: c.flag(p + "selected") ?? false,
-                external: c.flag(p + "external") ?? false, isDefault: c.flag(p + "default") ?? false,
-                channels: type == "audio" ? c.string(p + "demux-channels") : nil,
-                channelCount: type == "audio" ? c.int(p + "demux-channel-count").map(Int.init) : nil,
-                dvProfile: type == "video" ? c.int(p + "dolby-vision-profile").map(Int.init) : nil,
-                width: type == "video" ? c.int(p + "demux-w").map(Int.init) : nil,
-                height: type == "video" ? c.int(p + "demux-h").map(Int.init) : nil
-            ))
+        guard let c = client, !tracksRefreshPending else { return }
+        tracksRefreshPending = true
+        c.query({ c -> ([MediaTrack], String) in
+            var list: [MediaTrack] = []
+            let n = c.int("track-list/count") ?? 0
+            for i in 0..<Int(n) {
+                let p = "track-list/\(i)/"
+                guard let id = c.int(p + "id"), let type = c.string(p + "type") else { continue }
+                list.append(MediaTrack(
+                    id: Int(id), type: type, title: c.string(p + "title"), lang: c.string(p + "lang"),
+                    codec: c.string(p + "codec"), profile: c.string(p + "codec-profile"),
+                    selected: c.flag(p + "selected") ?? false,
+                    external: c.flag(p + "external") ?? false, isDefault: c.flag(p + "default") ?? false,
+                    channels: type == "audio" ? c.string(p + "demux-channels") : nil,
+                    channelCount: type == "audio" ? c.int(p + "demux-channel-count").map(Int.init) : nil,
+                    dvProfile: type == "video" ? c.int(p + "dolby-vision-profile").map(Int.init) : nil,
+                    width: type == "video" ? c.int(p + "demux-w").map(Int.init) : nil,
+                    height: type == "video" ? c.int(p + "demux-h").map(Int.init) : nil
+                ))
+            }
+            return (list, c.string("video-params/gamma") ?? "")
+        }) { [weak self] result in
+            guard let self else { return }
+            self.tracksRefreshPending = false
+            if result.0 != self.tracks { self.tracks = result.0 }
+            self.updateVideoFormat(gamma: result.1)
         }
-        if list != tracks { tracks = list }
-        updateVideoFormat()
     }
 
     func refreshChapters() {
-        guard let c = client, let n = c.int("chapter-list/count") else { chapters = []; return }
-        var list: [MediaChapter] = []
-        for i in 0..<Int(n) {
-            let t = c.double("chapter-list/\(i)/time") ?? 0
-            let title = c.string("chapter-list/\(i)/title") ?? "Chapter \(i + 1)"
-            list.append(MediaChapter(id: i, title: title, time: t))
+        guard let c = client else { chapters = []; return }
+        c.query({ c -> [MediaChapter] in
+            let n = c.int("chapter-list/count") ?? 0
+            var list: [MediaChapter] = []
+            for i in 0..<Int(n) {
+                let t = c.double("chapter-list/\(i)/time") ?? 0
+                let title = c.string("chapter-list/\(i)/title") ?? "Chapter \(i + 1)"
+                list.append(MediaChapter(id: i, title: title, time: t))
+            }
+            return list
+        }) { [weak self] list in
+            guard let self else { return }
+            if list != self.chapters { self.chapters = list }
         }
-        if list != chapters { chapters = list }
     }
 
     func tracks(_ type: String) -> [MediaTrack] { tracks.filter { $0.type == type } }
@@ -513,8 +574,10 @@ final class PlayerModel: ObservableObject {
         client?.command(["sub-add", dest.path, "select"])
     }
 
-    private func updateVideoFormat() {
-        let gamma = client?.string("video-params/gamma") ?? ""
+    private var lastGamma = ""
+    private func updateVideoFormat(gamma: String? = nil) {
+        if let gamma { lastGamma = gamma }
+        let gamma = lastGamma
         let dv = tracks.first { $0.type == "video" && $0.selected }?.dvProfile ?? 0
         if dv > 0 { videoFormat = "Dolby Vision" }
         else if gamma == "pq" { videoFormat = "HDR10" }
@@ -620,7 +683,7 @@ final class PlayerModel: ObservableObject {
     func setShaders(_ names: [String]) {
         MPVFiles.activeShaderNames = names
         activeShaders = names
-        client?.set("glsl-shaders", MPVFiles.activeShaderPaths.joined(separator: ":"))
+        applyShaderList()
         showToast(names.isEmpty ? "Shaders off" : "\(names.count) shader\(names.count == 1 ? "" : "s") on")
     }
 
@@ -721,10 +784,14 @@ final class PlayerModel: ObservableObject {
         case .gl:
             glView?.setPiPFeed(pip.makeSink())
         case .metal:
+            // A readback of the full frame is not free; refresh the PiP
+            // layer rarely (it only needs *some* current-ish picture to be
+            // allowed to start) and whenever playback settles.
             snapshotTimer?.invalidate()
-            let t = Timer(timeInterval: 3, repeats: true) { [weak self] _ in
+            let t = Timer(timeInterval: 45, repeats: true) { [weak self] _ in
                 MainActor.assumeIsolated { self?.takeSnapshot() }
             }
+            t.tolerance = 10
             RunLoop.main.add(t, forMode: .common)
             snapshotTimer = t
         }
@@ -745,9 +812,20 @@ final class PlayerModel: ObservableObject {
         ThumbnailStore.save(bgra: bytes, width: Int(w), height: Int(h), key: item.id)
     }
 
+    private var snapshotWork: DispatchWorkItem?
+    private func scheduleSnapshot(after delay: Double) {
+        snapshotWork?.cancel()
+        let w = DispatchWorkItem { [weak self] in self?.takeSnapshot() }
+        snapshotWork = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: w)
+    }
+
+    private var lastSnapshot = Date.distantPast
     private func takeSnapshot() {
         guard renderer == .metal, mode == .main, fileLoaded, !isPiPActive,
               UIApplication.shared.applicationState == .active, let c = client else { return }
+        guard Date().timeIntervalSince(lastSnapshot) > 2 else { return }
+        lastSnapshot = Date()
         let sink = pip.makeSink()
         snapshotQueue.async { [weak self] in
             guard !c.isShutDown else { return }
@@ -975,6 +1053,7 @@ extension PlayerModel: MPVClientDelegate {
                 if let u = item.resolvedURL, u.isFileURL, !FileManager.default.isReadableFile(atPath: u.path) {
                     msg += "\n\niOS didn't grant access to this file (\(u.lastPathComponent)). Open it again from Files, or copy it into GlassPlayer → Media."
                 }
+                dlog("player/error", msg)
                 errorMessage = msg
             }
         case .playbackRestart:
@@ -983,7 +1062,7 @@ extension PlayerModel: MPVClientDelegate {
                 awaitingFirstFrameAfterPiP = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in self?.setPiPLayerOnTop(false) }
             }
-            if renderer == .metal { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.takeSnapshot() } }
+            if renderer == .metal { scheduleSnapshot(after: 0.8) }
         case .videoReconfig:
             break
         case .clientMessage(let args):
@@ -1019,7 +1098,7 @@ extension PlayerModel: MPVClientDelegate {
             pip.invalidate()
             updateNowPlaying()
             UIApplication.shared.isIdleTimerDisabled = !paused
-            if paused { saveHistory(force: true); takeSnapshot() }
+            if paused { saveHistory(force: true); scheduleSnapshot(after: 0.3) }
         case "paused-for-cache":
             buffering = value.bool ?? false
         case "seeking":
@@ -1044,18 +1123,14 @@ extension PlayerModel: MPVClientDelegate {
             subDelay = value.double ?? 0
         case "audio-delay":
             audioDelay = value.double ?? 0
-        case "dwidth", "dheight":
-            let w = client?.int("dwidth") ?? 0, h = client?.int("dheight") ?? 0
-            let size = CGSize(width: Int(w), height: Int(h))
-            if size != videoSize { videoSize = size }
-            if w > 0, h > 0 {
-                glView?.setVideoAspect(Double(w) / Double(h))
-                sw.setVideoSize(width: Int(w), height: Int(h))
-            }
+        case "dwidth":
+            pendingW = Int(value.int ?? 0); applyVideoSize()
+        case "dheight":
+            pendingH = Int(value.int ?? 0); applyVideoSize()
         case "hwdec-current":
             hwdecCurrent = value.string ?? ""
         case "video-params/gamma":
-            updateVideoFormat()
+            updateVideoFormat(gamma: value.string ?? "")
         case "audio-out-params/channels":
             audioOut = value.string ?? ""
         case "demuxer-cache-duration":
@@ -1068,9 +1143,19 @@ extension PlayerModel: MPVClientDelegate {
         }
     }
 
+    private var pendingW = 0, pendingH = 0
+    private func applyVideoSize() {
+        let size = CGSize(width: pendingW, height: pendingH)
+        if size != videoSize { videoSize = size }
+        if pendingW > 0, pendingH > 0 {
+            glView?.setVideoAspect(Double(pendingW) / Double(pendingH))
+            sw.setVideoSize(width: pendingW, height: pendingH)
+        }
+    }
+
     private func handleEOF() {
         saveHistory(force: true)
-        if defaults.bool(forKey: SettingsKey.autoplayNext), hasNext {
+        if playbackMode == "playlist", defaults.bool(forKey: SettingsKey.autoplayNext), hasNext {
             playNext()
         } else {
             ended = true

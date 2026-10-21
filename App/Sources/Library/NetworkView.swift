@@ -16,19 +16,7 @@ struct NetworkView: View {
                             } else {
                                 Text("Invalid server URL")
                             }
-                        } label: {
-                            HStack(spacing: 12) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 10).fill(Theme.accentSoft)
-                                    Image(systemName: "server.rack").foregroundStyle(Theme.accent)
-                                }
-                                .frame(width: 40, height: 40)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(s.name).font(.headline)
-                                    Text(s.base?.host ?? s.baseURL).font(.caption).foregroundStyle(.secondary)
-                                }
-                            }
-                        }
+                        } label: { ServerRow(server: s) }
                         .swipeActions {
                             Button(role: .destructive) { store.remove(s) } label: { Label("Delete", systemImage: "trash") }
                             Button { editing = s } label: { Label("Edit", systemImage: "pencil") }.tint(.gray)
@@ -45,7 +33,7 @@ struct NetworkView: View {
 
                 Section("Files") {
                     NavigationLink {
-                        LocalFolderView(url: MPVFiles.mediaDir, title: "Media")
+                        LocalFolderView(url: MPVFiles.mediaDir, title: "Library")
                     } label: { Label("On this device", systemImage: "iphone") }
                     NavigationLink {
                         LocalFolderView(url: MPVFiles.screenshotsDir, title: "Screenshots")
@@ -105,5 +93,31 @@ struct LocalFolderView: View {
     private func reload() {
         items = ((try? FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey])) ?? [])
             .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+    }
+}
+
+
+struct ServerRow: View {
+    let server: WebDAVServer
+    @StateObject private var brand = BrandIconLoader()
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                if let img = brand.image {
+                    Image(uiImage: img).resizable().scaledToFit()
+                        .frame(width: 40, height: 40)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                } else {
+                    RoundedRectangle(cornerRadius: 10).fill(Theme.accentSoft)
+                    Image(systemName: "externaldrive.connected.to.line.below").foregroundStyle(Theme.accent)
+                }
+            }
+            .frame(width: 40, height: 40)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(server.name).font(.headline)
+                Text(server.base?.host ?? server.baseURL).font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .onAppear { brand.load(host: server.base?.host) }
     }
 }

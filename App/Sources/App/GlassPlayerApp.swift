@@ -7,6 +7,7 @@ struct GlassPlayerApp: App {
 
     init() {
         SettingsKey.registerDefaults()
+        Diagnostics.shared.start()
         MPVFiles.bootstrap()
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
@@ -44,25 +45,23 @@ struct RootView: View {
                 .tabItem { Label("Discover", systemImage: "sparkles.tv") }
                 .tag(1)
             NetworkView()
-                .tabItem { Label("Network", systemImage: "server.rack") }
+                .tabItem { Label("Network", systemImage: "externaldrive.connected.to.line.below") }
                 .tag(2)
-            SettingsView()
-                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
-                .tag(3)
         }
         .onOpenURL(perform: handle)
     }
 
     private func handle(_ url: URL) {
+        dlog("open", "onOpenURL \(url.isFileURL ? url.lastPathComponent : url.absoluteString)")
         if url.isFileURL {
             if url.pathExtension.lowercased() == "lua" {
                 _ = try? MPVFiles.importItem(from: url, into: MPVFiles.scriptsDir)
-                tab = 3
+                tab = 0
                 return
             }
             if ["glsl", "hook"].contains(url.pathExtension.lowercased()) {
                 _ = try? MPVFiles.importItem(from: url, into: MPVFiles.shadersDir)
-                tab = 3
+                tab = 0
                 return
             }
             FileOpener.open([url])

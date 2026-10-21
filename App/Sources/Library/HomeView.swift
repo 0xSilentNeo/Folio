@@ -11,21 +11,24 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    header
-                    if !history.continueWatching.isEmpty { hero }
-                    quickActions
-                    if !local.files.isEmpty { recentlyAdded }
-                    sources
-                    if history.recent.count > 0 { recentlyPlayed }
-                    if history.entries.isEmpty && local.files.isEmpty { welcome }
+            GeometryReader { geo in
+                let wide = geo.size.width > 700
+                let margin: CGFloat = wide ? 28 : 20
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 30) {
+                        header(margin)
+                        if !history.continueWatching.isEmpty { hero(width: geo.size.width, wide: wide, margin: margin) }
+                        else { emptyHero(margin) }
+                        if !local.files.isEmpty { library(width: geo.size.width, margin: margin) }
+                        sources(margin)
+                        if !history.recent.isEmpty { recentlyPlayed(width: geo.size.width, wide: wide, margin: margin) }
+                    }
+                    .padding(.top, 6)
+                    .padding(.bottom, 28)
                 }
-                .padding(.vertical, 8)
-                .padding(.bottom, 24)
+                .scrollIndicators(.hidden)
             }
-            .scrollIndicators(.hidden)
-            .background(Theme.background.ignoresSafeArea())
+            .background(HomeBackdrop().ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { local.refresh() }
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
@@ -35,28 +38,28 @@ struct HomeView: View {
 
     // MARK: Header
 
-    private var header: some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(greeting.uppercased())
-                    .font(.caption.weight(.semibold)).foregroundStyle(Theme.accent).tracking(1.2)
-                Text("What are we watching?")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
+    private func header(_ margin: CGFloat) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(greeting).font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
+                Text("GlassPlayer").font(.system(size: 28, weight: .bold, design: .rounded))
             }
             Spacer()
             Menu {
                 Button { FileOpener.pickAndPlay() } label: { Label("Open file", systemImage: "folder") }
                 Button { showOpenURL = true } label: { Label("Open URL", systemImage: "link") }
                 Button { pasteAndPlay() } label: { Label("Paste & play", systemImage: "doc.on.clipboard") }
-                Button { addServer = true } label: { Label("Add WebDAV server", systemImage: "server.rack") }
+                Divider()
+                Button { addServer = true } label: { Label("Add WebDAV server", systemImage: "externaldrive.connected.to.line.below") }
             } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 17, weight: .bold))
-                    .frame(width: 42, height: 42)
-                    .glassCircle()
+                Image(systemName: "plus").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
+            NavigationLink { SettingsView() } label: {
+                Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
+            }
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, margin)
         .padding(.top, 8)
     }
 
@@ -69,51 +72,67 @@ struct HomeView: View {
         }
     }
 
-    // MARK: Hero (continue watching)
+    // MARK: Hero
 
-    private var hero: some View {
+    private func hero(width: CGFloat, wide: Bool, margin: CGFloat) -> some View {
         let items = Array(history.continueWatching.prefix(8))
+        let h: CGFloat = wide ? 300 : min(240, (width - margin * 2) * 0.6)
         return VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Continue Watching")
+            sectionTitle("Continue Watching", margin)
             TabView(selection: $heroIndex) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { i, e in
-                    HeroCard(entry: e)
-                        .padding(.horizontal, 20)
+                    HeroCard(entry: e, height: h)
+                        .padding(.horizontal, margin)
                         .tag(i)
                         .onTapGesture { PlayerPresenter.play(e.item) }
                         .contextMenu { historyMenu(e) }
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: items.count > 1 ? .automatic : .never))
-            .frame(height: 236)
-        }
-    }
-
-    // MARK: Quick actions
-
-    private var quickActions: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                Chip(icon: "folder.fill", title: "Open File") { FileOpener.pickAndPlay() }
-                Chip(icon: "link", title: "Stream URL") { showOpenURL = true }
-                Chip(icon: "doc.on.clipboard", title: "Paste & Play") { pasteAndPlay() }
-                Chip(icon: "server.rack", title: "Add Server") { addServer = true }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: h)
+            if items.count > 1 {
+                HStack(spacing: 6) {
+                    ForEach(0..<items.count, id: \.self) { i in
+                        Capsule().fill(.white.opacity(i == heroIndex ? 0.9 : 0.25))
+                            .frame(width: i == heroIndex ? 18 : 6, height: 6)
+                            .animation(.spring(response: 0.3), value: heroIndex)
+                    }
+                }
+                .padding(.horizontal, margin)
             }
-            .padding(.horizontal, 20)
         }
     }
 
-    // MARK: Recently added (on this device)
+    private func emptyHero(_ margin: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Image(systemName: "play.rectangle.on.rectangle").font(.system(size: 30, weight: .light)).foregroundStyle(Theme.accent)
+            Text("Play anything").font(.title3.weight(.bold))
+            Text("Open a file, paste a link, connect Real-Debrid or a NAS, or browse Discover. What you watch shows up here.")
+                .font(.subheadline).foregroundStyle(.secondary)
+            HStack(spacing: 10) {
+                PrimaryChip(icon: "folder", title: "Open file") { FileOpener.pickAndPlay() }
+                PrimaryChip(icon: "link", title: "Stream URL") { showOpenURL = true }
+            }
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glass(cornerRadius: 26)
+        .padding(.horizontal, margin)
+    }
 
-    private var recentlyAdded: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("On This Device", trailing: "\(local.files.count)")
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 16) {
-                ForEach(local.files.prefix(8), id: \.self) { f in
+    // MARK: Library
+
+    private func library(width: CGFloat, margin: CGFloat) -> some View {
+        let cols = max(2, Int((width - margin * 2 + 14) / 184))
+        return VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Library", margin, trailing: "\(local.files.count)") {
+                LocalFolderView(url: MPVFiles.mediaDir, title: "Library")
+            }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
+                ForEach(local.files.prefix(cols * 2), id: \.self) { f in
                     Button { playLocal(f) } label: {
-                        MediaTile(title: TitleParser.clean(f.lastPathComponent),
-                                  subtitle: f.pathExtension.uppercased(),
-                                  key: f.path, fileURL: f, artwork: nil,
+                        MediaTile(title: TitleParser.clean(f.lastPathComponent), subtitle: f.pathExtension.uppercased(),
+                                  key: f.path, fileURL: f, lookupName: f.lastPathComponent,
                                   progress: history.entry(forURL: f.path)?.progress)
                     }
                     .buttonStyle(.plain)
@@ -123,23 +142,15 @@ struct HomeView: View {
                     }
                 }
             }
-            .padding(.horizontal, 20)
-            if local.files.count > 8 {
-                NavigationLink {
-                    LocalFolderView(url: MPVFiles.mediaDir, title: "On This Device")
-                } label: {
-                    Text("Show all \(local.files.count)").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
-                }
-                .padding(.horizontal, 20)
-            }
+            .padding(.horizontal, margin)
         }
     }
 
     // MARK: Sources
 
-    private var sources: some View {
+    private func sources(_ margin: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Sources")
+            sectionTitle("Sources", margin)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(servers.servers) { s in
@@ -147,65 +158,68 @@ struct HomeView: View {
                             if let url = WebDAVClient(server: s).url(forPath: s.rootPath) {
                                 WebDAVBrowserView(server: s, url: url, title: s.name)
                             }
-                        } label: {
-                            SourceCard(title: s.name, subtitle: s.base?.host ?? "", icon: "server.rack", tint: Theme.accent)
-                        }
+                        } label: { SourceCard(server: s) }
                         .buttonStyle(.plain)
                     }
-                    NavigationLink {
-                        LocalFolderView(url: MPVFiles.mediaDir, title: "On This Device")
-                    } label: {
-                        SourceCard(title: "This iPhone", subtitle: "Files → GlassPlayer", icon: "iphone", tint: .blue)
+                    NavigationLink { LocalFolderView(url: MPVFiles.mediaDir, title: "Library") } label: {
+                        SourceCard(title: "This iPhone", subtitle: "Files → GlassPlayer", icon: "iphone", host: nil)
                     }
                     .buttonStyle(.plain)
                     Button { addServer = true } label: {
-                        SourceCard(title: "Add server", subtitle: "Real-Debrid, NAS…", icon: "plus", tint: .gray)
+                        SourceCard(title: "Add source", subtitle: "WebDAV, debrid, NAS", icon: "plus", host: nil, dashed: true)
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, margin)
             }
         }
     }
 
     // MARK: Recently played
 
-    private var recentlyPlayed: some View {
+    private func recentlyPlayed(width: CGFloat, wide: Bool, margin: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Recently Played")
-            VStack(spacing: 10) {
-                ForEach(history.recent.prefix(6)) { e in
-                    Button { PlayerPresenter.play(e.item) } label: { HistoryRow(entry: e) }
-                        .buttonStyle(.plain)
-                        .contextMenu { historyMenu(e) }
+            sectionTitle("Recently Played", margin)
+            let rows = Array(history.recent.prefix(wide ? 8 : 6))
+            if wide {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 10) {
+                    ForEach(rows) { e in historyRow(e) }
                 }
+                .padding(.horizontal, margin)
+            } else {
+                VStack(spacing: 10) { ForEach(rows) { e in historyRow(e) } }.padding(.horizontal, margin)
             }
-            .padding(.horizontal, 20)
         }
     }
 
-    private var welcome: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: "sparkles.tv").font(.largeTitle).foregroundStyle(Theme.gradient)
-            Text("Everything mpv can play").font(.title3.weight(.bold))
-            Text("Open a file, paste a link, connect Real-Debrid or a NAS over WebDAV, or browse what's on Netflix, Prime and more in Discover.")
-                .font(.subheadline).foregroundStyle(.secondary)
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glass(cornerRadius: 24)
-        .padding(.horizontal, 20)
+    private func historyRow(_ e: HistoryEntry) -> some View {
+        Button { PlayerPresenter.play(e.item) } label: { HistoryRow(entry: e) }
+            .buttonStyle(.plain)
+            .contextMenu { historyMenu(e) }
     }
 
     // MARK: Helpers
 
-    private func sectionTitle(_ t: String, trailing: String? = nil) -> some View {
+    private func sectionTitle(_ t: String, _ margin: CGFloat, trailing: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(t).font(.title3.weight(.bold))
             if let trailing { Text(trailing).font(.subheadline).foregroundStyle(.secondary) }
             Spacer()
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, margin)
+    }
+
+    private func sectionTitle<D: View>(_ t: String, _ margin: CGFloat, trailing: String?, @ViewBuilder destination: @escaping () -> D) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(t).font(.title3.weight(.bold))
+            if let trailing { Text(trailing).font(.subheadline).foregroundStyle(.secondary) }
+            Spacer()
+            NavigationLink(destination: destination) {
+                HStack(spacing: 2) { Text("All"); Image(systemName: "chevron.right").font(.caption.weight(.bold)) }
+                    .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
+            }
+        }
+        .padding(.horizontal, margin)
     }
 
     @ViewBuilder
@@ -216,9 +230,15 @@ struct HomeView: View {
     }
 
     private func pasteAndPlay() {
-        if let s = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), URL(string: s)?.scheme != nil {
-            PlayerPresenter.play(MediaItem(url: s, title: "", source: .url))
+        guard let s = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else {
+            FileOpener.showAlert("Nothing to play", "Copy a video link first, then tap Paste & play.")
+            return
         }
+        guard let u = URL(string: s), u.scheme != nil else {
+            FileOpener.showAlert("Not a link", "The clipboard doesn't contain a URL.")
+            return
+        }
+        PlayerPresenter.play(MediaItem(url: s, title: "", source: .url))
     }
 
     private func playLocal(_ f: URL) {
@@ -235,44 +255,56 @@ struct HomeView: View {
 
 // MARK: - Components
 
+struct HomeBackdrop: View {
+    var body: some View {
+        ZStack {
+            Theme.background
+            RadialGradient(colors: [Theme.accent.opacity(0.16), .clear], center: .topLeading, startRadius: 0, endRadius: 420)
+            RadialGradient(colors: [Color(red: 0.45, green: 0.35, blue: 1.0).opacity(0.12), .clear], center: .topTrailing, startRadius: 0, endRadius: 380)
+        }
+    }
+}
+
 struct HeroCard: View {
     let entry: HistoryEntry
+    var height: CGFloat = 230
     @StateObject private var thumb = ThumbLoader()
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             Group {
-                if let img = thumb.image {
-                    Image(uiImage: img).resizable().scaledToFill()
-                } else {
-                    GeneratedArt(seed: entry.item.displayTitle)
-                }
+                if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+                else { GeneratedArt(seed: entry.item.displayTitle) }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
-            LinearGradient(colors: [.clear, .black.opacity(0.85)], startPoint: .center, endPoint: .bottom)
+            LinearGradient(colors: [.clear, .black.opacity(0.35), .black.opacity(0.9)], startPoint: .top, endPoint: .bottom)
             VStack(alignment: .leading, spacing: 8) {
-                Text(entry.item.displayTitle).font(.title3.weight(.bold)).lineLimit(2)
-                if let s = entry.item.subtitle { Text(s).font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(1) }
-                HStack(spacing: 10) {
+                Text(thumb.meta?.name ?? entry.item.displayTitle).font(.title3.weight(.bold)).lineLimit(2)
+                let line = [entry.item.subtitle, thumb.meta?.episodeTitle].compactMap { $0 }.first ?? thumb.meta?.synopsis
+                if let line { Text(line).font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(2) }
+                HStack(spacing: 12) {
                     Label("Resume", systemImage: "play.fill")
                         .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 14).padding(.vertical, 8)
-                        .glass(cornerRadius: 18, interactive: true)
-                    VStack(alignment: .leading, spacing: 4) {
+                        .padding(.horizontal, 16).padding(.vertical, 9)
+                        .glass(cornerRadius: 20, interactive: true)
+                    VStack(alignment: .leading, spacing: 5) {
                         ProgressView(value: entry.progress).tint(.white)
                         Text("\(PlayerModel.format(max(0, entry.duration - entry.position))) left")
-                            .font(.caption2.monospacedDigit()).foregroundStyle(.white.opacity(0.8))
+                            .font(.caption2.monospacedDigit()).foregroundStyle(.white.opacity(0.75))
                     }
                 }
             }
             .foregroundStyle(.white)
-            .padding(16)
+            .padding(18)
         }
-        .frame(height: 210)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.08)))
-        .onAppear { thumb.load(key: entry.item.id, fileURL: entry.item.resolvedURL?.isFileURL == true ? entry.item.resolvedURL : nil, artwork: entry.item.artwork) }
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08)))
+        .onAppear {
+            thumb.load(key: entry.item.id, fileURL: entry.item.resolvedURL?.isFileURL == true ? entry.item.resolvedURL : nil,
+                       artwork: entry.item.artwork, lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title)
+        }
     }
 }
 
@@ -281,7 +313,8 @@ struct MediaTile: View {
     let subtitle: String
     let key: String
     let fileURL: URL?
-    let artwork: String?
+    var artwork: String? = nil
+    var lookupName: String? = nil
     let progress: Double?
     @StateObject private var thumb = ThumbLoader()
 
@@ -290,11 +323,8 @@ struct MediaTile: View {
             ZStack(alignment: .bottomLeading) {
                 Color.clear.aspectRatio(16.0 / 9.0, contentMode: .fit)
                     .overlay {
-                        if let img = thumb.image {
-                            Image(uiImage: img).resizable().scaledToFill()
-                        } else {
-                            GeneratedArt(seed: title)
-                        }
+                        if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+                        else { GeneratedArt(seed: title) }
                     }
                     .clipped()
                 if let progress, progress > 0.01 {
@@ -305,41 +335,36 @@ struct MediaTile: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
-            Text(subtitle).font(.caption2.weight(.medium)).foregroundStyle(.secondary)
+            Text(thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)
+            Text(thumb.meta?.episodeTitle ?? subtitle).font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
         }
-        .onAppear { thumb.load(key: key, fileURL: fileURL, artwork: artwork) }
+        .onAppear { thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName) }
     }
 }
 
-/// Deterministic gradient art for items without a thumbnail.
 struct GeneratedArt: View {
     let seed: String
     var body: some View {
         let h = Double(abs(seed.hashValue % 360)) / 360
         ZStack {
-            LinearGradient(colors: [Color(hue: h, saturation: 0.55, brightness: 0.45),
-                                    Color(hue: (h + 0.12).truncatingRemainder(dividingBy: 1), saturation: 0.6, brightness: 0.18)],
+            LinearGradient(colors: [Color(hue: h, saturation: 0.5, brightness: 0.42),
+                                    Color(hue: (h + 0.12).truncatingRemainder(dividingBy: 1), saturation: 0.6, brightness: 0.16)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
-            Text(String(seed.prefix(1)).uppercased())
-                .font(.system(size: 40, weight: .heavy, design: .rounded))
-                .foregroundStyle(.white.opacity(0.18))
+            Image(systemName: "film").font(.system(size: 28, weight: .light)).foregroundStyle(.white.opacity(0.25))
         }
     }
 }
 
-struct Chip: View {
+struct PrimaryChip: View {
     let icon: String
     let title: String
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 7) {
-                Image(systemName: icon).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.accent)
-                Text(title).font(.subheadline.weight(.semibold))
-            }
-            .padding(.horizontal, 14).padding(.vertical, 10)
-            .glass(cornerRadius: 20, interactive: true)
+            Label(title, systemImage: icon).font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 14).padding(.vertical, 10)
+                .background(Theme.accent, in: Capsule())
+                .foregroundStyle(.white)
         }
         .buttonStyle(.plain)
     }
@@ -349,14 +374,30 @@ struct SourceCard: View {
     let title: String
     let subtitle: String
     let icon: String
-    let tint: Color
+    let host: String?
+    var dashed = false
+    @StateObject private var brand = BrandIconLoader()
+
+    init(title: String, subtitle: String, icon: String, host: String?, dashed: Bool = false) {
+        self.title = title; self.subtitle = subtitle; self.icon = icon; self.host = host; self.dashed = dashed
+    }
+
+    init(server: WebDAVServer) {
+        self.init(title: server.name, subtitle: server.base?.host ?? server.baseURL, icon: "externaldrive.connected.to.line.below", host: server.base?.host)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 40, height: 40)
-                .background(tint.gradient, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        VStack(alignment: .leading, spacing: 14) {
+            ZStack {
+                if let img = brand.image {
+                    Image(uiImage: img).resizable().scaledToFit().frame(width: 40, height: 40)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                } else {
+                    Image(systemName: icon).font(.system(size: 18, weight: .semibold))
+                        .frame(width: 40, height: 40)
+                        .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
                 Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -364,7 +405,14 @@ struct SourceCard: View {
         }
         .frame(width: 150, alignment: .leading)
         .padding(14)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(Theme.card.opacity(dashed ? 0.4 : 1), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            if dashed {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [5, 4])).foregroundStyle(.white.opacity(0.25))
+            }
+        }
+        .onAppear { brand.load(host: host) }
     }
 }
 
@@ -375,19 +423,16 @@ struct HistoryRow: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                if let img = thumb.image {
-                    Image(uiImage: img).resizable().scaledToFill()
-                } else {
-                    GeneratedArt(seed: entry.item.displayTitle)
-                }
+                if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+                else { GeneratedArt(seed: entry.item.displayTitle) }
             }
             .frame(width: 96, height: 54)
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             VStack(alignment: .leading, spacing: 3) {
-                Text(entry.item.displayTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
+                Text(thumb.meta?.name ?? entry.item.displayTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
                 HStack(spacing: 6) {
                     Image(systemName: icon)
-                    if let s = entry.item.subtitle { Text(s).lineLimit(1) }
+                    if let s = entry.item.subtitle ?? thumb.meta?.episodeTitle { Text(s).lineLimit(1) }
                     Text(entry.updated, style: .relative)
                 }
                 .font(.caption).foregroundStyle(.secondary)
@@ -400,13 +445,16 @@ struct HistoryRow: View {
         }
         .padding(8)
         .background(Theme.card.opacity(0.7), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .onAppear { thumb.load(key: entry.item.id, fileURL: nil, artwork: entry.item.artwork) }
+        .onAppear {
+            thumb.load(key: entry.item.id, fileURL: nil, artwork: entry.item.artwork,
+                       lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title)
+        }
     }
 
     private var icon: String {
         switch entry.item.source {
-        case .webdav: return "server.rack"
-        case .addon: return "puzzlepiece.extension.fill"
+        case .webdav: return "externaldrive.connected.to.line.below"
+        case .addon: return "puzzlepiece.extension"
         case .local: return "iphone"
         case .url: return "link"
         }
@@ -425,6 +473,14 @@ struct OpenURLSheet: View {
                 Section {
                     TextField("https://, rtsp://, smb://, ftp://…", text: $url, axis: .vertical)
                         .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .onDrop(of: [.url, .text], isTargeted: nil) { providers in
+                            if let p = providers.first {
+                                _ = p.loadObject(ofClass: URL.self) { u, _ in
+                                    if let u { DispatchQueue.main.async { url = u.absoluteString } }
+                                }
+                            }
+                            return true
+                        }
                     Button("Paste") { url = UIPasteboard.general.string ?? "" }
                 } header: { Text("Stream URL") } footer: { Text("HTTP(S), HLS (.m3u8), DASH, RTSP, RTMP, FTP, SMB and SFTP.") }
                 Section("Optional headers") {
@@ -434,6 +490,7 @@ struct OpenURLSheet: View {
             }
             .navigationTitle("Open URL")
             .navigationBarTitleDisplayMode(.inline)
+            .interactiveDismissDisabled(!url.isEmpty)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -442,9 +499,9 @@ struct OpenURLSheet: View {
                         if !userAgent.isEmpty { m.headers["User-Agent"] = userAgent }
                         if !referer.isEmpty { m.headers["Referer"] = referer }
                         dismiss()
-                        PlayerPresenter.play(m)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { PlayerPresenter.play(m) }
                     }
-                    .disabled(url.isEmpty)
+                    .disabled(URL(string: url.trimmingCharacters(in: .whitespacesAndNewlines))?.scheme == nil)
                 }
             }
         }

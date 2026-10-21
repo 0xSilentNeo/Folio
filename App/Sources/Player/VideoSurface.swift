@@ -75,6 +75,7 @@ struct VideoSurface: UIViewRepresentable {
         }
 
         @objc private func singleTap(_ g: UITapGestureRecognizer) {
+            if ui.panel != nil { ui.closePanel(); return }
             if ui.showInfo { ui.showInfo = false; return }
             if ui.showConsole { ui.showConsole = false; return }
             withAnimation(.easeOut(duration: 0.2)) { ui.toggleControls() }

@@ -4,10 +4,24 @@ import SwiftUI
 /// UI-only state for the player screen.
 @MainActor
 final class PlayerUIState: ObservableObject {
+    enum Panel: String, Identifiable { case settings, tracks, nowPlaying; var id: String { rawValue } }
+
     @Published var controlsVisible = true
     @Published var locked = false
     @Published var showInfo = false
+    @Published var panel: Panel?
     var menuOpen = false
+
+    func toggle(_ p: Panel) {
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) { panel = panel == p ? nil : p }
+        if panel == nil { scheduleHide() } else { showControls(autoHide: false) }
+    }
+
+    func closePanel() {
+        guard panel != nil else { return }
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) { panel = nil }
+        scheduleHide()
+    }
     @Published var scrubbing = false
     @Published var scrubTime: Double?
     @Published var gestureHUD: GestureHUD?
@@ -35,7 +49,7 @@ final class PlayerUIState: ObservableObject {
     func scheduleHide(after seconds: Double = 4) {
         hideWork?.cancel()
         let w = DispatchWorkItem { [weak self] in
-            guard let self, !self.showInfo, !self.scrubbing, !self.showConsole, !self.menuOpen else { return }
+            guard let self, !self.showInfo, !self.scrubbing, !self.showConsole, !self.menuOpen, self.panel == nil else { return }
             withAnimation(.easeOut(duration: 0.25)) { self.controlsVisible = false }
         }
         hideWork = w
@@ -73,7 +87,8 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
         // Start once the video surface has its real size (the Metal
         // swapchain is created from it).
         model.start()
-        if UserDefaults.standard.bool(forKey: SettingsKey.landscapeOnOpen), UIDevice.current.userInterfaceIdiom == .phone {
+        if UserDefaults.standard.bool(forKey: SettingsKey.landscapeOnOpen), UIDevice.current.userInterfaceIdiom == .phone,
+           model.videoSize == .zero || model.videoSize.width >= model.videoSize.height {
             requestOrientation(.landscape)
         }
     }
@@ -84,10 +99,9 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
     override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge { .all }
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask { orientationMask }
 
-    func closePlayer() {
+    func closePlayer(animated: Bool = true) {
         model.close()
-        if UIDevice.current.userInterfaceIdiom == .phone { requestOrientation(.portrait) }
-        dismiss(animated: true)
+        PlayerPresenter.dismiss(animated: animated)
     }
 
     private func setRotationLocked(_ locked: Bool) {
@@ -205,46 +219,65 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
     }
 }
 
-/// Presents the player full screen from anywhere.
+/// Shows the player in its own window above the app. A separate window
+/// never depends on whatever view controller happens to be mid-transition
+/// (document picker closing, sheet dismissing), which is what used to make
+/// "Open file" silently do nothing.
 @MainActor
 enum PlayerPresenter {
+    private static var window: UIWindow?
+    private(set) static var current: PlayerViewController?
+
     static func play(_ item: MediaItem) { play(queue: [item], index: 0) }
 
     static func play(queue: [MediaItem], index: Int) {
-        guard let model = PlayerModel(queue: queue.map { $0.preparedForPlayback() }, startIndex: index) else { return }
+        dlog("player", "play requested: \(queue.count) item(s), index \(index), first=\(queue.first?.mpvPath ?? "")")
+        if let existing = current {
+            dlog("player", "closing previous player first")
+            existing.closePlayer(animated: false)
+        }
+        guard let model = PlayerModel(queue: queue.map { $0.preparedForPlayback() }, startIndex: index) else {
+            dlog("player/error", "could not create PlayerModel")
+            return
+        }
+        guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first(where: { $0.activationState == .foregroundActive })
+                ?? UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else {
+            dlog("player/error", "no window scene")
+            return
+        }
         let vc = PlayerViewController(model: model)
-        present(vc, attempt: 0)
+        let w = PlayerWindowMarker(windowScene: scene)
+        w.windowLevel = .normal + 1
+        w.backgroundColor = .black
+        w.rootViewController = vc
+        w.alpha = 0
+        w.makeKeyAndVisible()
+        window = w
+        current = vc
+        UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut]) { w.alpha = 1 }
     }
 
-    /// Presents as soon as nothing else is mid-transition. Opening a file
-    /// from the document picker, the share sheet or a cold launch from the
-    /// Files app all call in while another presentation is still animating,
-    /// which UIKit silently refuses.
-    private static func present(_ vc: PlayerViewController, attempt: Int) {
-        guard attempt < 40 else { return }
-        func retry() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { present(vc, attempt: attempt + 1) }
+    static func dismiss(animated: Bool) {
+        guard let w = window else { return }
+        let done = {
+            w.isHidden = true
+            w.rootViewController = nil
+            if window === w { window = nil }
+            current = nil
+            // Give focus back to the app window.
+            UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first { !($0 is PlayerWindowMarker) }?.makeKey()
         }
-        guard let top = topViewController(), top.view.window != nil else { return retry() }
-        if top.isBeingPresented || top.isBeingDismissed || top.transitionCoordinator != nil {
-            return retry()
-        }
-        if let existing = top as? PlayerViewController {
-            existing.closePlayer()
-            return retry()
-        }
-        if top is UIDocumentPickerViewController || top is UIActivityViewController {
-            top.dismiss(animated: true)
-            return retry()
-        }
-        top.present(vc, animated: true)
+        if animated { UIView.animate(withDuration: 0.2, animations: { w.alpha = 0 }, completion: { _ in done() }) } else { done() }
     }
 
     static func topViewController() -> UIViewController? {
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let window = scenes.flatMap(\.windows).first { $0.isKeyWindow } ?? scenes.first?.windows.first
+        let windows = scenes.flatMap(\.windows).filter { $0 !== window }
+        let window = windows.first { $0.isKeyWindow } ?? windows.first
         var vc = window?.rootViewController
         while let presented = vc?.presentedViewController { vc = presented }
         return vc
     }
 }
+
+private class PlayerWindowMarker: UIWindow {}

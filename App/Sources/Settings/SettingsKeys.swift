@@ -42,6 +42,11 @@ enum SettingsKey {
     static let renderer = "renderer"            // "metal" | "gl"
     static let hdrOutput = "hdrOutput"
     static let surroundAudio = "surroundAudio"
+    static let anime4kMode = "anime4kMode"
+    static let anime4kQuality = "anime4kQuality"
+    static let enhancedQuality = "enhancedQuality"
+    static let audioBoost = "audioBoost"          // 0 | 50 | 100 (percent)
+    static let playbackMode = "playbackMode"      // playlist | single | loop
     static let logLevel = "logLevel"
 
     // Library
@@ -81,6 +86,11 @@ enum SettingsKey {
             renderer: "metal",
             hdrOutput: true,
             surroundAudio: true,
+            anime4kMode: "off",
+            anime4kQuality: "fast",
+            enhancedQuality: false,
+            audioBoost: 0,
+            playbackMode: "playlist",
             logLevel: "info",
             cleanTitles: true,
             showOnlyMedia: false,

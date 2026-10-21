@@ -24,6 +24,9 @@ targets:
       - path: App/Resources/defaults
         type: folder
         buildPhase: resources
+      - path: App/Resources/shaders
+        type: folder
+        buildPhase: resources
       - path: App/Assets.xcassets
     info:
       path: App/Info.plist

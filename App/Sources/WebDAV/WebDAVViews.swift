@@ -93,6 +93,7 @@ struct ServerEditView: View {
                     Button("Save") {
                         server.password = password
                         ServerStore.shared.upsert(server)
+                        if let host = server.base?.host { Task { _ = await BrandIcon.fetch(host) } }
                         dismiss()
                     }
                     .disabled(server.base == nil)
@@ -276,16 +277,26 @@ struct DAVRow: View {
     let item: DAVItem
     let clean: Bool
     let entry: HistoryEntry?
+    @StateObject private var thumb = ThumbLoader()
 
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10).fill(item.isDirectory ? Theme.accentSoft : Theme.card)
-                Image(systemName: icon).foregroundStyle(item.isDirectory ? Theme.accent : .white.opacity(0.8))
+                if item.isMedia, let img = thumb.image {
+                    Image(uiImage: img).resizable().scaledToFill()
+                        .frame(width: 72, height: 42)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                } else {
+                    RoundedRectangle(cornerRadius: 10).fill(item.isDirectory ? Theme.accentSoft : Theme.card)
+                        .frame(width: item.isMedia ? 72 : 40, height: item.isMedia ? 42 : 40)
+                    Image(systemName: icon).foregroundStyle(item.isDirectory ? Theme.accent : .white.opacity(0.8))
+                }
             }
-            .frame(width: 40, height: 40)
+            .frame(width: item.isMedia ? 72 : 40, height: item.isMedia ? 42 : 40)
+            .onAppear { if item.isMedia && clean { thumb.load(key: item.url.absoluteString, fileURL: nil, artwork: nil, lookupName: item.name) } }
             VStack(alignment: .leading, spacing: 3) {
-                Text(displayName).font(.subheadline.weight(.medium)).lineLimit(2)
+                Text(item.isMedia && clean ? (thumb.meta.map { m in m.episodeTitle.map { "\(m.name) · \($0)" } ?? m.name } ?? displayName) : displayName)
+                    .font(.subheadline.weight(.medium)).lineLimit(2)
                 HStack(spacing: 6) {
                     if let size = item.size, !item.isDirectory { Text(size.byteString) }
                     if let d = item.modified { Text(d, format: .dateTime.day().month().year()) }

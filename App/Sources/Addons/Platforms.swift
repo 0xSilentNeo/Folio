@@ -78,155 +78,190 @@ enum PlatformCatalogs {
 
 // MARK: - Discover
 
+/// Browse filters for the main grid (Cinemeta: popular / top rated / new).
 @MainActor
-final class DiscoverModel: ObservableObject {
-    @Published var trending: [(meta: MetaItem, platform: StreamingPlatform)] = []
-    @Published var top10Shows: [MetaItem] = []
-    @Published var top10Movies: [MetaItem] = []
-    @Published var rows: [String: [MetaItem]] = [:]
-    @Published var loaded = false
+final class BrowseModel: ObservableObject {
+    enum Sort: String, CaseIterable, Identifiable {
+        case trending, topRated, new
+        var id: String { rawValue }
+        var title: String { self == .trending ? "Trending" : self == .topRated ? "Top Rated" : "New" }
+        var catalog: String { self == .trending ? "top" : self == .topRated ? "imdbRating" : "year" }
+    }
+    static let genres = ["Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy",
+                         "History", "Horror", "Music", "Mystery", "Romance", "Sci-Fi", "Sport", "Thriller", "War", "Western"]
+    static let years: [String] = (0..<30).map { String(Calendar.current.component(.year, from: Date()) - $0) }
 
-    func load(force: Bool = false) async {
-        if loaded && !force { return }
-        let platforms = StreamingPlatform.enabled
-        async let shows = PlatformCatalogs.catalog(type: "series", id: "netflix-top10-global")
-        async let movies = PlatformCatalogs.catalog(type: "movie", id: "netflix-top10-global")
-        var newRows: [String: [MetaItem]] = [:]
-        await withTaskGroup(of: (String, [MetaItem]).self) { g in
-            for p in platforms { g.addTask { (p.id, await PlatformCatalogs.mixed(p.id)) } }
-            for await (id, metas) in g {
-                newRows[id] = metas
-                rows[id] = metas
-            }
-        }
-        let sh = await shows
-        let mv = await movies
-        top10Shows = Array(sh.prefix(10))
-        top10Movies = Array(mv.prefix(10))
-        // Trending everywhere: the top picks of each platform, round-robin.
-        var t: [(MetaItem, StreamingPlatform)] = []
-        var seen = Set<String>()
-        for i in 0..<3 {
-            for p in platforms {
-                if let list = newRows[p.id], i < list.count, list[i].background != nil, seen.insert(list[i].id).inserted {
-                    t.append((list[i], p))
-                }
-            }
-        }
-        trending = Array(t.prefix(12)).map { (meta: $0.0, platform: $0.1) }
-        loaded = true
+    @Published var sort: Sort = .trending { didSet { reload() } }
+    @Published var type = "movie" { didSet { reload() } }
+    @Published var genre: String? { didSet { reload() } }
+    @Published var year: String = BrowseModel.years[0] { didSet { if sort == .new { reload() } } }
+    @Published var metas: [MetaItem] = []
+    @Published var loading = false
+    private var exhausted = false
+    private var generation = 0
+
+    private var addon: InstalledAddon? {
+        AddonStore.shared.addons.first { $0.transportURL == AddonStore.cinemeta } ?? AddonStore.shared.addons.first { $0.manifest.id == "com.linvo.cinemeta" }
+    }
+
+    func reload() {
+        metas = []; exhausted = false
+        Task { await loadMore() }
+    }
+
+    func loadMore() async {
+        guard !loading, !exhausted, let addon else { return }
+        generation += 1
+        let gen = generation
+        loading = true
+        defer { loading = false }
+        guard let cat = addon.manifest.catalogs.first(where: { $0.id == sort.catalog && $0.type == type }) else { return }
+        var extra: [String: String] = [:]
+        if sort == .new { extra["genre"] = year } else if let genre { extra["genre"] = genre }
+        if !metas.isEmpty { extra["skip"] = String(metas.count) }
+        let page = (try? await AddonAPI.catalog(addon, cat, extra: extra)) ?? []
+        guard gen == generation else { return }
+        let known = Set(metas.map(\.id))
+        let fresh = page.filter { !known.contains($0.id) }
+        if fresh.isEmpty { exhausted = true }
+        metas += fresh
     }
 }
 
 struct DiscoverView: View {
     @ObservedObject private var store = AddonStore.shared
-    @StateObject private var model = DiscoverModel()
+    @StateObject private var browse = BrowseModel()
     @State private var showPlatformSettings = false
-    @State private var heroIndex = 0
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 28) {
-                    header
-                    platformStrip
-                    if !model.trending.isEmpty { hero } else if !model.loaded { heroPlaceholder }
-                    if !model.top10Shows.isEmpty { RankedRow(title: "Top 10 Shows on Netflix", metas: model.top10Shows) }
-                    if !model.top10Movies.isEmpty { RankedRow(title: "Top 10 Movies on Netflix", metas: model.top10Movies) }
-                    ForEach(StreamingPlatform.enabled) { p in
-                        PlatformSection(platform: p, metas: model.rows[p.id] ?? [], loaded: model.loaded || model.rows[p.id] != nil)
-                    }
-                    if !addonRows.isEmpty {
-                        Text("From your addons").font(.title3.weight(.bold)).padding(.horizontal, 20).padding(.top, 8)
-                        ForEach(addonRows, id: \.key) { row in
-                            CatalogRow(addon: row.addon, catalog: row.catalog)
+            GeometryReader { geo in
+                let margin: CGFloat = geo.size.width > 700 ? 28 : 20
+                let cols = max(3, Int((geo.size.width - margin * 2 + 12) / 122))
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 24) {
+                        header(margin)
+                        platformStrip(margin)
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(gridTitle).font(.title3.weight(.bold))
+                            Spacer()
+                            if browse.loading && browse.metas.isEmpty { ProgressView() }
+                        }
+                        .padding(.horizontal, margin)
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: cols), spacing: 18) {
+                            ForEach(browse.metas) { m in
+                                NavigationLink { MetaDetailView(preview: m, sourceAddon: nil) } label: { PosterCard(meta: m, width: nil) }
+                                    .buttonStyle(.plain)
+                                    .onAppear { if m.id == browse.metas.last?.id { Task { await browse.loadMore() } } }
+                            }
+                        }
+                        .padding(.horizontal, margin)
+                        if browse.loading && !browse.metas.isEmpty { ProgressView().frame(maxWidth: .infinity) }
+                        if !browse.loading && browse.metas.isEmpty {
+                            Text(store.addons.isEmpty ? "Install Cinemeta in Addons to browse." : "Nothing here.")
+                                .foregroundStyle(.secondary).padding(.horizontal, margin)
                         }
                     }
+                    .padding(.top, 6)
+                    .padding(.bottom, 90)
                 }
-                .padding(.vertical, 8)
-                .padding(.bottom, 24)
+                .scrollIndicators(.hidden)
             }
-            .scrollIndicators(.hidden)
-            .background(Theme.background.ignoresSafeArea())
+            .background(HomeBackdrop().ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
-            .refreshable { await model.load(force: true) }
-            .task { await model.load() }
-            .sheet(isPresented: $showPlatformSettings, onDismiss: { Task { await model.load(force: true) } }) {
-                PlatformSettingsView()
-            }
+            .safeAreaInset(edge: .bottom) { filterBar }
+            .task { if browse.metas.isEmpty { await browse.loadMore() } }
+            .onChange(of: store.addons.count) { _, _ in if browse.metas.isEmpty { browse.reload() } }
+            .sheet(isPresented: $showPlatformSettings) { PlatformSettingsView() }
         }
     }
 
-    private var header: some View {
-        HStack {
-            Text("Discover").font(.system(size: 30, weight: .bold, design: .rounded))
+    private var gridTitle: String {
+        let t = browse.type == "movie" ? "Movies" : "Series"
+        switch browse.sort {
+        case .new: return "New \(t) · \(browse.year)"
+        case .topRated: return "Top Rated \(t)" + (browse.genre.map { " · \($0)" } ?? "")
+        case .trending: return "Trending \(t)" + (browse.genre.map { " · \($0)" } ?? "")
+        }
+    }
+
+    private func header(_ margin: CGFloat) -> some View {
+        HStack(spacing: 10) {
+            Text("Discover").font(.system(size: 28, weight: .bold, design: .rounded))
             Spacer()
             NavigationLink { AddonSearchView() } label: {
-                Image(systemName: "magnifyingglass").font(.system(size: 16, weight: .bold)).frame(width: 42, height: 42).glassCircle()
+                Image(systemName: "magnifyingglass").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
             .buttonStyle(.plain)
             Menu {
-                Button { showPlatformSettings = true } label: { Label("Choose services", systemImage: "square.grid.2x2") }
+                Button { showPlatformSettings = true } label: { Label("Streaming services", systemImage: "rectangle.grid.2x2") }
                 NavigationLink { AddonsManagerView() } label: { Label("Addons", systemImage: "puzzlepiece.extension") }
             } label: {
-                Image(systemName: "slider.horizontal.3").font(.system(size: 16, weight: .bold)).frame(width: 42, height: 42).glassCircle()
+                Image(systemName: "ellipsis").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, margin)
         .padding(.top, 8)
     }
 
-    private var platformStrip: some View {
+    private func platformStrip(_ margin: CGFloat) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 14) {
                 ForEach(StreamingPlatform.enabled) { p in
                     NavigationLink { PlatformDetailView(platform: p) } label: {
                         VStack(spacing: 6) {
-                            PlatformBadge(platform: p, size: 58)
+                            PlatformBadge(platform: p, size: 56)
                             Text(p.name).font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
                         }
-                        .frame(width: 70)
+                        .frame(width: 68)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, margin)
         }
     }
 
-    private var hero: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Trending Everywhere").font(.title3.weight(.bold)).padding(.horizontal, 20)
-            TabView(selection: $heroIndex) {
-                ForEach(Array(model.trending.enumerated()), id: \.offset) { i, t in
-                    NavigationLink { MetaDetailView(preview: t.meta, sourceAddon: nil) } label: {
-                        TrendingCard(meta: t.meta, platform: t.platform)
+    /// Floating Liquid Glass filter bar.
+    private var filterBar: some View {
+        HStack(spacing: 6) {
+            SegmentPicker(options: [("movie", "Movies"), ("series", "Series")], selection: $browse.type)
+            Menu {
+                Picker("Sort", selection: $browse.sort) { ForEach(BrowseModel.Sort.allCases) { Text($0.title).tag($0) } }
+            } label: { FilterChip(title: browse.sort.title, active: true) }
+            if browse.sort == .new {
+                Menu {
+                    Picker("Year", selection: $browse.year) { ForEach(BrowseModel.years, id: \.self) { Text($0).tag($0) } }
+                } label: { FilterChip(title: browse.year, active: true) }
+            } else {
+                Menu {
+                    Button { browse.genre = nil } label: { browse.genre == nil ? Label("All genres", systemImage: "checkmark") : Label("All genres", systemImage: "circle") }
+                    Divider()
+                    ForEach(BrowseModel.genres, id: \.self) { g in
+                        Button { browse.genre = g } label: { if browse.genre == g { Label(g, systemImage: "checkmark") } else { Text(g) } }
                     }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 20)
-                    .tag(i)
-                }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .automatic))
-            .frame(height: 250)
-        }
-    }
-
-    private var heroPlaceholder: some View {
-        RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Theme.card)
-            .frame(height: 220)
-            .overlay(ProgressView())
-            .padding(.horizontal, 20)
-    }
-
-    private struct Row { let key: String; let addon: InstalledAddon; let catalog: AddonManifest.Catalog }
-
-    private var addonRows: [Row] {
-        store.addons.flatMap { a in
-            a.manifest.catalogs.filter(\.isBrowsable).prefix(8).map { c in
-                Row(key: a.id + c.type + c.id, addon: a, catalog: c)
+                } label: { FilterChip(title: browse.genre ?? "Genre", active: browse.genre != nil) }
             }
         }
+        .padding(6)
+        .glass(cornerRadius: 28, interactive: true)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 6)
+        .tint(Theme.accent)
+    }
+}
+
+struct FilterChip: View {
+    let title: String
+    let active: Bool
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
+            Image(systemName: "chevron.down").font(.caption2.weight(.bold))
+        }
+        .foregroundStyle(active ? .white : .white.opacity(0.7))
+        .padding(.horizontal, 12).frame(height: 38)
+        .background(active ? Color.white.opacity(0.14) : Color.clear, in: Capsule())
     }
 }
 
@@ -244,111 +279,6 @@ struct PlatformBadge: View {
         }
         .frame(width: size, height: size)
         .overlay(Circle().strokeBorder(.white.opacity(0.15)))
-    }
-}
-
-struct TrendingCard: View {
-    let meta: MetaItem
-    let platform: StreamingPlatform
-
-    var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            PosterImage(url: meta.background ?? meta.poster, aspect: 16.0 / 9.0, cornerRadius: 0)
-                .frame(maxWidth: .infinity)
-            LinearGradient(colors: [.clear, .black.opacity(0.9)], startPoint: .center, endPoint: .bottom)
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    PlatformBadge(platform: platform, size: 22)
-                    Text(platform.name).font(.caption.weight(.bold))
-                }
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .glass(cornerRadius: 14)
-                if let logo = meta.logo, let u = URL(string: logo) {
-                    AsyncImage(url: u) { img in img.resizable().scaledToFit() } placeholder: {
-                        Text(meta.name).font(.title2.weight(.heavy))
-                    }
-                    .frame(maxWidth: 200, maxHeight: 56, alignment: .leading)
-                } else {
-                    Text(meta.name).font(.title2.weight(.heavy)).lineLimit(2)
-                }
-                Text([meta.type == "series" ? "Series" : "Movie", meta.releaseInfo, meta.genres?.first].compactMap { $0 }.joined(separator: " · "))
-                    .font(.caption).foregroundStyle(.white.opacity(0.8))
-            }
-            .foregroundStyle(.white)
-            .padding(16)
-        }
-        .frame(height: 230)
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08)))
-    }
-}
-
-struct RankedRow: View {
-    let title: String
-    let metas: [MetaItem]
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title).font(.title3.weight(.bold)).padding(.horizontal, 20)
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 4) {
-                    ForEach(Array(metas.enumerated()), id: \.element.id) { i, m in
-                        NavigationLink { MetaDetailView(preview: m, sourceAddon: nil) } label: {
-                            HStack(alignment: .bottom, spacing: -14) {
-                                Text("\(i + 1)")
-                                    .font(.system(size: 96, weight: .black, design: .rounded))
-                                    .foregroundStyle(.clear)
-                                    .overlay(
-                                        Text("\(i + 1)").font(.system(size: 96, weight: .black, design: .rounded))
-                                            .foregroundStyle(LinearGradient(colors: [.white.opacity(0.9), .white.opacity(0.25)], startPoint: .top, endPoint: .bottom))
-                                    )
-                                    .offset(y: 14)
-                                PosterImage(url: m.poster).frame(width: 112)
-                                    .shadow(color: .black.opacity(0.5), radius: 8, x: -4)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 20)
-            }
-        }
-    }
-}
-
-struct PlatformSection: View {
-    let platform: StreamingPlatform
-    let metas: [MetaItem]
-    let loaded: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                PlatformBadge(platform: platform, size: 30)
-                Text(platform.name).font(.title3.weight(.bold))
-                Spacer()
-                NavigationLink { PlatformDetailView(platform: platform) } label: {
-                    Text("See all").font(.subheadline.weight(.semibold)).foregroundStyle(platform.color == Color(white: 0.55) ? Theme.accent : platform.color)
-                }
-            }
-            .padding(.horizontal, 20)
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 12) {
-                    if metas.isEmpty {
-                        ForEach(0..<6, id: \.self) { _ in
-                            RoundedRectangle(cornerRadius: 12).fill(Theme.card).frame(width: 118, height: 177)
-                                .overlay { if loaded { EmptyView() } else { ProgressView() } }
-                        }
-                    }
-                    ForEach(metas) { m in
-                        NavigationLink { MetaDetailView(preview: m, sourceAddon: nil) } label: {
-                            PosterCard(meta: m, width: 118)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 20)
-            }
-        }
     }
 }
 

@@ -1,4 +1,5 @@
 import UIKit
+import SwiftUI
 import UniformTypeIdentifiers
 import AVFoundation
 
@@ -15,10 +16,13 @@ final class DocumentPicker: NSObject, UIDocumentPickerDelegate {
         picker.shouldShowFileExtensions = true
         picker.delegate = self
         self.completion = completion
-        PlayerPresenter.topViewController()?.present(picker, animated: true)
+        guard let top = PlayerPresenter.topViewController() else { dlog("open/error", "no view controller to present picker"); return }
+        dlog("open", "presenting document picker from \(type(of: top))")
+        top.present(picker, animated: true)
     }
 
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        dlog("open", "picker returned \(urls.count) url(s)")
         let cb = completion
         completion = nil
         cb?(urls)
@@ -44,12 +48,14 @@ enum FileOpener {
 
     static func open(_ urls: [URL]) {
         guard !urls.isEmpty else { return }
+        dlog("open", "open \(urls.count) url(s): \(urls.map { $0.lastPathComponent })")
         Task {
             var items: [MediaItem] = []
             for url in urls {
                 if let item = await prepare(url) { items.append(item) }
             }
             if items.isEmpty {
+                dlog("open/error", "no readable items")
                 showAlert("Couldn't open file", "iOS didn't give GlassPlayer access to the selected file. Try copying it to On My iPhone → GlassPlayer → Media.")
                 return
             }
@@ -65,9 +71,11 @@ enum FileOpener {
             if let coordinated = await coordinatedURL(url) { playURL = coordinated }
         }
         guard FileManager.default.fileExists(atPath: playURL.path) else {
+            dlog("open/error", "file not found after coordination: \(url.path) scoped=\(scoped)")
             if scoped { url.stopAccessingSecurityScopedResource() }
             return nil
         }
+        dlog("open", "prepared \(playURL.lastPathComponent) scoped=\(scoped) readable=\(FileManager.default.isReadableFile(atPath: playURL.path))")
         var m = MediaItem(url: playURL.path, title: TitleParser.clean(playURL.lastPathComponent), source: .local)
         if playURL == url, !url.path.hasPrefix(MPVFiles.documents.path) {
             m.bookmark = try? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
@@ -156,37 +164,50 @@ final class LocalMediaStore: ObservableObject {
     }
 }
 
-/// Async thumbnail: saved player frame → artwork URL → AVFoundation frame
-/// (MP4/MOV) → generated placeholder.
+/// Async artwork for a tile: saved player frame → explicit artwork →
+/// metadata lookup from the file name → embedded frame (MP4/MOV).
 @MainActor
 final class ThumbLoader: ObservableObject {
     @Published var image: UIImage?
+    @Published var meta: MediaMeta?
     private static let cache = NSCache<NSString, UIImage>()
+    private var loadedKey: String?
 
-    func load(key: String, fileURL: URL?, artwork: String?) {
-        if let c = Self.cache.object(forKey: key as NSString) { image = c; return }
-        if let img = ThumbnailStore.image(for: key) { set(img, key); return }
-        if let artwork, let u = URL(string: artwork) {
+    func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool = false) {
+        guard loadedKey != key else { return }
+        loadedKey = key
+        if let c = Self.cache.object(forKey: key as NSString) { image = c }
+        else if let img = ThumbnailStore.image(for: key), !preferMeta { set(img, key) }
+        if image == nil, let artwork, let u = URL(string: artwork) { fetch(u, key) }
+        if let lookupName {
             Task {
-                if let r = try? await URLSession.shared.data(from: u), let img = UIImage(data: r.0) { set(img, key) }
+                guard let m = await MetadataService.shared.lookup(filename: lookupName) else { return }
+                self.meta = m
+                if (self.image == nil || preferMeta), let art = m.wideArt, let u = URL(string: art) { self.fetch(u, key) }
             }
-            return
         }
-        guard let fileURL, ["mp4", "m4v", "mov"].contains(fileURL.pathExtension.lowercased()) else { return }
-        Task.detached(priority: .utility) {
-            let gen = AVAssetImageGenerator(asset: AVURLAsset(url: fileURL))
-            gen.appliesPreferredTrackTransform = true
-            gen.maximumSize = CGSize(width: 640, height: 360)
-            if let cg = try? await gen.image(at: CMTime(seconds: 30, preferredTimescale: 600)).image {
-                let img = UIImage(cgImage: cg)
-                if let data = img.jpegData(compressionQuality: 0.75) { try? data.write(to: ThumbnailStore.url(for: key)) }
-                await MainActor.run { self.set(img, key) }
+        if image == nil, artwork == nil, let fileURL, ["mp4", "m4v", "mov"].contains(fileURL.pathExtension.lowercased()) {
+            Task.detached(priority: .utility) {
+                let gen = AVAssetImageGenerator(asset: AVURLAsset(url: fileURL))
+                gen.appliesPreferredTrackTransform = true
+                gen.maximumSize = CGSize(width: 640, height: 360)
+                if let cg = try? await gen.image(at: CMTime(seconds: 30, preferredTimescale: 600)).image {
+                    let img = UIImage(cgImage: cg)
+                    if let data = img.jpegData(compressionQuality: 0.75) { try? data.write(to: ThumbnailStore.url(for: key)) }
+                    await MainActor.run { if self.image == nil { self.set(img, key) } }
+                }
             }
+        }
+    }
+
+    private func fetch(_ u: URL, _ key: String) {
+        Task {
+            if let r = try? await URLSession.shared.data(from: u), let img = UIImage(data: r.0) { set(img, key) }
         }
     }
 
     private func set(_ img: UIImage, _ key: String) {
         Self.cache.setObject(img, forKey: key as NSString)
-        image = img
+        withAnimation(.easeOut(duration: 0.25)) { image = img }
     }
 }
