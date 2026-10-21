@@ -22,6 +22,7 @@ final class Diagnostics: NSObject {
     private let heartbeatLock = NSLock()
     private var lastHeartbeat = Date()
     private var hangReported = false
+    private var isActive = true
     private static let fmt: DateFormatter = {
         let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "HH:mm:ss.SSS"; return f
     }()
@@ -50,6 +51,18 @@ final class Diagnostics: NSObject {
             try? ("[reported]\n" + last).write(to: crashLog, atomically: true, encoding: .utf8)
         }
         installCrashHandlers()
+        let nc = NotificationCenter.default
+        nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.heartbeatLock.lock(); self?.isActive = true; self?.lastHeartbeat = Date(); self?.heartbeatLock.unlock()
+            self?.log("app", "active")
+        }
+        nc.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.heartbeatLock.lock(); self?.isActive = false; self?.heartbeatLock.unlock()
+            self?.log("app", "resign active")
+        }
+        nc.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.log("app/warn", "memory warning")
+        }
         startWatchdog()
         MXMetricManager.shared.add(self)
     }
@@ -167,14 +180,13 @@ final class Diagnostics: NSObject {
                 Thread.sleep(forTimeInterval: 0.5)
                 guard let self else { return }
                 self.heartbeatLock.lock()
-                let stalled = Date().timeIntervalSince(self.lastHeartbeat)
+                let stalled = self.isActive ? Date().timeIntervalSince(self.lastHeartbeat) : 0
                 let reported = self.hangReported
                 if stalled > 1.0 && !reported { self.hangReported = true }
                 self.heartbeatLock.unlock()
                 if stalled > 1.0 && !reported {
-                    let stack = Thread.callStackSymbols.joined(separator: "\n")   // watchdog's own stack is not useful; log the stall
-                    self.log("hang", String(format: "main thread unresponsive for %.1f s (state=%d)", stalled, UIApplication.shared.applicationState.rawValue))
-                    let text = "\(Date()) main thread stalled \(String(format: "%.1f", stalled)) s\n\(stack)\n\n"
+                    self.log("hang", String(format: "main thread unresponsive for %.1f s", stalled))
+                    let text = "\(Date()) main thread stalled \(String(format: "%.1f", stalled)) s\n\n"
                     if let h = try? FileHandle(forWritingTo: self.hangLog) { try? h.seekToEnd(); h.write(text.data(using: .utf8)!); try? h.close() }
                     else { try? text.write(to: self.hangLog, atomically: true, encoding: .utf8) }
                 }

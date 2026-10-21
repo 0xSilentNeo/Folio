@@ -19,11 +19,14 @@
 - **Commands**: run any mpv command from the in-player console, or save buttons for script bindings (`script-binding …`) so touch users can trigger scripts
 - Hardware keyboards are forwarded to mpv, so `input.conf` and script key bindings work on iPad
 
-**Player UI (Outplayer-style, glass on iOS 26)**
+**Player UI (Outplayer-style, Liquid Glass)**
 - Double-tap to seek, swipe to scrub, swipe left/right edge for brightness/volume, pinch to fill, hold for 2× speed
-- Side panels for audio/subtitle tracks, delays, speed, chapters, shaders, commands, aspect ratio, media info
+- Three glass pills (transport · progress · panels); Tracks, Settings and Now Playing panels grow out of their buttons
+- Built-in Anime4K modes (A/B/C, A+A, B+B, C+A; Fast/Balanced/High), Enhanced Quality toggle, audio boost
 - Seek bar shows chapters, cache and skip markers; lock screen, rotation lock, AirPlay, screenshots
 - Resume playback, continue watching, autoplay next file in the folder
+- Metadata (posters, synopsis, episode names) looked up from file names via Cinemeta and cached
+- Diagnostics: app log, crash/hang capture and a redacted report zip (Settings → Advanced)
 
 **Active Picture in Picture**
 - Manual or automatic PiP when you leave the app, with play/pause/skip from the PiP window
