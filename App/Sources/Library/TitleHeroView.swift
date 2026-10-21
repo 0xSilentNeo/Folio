@@ -62,9 +62,9 @@ struct TitleHeroView: View {
                 }
             }
             .scrollIndicators(.hidden)
+            .ignoresSafeArea(edges: .top)
         }
         .background(HomeBackdrop().ignoresSafeArea())
-        .ignoresSafeArea(edges: .top)
         .toolbar(.hidden, for: .navigationBar)
         .overlay(alignment: .topLeading) { backButton }
         .overlay(alignment: .topTrailing) { moreButton }
