@@ -36,32 +36,37 @@ enum IMDbSource {
         let c = URLSessionConfiguration.default
         c.timeoutIntervalForRequest = 20
         c.httpCookieAcceptPolicy = .always
+        c.httpCookieStorage = .shared
         c.httpAdditionalHeaders = [
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": language + ",en;q=0.8",
         ]
         return URLSession(configuration: c)
     }()
 
+    /// Page HTML. Plain request first (with WebKit's user agent and the WAF
+    /// token cookie once we have one); when IMDb answers with its JavaScript
+    /// challenge (HTTP 202) the page is loaded through the hidden web view.
     private static func html(_ path: String, _ query: [String: String] = [:]) async -> String? {
         var comps = URLComponents(string: "https://www.imdb.com" + path)!
         if !query.isEmpty { comps.queryItems = query.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) } }
         guard let url = comps.url else { return nil }
+        await IMDbPageLoader.shared.ensureUserAgent()
         var req = URLRequest(url: url)
         req.setValue(language + ",en;q=0.8", forHTTPHeaderField: "Accept-Language")
+        if let ua = await IMDbPageLoader.shared.userAgent { req.setValue(ua, forHTTPHeaderField: "User-Agent") }
         do {
             let (data, resp) = try await session.data(for: req)
             let status = (resp as? HTTPURLResponse)?.statusCode ?? 0
-            guard status == 200, let s = String(data: data, encoding: .utf8) else {
-                dlog("imdb/error", "HTTP \(status) for \(path) (\(data.count) bytes)")
-                return nil
+            if status == 200, let s = String(data: data, encoding: .utf8), s.contains("__NEXT_DATA__") || s.contains("ld+json") {
+                return s
             }
-            return s
+            dlog("imdb", "HTTP \(status) for \(path) (\(data.count) bytes) → web view")
         } catch {
-            if !(error is CancellationError) { dlog("imdb/error", "\(path): \(error.localizedDescription)") }
-            return nil
+            if error is CancellationError { return nil }
+            dlog("imdb", "\(path): \(error.localizedDescription) → web view")
         }
+        if Task.isCancelled { return nil }
+        return await IMDbPageLoader.shared.load(url)
     }
 
     // MARK: - Cache
@@ -189,7 +194,9 @@ enum IMDbSource {
         if let hit = cached(key, ttl: 86400, as: [MetaItem].self) { return hit }
         let path = q.replacingOccurrences(of: " ", with: "_").addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? q
         guard let url = URL(string: "https://v3.sg.media-imdb.com/suggestion/x/\(path).json") else { return [] }
-        guard let r = try? await session.data(from: url), let res = try? JSONDecoder().decode(SuggestionResponse.self, from: r.0) else {
+        var req = URLRequest(url: url)
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        guard let r = try? await session.data(for: req), let res = try? JSONDecoder().decode(SuggestionResponse.self, from: r.0) else {
             dlog("imdb/error", "suggestion failed for \(q)")
             return []
         }

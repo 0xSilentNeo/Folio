@@ -4,15 +4,14 @@ import SwiftUI
 struct InfoCard: View {
     @ObservedObject var model: PlayerModel
     @ObservedObject var ui: PlayerUIState
+    var ns: Namespace.ID
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Media Info").font(.headline)
                 Spacer()
-                Button { ui.showInfo = false } label: {
-                    Image(systemName: "xmark.circle.fill").font(.title3).foregroundStyle(.white.opacity(0.6))
-                }
+                CloseDot { ui.showInfo = false }
             }
             if let v = model.tracks.first(where: { $0.type == "video" && $0.selected }) {
                 row("Video", v.detail)
@@ -26,25 +25,31 @@ struct InfoCard: View {
             row("Renderer", model.renderer == .metal ? "Metal (libplacebo)" : "OpenGL ES")
             row("Source", model.item.url)
             Button {
-                ui.showStats.toggle()
-                ui.showInfo = false
+                // The card morphs into the live stats card (matched geometry).
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.84)) {
+                    ui.showInfo = false
+                    ui.showStats = true
+                }
             } label: {
-                Label(ui.showStats ? "Hide live stats" : "Show live stats", systemImage: "waveform.path.ecg")
+                Label("Show live stats", systemImage: "waveform.path.ecg")
                     .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity).frame(height: 38)
+                    .background(.white.opacity(0.12), in: Capsule())
             }
-            .tint(Theme.accent)
+            .buttonStyle(PressStyle(scale: 0.96))
         }
         .foregroundStyle(.white)
         .padding(18)
         .frame(maxWidth: 420)
-        .background(.black.opacity(0.82), in: RoundedRectangle(cornerRadius: 20))
+        .glass(cornerRadius: 24)
+        .matchedGeometryEffect(id: "statcard", in: ns)
         .padding(20)
     }
 
     private func row(_ k: String, _ v: String) -> some View {
         HStack(alignment: .top) {
             Text(k).font(.caption).foregroundStyle(.white.opacity(0.55)).frame(width: 96, alignment: .leading)
-            Text(v).font(.caption).textSelection(.enabled).lineLimit(3)
+            Text(v).font(.caption).textSelection(.enabled).lineLimit(2)
             Spacer(minLength: 0)
         }
     }
@@ -171,9 +176,25 @@ final class StatsModel: ObservableObject {
     }
 }
 
+/// Small round close button used by the in-player cards.
+struct CloseDot: View {
+    let action: () -> Void
+    init(action: @escaping () -> Void) { self.action = action }
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "xmark").font(.system(size: 11, weight: .bold))
+                .frame(width: 28, height: 28).background(.white.opacity(0.15), in: Circle())
+                .contentShape(Circle())
+        }
+        .buttonStyle(PressStyle())
+        .foregroundStyle(.white)
+    }
+}
+
 struct StatsOverlay: View {
     @ObservedObject var model: PlayerModel
     @ObservedObject var ui: PlayerUIState
+    var ns: Namespace.ID
     @StateObject private var stats = StatsModel()
 
     var body: some View {
@@ -181,13 +202,9 @@ struct StatsOverlay: View {
             HStack {
                 VStack(alignment: .leading, spacing: 5) {
                     HStack {
-                        Text("Live stats").font(.system(size: 12, weight: .bold)).foregroundStyle(.white.opacity(0.8))
+                        Text("Live stats").font(.headline)
                         Spacer()
-                        Button { ui.showStats = false } label: {
-                            Image(systemName: "xmark").font(.system(size: 11, weight: .bold))
-                                .frame(width: 26, height: 26).background(.white.opacity(0.15), in: Circle())
-                        }
-                        .buttonStyle(PressStyle())
+                        CloseDot { withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { ui.showStats = false } }
                     }
                     .padding(.bottom, 4)
                     ForEach(stats.lines) { l in
@@ -199,9 +216,11 @@ struct StatsOverlay: View {
                 }
                 .font(.system(size: 11, weight: .medium, design: .monospaced))
                 .foregroundStyle(.white)
-                .padding(12)
-                .glass(cornerRadius: 16)
-                .padding(.leading, 20).padding(.top, 64)
+                .padding(16)
+                .frame(maxWidth: 480)
+                .glass(cornerRadius: 24)
+                .matchedGeometryEffect(id: "statcard", in: ns)
+                .padding(.leading, 20).padding(.top, 60)
                 Spacer()
             }
             Spacer()

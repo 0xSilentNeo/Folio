@@ -669,6 +669,8 @@ final class PlayerModel: ObservableObject {
     }
 
     func skip(_ segment: SkipSegment) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        showToast("Skipped \(segment.kind.chapterTitle.lowercased())")
         seek(to: segment.end)
         autoSkipped.insert(segment.id)
         skipSuppressedUntil = Date().addingTimeInterval(3)   // position still reads "inside" until the seek lands
@@ -679,6 +681,7 @@ final class PlayerModel: ObservableObject {
     func jump(to chapter: MediaChapter) { seek(to: chapter.time) }
 
     func addMarker() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
         let t = position
         var list = userMarkers
         list.append(UserMarker(time: t, title: "Marker \(list.count + 1) · \(Self.format(t))"))

@@ -12,6 +12,7 @@ struct PlayerScreen: View {
     var onRotationLock: (Bool) -> Void = { _ in }
 
     @State private var showSubtitlePicker = false
+    @Namespace private var cardNS
 
     var body: some View {
         GeometryReader { geo in
@@ -55,7 +56,10 @@ struct PlayerScreen: View {
                         .id("gesturehud")
                         .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
-                if ui.showStats { StatsOverlay(model: model, ui: ui).transition(.opacity) }
+                if ui.showStats {
+                    StatsOverlay(model: model, ui: ui, ns: cardNS)
+                        .transition(.scale(scale: 0.9, anchor: .topLeading).combined(with: .opacity))
+                }
                 if let toast = model.toast, ui.gestureHUD == nil, !model.holdSpeedActive {
                     topPill(Text(toast), top: geo.safeAreaInsets.top + (ui.controlsVisible ? 56 : 0))
                 }
@@ -66,9 +70,12 @@ struct PlayerScreen: View {
                 if let panel = ui.panel {
                     PlayerPanel(kind: panel, model: model, ui: ui, size: geo.size, safe: geo.safeAreaInsets, compact: compact,
                                 onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
-                        .transition(.scale(scale: 0.9, anchor: .bottomTrailing).combined(with: .opacity))
+                        .transition(.scale(scale: 0.55, anchor: .bottomTrailing).combined(with: .opacity))
                 }
-                if ui.showInfo { InfoCard(model: model, ui: ui).transition(.opacity) }
+                if ui.showInfo {
+                    InfoCard(model: model, ui: ui, ns: cardNS)
+                        .transition(.scale(scale: 0.9).combined(with: .opacity))
+                }
                 if ui.showConsole {
                     ConsoleBar(model: model, ui: ui).transition(.move(edge: .bottom).combined(with: .opacity))
                 }
@@ -76,7 +83,9 @@ struct PlayerScreen: View {
             .animation(.easeOut(duration: 0.18), value: ui.controlsVisible)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD != nil)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD?.kind)
-            .animation(.easeOut(duration: 0.2), value: ui.showStats)
+            .animation(.spring(response: 0.4, dampingFraction: 0.84), value: ui.showStats)
+            .animation(.spring(response: 0.4, dampingFraction: 0.84), value: ui.showInfo)
+            .animation(.spring(response: 0.38, dampingFraction: 0.82), value: ui.panel)
             .animation(.easeOut(duration: 0.18), value: model.toast)
             .animation(.easeOut(duration: 0.18), value: model.holdSpeedActive)
         }
@@ -484,8 +493,7 @@ struct LevelHUD: View {
         let level = min(1, max(0, hud.progress ?? 0))
         VStack {
             ZStack(alignment: .leading) {
-                Capsule().fill(.black.opacity(0.45))
-                    .background(.ultraThinMaterial, in: Capsule())
+                Capsule().fill(.black.opacity(0.18)).glass(cornerRadius: 12)
                 GeometryReader { g in
                     Capsule().fill(.white).frame(width: max(g.size.height, g.size.width * level))
                         .animation(.interactiveSpring(response: 0.18, dampingFraction: 0.9), value: level)
@@ -511,24 +519,26 @@ struct LevelHUD: View {
 struct GestureHUDView: View {
     let hud: PlayerUIState.GestureHUD
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: hud.icon).font(.system(size: 22, weight: .semibold))
+        HStack(spacing: 10) {
+            Image(systemName: hud.icon).font(.system(size: 16, weight: .semibold))
                 .contentTransition(.symbolEffect(.replace))
-            Text(hud.text).font(.subheadline.monospacedDigit().weight(.semibold))
-                .contentTransition(.numericText())
-            if let p = hud.progress {
-                GeometryReader { g in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(.white.opacity(0.25))
-                        Capsule().fill(.white).frame(width: g.size.width * min(1, max(0, p)))
+            VStack(alignment: .leading, spacing: 5) {
+                Text(hud.text).font(.caption.monospacedDigit().weight(.semibold))
+                    .contentTransition(.numericText())
+                if let p = hud.progress {
+                    GeometryReader { g in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(.white.opacity(0.25))
+                            Capsule().fill(.white).frame(width: g.size.width * min(1, max(0, p)))
+                        }
                     }
+                    .frame(width: 110, height: 3)
                 }
-                .frame(width: 140, height: 4)
             }
         }
         .foregroundStyle(.white)
-        .padding(.horizontal, 20).padding(.vertical, 14)
-        .glass(cornerRadius: 18)
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .glass(cornerRadius: 16)
         .animation(.easeOut(duration: 0.12), value: hud.text)
     }
 }

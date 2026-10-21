@@ -27,6 +27,8 @@ struct PlayerPanel: View {
                         .background(GeometryReader { g in
                             Color.clear.preference(key: HeightKey.self, value: g.size.height)
                         })
+                        .id(kind)
+                        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .bottomTrailing)))
                 }
                 .onPreferenceChange(HeightKey.self) { h in
                     if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h }
@@ -34,7 +36,10 @@ struct PlayerPanel: View {
                 .scrollIndicators(.hidden)
                 .frame(width: width)
                 .frame(height: min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxH))
+                .onChange(of: kind) { _, k in contentHeight = PlayerPanel.lastHeights[k.rawValue] ?? 0 }
                 .glass(cornerRadius: 28)
+                .animation(.spring(response: 0.36, dampingFraction: 0.84), value: kind)
+                .animation(.spring(response: 0.36, dampingFraction: 0.84), value: contentHeight)
                 .padding(.trailing, 20)
                 .padding(.bottom, bottom)
             }
@@ -123,7 +128,7 @@ struct SegmentPicker<T: Hashable>: View {
                 Button {
                     withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) { selection = o.0 }
                 } label: {
-                    Text(o.1).font(.subheadline.weight(.semibold))
+                    Text(o.1).font(.subheadline.weight(.semibold)).fixedSize()
                         .padding(.horizontal, 12).frame(height: 32)
                         .background {
                             if selection == o.0 {
@@ -156,7 +161,8 @@ struct ValueMenu<T: Hashable>: View {
                 Text(options.first { $0.0 == selection }?.1 ?? "").font(.body)
                 Image(systemName: "chevron.up.chevron.down").font(.caption2.weight(.bold)).foregroundStyle(.white.opacity(0.6))
             }
-            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, minHeight: 48, alignment: .trailing)   // the whole free part of the row opens the menu
+            .contentShape(Rectangle())
         }
         .tint(.white)
     }
@@ -426,9 +432,9 @@ struct NowPlayingPanelContent: View {
             }
             }
             .id(tab)
-            .transition(.opacity.combined(with: .move(edge: tab == 0 ? .leading : .trailing)))
+            .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
         }
-        .animation(.spring(response: 0.32, dampingFraction: 0.85), value: tab)
+        .animation(.spring(response: 0.36, dampingFraction: 0.84), value: tab)
         .onAppear { if !model.chapters.isEmpty && model.queue.count <= 1 { tab = 1 } }
     }
 }
