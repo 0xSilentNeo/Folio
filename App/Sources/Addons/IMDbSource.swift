@@ -78,8 +78,9 @@ enum IMDbSource {
         try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
         return d
     }
+    private static let cacheVersion = "v2|"   // bump when parsed shapes change
     private static func cacheFile(_ key: String) -> URL {
-        let h = SHA256.hash(data: Data(key.utf8)).compactMap { String(format: "%02x", $0) }.joined().prefix(32)
+        let h = SHA256.hash(data: Data((cacheVersion + key).utf8)).compactMap { String(format: "%02x", $0) }.joined().prefix(32)
         return dir.appendingPathComponent(String(h) + ".json")
     }
     private static func cached<T: Decodable>(_ key: String, ttl: TimeInterval, as: T.Type) -> T? {
@@ -99,6 +100,16 @@ enum IMDbSource {
     static func clearCache() {
         lock.lock(); memory = [:]; lock.unlock()
         try? FileManager.default.removeItem(at: dir)
+    }
+
+    // MARK: - Formatting
+
+    /// IMDb ratings arrive as doubles like 8.8000000000000007; show one decimal.
+    static func rating(_ v: Any?) -> String? {
+        if let d = v as? Double { return String(format: "%.1f", d) }
+        if let i = v as? Int { return String(format: "%.1f", Double(i)) }
+        if let s = v as? String, let d = Double(s) { return String(format: "%.1f", d) }
+        return nil
     }
 
     // MARK: - Images
@@ -164,8 +175,8 @@ enum IMDbSource {
         let key = "chart|\(path)|\(language)"
         if let hit = cached(key, ttl: 6 * 3600, as: [MetaItem].self) { return hit }
         guard let page = await html(path) else { return [] }
-        var items = jsonLDList(page, type: type)
-        if items.isEmpty { items = nextTitles(page, type: type) }
+        var items = nextTitles(page, type: type)
+        if items.isEmpty { items = jsonLDList(page, type: type) }
         for i in items.indices where items[i].rank == nil { items[i].rank = i + 1 }
         dlog("imdb", "chart \(path) → \(items.count)")
         if !items.isEmpty { store(key, items) }
@@ -232,7 +243,7 @@ enum IMDbSource {
             var item = MetaItem(id: id, type: type, name: name, poster: sized(obj["image"] as? String, width: 500),
                                 description: unescape(obj["description"] as? String),
                                 releaseInfo: (obj["datePublished"] as? String).map { String($0.prefix(4)) },
-                                imdbRating: ((obj["aggregateRating"] as? [String: Any])?["ratingValue"]).map { "\($0)" },
+                                imdbRating: Self.rating((obj["aggregateRating"] as? [String: Any])?["ratingValue"]),
                                 genres: (obj["genre"] as? [String]) ?? (obj["genre"] as? String).map { [$0] })
             item.runtime = (obj["duration"] as? String).flatMap(prettyDuration)
             if let tr = obj["trailer"] as? [String: Any], let thumb = tr["thumbnailUrl"] as? String { item.background = sized(thumb, width: 1280) }
@@ -242,10 +253,15 @@ enum IMDbSource {
             m = item
             break
         }
-        // Extra facts only the page data carries.
+        // Extra facts only the page data carries; its titleText is the title in
+        // the user's language (JSON-LD may carry the original one).
         if let next = nextData(page) {
-            var m2 = m ?? nextTitles(page, type: hint).first { $0.id == id }
+            let fromData = nextTitles(page, type: hint).first { $0.id == id }
+            var m2 = m ?? fromData
             if m2 != nil {
+                if let n = fromData?.name, !n.isEmpty { m2!.name = n }
+                if m2!.releaseInfo == nil { m2!.releaseInfo = fromData?.releaseInfo }
+                if m2!.runtime == nil { m2!.runtime = fromData?.runtime }
                 walk(next) { d in
                     if let c = d["countriesOfOrigin"] as? [String: Any], let list = c["countries"] as? [[String: Any]] {
                         m2!.countries = list.compactMap { $0["id"] as? String }
@@ -324,7 +340,7 @@ enum IMDbSource {
                 if let rd = d["releaseDate"] as? [String: Any], let y = rd["year"] as? Int {
                     v.released = String(format: "%04d-%02d-%02d", y, (rd["month"] as? Int) ?? 1, (rd["day"] as? Int) ?? 1)
                 } else if let s = d["releaseDate"] as? String { v.released = s }
-                v.rating = (d["aggregateRating"] as? Double).map { String(format: "%.1f", $0) }
+                v.rating = Self.rating(d["aggregateRating"])
                 v.imdbId = epId
                 out.append(v)
                 return false
@@ -356,8 +372,8 @@ enum IMDbSource {
                 let item = (el["item"] as? [String: Any]) ?? el
                 guard let urlStr = item["url"] as? String,
                       let id = urlStr.split(separator: "/").first(where: { $0.hasPrefix("tt") }).map(String.init) else { continue }
-                let name = unescape((item["name"] as? String) ?? (item["alternateName"] as? String) ?? id)
-                let rating = ((item["aggregateRating"] as? [String: Any])?["ratingValue"]).map { "\($0)" }
+                let name = unescape((item["alternateName"] as? String) ?? (item["name"] as? String) ?? id)
+                let rating = Self.rating((item["aggregateRating"] as? [String: Any])?["ratingValue"])
                 let genres = (item["genre"] as? [String]) ?? (item["genre"] as? String).map { [$0] }
                 let t = (item["@type"] as? String) ?? ""
                 let itemType = t == "TVSeries" || t == "TVMiniSeries" ? "series" : (t == "Movie" || t == "TVMovie" ? "movie" : type)
@@ -397,7 +413,7 @@ enum IMDbSource {
                              poster: sized(imageURL(d["primaryImage"]) ?? imageURL(d["image"]) ?? imageURL(d["poster"]), width: 342),
                              description: (d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String,
                              releaseInfo: (int(d["releaseYear"]) ?? int((d["releaseYear"] as? [String: Any])?["year"])).map(String.init),
-                             imdbRating: (rating as? Double).map { String(format: "%.1f", $0) } ?? (rating as? Int).map { "\($0)" },
+                             imdbRating: Self.rating(rating),
                              genres: genreList(d), rank: int(d["currentRank"]) ?? int(d["rank"]))
             m.runtime = (int(d["runtime"]) ?? int((d["runtime"] as? [String: Any])?["seconds"])).flatMap { $0 > 0 ? "\($0 / 60) min" : nil }
             out.append(m)

@@ -157,27 +157,43 @@ struct HomeView: View {
 
     // MARK: Library
 
+    @AppStorage("libraryView") private var libraryView = LibraryViewMode.grid.rawValue
+
     private func library(width: CGFloat, margin: CGFloat) -> some View {
         let cols = max(2, Int((width - margin * 2 + 14) / 184))
+        let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
         return VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Library", margin, trailing: "\(local.files.count)") {
-                LocalFolderView(url: MPVFiles.mediaDir, title: "Library")
-            }
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
-                ForEach(local.files.prefix(cols * 2), id: \.self) { f in
-                    Button { playLocal(f) } label: {
-                        MediaTile(title: TitleParser.clean(f.lastPathComponent), subtitle: f.pathExtension.uppercased(),
-                                  key: f.path, fileURL: f, lookupName: f.lastPathComponent,
-                                  progress: history.entry(forURL: f.path)?.progress)
-                    }
-                    .buttonStyle(.plain)
-                    .contextMenu {
-                        Button { playLocal(f) } label: { Label("Play", systemImage: "play") }
-                        Button(role: .destructive) { local.delete(f) } label: { Label("Delete", systemImage: "trash") }
-                    }
+            HStack(alignment: .firstTextBaseline) {
+                Text("Library").font(.title3.weight(.bold))
+                Text("\(local.files.count)").font(.subheadline).foregroundStyle(.secondary)
+                Spacer()
+                ViewModeMenu(mode: $libraryView)
+                NavigationLink { LocalFolderView(url: MPVFiles.mediaDir, title: "Library") } label: {
+                    HStack(spacing: 2) { Text("All"); Image(systemName: "chevron.right").font(.caption.weight(.bold)) }
+                        .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
                 }
             }
             .padding(.horizontal, margin)
+            if mode == .grid {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
+                    ForEach(local.files.prefix(cols * 2), id: \.self) { f in
+                        NavigationLink { TitleHeroView(file: f) } label: {
+                            MediaTile(title: TitleParser.clean(f.lastPathComponent), subtitle: f.pathExtension.uppercased(),
+                                      key: f.path, fileURL: f, lookupName: f.lastPathComponent,
+                                      progress: history.entry(forURL: f.path)?.progress)
+                        }
+                        .buttonStyle(PressStyle(scale: 0.97))
+                        .contextMenu {
+                            Button { playLocal(f) } label: { Label("Play", systemImage: "play") }
+                            Button(role: .destructive) { local.delete(f) } label: { Label("Delete", systemImage: "trash") }
+                        }
+                    }
+                }
+                .padding(.horizontal, margin)
+            } else {
+                LibraryList(files: Array(local.files.prefix(mode == .list ? 8 : 5)), mode: mode) { playLocal($0) }
+                    .padding(.horizontal, margin)
+            }
         }
     }
 

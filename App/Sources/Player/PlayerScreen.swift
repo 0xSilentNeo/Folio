@@ -49,7 +49,7 @@ struct PlayerScreen: View {
                 if let hud = ui.gestureHUD, hud.kind == .brightness || hud.kind == .volume {
                     LevelHUD(hud: hud, top: geo.safeAreaInsets.top)
                         .id("levelhud")
-                        .transition(.opacity.combined(with: .scale(scale: 0.85, anchor: .top)))
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 if let hud = ui.gestureHUD, hud.kind != .brightness && hud.kind != .volume {
                     GestureHUDView(hud: hud).allowsHitTesting(false)
@@ -70,11 +70,13 @@ struct PlayerScreen: View {
                 if let panel = ui.panel {
                     PlayerPanel(kind: panel, model: model, ui: ui, size: geo.size, safe: geo.safeAreaInsets, compact: compact,
                                 onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
-                        .transition(.scale(scale: 0.55, anchor: .bottomTrailing).combined(with: .opacity))
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.2, anchor: .bottomTrailing).combined(with: .opacity),
+                            removal: .scale(scale: 0.5, anchor: .bottomTrailing).combined(with: .opacity)))
                 }
                 if ui.showInfo {
                     InfoCard(model: model, ui: ui, ns: cardNS)
-                        .transition(.scale(scale: 0.9).combined(with: .opacity))
+                        .transition(.scale(scale: 0.9, anchor: .topLeading).combined(with: .opacity))
                 }
                 if ui.showConsole {
                     ConsoleBar(model: model, ui: ui).transition(.move(edge: .bottom).combined(with: .opacity))
@@ -85,7 +87,7 @@ struct PlayerScreen: View {
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD?.kind)
             .animation(.spring(response: 0.4, dampingFraction: 0.84), value: ui.showStats)
             .animation(.spring(response: 0.4, dampingFraction: 0.84), value: ui.showInfo)
-            .animation(.spring(response: 0.38, dampingFraction: 0.82), value: ui.panel)
+            .animation(.spring(response: 0.45, dampingFraction: 0.78), value: ui.panel)
             .animation(.easeOut(duration: 0.18), value: model.toast)
             .animation(.easeOut(duration: 0.18), value: model.holdSpeedActive)
         }
@@ -493,21 +495,21 @@ struct LevelHUD: View {
         let level = min(1, max(0, hud.progress ?? 0))
         VStack {
             ZStack(alignment: .leading) {
-                Capsule().fill(.black.opacity(0.18)).glass(cornerRadius: 12)
+                Capsule().fill(.black.opacity(0.18)).glass(cornerRadius: 10)
                 GeometryReader { g in
                     Capsule().fill(.white).frame(width: max(g.size.height, g.size.width * level))
                         .animation(.interactiveSpring(response: 0.18, dampingFraction: 0.9), value: level)
                 }
                 Image(systemName: hud.icon)
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(level > 0.07 ? Color.black : Color.white)
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(level > 0.08 ? Color.black : Color.white)
                     .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 22, height: 22)
-                    .padding(.leading, 2)
+                    .frame(width: 18, height: 18)
+                    .padding(.leading, 1)
             }
-            .frame(width: 214, height: 24)
+            .frame(width: 180, height: 20)
             .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
-            .padding(.top, top + 12)
+            .padding(.top, top + 10)
             Spacer()
         }
         .allowsHitTesting(false)

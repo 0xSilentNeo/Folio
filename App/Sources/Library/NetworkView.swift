@@ -42,43 +42,70 @@ struct LocalFolderView: View {
     let url: URL
     let title: String
     @State private var items: [URL] = []
+    @AppStorage("libraryView") private var libraryView = LibraryViewMode.grid.rawValue
+    @ObservedObject private var history = HistoryStore.shared
+
+    private var folders: [URL] { items.filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true } }
+    private var media: [URL] { items.filter { TitleParser.isMedia($0.lastPathComponent) } }
 
     var body: some View {
-        List {
-            ForEach(items, id: \.self) { u in
-                let isDir = (try? u.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
-                if isDir == true {
-                    NavigationLink { LocalFolderView(url: u, title: u.lastPathComponent) } label: {
-                        Label(u.lastPathComponent, systemImage: "folder.fill")
-                    }
-                } else {
-                    Button {
-                        let media = items.filter { TitleParser.isMedia($0.lastPathComponent) }
-                        let queue = media.map { f -> MediaItem in
-                            var m = MediaItem(url: f.path, title: TitleParser.clean(f.lastPathComponent), source: .local)
-                            m.historyKey = f.path
-                            return m
+        GeometryReader { geo in
+            let margin: CGFloat = geo.size.width > 700 ? 28 : 20
+            let cols = max(2, Int((geo.size.width - margin * 2 + 14) / 184))
+            let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    ForEach(folders, id: \.self) { u in
+                        NavigationLink { LocalFolderView(url: u, title: u.lastPathComponent) } label: {
+                            Label(u.lastPathComponent, systemImage: "folder.fill").font(.subheadline.weight(.semibold))
+                                .frame(maxWidth: .infinity, alignment: .leading).padding(12)
+                                .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
-                        if let i = media.firstIndex(of: u) { PlayerPresenter.play(queue: queue, index: i) }
-                    } label: {
-                        Label(u.lastPathComponent, systemImage: TitleParser.isMedia(u.lastPathComponent) ? "film" : "doc")
+                        .buttonStyle(PressStyle(scale: 0.98))
                     }
-                    .disabled(!TitleParser.isMedia(u.lastPathComponent))
+                    if mode == .grid {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
+                            ForEach(media, id: \.self) { f in
+                                NavigationLink { TitleHeroView(file: f) } label: {
+                                    MediaTile(title: TitleParser.clean(f.lastPathComponent), subtitle: f.pathExtension.uppercased(),
+                                              key: f.path, fileURL: f, lookupName: f.lastPathComponent,
+                                              progress: history.entry(forURL: f.path)?.progress)
+                                }
+                                .buttonStyle(PressStyle(scale: 0.97))
+                                .contextMenu {
+                                    Button { play(f) } label: { Label("Play", systemImage: "play") }
+                                    Button(role: .destructive) { try? FileManager.default.removeItem(at: f); reload() } label: { Label("Delete", systemImage: "trash") }
+                                }
+                            }
+                        }
+                    } else {
+                        LibraryList(files: media, mode: mode) { play($0) }
+                    }
+                    if items.isEmpty {
+                        Text("Empty. Add files from Home, or copy them with the Files app (On My iPhone → GlassPlayer → \(title)).")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
-            }
-            .onDelete { idx in
-                for i in idx { try? FileManager.default.removeItem(at: items[i]) }
-                reload()
-            }
-            if items.isEmpty {
-                Text("Empty. Copy files here with the Files app (On My iPhone → GlassPlayer → \(title)).")
-                    .font(.footnote).foregroundStyle(.secondary)
+                .padding(.horizontal, margin)
+                .padding(.vertical, 12)
             }
         }
+        .background(HomeBackdrop().ignoresSafeArea())
         .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .topBarTrailing) { ViewModeMenu(mode: $libraryView) } }
         .onAppear(perform: reload)
         .refreshable { reload() }
         .onReceive(LocalMediaStore.shared.$files) { _ in reload() }
+    }
+
+    private func play(_ u: URL) {
+        let queue = media.map { f -> MediaItem in
+            var m = MediaItem(url: f.path, title: TitleParser.clean(f.lastPathComponent), source: .local)
+            m.historyKey = f.path
+            return m
+        }
+        if let i = media.firstIndex(of: u) { PlayerPresenter.play(queue: queue, index: i) }
     }
 
     private func reload() {

@@ -7,9 +7,9 @@ struct InfoCard: View {
     var ns: Namespace.ID
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Media Info").font(.headline)
+                Text("Media info").font(.headline)
                 Spacer()
                 CloseDot { ui.showInfo = false }
             }
@@ -39,17 +39,18 @@ struct InfoCard: View {
             .buttonStyle(PressStyle(scale: 0.96))
         }
         .foregroundStyle(.white)
-        .padding(18)
-        .frame(maxWidth: 420)
+        .padding(16)
+        .frame(maxWidth: 480)
         .glass(cornerRadius: 24)
         .matchedGeometryEffect(id: "statcard", in: ns)
-        .padding(20)
+        .padding(.leading, 20).padding(.top, 60)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private func row(_ k: String, _ v: String) -> some View {
         HStack(alignment: .top) {
-            Text(k).font(.caption).foregroundStyle(.white.opacity(0.55)).frame(width: 96, alignment: .leading)
-            Text(v).font(.caption).textSelection(.enabled).lineLimit(2)
+            Text(k).font(.system(size: 11, weight: .medium, design: .monospaced)).foregroundStyle(.white.opacity(0.55)).frame(width: 82, alignment: .leading)
+            Text(v).font(.system(size: 11, weight: .medium, design: .monospaced)).textSelection(.enabled).lineLimit(2)
             Spacer(minLength: 0)
         }
     }

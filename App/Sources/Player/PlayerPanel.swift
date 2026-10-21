@@ -15,15 +15,15 @@ struct PlayerPanel: View {
     @MainActor static var lastHeights: [String: CGFloat] = [:]
 
     var body: some View {
-        let width = compact ? size.width - 40 : min(400, size.width * 0.46)
-        let bottom = compact ? 132.0 : 74.0
+        let width = compact ? size.width - 40 : min(340, size.width * 0.42)
+        let bottom = compact ? 128.0 : 70.0
         let maxH = size.height - bottom - safe.top - 16
         VStack(spacing: 0) {
             Spacer(minLength: 0)
             HStack {
                 Spacer(minLength: 0)
                 ScrollView {
-                    content.padding(18)
+                    content.padding(14)
                         .background(GeometryReader { g in
                             Color.clear.preference(key: HeightKey.self, value: g.size.height)
                         })
@@ -37,7 +37,7 @@ struct PlayerPanel: View {
                 .frame(width: width)
                 .frame(height: min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxH))
                 .onChange(of: kind) { _, k in contentHeight = PlayerPanel.lastHeights[k.rawValue] ?? 0 }
-                .glass(cornerRadius: 28)
+                .glass(cornerRadius: 24)
                 .animation(.spring(response: 0.36, dampingFraction: 0.84), value: kind)
                 .animation(.spring(response: 0.36, dampingFraction: 0.84), value: contentHeight)
                 .padding(.trailing, 20)
@@ -64,10 +64,10 @@ struct PanelHeader: View {
     let title: String
     var body: some View {
         HStack(spacing: 10) {
-            Text(title).font(.headline)
+            Text(title).font(.subheadline.weight(.bold))
             Rectangle().fill(.white.opacity(0.18)).frame(height: 1)
         }
-        .padding(.top, 6)
+        .padding(.top, 4)
     }
 }
 
@@ -78,16 +78,37 @@ struct PanelRow<Trailing: View>: View {
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon).font(.system(size: 18, weight: .medium)).frame(width: 28)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.body)
-                if let subtitle { Text(subtitle).font(.caption).foregroundStyle(.white.opacity(0.55)) }
+        HStack(spacing: 10) {
+            Image(systemName: icon).font(.system(size: 15, weight: .medium)).frame(width: 24)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(.subheadline)
+                if let subtitle { Text(subtitle).font(.caption2).foregroundStyle(.white.opacity(0.55)) }
             }
             Spacer(minLength: 8)
             trailing
         }
-        .frame(minHeight: 48)
+        .frame(minHeight: 42)
+    }
+}
+
+/// A whole-row button with a chevron (navigates or opens something).
+struct PanelLink: View {
+    let icon: String
+    let title: String
+    var subtitle: String? = nil
+    let action: () -> Void
+    init(icon: String, title: String, subtitle: String? = nil, action: @escaping () -> Void) {
+        self.icon = icon; self.title = title; self.subtitle = subtitle; self.action = action
+    }
+    var body: some View {
+        Button(action: action) {
+            PanelRow(icon: icon, title: title, subtitle: subtitle) {
+                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.white.opacity(0.6)).padding(8)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressStyle(scale: 0.98))
+        .foregroundStyle(.white)
     }
 }
 
@@ -98,7 +119,7 @@ struct Stepper3: View {
     var body: some View {
         HStack(spacing: 10) {
             RoundButton("minus", action: minus)
-            Text(text).font(.body.monospacedDigit().weight(.medium)).frame(minWidth: 44)
+            Text(text).font(.subheadline.monospacedDigit().weight(.medium)).frame(minWidth: 40)
             RoundButton("plus", action: plus)
         }
     }
@@ -110,38 +131,86 @@ struct RoundButton: View {
     init(_ icon: String, action: @escaping () -> Void) { self.icon = icon; self.action = action }
     var body: some View {
         Button(action: action) {
-            Image(systemName: icon).font(.system(size: 14, weight: .bold))
-                .frame(width: 36, height: 36)
+            Image(systemName: icon).font(.system(size: 12, weight: .bold))
+                .frame(width: 30, height: 30)
                 .background(.white.opacity(0.14), in: Circle())
         }
         .buttonStyle(PressStyle(scale: 0.85))
     }
 }
 
+/// Segmented control with a sliding thumb. The thumb is glass while it is
+/// moving (tap or drag) and takes the accent colour once it has settled;
+/// it can be dragged across like the main tab bar.
 struct SegmentPicker<T: Hashable>: View {
     let options: [(T, String)]
     @Binding var selection: T
-    @Namespace private var ns
+    @State private var moving = false
+    @State private var dragX: CGFloat?      // thumb centre while dragging
+    @State private var settle: DispatchWorkItem?
+
+    private var index: Int { options.firstIndex { $0.0 == selection } ?? 0 }
+    /// Equal segments sized for the longest label (the control keeps an intrinsic width).
+    private var segmentWidth: CGFloat {
+        let longest = options.map { $0.1.count }.max() ?? 1
+        return CGFloat(longest) * 8.6 + 26
+    }
+
     var body: some View {
-        HStack(spacing: 2) {
-            ForEach(options, id: \.0) { o in
-                Button {
-                    withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) { selection = o.0 }
-                } label: {
-                    Text(o.1).font(.subheadline.weight(.semibold)).fixedSize()
-                        .padding(.horizontal, 12).frame(height: 32)
-                        .background {
-                            if selection == o.0 {
-                                Capsule().fill(Color.accentColor).matchedGeometryEffect(id: "seg", in: ns)
-                            }
-                        }
-                        .contentShape(Capsule())
+        let n = max(options.count, 1)
+        GeometryReader { g in
+            let segW = g.size.width / CGFloat(n)
+            let centre = dragX.map { min(max($0, segW / 2), g.size.width - segW / 2) } ?? (segW * (CGFloat(index) + 0.5))
+            ZStack(alignment: .leading) {
+                Group {
+                    if moving {
+                        Capsule().fill(.white.opacity(0.12)).glass(cornerRadius: 16)
+                    } else {
+                        Capsule().fill(Color.accentColor)
+                    }
                 }
-                .buttonStyle(PressStyle(scale: 0.95))
+                .frame(width: segW, height: 32)
+                .position(x: centre, y: g.size.height / 2)
+                .animation(dragX == nil ? .spring(response: 0.32, dampingFraction: 0.78) : nil, value: centre)
+                .animation(.easeOut(duration: 0.18), value: moving)
+                HStack(spacing: 0) {
+                    ForEach(Array(options.enumerated()), id: \.offset) { i, o in
+                        Text(o.1).font(.subheadline.weight(.semibold)).fixedSize()
+                            .frame(width: segW, height: 32)
+                            .contentShape(Rectangle())
+                            .onTapGesture { select(i) }
+                    }
+                }
             }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 6)
+                    .onChanged { v in
+                        dragX = v.location.x
+                        if !moving { moving = true }
+                        let i = min(n - 1, max(0, Int(v.location.x / segW)))
+                        if options[i].0 != selection { selection = options[i].0 }
+                    }
+                    .onEnded { _ in dragX = nil; settleSoon() }
+            )
         }
+        .frame(width: segmentWidth * CGFloat(n), height: 32)
         .padding(3)
         .background(.white.opacity(0.12), in: Capsule())
+    }
+
+    private func select(_ i: Int) {
+        guard options[i].0 != selection else { return }
+        moving = true
+        selection = options[i].0
+        settleSoon()
+    }
+
+    private func settleSoon() {
+        settle?.cancel()
+        let w = DispatchWorkItem { moving = false }
+        settle = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.32, execute: w)
     }
 }
 
@@ -158,10 +227,10 @@ struct ValueMenu<T: Hashable>: View {
             }
         } label: {
             HStack(spacing: 4) {
-                Text(options.first { $0.0 == selection }?.1 ?? "").font(.body)
+                Text(options.first { $0.0 == selection }?.1 ?? "").font(.subheadline)
                 Image(systemName: "chevron.up.chevron.down").font(.caption2.weight(.bold)).foregroundStyle(.white.opacity(0.6))
             }
-            .frame(maxWidth: .infinity, minHeight: 48, alignment: .trailing)   // the whole free part of the row opens the menu
+            .frame(maxWidth: .infinity, minHeight: 42, alignment: .trailing)   // the whole free part of the row opens the menu
             .contentShape(Rectangle())
         }
         .tint(.white)
@@ -266,18 +335,13 @@ struct SettingsPanelContent: View {
             PanelRow(icon: "camera.viewfinder", title: "Screenshots") {
                 ValueMenu(options: [(true, "With Subtitles"), (false, "Video Only")], selection: $screenshotSubs)
             }
-            PanelRow(icon: "lock", title: "Lock controls") {
-                Button { ui.locked = true; ui.closePanel(); ui.showControls() } label: {
-                    Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.white.opacity(0.6)).padding(8)
-                }
-                .buttonStyle(.plain)
-            }
+            PanelLink(icon: "lock", title: "Lock controls") { ui.locked = true; ui.closePanel(); ui.showControls() }
 
             PanelHeader(title: "Subtitles")
             PanelRow(icon: "textformat.size", title: "Size") {
                 HStack(spacing: 10) {
-                    Slider(value: Binding(get: { subScale }, set: { subScale = $0; model.setSubScale($0) }), in: 0.5...2.5)
-                        .frame(width: 130)
+                    Slider(value: Binding(get: { subScale }, set: { subScale = $0; model.setSubScale($0) }), in: 0.6...1.6)
+                        .frame(width: 120)
                     RoundButton("arrow.counterclockwise") { subScale = 1; model.setSubScale(1) }
                 }
             }
@@ -292,17 +356,19 @@ struct SettingsPanelContent: View {
             }
 
             PanelHeader(title: "More")
-            PanelRow(icon: "info.circle", title: "Media info") {
-                Button { ui.closePanel(); ui.showInfo = true } label: { chevron }.buttonStyle(.plain)
+            PanelLink(icon: "info.circle", title: "Media info") {
+                ui.closePanel()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.84)) { ui.showInfo = true }
             }
-            PanelRow(icon: "command", title: "Commands", subtitle: "Your saved mpv commands") {
-                Menu {
-                    ForEach(ScriptCommandStore.all) { c in Button(c.name) { model.run(command: c.command) } }
-                    Divider()
-                    Button { ui.closePanel(); ui.showConsole = true } label: { Label("Run mpv command…", systemImage: "terminal") }
-                } label: { chevron }
-                .tint(.white)
+            Menu {
+                ForEach(ScriptCommandStore.all) { c in Button(c.name) { model.run(command: c.command) } }
+                Divider()
+                Button { ui.closePanel(); ui.showConsole = true } label: { Label("Run mpv command…", systemImage: "terminal") }
+            } label: {
+                PanelRow(icon: "command", title: "Commands", subtitle: "Your saved mpv commands") { chevron }
+                    .contentShape(Rectangle())
             }
+            .tint(.white)
         }
     }
 
@@ -404,8 +470,7 @@ struct NowPlayingPanelContent: View {
             switch tab {
             case 0:
                 ForEach(Array(model.queue.enumerated()), id: \.offset) { i, item in
-                    ListRow(icon: i == model.queueIndex ? "play.fill" : "film", title: item.displayTitle,
-                            trailing: item.subtitle ?? "", active: i == model.queueIndex) {
+                    PlaylistRow(item: item, active: i == model.queueIndex) {
                         model.queueIndex = i
                         model.load(item)
                     }
@@ -449,16 +514,52 @@ struct ListRow: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon).font(.system(size: 16, weight: .semibold)).frame(width: 22)
-                Text(title).font(.body).lineLimit(2)
+                Text(title).font(.subheadline).lineLimit(2)
                 Spacer()
-                Text(trailing).font(.subheadline.monospacedDigit()).foregroundStyle(active ? .white : .white.opacity(0.5))
+                Text(trailing).font(.caption.monospacedDigit()).foregroundStyle(active ? .white : .white.opacity(0.5))
             }
-            .padding(.horizontal, 14)
-            .frame(minHeight: 48)
-            .background(active ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .padding(.horizontal, 12)
+            .frame(minHeight: 42)
+            .background(active ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .contentShape(Rectangle())
         }
         .buttonStyle(PressStyle(scale: 0.97))
+    }
+}
+
+/// Playlist entry with its thumbnail (saved frame, artwork or metadata art).
+struct PlaylistRow: View {
+    let item: MediaItem
+    let active: Bool
+    let action: () -> Void
+    @StateObject private var thumb = ThumbLoader()
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                ZStack {
+                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+                    else { GeneratedArt(seed: item.displayTitle) }
+                    if active { Image(systemName: "play.fill").font(.system(size: 12, weight: .bold)).shadow(radius: 3) }
+                }
+                .frame(width: 64, height: 36)
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(thumb.meta?.name ?? item.displayTitle).font(.subheadline.weight(active ? .semibold : .regular)).lineLimit(1)
+                    if let sub = thumb.meta?.episodeTitle ?? item.subtitle, !sub.isEmpty {
+                        Text(sub).font(.caption2).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 8).padding(.vertical, 6)
+            .background(active ? Color.accentColor.opacity(0.9) : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressStyle(scale: 0.97))
+        .onAppear {
+            thumb.load(key: item.historyKey ?? item.url, fileURL: item.url.hasPrefix("/") ? URL(fileURLWithPath: item.url) : nil,
+                       artwork: item.artwork, lookupName: item.resolvedURL?.lastPathComponent ?? item.title)
+        }
     }
 }
 
