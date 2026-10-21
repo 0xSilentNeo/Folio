@@ -335,43 +335,54 @@ struct LibraryRow: View {
         return "S\(parsed.season ?? 1) · E\(e)"
     }
 
+    private var detail: Bool { mode == .details }
+    private var thumbW: CGFloat { detail ? 150 : 78 }
+    private var thumbH: CGFloat { detail ? 84 : 44 }
+    private var headline: String { thumb.meta?.episodeTitle ?? thumb.meta?.name ?? TitleParser.clean(file.lastPathComponent) }
+    private var secondary: String {
+        if detail {
+            if let s = thumb.meta?.synopsis, !s.isEmpty { return s }
+            return file.lastPathComponent
+        }
+        if let n = thumb.meta?.name, n != thumb.meta?.episodeTitle { return n }
+        return file.pathExtension.uppercased()
+    }
+
     var body: some View {
-        let detail = mode == .details
         HStack(alignment: .top, spacing: 12) {
-            ZStack(alignment: .bottomLeading) {
-                Color.clear.frame(width: detail ? 150 : 78, height: detail ? 84 : 44)
-                    .overlay {
-                        if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
-                        else { GeneratedArt(seed: file.lastPathComponent) }
-                    }
-                    .clipped()
-                if let progress, progress > 0.01 {
-                    Rectangle().fill(Theme.accent).frame(width: (detail ? 150 : 78) * progress, height: 3)
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: detail ? 12 : 8, style: .continuous))
+            thumbnail
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     if let tag = episodeTag { Text(tag).font(.caption2.weight(.bold)).foregroundStyle(Theme.accent) }
-                    Text(thumb.meta?.episodeTitle ?? thumb.meta?.name ?? TitleParser.clean(file.lastPathComponent))
-                        .font(.subheadline.weight(.semibold)).lineLimit(1)
+                    Text(headline).font(.subheadline.weight(.semibold)).lineLimit(1)
                 }
-                if detail {
-                    if let s = thumb.meta?.synopsis, !s.isEmpty {
-                        Text(s).font(.caption).foregroundStyle(.secondary).lineLimit(3)
-                    } else {
-                        Text(file.lastPathComponent).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                    }
-                } else {
-                    Text(thumb.meta?.name.map { $0 == (thumb.meta?.episodeTitle ?? "") ? file.pathExtension.uppercased() : $0 } ?? file.pathExtension.uppercased())
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                }
+                Text(secondary).font(.caption).foregroundStyle(.secondary).lineLimit(detail ? 3 : 1)
             }
             Spacer(minLength: 0)
             if highlighted { Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent).padding(.top, 4) }
         }
         .padding(detail ? 8 : 6)
-        .background(highlighted ? Theme.accent.opacity(0.14) : Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: detail ? 16 : 12, style: .continuous))
+        .background(rowBackground)
         .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent) }
+    }
+
+    private var rowBackground: some View {
+        RoundedRectangle(cornerRadius: detail ? 16 : 12, style: .continuous)
+            .fill(highlighted ? Theme.accent.opacity(0.14) : Color.white.opacity(0.05))
+    }
+
+    private var thumbnail: some View {
+        ZStack(alignment: .bottomLeading) {
+            Color.clear.frame(width: thumbW, height: thumbH)
+                .overlay {
+                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+                    else { GeneratedArt(seed: file.lastPathComponent) }
+                }
+                .clipped()
+            if let progress, progress > 0.01 {
+                Rectangle().fill(Theme.accent).frame(width: thumbW * progress, height: 3)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: detail ? 12 : 8, style: .continuous))
     }
 }
