@@ -26,10 +26,10 @@ struct InfoCard: View {
             row("Renderer", model.renderer == .metal ? "Metal (libplacebo)" : "OpenGL ES")
             row("Source", model.item.url)
             Button {
-                model.run(command: "script-binding stats/display-stats-toggle")
+                ui.showStats.toggle()
                 ui.showInfo = false
             } label: {
-                Label("mpv stats overlay", systemImage: "chart.bar.xaxis")
+                Label(ui.showStats ? "Hide live stats" : "Show live stats", systemImage: "waveform.path.ecg")
                     .font(.subheadline.weight(.semibold))
             }
             .tint(Theme.accent)
@@ -123,5 +123,80 @@ enum ShaderPresets {
     static func available(files: [URL]) -> [Preset] {
         let names = Set(files.map(\.lastPathComponent))
         return all.filter { $0.shaders.allSatisfy(names.contains) }
+    }
+}
+
+/// Compact live stats card (our own, instead of mpv's stats.lua overlay):
+/// polled once a second off the main thread.
+@MainActor
+final class StatsModel: ObservableObject {
+    struct Line: Identifiable { let id: String; let value: String }
+    @Published var lines: [Line] = []
+    private var timer: Timer?
+
+    func start(_ client: MPVClient?) {
+        stop()
+        tick(client)
+        let t = Timer(timeInterval: 1, repeats: true) { [weak self] _ in MainActor.assumeIsolated { self?.tick(client) } }
+        RunLoop.main.add(t, forMode: .common)
+        timer = t
+    }
+
+    func stop() { timer?.invalidate(); timer = nil }
+
+    private func tick(_ client: MPVClient?) {
+        guard let client else { return }
+        client.query({ c -> [Line] in
+            func s(_ k: String) -> String { c.string(k) ?? "–" }
+            var out: [Line] = []
+            let w = c.int("video-params/w") ?? 0, h = c.int("video-params/h") ?? 0
+            let dw = c.int("dwidth") ?? 0, dh = c.int("dheight") ?? 0
+            out.append(Line(id: "Video", value: "\(s("video-codec").split(separator: " ").first.map(String.init) ?? "–") \(w)×\(h)" + (dw != w ? " → \(dw)×\(dh)" : "")))
+            let fps = c.double("container-fps") ?? 0, efps = c.double("estimated-vf-fps") ?? 0
+            out.append(Line(id: "Frame rate", value: String(format: "%.3f fps (display %.1f)", fps, efps)))
+            out.append(Line(id: "Decoder", value: s("hwdec-current") == "no" ? "software" : s("hwdec-current")))
+            out.append(Line(id: "Pixel format", value: "\(s("video-params/pixelformat")) · \(s("video-params/primaries")) · \(s("video-params/gamma"))"))
+            let drops = c.int("frame-drop-count") ?? 0, vo = c.int("vo-delayed-frame-count") ?? 0
+            out.append(Line(id: "Dropped", value: "\(drops) decoder · \(vo) output"))
+            let av = c.double("avsync") ?? 0
+            out.append(Line(id: "A/V sync", value: String(format: "%+.3f s", av)))
+            let br = (c.double("video-bitrate") ?? 0) / 1_000_000
+            out.append(Line(id: "Bitrate", value: String(format: "%.1f Mb/s", br)))
+            out.append(Line(id: "Audio", value: "\(s("audio-codec-name")) \(s("audio-params/channels")) \(s("audio-params/samplerate")) Hz → \(s("audio-out-params/channels"))"))
+            let cache = c.double("demuxer-cache-duration") ?? 0, speed = (c.double("cache-speed") ?? 0) / 1_000_000
+            out.append(Line(id: "Cache", value: String(format: "%.0f s ahead · %.1f MB/s", cache, speed)))
+            out.append(Line(id: "Shaders", value: (c.string("glsl-shaders") ?? "").split(separator: ":").map { URL(fileURLWithPath: String($0)).lastPathComponent }.joined(separator: ", ").isEmpty ? "none" : "\((c.string("glsl-shaders") ?? "").split(separator: ":").count) active"))
+            return out
+        }) { [weak self] lines in self?.lines = lines }
+    }
+}
+
+struct StatsOverlay: View {
+    @ObservedObject var model: PlayerModel
+    @StateObject private var stats = StatsModel()
+
+    var body: some View {
+        VStack {
+            HStack {
+                VStack(alignment: .leading, spacing: 5) {
+                    ForEach(stats.lines) { l in
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text(l.id).foregroundStyle(.white.opacity(0.55)).frame(width: 82, alignment: .leading)
+                            Text(l.value).lineLimit(1)
+                        }
+                    }
+                }
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundStyle(.white)
+                .padding(12)
+                .glass(cornerRadius: 16)
+                .padding(.leading, 20).padding(.top, 64)
+                Spacer()
+            }
+            Spacer()
+        }
+        .allowsHitTesting(false)
+        .onAppear { stats.start(model.client) }
+        .onDisappear { stats.stop() }
     }
 }

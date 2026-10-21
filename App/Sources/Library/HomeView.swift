@@ -4,10 +4,8 @@ import UniformTypeIdentifiers
 struct HomeView: View {
     @ObservedObject private var history = HistoryStore.shared
     @ObservedObject private var local = LocalMediaStore.shared
-    @ObservedObject private var servers = ServerStore.shared
     @State private var showOpenURL = false
     @State private var addServer = false
-    @State private var heroIndex = 0
 
     var body: some View {
         NavigationStack {
@@ -17,11 +15,9 @@ struct HomeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 30) {
                         header(margin)
-                        if !history.continueWatching.isEmpty { hero(width: geo.size.width, wide: wide, margin: margin) }
-                        else { emptyHero(margin) }
+                        if !history.continueWatching.isEmpty { continueWatching(width: geo.size.width, wide: wide, margin: margin) }
                         if !local.files.isEmpty { library(width: geo.size.width, margin: margin) }
-                        sources(margin)
-                        if !history.recent.isEmpty { recentlyPlayed(width: geo.size.width, wide: wide, margin: margin) }
+                        else { howToAdd(margin).padding(.top, history.continueWatching.isEmpty ? 40 : 10) }
                     }
                     .padding(.top, 6)
                     .padding(.bottom, 28)
@@ -54,13 +50,30 @@ struct HomeView: View {
             } label: {
                 Image(systemName: "plus").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
-            NavigationLink { SettingsView() } label: {
-                Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
-            }
-            .buttonStyle(.plain)
+            settingsLink
         }
         .padding(.horizontal, margin)
         .padding(.top, 8)
+    }
+
+    @Namespace private var zoomNS
+
+    @ViewBuilder
+    private var settingsLink: some View {
+        if #available(iOS 18.0, *) {
+            NavigationLink {
+                SettingsView().navigationTransition(.zoom(sourceID: "settings", in: zoomNS))
+            } label: {
+                Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
+            }
+            .buttonStyle(PressStyle())
+            .matchedTransitionSource(id: "settings", in: zoomNS)
+        } else {
+            NavigationLink { SettingsView() } label: {
+                Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
+            }
+            .buttonStyle(PressStyle())
+        }
     }
 
     private var greeting: String {
@@ -72,52 +85,40 @@ struct HomeView: View {
         }
     }
 
-    // MARK: Hero
+    // MARK: Continue watching
 
-    private func hero(width: CGFloat, wide: Bool, margin: CGFloat) -> some View {
-        let items = Array(history.continueWatching.prefix(8))
-        let h: CGFloat = wide ? 300 : min(240, (width - margin * 2) * 0.6)
+    private func continueWatching(width: CGFloat, wide: Bool, margin: CGFloat) -> some View {
+        let items = Array(history.continueWatching.prefix(12))
+        let cardW: CGFloat = wide ? 320 : min(340, width - margin * 2 - 28)
         return VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Continue Watching", margin)
-            TabView(selection: $heroIndex) {
-                ForEach(Array(items.enumerated()), id: \.element.id) { i, e in
-                    HeroCard(entry: e, height: h)
-                        .padding(.horizontal, margin)
-                        .tag(i)
-                        .onTapGesture { PlayerPresenter.play(e.item) }
-                        .contextMenu { historyMenu(e) }
-                }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .frame(height: h)
-            if items.count > 1 {
-                HStack(spacing: 6) {
-                    ForEach(0..<items.count, id: \.self) { i in
-                        Capsule().fill(.white.opacity(i == heroIndex ? 0.9 : 0.25))
-                            .frame(width: i == heroIndex ? 18 : 6, height: 6)
-                            .animation(.spring(response: 0.3), value: heroIndex)
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 14) {
+                    ForEach(items) { e in
+                        HeroCard(entry: e, height: cardW * 9 / 16 + 8)
+                            .frame(width: cardW)
+                            .onTapGesture { PlayerPresenter.play(e.item) }
+                            .contextMenu { historyMenu(e) }
                     }
                 }
+                .scrollTargetLayout()
                 .padding(.horizontal, margin)
             }
+            .scrollTargetBehavior(.viewAligned)
+            .scrollClipDisabled()
         }
     }
 
-    private func emptyHero(_ margin: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Image(systemName: "play.rectangle.on.rectangle").font(.system(size: 30, weight: .light)).foregroundStyle(Theme.accent)
-            Text("Play anything").font(.title3.weight(.bold))
-            Text("Open a file, paste a link, connect Real-Debrid or a NAS, or browse Discover. What you watch shows up here.")
-                .font(.subheadline).foregroundStyle(.secondary)
-            HStack(spacing: 10) {
-                PrimaryChip(icon: "folder", title: "Open file") { FileOpener.pickAndPlay() }
-                PrimaryChip(icon: "link", title: "Stream URL") { showOpenURL = true }
-            }
+    private func howToAdd(_ margin: CGFloat) -> some View {
+        VStack(spacing: 10) {
+            Image(systemName: "film.stack").font(.system(size: 34, weight: .light)).foregroundStyle(Theme.accent)
+            Text("Your library is empty").font(.headline)
+            Text("Tap **+** to open a file or paste a link, or copy videos into\n**Files → On My iPhone → GlassPlayer → Media**.\nWebDAV servers like Real-Debrid live under Network.")
+                .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }
-        .padding(22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glass(cornerRadius: 26)
-        .padding(.horizontal, margin)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, margin + 10)
+        .padding(.vertical, 30)
     }
 
     // MARK: Library
@@ -144,58 +145,6 @@ struct HomeView: View {
             }
             .padding(.horizontal, margin)
         }
-    }
-
-    // MARK: Sources
-
-    private func sources(_ margin: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Sources", margin)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(servers.servers) { s in
-                        NavigationLink {
-                            if let url = WebDAVClient(server: s).url(forPath: s.rootPath) {
-                                WebDAVBrowserView(server: s, url: url, title: s.name)
-                            }
-                        } label: { SourceCard(server: s) }
-                        .buttonStyle(.plain)
-                    }
-                    NavigationLink { LocalFolderView(url: MPVFiles.mediaDir, title: "Library") } label: {
-                        SourceCard(title: "This iPhone", subtitle: "Files → GlassPlayer", icon: "iphone", host: nil)
-                    }
-                    .buttonStyle(.plain)
-                    Button { addServer = true } label: {
-                        SourceCard(title: "Add source", subtitle: "WebDAV, debrid, NAS", icon: "plus", host: nil, dashed: true)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, margin)
-            }
-        }
-    }
-
-    // MARK: Recently played
-
-    private func recentlyPlayed(width: CGFloat, wide: Bool, margin: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Recently Played", margin)
-            let rows = Array(history.recent.prefix(wide ? 8 : 6))
-            if wide {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 10) {
-                    ForEach(rows) { e in historyRow(e) }
-                }
-                .padding(.horizontal, margin)
-            } else {
-                VStack(spacing: 10) { ForEach(rows) { e in historyRow(e) } }.padding(.horizontal, margin)
-            }
-        }
-    }
-
-    private func historyRow(_ e: HistoryEntry) -> some View {
-        Button { PlayerPresenter.play(e.item) } label: { HistoryRow(entry: e) }
-            .buttonStyle(.plain)
-            .contextMenu { historyMenu(e) }
     }
 
     // MARK: Helpers
@@ -280,9 +229,9 @@ struct HeroCard: View {
             .clipped()
             LinearGradient(colors: [.clear, .black.opacity(0.35), .black.opacity(0.9)], startPoint: .top, endPoint: .bottom)
             VStack(alignment: .leading, spacing: 8) {
-                Text(thumb.meta?.name ?? entry.item.displayTitle).font(.title3.weight(.bold)).lineLimit(2)
+                Text(thumb.meta?.name ?? entry.item.displayTitle).font(.headline.weight(.bold)).lineLimit(1)
                 let line = [entry.item.subtitle, thumb.meta?.episodeTitle].compactMap { $0 }.first ?? thumb.meta?.synopsis
-                if let line { Text(line).font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(2) }
+                if let line { Text(line).font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(1) }
                 HStack(spacing: 12) {
                     Label("Resume", systemImage: "play.fill")
                         .font(.subheadline.weight(.semibold))
@@ -296,10 +245,10 @@ struct HeroCard: View {
                 }
             }
             .foregroundStyle(.white)
-            .padding(18)
+            .padding(14)
         }
         .frame(height: height)
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08)))
         .onAppear {
             thumb.load(key: entry.item.id, fileURL: entry.item.resolvedURL?.isFileURL == true ? entry.item.resolvedURL : nil,

@@ -10,6 +10,7 @@ final class PlayerUIState: ObservableObject {
     @Published var locked = false
     @Published var showInfo = false
     @Published var panel: Panel?
+    @Published var showStats = false
     var menuOpen = false
 
     func toggle(_ p: Panel) {
@@ -30,9 +31,11 @@ final class PlayerUIState: ObservableObject {
     @Published var showConsole = false
 
     struct GestureHUD: Equatable {
+        enum Kind { case seek, brightness, volume, generic }
         var icon: String
         var text: String
         var progress: Double?
+        var kind: Kind = .generic
     }
 
     private var hideWork: DispatchWorkItem?

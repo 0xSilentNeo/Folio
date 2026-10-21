@@ -141,16 +141,16 @@ struct VideoSurface: UIViewRepresentable {
                     let sign = delta >= 0 ? "+" : "-"
                     ui.gestureHUD = .init(icon: delta >= 0 ? "forward" : "backward",
                                           text: "\(PlayerModel.format(target))  (\(sign)\(PlayerModel.format(abs(delta))))",
-                                          progress: target / model.duration)
+                                          progress: target / model.duration, kind: .seek)
                 case .brightness:
                     let value = min(1, max(0, panStartValue - Double(t.y / (v.bounds.height * 0.8))))
                     (v.window?.windowScene?.screen ?? UIScreen.main).brightness = CGFloat(value)
-                    ui.gestureHUD = .init(icon: "sun.max.fill", text: "\(Int(value * 100))%", progress: value)
+                    ui.gestureHUD = .init(icon: value < 0.34 ? "sun.min.fill" : "sun.max.fill", text: "\(Int(value * 100))%", progress: value, kind: .brightness)
                 case .volume:
                     let value = min(150, max(0, panStartValue - Double(t.y / (v.bounds.height * 0.8)) * 100))
                     model.setVolume(value)
-                    ui.gestureHUD = .init(icon: value == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill",
-                                          text: "\(Int(value))%", progress: min(1, value / 100))
+                    ui.gestureHUD = .init(icon: value == 0 ? "speaker.slash.fill" : value < 40 ? "speaker.wave.1.fill" : value < 90 ? "speaker.wave.2.fill" : "speaker.wave.3.fill",
+                                          text: "\(Int(value))%", progress: min(1, value / 150), kind: .volume)
                 case .none: break
                 }
             case .ended, .cancelled:
@@ -160,7 +160,7 @@ struct VideoSurface: UIViewRepresentable {
                 ui.scrubbing = false
                 ui.scrubTime = nil
                 panMode = .none
-                hideHUD(after: 0.5)
+                hideHUD(after: 0.8)
             default: break
             }
         }
@@ -180,7 +180,7 @@ struct VideoSurface: UIViewRepresentable {
             hudWork?.cancel()
             let w = DispatchWorkItem { [weak self] in
                 guard let self, !self.ui.scrubbing, !self.model.holdSpeedActive else { return }
-                withAnimation(.easeOut(duration: 0.2)) { self.ui.gestureHUD = nil }
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { self.ui.gestureHUD = nil }
             }
             hudWork = w
             DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: w)

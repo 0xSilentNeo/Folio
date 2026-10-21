@@ -12,6 +12,7 @@ struct PlayerPanel: View {
     let onRotationLock: (Bool) -> Void
 
     @State private var contentHeight: CGFloat = 0
+    @MainActor static var lastHeights: [String: CGFloat] = [:]
 
     var body: some View {
         let width = compact ? size.width - 32 : min(400, size.width * 0.46)
@@ -27,10 +28,12 @@ struct PlayerPanel: View {
                             Color.clear.preference(key: HeightKey.self, value: g.size.height)
                         })
                 }
-                .onPreferenceChange(HeightKey.self) { contentHeight = $0 }
+                .onPreferenceChange(HeightKey.self) { h in
+                    if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h }
+                }
                 .scrollIndicators(.hidden)
                 .frame(width: width)
-                .frame(height: min(max(contentHeight, 120), maxH))
+                .frame(height: min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxH))
                 .glass(cornerRadius: 28)
                 .padding(.trailing, compact ? 16 : max(16, min(max(safe.leading, safe.trailing), 48)))
                 .padding(.bottom, bottom)
@@ -105,24 +108,30 @@ struct RoundButton: View {
                 .frame(width: 36, height: 36)
                 .background(.white.opacity(0.14), in: Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressStyle(scale: 0.85))
     }
 }
 
 struct SegmentPicker<T: Hashable>: View {
     let options: [(T, String)]
     @Binding var selection: T
+    @Namespace private var ns
     var body: some View {
         HStack(spacing: 2) {
             ForEach(options, id: \.0) { o in
                 Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { selection = o.0 }
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) { selection = o.0 }
                 } label: {
                     Text(o.1).font(.subheadline.weight(.semibold))
                         .padding(.horizontal, 12).frame(height: 32)
-                        .background(selection == o.0 ? Color.accentColor : Color.clear, in: Capsule())
+                        .background {
+                            if selection == o.0 {
+                                Capsule().fill(Color.accentColor).matchedGeometryEffect(id: "seg", in: ns)
+                            }
+                        }
+                        .contentShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressStyle(scale: 0.95))
             }
         }
         .padding(3)
@@ -356,7 +365,7 @@ struct TrackRow: View {
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressStyle(scale: 0.97))
     }
 }
 
@@ -384,6 +393,7 @@ struct NowPlayingPanelContent: View {
                 }
                 .buttonStyle(.plain)
             }
+            Group {
             switch tab {
             case 0:
                 ForEach(Array(model.queue.enumerated()), id: \.offset) { i, item in
@@ -413,7 +423,11 @@ struct NowPlayingPanelContent: View {
                 .buttonStyle(.plain)
                 Text("Long-press a marker to remove it.").font(.caption2).foregroundStyle(.white.opacity(0.45))
             }
+            }
+            .id(tab)
+            .transition(.opacity.combined(with: .move(edge: tab == 0 ? .leading : .trailing)))
         }
+        .animation(.spring(response: 0.32, dampingFraction: 0.85), value: tab)
         .onAppear { if !model.chapters.isEmpty && model.queue.count <= 1 { tab = 1 } }
     }
 }
@@ -437,7 +451,7 @@ struct ListRow: View {
             .background(active ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressStyle(scale: 0.97))
     }
 }
 

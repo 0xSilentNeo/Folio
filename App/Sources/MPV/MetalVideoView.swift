@@ -37,6 +37,10 @@ final class MetalVideoView: UIView {
     override class var layerClass: AnyClass { GPMetalLayer.self }
     var metalLayer: GPMetalLayer { layer as! GPMetalLayer }
 
+    /// Called after the drawable size changed (rotation, PiP restore, app switch).
+    var onResize: (() -> Void)?
+    private var lastSize: CGSize = .zero
+
     init() {
         super.init(frame: .zero)
         backgroundColor = .black
@@ -62,6 +66,10 @@ final class MetalVideoView: UIView {
         CATransaction.setDisableActions(true)
         metalLayer.drawableSize = size
         CATransaction.commit()
+        if size != lastSize {
+            lastSize = size
+            onResize?()
+        }
     }
 
     /// Value for mpv's `wid` option.

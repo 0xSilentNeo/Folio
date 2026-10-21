@@ -261,6 +261,7 @@ final class PlayerModel: ObservableObject {
                 errorMessage = "Video output failed: \(error.localizedDescription)"
             }
         }
+        metalView?.onResize = { [weak self] in self?.nudgeRedraw() }
         mode = .main
 
         if defaults.bool(forKey: SettingsKey.pipEnabled), PiPManager.isSupported {
@@ -401,6 +402,21 @@ final class PlayerModel: ObservableObject {
             UserDefaults.standard.set(playbackMode, forKey: SettingsKey.playbackMode)
             client?.set("loop-file", playbackMode == "loop" ? "inf" : "no")
         }
+    }
+
+    /// Forces the VO to re-render at the new drawable size even while paused
+    /// (otherwise the old frame stays stretched until the next decoded frame).
+    private var nudgeWork: DispatchWorkItem?
+    func nudgeRedraw() {
+        guard mode == .main, renderer == .metal, let c = client else { return }
+        nudgeWork?.cancel()
+        let w = DispatchWorkItem { [weak c] in
+            guard let c, !c.isShutDown else { return }
+            c.command(["set", "video-zoom", "0.0001"])
+            c.command(["set", "video-zoom", "0"])
+        }
+        nudgeWork = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08, execute: w)
     }
 
     private func applyShaderList() {
@@ -957,6 +973,8 @@ final class PlayerModel: ObservableObject {
             videoOffForBackground = false
             c.set("vid", vidSaved ?? "auto")
         }
+        videoView.setNeedsLayout()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.nudgeRedraw() }
     }
 
     private func configureAudioSession() {

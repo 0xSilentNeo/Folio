@@ -180,6 +180,13 @@ struct MetaItem: Codable, Hashable, Identifiable {
     var runtime: String?
     var genres: [String]?
     var videos: [MetaVideo]?
+    /// Chart position (IMDb Top 250); not part of the addon protocol.
+    var rank: Int?
+
+    init(id: String, type: String, name: String, poster: String?, description: String?, releaseInfo: String?, imdbRating: String?, genres: [String]?, rank: Int? = nil) {
+        self.id = id; self.type = type; self.name = name; self.poster = poster; self.description = description
+        self.releaseInfo = releaseInfo; self.imdbRating = imdbRating; self.genres = genres; self.rank = rank
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)

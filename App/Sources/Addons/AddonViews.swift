@@ -67,9 +67,17 @@ struct PosterCard: View {
         VStack(alignment: .leading, spacing: 6) {
             PosterImage(url: meta.poster, aspect: meta.posterShape == "landscape" ? 16.0 / 9.0 : (meta.posterShape == "square" ? 1 : 2.0 / 3.0))
                 .frame(width: width)
+                .overlay(alignment: .topLeading) {
+                    if let rank = meta.rank {
+                        Text("#\(rank)").font(.caption2.weight(.heavy))
+                            .padding(.horizontal, 7).padding(.vertical, 3)
+                            .background(.black.opacity(0.65), in: Capsule())
+                            .padding(6)
+                    }
+                }
                 .shadow(color: .black.opacity(0.4), radius: 6, y: 3)
             Text(meta.name).font(.caption.weight(.medium)).lineLimit(1).frame(width: width, alignment: .leading)
-            if let r = meta.releaseInfo {
+            if let r = meta.rank != nil ? meta.imdbRating.map { "IMDb \($0)" } : meta.releaseInfo {
                 Text(r).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
             }
         }

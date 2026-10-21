@@ -30,15 +30,6 @@ struct NetworkView: View {
                 } header: { Text("WebDAV") } footer: {
                     Text("Real-Debrid, TorBox, Premiumize, Nextcloud, Synology, rclone serve webdav… Passwords are stored in the iOS Keychain.")
                 }
-
-                Section("Files") {
-                    NavigationLink {
-                        LocalFolderView(url: MPVFiles.mediaDir, title: "Library")
-                    } label: { Label("On this device", systemImage: "iphone") }
-                    NavigationLink {
-                        LocalFolderView(url: MPVFiles.screenshotsDir, title: "Screenshots")
-                    } label: { Label("Screenshots", systemImage: "camera") }
-                }
             }
             .navigationTitle("Network")
             .sheet(isPresented: $adding) { ServerEditView(server: nil) }

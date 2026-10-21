@@ -85,6 +85,7 @@ final class BrowseModel: ObservableObject {
         case trending, topRated, new
         var id: String { rawValue }
         var title: String { self == .trending ? "Trending" : self == .topRated ? "Top Rated" : "New" }
+        var footnote: String? { self == .topRated ? "IMDb Top 250, as rated by IMDb users" : nil }
         var catalog: String { self == .trending ? "top" : self == .topRated ? "imdbRating" : "year" }
     }
     static let genres = ["Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy",
@@ -110,11 +111,22 @@ final class BrowseModel: ObservableObject {
     }
 
     func loadMore() async {
-        guard !loading, !exhausted, let addon else { return }
+        guard !loading, !exhausted else { return }
         generation += 1
         let gen = generation
         loading = true
         defer { loading = false }
+        if sort == .topRated {
+            // IMDb's chart, filtered by genre locally; falls back to Cinemeta.
+            let chart = await IMDbCharts.top(type: type)
+            guard gen == generation else { return }
+            if !chart.isEmpty {
+                metas = chart.filter { m in genre.map { g in (m.genres ?? []).contains { $0.caseInsensitiveCompare(g) == .orderedSame } } ?? true }
+                exhausted = true
+                return
+            }
+        }
+        guard let addon else { return }
         guard let cat = addon.manifest.catalogs.first(where: { $0.id == sort.catalog && $0.type == type }) else { return }
         var extra: [String: String] = [:]
         if sort == .new { extra["genre"] = year } else if let genre { extra["genre"] = genre }
@@ -142,10 +154,13 @@ struct DiscoverView: View {
                     LazyVStack(alignment: .leading, spacing: 24) {
                         header(margin)
                         platformStrip(margin)
-                        HStack(alignment: .firstTextBaseline) {
-                            Text(gridTitle).font(.title3.weight(.bold))
-                            Spacer()
-                            if browse.loading && browse.metas.isEmpty { ProgressView() }
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(alignment: .firstTextBaseline) {
+                                Text(gridTitle).font(.title3.weight(.bold))
+                                Spacer()
+                                if browse.loading && browse.metas.isEmpty { ProgressView() }
+                            }
+                            if let f = browse.sort.footnote { Text(f).font(.caption).foregroundStyle(.secondary) }
                         }
                         .padding(.horizontal, margin)
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: cols), spacing: 18) {

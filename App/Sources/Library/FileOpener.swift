@@ -29,6 +29,7 @@ final class DocumentPicker: NSObject, UIDocumentPickerDelegate {
     }
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        dlog("open", "picker cancelled")
         completion = nil
     }
 }
@@ -40,8 +41,11 @@ final class DocumentPicker: NSObject, UIDocumentPickerDelegate {
 enum FileOpener {
     static let mediaTypes: [UTType] = [.movie, .video, .audiovisualContent, .audio, .item]
 
+    /// Single selection on purpose: with multiple selection iOS only ticks
+    /// the file you tap and waits for an "Open" button, which reads as
+    /// "nothing happens".
     static func pickAndPlay() {
-        DocumentPicker.shared.present(types: mediaTypes, multiple: true) { urls in
+        DocumentPicker.shared.present(types: mediaTypes, multiple: false) { urls in
             open(urls)
         }
     }
