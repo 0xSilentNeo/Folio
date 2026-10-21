@@ -239,7 +239,11 @@ struct MetaDetailView: View {
                 if m.type != "movie" {
                     loadingEpisodes = true
                     seasons = await IMDbSource.seasons(id: id)
-                    if let first = seasons.first { season = first } else { loadingEpisodes = false }
+                    if let first = seasons.first {
+                        season = first
+                        episodes = await IMDbSource.episodes(id: id, season: first)
+                    }
+                    loadingEpisodes = false
                 }
             } else {
                 guard let addon = AddonStore.shared.metaAddon(type: preview.type, id: id, preferred: sourceAddon) else { return }

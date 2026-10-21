@@ -128,7 +128,7 @@ enum IMDbSource {
         if let genre {
             if genre == "Anime" {
                 q["genres"] = "animation"
-                if animeJapanOnly { q["countries"] = "JP" }
+                if animeJapanOnly { q["country_of_origin"] = "JP"; q["countries"] = "JP" }
             } else {
                 q["genres"] = genre.lowercased()
             }
@@ -221,7 +221,7 @@ enum IMDbSource {
             let t = (obj["@type"] as? String) ?? ""
             guard ["Movie", "TVSeries", "TVMiniSeries", "TVEpisode", "TVMovie", "VideoObject", "CreativeWork"].contains(t) || obj["name"] != nil, obj["itemListElement"] == nil else { continue }
             let type = t.hasPrefix("TV") && t != "TVMovie" && t != "TVEpisode" ? "series" : (t == "TVEpisode" ? hint : "movie")
-            let name = unescape((obj["alternateName"] as? String) ?? (obj["name"] as? String) ?? id)
+            let name = unescape((obj["name"] as? String) ?? (obj["alternateName"] as? String) ?? id)
             var item = MetaItem(id: id, type: type, name: name, poster: sized(obj["image"] as? String, width: 500),
                                 description: unescape(obj["description"] as? String),
                                 releaseInfo: (obj["datePublished"] as? String).map { String($0.prefix(4)) },
@@ -349,7 +349,7 @@ enum IMDbSource {
                 let item = (el["item"] as? [String: Any]) ?? el
                 guard let urlStr = item["url"] as? String,
                       let id = urlStr.split(separator: "/").first(where: { $0.hasPrefix("tt") }).map(String.init) else { continue }
-                let name = unescape((item["alternateName"] as? String) ?? (item["name"] as? String) ?? id)
+                let name = unescape((item["name"] as? String) ?? (item["alternateName"] as? String) ?? id)
                 let rating = ((item["aggregateRating"] as? [String: Any])?["ratingValue"]).map { "\($0)" }
                 let genres = (item["genre"] as? [String]) ?? (item["genre"] as? String).map { [$0] }
                 let t = (item["@type"] as? String) ?? ""
