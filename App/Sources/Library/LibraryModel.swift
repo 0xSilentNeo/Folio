@@ -30,7 +30,7 @@ struct LibraryGroup: Identifiable, Hashable {
     var seasons: [Int] { Array(Set(files.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted() }
 
     /// The file a tap should land on: the one being watched, else the first unfinished, else the first.
-    var nextUp: URL {
+    @MainActor var nextUp: URL {
         let h = HistoryStore.shared
         if let e = files.first(where: { h.entry(forURL: $0.path)?.canResume == true }) { return e }
         if let e = files.first(where: { h.entry(forURL: $0.path)?.isFinished != true }) { return e }
