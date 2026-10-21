@@ -45,3 +45,24 @@ mpv/libmpv engine (Metal · libplacebo · Dolby Vision · HDR · TrueHD/DTS/Atmo
 - IMDb page access depends on the WAF challenge staying solvable in WebKit; keep the TMDB path as fallback and consider an own metadata proxy.
 - Streaming-service rows come from a community addon host; cache aggressively, fail quietly.
 - Sideloading: no App Store entitlements (no background downloads beyond ~30 s, no CarPlay); document it.
+
+## What could be paid (one-time "Pro" unlock)
+
+Keep everything a player *needs* free — playback of every format, Liquid Glass UI, PiP, one WebDAV server, local library with IMDb metadata, Discover, subtitles, chapters, skip intro. Charge once for the things that are conveniences, integrations or power-user depth:
+
+| Pro feature | Why people pay for it |
+|---|---|
+| Unlimited WebDAV / cloud sources (SMB, FTP, Google Drive, OneDrive, Jellyfin/Plex/Emby) | Infuse's model; sources are the sticky part |
+| Trakt sync + watched-state across devices | Ongoing value, hard to replicate |
+| Seek-bar thumbnails & live scrub strip | Visible polish, costs CPU work to build |
+| Anime4K / shader presets per genre, Enhanced Quality profiles | Enthusiast feature |
+| Subtitle styling (fonts, colours, outline, position) and OpenSubtitles search | Daily-use convenience |
+| Audio EQ, night-mode normalisation, audio route picker | Power-user audio |
+| Wi-Fi transfer server & URL downloads with queue | Replaces a separate app |
+| Up-next autoplay with countdown, smart playlists, collections | Binge features |
+| App icons, accent colours, custom glass tint, iPad layout extras | Cosmetic, cheap to build |
+| Priority metadata (TMDB key bundled through a proxy), "Fix match" | Saves the user from getting their own key |
+
+Pricing shape that works for this category: free tier with no time limit, Pro unlock as a single purchase (A$14–20), optional "supporter" tier later. 
+
+Caveat for a sideloaded build: StoreKit in-app purchase only works through the App Store (TestFlight included). For a sideloaded/KSign distribution the only honest options are a licence key checked against your own server, or making the sideloaded build fully unlocked and charging only on the App Store.

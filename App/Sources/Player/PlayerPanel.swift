@@ -17,7 +17,7 @@ struct PlayerPanel: View {
     var body: some View {
         let width = compact ? size.width - 40 : min(340, size.width * 0.42)
         let bottom = compact ? 128.0 : 70.0
-        let maxH = size.height - bottom - safe.top - 16
+        let maxH = size.height - bottom - max(safe.top, 8) - 52   // keep clear of the close / PiP row
         VStack(spacing: 0) {
             Spacer(minLength: 0)
             HStack {
