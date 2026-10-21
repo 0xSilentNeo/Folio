@@ -209,6 +209,7 @@ final class PlayerModel: ObservableObject {
     private var started = false
     private var closed = false
     private var loadStarted = Date()
+    private var pendingW = 0, pendingH = 0
     var onClose: (() -> Void)?
 
     private let defaults = UserDefaults.standard
@@ -1143,7 +1144,6 @@ extension PlayerModel: MPVClientDelegate {
         }
     }
 
-    private var pendingW = 0, pendingH = 0
     private func applyVideoSize() {
         let size = CGSize(width: pendingW, height: pendingH)
         if size != videoSize { videoSize = size }

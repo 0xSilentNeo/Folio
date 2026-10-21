@@ -272,9 +272,10 @@ enum PlayerPresenter {
 
     static func topViewController() -> UIViewController? {
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let windows = scenes.flatMap(\.windows).filter { $0 !== window }
-        let window = windows.first { $0.isKeyWindow } ?? windows.first
-        var vc = window?.rootViewController
+        let playerWindow = window
+        let windows = scenes.flatMap(\.windows).filter { $0 !== playerWindow }
+        let target = windows.first { $0.isKeyWindow } ?? windows.first
+        var vc = target?.rootViewController
         while let presented = vc?.presentedViewController { vc = presented }
         return vc
     }
