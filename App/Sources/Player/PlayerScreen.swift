@@ -12,7 +12,6 @@ struct PlayerScreen: View {
     var onRotationLock: (Bool) -> Void = { _ in }
 
     @State private var showSubtitlePicker = false
-    @Namespace private var cardNS
 
     var body: some View {
         GeometryReader { geo in
@@ -56,9 +55,9 @@ struct PlayerScreen: View {
                         .id("gesturehud")
                         .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
-                if ui.showStats {
-                    StatsOverlay(model: model, ui: ui, ns: cardNS)
-                        .transition(.scale(scale: 0.9, anchor: .topLeading).combined(with: .opacity))
+                if ui.showStats || ui.showInfo {
+                    MediaCard(model: model, ui: ui)
+                        .transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
                 }
                 if let toast = model.toast, ui.gestureHUD == nil, !model.holdSpeedActive {
                     topPill(Text(toast), top: geo.safeAreaInsets.top + (ui.controlsVisible ? 56 : 0))
@@ -68,15 +67,14 @@ struct PlayerScreen: View {
                 if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
 
                 if let panel = ui.panel {
+                    // Each panel kind is its own view (id), so switching panels is a
+                    // close + open rather than a crossfade that can leave a ghost.
                     PlayerPanel(kind: panel, model: model, ui: ui, size: geo.size, safe: geo.safeAreaInsets, compact: compact,
                                 onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
+                        .id(panel)
                         .transition(.asymmetric(
-                            insertion: .scale(scale: 0.2, anchor: .bottomTrailing).combined(with: .opacity),
-                            removal: .scale(scale: 0.5, anchor: .bottomTrailing).combined(with: .opacity)))
-                }
-                if ui.showInfo {
-                    InfoCard(model: model, ui: ui, ns: cardNS)
-                        .transition(.scale(scale: 0.9, anchor: .topLeading).combined(with: .opacity))
+                            insertion: .scale(scale: 0.1, anchor: .bottomTrailing).combined(with: .opacity),
+                            removal: .scale(scale: 0.6, anchor: .bottomTrailing).combined(with: .opacity).animation(.easeIn(duration: 0.16))))
                 }
                 if ui.showConsole {
                     ConsoleBar(model: model, ui: ui).transition(.move(edge: .bottom).combined(with: .opacity))
@@ -85,9 +83,8 @@ struct PlayerScreen: View {
             .animation(.easeOut(duration: 0.18), value: ui.controlsVisible)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD != nil)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD?.kind)
-            .animation(.spring(response: 0.4, dampingFraction: 0.84), value: ui.showStats)
-            .animation(.spring(response: 0.4, dampingFraction: 0.84), value: ui.showInfo)
-            .animation(.spring(response: 0.45, dampingFraction: 0.78), value: ui.panel)
+            .animation(.spring(response: 0.42, dampingFraction: 0.84), value: ui.showStats || ui.showInfo)
+            .animation(.spring(response: 0.55, dampingFraction: 0.74), value: ui.panel)
             .animation(.easeOut(duration: 0.18), value: model.toast)
             .animation(.easeOut(duration: 0.18), value: model.holdSpeedActive)
         }

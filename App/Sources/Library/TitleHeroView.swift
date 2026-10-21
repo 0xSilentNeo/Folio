@@ -5,6 +5,7 @@ import CoreMotion
 /// 3D play button, and the other files of the same title (episodes) in the
 /// chosen view style.
 struct TitleHeroView: View {
+    let group: LibraryGroup
     let file: URL
     @ObservedObject private var local = LocalMediaStore.shared
     @ObservedObject private var history = HistoryStore.shared
@@ -12,20 +13,34 @@ struct TitleHeroView: View {
     @AppStorage("heroView") private var viewMode = LibraryViewMode.details.rawValue
     @Environment(\.dismiss) private var dismiss
     @State private var confirmDelete = false
+    @State private var season: Int?
+
+    /// A series page (all episodes merged) or a single file.
+    init(group: LibraryGroup, focus: URL? = nil) {
+        self.group = group
+        self.file = focus ?? group.nextUp
+    }
+    init(file: URL) {
+        let g = LibraryOrganizer.groups(LocalMediaStore.shared.files).first { $0.files.contains(file) }
+            ?? LibraryGroup(id: file.path, title: TitleParser.clean(file.lastPathComponent), files: [file], isSeries: false, date: .distantPast, size: 0)
+        self.init(group: g, focus: file)
+    }
 
     private var parsed: TitleParser.Parsed { TitleParser.parse(file.lastPathComponent) }
     private var meta: MediaMeta? { thumb.meta }
-    private var title: String { meta?.name ?? TitleParser.clean(file.lastPathComponent) }
+    private var title: String { meta?.name ?? group.title }
     private var entry: HistoryEntry? { history.entry(forURL: file.path) }
 
-    /// Other library files that parse to the same title (a series' episodes).
+    /// Episodes of this title currently in the library (live, so deletions update).
     private var siblings: [URL] {
-        let me = parsed.title.lowercased()
-        return local.files.filter { TitleParser.parse($0.lastPathComponent).title.lowercased() == me }
-            .sorted { a, b in
-                let pa = TitleParser.parse(a.lastPathComponent), pb = TitleParser.parse(b.lastPathComponent)
-                return (pa.season ?? 0, pa.episode ?? 0, a.lastPathComponent) < (pb.season ?? 0, pb.episode ?? 0, b.lastPathComponent)
-            }
+        let live = local.files.filter { group.files.contains($0) }
+        let extra = local.files.filter { f in !group.files.contains(f) && group.isSeries && TitleParser.parse(f.lastPathComponent).title.lowercased() == TitleParser.parse(file.lastPathComponent).title.lowercased() }
+        return (live + extra).sorted(by: LibraryOrganizer.episodeOrder)
+    }
+    private var seasons: [Int] { Array(Set(siblings.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted() }
+    private var shownEpisodes: [URL] {
+        guard seasons.count > 1, let season else { return siblings }
+        return siblings.filter { TitleParser.parse($0.lastPathComponent).season == season }
     }
 
     var body: some View {
@@ -138,12 +153,27 @@ struct TitleHeroView: View {
     private var episodes: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("In your library").font(.title3.weight(.bold))
+                Text("Episodes").font(.title3.weight(.bold))
                 Text("\(siblings.count)").font(.subheadline).foregroundStyle(.secondary)
                 Spacer()
                 ViewModeMenu(mode: $viewMode)
             }
-            LibraryList(files: siblings, mode: LibraryViewMode(rawValue: viewMode) ?? .details, current: file) { play($0) }
+            if seasons.count > 1 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(seasons, id: \.self) { s in
+                            Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { season = s } } label: {
+                                Text(s == 0 ? "Specials" : "Season \(s)").font(.subheadline.weight(.semibold))
+                                    .padding(.horizontal, 14).frame(height: 34)
+                                    .background((season ?? seasons[0]) == s ? Theme.accent : Color.white.opacity(0.1), in: Capsule())
+                            }
+                            .buttonStyle(PressStyle())
+                        }
+                    }
+                }
+                .onAppear { if season == nil { season = parsed.season ?? seasons[0] } }
+            }
+            LibraryList(files: shownEpisodes, mode: LibraryViewMode(rawValue: viewMode) ?? .details, current: file, group: group) { play($0) }
         }
         .padding(.top, 10)
     }
@@ -172,7 +202,7 @@ struct TitleHeroView: View {
     // MARK: Actions
 
     private func play(_ f: URL) {
-        let list = siblings.count > 1 ? siblings : local.files
+        let list = siblings.count > 1 ? siblings : LibraryOrganizer.sorted(local.files)
         let queue = list.map { u -> MediaItem in
             var m = MediaItem(url: u.path, title: TitleParser.clean(u.lastPathComponent), source: .local)
             m.historyKey = u.path
@@ -283,6 +313,25 @@ enum LibraryViewMode: String, CaseIterable {
     var icon: String { self == .grid ? "square.grid.2x2" : self == .list ? "list.bullet" : "rectangle.grid.1x2" }
 }
 
+struct SortMenu: View {
+    @Binding var sort: String
+    @Binding var ascending: Bool
+    var body: some View {
+        Menu {
+            Picker("Sort by", selection: $sort) {
+                ForEach(LibrarySort.allCases, id: \.rawValue) { Label($0.title, systemImage: $0.icon).tag($0.rawValue) }
+            }
+            Divider()
+            Button { ascending.toggle() } label: {
+                Label(ascending ? "Ascending" : "Descending", systemImage: ascending ? "arrow.up" : "arrow.down")
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down").font(.system(size: 13, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
+        }
+        .foregroundStyle(.white)
+    }
+}
+
 struct ViewModeMenu: View {
     @Binding var mode: String
     var body: some View {
@@ -303,14 +352,20 @@ struct LibraryList: View {
     let files: [URL]
     let mode: LibraryViewMode
     var current: URL? = nil
+    var group: LibraryGroup? = nil
     let play: (URL) -> Void
     @ObservedObject private var history = HistoryStore.shared
+    @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
 
     var body: some View {
         LazyVStack(spacing: mode == .details ? 12 : 4) {
             ForEach(files, id: \.self) { f in
-                NavigationLink { TitleHeroView(file: f) } label: {
-                    LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress)
+                Group {
+                    if openTitlePage && group == nil {
+                        NavigationLink { TitleHeroView(file: f) } label: { row(f) }
+                    } else {
+                        Button { play(f) } label: { row(f) }
+                    }
                 }
                 .buttonStyle(PressStyle(scale: 0.98))
                 .contextMenu {
@@ -320,6 +375,10 @@ struct LibraryList: View {
             }
         }
     }
+
+    private func row(_ f: URL) -> some View {
+        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress)
+    }
 }
 
 struct LibraryRow: View {
@@ -327,6 +386,8 @@ struct LibraryRow: View {
     let mode: LibraryViewMode
     var highlighted = false
     let progress: Double?
+    var fixedTitle: String? = nil
+    var fixedSubtitle: String? = nil
     @StateObject private var thumb = ThumbLoader()
 
     private var parsed: TitleParser.Parsed { TitleParser.parse(file.lastPathComponent) }
@@ -338,8 +399,12 @@ struct LibraryRow: View {
     private var detail: Bool { mode == .details }
     private var thumbW: CGFloat { detail ? 150 : 78 }
     private var thumbH: CGFloat { detail ? 84 : 44 }
-    private var headline: String { thumb.meta?.episodeTitle ?? thumb.meta?.name ?? TitleParser.clean(file.lastPathComponent) }
+    private var headline: String { fixedTitle ?? thumb.meta?.episodeTitle ?? thumb.meta?.name ?? TitleParser.clean(file.lastPathComponent) }
     private var secondary: String {
+        if let fixedSubtitle {
+            if detail, let s = thumb.meta?.description, !s.isEmpty { return fixedSubtitle + " — " + s }
+            return fixedSubtitle
+        }
         if detail {
             if let s = thumb.meta?.synopsis, !s.isEmpty { return s }
             return file.lastPathComponent
@@ -353,7 +418,7 @@ struct LibraryRow: View {
             thumbnail
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
-                    if let tag = episodeTag { Text(tag).font(.caption2.weight(.bold)).foregroundStyle(Theme.accent) }
+                    if fixedTitle == nil, let tag = episodeTag { Text(tag).font(.caption2.weight(.bold)).foregroundStyle(Theme.accent) }
                     Text(headline).font(.subheadline.weight(.semibold)).lineLimit(1)
                 }
                 Text(secondary).font(.caption).foregroundStyle(.secondary).lineLimit(detail ? 3 : 1)

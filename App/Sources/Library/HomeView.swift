@@ -158,42 +158,71 @@ struct HomeView: View {
     // MARK: Library
 
     @AppStorage("libraryView") private var libraryView = LibraryViewMode.grid.rawValue
+    @AppStorage("librarySort") private var librarySort = LibrarySort.name.rawValue
+    @AppStorage("librarySortAsc") private var librarySortAsc = true
+    @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
+
+    private var groups: [LibraryGroup] {
+        LibraryOrganizer.groups(local.files, sort: LibrarySort(rawValue: librarySort) ?? .name, ascending: librarySortAsc)
+    }
 
     private func library(width: CGFloat, margin: CGFloat) -> some View {
         let cols = max(2, Int((width - margin * 2 + 14) / 184))
         let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
+        let groups = self.groups
         return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("Library").font(.title3.weight(.bold))
-                Text("\(local.files.count)").font(.subheadline).foregroundStyle(.secondary)
+                Text("\(groups.count)").font(.subheadline).foregroundStyle(.secondary)
                 Spacer()
+                SortMenu(sort: $librarySort, ascending: $librarySortAsc)
                 ViewModeMenu(mode: $libraryView)
-                NavigationLink { LocalFolderView(url: MPVFiles.mediaDir, title: "Library") } label: {
-                    HStack(spacing: 2) { Text("All"); Image(systemName: "chevron.right").font(.caption.weight(.bold)) }
-                        .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
-                }
             }
             .padding(.horizontal, margin)
             if mode == .grid {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
-                    ForEach(local.files.prefix(cols * 2), id: \.self) { f in
-                        NavigationLink { TitleHeroView(file: f) } label: {
-                            MediaTile(title: TitleParser.clean(f.lastPathComponent), subtitle: f.pathExtension.uppercased(),
-                                      key: f.path, fileURL: f, lookupName: f.lastPathComponent,
-                                      progress: history.entry(forURL: f.path)?.progress)
-                        }
-                        .buttonStyle(PressStyle(scale: 0.97))
-                        .contextMenu {
-                            Button { playLocal(f) } label: { Label("Play", systemImage: "play") }
-                            Button(role: .destructive) { local.delete(f) } label: { Label("Delete", systemImage: "trash") }
+                    ForEach(groups) { g in
+                        groupLink(g) {
+                            MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
+                                      key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
+                                      progress: history.entry(forURL: g.nextUp.path)?.progress,
+                                      fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil)
                         }
                     }
                 }
                 .padding(.horizontal, margin)
             } else {
-                LibraryList(files: Array(local.files.prefix(mode == .list ? 8 : 5)), mode: mode) { playLocal($0) }
-                    .padding(.horizontal, margin)
+                LazyVStack(spacing: mode == .details ? 12 : 4) {
+                    ForEach(groups) { g in
+                        groupLink(g) {
+                            LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
+                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil)
+                        }
+                    }
+                }
+                .padding(.horizontal, margin)
             }
+        }
+    }
+
+    private func seriesSubtitle(_ g: LibraryGroup) -> String {
+        let s = g.seasons.count
+        return "\(g.count) episode\(g.count == 1 ? "" : "s")" + (s > 1 ? " · \(s) seasons" : "")
+    }
+
+    @ViewBuilder
+    private func groupLink<L: View>(_ g: LibraryGroup, @ViewBuilder label: () -> L) -> some View {
+        Group {
+            if openTitlePage || g.isSeries {
+                NavigationLink { TitleHeroView(group: g) } label: { label() }
+            } else {
+                Button { playLocal(g.nextUp) } label: { label() }
+            }
+        }
+        .buttonStyle(PressStyle(scale: 0.97))
+        .contextMenu {
+            Button { playLocal(g.nextUp) } label: { Label(g.isSeries ? "Play next episode" : "Play", systemImage: "play") }
+            if !g.isSeries { Button(role: .destructive) { local.delete(g.files[0]) } label: { Label("Delete", systemImage: "trash") } }
         }
     }
 
@@ -241,14 +270,16 @@ struct HomeView: View {
     }
 
     private func playLocal(_ f: URL) {
-        let queue = local.files.map { u -> MediaItem in
+        let group = groups.first { $0.files.contains(f) }
+        let list = (group?.isSeries == true ? group!.files : LibraryOrganizer.sorted(local.files))
+        let queue = list.map { u -> MediaItem in
             var m = MediaItem(url: u.path, title: TitleParser.clean(u.lastPathComponent), source: .local)
             m.historyKey = u.path
             let p = TitleParser.parse(u.lastPathComponent)
             if p.episode != nil { m.anime = AnimeHint(title: p.title, episode: p.episode) }
             return m
         }
-        PlayerPresenter.play(queue: queue, index: local.files.firstIndex(of: f) ?? 0)
+        PlayerPresenter.play(queue: queue, index: list.firstIndex(of: f) ?? 0)
     }
 }
 
@@ -315,6 +346,8 @@ struct MediaTile: View {
     var artwork: String? = nil
     var lookupName: String? = nil
     let progress: Double?
+    var fixedTitle: String? = nil
+    var fixedSubtitle: String? = nil
     @StateObject private var thumb = ThumbLoader()
 
     var body: some View {
@@ -334,8 +367,8 @@ struct MediaTile: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            Text(thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)
-            Text(thumb.meta?.episodeTitle ?? subtitle).font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
+            Text(fixedTitle ?? thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)
+            Text(fixedSubtitle ?? thumb.meta?.episodeTitle ?? subtitle).font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
         }
         .onAppear { thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName) }
     }

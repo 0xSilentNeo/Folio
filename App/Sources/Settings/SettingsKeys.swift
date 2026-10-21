@@ -3,6 +3,7 @@ import Foundation
 enum SettingsKey {
     // Playback
     static let hwdec = "hwdec"                       // "auto" | "copy" | "no"
+    static let openTitlePage = "openTitlePage"
     static let resumePlayback = "resumePlayback"
     static let defaultSpeed = "defaultSpeed"
     static let seekStep = "seekStep"
@@ -58,6 +59,7 @@ enum SettingsKey {
         UserDefaults.standard.register(defaults: [
             hwdec: "auto",
             resumePlayback: true,
+            openTitlePage: true,
             defaultSpeed: 1.0,
             seekStep: 10,
             autoplayNext: true,

@@ -52,6 +52,7 @@ struct SettingsView: View {
 struct PlaybackSettings: View {
     @ObservedObject private var bar = SeekBarPrefs.shared
     @AppStorage(SettingsKey.resumePlayback) private var resume = true
+    @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
     @AppStorage(SettingsKey.autoplayNext) private var autoplayNext = true
     @AppStorage(SettingsKey.backgroundAudio) private var backgroundAudio = true
     @AppStorage(SettingsKey.landscapeOnOpen) private var landscapeOnOpen = true
@@ -66,6 +67,7 @@ struct PlaybackSettings: View {
         Form {
             Section {
                 Toggle("Resume where I left off", isOn: $resume)
+                Toggle("Open title page on tap", isOn: $openTitlePage)
                 Toggle("Play next file automatically", isOn: $autoplayNext)
                 Toggle("Open in landscape", isOn: $landscapeOnOpen)
                 Toggle("Keep audio playing in background", isOn: $backgroundAudio)

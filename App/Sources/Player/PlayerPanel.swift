@@ -27,8 +27,6 @@ struct PlayerPanel: View {
                         .background(GeometryReader { g in
                             Color.clear.preference(key: HeightKey.self, value: g.size.height)
                         })
-                        .id(kind)
-                        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .bottomTrailing)))
                 }
                 .onPreferenceChange(HeightKey.self) { h in
                     if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h }
@@ -36,9 +34,7 @@ struct PlayerPanel: View {
                 .scrollIndicators(.hidden)
                 .frame(width: width)
                 .frame(height: min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxH))
-                .onChange(of: kind) { _, k in contentHeight = PlayerPanel.lastHeights[k.rawValue] ?? 0 }
                 .glass(cornerRadius: 24)
-                .animation(.spring(response: 0.36, dampingFraction: 0.84), value: kind)
                 .animation(.spring(response: 0.36, dampingFraction: 0.84), value: contentHeight)
                 .padding(.trailing, 20)
                 .padding(.bottom, bottom)

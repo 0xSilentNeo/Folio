@@ -46,7 +46,9 @@ struct LocalFolderView: View {
     @ObservedObject private var history = HistoryStore.shared
 
     private var folders: [URL] { items.filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true } }
-    private var media: [URL] { items.filter { TitleParser.isMedia($0.lastPathComponent) } }
+    private var media: [URL] { LibraryOrganizer.sorted(items.filter { TitleParser.isMedia($0.lastPathComponent) }) }
+    @AppStorage("librarySort") private var librarySort = LibrarySort.name.rawValue
+    @AppStorage("librarySortAsc") private var librarySortAsc = true
 
     var body: some View {
         GeometryReader { geo in
@@ -93,7 +95,9 @@ struct LocalFolderView: View {
         .background(HomeBackdrop().ignoresSafeArea())
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .topBarTrailing) { ViewModeMenu(mode: $libraryView) } }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) { HStack(spacing: 6) { SortMenu(sort: $librarySort, ascending: $librarySortAsc); ViewModeMenu(mode: $libraryView) } }
+        }
         .onAppear(perform: reload)
         .refreshable { reload() }
         .onReceive(LocalMediaStore.shared.$files) { _ in reload() }

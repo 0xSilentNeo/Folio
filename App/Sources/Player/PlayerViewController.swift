@@ -14,13 +14,13 @@ final class PlayerUIState: ObservableObject {
     var menuOpen = false
 
     func toggle(_ p: Panel) {
-        withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) { panel = panel == p ? nil : p }
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.74)) { panel = panel == p ? nil : p }
         if panel == nil { scheduleHide() } else { showControls(autoHide: false) }
     }
 
     func closePanel() {
         guard panel != nil else { return }
-        withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) { panel = nil }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.86)) { panel = nil }
         scheduleHide()
     }
     @Published var scrubbing = false

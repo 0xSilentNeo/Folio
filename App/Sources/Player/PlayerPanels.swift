@@ -1,57 +1,84 @@
 import SwiftUI
 
-/// Compact media info card (codec, HDR / Dolby Vision, audio format, decoder).
-struct InfoCard: View {
+/// One glass card at the top left that shows either Media info or Live
+/// stats; switching crossfades the content while the card's height follows,
+/// so the card itself morphs rather than being replaced.
+struct MediaCard: View {
     @ObservedObject var model: PlayerModel
     @ObservedObject var ui: PlayerUIState
-    var ns: Namespace.ID
+    @StateObject private var stats = StatsModel()
+
+    private var showingStats: Bool { ui.showStats }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack {
             HStack {
-                Text("Media info").font(.headline)
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(showingStats ? "Live stats" : "Media info").font(.headline)
+                            .contentTransition(.opacity)
+                        Spacer()
+                        CloseDot { withAnimation(.spring(response: 0.38, dampingFraction: 0.85)) { ui.showStats = false; ui.showInfo = false } }
+                    }
+                    .padding(.bottom, 2)
+                    Group {
+                        if showingStats { statsBody } else { infoBody }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .id(showingStats)
+                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .topLeading)))
+                    Button {
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                            ui.showStats.toggle()
+                            ui.showInfo = !ui.showStats
+                        }
+                    } label: {
+                        Label(showingStats ? "Media info" : "Show live stats", systemImage: showingStats ? "info.circle" : "waveform.path.ecg")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity).frame(height: 34)
+                            .background(.white.opacity(0.12), in: Capsule())
+                    }
+                    .buttonStyle(PressStyle(scale: 0.96))
+                    .padding(.top, 4)
+                }
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundStyle(.white)
+                .padding(16)
+                .frame(maxWidth: 440)
+                .glass(cornerRadius: 24)
+                .animation(.spring(response: 0.45, dampingFraction: 0.82), value: showingStats)
+                .padding(.leading, 20).padding(.top, 60)
                 Spacer()
-                CloseDot { ui.showInfo = false }
             }
-            if let v = model.tracks.first(where: { $0.type == "video" && $0.selected }) {
-                row("Video", v.detail)
-            }
+            Spacer()
+        }
+        .onAppear { if showingStats { stats.start(model.client) } }
+        .onChange(of: showingStats) { _, on in on ? stats.start(model.client) : stats.stop() }
+        .onDisappear { stats.stop() }
+    }
+
+    private var infoBody: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            if let v = model.tracks.first(where: { $0.type == "video" && $0.selected }) { row("Video", v.detail) }
             row("Picture", model.videoFormat.isEmpty ? "–" : model.videoFormat)
             row("Decoder", model.hwdecCurrent.isEmpty || model.hwdecCurrent == "no" ? "Software" : "Hardware (\(model.hwdecCurrent))")
-            if let a = model.tracks.first(where: { $0.type == "audio" && $0.selected }) {
-                row("Audio", a.detail)
-            }
-            if !model.audioOut.isEmpty { row("Audio output", model.audioOut) }
+            if let a = model.tracks.first(where: { $0.type == "audio" && $0.selected }) { row("Audio", a.detail) }
+            if !model.audioOut.isEmpty { row("Output", model.audioOut) }
             row("Renderer", model.renderer == .metal ? "Metal (libplacebo)" : "OpenGL ES")
             row("Source", model.item.url)
-            Button {
-                // The card morphs into the live stats card (matched geometry).
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.84)) {
-                    ui.showInfo = false
-                    ui.showStats = true
-                }
-            } label: {
-                Label("Show live stats", systemImage: "waveform.path.ecg")
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity).frame(height: 38)
-                    .background(.white.opacity(0.12), in: Capsule())
-            }
-            .buttonStyle(PressStyle(scale: 0.96))
         }
-        .foregroundStyle(.white)
-        .padding(16)
-        .frame(maxWidth: 480)
-        .glass(cornerRadius: 24)
-        .matchedGeometryEffect(id: "statcard", in: ns)
-        .padding(.leading, 20).padding(.top, 60)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private var statsBody: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            ForEach(stats.lines) { l in row(l.id, l.value) }
+        }
     }
 
     private func row(_ k: String, _ v: String) -> some View {
-        HStack(alignment: .top) {
-            Text(k).font(.system(size: 11, weight: .medium, design: .monospaced)).foregroundStyle(.white.opacity(0.55)).frame(width: 82, alignment: .leading)
-            Text(v).font(.system(size: 11, weight: .medium, design: .monospaced)).textSelection(.enabled).lineLimit(2)
-            Spacer(minLength: 0)
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(k).foregroundStyle(.white.opacity(0.55)).frame(width: 82, alignment: .leading)
+            Text(v).lineLimit(2).textSelection(.enabled)
         }
     }
 }
@@ -189,44 +216,5 @@ struct CloseDot: View {
         }
         .buttonStyle(PressStyle())
         .foregroundStyle(.white)
-    }
-}
-
-struct StatsOverlay: View {
-    @ObservedObject var model: PlayerModel
-    @ObservedObject var ui: PlayerUIState
-    var ns: Namespace.ID
-    @StateObject private var stats = StatsModel()
-
-    var body: some View {
-        VStack {
-            HStack {
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack {
-                        Text("Live stats").font(.headline)
-                        Spacer()
-                        CloseDot { withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { ui.showStats = false } }
-                    }
-                    .padding(.bottom, 4)
-                    ForEach(stats.lines) { l in
-                        HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Text(l.id).foregroundStyle(.white.opacity(0.55)).frame(width: 82, alignment: .leading)
-                            Text(l.value).lineLimit(1)
-                        }
-                    }
-                }
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundStyle(.white)
-                .padding(16)
-                .frame(maxWidth: 480)
-                .glass(cornerRadius: 24)
-                .matchedGeometryEffect(id: "statcard", in: ns)
-                .padding(.leading, 20).padding(.top, 60)
-                Spacer()
-            }
-            Spacer()
-        }
-        .onAppear { stats.start(model.client) }
-        .onDisappear { stats.stop() }
     }
 }
