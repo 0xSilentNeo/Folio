@@ -25,7 +25,7 @@
 - Built-in Anime4K modes (A/B/C, A+A, B+B, C+A; Fast/Balanced/High), Enhanced Quality toggle, audio boost
 - Seek bar shows chapters, cache and skip markers; lock screen, rotation lock, AirPlay, screenshots
 - Resume playback, continue watching, autoplay next file in the folder
-- Metadata (posters, synopsis, episode names) looked up from file names via Cinemeta and cached
+- Metadata (posters, synopsis, ratings, episode names) looked up from file names on IMDb (built-in source, no key) and cached
 - Diagnostics: app log, crash/hang capture and a redacted report zip (Settings → Advanced)
 
 **Active Picture in Picture**
@@ -34,7 +34,7 @@
 
 **Sources**
 - **WebDAV**: Real-Debrid, TorBox, Premiumize presets or any server. Per-folder sort memory, clean titles, watched/progress badges, folder filter and a background **library-wide search** index. Passwords live in the Keychain.
-- **Addons** (Stremio protocol, the same ones Nuvio uses): Cinemeta pre-installed; add Torrentio/Comet/MediaFusion (with your debrid key), OpenSubtitles, anime catalogs… Browse catalogs, search, episode lists, streams from all addons, addon subtitles attached automatically.
+- **Discover** powered by IMDb directly (Most Popular, Top 250, genres incl. Anime, search, details, episodes) with an optional TMDB key. **Addons** (Stremio protocol, the same ones Nuvio uses) provide streams: Torrentio/Comet/MediaFusion (with your debrid key), OpenSubtitles, anime catalogs… addon subtitles attached automatically.
 - Local files (Files app → GlassPlayer → Media), "Open in…" from other apps, URLs, `glassplayer://play?url=…`
 
 **Skip intro / outro**
