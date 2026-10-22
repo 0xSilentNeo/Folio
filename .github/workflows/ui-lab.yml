@@ -2,11 +2,6 @@ name: UI lab (simulator recording)
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'App/Sources/Player/**'
-      - 'App/Sources/Util/UILab.swift'
-      - '.github/workflows/ui-lab.yml'
 
 permissions:
   contents: write
