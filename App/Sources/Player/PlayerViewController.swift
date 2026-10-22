@@ -19,9 +19,13 @@ final class PlayerUIState: ObservableObject {
     weak var panelBar: UIView?
     var menuOpen = false
 
+    /// Set by the player screen: presents a panel right away (from the tap).
+    var presentNow: ((Panel) -> Void)?
+
     func toggle(_ p: Panel) {
         panel = panel == p ? nil : p
         dlog("ui", "panel \(panel?.rawValue ?? "closed")")
+        if let panel { presentNow?(panel) }
         if panel == nil { scheduleHide() } else { showControls(autoHide: false) }
     }
 

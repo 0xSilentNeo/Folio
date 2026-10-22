@@ -91,7 +91,10 @@ struct PlayerScreen: View {
         .tint(Theme.accent)
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
-        .onAppear { ui.scheduleHide() }
+        .onAppear {
+            ui.scheduleHide()
+            ui.presentNow = { presentPanel($0, immediate: true) }
+        }
         .onChange(of: ui.panel) { _, new in
             if let new { presentPanel(new) } else { PanelPresenter.shared.hide() }
         }
@@ -106,7 +109,7 @@ struct PlayerScreen: View {
 
     /// Presents the panel as a system popover from its button (a bar item on
     /// iOS 26, so the button's glass morphs into the panel).
-    private func presentPanel(_ kind: PlayerUIState.Panel) {
+    private func presentPanel(_ kind: PlayerUIState.Panel, immediate: Bool = false) {
         let source: PanelSource
         let sourceView: UIView?
         if let item = ui.barItems[kind], ui.panelBar?.window != nil {
@@ -134,7 +137,8 @@ struct PlayerScreen: View {
             let f = bar.convert(bar.bounds, to: window)
             bottomInset = max(8, window.bounds.height - f.minY + 6)
         }
-        PanelPresenter.shared.show(content: AnyView(body), source: source, from: root, passthrough: passthrough, bottomInset: bottomInset) { [weak ui] in
+        PanelPresenter.shared.show(kind: kind.rawValue, content: AnyView(body), source: source, from: root, passthrough: passthrough,
+                                   bottomInset: bottomInset, immediate: immediate) { [weak ui] in
             // Dismissed by a tap outside.
             if ui?.panel == kind { ui?.panel = nil }
             ui?.scheduleHide()

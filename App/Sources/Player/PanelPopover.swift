@@ -89,8 +89,14 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
 final class PanelPresenter {
     static let shared = PanelPresenter()
     private weak var current: PanelPopoverController?
+    private var currentKind: String?
 
-    func show(content: AnyView, source: PanelSource, from presenter: UIViewController, passthrough: [UIView], bottomInset: CGFloat, onDismiss: @escaping () -> Void) {
+    /// `immediate`: called straight from the button's action (not from inside
+    /// a SwiftUI update), so present in this run-loop turn — no extra frame.
+    func show(kind: String, content: AnyView, source: PanelSource, from presenter: UIViewController, passthrough: [UIView], bottomInset: CGFloat,
+              immediate: Bool = false, onDismiss: @escaping () -> Void) {
+        if currentKind == kind, let c = current, c.presentingViewController != nil, !c.isBeingDismissed { return }   // already up
+        currentKind = kind
         let present = { [weak self] in
             let vc = PanelPopoverController(content: content, source: source, passthrough: passthrough, bottomInset: bottomInset, onDismiss: onDismiss)
             // Size known before the transition starts (no resize mid-morph).
@@ -104,6 +110,8 @@ final class PanelPresenter {
         if let c = current, c.presentingViewController != nil {
             current = nil
             c.dismiss(animated: true) { present() }
+        } else if immediate {
+            present()
         } else {
             // Outside the SwiftUI update pass that triggered it.
             DispatchQueue.main.async(execute: present)
@@ -111,6 +119,7 @@ final class PanelPresenter {
     }
 
     func hide(animated: Bool = true) {
+        currentKind = nil
         guard let c = current else { return }
         current = nil
         c.dismiss(animated: animated)
