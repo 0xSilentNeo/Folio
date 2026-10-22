@@ -1,0 +1,506 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-22 05:33:45.590 Df GlassPlayer[8281:7124] (libMobileGestalt.dylib) No persisted cache on this platform.
+2026-10-22 05:33:45.594 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102b07170] activating connection: mach=true listener=false peer=false name=com.apple.cfprefsd.daemon
+2026-10-22 05:33:45.605 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102b12590] activating connection: mach=true listener=false peer=false name=com.apple.metrickit.xpc
+2026-10-22 05:33:45.605 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102b12590] failed to do a bootstrap look-up: xpc_error=[3: No such process]
+2026-10-22 05:33:45.605 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102b12590] invalidated after a failed init
+2026-10-22 05:33:45.617 Df GlassPlayer[8281:7124] [com.apple.BoardServices:XPCErrors] [C:1] Alloc com.apple.frontboard.systemappservices
+2026-10-22 05:33:45.618 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102b1a5b0] activating connection: mach=false listener=false peer=false name=(anonymous)
+2026-10-22 05:33:45.719 Df GlassPlayer[8281:7161] [com.apple.UIKit:BackgroundTask] Creating new assertion because there is no existing background assertion.
+2026-10-22 05:33:45.719 Df GlassPlayer[8281:7161] [com.apple.UIKit:BackgroundTask] Creating new background assertion
+2026-10-22 05:33:45.719 Df GlassPlayer[8281:7161] [com.apple.UIKit:BackgroundTask] Created new background assertion <BKSProcessAssertion: 0x60000210d2c0>
+2026-10-22 05:33:45.722 Df GlassPlayer[8281:7161] [com.apple.runningboard:connection] Initializing connection
+2026-10-22 05:33:45.722 Df GlassPlayer[8281:7161] [com.apple.runningboard:process] Removing all cached process handles
+2026-10-22 05:33:45.722 Df GlassPlayer[8281:7161] [com.apple.runningboard:connection] Creating connection to com.apple.runningboard
+2026-10-22 05:33:45.722 Df GlassPlayer[8281:7161] [com.apple.xpc:connection] [0x102b1d290] activating connection: mach=true listener=false peer=false name=com.apple.runningboard
+2026-10-22 05:33:45.725 Df GlassPlayer[8281:7124] [com.apple.UIKit:Application] Deactivation reason added: 10; deactivation reasons: 0 -> 1024; animating application lifecycle event: 0
+2026-10-22 05:33:45.725 Df GlassPlayer[8281:7164] [com.apple.runningboard:connection] Sending handshake request attempt #1 to server
+2026-10-22 05:33:45.734 Df GlassPlayer[8281:7124] [com.apple.BoardServices:Injection] activating monitor for service com.apple.frontboard.open
+2026-10-22 05:33:45.734 Df GlassPlayer[8281:7124] [com.apple.BoardServices:Injection] activating monitor for service com.apple.frontboard.workspace-service
+2026-10-22 05:33:45.736 Df GlassPlayer[8281:7124] [com.apple.FrontBoard:Common] FBSWorkspace registering source: com.apple.frontboard.systemappservices
+2026-10-22 05:33:45.738 A  GlassPlayer[8281:7169] (RunningBoardServices) didChangeInheritances
+2026-10-22 05:33:45.739 A  GlassPlayer[8281:7165] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-10-22 05:33:45.740 Df GlassPlayer[8281:7164] [com.apple.runningboard:connection] Handshake succeeded
+2026-10-22 05:33:45.740 Df GlassPlayer[8281:7124] [com.apple.FrontBoard:Common] FBSWorkspace connected to endpoint : <BSServiceConnectionEndpoint: 0x6000002118e0; target: com.apple.frontboard.systemappservices; service: com.apple.frontboard.workspace-service>
+2026-10-22 05:33:45.740 Df GlassPlayer[8281:7124] [com.apple.FrontBoard:Common] <FBSWorkspaceScenesClient:0x600003008510 com.apple.frontboard.systemappservices> attempting immediate handshake from activate
+2026-10-22 05:33:45.740 Df GlassPlayer[8281:7164] [com.apple.runningboard:connection] Identity resolved as app<dev.silentneo.glassplayer((null))>
+2026-10-22 05:33:45.740 Df GlassPlayer[8281:7124] [com.apple.FrontBoard:Common] <FBSWorkspaceScenesClient:0x600003008510 com.apple.frontboard.systemappservices> sent handshake
+2026-10-22 05:33:45.741 Df GlassPlayer[8281:7124] [com.apple.runningboard:general] Added observer for process assertions expiration warning: <_RBSExpirationWarningClient: 0x60000020a600>
+2026-10-22 05:33:45.742 Df GlassPlayer[8281:7161] [com.apple.UIKit:BackgroundTask] Incrementing reference count for background assertion <BKSProcessAssertion: 0x60000210d2c0>
+2026-10-22 05:33:45.742 Df GlassPlayer[8281:7161] [com.apple.UIKit:BackgroundTask] Created background task <_UIBackgroundTaskInfo: 0x600001706fc0>: taskID = 1, taskName = Launch Background Task for Coalescing, creationTime = 437 (elapsed = 0).
+2026-10-22 05:33:45.742 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension _UIApplicationSceneKeyboardSettings on FBSSceneSettings
+2026-10-22 05:33:45.744 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneOcclusionSettings> on FBSSceneSettings
+2026-10-22 05:33:45.745 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneInterfaceProtectionSettings> on FBSSceneSettings
+2026-10-22 05:33:45.745 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension _UISceneLayoutPreferencesHostSettingsExtension on FBSSceneSettings
+2026-10-22 05:33:45.745 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension _UISceneSafeAreaSettingsExtension on FBSSceneSettings
+2026-10-22 05:33:45.745 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension _UISceneLayoutPreferenceClientSettingsExtension on FBSSceneClientSettings
+2026-10-22 05:33:45.746 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UIHomeAffordanceHostSceneSettings> on FBSSceneSettings
+2026-10-22 05:33:45.746 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension _UISystemShellSceneHostingEnvironmentSettings on FBSSceneSettings
+2026-10-22 05:33:45.746 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension _UISceneRenderingEnvironmentSettings on FBSSceneSettings
+2026-10-22 05:33:45.746 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneRenderingEnvironmentClientSettings> on FBSSceneClientSettings
+2026-10-22 05:33:45.746 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneTransitioningHostSettings> on FBSSceneSettings
+2026-10-22 05:33:45.746 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneFocusSystemSettings> on FBSSceneSettings
+2026-10-22 05:33:45.747 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension _UISceneOrientationSettingsExtension on FBSSceneSettings
+2026-10-22 05:33:45.747 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension _UISceneOrientationClientSettingsExtension on FBSSceneClientSettings
+2026-10-22 05:33:45.747 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension _UISceneWindowingControlClientSettings on FBSSceneClientSettings
+2026-10-22 05:33:45.747 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneHostingContentSizePreferenceClientSettings> on FBSSceneClientSettings
+2026-10-22 05:33:45.747 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension _UISceneHostingTraitCollectionPropagationSettings on FBSSceneSettings
+2026-10-22 05:33:45.748 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneHostingSheetPresentationSettings> on FBSSceneSettings
+2026-10-22 05:33:45.748 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneHostingSheetPresentationClientSettings> on FBSSceneClientSettings
+2026-10-22 05:33:45.748 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneHostingEventDeferringSettings> on FBSSceneSettings
+2026-10-22 05:33:45.748 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <UIKit__UITypedKeyValueSceneSettings> on FBSSceneSettings
+2026-10-22 05:33:45.748 Df GlassPlayer[8281:7124] [com.apple.UIKit:UIScreen] Evaluated capturing state as 0 on <UIScreen: 0x102b19a60> for initial
+2026-10-22 05:33:45.749 Df GlassPlayer[8281:7124] [com.apple.UIKit:UIScreen] Evaluated capturing state as 0 on <UIScreen: 0x102b19a60> for CADisplay KVO
+2026-10-22 05:33:45.749 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <UIKit__UITypedKeyValueSceneSettings> on FBSSceneClientSettings
+2026-10-22 05:33:45.749 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneHostingViewControllerPreferencePropagationClientSettings> on FBSSceneClientSettings
+2026-10-22 05:33:45.749 Df GlassPlayer[8281:7161] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneZoomTransitionSettings> on FBSSceneSettings
+2026-10-22 05:33:45.750 Df GlassPlayer[8281:7164] [com.apple.FrontBoard:SceneExtension] Realizing settings extension FBSSceneSettingsCore on FBSSceneSettings
+2026-10-22 05:33:45.750 Df GlassPlayer[8281:7124] [com.apple.Accessibility:AXSupportCommon] Read CategoryName: per-app = 1, category name = (null)
+2026-10-22 05:33:45.750 Df GlassPlayer[8281:7124] [com.apple.Accessibility:AXSupportCommon] Read CategoryName: per-app = 0, category name = (null)
+2026-10-22 05:33:45.750 Df GlassPlayer[8281:7164] [com.apple.FrontBoard:SceneExtension] Realizing settings extension FBSSceneClientSettingsCore on FBSSceneClientSettings
+2026-10-22 05:33:45.756 Df GlassPlayer[8281:7164] [com.apple.FrontBoard:SceneExtension] UIMutableApplicationSceneSettings setting counterpart class: UIApplicationSceneSettings
+2026-10-22 05:33:45.757 Df GlassPlayer[8281:7164] [com.apple.FrontBoard:SceneExtension] UIMutableApplicationSceneClientSettings setting counterpart class: UIApplicationSceneClientSettings
+2026-10-22 05:33:45.757 Df GlassPlayer[8281:7164] [com.apple.FrontBoard:SceneExtension] Realizing settings extension FBSSceneTransitionContextCore on FBSSceneTransitionContext
+2026-10-22 05:33:45.757 Df GlassPlayer[8281:7124] [com.apple.dt.xctest:Default] Registering for test daemon availability notify post.
+2026-10-22 05:33:45.758 Df GlassPlayer[8281:7124] [com.apple.dt.xctest:Default] notify_get_state check indicated test daemon not ready.
+2026-10-22 05:33:45.758 Df GlassPlayer[8281:7124] [com.apple.dt.xctest:Default] notify_get_state check indicated test daemon not ready.
+2026-10-22 05:33:45.758 Df GlassPlayer[8281:7124] [com.apple.dt.xctest:Default] notify_get_state check indicated test daemon not ready.
+2026-10-22 05:33:45.759 Df GlassPlayer[8281:7124] [com.apple.UIKit:Application] Deactivation reason added: 11; deactivation reasons: 1024 -> 3072; animating application lifecycle event: 0
+2026-10-22 05:33:45.760 Df GlassPlayer[8281:7124] [com.apple.UIKit:Application] Deactivation reason removed: 10; deactivation reasons: 3072 -> 2048; animating application lifecycle event: 0
+2026-10-22 05:33:45.775 Df GlassPlayer[8281:7124] [com.apple.UIKit:EventBus] Event Timing Profile for Touch: not found, path="/System/Library/EventTimingProfiles/Sim.Touch.plist"
+2026-10-22 05:33:45.775 Df GlassPlayer[8281:7124] [com.apple.UIKit:EventBus] Event Timing Profile for Pencil: not found, path="/System/Library/EventTimingProfiles/Sim.Pencil.plist"
+2026-10-22 05:33:45.775 Df GlassPlayer[8281:7124] [com.apple.UIKit:UpdateScheduler] Selected display: name=LCD (PurpleMain), id=1
+2026-10-22 05:33:45.910 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102b1f080] activating connection: mach=true listener=false peer=false name=com.apple.lsd.mapdb
+2026-10-22 05:33:45.994 Df GlassPlayer[8281:7124] [com.apple.BoardServices:XPCErrors] [C:2] Alloc com.apple.backboard.hid-services.xpc
+2026-10-22 05:33:45.995 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102b1f430] activating connection: mach=false listener=false peer=false name=(anonymous)
+2026-10-22 05:33:45.999 Df GlassPlayer[8281:7165] [com.apple.BackBoard:EventDelivery] BKSHIDEventDeliveryManager - connection activation
+2026-10-22 05:33:46.012 Df GlassPlayer[8281:7124] [com.apple.UIKit:BackgroundTask] Will add backgroundTask with taskName: Persistent SceneSession Map Update, expirationHandler: <__NSGlobalBlock__: 0x1e61729e0>
+2026-10-22 05:33:46.013 Df GlassPlayer[8281:7124] [com.apple.UIKit:BackgroundTask] Reusing background assertion <BKSProcessAssertion: 0x60000210d2c0>
+2026-10-22 05:33:46.013 Df GlassPlayer[8281:7124] [com.apple.UIKit:BackgroundTask] Incrementing reference count for background assertion <BKSProcessAssertion: 0x60000210d2c0>
+2026-10-22 05:33:46.013 Df GlassPlayer[8281:7124] [com.apple.UIKit:BackgroundTask] Created background task <_UIBackgroundTaskInfo: 0x600001712680>: taskID = 2, taskName = Persistent SceneSession Map Update, creationTime = 437 (elapsed = 0).
+2026-10-22 05:33:46.013 Df GlassPlayer[8281:7124] [com.apple.UIKit:Application] Deactivation reason added: 5; deactivation reasons: 2048 -> 2080; animating application lifecycle event: 1
+2026-10-22 05:33:46.014 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Should send trait collection or coordinate space update, interface style 1 -> 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:46.017 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:46.017 Df GlassPlayer[8281:7124] [com.apple.UIKit:HomeAffordanceObservation] Initializing: <_UIHomeAffordanceSceneNotifier: 0x600002901500>; with scene: <UIWindowScene: 0x102c09170>
+2026-10-22 05:33:46.018 Df GlassPlayer[8281:7124] [com.apple.BacklightServices:scenes] 0x600000c03fc0 setDelegate:<0x600000c1bcf0 _UIBacklightEnvironment> hasDelegate:YES for environment:sceneID:dev.silentneo.glassplayer-default
+2026-10-22 05:33:46.021 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:46.023 Df GlassPlayer[8281:7124] [com.apple.UIKit:EventDeferring] [0x600002910bd0] Initialized with scene: <UIWindowScene: 0x102c09170>; behavior: <_UIEventDeferringBehavior_iOS: 0x60000020e9a0>; availableForProcess: 1, systemShellManagesKeyboardFocus: 1
+2026-10-22 05:33:46.026 Df GlassPlayer[8281:7124] [com.apple.BackBoard:EventDelivery] policyStatus:<BKSHIDEventDeliveryPolicyObserver: 0x600002600b40; process scope; status: target> was:none
+2026-10-22 05:33:46.026 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Setting default evaluation strategy for UIUserInterfaceIdiomPhone to LastOneWins
+2026-10-22 05:33:46.027 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Scene target of keyboard event deferring environment did change: 1; scene: UIWindowScene: 0x102c09170; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Adev.silentneo.glassplayer-default
+2026-10-22 05:33:46.027 Df GlassPlayer[8281:7124] [com.apple.UIKit:EventDeferring] [0x600002910bd0] Scene target of event deferring environments did update: scene: 0x102c09170; current systemShellManagesKeyboardFocus: 1; systemShellManagesKeyboardFocusForScene: 1; eligibleForRecordRemoval: 1;
+2026-10-22 05:33:46.027 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Scene became target of keyboard event deferring environment: UIWindowScene: 0x102c09170; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Adev.silentneo.glassplayer-default
+2026-10-22 05:33:46.027 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Stack[KeyWindow] 0x600000c20030: Taking no further action for migration from LastOneWins -> SystemShellManaged as there are no scenes
+2026-10-22 05:33:46.028 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Setting default evaluation strategy for UIUserInterfaceIdiomPhone to SystemShellManaged
+2026-10-22 05:33:46.028 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Key window needs update: 0; currentKeyWindowScene: 0x0; evaluatedKeyWindowScene: 0x102c09170; currentApplicationKeyWindow: 0x0; evaluatedApplicationKeyWindow: 0x0; reason: UIWindowScene: 0x102c09170: Window scene became target of keyboard environment
+2026-10-22 05:33:46.029 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:46.029 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:46.031 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:46.060 Df GlassPlayer[8281:7165] [com.apple.BackBoard:EventDelivery] BKSHIDEventObserver - connection activation
+2026-10-22 05:33:46.133 Df GlassPlayer[8281:7124] [com.apple.UIKit:Orientation] <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E) Scene updated orientation preferences: none -> ( Pu Ll Lr )
+2026-10-22 05:33:46.135 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Key window API is scene-level: YES
+2026-10-22 05:33:46.135 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] UIWindowScene: 0x102c09170: Window became key in scene: UIWindow: 0x102b21b00; contextId: 0x6D83546: reason: UIWindowScene: 0x102c09170: Window requested to become key in scene: 0x102b21b00
+2026-10-22 05:33:46.135 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Key window needs update: 1; currentKeyWindowScene: 0x0; evaluatedKeyWindowScene: 0x102c09170; currentApplicationKeyWindow: 0x0; evaluatedApplicationKeyWindow: 0x102b21b00; reason: UIWindowScene: 0x102c09170: Window requested to become key in scene: 0x102b21b00
+2026-10-22 05:33:46.135 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Window did become application key: UIWindow: 0x102b21b00; contextId: 0x6D83546; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Adev.silentneo.glassplayer-default
+2026-10-22 05:33:46.135 Df GlassPlayer[8281:7124] [com.apple.UIKit:EventDeferring] [0x600002910bd0] Begin local event deferring requested for token: 0x600002609b60; environments: 1; reason: UIWindowScene: 0x102c09170: Begin event deferring in keyboardFocus for window: 0x102b21b00
+2026-10-22 05:33:46.137 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:46.138 Df GlassPlayer[8281:7164] [com.apple.BackBoard:EventDelivery] policyStatus:<BKSHIDEventDeliveryPolicyObserver: 0x600002600b40; token: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Adev.silentneo.glassplayer-default; status: ancestor> was:target
+2026-10-22 05:33:46.138 Df GlassPlayer[8281:7124] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:dev.silentneo.glassplayer-default  persistentID: 8A73FEE0-63E0-4B1C-A1E1-D2655363E54E
+2026-10-22 05:33:46.138 Df GlassPlayer[8281:7124] [com.apple.UIKit:Application] Ignoring already applied deactivation reason: 5; deactivation reasons: 2080
+2026-10-22 05:33:46.138 Df GlassPlayer[8281:7124] [com.apple.UIKit:Application] Deactivation reason added: 12; deactivation reasons: 2080 -> 6176; animating application lifecycle event: 1
+2026-10-22 05:33:46.138 Df GlassPlayer[8281:7124] [com.apple.UIKit:Application] Deactivation reason removed: 11; deactivation reasons: 6176 -> 4128; animating application lifecycle event: 1
+2026-10-22 05:33:46.139 Df GlassPlayer[8281:7124] [com.apple.FrontBoard:SceneExtension] Realizing settings extension <_UISceneIntelligenceSupportSettings> on FBSSceneSettings
+2026-10-22 05:33:46.140 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:46.141 Df GlassPlayer[8281:7165] [com.apple.UIIntelligenceSupport:xpc] establishing connection to agent
+2026-10-22 05:33:46.142 Df GlassPlayer[8281:7165] [com.apple.xpc:session] [0x600002100460] Session created.
+2026-10-22 05:33:46.142 Df GlassPlayer[8281:7165] [com.apple.xpc:session] [0x600002100460] Session created from connection [0x102b22d10]
+2026-10-22 05:33:46.142 Df GlassPlayer[8281:7165] [com.apple.xpc:connection] [0x102b22d10] activating connection: mach=true listener=false peer=false name=com.apple.uiintelligencesupport.agent
+2026-10-22 05:33:46.142 Df GlassPlayer[8281:7165] [com.apple.xpc:session] [0x600002100460] Session activated
+2026-10-22 05:33:46.149 A  GlassPlayer[8281:7124] (CoreFoundation) Updating Key-Value Observers Of Preferences
+2026-10-22 05:33:46.516 Df GlassPlayer[8281:7161] [com.apple.xpc:connection] [0x102c078c0] activating connection: mach=true listener=false peer=false name=com.apple.fontservicesd
+2026-10-22 05:33:46.527 Df GlassPlayer[8281:7164] [com.apple.UIKit:BackgroundTask] Ending background task with UIBackgroundTaskIdentifier: 2
+2026-10-22 05:33:46.527 Df GlassPlayer[8281:7164] [com.apple.UIKit:BackgroundTask] Ending task with identifier 2 and description: <_UIBackgroundTaskInfo: 0x600001712680>: taskID = 2, taskName = Persistent SceneSession Map Update, creationTime = 437 (elapsed = 1), _expireHandler: <__NSGlobalBlock__: 0x1e61729e0>
+2026-10-22 05:33:46.527 Df GlassPlayer[8281:7164] [com.apple.UIKit:BackgroundTask] Decrementing reference count for assertion <BKSProcessAssertion: 0x60000210d2c0> (used by background task with identifier 2: <_UIBackgroundTaskInfo: 0x600001712680>: taskID = 2, taskName = Persistent SceneSession Map Update, creationTime = 437 (elapsed = 1))
+2026-10-22 05:33:46.568 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:46.728 A  GlassPlayer[8281:7124] (CoreFoundation) Updating Key-Value Observers Of Preferences
+2026-10-22 05:33:46.779 Df GlassPlayer[8281:7161] [com.apple.UIKit:BackgroundTask] Ending background task with UIBackgroundTaskIdentifier: 1
+2026-10-22 05:33:46.779 Df GlassPlayer[8281:7161] [com.apple.UIKit:BackgroundTask] Ending task with identifier 1 and description: <_UIBackgroundTaskInfo: 0x600001706fc0>: taskID = 1, taskName = Launch Background Task for Coalescing, creationTime = 437 (elapsed = 1), _expireHandler: (null)
+2026-10-22 05:33:46.779 Df GlassPlayer[8281:7161] [com.apple.UIKit:BackgroundTask] Decrementing reference count for assertion <BKSProcessAssertion: 0x60000210d2c0> (used by background task with identifier 1: <_UIBackgroundTaskInfo: 0x600001706fc0>: taskID = 1, taskName = Launch Background Task for Coalescing, creationTime = 437 (elapsed = 1))
+2026-10-22 05:33:46.779 Df GlassPlayer[8281:7161] [com.apple.UIKit:BackgroundTask] Will invalidate assertion: <BKSProcessAssertion: 0x60000210d2c0> for task identifier: 1
+2026-10-22 05:33:46.844 Df GlassPlayer[8281:7124] [PrototypeTools:domain] Not observing PTDefaults on customer install.
+2026-10-22 05:33:46.893 A  GlassPlayer[8281:716a] (RunningBoardServices) didChangeInheritances
+2026-10-22 05:33:47.199 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102b5b190] activating connection: mach=true listener=false peer=false name=com.apple.IOSurface.Remote
+2026-10-22 05:33:47.217 Df GlassPlayer[8281:7124] [com.apple.network:activity] Create activity from XPC object <nw_activity 50:1 [D411884D-10F3-471A-8A9A-7A1ABC578DD8] (reporting strategy default)>
+2026-10-22 05:33:47.217 Df GlassPlayer[8281:7124] [com.apple.network:activity] Create activity from XPC object <nw_activity 50:2 [2F9D8E1B-AECA-4503-9FDC-B706A7453C9C] (reporting strategy default)>
+2026-10-22 05:33:47.217 Df GlassPlayer[8281:7124] [com.apple.network:activity] Set activity <nw_activity 50:1 [D411884D-10F3-471A-8A9A-7A1ABC578DD8] (reporting strategy default)> as the global parent
+2026-10-22 05:33:47.218 Df GlassPlayer[8281:7124] [com.apple.UIKit:UpdateScheduler] Target list changed: <CADisplay:LCD PurpleMain>
+2026-10-22 05:33:47.219 Df GlassPlayer[8281:7124] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:dev.silentneo.glassplayer-default  persistentID: 8A73FEE0-63E0-4B1C-A1E1-D2655363E54E
+2026-10-22 05:33:47.220 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:47.222 A  GlassPlayer[8281:716a] (RunningBoardServices) didChangeInheritances
+2026-10-22 05:33:47.227 A  GlassPlayer[8281:7169] (RunningBoardServices) didChangeInheritances
+2026-10-22 05:33:47.228 Df GlassPlayer[8281:7124] [com.apple.UIKit:EventDeferring] [0x600002910bd0] Scene target of event deferring environments did update: scene: 0x102c09170; current systemShellManagesKeyboardFocus: 1; systemShellManagesKeyboardFocusForScene: 1; eligibleForRecordRemoval: 1;
+2026-10-22 05:33:47.228 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Scene became target of keyboard event deferring environment: UIWindowScene: 0x102c09170; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Adev.silentneo.glassplayer-default
+2026-10-22 05:33:47.229 Df GlassPlayer[8281:7124] [com.apple.Accessibility:AXCommon] Read Per-App on Init: Smart invert = (null)
+2026-10-22 05:33:47.234 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:47.234 Df GlassPlayer[8281:7124] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:dev.silentneo.glassplayer-default  persistentID: 8A73FEE0-63E0-4B1C-A1E1-D2655363E54E
+2026-10-22 05:33:47.235 Df GlassPlayer[8281:7124] [com.apple.UIKit:Application] Deactivation reason removed: 12; deactivation reasons: 4128 -> 32; animating application lifecycle event: 1
+2026-10-22 05:33:47.235 Df GlassPlayer[8281:7124] [com.apple.KeyboardArbiter:Client] Send setDeactivating: N (-DeactivationReason:SuspendedEventsOnly)
+2026-10-22 05:33:47.235 Df GlassPlayer[8281:7124] [com.apple.UIKit:Application] Deactivation reason removed: 5; deactivation reasons: 32 -> 0; animating application lifecycle event: 0
+2026-10-22 05:33:47.237 Df GlassPlayer[8281:7124] [com.apple.KeyboardArbiter:Client] startConnection
+2026-10-22 05:33:47.238 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102b880f0] activating connection: mach=true listener=false peer=false name=com.apple.UIKit.KeyboardManagement.hosted
+2026-10-22 05:33:47.249 Df GlassPlayer[8281:7124] [com.apple.KeyboardArbiter:Client] handleKeyboardChange: set currentKeyboard:N (wasKeyboard:N)
+2026-10-22 05:33:47.250 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardArbiterClientLog] isWritingToolsHandlingKeyboardTracking:Y (WT ready:Y, Arbiter ready:Y)
+2026-10-22 05:33:47.294 Df GlassPlayer[8281:7124] [com.apple.network:activity] <nw_activity 50:1 [D411884D-10F3-471A-8A9A-7A1ABC578DD8] (global parent) (reporting strategy default) complete (reason success)> complete with reason 2 (success), duration 2300ms
+2026-10-22 05:33:47.294 Df GlassPlayer[8281:7124] [com.apple.network:activity] <nw_activity 50:2 [2F9D8E1B-AECA-4503-9FDC-B706A7453C9C] (reporting strategy default) complete (reason success)> complete with reason 2 (success), duration 2301ms
+2026-10-22 05:33:47.294 Df GlassPlayer[8281:7124] [com.apple.network:activity] Unsetting the global parent activity <nw_activity 50:1 [D411884D-10F3-471A-8A9A-7A1ABC578DD8] (global parent) (reporting strategy default) complete (reason success)>
+2026-10-22 05:33:47.294 Df GlassPlayer[8281:7124] [com.apple.network:activity] Unset the global parent activity
+2026-10-22 05:33:47.334 A  GlassPlayer[8281:7162] (RunningBoardServices) didChangeInheritances
+2026-10-22 05:33:47.739 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< AVReadWriteDispatchQueue >>>> usesSerialQueue_block_invoke: Using read/write queue
+2026-10-22 05:33:47.740 Df GlassPlayer[8281:7124] [com.apple.runningboard:connection] Creating side-channel connection to com.apple.runningboard
+2026-10-22 05:33:47.740 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102c0d6b0] activating connection: mach=true listener=false peer=false name=com.apple.runningboard
+2026-10-22 05:33:47.740 Df GlassPlayer[8281:7124] [com.apple.runningboard:process] Hit the server for a process handle 1dbf570f00002059 that resolved to: [app<dev.silentneo.glassplayer((null))>:8281]
+2026-10-22 05:33:47.749 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigVideoQueue >>>> FigVideoQueueCreateLocalWithOptions: 0x102c05e10 (pid 0)
+2026-10-22 05:33:47.752 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigPlayerResourceArbiter >>>> FigPlayerResourceArbiterCreate: 0x60000294fb80: [DeviceBudget: 18446744073709551615] [Budget: 18446744073709551615] [StepCost: 0] {
+ Groups: 
+}
+2026-10-22 05:33:47.752 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigPlayerResourceArbiter >>>> FigPlayerResourceArbiterRegisterConsumer: 0x60000294fb80: Registered new consumer: 1, group (null) consumer name com.apple.coremedia.videoqueue.resourcearbiter.consumername..8281-1 (VR/LUY)
+2026-10-22 05:33:47.752 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigVideoQueue >>>> FigVideoQueueCreateLocalWithOptions: created (0x102c05e10) VR/LUY (pid 8281)
+2026-10-22 05:33:47.755 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigVideoQueue >>>> vq_SetProperty: (0x102c05e10) controlTimebase 0x102c54840 (pid 8281)
+2026-10-22 05:33:47.755 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigVideoQueue >>>> vq_updateForCurrentTimebaseRate: (0x102c05e10) Effective Timebase Rate of videoqueue changed to: 1.000 (pid 8281)
+2026-10-22 05:33:47.758 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< AVSampleBufferVideoRenderer >>>> -[AVSampleBufferVideoRenderer init]: <VR/LUY|0x102b73d50> [0x102c05e10]
+2026-10-22 05:33:47.762 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigVideoQueue >>>> vq_setupVideoLayer: [0x102c05e10] videoLayer:[0x600000c74420:0x60000294ca10] associated with iq: 0x102b41920
+2026-10-22 05:33:47.762 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigVideoQueue >>>> vq_updateClientVideoLayer: (0x102c05e10) VR/LUY clientVideoLayer <AVSampleBufferDisplayLayerContentLayer: 0x600000c79cb0> associated with videoLayer [0x600000c74420:0x60000294ca10] (pid 8281)
+2026-10-22 05:33:47.765 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigVideoQueue >>>> vq_updateForCurrentTimebaseRate: (0x102c05e10) Effective Timebase Rate of videoqueue changed to: 0.000 (pid 8281)
+2026-10-22 05:33:47.786 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102987430] activating connection: mach=true listener=false peer=false name=com.apple.metal.simulator
+2026-10-22 05:33:47.789 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102987560] activating connection: mach=true listener=false peer=false name=com.apple.metal.simulator
+2026-10-22 05:33:47.789 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x102c456a0] activating connection: mach=true listener=false peer=false name=com.apple.metal.simulator
+2026-10-22 05:33:47.807 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] UIWindowScene: 0x102c09170: Window became key in scene: _TtC11GlassPlayerP33_51EBF0D5322979365047650CBE037EA918PlayerWindowMarker: 0x102c37020; contextId: 0xF2D9510C: reason: UIWindowScene: 0x102c09170: Window requested to become key in scene: 0x102c37020
+2026-10-22 05:33:47.807 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Key window needs update: 1; currentKeyWindowScene: 0x102c09170; evaluatedKeyWindowScene: 0x102c09170; currentApplicationKeyWindow: 0x102b21b00; evaluatedApplicationKeyWindow: 0x102c37020; reason: UIWindowScene: 0x102c09170: Window requested to become key in scene: 0x102c37020
+2026-10-22 05:33:47.807 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Window did become application key: _TtC11GlassPlayerP33_51EBF0D5322979365047650CBE037EA918PlayerWindowMarker: 0x102c37020; contextId: 0xF2D9510C; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Adev.silentneo.glassplayer-default
+2026-10-22 05:33:47.807 Df GlassPlayer[8281:7124] [com.apple.UIKit:EventDeferring] [0x600002910bd0] Beginning and ending local event deferring requested for token: 0x600002609b60; environments: 1; reason: UIWindowScene: 0x102c09170: Begin event deferring in keyboardFocus for window: 0x102c37020
+2026-10-22 05:33:47.807 Df GlassPlayer[8281:7124] [com.apple.UIKit:EventDeferring] [0x600002910bd0] Begin local event deferring requested for token: 0x6000026272a0; environments: 1; reason: UIWindowScene: 0x102c09170: Begin event deferring in keyboardFocus for window: 0x102c37020
+2026-10-22 05:33:47.808 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyWindow] Window resigning application key: UIWindow: 0x102b21b00; contextId: 0x6D83546; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Adev.silentneo.glassplayer-default
+2026-10-22 05:33:47.809 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] Reloading input views for key-window scene responder: <GlassPlayer.PlayerViewController: 0x1040c4000; > force:N
+2026-10-22 05:33:47.810 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _reloadInputViewsForKeyWindowSceneResponder: 1 force: 0, fromBecomeFirstResponder: 1 (automaticKeyboard: 1, reloadIdentifier: 85F6CA96-88B6-43FE-BA63-997FEE539459)
+2026-10-22 05:33:47.811 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder: <GlassPlayer.PlayerViewController: 0x1040c4000; >, automaticKeyboard: 1, force: 0
+2026-10-22 05:33:47.811 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, found custom inputView: <(null): 0x0>, customInputViewController: <(null): 0x0>
+2026-10-22 05:33:47.811 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, found inputAccessoryView: <(null): 0x0>
+2026-10-22 05:33:47.811 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, responderRequiresKeyboard 0 (automaticKeyboardEnabled: 1, activeInstance: <(null): 0x0>, self.isOnScreen: 0, requiresKBWhenFirstResponder: 0)
+2026-10-22 05:33:47.812 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, useKeyboard 0 (allowsSystemInputView: 1, !inputView <(null): 0x0>, responderRequiresKeyboard 0)
+2026-10-22 05:33:47.812 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, configuring _responderWithoutAutomaticAppearanceEnabled: <(null): 0x0> (_automaticAppearEnabled: 1)
+2026-10-22 05:33:47.812 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, needsIVPlaceholder: 0, needsIAVPlaceholder: 0, needsInputSetWithPlaceholder: 0
+2026-10-22 05:33:47.812 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder returning: <<UIInputViewSet: 0x6000037567c0>; (empty)>
+2026-10-22 05:33:47.876 Df GlassPlayer[8281:7124] [com.apple.avkit:AVKit] +[AVPictureInPicturePlatformAdapter isPictureInPictureSupported]_block_invoke isPictureInPictureSupported NO
+2026-10-22 05:33:47.899 Df GlassPlayer[8281:7124] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-10-22 05:33:47.899 Df GlassPlayer[8281:7124] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-10-22 05:33:48.075 Df GlassPlayer[8281:7124] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:dev.silentneo.glassplayer-default  persistentID: 8A73FEE0-63E0-4B1C-A1E1-D2655363E54E
+2026-10-22 05:33:48.077 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigDeferredTransaction >>>> fdt_commitTransactionOnMainQueue: Warning: deferred transaction <FigDeferredTransaction 0x600002156080, wants CATransaction, is committed
+Changes:
+<FigDeferredTransactionChange 0x600000c7a160
+unknown caller requesting to
+
+0x192656f38>
+
+Post commit changes:
+> was delayed by 0.313s before it began running
+2026-10-22 05:33:48.163 Df GlassPlayer[8281:7124] [com.apple.audio.caulk:alloc] Registered notify signal com.apple.caulk.alloc.rtdump (0)
+2026-10-22 05:33:48.390 Df GlassPlayer[8281:7124] (CoreAudio)   HALPlugInManagement.cpp:443    HALPlugInManagement::RegisterPlugIns: loading in-process plug-ins
+2026-10-22 05:33:48.416 E  GlassPlayer[8281:7124] [com.apple.CFBundle:plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x6000002f6940> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+2026-10-22 05:33:48.531 Df GlassPlayer[8281:7124] [com.apple.coreaudio:as_client] AVAudioSessionImpl_Simulator.mm:111   Set volume on device 85 to 0.60
+2026-10-22 05:33:48.532 Df GlassPlayer[8281:7124] [com.apple.coreaudio:as_client] AVAudioSessionImpl_Simulator.mm:111   Set volume on device 85 to 0.60
+2026-10-22 05:33:48.537 Df GlassPlayer[8281:7124] [com.apple.coreaudio:ddagg]        AggregateDevice.mm:887   Creating DefaultDeviceAggregate
+2026-10-22 05:33:48.566 Df GlassPlayer[8281:7124] [com.apple.coreaudio:ddagg]        AggregateDevice.mm:688   Built valid aggregate 109
+2026-10-22 05:33:48.566 Df GlassPlayer[8281:7124] [com.apple.coreaudio:ddagg]        AggregateDevice.mm:1008  PrimarySessionActiveWithInputEnabled 0 -> 0
+2026-10-22 05:33:48.664 Df GlassPlayer[8281:7124] [com.apple.amp.mediaplayer:RemoteControl] [RCC:0x102c57210:MediaRemote-DefaultPlayer] initWithPlayerPath:【 􁊸 LOCL ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】
+2026-10-22 05:33:48.668 Df GlassPlayer[8281:7124] [com.apple.amp.mediaplayer:RemoteControl] [RCC:0x102c57210:MediaRemote-DefaultPlayer] _startMediaRemoteSync | MRMediaRemoteAddCommandHandlerForPlayer [] playerPath=【 􁊸 LOCL ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】
+2026-10-22 05:33:48.676 Df GlassPlayer[8281:7124] [com.apple.amp.mediaremote:NowPlaying] [MRNowPlayingOriginClient] Creating MRNowPlayingOriginClient for origin 􁊸 LOCL (iPhone)
+2026-10-22 05:33:48.680 Df GlassPlayer[8281:7169] [com.apple.coremedia:] -AVSystemController- +[AVSystemController sharedInstance]: Failed to allocate AVSystemController, numberOfAttempts=1
+2026-10-22 05:33:48.680 Df GlassPlayer[8281:7169] [com.apple.coremedia:] -AVSystemController- +[AVSystemController sharedInstance]: Failed to allocate AVSystemController, numberOfAttempts=2
+2026-10-22 05:33:48.680 Df GlassPlayer[8281:7169] [com.apple.coremedia:] -AVSystemController- +[AVSystemController sharedInstance]: Failed to allocate AVSystemController, numberOfAttempts=3
+2026-10-22 05:33:48.686 Df GlassPlayer[8281:7124] [com.apple.amp.mediaremote:MediaRemote] Set: 【 􁊸 LOCL (iPhone) ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】 setting ActivePlayerPath to <􀽍 default>
+2026-10-22 05:33:48.687 Df GlassPlayer[8281:7124] [com.apple.amp.mediaremote:rr] Request: setNowPlayingPlayer<3521F086-E1C7-4859-A296-4303B742CF9A> for 【 􁊸 LOCL (iPhone) ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】 because New player 【 􁊸 LOCL (iPhone) ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】 was added
+2026-10-22 05:33:48.699 Df GlassPlayer[8281:7124] [com.apple.xpc:connection] [0x1029b34e0] activating connection: mach=true listener=false peer=false name=com.apple.mediaremoted.xpc
+2026-10-22 05:33:48.702 Df GlassPlayer[8281:7124] [com.apple.amp.mediaremote:MediaRemote] MediaRemote server initializing
+2026-10-22 05:33:48.723 Df GlassPlayer[8281:7124] [com.apple.amp.mediaplayer:RemoteControl_Oversize] [RCC] reevaluateCanBeNowPlayingApplication: canBeNowPlayingApplication=YES playerPath=【 􁊸 LOCL (iPhone) ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】 commands=(
+    "<MPRemoteCommand: 0x60000218a030 type=Play (0) enabled=YES handlers=[0x600000c8f480]>"
+)
+2026-10-22 05:33:48.777 Df GlassPlayer[8281:7169] [com.apple.amp.mediaremote:rr] Response: setNowPlayingPlayer<3521F086-E1C7-4859-A296-4303B742CF9A> returned for 【 􁊸 LOCL (iPhone) ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】 in 0.0904 seconds
+2026-10-22 05:33:48.779 Df GlassPlayer[8281:7124] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:dev.silentneo.glassplayer-default] Sending action(s) in update: <_UIOrientationRequestAction: 0x20590000>
+2026-10-22 05:33:48.783 Df GlassPlayer[8281:7124] [com.apple.coremedia:] <<<< FigVideoQueue >>>> vq_updateForCurrentTimebaseRate: (0x102c05e10) Effective Timebase Rate of videoqueue changed to: 1.000 (pid 8281)
+2026-10-22 05:33:48.785 Df GlassPlayer[8281:7124] [com.apple.amp.mediaplayer:RemoteControl] <MPRemoteCommandCenter: 0x102c57210 (【 􁊸 LOCL (iPhone) ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】)> [MPRemoteCommandCenter] setSupportedCommands (
+    "<MRCommandInfo: 0x60000021d700, SeekToPlaybackPosition, enabled = 1, options = {\134n    kMRMediaRemoteCommandInfoCanBeControlledByScrubbingKey = 0;\134n    kMRMediaRemoteCommandInfoSupportsReferencePosition = 0;\134n}>",
+    "<MRCommandInfo: 0x6000002e41c0, SkipBackward, enabled = 1, options = {\134n    kMRMediaRemoteCommandInfoPreferredIntervalsKey =     (\134n        10\134n    );\134n}>",
+    "<MRCommandInfo: 0x6000002e5e60, SkipForward, enabled = 1, options = {\134n    kMRMediaRemoteCommandInfoPreferredIntervalsKey =     (\134n        10\134n    );\134n}>",
+    "<MRCommandInfo: 0x6000002e5ea0, PreviousTrack, enabled = 1, options = {\134n}>",
+    "<MRCommandInfo: 0x6000002e5e80, NextTrack, enabled = 1, options = {\134n}>",
+    "<MRCommandInfo: 0x6000002e5ee0, TogglePlayPause, enabled = 1, options = {\134n}>",
+    "<MRCommandInfo: 0x6000002e5ec0, Pause, enabled = 1, options = {\134n}>",
+    "<MRCommandInfo:
+2026-10-22 05:33:48.786 Df GlassPlayer[8281:7124] [com.apple.amp.mediaremote:NowPlaying] [MRNowPlaying] MRMediaRemoteSetCanBeNowPlayingForPlayer 【 􁊸 LOCL (iPhone) ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】 set to YES
+2026-10-22 05:33:48.787 Df GlassPlayer[8281:7124] [com.apple.coremedia:] -AVSystemController- +[AVSystemController sharedInstance]: Failed to allocate AVSystemController, numberOfAttempts=1
+2026-10-22 05:33:48.787 Df GlassPlayer[8281:7124] [com.apple.coremedia:] -AVSystemController- +[AVSystemController sharedInstance]: Failed to allocate AVSystemController, numberOfAttempts=2
+2026-10-22 05:33:48.787 Df GlassPlayer[8281:7124] [com.apple.coremedia:] -AVSystemController- +[AVSystemController sharedInstance]: Failed to allocate AVSystemController, numberOfAttempts=3
+2026-10-22 05:33:48.858 Df GlassPlayer[8281:7124] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:dev.silentneo.glassplayer-default  persistentID: 8A73FEE0-63E0-4B1C-A1E1-D2655363E54E
+2026-10-22 05:33:48.858 Df GlassPlayer[8281:7124] [com.apple.UIKit:Orientation] <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E) Scene will change interface orientation: landscapeRight (3)
+2026-10-22 05:33:48.859 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Not push traits update to screen for new style 1, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:49.010 Df GlassPlayer[8281:7124] [com.apple.UIKit:InterfaceStyle] Should send trait collection or coordinate space update, interface style 2 -> 2, <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E)
+2026-10-22 05:33:49.389 E  GlassPlayer[8281:7277] (libCoreFSCache.dylib) fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-22 05:33:49.390 E  GlassPlayer[8281:7277] (libCoreFSCache.dylib) Errors found! Invalidating cache...
+2026-10-22 05:33:49.391 Df GlassPlayer[8281:7277] [com.apple.xpc:connection] [0x102b5c1c0] activating connection: mach=false listener=false peer=false name=com.apple.MTLCompilerService
+2026-10-22 05:33:49.459 Df GlassPlayer[8281:7277] [com.apple.xpc:connection] [0x102b92140] activating connection: mach=false listener=false peer=false name=com.apple.MTLCompilerService
+2026-10-22 05:33:49.459 A  GlassPlayer[8281:7169] (Metal) Metal Compiling Shader
+2026-10-22 05:33:49.630 Df GlassPlayer[8281:7162] [com.apple.amp.mediaplayer:RemoteControl] NPIC: setNowPlayingInfo: sending to MediaRemote
+2026-10-22 05:33:49.632 Df GlassPlayer[8281:7162] [com.apple.amp.mediaremote:NowPlaying] [NowPlayingInfo] Setting nowPlayingInfo with mergePolicy Replace: <NSCFDictionary 0x6000002f9320 {
+	kMRMediaRemoteNowPlayingInfoMediaType = kMRMediaRemoteNowPlayingInfoTypeVideo
+	kMRMediaRemoteNowPlayingInfoPlaybackRate = 1
+	kMRMediaRemoteNowPlayingInfoTimestamp = 2026-10-22 05:33:49 +0000
+	kMRMediaRemoteNowPlayingInfoContentItemIdentifier = 693D26EF-1155-4D99-8049-41CEF752DF19
+	kMRMediaRemoteNowPlayingInfoElapsedTime = 0
+	kMRMediaRemoteNowPlayingInfoTitle = Lab clip
+}>
+2026-10-22 05:33:49.632 Df GlassPlayer[8281:7162] [com.apple.amp.mediaremote:NowPlaying] [NowPlayingInfo] Setting nowPlayingInfo artwork (id: (null)): (null)
+2026-10-22 05:33:49.632 Df GlassPlayer[8281:7162] [com.apple.amp.mediaremote:NowPlaying] PlaybackQueueInvalidation: NowPlayingItem for 【 􁊸 LOCL (iPhone) ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】 changed from
+ item:<(null)>
+ -> 
+item:<693D26EF-1155-4D99-8049-41CEF752DF19/Lab clip/CalculatedPlaybackPosition: 0.002028/PlaybackRate: 1.000000>
+2026-10-22 05:33:49.635 Df GlassPlayer[8281:7124] [com.apple.amp.mediaplayer:RemoteControl] NPIC: setNowPlayingInfo: finished
+2026-10-22 05:33:50.162 Df GlassPlayer[8281:7162] [com.apple.amp.mediaplayer:RemoteControl] NPIC: setNowPlayingInfo: sending to MediaRemote
+2026-10-22 05:33:50.163 Df GlassPlayer[8281:7162] [com.apple.amp.mediaremote:NowPlaying] [NowPlayingInfo] Setting identical nowPlayingInfo, skipping update.
+2026-10-22 05:33:50.163 Df GlassPlayer[8281:7124] [com.apple.amp.mediaplayer:RemoteControl] NPIC: setNowPlayingInfo: finished
+2026-10-22 05:33:51.469 E  GlassPlayer[8281:7277] [com.apple.Metal:Metal Compiler Warning] Warning: Compilation succeeded with: 
+
+program_source:50:1788: warning: unused function 'decompressDXTnBlock' [-Wunused-function]
+static bool isBC1Format(VkFormat format) { return format == VK_FORMAT_BC1_RGB_UNORM_BLOCK || format == VK_FORMAT_BC1_RGB_SRGB_BLOCK || format == VK_FORMAT_BC1_RGBA_UNORM_BLOCK || format == VK_FORMAT_BC1_RGBA_SRGB_BLOCK; } static bool isBC2Format(VkFormat format) { return format == VK_FORMAT_BC2_UNORM_BLOCK || format == VK_FORMAT_BC2_SRGB_BLOCK; } static bool isBC3Format(VkFormat format) { return format == VK_FORMAT_BC3_UNORM_BLOCK || format == VK_FORMAT_BC3_SRGB_BLOCK; } static bool isSRGBFormat(VkFormat format) { return format == VK_FORMAT_BC1_RGB_SRGB_BLOCK || format == VK_FORMAT_BC1_RGBA_SRGB_BLOCK || format == VK_FORMAT_BC2_SRGB_BLOCK || format == VK_FORMAT_BC3_SRGB_BLOCK; } static void buildDXTnColourTable(uint16_t colour0, uint16_t colour1, thread float3* pColourTable, VkFormat format) { pColourTable[0] = unpack_unorm565_to_float(colour0); pColourTable[1] = unpack_unorm565_to<…>
+2026-10-22 05:33:51.513 Df GlassPlayer[8281:7164] [com.apple.amp.mediaplayer:RemoteControl] NPIC: setNowPlayingInfo: sending to MediaRemote
+2026-10-22 05:33:51.514 Df GlassPlayer[8281:7164] [com.apple.amp.mediaremote:NowPlaying] [NowPlayingInfo] Setting identical nowPlayingInfo, skipping update.
+2026-10-22 05:33:51.524 Df GlassPlayer[8281:7124] [com.apple.amp.mediaplayer:RemoteControl] NPIC: setNowPlayingInfo: finished
+2026-10-22 05:33:51.529 Df GlassPlayer[8281:7318] [com.apple.coremedia:playback-memory] <<< FigOSTransactionsUtilities >>> FigOSTransactionCreateWithProcessName: [Fig Transaction] Added transaction weak reference holder <0x6000002ee400>: 1792647231 VTDecompressionSession NULL 0:(null)
+2026-10-22 05:33:51.540 Df GlassPlayer[8281:7124] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-10-22 05:33:51.541 Df GlassPlayer[8281:7124] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-10-22 05:33:51.639 E  GlassPlayer[8281:7318] [com.apple.coremedia:] <<<< VT-DS >>>> signalled err=-12906 at <>:2615
+2026-10-22 05:33:51.639 Df GlassPlayer[8281:7319] [com.apple.coremedia:playback-memory] <<< FigOSTransactionsUtilities >>> figPruneOSTransactionArrayWhilePerformingOperation: [Fig Transaction] Pruned transaction weak reference holder: <0x6000002ee400>
+2026-10-22 05:33:51.639 Df GlassPlayer[8281:7319] [com.apple.coremedia:playback-memory] <<< FigOSTransactionsUtilities >>> FigOSTransactionCreateWithProcessName: [Fig Transaction] Added transaction weak reference holder <0x6000002d3200>: 1792647231 VTDecompressionSession NULL 0:(null)
+2026-10-22 05:33:51.639 E  GlassPlayer[8281:7319] [com.apple.coremedia:] <<<< VT-DS >>>> signalled err=-12906 at <>:2615
+2026-10-22 05:33:51.639 Df GlassPlayer[8281:7257] (CoreVideo) pool 0x60000352a3c0 being deallocated [0 in use, 0 free] _targetBufferCountsBitfield 0x0
+2026-10-22 05:33:51.639 Df GlassPlayer[8281:7257] (CoreVideo) pool 0x0 being deallocated [0 in use, 0 free] _targetBufferCountsBitfield 0x0
+2026-10-22 05:33:51.642 Df GlassPlayer[8281:7328] [com.apple.coremedia:playback-memory] <<< FigOSTransactionsUtilities >>> figPruneOSTransactionArrayWhilePerformingOperation: [Fig Transaction] Pruned transaction weak reference holder: <0x6000002d3200>
+2026-10-22 05:33:51.642 Df GlassPlayer[8281:7328] [com.apple.coremedia:playback-memory] <<< FigOSTransactionsUtilities >>> FigOSTransactionCreateWithProcessName: [Fig Transaction] Added transaction weak reference holder <0x6000002c46e0>: 1792647231 VTDecompressionSession NULL 0:(null)
+2026-10-22 05:33:51.642 E  GlassPlayer[8281:7328] [com.apple.coremedia:] <<<< VT-DS >>>> signalled err=-12906 at <>:2615
+2026-10-22 05:33:51.642 Df GlassPlayer[8281:7328] (CoreVideo) pool 0x60000352a3c0 being deallocated [0 in use, 0 free] _targetBufferCountsBitfield 0x0
+2026-10-22 05:33:51.642 Df GlassPlayer[8281:7328] (CoreVideo) pool 0x0 being deallocated [0 in use, 0 free] _targetBufferCountsBitfield 0x0
+2026-10-22 05:33:51.643 Df GlassPlayer[8281:7329] [com.apple.coremedia:playback-memory] <<< FigOSTransactionsUtilities >>> figPruneOSTransactionArrayWhilePerformingOperation: [Fig Transaction] Pruned transaction weak reference holder: <0x6000002c46e0>
+2026-10-22 05:33:51.643 Df GlassPlayer[8281:7329] [com.apple.coremedia:playback-memory] <<< FigOSTransactionsUtilities >>> FigOSTransactionCreateWithProcessName: [Fig Transaction] Added transaction weak reference holder <0x6000002d2cc0>: 1792647231 VTDecompressionSession NULL 0:(null)
+2026-10-22 05:33:51.643 E  GlassPlayer[8281:7329] [com.apple.coremedia:] <<<< VT-DS >>>> signalled err=-12906 at <>:2615
+2026-10-22 05:33:51.643 Df GlassPlayer[8281:7329] (CoreVideo) pool 0x600003502b50 being deallocated [0 in use, 0 free] _targetBufferCountsBitfield 0x0
+2026-10-22 05:33:51.643 Df GlassPlayer[8281:7329] (CoreVideo) pool 0x0 being deallocated [0 in use, 0 free] _targetBufferCountsBitfield 0x0
+2026-10-22 05:33:51.776 E  GlassPlayer[8281:7277] [com.apple.UIKit:Assert] Modifying properties of a view's layer off the main thread is not allowed: view <GlassPlayer.MetalVideoView: 0x102989860> with nearest ancestor view controller <GlassPlayer.PlayerViewController: 0x1040c4000>; backtrace: 
+(
+	0   UIKitCore                           0x000000018691fc04 -[UIView(UIKitManual) _raiseExceptionForBackgroundThreadLayerPropertyModification] + 404
+	1   UIKitCore                           0x0000000186920134 -[UIView(UIKitManual) actionForLayer:forKey:] + 576
+	2   QuartzCore                          0x000000018c7dc240 -[CALayer actionForKey:] + 148
+	3   QuartzCore                          0x000000018c7e2fcc _ZN2CA5Layer12begin_changeEPNS_11TransactionEjP11objc_objectRS4_ + 204
+	4   QuartzCore                          0x000000018c7e72f8 _ZN2CA5Layer6setterEj12_CAValueTypePKv + 348
+	5   QuartzCore                          0x000000018c7e1358 -[CALayer setMinificationFilter:] + 52
+	6   GlassPlayer.debug.dylib             0x000000010c54b8dc _ZN12MVKSwapchain16initCAMetalLayerEPK24VkSwapchainCreateInfoKHRP38VkSwapchainPresentScalingCreateInfoKHRj + 328
+	7   GlassPlayer.debug.dylib             0x000000010c54b6e0 _ZN12MVKSwapchainC2EP9MVKDevicePK24VkSwapchainCreateInfoKHR + 812
+	8   GlassPlayer.debug.dylib             0x000000010c5038ac _ZN9MVKDevice15createSwapchainEPK24VkSwapchainCreateInfoKHRPK21VkAllocationCallbacks + 48
+	9   GlassPlayer.debug.dylib             0x000000010c4a9298 vkCreateSwapchainKHR + 112
+	10  GlassPlayer.debug.dylib             0x000000010b6c78d0 vk_sw_recreate + 1244
+	11  GlassPlayer.debug.dylib             0x000000010b6c6938 vk_sw_resize + 160
+	12  GlassPlayer.debug.dylib             0x000000010b68e154 pl_swapchain_resize + 68
+	13  GlassPlayer.debug.dylib             0x000000010b633358 ra_vk_ctx_resize + 52
+	14  GlassPlayer.debug.dylib             0x000000010b6338f0 moltenvk_reconfig + 44
+	15  GlassPlayer.debug.dylib             0x000000010b61f734 reconfig + 36
+	16  GlassPlayer.debug.dylib             0x000000010b612024 run_reconfig + 532
+	17  GlassPlayer.debug.dylib             0x000000010b594048 mp_dispatch_queue_process + 248
+	18  GlassPlayer.debug.dylib             0x000000010b6136c4 vo_thread + 548
+	19  libsystem_pthread.dylib             0x00000001024b65ac _pthread_start + 104
+	20  libsystem_pthread.dylib             0x00000001024b1998 thread_start + 8
+)
+2026-10-22 05:33:51.780 E  GlassPlayer[8281:7277] [com.apple.UIKit:Assert] Modifying properties of a view's layer off the main thread is not allowed: view <GlassPlayer.MetalVideoView: 0x102989860> with nearest ancestor view controller <GlassPlayer.PlayerViewController: 0x1040c4000>; backtrace: 
+(
+	0   UIKitCore                           0x000000018691fc04 -[UIView(UIKitManual) _raiseExceptionForBackgroundThreadLayerPropertyModification] + 404
+	1   UIKitCore                           0x0000000186920134 -[UIView(UIKitManual) actionForLayer:forKey:] + 576
+	2   QuartzCore                          0x000000018c7dc240 -[CALayer actionForKey:] + 148
+	3   QuartzCore                          0x000000018c7e2fcc _ZN2CA5Layer12begin_changeEPNS_11TransactionEjP11objc_objectRS4_ + 204
+	4   QuartzCore                          0x000000018c7e72f8 _ZN2CA5Layer6setterEj12_CAValueTypePKv + 348
+	5   QuartzCore                          0x000000018c7e129c -[CALayer setMagnificationFilter:] + 52
+	6   GlassPlayer.debug.dylib             0x000000010c54b8e8 _ZN12MVKSwapchain16initCAMetalLayerEPK24VkSwapchainCreateInfoKHRP38VkSwapchainPresentScalingCreateInfoKHRj + 340
+	7   GlassPlayer.debug.dylib             0x000000010c54b6e0 _ZN12MVKSwapchainC2EP9MVKDevicePK24VkSwapchainCreateInfoKHR + 812
+	8   GlassPlayer.debug.dylib             0x000000010c5038ac _ZN9MVKDevice15createSwapchainEPK24VkSwapchainCreateInfoKHRPK21VkAllocationCallbacks + 48
+	9   GlassPlayer.debug.dylib             0x000000010c4a9298 vkCreateSwapchainKHR + 112
+	10  GlassPlayer.debug.dylib             0x000000010b6c78d0 vk_sw_recreate + 1244
+	11  GlassPlayer.debug.dylib             0x000000010b6c6938 vk_sw_resize + 160
+	12  GlassPlayer.debug.dylib             0x000000010b68e154 pl_swapchain_resize + 68
+	13  GlassPlayer.debug.dylib             0x000000010b633358 ra_vk_ctx_resize + 52
+	14  GlassPlayer.debug.dylib             0x000000010b6338f0 moltenvk_reconfig + 44
+	15  GlassPlayer.debug.dylib             0x000000010b61f734 reconfig + 36
+	16  GlassPlayer.debug.dylib             0x000000010b612024 run_reconfig + 532
+	17  GlassPlayer.debug.dylib             0x000000010b594048 mp_dispatch_queue_process + 248
+	18  GlassPlayer.debug.dylib             0x000000010b6136c4 vo_thread + 548
+	19  libsystem_pthread.dylib             0x00000001024b65ac _pthread_start + 104
+	20  libsystem_pthread.dylib             0x00000001024b1998 thread_start + 8
+)
+2026-10-22 05:33:51.784 E  GlassPlayer[8281:7277] [com.apple.UIKit:Assert] Modifying properties of a view's layer off the main thread is not allowed: view <GlassPlayer.MetalVideoView: 0x102989860> with nearest ancestor view controller <GlassPlayer.PlayerViewController: 0x1040c4000>; backtrace: 
+(
+	0   UIKitCore                           0x000000018691fc04 -[UIView(UIKitManual) _raiseExceptionForBackgroundThreadLayerPropertyModification] + 404
+	1   UIKitCore                           0x0000000186920134 -[UIView(UIKitManual) actionForLayer:forKey:] + 576
+	2   QuartzCore                          0x000000018c7dc240 -[CALayer actionForKey:] + 148
+	3   QuartzCore                          0x000000018c7e2fcc _ZN2CA5Layer12begin_changeEPNS_11TransactionEjP11objc_objectRS4_ + 204
+	4   QuartzCore                          0x000000018c7e70c4 _ZN2CA5Layer11set_bit_intEjjjjj + 184
+	5   GlassPlayer.debug.dylib             0x000000010c54b928 _ZN12MVKSwapchain16initCAMetalLayerEPK24VkSwapchainCreateInfoKHRP38VkSwapchainPresentScalingCreateInfoKHRj + 404
+	6   GlassPlayer.debug.dylib             0x000000010c54b6e0 _ZN12MVKSwapchainC2EP9MVKDevicePK24VkSwapchainCreateInfoKHR + 812
+	7   GlassPlayer.debug.dylib             0x000000010c5038ac _ZN9MVKDevice15createSwapchainEPK24VkSwapchainCreateInfoKHRPK21VkAllocationCallbacks + 48
+	8   GlassPlayer.debug.dylib             0x000000010c4a9298 vkCreateSwapchainKHR + 112
+	9   GlassPlayer.debug.dylib             0x000000010b6c78d0 vk_sw_recreate + 1244
+	10  GlassPlayer.debug.dylib             0x000000010b6c6938 vk_sw_resize + 160
+	11  GlassPlayer.debug.dylib             0x000000010b68e154 pl_swapchain_resize + 68
+	12  GlassPlayer.debug.dylib             0x000000010b633358 ra_vk_ctx_resize + 52
+	13  GlassPlayer.debug.dylib             0x000000010b6338f0 moltenvk_reconfig + 44
+	14  GlassPlayer.debug.dylib             0x000000010b61f734 reconfig + 36
+	15  GlassPlayer.debug.dylib             0x000000010b612024 run_reconfig + 532
+	16  GlassPlayer.debug.dylib             0x000000010b594048 mp_dispatch_queue_process + 248
+	17  GlassPlayer.debug.dylib             0x000000010b6136c4 vo_thread + 548
+	18  libsystem_pthread.dylib             0x00000001024b65ac _pthread_start + 104
+	19  libsystem_pthread.dylib             0x00000001024b1998 thread_start + 8
+)
+2026-10-22 05:33:51.788 E  GlassPlayer[8281:7277] [com.apple.UIKit:Assert] Modifying properties of a view's layer off the main thread is not allowed: view <GlassPlayer.MetalVideoView: 0x102989860> with nearest ancestor view controller <GlassPlayer.PlayerViewController: 0x1040c4000>; backtrace: 
+(
+	0   UIKitCore                           0x000000018691fc04 -[UIView(UIKitManual) _raiseExceptionForBackgroundThreadLayerPropertyModification] + 404
+	1   UIKitCore                           0x0000000186920134 -[UIView(UIKitManual) actionForLayer:forKey:] + 576
+	2   QuartzCore                          0x000000018c7dc240 -[CALayer actionForKey:] + 148
+	3   QuartzCore                          0x000000018c7e2fcc _ZN2CA5Layer12begin_changeEPNS_11TransactionEjP11objc_objectRS4_ + 204
+	4   QuartzCore                          0x000000018c7e2dfc _ZN2CA5Layer7set_bitEjjjbMS0_FvPNS_11TransactionEE + 188
+	5   GlassPlayer.debug.dylib             0x000000010c54b96c _ZN12MVKSwapchain16initCAMetalLayerEPK24VkSwapchainCreateInfoKHRP38VkSwapchainPresentScalingCreateInfoKHRj + 472
+	6   GlassPlayer.debug.dylib             0x000000010c54b6e0 _ZN12MVKSwapchainC2EP9MVKDevicePK24VkSwapchainCreateInfoKHR + 812
+	7   GlassPlayer.debug.dylib             0x000000010c5038ac _ZN9MVKDevice15createSwapchainEPK24VkSwapchainCreateInfoKHRPK21VkAllocationCallbacks + 48
+	8   GlassPlayer.debug.dylib             0x000000010c4a9298 vkCreateSwapchainKHR + 112
+	9   GlassPlayer.debug.dylib             0x000000010b6c78d0 vk_sw_recreate + 1244
+	10  GlassPlayer.debug.dylib             0x000000010b6c6938 vk_sw_resize + 160
+	11  GlassPlayer.debug.dylib             0x000000010b68e154 pl_swapchain_resize + 68
+	12  GlassPlayer.debug.dylib             0x000000010b633358 ra_vk_ctx_resize + 52
+	13  GlassPlayer.debug.dylib             0x000000010b6338f0 moltenvk_reconfig + 44
+	14  GlassPlayer.debug.dylib             0x000000010b61f734 reconfig + 36
+	15  GlassPlayer.debug.dylib             0x000000010b612024 run_reconfig + 532
+	16  GlassPlayer.debug.dylib             0x000000010b594048 mp_dispatch_queue_process + 248
+	17  GlassPlayer.debug.dylib             0x000000010b6136c4 vo_thread + 548
+	18  libsystem_pthread.dylib             0x00000001024b65ac _pthread_start + 104
+	19  libsystem_pthread.dylib             0x00000001024b1998 thread_start + 8
+)
+2026-10-22 05:33:51.793 E  GlassPlayer[8281:7277] [com.apple.UIKit:Assert] Modifying properties of a view's layer off the main thread is not allowed: view <GlassPlayer.MetalVideoView: 0x102989860> with nearest ancestor view controller <GlassPlayer.PlayerViewController: 0x1040c4000>; backtrace: 
+(
+	0   UIKitCore                           0x000000018691fc04 -[UIView(UIKitManual) _raiseExceptionForBackgroundThreadLayerPropertyModification] + 404
+	1   UIKitCore                           0x0000000186920134 -[UIView(UIKitManual) actionForLayer:forKey:] + 576
+	2   QuartzCore                          0x000000018c7dc240 -[CALayer actionForKey:] + 148
+	3   QuartzCore                          0x000000018c7e2fcc _ZN2CA5Layer12begin_changeEPNS_11TransactionEjP11objc_objectRS4_ + 204
+	4   QuartzCore                          0x000000018c7e72f8 _ZN2CA5Layer6setterEj12_CAValueTypePKv + 348
+	5   QuartzCore                          0x000000018c7b2ea4 -[CAMetalLayer(CAMetalLayerPrivate) setNonDefaultColorspace:] + 96
+	6   GlassPlayer.debug.dylib             0x000000010c561740 -[CAMetalLayer(MoltenVK) setColorspaceNameMVK:] + 40
+	7   GlassPlayer.debug.dylib             0x000000010c54ba80 _ZN12MVKSwapchain16initCAMetalLayerEPK24VkSwapchainCreateInfoKHRP38VkSwapchainPresentScalingCreateInfoKHRj + 748
+	8   GlassPlayer.debug.dylib             0x000000010c54b6e0 _ZN12MVKSwapchainC2EP9MVKDevicePK24VkSwapchainCreateInfoKHR + 812
+	9   GlassPlayer.debug.dylib             0x000000010c5038ac _ZN9MVKDevice15createSwapchainEPK24VkSwapchainCreateInfoKHRPK21VkAllocationCallbacks + 48
+	10  GlassPlayer.debug.dylib             0x000000010c4a9298 vkCreateSwapchainKHR + 112
+	11  GlassPlayer.debug.dylib             0x000000010b6c78d0 vk_sw_recreate + 1244
+	12  GlassPlayer.debug.dylib             0x000000010b6c6938 vk_sw_resize + 160
+	13  GlassPlayer.debug.dylib             0x000000010b68e154 pl_swapchain_resize + 68
+	14  GlassPlayer.debug.dylib             0x000000010b633358 ra_vk_ctx_resize + 52
+	15  GlassPlayer.debug.dylib             0x000000010b6338f0 moltenvk_reconfig + 44
+	16  GlassPlayer.debug.dylib             0x000000010b61f734 reconfig + 36
+	17  GlassPlayer.debug.dylib             0x000000010b612024 run_reconfig + 532
+	18  GlassPlayer.debug.dylib             0x000000010b594048 mp_dispatch_queue_process + 248
+	19  GlassPlayer.debug.dylib             0x000000010b6136c4 vo_thread + 548
+	20  libsystem_pthread.dylib             0x00000001024b65ac _pthread_start + 104
+	21  libsystem_pthread.dylib             0x00000001024b1998 thread_start + 8
+)
+2026-10-22 05:33:52.041 Df GlassPlayer[8281:7124] [com.apple.UIKit:Orientation] <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E) Scene updated orientation preferences: ( Pu Ll Lr ) -> ( Lr )
+2026-10-22 05:33:52.053 Df GlassPlayer[8281:7162] [com.apple.amp.mediaplayer:RemoteControl] NPIC: setNowPlayingInfo: sending to MediaRemote
+2026-10-22 05:33:52.058 Df GlassPlayer[8281:7162] [com.apple.amp.mediaremote:NowPlaying] [NowPlayingInfo] Setting nowPlayingInfo with mergePolicy Replace: <NSCFDictionary 0x6000003086e0 {
+	kMRMediaRemoteNowPlayingInfoTimestamp = 2026-10-22 05:33:52 +0000
+	kMRMediaRemoteNowPlayingInfoDuration = 30
+	kMRMediaRemoteNowPlayingInfoElapsedTime = 0
+	kMRMediaRemoteNowPlayingInfoContentItemIdentifier = C6431F68-A854-49B8-9419-79AFC31DF4ED
+	kMRMediaRemoteNowPlayingInfoPlaybackRate = 1
+	kMRMediaRemoteNowPlayingInfoTitle = Lab clip
+	kMRMediaRemoteNowPlayingInfoMediaType = kMRMediaRemoteNowPlayingInfoTypeVideo
+}>
+2026-10-22 05:33:52.059 Df GlassPlayer[8281:7162] [com.apple.amp.mediaremote:NowPlaying] [NowPlayingInfo] Setting nowPlayingInfo artwork (id: (null)): (null)
+2026-10-22 05:33:52.063 Df GlassPlayer[8281:7162] [com.apple.amp.mediaremote:NowPlaying] PlaybackQueueInvalidation: NowPlayingItem for 【 􁊸 LOCL (iPhone) ❯ 􀐥 dev.silentneo.glassplayer (8281) ❯ 􀽍 default 】 changed from
+ item:<693D26EF-1155-4D99-8049-41CEF752DF19/Lab clip/CalculatedPlaybackPosition: 2.433071/PlaybackRate: 1.000000>
+ -> 
+item:<C6431F68-A854-49B8-9419-79AFC31DF4ED/Lab clip/CalculatedPlaybackPosition: 0.006069/PlaybackRate: 1.000000>
+2026-10-22 05:33:52.072 Df GlassPlayer[8281:7124] [com.apple.UIKit:TrackingElementWindowController] Change from input view set: (null)
+2026-10-22 05:33:52.072 Df GlassPlayer[8281:7124] [com.apple.UIKit:TrackingElementWindowController] Change to input view set: (null)
+2026-10-22 05:33:52.082 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardLayoutGuide] _moveGuideOffscreenAtEdge: 4
+2026-10-22 05:33:52.082 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardLayoutGuide] changeOffsetConstants: offset is changing to {0, 0} [previous offset: {-1, -1}]
+2026-10-22 05:33:52.083 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardLayoutGuide] changeSizingConstants: size is changing [not transitioning] to {812, 0} [previous size: {1, 0}]
+2026-10-22 05:33:52.087 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] KeyboardTrackingCoordinator: Creating tracking coordinator for <UIWindowScene: 0x102c09170; role: UIWindowSceneSessionRoleApplication; persistentIdentifier: 8A73FEE0-63E0-4B1C-A1E1-D2655363E54E; activationState: UISceneActivationStateForegroundActive>
+2026-10-22 05:33:52.151 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.229 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.317 Df GlassPlayer[8281:7124] [com.apple.amp.mediaplayer:RemoteControl] NPIC: setNowPlayingInfo: finished
+2026-10-22 05:33:52.326 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.328 E  GlassPlayer[8281:7162] (libCoreFSCache.dylib) fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-22 05:33:52.329 E  GlassPlayer[8281:7162] (libCoreFSCache.dylib) Errors found! Invalidating cache...
+2026-10-22 05:33:52.329 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.356 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.401 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.519 Df GlassPlayer[8281:7124] [com.apple.UIKit:Orientation] <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E) Scene updated orientation preferences: ( Lr ) -> ( Pu Ll Lr )
+2026-10-22 05:33:52.584 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.587 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.619 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.631 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.804 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.809 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.813 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.836 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.963 E  GlassPlayer[8281:7162] [com.apple.Metal:Metal Compiler Warning] Warning: Compilation succeeded with: 
+
+program_source:60:17: warning: unused variable '_524' [-Wunused-const-variable]
+constant float4 _524 = {};
+                ^
+2026-10-22 05:33:52.963 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.970 A  GlassPlayer[8281:7169] (Metal) Metal Compiling Shader
+2026-10-22 05:33:52.988 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.119 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.125 A  GlassPlayer[8281:7169] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.204 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.315 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.326 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.419 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.599 A  GlassPlayer[8281:7164] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.607 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.637 A  GlassPlayer[8281:7169] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.755 Df GlassPlayer[8281:7124] [com.apple.UIKit:Orientation] <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E) Scene updated orientation preferences: ( Pu Ll Lr ) -> ( Lr )
+2026-10-22 05:33:53.758 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder: <GlassPlayer.PlayerViewController: 0x1040c4000; >, automaticKeyboard: 1, force: 0
+2026-10-22 05:33:53.758 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, found custom inputView: <(null): 0x0>, customInputViewController: <(null): 0x0>
+2026-10-22 05:33:53.758 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, found inputAccessoryView: <(null): 0x0>
+2026-10-22 05:33:53.758 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, responderRequiresKeyboard 0 (automaticKeyboardEnabled: 1, activeInstance: <(null): 0x0>, self.isOnScreen: 0, requiresKBWhenFirstResponder: 0)
+2026-10-22 05:33:53.758 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, useKeyboard 0 (allowsSystemInputView: 1, !inputView <(null): 0x0>, responderRequiresKeyboard 0)
+2026-10-22 05:33:53.758 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, configuring _responderWithoutAutomaticAppearanceEnabled: <(null): 0x0> (_automaticAppearEnabled: 1)
+2026-10-22 05:33:53.758 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, needsIVPlaceholder: 0, needsIAVPlaceholder: 0, needsInputSetWithPlaceholder: 0
+2026-10-22 05:33:53.758 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder returning: <<UIInputViewSet: 0x6000037695c0>; (empty)>
+2026-10-22 05:33:53.759 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] Reloading input views for key-window scene responder: <GlassPlayer.PlayerViewController: 0x1040c4000; > force:N
+2026-10-22 05:33:53.759 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _reloadInputViewsForKeyWindowSceneResponder: 1 force: 0, fromBecomeFirstResponder: 0 (automaticKeyboard: 1, reloadIdentifier: 7C6F7C08-1B19-4DD2-A6DA-2E1AC4D3BC21)
+2026-10-22 05:33:53.759 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder: <GlassPlayer.PlayerViewController: 0x1040c4000; >, automaticKeyboard: 1, force: 0
+2026-10-22 05:33:53.759 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, found custom inputView: <(null): 0x0>, customInputViewController: <(null): 0x0>
+2026-10-22 05:33:53.760 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, found inputAccessoryView: <(null): 0x0>
+2026-10-22 05:33:53.760 Df GlassPlayer[8281:7162] [com.apple.coremedia:] <<<< FigVideoQueue >>>> FigVideoQueueGMStats: (0x102c05e10) 0 frames enqueued in the last 6 seconds; 0 were suspended. sbuf queue contains 0 frames (0.000 sec), max PTS: 0.000; LWM: 1.000 HWM: 2.000. Timebase time 2.236, rate 1.00. (pid 8281)
+2026-10-22 05:33:53.760 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, responderRequiresKeyboard 0 (automaticKeyboardEnabled: 1, activeInstance: <(null): 0x0>, self.isOnScreen: 0, requiresKBWhenFirstResponder: 0)
+2026-10-22 05:33:53.760 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, useKeyboard 0 (allowsSystemInputView: 1, !inputView <(null): 0x0>, responderRequiresKeyboard 0)
+2026-10-22 05:33:53.760 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, configuring _responderWithoutAutomaticAppearanceEnabled: <(null): 0x0> (_automaticAppearEnabled: 1)
+2026-10-22 05:33:53.760 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, needsIVPlaceholder: 0, needsIAVPlaceholder: 0, needsInputSetWithPlaceholder: 0
+2026-10-22 05:33:53.761 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder returning: <<UIInputViewSet: 0x600003772dc0>; (empty)>
+2026-10-22 05:33:53.762 Df GlassPlayer[8281:7124] [com.apple.UIKit:UIPeripheralHost] endPlacementForInputViewSet: <<UIInputViewSet: 0x600003772dc0>; (empty)> windowScene: <UIWindowScene: 0x102c09170; role: UIWindowSceneSessionRoleApplication; persistentIdentifier: 8A73FEE0-63E0-4B1C-A1E1-D2655363E54E; activationState: UISceneActivationStateForegroundActive>
+2026-10-22 05:33:53.762 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardSceneDelegate] [Interface Orientation] was:Interface Unknown now:UIInterfaceOrientationLandscapeRight reason:Using key window scene
+2026-10-22 05:33:53.763 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardArbiterClientLog] -[_UIRemoteKeyboards prepareToMoveKeyboard:withIAV:isIAVRelevant:showing:notifyRemote:forScene:] position: {{0, 0}, {0, 0}} visible: 0; notifyRemote: 1; isMinimized: NO
+2026-10-22 05:33:53.764 Df GlassPlayer[8281:7124] [com.apple.UIKit:KeyboardVisualMode] Show keyboard with visual mode windowed (0)
+2026-10-22 05:33:53.883 A  GlassPlayer[8281:7169] (Metal) Metal Compiling Shader
+2026-10-22 05:33:53.910 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:54.139 Df GlassPlayer[8281:7124] [com.apple.UIKit:Orientation] <UIWindowScene: 0x102c09170> (8A73FEE0-63E0-4B1C-A1E1-D2655363E54E) Scene updated orientation preferences: ( Lr ) -> ( Pu Ll Lr )
+2026-10-22 05:33:54.238 A  GlassPlayer[8281:726a] (Metal) Metal Compiling Shader
+2026-10-22 05:33:54.384 E  GlassPlayer[8281:726a] [com.apple.Metal:Metal Compiler Warning] Warning: Compilation succeeded with: 
+
+program_source:61:17: warning: unused variable '_663' [-Wunused-const-variable]
+constant float4 _663 = {};
+                ^
+2026-10-22 05:33:54.384 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader
+2026-10-22 05:33:54.391 A  GlassPlayer[8281:7162] (Metal) Metal Compiling Shader

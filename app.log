@@ -1,0 +1,15 @@
+05:33:45.602 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=42.13 GB
+05:33:45.609 [lab] UI lab run
+05:33:47.068 [hang] main thread unresponsive for 1.5 s
+05:33:47.236 [app] active
+05:33:47.709 [lab] t=2.0 play
+05:33:47.710 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/5C403243-5D68-493B-A977-1BCFF4BC41A6/data/Containers/Bundle/Application/2213105B-2F7B-44A3-8FA2-0F26A882E33A/GlassPlayer.app/lab/lab.mp4
+05:33:48.573 [player] start renderer=metal
+05:33:48.619 [player] mpv options applied renderer=metal hwdec=auto anime4k=off/fast enhanced=false
+05:33:48.736 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/5C403243-5D68-493B-A977-1BCFF4BC41A6/data/Containers/Bundle/Application/2213105B-2F7B-44A3-8FA2-0F26A882E33A/GlassPlayer.app/lab/lab.mp4 source=local opts=[] -> 0
+05:33:50.862 [lab] t=5.0 controls
+05:33:51.513 [player] file loaded in 2785 ms
+05:33:51.907 [lab] t=6.0 open tracks
+05:33:51.909 [ui] panel tracks
+05:33:51.927 [ui] present popover tracks 340×≤229
+05:33:53.746 [lab] t=8.0 close
