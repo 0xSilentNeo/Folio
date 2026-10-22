@@ -95,10 +95,13 @@ final class PanelPresenter {
     /// a SwiftUI update), so present in this run-loop turn — no extra frame.
     func show(kind: String, content: AnyView, source: PanelSource, from presenter: UIViewController, passthrough: [UIView], bottomInset: CGFloat,
               immediate: Bool = false, onDismiss: @escaping () -> Void) {
-        if currentKind == kind, let c = current, c.presentingViewController != nil, !c.isBeingDismissed { return }   // already up
+        // Already shown or on its way (the tap presents it, then SwiftUI's
+        // onChange asks again). Cleared by hide() and by an outside-tap dismiss.
+        if currentKind == kind { return }
         currentKind = kind
         let present = { [weak self] in
-            let vc = PanelPopoverController(content: content, source: source, passthrough: passthrough, bottomInset: bottomInset, onDismiss: onDismiss)
+            let vc = PanelPopoverController(content: content, source: source, passthrough: passthrough, bottomInset: bottomInset,
+                                            onDismiss: { [weak self] in self?.currentKind = nil; onDismiss() })
             // Size known before the transition starts (no resize mid-morph).
             vc.loadViewIfNeeded()
             self?.current = vc
