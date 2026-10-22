@@ -1,52 +1,39 @@
 import SwiftUI
 
-/// Glass panel anchored above the right pill: Settings, Tracks or Now Playing.
+/// Content of a panel popover: Settings, Tracks or Now Playing on a glass
+/// card sized to its content (the popover takes its preferred size from it).
 struct PlayerPanel: View {
     let kind: PlayerUIState.Panel
     @ObservedObject var model: PlayerModel
     @ObservedObject var ui: PlayerUIState
-    let size: CGSize
-    let safe: EdgeInsets
-    let compact: Bool
+    let width: CGFloat
+    let maxHeight: CGFloat
     let onLoadSubtitle: () -> Void
     let onRotationLock: (Bool) -> Void
-    /// Namespace shared with the pill buttons: the panel's glass carries the
-    /// same `glassEffectID` as its button, so iOS 26 morphs one into the other.
-    var glassNS: Namespace.ID
 
     @State private var contentHeight: CGFloat = 0
     @MainActor static var lastHeights: [String: CGFloat] = [:]
     @ObservedObject private var tune = UITune.shared
 
     var body: some View {
-        let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
-        let bottom = compact ? 128.0 : 70.0
-        let maxH = size.height - bottom - max(safe.top, 8) - 52   // keep clear of the close / PiP row
-        VStack(spacing: 0) {
-            Spacer(minLength: 0)
-            HStack {
-                Spacer(minLength: 0)
-                let height = min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxH)
-                ScrollView {
-                    content.padding(14)
-                        .dynamicTypeSize(tune.typeSize)
-                        .background(GeometryReader { g in
-                            Color.clear.preference(key: HeightKey.self, value: g.size.height)
-                        })
-                }
-                .onPreferenceChange(HeightKey.self) { h in
-                    if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h }
-                }
-                .scrollIndicators(.hidden)
-                .frame(width: width, height: height)
-                .modifier(PanelGlass(id: kind.rawValue, ns: glassNS))
-                .animation(.spring(response: 0.36, dampingFraction: 0.84), value: contentHeight)
-                .padding(.trailing, 20)
-                .padding(.bottom, bottom)
-            }
+        let height = min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxHeight)
+        ScrollView {
+            content.padding(14)
+                .dynamicTypeSize(tune.typeSize)
+                .background(GeometryReader { g in
+                    Color.clear.preference(key: HeightKey.self, value: g.size.height)
+                })
         }
+        .onPreferenceChange(HeightKey.self) { h in
+            if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h }
+        }
+        .scrollIndicators(.hidden)
+        .frame(width: width, height: height)
+        .glass(cornerRadius: 24)
         .foregroundStyle(.white)
-        .ignoresSafeArea(.container, edges: .horizontal)
+        .tint(Theme.accent)
+        .preferredColorScheme(.dark)
+        .environment(\.colorScheme, .dark)
     }
 
     @ViewBuilder
@@ -56,32 +43,6 @@ struct PlayerPanel: View {
         case .tracks: TracksPanelContent(model: model, onLoadSubtitle: onLoadSubtitle)
         case .nowPlaying: NowPlayingPanelContent(model: model, ui: ui)
         }
-    }
-}
-
-/// Panel background: Liquid Glass carrying the morph id on iOS 26, material otherwise.
-struct PanelGlass: ViewModifier {
-    let id: String
-    let ns: Namespace.ID
-    @ViewBuilder
-    func body(content: Content) -> some View {
-        #if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            // Glass on a plain shape behind the content (not on the scroll
-            // view itself) so the container can morph it.
-            content
-                .background {
-                    Color.clear
-                        .glassEffect(.regular, in: .rect(cornerRadius: 24))
-                        .glassEffectID(id, in: ns)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        } else {
-            content.glass(cornerRadius: 24)
-        }
-        #else
-        content.glass(cornerRadius: 24)
-        #endif
     }
 }
 

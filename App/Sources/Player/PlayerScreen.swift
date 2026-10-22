@@ -13,9 +13,9 @@ struct PlayerScreen: View {
 
     @State private var showSubtitlePicker = false
     @ObservedObject private var tune = UITune.shared
-    /// Shared by the panel buttons and the panels: on iOS 26 the tapped
-    /// button's glass circle morphs into the panel (Liquid Glass morph).
     @Namespace private var glassNS
+    /// The open panel popover (UIKit); see PanelPopover.swift.
+    @State private var popover: PanelPopoverController?
 
     var body: some View {
         GeometryReader { geo in
@@ -38,18 +38,8 @@ struct PlayerScreen: View {
                         .offset(y: ui.controlsVisible && !ui.locked ? -10 : 0)
                 }
 
-                GlassStage {
-                    ZStack {
-                        if ui.controlsVisible && !ui.locked {
-                            controls(geo, compact: compact).transition(.opacity)
-                        }
-                        if let panel = ui.panel {
-                            PlayerPanel(kind: panel, model: model, ui: ui, size: geo.size, safe: geo.safeAreaInsets, compact: compact,
-                                        onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock, glassNS: glassNS)
-                                .id(panel)
-                                .transition(PlayerScreen.panelTransition)
-                        }
-                    }
+                if ui.controlsVisible && !ui.locked {
+                    controls(geo, compact: compact).transition(.opacity)
                 }
 
                 if ui.locked && ui.controlsVisible { lockedOverlay.transition(.opacity) }
@@ -125,6 +115,15 @@ struct PlayerScreen: View {
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
         .onAppear { ui.scheduleHide() }
+        .onChange(of: ui.panel) { _, new in
+            // Dismiss whatever is up, then present the new one from its button.
+            if let p = popover {
+                popover = nil
+                p.dismiss(animated: true) { if let new { presentPanel(new) } }
+            } else if let new {
+                presentPanel(new)
+            }
+        }
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
@@ -133,12 +132,28 @@ struct PlayerScreen: View {
         }
     }
 
-    /// Below iOS 26 there is no glass morph, so the panel scales out of the
-    /// pill; on iOS 26 the glass does the moving and the content just fades.
-    static var panelTransition: AnyTransition {
-        if #available(iOS 26.0, *) { return .opacity }
-        return .asymmetric(insertion: .scale(scale: 0.55, anchor: .bottomTrailing).combined(with: .opacity),
-                           removal: .scale(scale: 0.7, anchor: .bottomTrailing).combined(with: .opacity))
+    /// Presents the panel as a popover from its pill button (Outplayer's
+    /// approach; iOS 26 morphs the popover out of the source view).
+    private func presentPanel(_ kind: PlayerUIState.Panel) {
+        guard let anchor = ui.anchors[kind], let window = anchor.window, let root = window.rootViewController else {
+            dlog("ui/error", "no anchor for \(kind.rawValue)")
+            return
+        }
+        let size = window.bounds.size
+        let compact = size.width < 640
+        let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
+        let maxHeight = size.height - (compact ? 150 : 90) - window.safeAreaInsets.top - 56
+        let body = PlayerPanel(kind: kind, model: model, ui: ui, width: width, maxHeight: maxHeight,
+                               onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
+        let vc = PanelPopoverController(content: AnyView(body), anchor: anchor, passthrough: Array(ui.anchors.values)) {
+            // Dismissed by a tap outside.
+            if ui.panel == kind { ui.panel = nil }
+            popover = nil
+            ui.scheduleHide()
+        }
+        popover = vc
+        dlog("ui", "present popover \(kind.rawValue) \(Int(width))×≤\(Int(maxHeight))")
+        root.topMostPresented.present(vc, animated: true)
     }
 
     // MARK: Controls
@@ -204,9 +219,9 @@ struct PlayerScreen: View {
 
     private var panelPill: some View {
         GlassGroup(unionID: "panels", ns: glassNS) {
-            PillIcon("switch.2", size: 17, active: ui.panel == .tracks, unionID: "panels", ns: glassNS, morphID: PlayerUIState.Panel.tracks.rawValue) { ui.toggle(.tracks) }
-            PillIcon("slider.horizontal.3", size: 17, active: ui.panel == .settings, unionID: "panels", ns: glassNS, morphID: PlayerUIState.Panel.settings.rawValue) { ui.toggle(.settings) }
-            PillIcon("list.bullet", size: 17, active: ui.panel == .nowPlaying, unionID: "panels", ns: glassNS, morphID: PlayerUIState.Panel.nowPlaying.rawValue) { ui.toggle(.nowPlaying) }
+            PillIcon("switch.2", size: 17, active: ui.panel == .tracks, unionID: "panels", ns: glassNS, onAnchor: { ui.anchors[.tracks] = $0 }) { ui.toggle(.tracks) }
+            PillIcon("slider.horizontal.3", size: 17, active: ui.panel == .settings, unionID: "panels", ns: glassNS, onAnchor: { ui.anchors[.settings] = $0 }) { ui.toggle(.settings) }
+            PillIcon("list.bullet", size: 17, active: ui.panel == .nowPlaying, unionID: "panels", ns: glassNS, onAnchor: { ui.anchors[.nowPlaying] = $0 }) { ui.toggle(.nowPlaying) }
         }
     }
 
@@ -487,23 +502,6 @@ struct GlassIcon: View {
     }
 }
 
-/// Wraps the controls and panels in one Liquid Glass container (iOS 26) so
-/// glass shapes can merge and morph between them. Plain group elsewhere.
-struct GlassStage<Content: View>: View {
-    @ViewBuilder var content: Content
-    var body: some View {
-        #if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            GlassEffectContainer(spacing: 8) { content }
-        } else {
-            content
-        }
-        #else
-        content
-        #endif
-    }
-}
-
 /// A row of buttons on one glass capsule.
 struct GlassGroup<Content: View>: View {
     let unionID: String
@@ -524,15 +522,13 @@ struct PillIcon: View {
     var active = false
     let unionID: String
     let ns: Namespace.ID
-    /// When set, a glass circle under this button is the morph source of the
-    /// panel with the same id: it is removed as the panel appears, so Liquid
-    /// Glass morphs the circle into the panel (and back on close).
-    var morphID: String? = nil
+    /// Receives the UIKit view behind the button (popover source).
+    var onAnchor: ((UIView) -> Void)? = nil
     let action: () -> Void
     @ObservedObject private var tune = UITune.shared
 
-    init(_ icon: String, size: CGFloat = 18, active: Bool = false, unionID: String, ns: Namespace.ID, morphID: String? = nil, action: @escaping () -> Void) {
-        self.icon = icon; self.size = size; self.active = active; self.unionID = unionID; self.ns = ns; self.morphID = morphID; self.action = action
+    init(_ icon: String, size: CGFloat = 18, active: Bool = false, unionID: String, ns: Namespace.ID, onAnchor: ((UIView) -> Void)? = nil, action: @escaping () -> Void) {
+        self.icon = icon; self.size = size; self.active = active; self.unionID = unionID; self.ns = ns; self.onAnchor = onAnchor; self.action = action
     }
 
     var body: some View {
@@ -547,18 +543,7 @@ struct PillIcon: View {
         }
         .buttonStyle(PressStyle(scale: 0.82))
         .foregroundStyle(.white)
-        .background { morphSource(h) }
-    }
-
-    @ViewBuilder
-    private func morphSource(_ h: CGFloat) -> some View {
-        #if compiler(>=6.2)
-        if #available(iOS 26.0, *), let morphID, !active {
-            Color.clear.frame(width: h - 8, height: h - 8)
-                .glassEffect(.regular, in: .circle)
-                .glassEffectID(morphID, in: ns)
-        }
-        #endif
+        .background { if let onAnchor { AnchorView(onView: onAnchor) } }
     }
 }
 

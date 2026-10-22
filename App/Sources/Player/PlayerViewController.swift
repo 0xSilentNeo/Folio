@@ -12,17 +12,19 @@ final class PlayerUIState: ObservableObject {
     @Published var panel: Panel?
     @Published var showStats = false
     @Published var showTune = false
+    /// UIKit views behind the panel buttons; popovers are presented from them.
+    var anchors: [Panel: UIView] = [:]
     var menuOpen = false
 
     func toggle(_ p: Panel) {
-        withAnimation(UITune.shared.openSpring) { panel = panel == p ? nil : p }
-        dlog("ui", "panel \(panel?.rawValue ?? "closed") spring=\(String(format: "%.2f/%.2f", UITune.shared.response, UITune.shared.damping))")
+        panel = panel == p ? nil : p
+        dlog("ui", "panel \(panel?.rawValue ?? "closed")")
         if panel == nil { scheduleHide() } else { showControls(autoHide: false) }
     }
 
     func closePanel() {
         guard panel != nil else { return }
-        withAnimation(UITune.shared.closeSpring) { panel = nil }
+        panel = nil
         scheduleHide()
     }
     @Published var scrubbing = false
