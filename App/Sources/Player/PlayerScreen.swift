@@ -94,6 +94,20 @@ struct PlayerScreen: View {
                 if let error = model.errorMessage { errorView(error) }
                 if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
 
+                if ui.showTune {
+                    TuneCard(ui: ui).transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
+                }
+                if ui.showStats || ui.showInfo {
+                    MediaCard(model: model, ui: ui)
+                        .transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
+                }
+                if let toast = model.toast, ui.gestureHUD == nil, !model.holdSpeedActive {
+                    topPill(Text(toast), top: geo.safeAreaInsets.top + (ui.controlsVisible ? 56 : 0))
+                }
+
+                if let error = model.errorMessage { errorView(error) }
+                if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
+
                 if let panel = ui.panel {
                     // Each panel kind is its own view (id), so switching panels is a
                     // close + open rather than a crossfade that can leave a ghost.
