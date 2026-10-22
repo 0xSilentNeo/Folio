@@ -115,8 +115,13 @@ final class PanelUITests: XCTestCase {
     /// The tap sequence from the freeze log, replayed at its real timing.
     /// Afterwards the screen must match the last tap (Settings open) and the
     /// player must still respond: outside tap closes, Tracks opens and closes.
-    func test6RapidSwitchReplay() throws {
-        let app = launchPlayer(["-panelStress"])
+    func test6RapidSwitchReplay() throws { try replay([]) }
+
+    /// Same replay without the settle delay between transitions (comparison).
+    func test7ReplayNoSettle() throws { try replay(["-panelNoSettle"]) }
+
+    private func replay(_ extra: [String]) throws {
+        let app = launchPlayer(["-panelStress"] + extra)
         sleep(22)                                                 // replay: 3.5 s after landscape settles, lasts 11.6 s
         XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 4), "Settings (last tap) is not showing")
         XCTAssertFalse(app.staticTexts["NOW PLAYING"].exists, "an orphaned Now Playing panel is on screen")

@@ -142,8 +142,7 @@ final class PanelPresenter {
                 guard let self else { return }
                 if self.shown === vc { self.shown = nil; self.shownKind = nil }
                 dlog("ui", "panel: dismissed")
-                self.setBusy(false)
-                self.reconcile()
+                self.settle()
             }
             if switching, animated, let container = vc.presentationController?.containerView {
                 // Switching panels: fade the old one out quickly, then the new
@@ -170,6 +169,18 @@ final class PanelPresenter {
             dlog("ui", "panel: presented \(req.kind)")
             // UIKit resets passthrough views for bar-item popovers on presentation.
             vc.popoverPresentationController?.passthroughViews = vc.passthrough
+            self?.settle()
+        }
+    }
+
+    /// The next step starts a moment after UIKit reports a transition done:
+    /// a dismiss started from inside a present's completion (a second tap
+    /// while the panel was still opening) never finished in the simulator
+    /// replay of the freeze log, leaving UIKit mid-transition.
+    private func settle() {
+        let delay: Double = CommandLine.arguments.contains("-panelNoSettle") ? 0 : 0.12
+        if delay == 0 { setBusy(false); reconcile(); return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             self?.setBusy(false)
             self?.reconcile()
         }
@@ -204,7 +215,8 @@ final class PanelPresenter {
                 self.busy = false; self.setBusy(true, rearm: true)
                 return
             }
-            dlog("ui/error", "panel transition did not finish; recovering")
+            dlog("ui/error", "panel transition did not finish; recovering (shown=\(self.shownKind ?? "nil") presented=\(self.shown?.presentingViewController != nil))")
+            if let vc = self.shown, let p = vc.presentingViewController { p.dismiss(animated: false) }
             self.busy = false
             if let vc = self.shown, vc.presentingViewController == nil { self.shown = nil; self.shownKind = nil }
             self.reconcile()
