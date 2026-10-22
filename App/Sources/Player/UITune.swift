@@ -76,8 +76,6 @@ struct TuneCard: View {
                         row("Panel max", value: $tune.panelMax, in: 260...520, fmt: "%.0f pt")
                         row("Text size", value: $tune.textScale, in: 0.8...1.2, fmt: "%.2f×")
                         row("Pill height", value: $tune.pillHeight, in: 38...58, fmt: "%.0f pt")
-                        row("Spring response", value: $tune.response, in: 0.2...1.2, fmt: "%.2f s")
-                        row("Spring damping", value: $tune.damping, in: 0.4...1.0, fmt: "%.2f")
                     }
                     HStack {
                         Button {
