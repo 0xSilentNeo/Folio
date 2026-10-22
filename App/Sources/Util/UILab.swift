@@ -13,7 +13,7 @@ enum UILab {
         UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
         UserDefaults.standard.set(true, forKey: SettingsKey.landscapeOnOpen)
         if CommandLine.arguments.contains("-labGL") { UserDefaults.standard.set("gl", forKey: SettingsKey.renderer) }
-        guard let url = Bundle.main.url(forResource: "lab", withExtension: "mp4") else { dlog("lab/error", "lab.mp4 missing"); return }
+        guard let url = Bundle.main.url(forResource: "lab", withExtension: "mp4", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab", withExtension: "mp4") else { dlog("lab/error", "lab.mp4 missing"); return }
         let steps: [(Double, String, () -> Void)] = [
             (2.0, "play", { var m = MediaItem(url: url.path, title: "Lab clip", source: .local); m.historyKey = "lab"; PlayerPresenter.play(m) }),
             (5.0, "controls", { ui?.showControls(autoHide: false) }),
