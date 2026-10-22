@@ -21,7 +21,10 @@ enum PopLab {
             (13.5, { vc?.run(4) }), (15.5, { vc?.dismissAll() }),
             (17.0, { vc?.run(5) }), (19.0, { vc?.dismissAll() }),
             (20.5, { vc?.run(6) }), (22.5, { vc?.dismissAll() }),
-            (24.0, { vc?.label.text = "done"; dlog("lab", "pop lab done") }),
+            (24.0, { vc?.run(7) }), (26.0, { vc?.dismissAll() }),
+            (27.5, { vc?.run(8) }), (29.5, { vc?.dismissAll() }),
+            (31.0, { vc?.run(9) }), (31.8, { vc?.segment(2) }), (32.8, { vc?.segment(1) }), (33.8, { vc?.segment(0) }),
+            (35.0, { vc?.label.text = "done"; dlog("lab", "pop lab done") }),
         ]
         for (t, a) in steps { DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: a) }
     }
@@ -87,6 +90,9 @@ final class PopLabViewController: UIViewController {
     private let plainAnchor = UIView()
     private let state = PopLabState()
     private var host: UIHostingController<PopLabSwiftUI>!
+    private let toolbar = UIToolbar()
+    private var barItems: [UIBarButtonItem] = []
+    private let seg = UISegmentedControl(items: ["Playlist", "Chapters", "Markers"])
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -118,7 +124,28 @@ final class PopLabViewController: UIViewController {
         view.addSubview(host.view)
         host.didMove(toParent: self)
 
+        // Toolbar with three bar button items (Outplayer's construction on Liquid Glass).
+        let a = UIBarButtonItem(image: UIImage(systemName: "switch.2"), style: .plain, target: nil, action: nil)
+        let b = UIBarButtonItem(image: UIImage(systemName: "slider.horizontal.3"), style: .plain, target: nil, action: nil)
+        let c = UIBarButtonItem(image: UIImage(systemName: "list.bullet"), style: .plain, target: nil, action: nil)
+        barItems = [a, b, c]
+        toolbar.items = [.flexibleSpace(), a, b, c]
+        toolbar.tintColor = .white
+        toolbar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(toolbar)
+        seg.selectedSegmentIndex = 0
+        seg.selectedSegmentTintColor = UIColor(Theme.accent)
+        seg.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
+        seg.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(seg)
+
         NSLayoutConstraint.activate([
+            toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            toolbar.bottomAnchor.constraint(equalTo: pill.topAnchor, constant: -40),
+            seg.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            seg.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 30),
+            seg.widthAnchor.constraint(equalToConstant: 300),
             pill.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             pill.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             pill.widthAnchor.constraint(equalToConstant: 46 * 3 + 8),
@@ -138,6 +165,9 @@ final class PopLabViewController: UIViewController {
             4: "V4 UIKit popover\nsystem bg · presented async",
             5: "V5 SwiftUI .popover",
             6: "V6 UIKit present\ninside SwiftUI onChange",
+            7: "V7 popover from UIBarButtonItem\nin UIToolbar · system bg",
+            8: "V8 popover from UIBarButtonItem\nCLEAR bg",
+            9: "V9 UISegmentedControl\n(programmatic changes)",
         ]
         label.text = names[n]
         dlog("lab", "pop V\(n)")
@@ -148,6 +178,8 @@ final class PopLabViewController: UIViewController {
         case 4: DispatchQueue.main.async { self.presentUIKit(clear: false, source: self.pill.buttons[.nowPlaying]) }
         case 5: state.swiftUIPopover = true
         case 6: state.presentInUpdate = true
+        case 7: presentFromBar(barItems[2], clear: false)
+        case 8: presentFromBar(barItems[1], clear: true)
         default: break
         }
     }
@@ -162,6 +194,27 @@ final class PopLabViewController: UIViewController {
             pc.sourceView = source
             pc.sourceRect = source.bounds
             pc.permittedArrowDirections = [.down]
+            pc.delegate = PopLabDelegate.shared
+            if clear {
+                pc.popoverBackgroundViewClass = ClearPopoverBackground.self
+                pc.backgroundColor = .clear
+            }
+        }
+        present(c, animated: true)
+    }
+
+    func segment(_ i: Int) {
+        seg.selectedSegmentIndex = i
+        seg.sendActions(for: .valueChanged)
+    }
+
+    func presentFromBar(_ item: UIBarButtonItem, clear: Bool) {
+        let c = UIHostingController(rootView: PopLabContent())
+        c.view.backgroundColor = .clear
+        c.preferredContentSize = CGSize(width: 300, height: 230)
+        c.modalPresentationStyle = .popover
+        if let pc = c.popoverPresentationController {
+            pc.sourceItem = item
             pc.delegate = PopLabDelegate.shared
             if clear {
                 pc.popoverBackgroundViewClass = ClearPopoverBackground.self
