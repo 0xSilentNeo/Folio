@@ -1,0 +1,59 @@
+signal 06
+0   GlassPlayer                         0x00000001008028a4 $s11GlassPlayer11DiagnosticsC16writeSignalCrash33_C336E496D2403C1218B6FCA8D6332215LLyys5Int32VFZTf4nd_n + 284
+1   GlassPlayer                         0x00000001007fec10 $s11GlassPlayer11DiagnosticsC20installCrashHandlers33_C336E496D2403C1218B6FCA8D6332215LLyyFys5Int32VcfU0_To + 20
+2   libsystem_platform.dylib            0x0000000103e236a0 _sigtramp + 52
+3   libsystem_pthread.dylib             0x0000000103e462a8 pthread_kill + 264
+4   libsystem_c.dylib                   0x00000001801b5994 abort + 100
+5   libc++abi.dylib                     0x000000018030326c _ZN10__cxxabiv130__aligned_malloc_with_fallbackEm + 0
+6   libc++abi.dylib                     0x00000001802f31a4 _ZL29demangling_unexpected_handlerv + 0
+7   libobjc.A.dylib                     0x0000000180077218 _ZL15_objc_terminatev + 124
+8   libc++abi.dylib                     0x0000000180302758 _ZSt11__terminatePFvvE + 12
+9   libc++abi.dylib                     0x00000001803057c0 __cxa_get_exception_ptr + 0
+10  libc++abi.dylib                     0x00000001803057a0 _ZN10__cxxabiv1L12failed_throwEPNS_15__cxa_exceptionE + 0
+11  libobjc.A.dylib                     0x000000018009c1cc objc_exception_throw + 384
+12  CoreFoundation                      0x00000001804f70e0 -[NSException initWithCoder:] + 0
+13  UIKitCore                           0x0000000185730264 -[UIViewPropertyAnimator dealloc] + 712
+14  UIKitCore                           0x00000001856526f0 block_destroy_helper.181 + 26500
+15  libobjc.A.dylib                     0x0000000180075fc8 _ZL27object_cxxDestructFromClassP11objc_objectP10objc_class + 112
+16  libobjc.A.dylib                     0x000000018008fe60 _ZL38objc_destructInstance_nonnull_realizedP11objc_object + 72
+17  libobjc.A.dylib                     0x0000000180097f48 _objc_rootDealloc + 56
+18  UIKitCore                           0x00000001856544e8 block_destroy_helper + 168
+19  libswiftCore.dylib                  0x0000000197646a84 _swift_release_dealloc + 28
+20  libswiftCore.dylib                  0x0000000197647548 _ZN5swift9RefCountsINS_13RefCountBitsTILNS_19RefCountInlinednessE1EEEE15doDecrementSlowILNS_13PerformDeinitE1EEEbS3_j + 148
+21  UIKitCore                           0x00000001853d955c objectdestroyTm + 24
+22  libswiftCore.dylib                  0x0000000197646a84 _swift_release_dealloc + 28
+23  libswiftCore.dylib                  0x0000000197647548 _ZN5swift9RefCountsINS_13RefCountBitsTILNS_19RefCountInlinednessE1EEEE15doDecrementSlowILNS_13PerformDeinitE1EEEbS3_j + 148
+24  libsystem_blocks.dylib              0x000000018013ec60 _call_dispose_helpers_excp + 44
+25  libsystem_blocks.dylib              0x000000018013fb34 _Block_release + 280
+26  UIKitCore                           0x00000001852593a4 objectdestroy.272Tm + 1180
+27  libswiftCore.dylib                  0x0000000197646a84 _swift_release_dealloc + 28
+28  libswiftCore.dylib                  0x0000000197647548 _ZN5swift9RefCountsINS_13RefCountBitsTILNS_19RefCountInlinednessE1EEEE15doDecrementSlowILNS_13PerformDeinitE1EEEbS3_j + 148
+29  UIKitCore                           0x00000001851ea96c objectdestroy.5Tm + 32
+30  libswiftCore.dylib                  0x0000000197646a84 _swift_release_dealloc + 28
+31  libswiftCore.dylib                  0x0000000197647548 _ZN5swift9RefCountsINS_13RefCountBitsTILNS_19RefCountInlinednessE1EEEE15doDecrementSlowILNS_13PerformDeinitE1EEEbS3_j + 148
+32  libsystem_blocks.dylib              0x000000018013ec60 _call_dispose_helpers_excp + 44
+33  libsystem_blocks.dylib              0x000000018013fb34 _Block_release + 280
+34  UIKitCore                           0x000000018690c03c -[UIViewAnimationBlockDelegate .cxx_destruct] + 48
+35  libobjc.A.dylib                     0x0000000180075fc8 _ZL27object_cxxDestructFromClassP11objc_objectP10objc_class + 112
+36  libobjc.A.dylib                     0x000000018008fe60 _ZL38objc_destructInstance_nonnull_realizedP11objc_object + 72
+37  libobjc.A.dylib                     0x0000000180097f48 _objc_rootDealloc + 56
+38  libsystem_blocks.dylib              0x00000001801402c4 _ZN10HelperBaseI14ExtendedInlineE14disposeCaptureILNS1_16BlockCaptureKindE3EEEbjPh + 64
+39  libsystem_blocks.dylib              0x000000018013f428 _ZN10HelperBaseI13GenericInlineE12destroyBlockEP12Block_layoutbPh + 108
+40  libsystem_blocks.dylib              0x000000018013ec78 _call_dispose_helpers_excp + 68
+41  libsystem_blocks.dylib              0x000000018013fb34 _Block_release + 280
+42  libdispatch.dylib                   0x00000001801db4b0 _dispatch_client_callout + 12
+43  libdispatch.dylib                   0x00000001801f74a0 _dispatch_main_queue_drain.cold.7 + 24
+44  libdispatch.dylib                   0x00000001801d031c _dispatch_main_queue_drain + 1184
+45  libdispatch.dylib                   0x00000001801cfe6c _dispatch_main_queue_callback_4CF + 40
+46  CoreFoundation                      0x0000000180455ed8 __CFRUNLOOP_IS_SERVICING_THE_MAIN_DISPATCH_QUEUE__ + 12
+47  CoreFoundation                      0x00000001804550b0 __CFRunLoopRun + 1884
+48  CoreFoundation                      0x000000018044fcec _CFRunLoopRunSpecificWithOptions + 496
+49  GraphicsServices                    0x0000000192a669bc GSEventRunModal + 116
+50  UIKitCore                           0x0000000186348574 -[UIApplication _run] + 772
+51  UIKitCore                           0x000000018634c79c UIApplicationMain + 124
+52  SwiftUI                             0x00000001da58d620 $s7SwiftUI17KitRendererCommon33_ACC2C5639A7D76F611E170E831FCA491LLys5NeverOyXlXpFAESpySpys4Int8VGSgGXEfU_ + 164
+53  SwiftUI                             0x00000001da58d368 $s7SwiftUI6runAppys5NeverOxAA0D0RzlF + 180
+54  SwiftUI                             0x00000001da31b42c $s7SwiftUI3AppPAAE4mainyyFZ + 148
+55  GlassPlayer                         0x00000001008148d4 main + 64
+56  dyld                                0x0000000103bb93d0 start_sim + 20
+57  ???                                 0x0000000103cf6b98 0x0 + 4358892440

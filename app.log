@@ -1,0 +1,47 @@
+19:19:40.222 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=40.95 GB
+19:19:41.381 [hang] main thread unresponsive for 1.2 s
+19:19:42.771 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/4599CF09-42C3-4F02-A260-D1B056E97DA9/data/Containers/Bundle/Application/A90A18EA-0E65-4F58-AB4C-F646D31F9194/GlassPlayer.app/lab/lab.mp4
+19:19:43.595 [app] active
+19:19:44.372 [player] start renderer=metal
+19:19:44.373 [lab] engine not started (lab)
+19:19:48.080 [lab] landscape steady; replay starts
+19:19:48.605 [lab] stress tap settings
+19:19:48.606 [ui] panel settings
+19:19:48.606 [ui] present panel settings from bar item 340×≤225
+19:19:49.080 [ui] present panel settings from bar item 340×≤225
+19:19:49.518 [lab] stress tap nowPlaying
+19:19:49.518 [ui] panel nowPlaying
+19:19:49.522 [ui] present panel nowPlaying from bar item 340×≤225
+19:19:49.547 [ui] present panel nowPlaying from bar item 340×≤225
+19:19:50.367 [lab] stress tap nowPlaying
+19:19:50.368 [ui] panel closed
+19:19:51.354 [lab] stress tap tracks
+19:19:51.355 [ui] panel tracks
+19:19:51.355 [ui] present panel tracks from bar item 340×≤225
+19:19:51.366 [ui] present panel tracks from bar item 340×≤225
+19:19:52.114 [lab] stress tap tracks
+19:19:52.114 [ui] panel closed
+19:19:52.821 [lab] stress tap nowPlaying
+19:19:52.822 [ui] panel nowPlaying
+19:19:52.822 [ui] present panel nowPlaying from bar item 340×≤225
+19:19:52.832 [ui] present panel nowPlaying from bar item 340×≤225
+19:19:53.789 [lab] stress tap nowPlaying
+19:19:53.789 [ui] panel closed
+19:19:54.132 [lab] stress tap nowPlaying
+19:19:54.132 [ui] panel nowPlaying
+19:19:54.132 [ui] present panel nowPlaying from bar item 340×≤225
+19:19:54.162 [ui] present panel nowPlaying from bar item 340×≤225
+19:19:55.075 [lab] stress tap settings
+19:19:55.075 [ui] panel settings
+19:19:55.075 [ui] present panel settings from bar item 340×≤225
+19:19:55.191 [ui] present panel settings from bar item 340×≤225
+19:19:55.914 [lab] stress tap tracks
+19:19:55.915 [ui] panel tracks
+19:19:55.915 [ui] present panel tracks from bar item 340×≤225
+19:19:56.201 [ui] present panel tracks from bar item 340×≤225
+19:19:56.396 [lab] stress tap tracks
+19:19:56.397 [ui] panel closed
+19:19:56.765 [lab] stress tap tracks
+19:19:56.765 [ui] panel tracks
+19:19:56.765 [ui] present panel tracks from bar item 340×≤225
+19:19:56.798 [ui] present panel tracks from bar item 340×≤225

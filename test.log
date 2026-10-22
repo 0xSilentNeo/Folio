@@ -1,0 +1,73 @@
+Command line invocation:
+    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=4599CF09-42C3-4F02-A260-D1B056E97DA9 -derivedDataPath build "-only-testing:GlassPlayerUITests/PanelUITests/test6RapidSwitchReplay"
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS Simulator, arch:arm64, id:4599CF09-42C3-4F02-A260-D1B056E97DA9, OS:26.2, name:lab }
+{ platform:iOS Simulator, arch:x86_64, id:4599CF09-42C3-4F02-A260-D1B056E97DA9, OS:26.2, name:lab }
+2026-10-22 19:19:23.188863+0000 GlassPlayerUITests-Runner[9889:33136] [Default] Running tests...
+2026-10-22 19:19:23.342007+0000 GlassPlayerUITests-Runner[9889:33516] [General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
+2026-10-22 19:19:23.384491+0000 GlassPlayerUITests-Runner[9889:33514] [General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-22 19:19:28.244.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-22 19:19:28.245.
+Test Suite 'PanelUITests' started at 2026-10-22 19:19:28.245.
+Test Case '-[GlassPlayerUITests.PanelUITests test6RapidSwitchReplay]' started.
+    t =     0.00s Start Test at 2026-10-22 19:19:28.246
+    t =     0.42s Set Up
+    t =     0.43s Open dev.silentneo.glassplayer
+    t =     0.43s     Launch dev.silentneo.glassplayer
+    t =    10.36s         Setting up automation session
+    t =    13.04s         Wait for dev.silentneo.glassplayer to idle
+    t =    16.41s             Interface orientation changed to Landscape Right
+    t =    17.51s Setting device orientation to Landscape Left
+    t =    17.53s     Device orientation changed to Landscape Left
+    t =    17.57s     Wait for dev.silentneo.glassplayer to idle
+    t =    24.16s Waiting 20.0s for "Settings" Button to exist
+    t =    25.17s     Checking `Expect predicate `existsNoRetry == 1` for object "Settings" Button`
+    t =    25.17s         Checking existence of `"Settings" Button`
+    t =    49.45s Waiting 4.0s for "Playback" StaticText to exist
+    t =    49.49s     Interface orientation changed to Portrait
+    t =    50.50s     Checking `Expect predicate `existsNoRetry == 1` for object "Playback" StaticText`
+    t =    50.52s         Checking existence of `"Playback" StaticText`
+    t =    50.53s         Capturing element debug description
+    t =    51.58s     Checking `Expect predicate `existsNoRetry == 1` for object "Playback" StaticText`
+    t =    51.58s         Checking existence of `"Playback" StaticText`
+    t =    51.58s         Capturing element debug description
+    t =    52.54s     Checking `Expect predicate `existsNoRetry == 1` for object "Playback" StaticText`
+    t =    52.54s         Checking existence of `"Playback" StaticText`
+    t =    52.54s         Capturing element debug description
+    t =    53.49s     Checking `Expect predicate `existsNoRetry == 1` for object "Playback" StaticText`
+    t =    53.49s         Checking existence of `"Playback" StaticText`
+    t =    53.49s         Capturing element debug description
+    t =    53.49s     Checking existence of `"Playback" StaticText`
+    t =    54.50s     Checking existence of `"Playback" StaticText` (retry 1)
+    t =    55.51s     Checking existence of `"Playback" StaticText` (retry 2)
+    t =    55.51s Collecting debug information to assist test failure triage
+/Users/runner/work/GlassPlayer/GlassPlayer/UITests/PanelUITests.swift:121: error: -[GlassPlayerUITests.PanelUITests test6RapidSwitchReplay] : XCTAssertTrue failed - Settings (last tap) is not showing
+    t =    56.27s Checking existence of `"NOW PLAYING" StaticText`
+    t =    57.28s Checking existence of `"NOW PLAYING" StaticText` (retry 1)
+    t =    58.29s Checking existence of `"NOW PLAYING" StaticText` (retry 2)
+    t =    58.30s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    58.30s     Wait for dev.silentneo.glassplayer to idle
+    t =    58.30s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.30s         Collecting debug information to assist test failure triage
+/Users/runner/work/GlassPlayer/GlassPlayer/UITests/PanelUITests.swift:123: error: -[GlassPlayerUITests.PanelUITests test6RapidSwitchReplay] : Failed to get matching snapshot: Application dev.silentneo.glassplayer is not running
+    t =    58.32s Tear Down
+    t =    58.67s         Checking for crash reports corresponding to unexpected termination of dev.silentneo.glassplayer
+Test Case '-[GlassPlayerUITests.PanelUITests test6RapidSwitchReplay]' failed (78.684 seconds).
+Test Suite 'PanelUITests' failed at 2026-10-22 19:20:46.938.
+	 Executed 1 test, with 2 failures (0 unexpected) in 78.684 (78.693) seconds
+Test Suite 'GlassPlayerUITests.xctest' failed at 2026-10-22 19:20:46.945.
+	 Executed 1 test, with 2 failures (0 unexpected) in 78.684 (78.701) seconds
+Test Suite 'Selected tests' failed at 2026-10-22 19:20:46.946.
+	 Executed 1 test, with 2 failures (0 unexpected) in 78.684 (78.702) seconds
+2026-10-22 19:21:18.180 xcodebuild[8325:29009] [MT] IDETestOperationsObserverDebug: 124.336 elapsed -- Testing started completed.
+2026-10-22 19:21:18.181 xcodebuild[8325:29009] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-22 19:21:18.181 xcodebuild[8325:29009] [MT] IDETestOperationsObserverDebug: 124.336 sec, +124.336 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.22_19-19-07-+0000.xcresult
+
+** TEST EXECUTE FAILED **
+
+Testing started
