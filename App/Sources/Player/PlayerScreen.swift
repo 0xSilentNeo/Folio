@@ -108,16 +108,6 @@ struct PlayerScreen: View {
                 if let error = model.errorMessage { errorView(error) }
                 if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
 
-                if let panel = ui.panel {
-                    // Each panel kind is its own view (id), so switching panels is a
-                    // close + open rather than a crossfade that can leave a ghost.
-                    PlayerPanel(kind: panel, model: model, ui: ui, size: geo.size, safe: geo.safeAreaInsets, compact: compact,
-                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
-                        .id(panel)
-                        .transition(.asymmetric(
-                            insertion: .scale(scale: 0.1, anchor: .bottomTrailing).combined(with: .opacity),
-                            removal: .scale(scale: 0.6, anchor: .bottomTrailing).combined(with: .opacity).animation(.easeIn(duration: 0.16))))
-                }
                 if ui.showConsole {
                     ConsoleBar(model: model, ui: ui).transition(.move(edge: .bottom).combined(with: .opacity))
                 }
