@@ -40,6 +40,7 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
             pc.delegate = self
             pc.sourceView = anchor
             pc.sourceRect = anchor.bounds
+            if #available(iOS 17.0, *) { pc.sourceItem = anchor }
             pc.permittedArrowDirections = [.down]
             pc.popoverBackgroundViewClass = ClearPopoverBackground.self
             pc.passthroughViews = passthrough

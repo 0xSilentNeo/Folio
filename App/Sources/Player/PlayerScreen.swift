@@ -145,7 +145,8 @@ struct PlayerScreen: View {
         let maxHeight = size.height - (compact ? 150 : 90) - window.safeAreaInsets.top - 56
         let body = PlayerPanel(kind: kind, model: model, ui: ui, width: width, maxHeight: maxHeight,
                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
-        let vc = PanelPopoverController(content: AnyView(body), anchor: anchor, passthrough: Array(ui.anchors.values)) {
+        let pill = anchor.superview?.superview?.superview   // the glass pill, so taps on its other buttons switch panels
+        let vc = PanelPopoverController(content: AnyView(body), anchor: anchor, passthrough: [pill ?? anchor]) {
             // Dismissed by a tap outside.
             if ui.panel == kind { ui.panel = nil }
             popover = nil
@@ -219,11 +220,8 @@ struct PlayerScreen: View {
     }
 
     private var panelPill: some View {
-        GlassGroup(unionID: "panels", ns: glassNS) {
-            PillIcon("switch.2", size: 17, active: ui.panel == .tracks, unionID: "panels", ns: glassNS, onAnchor: { ui.anchors[.tracks] = $0 }) { ui.toggle(.tracks) }
-            PillIcon("slider.horizontal.3", size: 17, active: ui.panel == .settings, unionID: "panels", ns: glassNS, onAnchor: { ui.anchors[.settings] = $0 }) { ui.toggle(.settings) }
-            PillIcon("list.bullet", size: 17, active: ui.panel == .nowPlaying, unionID: "panels", ns: glassNS, onAnchor: { ui.anchors[.nowPlaying] = $0 }) { ui.toggle(.nowPlaying) }
-        }
+        PanelPillView(ui: ui, height: tune.pillHeight)
+            .frame(width: tune.pillHeight * 3 + 8, height: tune.pillHeight)
     }
 
     // MARK: Overlays

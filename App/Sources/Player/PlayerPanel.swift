@@ -150,17 +150,15 @@ struct SegmentPicker<T: Hashable>: View {
             let segW = g.size.width / CGFloat(n)
             let centre = dragX.map { min(max($0, segW / 2), g.size.width - segW / 2) } ?? (segW * (CGFloat(index) + 0.5))
             ZStack(alignment: .leading) {
-                Group {
-                    if moving {
-                        Capsule().fill(.white.opacity(0.12)).glass(cornerRadius: 16)
-                    } else {
-                        Capsule().fill(Color.accentColor)
-                    }
-                }
-                .frame(width: segW, height: 32)
-                .position(x: centre, y: g.size.height / 2)
-                .animation(dragX == nil ? .spring(response: 0.32, dampingFraction: 0.78) : nil, value: centre)
-                .animation(.easeOut(duration: 0.18), value: moving)
+                // One thumb whose fill changes, so its position animates like the tab bar's.
+                Capsule().fill(.white.opacity(0.12))
+                    .glass(cornerRadius: 16)
+                    .overlay(Capsule().fill(Color.accentColor).opacity(moving ? 0 : 1))
+                    .frame(width: segW * (dragX != nil ? 1.12 : 1), height: 32)
+                    .position(x: centre, y: g.size.height / 2)
+                    .animation(dragX == nil ? .spring(response: 0.38, dampingFraction: 0.76) : .interactiveSpring(response: 0.15, dampingFraction: 0.86), value: centre)
+                    .animation(.easeOut(duration: 0.2), value: moving)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: dragX != nil)
                 HStack(spacing: 0) {
                     ForEach(Array(options.enumerated()), id: \.offset) { i, o in
                         Text(o.1).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
