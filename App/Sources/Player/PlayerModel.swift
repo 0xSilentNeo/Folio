@@ -240,6 +240,7 @@ final class PlayerModel: ObservableObject {
         started = true
         configureAudioSession()
         dlog("player", "start renderer=\(renderer)")
+        if CommandLine.arguments.contains("-labNoEngine") { dlog("lab", "engine not started (lab)"); return }
         guard let c = MPVClient() else {
             dlog("player/error", "mpv_create failed")
             errorMessage = "Could not create the mpv player."
