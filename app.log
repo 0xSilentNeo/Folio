@@ -1,0 +1,43 @@
+11:03:38.930 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=42.25 GB
+11:03:38.942 [lab] UI lab run
+11:03:40.648 [lab] t=0.5 flags
+11:03:40.649 [lab] animationsEnabled=true reduceMotion=false crossFade=false lowPower=false
+11:03:40.660 [lab] t=1.5 test popover (main window)
+11:03:40.667 [lab] test popover presented from main window
+11:03:40.752 [app] active
+11:03:41.992 [lab] t=3.0 dismiss test popover
+11:03:42.959 [lab] t=4.0 play
+11:03:42.960 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/AAC0F4B7-8EC1-4C85-AC78-B520F6F976BD/data/Containers/Bundle/Application/6B42734E-E3FE-4D73-86C0-C42F98E22DE8/GlassPlayer.app/lab/lab.mp4
+11:03:43.907 [player] start renderer=metal
+11:03:43.981 [player] mpv options applied renderer=metal hwdec=auto anime4k=off/fast picture=efficient
+11:03:44.070 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/AAC0F4B7-8EC1-4C85-AC78-B520F6F976BD/data/Containers/Bundle/Application/6B42734E-E3FE-4D73-86C0-C42F98E22DE8/GlassPlayer.app/lab/lab.mp4 source=local opts=[] -> 0
+11:03:44.081 [player] decoder: software
+11:03:47.344 [lab] t=8.0 controls
+11:03:48.299 [player] file loaded in 4238 ms
+11:03:48.328 [lab] t=9.0 open tracks
+11:03:48.328 [ui] panel tracks
+11:03:48.359 [ui] present panel tracks from bar item 340×≤225
+11:03:49.009 [player] decoder: software
+11:03:49.975 [lab] t=11.0 close
+11:03:51.668 [lab] t=12.5 open settings
+11:03:51.669 [ui] panel settings
+11:03:51.673 [ui] present panel settings from bar item 340×≤225
+11:03:52.555 [hang] main thread unresponsive for 1.1 s
+11:03:53.401 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+11:03:53.401 [imdb] webkit load /title/tt35511966
+11:03:53.542 [lab] t=14.5 switch to now playing
+11:03:53.543 [ui] panel nowPlaying
+11:03:53.568 [ui] present panel nowPlaying from bar item 340×≤225
+11:03:55.525 [lab] t=16.5 close
+11:03:56.517 [lab] t=17.5 media info
+11:03:58.141 [lab] t=19.0 stats
+11:03:59.550 [lab] t=20.5 stats off
+11:04:00.167 [lab] t=21.0 open now playing
+11:04:00.168 [ui] panel nowPlaying
+11:04:00.187 [ui/error] no source for nowPlaying
+11:04:00.676 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+11:04:02.150 [lab] t=23.0 close
+11:04:03.170 [lab] t=24.0 done
+11:04:03.170 [lab] done
+11:04:18.588 [imdb/error] webkit timeout for /title/tt35511966
+11:04:19.220 [skip] IntroDB tt35511966 s0e0: [] postCredits=false
