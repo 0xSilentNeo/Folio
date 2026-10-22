@@ -122,10 +122,21 @@ final class AnimTracer {
         link?.add(to: .main, forMode: .common)
     }
 
+    /// Ancestors up to the transition container, plus everything inside that
+    /// container (the system may animate a sibling effect view, not our view).
     private var chain: [UIView] {
         var out: [UIView] = []
         var v = view
         while let cur = v, !(cur is UIWindow), out.count < 8 { out.append(cur); v = cur.superview }
+        if let top = out.last {
+            func walk(_ x: UIView, _ depth: Int) {
+                for sub in x.subviews where !out.contains(sub) {
+                    out.append(sub)
+                    if depth < 3 && out.count < 40 { walk(sub, depth + 1) }
+                }
+            }
+            walk(top, 0)
+        }
         return out
     }
 
@@ -133,10 +144,14 @@ final class AnimTracer {
         let t = CACurrentMediaTime() - start
         let c = chain
         if samples.isEmpty { samples = Array(repeating: [], count: c.count); names = c.map { String(describing: type(of: $0)) } }
+        if c.count > samples.count { // views added during the transition
+            samples += Array(repeating: [], count: c.count - samples.count)
+            names += c[names.count...].map { String(describing: type(of: $0)) }
+        }
         for (i, v) in c.enumerated() where i < samples.count {
             let p = v.layer.presentation() ?? v.layer
             let sx = sqrt(p.transform.m11 * p.transform.m11 + p.transform.m12 * p.transform.m12)
-            samples[i].append(Sample(t: t, w: p.bounds.width, h: p.bounds.height, a: p.opacity, s: sx))
+            samples[i].append(Sample(t: t, w: p.bounds.width, h: p.bounds.height, a: p.isHidden ? 0 : p.opacity, s: sx))
         }
         if t >= duration {
             link?.invalidate(); link = nil
