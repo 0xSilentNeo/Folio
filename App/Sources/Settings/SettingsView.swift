@@ -228,13 +228,13 @@ struct AdvancedSettings: View {
                 }
                 if renderer == "gl" { Toggle("Flip video (OpenGL)", isOn: $flipVideo) }
                 Button("Clear watch history", role: .destructive) { confirmClear = true }
+                    .confirmationDialog("Clear all history and resume positions?", isPresented: $confirmClear, titleVisibility: .visible) {
+                        Button("Clear", role: .destructive) { HistoryStore.shared.clear() }
+                    }
             }
         }
         .navigationTitle("Advanced")
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("Clear all history and resume positions?", isPresented: $confirmClear, titleVisibility: .visible) {
-            Button("Clear", role: .destructive) { HistoryStore.shared.clear() }
-        }
     }
 }
 

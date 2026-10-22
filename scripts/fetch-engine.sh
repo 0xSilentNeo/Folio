@@ -9,7 +9,8 @@ REPO="${GITHUB_REPOSITORY:-0xSilentNeo/GlassPlayer}"
 TAG="engine-$(tr -d '[:space:]' < engine/VERSION)"
 mkdir -p Vendor
 rm -rf Vendor/Frameworks
-if curl -fsSL -o /tmp/engine.zip "https://github.com/$REPO/releases/download/$TAG/GlassPlayerEngine.zip"; then
+# ENGINE=stock forces MPVKit's frameworks (they carry simulator slices; ours are device-only).
+if [ "${ENGINE:-}" != "stock" ] && curl -fsSL -o /tmp/engine.zip "https://github.com/$REPO/releases/download/$TAG/GlassPlayerEngine.zip"; then
   ditto -x -k /tmp/engine.zip Vendor/
   # Older engine zips shipped without FFmpeg: add MPVKit's GPL FFmpeg (same n9.0.2).
   for lib in avcodec avdevice avfilter avformat avutil swresample swscale; do

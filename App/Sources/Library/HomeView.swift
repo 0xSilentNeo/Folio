@@ -75,7 +75,7 @@ struct HomeView: View {
             }
             Spacer()
             Menu {
-                Button { showAddFiles = true } label: { Label("Add files", systemImage: "folder.badge.plus") }
+                Button { showAddFiles = true } label: { Label("Add files or folders", systemImage: "folder.badge.plus") }
                 Button { showOpenURL = true } label: { Label("Open URL", systemImage: "link") }
                 Button { pasteAndPlay() } label: { Label("Paste & play", systemImage: "doc.on.clipboard") }
                 Divider()

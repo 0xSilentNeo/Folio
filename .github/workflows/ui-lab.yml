@@ -1,0 +1,73 @@
+name: UI lab (simulator recording)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'App/Sources/Player/**'
+      - 'App/Sources/Util/UILab.swift'
+      - '.github/workflows/ui-lab.yml'
+
+jobs:
+  record:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          [ -z "$XC" ] && XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+          xcrun simctl list runtimes | grep -i ios || true
+
+      - name: Fetch engine (stock MPVKit — simulator slices)
+        run: ENGINE=stock bash scripts/fetch-engine.sh
+
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+
+      - name: Build for simulator
+        run: |
+          set -o pipefail
+          xcodebuild -project GlassPlayer.xcodeproj -scheme GlassPlayer -sdk iphonesimulator -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tail -40
+          ls build/Build/Products/Debug-iphonesimulator
+
+      - name: Boot simulator
+        id: sim
+        run: |
+          RT=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x["platform"]=="iOS" and x["isAvailable"]]; r.sort(key=lambda x:[int(p) for p in x["version"].split(".")]); print(r[-1]["identifier"])')
+          DT=$(xcrun simctl list devicetypes -j | python3 -c 'import json,sys; d=[x for x in json.load(sys.stdin)["devicetypes"] if x["name"].startswith("iPhone 1") and "Pro" in x["name"] and "Max" not in x["name"]]; print(d[-1]["identifier"])')
+          echo "runtime=$RT devicetype=$DT"
+          UDID=$(xcrun simctl create lab "$DT" "$RT")
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Install, record, drive
+        run: |
+          UDID=${{ steps.sim.outputs.udid }}
+          APP=build/Build/Products/Debug-iphonesimulator/GlassPlayer.app
+          xcrun simctl install "$UDID" "$APP"
+          mkdir -p lab
+          xcrun simctl io "$UDID" recordVideo --codec h264 --force lab/lab.mp4 &
+          REC=$!
+          sleep 2
+          xcrun simctl launch --console-pty "$UDID" dev.silentneo.glassplayer -uiLab > lab/console.log 2>&1 &
+          for t in 4 7 10 12 15 17 19; do sleep $(( t - ${PREV:-0} )); PREV=$t; xcrun simctl io "$UDID" screenshot "lab/shot_$t.png"; done
+          sleep 4
+          kill -INT $REC; wait $REC || true
+          CONT=$(xcrun simctl get_app_container "$UDID" dev.silentneo.glassplayer data)
+          cp "$CONT"/Library/Application\ Support/app.log lab/app.log 2>/dev/null || find "$CONT" -name app.log -exec cp {} lab/app.log \; || true
+          ls -la lab
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-lab
+          path: lab/

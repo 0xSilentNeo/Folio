@@ -18,6 +18,18 @@ enum FileOpener {
         var added: [URL] = []
         for src in urls {
             var dest = MPVFiles.mediaDir.appendingPathComponent(src.lastPathComponent)
+            let isDir = (try? src.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+            if isDir {
+                // A folder picked in the Files browser: iOS copied it whole; keep it as a folder in Media.
+                if FileManager.default.fileExists(atPath: dest.path) {
+                    let base = dest.lastPathComponent
+                    var n = 2
+                    repeat { dest = MPVFiles.mediaDir.appendingPathComponent("\(base) \(n)"); n += 1 } while FileManager.default.fileExists(atPath: dest.path)
+                }
+                do { try FileManager.default.moveItem(at: src, to: dest); dlog("open", "added folder to Media: \(dest.lastPathComponent)") }
+                catch { dlog("open/error", "folder add failed: \(error.localizedDescription)") }
+                continue
+            }
             if FileManager.default.fileExists(atPath: dest.path) {
                 // Same name already in the library: keep the existing file if it's
                 // the same size, otherwise store the new one next to it.
@@ -37,7 +49,7 @@ enum FileOpener {
             }
         }
         LocalMediaStore.shared.refresh()
-        if added.count == 1, let f = added.first, TitleParser.isMedia(f.lastPathComponent) {
+        if added.count == 1, urls.count == 1, let f = added.first, TitleParser.isMedia(f.lastPathComponent) {
             var m = MediaItem(url: f.path, title: TitleParser.clean(f.lastPathComponent), source: .local)
             m.historyKey = f.path
             PlayerPresenter.play(m)
@@ -129,7 +141,15 @@ final class LocalMediaStore: ObservableObject {
 
     func refresh() {
         let fm = FileManager.default
-        let items = (try? fm.contentsOfDirectory(at: MPVFiles.mediaDir, includingPropertiesForKeys: [.creationDateKey], options: [.skipsHiddenFiles])) ?? []
+        // Media and any folders added inside it (two levels, hidden files skipped).
+        var items: [URL] = []
+        if let e = fm.enumerator(at: MPVFiles.mediaDir, includingPropertiesForKeys: [.creationDateKey, .isDirectoryKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]) {
+            for case let u as URL in e {
+                if e.level > 2 { e.skipDescendants(); continue }
+                if (try? u.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true { continue }
+                items.append(u)
+            }
+        }
         let media = items.filter { TitleParser.isMedia($0.lastPathComponent) }
             .sorted {
                 let a = (try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? .distantPast
@@ -220,7 +240,7 @@ struct AddFilesPicker: UIViewControllerRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator(onDone: onDone) }
 
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: FileOpener.mediaTypes, asCopy: true)
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: FileOpener.mediaTypes + [.folder], asCopy: true)
         picker.allowsMultipleSelection = true
         picker.shouldShowFileExtensions = true
         picker.delegate = context.coordinator
