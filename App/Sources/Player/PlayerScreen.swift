@@ -14,8 +14,6 @@ struct PlayerScreen: View {
     @State private var showSubtitlePicker = false
     @ObservedObject private var tune = UITune.shared
     @Namespace private var glassNS
-    /// The open panel popover (UIKit); see PanelPopover.swift.
-    @State private var popover: PanelPopoverController?
 
     var body: some View {
         GeometryReader { geo in
@@ -116,14 +114,9 @@ struct PlayerScreen: View {
         .persistentSystemOverlays(.hidden)
         .onAppear { ui.scheduleHide() }
         .onChange(of: ui.panel) { _, new in
-            // Dismiss whatever is up, then present the new one from its button.
-            if let p = popover {
-                popover = nil
-                p.dismiss(animated: true) { if let new { presentPanel(new) } }
-            } else if let new {
-                presentPanel(new)
-            }
+            if let new { presentPanel(new) } else { PanelOverlay.shared.hide(animated: true) }
         }
+        .onDisappear { PanelOverlay.shared.hide(animated: false) }
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
@@ -132,10 +125,9 @@ struct PlayerScreen: View {
         }
     }
 
-    /// Presents the panel as a popover from its pill button (Outplayer's
-    /// approach; iOS 26 morphs the popover out of the source view).
+    /// Shows the panel as a glass overlay growing out of its pill button.
     private func presentPanel(_ kind: PlayerUIState.Panel) {
-        guard let anchor = ui.anchors[kind], let window = anchor.window, let root = window.rootViewController else {
+        guard let anchor = ui.anchors[kind], let window = anchor.window else {
             dlog("ui/error", "no anchor for \(kind.rawValue)")
             return
         }
@@ -144,18 +136,10 @@ struct PlayerScreen: View {
         let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
         let maxHeight = size.height - (compact ? 150 : 90) - window.safeAreaInsets.top - 56
         let body = PlayerPanel(kind: kind, model: model, ui: ui, width: width, maxHeight: maxHeight,
-                               onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
-        let pill = anchor.superview?.superview?.superview   // the glass pill, so taps on its other buttons switch panels
-        let vc = PanelPopoverController(content: AnyView(body), anchor: anchor, passthrough: [pill ?? anchor]) {
-            // Dismissed by a tap outside.
-            if ui.panel == kind { ui.panel = nil }
-            popover = nil
-            ui.scheduleHide()
-        }
-        popover = vc
-        dlog("ui", "present popover \(kind.rawValue) \(Int(width))×≤\(Int(maxHeight))")
-        root.topMostPresented.present(vc, animated: true)
-        DispatchQueue.main.async { AnimTracer.trace("popover \(kind.rawValue)", view: vc.view) }
+                               onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock,
+                               bare: true, onHeight: { _ in PanelOverlay.shared.relayout(maxHeight: maxHeight) })
+        let pill = anchor.superview?.superview?.superview
+        PanelOverlay.shared.show(kind, from: anchor, pill: pill, ui: ui, content: AnyView(body), width: width, maxHeight: maxHeight)
     }
 
     // MARK: Controls

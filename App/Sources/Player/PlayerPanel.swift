@@ -10,6 +10,9 @@ struct PlayerPanel: View {
     let maxHeight: CGFloat
     let onLoadSubtitle: () -> Void
     let onRotationLock: (Bool) -> Void
+    /// Hosted inside the UIKit glass overlay: no glass of its own, reports its height.
+    var bare = false
+    var onHeight: ((CGFloat) -> Void)? = nil
 
     @State private var contentHeight: CGFloat = 0
     @MainActor static var lastHeights: [String: CGFloat] = [:]
@@ -25,11 +28,11 @@ struct PlayerPanel: View {
                 })
         }
         .onPreferenceChange(HeightKey.self) { h in
-            if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h }
+            if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h; onHeight?(min(max(h, 120), maxHeight)) }
         }
         .scrollIndicators(.hidden)
         .frame(width: width, height: height)
-        .glass(cornerRadius: 24)
+        .modifier(OptionalGlass(enabled: !bare))
         .foregroundStyle(.white)
         .tint(Theme.accent)
         .preferredColorScheme(.dark)
@@ -43,6 +46,13 @@ struct PlayerPanel: View {
         case .tracks: TracksPanelContent(model: model, onLoadSubtitle: onLoadSubtitle)
         case .nowPlaying: NowPlayingPanelContent(model: model, ui: ui)
         }
+    }
+}
+
+struct OptionalGlass: ViewModifier {
+    let enabled: Bool
+    @ViewBuilder func body(content: Content) -> some View {
+        if enabled { content.glass(cornerRadius: 24) } else { content }
     }
 }
 
