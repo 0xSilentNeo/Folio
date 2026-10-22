@@ -1,0 +1,44 @@
+08:00:00.561 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=42.22 GB
+08:00:00.566 [lab] UI lab run
+08:00:01.919 [lab] t=0.5 flags
+08:00:01.919 [lab] animationsEnabled=true reduceMotion=false crossFade=false lowPower=false
+08:00:01.926 [app] active
+08:00:02.141 [lab] t=1.5 test popover (main window)
+08:00:02.148 [lab] test popover presented from main window
+08:00:02.834 [anim] UIView.animate alpha+scale: ANIMATED (30 samples, 28 distinct states at UIView) | 30ms 120×120 s1.00 a1.00 · 80ms 120×120 s1.03 a0.97 · 130ms 120×120 s1.09 a0.93 · 181ms 120×120 s1.18 a0.85 · 230ms 120×120 s1.30 a0.76 · 380ms 120×120 s1.71 a0.43 · 430ms 120×120 s1.83 a0.34 · 480ms 120×120 s1.91 a0.27 · 530ms 120×120 s1.97 a0.22 · 580ms 120×120 s2.00 a0.20 | levels: UIView:28
+08:00:02.950 [anim] control popover (main window): SNAP (43 samples, 2 distinct states at UIView) | 1ms 375×812 s1.00 a1.00 · 168ms 375×768 s1.00 a1.00 · 235ms 375×768 s1.00 a1.00 · 301ms 375×768 s1.00 a1.00 · 368ms 375×768 s1.00 a1.00 · 435ms 375×768 s1.00 a1.00 · 501ms 375×768 s1.00 a1.00 · 568ms 375×768 s1.00 a1.00 · 635ms 375×768 s1.00 a1.00 · 701ms 375×768 s1.00 a1.00 · 768ms 375×768 s1.00 a1.00 | levels: UIView:2 UIView:1 UIView:1 UIDropShadowView:1 UITransitionView:1 UIDimmingView:1
+08:00:03.717 [lab] t=3.0 dismiss test popover
+08:00:04.768 [lab] t=4.0 play
+08:00:04.769 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/EA2CA4B7-439A-4879-88C6-7F599065971C/data/Containers/Bundle/Application/E0A2CC45-F387-4E28-9993-C37CE43EA241/GlassPlayer.app/lab/lab.mp4
+08:00:05.547 [player] start renderer=gl
+08:00:05.575 [player] mpv options applied renderer=gl hwdec=auto anime4k=off/fast enhanced=false
+08:00:05.650 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/EA2CA4B7-439A-4879-88C6-7F599065971C/data/Containers/Bundle/Application/E0A2CC45-F387-4E28-9993-C37CE43EA241/GlassPlayer.app/lab/lab.mp4 source=local opts=[] -> 0
+08:00:06.147 [player] file loaded in 501 ms
+08:00:08.969 [lab] t=8.0 controls
+08:00:09.686 [lab] t=9.0 open tracks
+08:00:09.686 [ui] panel tracks
+08:00:09.733 [ui] panel tracks grows 46×46 → 340×229
+08:00:10.550 [anim] panel tracks (glass): ANIMATED (48 samples, 22 distinct states at UIVisualEffectView) | 18ms 47×47 s1.00 a1.00 · 83ms 153×113 s1.00 a1.00 · 167ms 291×198 s1.00 a1.00 · 234ms 335×226 s1.00 a1.00 · 302ms 346×233 s1.00 a1.00 · 367ms 345×232 s1.00 a1.00 · 433ms 342×230 s1.00 a1.00 · 500ms 340×229 s1.00 a1.00 · 567ms 340×229 s1.00 a1.00 · 633ms 340×229 s1.00 a1.00 · 700ms 340×229 s1.00 a1.00 · 767ms 340×229 s1.00 a1.00 | levels: UIVisualEffectView:22 PassthroughView:1
+08:00:12.115 [lab] t=11.0 close
+08:00:13.691 [lab] t=12.5 open settings
+08:00:13.692 [ui] panel settings
+08:00:14.079 [ui] panel settings grows 46×46 → 340×229
+08:00:14.883 [anim] panel settings (glass): ANIMATED (43 samples, 23 distinct states at UIVisualEffectView) | 89ms 49×48 s1.00 a1.00 · 157ms 166×121 s1.00 a1.00 · 221ms 276×189 s1.00 a1.00 · 287ms 330×223 s1.00 a1.00 · 354ms 345×232 s1.00 a1.00 · 437ms 344×232 s1.00 a1.00 · 504ms 342×230 s1.00 a1.00 · 571ms 340×229 s1.00 a1.00 · 637ms 340×229 s1.00 a1.00 · 704ms 340×229 s1.00 a1.00 · 771ms 340×229 s1.00 a1.00 | levels: UIVisualEffectView:23 PassthroughView:1
+08:00:15.787 [lab] t=14.5 switch to now playing
+08:00:15.788 [ui] panel nowPlaying
+08:00:16.340 [ui] panel nowPlaying grows 46×46 → 340×229
+08:00:17.151 [anim] panel nowPlaying (glass): ANIMATED (45 samples, 19 distinct states at UIVisualEffectView) | 59ms 58×53 s1.00 a1.00 · 126ms 183×132 s1.00 a1.00 · 212ms 307×209 s1.00 a1.00 · 276ms 339×229 s1.00 a1.00 · 343ms 346×233 s1.00 a1.00 · 409ms 344×231 s1.00 a1.00 · 476ms 342×230 s1.00 a1.00 · 543ms 340×229 s1.00 a1.00 · 609ms 340×229 s1.00 a1.00 · 676ms 340×229 s1.00 a1.00 · 743ms 340×229 s1.00 a1.00 · 809ms 340×229 s1.00 a1.00 | levels: UIVisualEffectView:19 PassthroughView:1
+08:00:17.317 [lab] t=16.5 close
+08:00:18.146 [lab] t=17.5 media info
+08:00:20.018 [lab] t=19.0 stats
+08:00:21.133 [lab] t=20.5 stats off
+08:00:21.623 [lab] t=21.0 open now playing
+08:00:21.629 [ui] panel nowPlaying
+08:00:21.677 [ui] panel nowPlaying grows 46×46 → 340×184
+08:00:22.483 [anim] panel nowPlaying (glass): ANIMATED (36 samples, 15 distinct states at UIVisualEffectView) | 32ms 340×185 s1.00 a1.00 · 112ms 126×84 s1.00 a1.00 · 159ms 220×128 s1.00 a1.00 · 309ms 343×186 s1.00 a1.00 · 374ms 346×187 s1.00 a1.00 · 473ms 342×186 s1.00 a1.00 · 525ms 341×185 s1.00 a1.00 · 574ms 340×185 s1.00 a1.00 · 623ms 340×185 s1.00 a1.00 · 673ms 340×185 s1.00 a1.00 · 723ms 340×185 s1.00 a1.00 · 773ms 340×185 s1.00 a1.00 | levels: UIVisualEffectView:15 PassthroughView:1
+08:00:22.652 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+08:00:22.652 [imdb] webkit load /title/tt35511966
+08:00:23.628 [lab] t=23.0 close
+08:00:24.846 [lab] t=24.0 done
+08:00:24.846 [lab] done
+08:00:26.630 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
