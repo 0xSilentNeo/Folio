@@ -101,3 +101,43 @@ final class PanelPillUIView: UIView {
         }
     }
 }
+
+/// iOS 26: the three panel buttons as bar button items in a UIToolbar. The
+/// system draws them as one Liquid Glass capsule, and a popover presented
+/// from one of them morphs out of that glass (verified in the pop lab, V7).
+struct PanelToolbarView: UIViewRepresentable {
+    @ObservedObject var ui: PlayerUIState
+
+    func makeUIView(context: Context) -> UIToolbar {
+        let bar = UIToolbar()
+        bar.tintColor = .white
+        bar.overrideUserInterfaceStyle = .dark
+        let appearance = UIToolbarAppearance()
+        appearance.configureWithTransparentBackground()
+        bar.standardAppearance = appearance
+        bar.scrollEdgeAppearance = appearance
+        bar.compactAppearance = appearance
+        let items: [(PlayerUIState.Panel, String, String)] = [
+            (.tracks, "switch.2", "Tracks"), (.settings, "slider.horizontal.3", "Settings"), (.nowPlaying, "list.bullet", "Now Playing"),
+        ]
+        var barItems: [UIBarButtonItem] = [.flexibleSpace()]
+        for (kind, symbol, title) in items {
+            let item = UIBarButtonItem(primaryAction: UIAction(title: title, image: UIImage(systemName: symbol)) { [weak ui] _ in
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                ui?.toggle(kind)
+            })
+            item.accessibilityLabel = title
+            ui.barItems[kind] = item
+            barItems.append(item)
+        }
+        bar.items = barItems
+        ui.panelBar = bar
+        return bar
+    }
+
+    func updateUIView(_ bar: UIToolbar, context: Context) {}
+
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UIToolbar, context: Context) -> CGSize? {
+        CGSize(width: proposal.width ?? 180, height: 50)
+    }
+}

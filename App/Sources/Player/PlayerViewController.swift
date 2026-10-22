@@ -12,8 +12,11 @@ final class PlayerUIState: ObservableObject {
     @Published var panel: Panel?
     @Published var showStats = false
     @Published var showTune = false
-    /// UIKit views behind the panel buttons; popovers are presented from them.
+    /// UIKit views behind the panel buttons (iOS 17/18 pill); popovers are presented from them.
     var anchors: [Panel: UIView] = [:]
+    /// iOS 26: the panel buttons as bar items in a toolbar (popover sources).
+    var barItems: [Panel: UIBarButtonItem] = [:]
+    weak var panelBar: UIView?
     var menuOpen = false
 
     func toggle(_ p: Panel) {
@@ -55,6 +58,7 @@ final class PlayerUIState: ObservableObject {
 
     func scheduleHide(after seconds: Double = 4) {
         hideWork?.cancel()
+        if UILab.uiTest { return }   // keep controls up while the UI test taps
         let w = DispatchWorkItem { [weak self] in
             guard let self, !self.showInfo, !self.showStats, !self.showTune, !self.scrubbing, !self.showConsole, !self.menuOpen, self.panel == nil else { return }
             withAnimation(.easeOut(duration: 0.25)) { self.controlsVisible = false }

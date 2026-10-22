@@ -250,6 +250,7 @@ struct SettingsPanelContent: View {
             PanelHeader(title: "Interface")
             PanelRow(icon: "arrow.counterclockwise", title: "Skip interval") {
                 SegmentPicker(options: [(5, "5"), (10, "10"), (15, "15"), (30, "30")], selection: $seekStep)
+                    .frame(width: 168)
             }
             PanelRow(icon: "rectangle.landscape.rotate", title: "Auto-Rotate", subtitle: ui.rotationLocked ? "Locked" : nil) {
                 Toggle("", isOn: Binding(get: { !ui.rotationLocked }, set: { on in
@@ -385,7 +386,7 @@ struct NowPlayingPanelContent: View {
             Text(model.item.displayTitle).font(.headline).lineLimit(3)
             HStack(spacing: 10) {
                 SegmentPicker(options: [(0, "Playlist"), (1, "Chapters"), (2, "Markers")], selection: $tab)
-                Spacer()
+                    .frame(maxWidth: .infinity)
                 Button {
                     model.run(command: screenshotSubs ? "screenshot subtitles" : "screenshot video")
                     model.showToast("Screenshot saved")

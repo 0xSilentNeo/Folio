@@ -114,9 +114,9 @@ struct PlayerScreen: View {
         .persistentSystemOverlays(.hidden)
         .onAppear { ui.scheduleHide() }
         .onChange(of: ui.panel) { _, new in
-            if let new { presentPanel(new) } else { PanelOverlay.shared.hide(animated: true) }
+            if let new { presentPanel(new) } else { PanelPresenter.shared.hide() }
         }
-        .onDisappear { PanelOverlay.shared.hide(animated: false) }
+        .onDisappear { PanelPresenter.shared.hide(animated: false) }
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
@@ -125,21 +125,36 @@ struct PlayerScreen: View {
         }
     }
 
-    /// Shows the panel as a glass overlay growing out of its pill button.
+    /// Presents the panel as a system popover from its button (a bar item on
+    /// iOS 26, so the button's glass morphs into the panel).
     private func presentPanel(_ kind: PlayerUIState.Panel) {
-        guard let anchor = ui.anchors[kind], let window = anchor.window else {
-            dlog("ui/error", "no anchor for \(kind.rawValue)")
+        let source: PanelSource
+        let sourceView: UIView?
+        if let item = ui.barItems[kind], ui.panelBar?.window != nil {
+            source = .item(item); sourceView = ui.panelBar
+        } else if let anchor = ui.anchors[kind], anchor.window != nil {
+            source = .view(anchor); sourceView = anchor
+        } else {
+            dlog("ui/error", "no source for \(kind.rawValue)")
+            ui.panel = nil
             return
         }
+        guard let window = sourceView?.window, let root = window.rootViewController else { return }
         let size = window.bounds.size
         let compact = size.width < 640
         let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
-        let maxHeight = size.height - (compact ? 150 : 90) - window.safeAreaInsets.top - 56
+        let maxHeight = max(200, size.height - (compact ? 150 : 84) - window.safeAreaInsets.top - 52)
         let body = PlayerPanel(kind: kind, model: model, ui: ui, width: width, maxHeight: maxHeight,
-                               onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock,
-                               bare: true, onHeight: { _ in PanelOverlay.shared.relayout(maxHeight: maxHeight) })
-        let pill = anchor.superview?.superview?.superview
-        PanelOverlay.shared.show(kind, from: anchor, pill: pill, ui: ui, content: AnyView(body), width: width, maxHeight: maxHeight)
+                               onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock, bare: true)
+        var passthrough: [UIView] = []
+        if let bar = ui.panelBar { passthrough.append(bar) }
+        if let pill = ui.anchors[kind]?.superview?.superview?.superview { passthrough.append(pill) }
+        dlog("ui", "present panel \(kind.rawValue) from \(ui.barItems[kind] != nil && ui.panelBar?.window != nil ? "bar item" : "view") \(Int(width))×≤\(Int(maxHeight))")
+        PanelPresenter.shared.show(content: AnyView(body), source: source, from: root, passthrough: passthrough) { [weak ui] in
+            // Dismissed by a tap outside.
+            if ui?.panel == kind { ui?.panel = nil }
+            ui?.scheduleHide()
+        }
     }
 
     // MARK: Controls
@@ -203,9 +218,15 @@ struct PlayerScreen: View {
         }
     }
 
+    @ViewBuilder
     private var panelPill: some View {
-        PanelPillView(ui: ui, height: tune.pillHeight)
-            .frame(width: tune.pillHeight * 3 + 8, height: tune.pillHeight)
+        if #available(iOS 26.0, *) {
+            PanelToolbarView(ui: ui)
+                .frame(width: 176, height: 50)
+        } else {
+            PanelPillView(ui: ui, height: tune.pillHeight)
+                .frame(width: tune.pillHeight * 3 + 8, height: tune.pillHeight)
+        }
     }
 
     // MARK: Overlays

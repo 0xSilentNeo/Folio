@@ -252,6 +252,7 @@ struct DiscoverView: View {
     private var filterBar: some View {
         HStack(spacing: 6) {
             SegmentPicker(options: [("movie", "Movies"), ("series", "Series")], selection: $browse.type)
+                .frame(width: 160)
             Menu {
                 Picker("Sort", selection: $browse.sort) { ForEach(BrowseModel.Sort.allCases) { Text($0.title).tag($0) } }
             } label: { FilterChip(title: browse.sort.title, active: true) }

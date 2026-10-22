@@ -5,10 +5,22 @@ import UIKit
 /// resulting video shows every panel opening, switching and closing.
 @MainActor
 enum UILab {
-    static var enabled: Bool { CommandLine.arguments.contains("-uiLab") }
+    static var enabled: Bool { CommandLine.arguments.contains("-uiLab") || uiTest }
+    /// XCUITest run: just open the player with the bundled clip; the test taps.
+    static var uiTest: Bool { CommandLine.arguments.contains("-uiTest") }
 
     static func start() {
         guard enabled else { return }
+        if uiTest {
+            UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
+            guard let url = Bundle.main.url(forResource: "lab", withExtension: "mp4", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab", withExtension: "mp4") else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                var m = MediaItem(url: url.path, title: "Lab clip", source: .local); m.historyKey = "lab"
+                PlayerPresenter.play(m)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { PlayerPresenter.current?.ui.showControls(autoHide: false) }
+            return
+        }
         dlog("lab", "UI lab run")
         UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
         UserDefaults.standard.set(true, forKey: SettingsKey.landscapeOnOpen)
@@ -56,7 +68,6 @@ enum UILab {
         let v = UIView(frame: CGRect(x: 40, y: 200, width: 120, height: 120))
         v.backgroundColor = .systemTeal
         window.addSubview(v)
-        AnimTracer.trace("UIView.animate alpha+scale", view: v, duration: 0.9)
         UIView.animate(withDuration: 0.6) { v.alpha = 0.2; v.transform = CGAffineTransform(scaleX: 2, y: 2) } completion: { _ in v.removeFromSuperview() }
     }
     private static func presentTestPopover() {
@@ -74,7 +85,6 @@ enum UILab {
         vc.popoverPresentationController?.permittedArrowDirections = [.down]
         testPopover = vc
         root.present(vc, animated: true)
-        DispatchQueue.main.async { AnimTracer.trace("control popover (main window)", view: vc.view) }
         dlog("lab", "test popover presented from main window")
     }
 }

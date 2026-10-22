@@ -137,5 +137,19 @@ targets:
       Debug: Vendor/engine.xcconfig
       Release: Vendor/engine.xcconfig
     scheme:
-      testTargets: []
+      testTargets: [GlassPlayerUITests]
       gatherCoverageData: false
+
+  GlassPlayerUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: UITests
+    dependencies:
+      - target: GlassPlayer
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.glassplayer.uitests
+        TEST_TARGET_NAME: GlassPlayer
