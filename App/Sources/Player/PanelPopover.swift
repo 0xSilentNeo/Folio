@@ -187,17 +187,21 @@ final class PanelPresenter {
 
     /// While busy, taps only update `wanted`. A watchdog clears a transition
     /// UIKit never completed, so the player can't get stuck behind it.
-    private func setBusy(_ b: Bool) {
+    private var waits = 0
+
+    private func setBusy(_ b: Bool, rearm: Bool = false) {
         busy = b
         busyToken += 1
+        if !rearm { waits = 0 }
         guard b else { return }
         let token = busyToken
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             guard let self, self.busy, self.busyToken == token else { return }
             // Still animating (slow device / simulator): keep waiting — starting
             // another transition on top of a running one is what breaks UIKit.
-            if let vc = self.shown, vc.isBeingPresented || vc.isBeingDismissed || vc.transitionCoordinator != nil {
-                self.busy = false; self.setBusy(true)
+            if let vc = self.shown, vc.isBeingPresented || vc.isBeingDismissed || vc.transitionCoordinator != nil, self.waits < 3 {
+                self.waits += 1
+                self.busy = false; self.setBusy(true, rearm: true)
                 return
             }
             dlog("ui/error", "panel transition did not finish; recovering")

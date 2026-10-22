@@ -19,7 +19,7 @@ enum UILab {
                 PlayerPresenter.play(m)
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { PlayerPresenter.current?.ui.showControls(autoHide: false) }
-            if CommandLine.arguments.contains("-panelStress") { scheduleStress(after: 6) }
+            if CommandLine.arguments.contains("-panelStress") { waitForSteadyLandscape(count: 0) }
             return
         }
         dlog("lab", "UI lab run")
@@ -63,6 +63,17 @@ enum UILab {
     /// Replays the button taps from the 1.10.0 freeze log (23 Oct, 05:09:49–05:10:01)
     /// at their real intervals: each entry is a tap on that panel's button
     /// (tapping the open panel's own button closes it, as in the log).
+    /// The replay must not overlap the launch rotation: start once the player
+    /// has been in landscape for 3 s straight.
+    private static func waitForSteadyLandscape(count: Int) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let b = PlayerPresenter.current?.view.window?.bounds ?? .zero
+            let landscape = b.width > b.height && ui?.panelBar?.window != nil
+            if landscape && count >= 6 { dlog("lab", "landscape steady; replay starts"); scheduleStress(after: 0.5) }
+            else { waitForSteadyLandscape(count: landscape ? count + 1 : 0) }
+        }
+    }
+
     private static func scheduleStress(after start: Double) {
         let taps: [(Double, PlayerUIState.Panel)] = [
             (49.851, .settings), (50.684, .nowPlaying), (51.534, .nowPlaying), (52.617, .tracks), (53.201, .tracks),
