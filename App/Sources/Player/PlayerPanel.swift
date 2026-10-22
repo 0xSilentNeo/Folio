@@ -19,7 +19,9 @@ struct PlayerPanel: View {
     @ObservedObject private var tune = UITune.shared
 
     var body: some View {
-        let height = min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxHeight)
+        // Now Playing keeps a fixed height so switching tabs doesn't resize the panel.
+        let measured = contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260)
+        let height = kind == .nowPlaying ? maxHeight : min(max(measured, 120), maxHeight)
         ScrollView {
             content.padding(14)
                 .dynamicTypeSize(tune.typeSize)
@@ -28,7 +30,7 @@ struct PlayerPanel: View {
                 })
         }
         .onPreferenceChange(HeightKey.self) { h in
-            if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h; onHeight?(min(max(h, 120), maxHeight)) }
+            if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h; if kind != .nowPlaying { onHeight?(min(max(h, 120), maxHeight)) } }
         }
         .scrollIndicators(.hidden)
         .frame(width: width, height: height)
@@ -134,80 +136,6 @@ struct RoundButton: View {
                 .background(.white.opacity(0.14), in: Circle())
         }
         .buttonStyle(PressStyle(scale: 0.85))
-    }
-}
-
-/// Segmented control with a sliding thumb. The thumb is glass while it is
-/// moving (tap or drag) and takes the accent colour once it has settled;
-/// it can be dragged across like the main tab bar.
-struct SegmentPicker<T: Hashable>: View {
-    let options: [(T, String)]
-    @Binding var selection: T
-    @State private var moving = false
-    @State private var dragX: CGFloat?      // thumb centre while dragging
-    @State private var settle: DispatchWorkItem?
-
-    private var index: Int { options.firstIndex { $0.0 == selection } ?? 0 }
-    /// Equal segments sized for the longest label (the control keeps an intrinsic width).
-    private var segmentWidth: CGFloat {
-        let longest = options.map { $0.1.count }.max() ?? 1
-        return CGFloat(longest) * 8.6 + 26
-    }
-
-    var body: some View {
-        let n = max(options.count, 1)
-        GeometryReader { g in
-            let segW = g.size.width / CGFloat(n)
-            let centre = dragX.map { min(max($0, segW / 2), g.size.width - segW / 2) } ?? (segW * (CGFloat(index) + 0.5))
-            ZStack(alignment: .leading) {
-                // One thumb whose fill changes, so its position animates like the tab bar's.
-                Capsule().fill(.white.opacity(0.12))
-                    .glass(cornerRadius: 16)
-                    .overlay(Capsule().fill(Color.accentColor).opacity(moving ? 0 : 1))
-                    .frame(width: segW * (dragX != nil ? 1.12 : 1), height: 32)
-                    .position(x: centre, y: g.size.height / 2)
-                    .animation(dragX == nil ? .spring(response: 0.38, dampingFraction: 0.76) : .interactiveSpring(response: 0.15, dampingFraction: 0.86), value: centre)
-                    .animation(.easeOut(duration: 0.2), value: moving)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: dragX != nil)
-                HStack(spacing: 0) {
-                    ForEach(Array(options.enumerated()), id: \.offset) { i, o in
-                        Text(o.1).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
-                            .frame(width: segW, height: 32)
-                            .contentShape(Rectangle())
-                            .onTapGesture { select(i) }
-                    }
-                }
-            }
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 6)
-                    .onChanged { v in
-                        dragX = v.location.x
-                        if !moving { moving = true }
-                        let i = min(n - 1, max(0, Int(v.location.x / segW)))
-                        if options[i].0 != selection { selection = options[i].0 }
-                    }
-                    .onEnded { _ in dragX = nil; settleSoon() }
-            )
-        }
-        .frame(maxWidth: segmentWidth * CGFloat(n))
-        .frame(height: 32)
-        .padding(3)
-        .background(.white.opacity(0.12), in: Capsule())
-    }
-
-    private func select(_ i: Int) {
-        guard options[i].0 != selection else { return }
-        moving = true
-        selection = options[i].0
-        settleSoon()
-    }
-
-    private func settleSoon() {
-        settle?.cancel()
-        let w = DispatchWorkItem { moving = false }
-        settle = w
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.32, execute: w)
     }
 }
 
