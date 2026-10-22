@@ -851,6 +851,7 @@ final class PlayerModel: ObservableObject {
 
     private var lastSnapshot = Date.distantPast
     private func takeSnapshot() {
+        if UILab.enabled { return }   // the simulator's Metal driver aborts on readback
         guard renderer == .metal, mode == .main, fileLoaded, !isPiPActive,
               UIApplication.shared.applicationState == .active, let c = client else { return }
         guard Date().timeIntervalSince(lastSnapshot) > 2 else { return }
