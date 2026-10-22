@@ -9,6 +9,7 @@ struct GlassPlayerApp: App {
         SettingsKey.registerDefaults()
         Diagnostics.shared.start()
         UILab.start()
+        PopLab.start()
         MPVFiles.bootstrap()
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
