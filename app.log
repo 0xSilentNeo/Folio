@@ -1,0 +1,15 @@
+08:52:53.604 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=42.47 GB
+08:52:53.610 [lab] pop lab
+08:52:56.946 [lab] pop V1
+08:52:57.179 [hang] main thread unresponsive for 3.6 s
+08:53:02.174 [app] active
+08:53:03.535 [hang] main thread unresponsive for 1.4 s
+08:53:05.736 [lab] pop V2
+08:53:09.393 [lab] pop V3
+08:53:09.400 [lab] pop V4
+08:53:10.628 [lab] pop V5
+08:53:14.202 [lab] pop V6
+08:53:17.728 [lab] pop V7
+08:53:21.517 [lab] pop V8
+08:53:24.742 [lab] pop V9
+08:53:29.137 [lab] pop lab done

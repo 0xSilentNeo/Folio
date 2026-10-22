@@ -1,0 +1,10 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-22 08:53:05.612 E  GlassPlayer[8938:773e] (libCoreFSCache.dylib) fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-22 08:53:05.612 E  GlassPlayer[8938:773e] (libCoreFSCache.dylib) Errors found! Invalidating cache...
+2026-10-22 08:53:08.838 E  GlassPlayer[8938:773e] (libCoreFSCache.dylib) fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-22 08:53:08.839 E  GlassPlayer[8938:773e] (libCoreFSCache.dylib) Errors found! Invalidating cache...
+2026-10-22 08:53:08.896 F  GlassPlayer[8938:773e] [com.apple.renderbox:error] building pipeline path_distance-kba6pa7jbebia3 took 3.287230 seconds
+2026-10-22 08:53:09.694 E  GlassPlayer[8938:7735] [com.apple.UIKit:Presentation] Attempt to present <_TtGC7SwiftUI19UIHostingControllerV11GlassPlayer13PopLabContent_: 0x1070da000> on <GlassPlayer.PopLabViewController: 0x10605ea00> (from <GlassPlayer.PopLabViewController: 0x10605ea00>) while a presentation is in progress.
+2026-10-22 08:53:09.695 E  GlassPlayer[8938:7735] [com.apple.UIKit:Presentation] Attempt to present <_TtGC7SwiftUI19UIHostingControllerV11GlassPlayer13PopLabContent_: 0x107a49600> on <GlassPlayer.PopLabViewController: 0x10605ea00> (from <GlassPlayer.PopLabViewController: 0x10605ea00>) while a presentation is in progress.
+2026-10-22 08:53:09.695 E  GlassPlayer[8938:7735] [com.apple.UIKit:Presentation] Attempt to present <_TtGC7SwiftUI19UIHostingControllerV11GlassPlayer13PopLabContent_: 0x107210a00> on <GlassPlayer.PopLabViewController: 0x10605ea00> (from <GlassPlayer.PopLabViewController: 0x10605ea00>) while a presentation is in progress.
+2026-10-22 08:53:20.137 E  GlassPlayer[8938:7776] [com.apple.UIKit:Graphics] UIColor created with component values far outside the expected range. Set a breakpoint on UIColorBreakForOutOfRangeColorComponents to debug. This message will only be logged once.
