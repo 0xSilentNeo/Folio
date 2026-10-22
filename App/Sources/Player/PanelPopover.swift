@@ -31,7 +31,7 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
     private let host: UIHostingController<AnyView>
     private let onDismiss: () -> Void
 
-    init(content: AnyView, source: PanelSource, passthrough: [UIView], onDismiss: @escaping () -> Void) {
+    init(content: AnyView, source: PanelSource, passthrough: [UIView], bottomInset: CGFloat = 8, onDismiss: @escaping () -> Void) {
         host = UIHostingController(rootView: content)
         self.onDismiss = onDismiss
         super.init(nibName: nil, bundle: nil)
@@ -51,7 +51,8 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
                 pc.permittedArrowDirections = [.down]
             }
             pc.passthroughViews = passthrough
-            pc.popoverLayoutMargins = UIEdgeInsets(top: 52, left: 16, bottom: 8, right: 16)
+            // Keep the panel above the button bar so the other buttons stay tappable.
+            pc.popoverLayoutMargins = UIEdgeInsets(top: 52, left: 16, bottom: bottomInset, right: 16)
         }
     }
 
@@ -89,11 +90,14 @@ final class PanelPresenter {
     static let shared = PanelPresenter()
     private weak var current: PanelPopoverController?
 
-    func show(content: AnyView, source: PanelSource, from presenter: UIViewController, passthrough: [UIView], onDismiss: @escaping () -> Void) {
+    func show(content: AnyView, source: PanelSource, from presenter: UIViewController, passthrough: [UIView], bottomInset: CGFloat, onDismiss: @escaping () -> Void) {
         let present = { [weak self] in
-            let vc = PanelPopoverController(content: content, source: source, passthrough: passthrough, onDismiss: onDismiss)
+            let vc = PanelPopoverController(content: content, source: source, passthrough: passthrough, bottomInset: bottomInset, onDismiss: onDismiss)
             self?.current = vc
-            presenter.topMostPresented.present(vc, animated: true)
+            presenter.topMostPresented.present(vc, animated: true) {
+                // UIKit resets passthrough views for bar-item popovers on presentation.
+                vc.popoverPresentationController?.passthroughViews = passthrough
+            }
         }
         if let c = current, c.presentingViewController != nil {
             current = nil
