@@ -10,6 +10,10 @@ struct PlayerPanel: View {
     let compact: Bool
     let onLoadSubtitle: () -> Void
     let onRotationLock: (Bool) -> Void
+    /// 0…1 open progress. The glass frame grows with it (a layout change,
+    /// which Liquid Glass morphs properly) while the content scales inside;
+    /// a plain scaleEffect on a glass view leaves the glass behind on iOS 26.
+    var progress: CGFloat = 1
 
     @State private var contentHeight: CGFloat = 0
     @MainActor static var lastHeights: [String: CGFloat] = [:]
@@ -23,6 +27,8 @@ struct PlayerPanel: View {
             Spacer(minLength: 0)
             HStack {
                 Spacer(minLength: 0)
+                let height = min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxH)
+                let p = max(0.01, progress)
                 ScrollView {
                     content.padding(14)
                         .dynamicTypeSize(tune.typeSize)
@@ -34,9 +40,12 @@ struct PlayerPanel: View {
                     if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h }
                 }
                 .scrollIndicators(.hidden)
-                .frame(width: width)
-                .frame(height: min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxH))
-                .glass(cornerRadius: 24)
+                .frame(width: width, height: height)
+                .scaleEffect(p, anchor: .bottomTrailing)                       // content
+                .frame(width: width * p, height: height * p, alignment: .bottomTrailing)   // glass frame (layout)
+                .clipShape(RoundedRectangle(cornerRadius: 24 * max(p, 0.4), style: .continuous))
+                .glass(cornerRadius: 24 * max(p, 0.4))
+                .opacity(Double(min(1, p * 1.6)))
                 .animation(.spring(response: 0.36, dampingFraction: 0.84), value: contentHeight)
                 .padding(.trailing, 20)
                 .padding(.bottom, bottom)

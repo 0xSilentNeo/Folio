@@ -74,11 +74,9 @@ struct PlayerScreen: View {
 
                 if let mounted {
                     PlayerPanel(kind: mounted, model: model, ui: ui, size: geo.size, safe: geo.safeAreaInsets, compact: compact,
-                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
+                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock,
+                                progress: open ? 1 : tune.startScale)
                         .id(mounted)
-                        .scaleEffect(open ? 1 : tune.startScale, anchor: panelAnchor(mounted, compact: compact))
-                        .opacity(open ? 1 : 0)
-                        .blur(radius: open || !tune.blur ? 0 : 14)
                         .allowsHitTesting(open)
                 }
                 if ui.showTune {

@@ -79,7 +79,6 @@ struct TuneCard: View {
                         row("Spring response", value: $tune.response, in: 0.2...1.2, fmt: "%.2f s")
                         row("Spring damping", value: $tune.damping, in: 0.4...1.0, fmt: "%.2f")
                         row("Start scale", value: $tune.startScale, in: 0.02...0.9, fmt: "%.2f")
-                        Toggle("Blur while opening", isOn: $tune.blur).font(.caption).tint(Theme.accent)
                     }
                     HStack {
                         Button {
