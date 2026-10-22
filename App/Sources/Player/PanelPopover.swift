@@ -30,10 +30,13 @@ enum PanelSource {
 final class PanelPopoverController: UIViewController, UIPopoverPresentationControllerDelegate {
     private let host: UIHostingController<AnyView>
     private let onDismiss: () -> Void
+    var onWillDismiss: (() -> Void)?
+    let passthrough: [UIView]
 
     init(content: AnyView, source: PanelSource, passthrough: [UIView], bottomInset: CGFloat = 8, onDismiss: @escaping () -> Void) {
         host = UIHostingController(rootView: content)
         self.onDismiss = onDismiss
+        self.passthrough = passthrough
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .popover
         overrideUserInterfaceStyle = .dark
@@ -81,51 +84,116 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
 
     func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle { .none }
     func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle { .none }
+    func presentationControllerWillDismiss(_ presentationController: UIPresentationController) { onWillDismiss?() }
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) { onDismiss() }
 }
 
-/// Owns the one open panel popover: switching dismisses the old one first.
+/// Owns the one open panel popover and runs ONE transition at a time.
+///
+/// 1.10.0 presented and dismissed as taps came in; quick taps started a new
+/// popover while the previous one was still animating, which left a popover
+/// orphaned on screen with UIKit's transition never finishing — the player
+/// stopped responding. Now a tap only records which panel is wanted, and
+/// `reconcile()` moves the screen towards it step by step: dismiss what's
+/// shown, wait for that to finish, then present the wanted one.
 @MainActor
 final class PanelPresenter {
     static let shared = PanelPresenter()
-    private weak var current: PanelPopoverController?
-    private var currentKind: String?
+
+    private struct Request {
+        let kind: String
+        let presenter: UIViewController
+        let make: () -> PanelPopoverController
+    }
+    private var wanted: Request?
+    private var shown: PanelPopoverController?
+    private var shownKind: String?
+    private var busy = false
+    private var busyToken = 0
 
     /// `immediate`: called straight from the button's action (not from inside
-    /// a SwiftUI update), so present in this run-loop turn — no extra frame.
+    /// a SwiftUI update), so start in this run-loop turn — no extra frame.
     func show(kind: String, content: AnyView, source: PanelSource, from presenter: UIViewController, passthrough: [UIView], bottomInset: CGFloat,
               immediate: Bool = false, onDismiss: @escaping () -> Void) {
-        // Already shown or on its way (the tap presents it, then SwiftUI's
-        // onChange asks again). Cleared by hide() and by an outside-tap dismiss.
-        if currentKind == kind { return }
-        currentKind = kind
-        let present = { [weak self] in
+        if wanted?.kind == kind { return }            // the tap already asked; SwiftUI's onChange asks again
+        wanted = Request(kind: kind, presenter: presenter) { [weak self] in
             let vc = PanelPopoverController(content: content, source: source, passthrough: passthrough, bottomInset: bottomInset,
-                                            onDismiss: { [weak self] in self?.currentKind = nil; onDismiss() })
-            // Size known before the transition starts (no resize mid-morph).
-            vc.loadViewIfNeeded()
-            self?.current = vc
-            presenter.topMostPresented.present(vc, animated: true) {
-                // UIKit resets passthrough views for bar-item popovers on presentation.
-                vc.popoverPresentationController?.passthroughViews = passthrough
-            }
+                                            onDismiss: { [weak self] in self?.dismissedBySystem(kind: kind); onDismiss() })
+            vc.onWillDismiss = { [weak self] in self?.setBusy(true) }
+            return vc
         }
-        if let c = current, c.presentingViewController != nil {
-            current = nil
-            c.dismiss(animated: true) { present() }
-        } else if immediate {
-            present()
-        } else {
-            // Outside the SwiftUI update pass that triggered it.
-            DispatchQueue.main.async(execute: present)
-        }
+        if immediate { reconcile() } else { DispatchQueue.main.async { [weak self] in self?.reconcile() } }
     }
 
     func hide(animated: Bool = true) {
-        currentKind = nil
-        guard let c = current else { return }
-        current = nil
-        c.dismiss(animated: animated)
+        wanted = nil
+        reconcile(animated: animated)
+    }
+
+    private func reconcile(animated: Bool = true) {
+        guard !busy else { return }                   // a transition is running; it calls back here when done
+        if let vc = shown, vc.presentingViewController == nil { shown = nil; shownKind = nil }   // went away on its own
+        if let vc = shown {
+            guard wanted?.kind != shownKind else { return }
+            let switching = wanted != nil
+            setBusy(true)
+            let finish = { [weak self] in
+                guard let self else { return }
+                if self.shown === vc { self.shown = nil; self.shownKind = nil }
+                self.setBusy(false)
+                self.reconcile()
+            }
+            if switching, animated, let container = vc.presentationController?.containerView {
+                // Switching panels: fade the old one out quickly, then the new
+                // one morphs out of the button that was tapped.
+                UIView.animate(withDuration: 0.12, animations: { container.alpha = 0 }) { _ in vc.dismiss(animated: false, completion: finish) }
+            } else {
+                vc.dismiss(animated: animated, completion: finish)
+            }
+            return
+        }
+        guard let req = wanted else { return }
+        let vc = req.make()
+        vc.loadViewIfNeeded()                         // size known before the transition starts (no resize mid-morph)
+        let host = req.presenter.topMostPresented
+        guard host.view.window != nil, !host.isBeingDismissed, !host.isBeingPresented else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in self?.reconcile() }
+            return
+        }
+        shown = vc
+        shownKind = req.kind
+        setBusy(true)
+        host.present(vc, animated: animated) { [weak self] in
+            // UIKit resets passthrough views for bar-item popovers on presentation.
+            vc.popoverPresentationController?.passthroughViews = vc.passthrough
+            self?.setBusy(false)
+            self?.reconcile()
+        }
+    }
+
+    /// Closed by a tap outside (UIKit dismissed it).
+    private func dismissedBySystem(kind: String) {
+        shown = nil
+        shownKind = nil
+        if wanted?.kind == kind { wanted = nil }      // keep a panel tapped while this one was closing
+        setBusy(false)
+        reconcile()
+    }
+
+    /// While busy, taps only update `wanted`. A watchdog clears a transition
+    /// UIKit never completed, so the player can't get stuck behind it.
+    private func setBusy(_ b: Bool) {
+        busy = b
+        busyToken += 1
+        guard b else { return }
+        let token = busyToken
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self, self.busy, self.busyToken == token else { return }
+            dlog("ui/error", "panel transition did not finish; recovering")
+            self.busy = false
+            if let vc = self.shown, vc.presentingViewController == nil { self.shown = nil; self.shownKind = nil }
+            self.reconcile()
+        }
     }
 }
 

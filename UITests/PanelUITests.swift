@@ -111,4 +111,20 @@ final class PanelUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 4), "controls did not come back")
         sleep(1)
     }
+
+    /// The tap sequence from the freeze log, replayed at its real timing.
+    /// Afterwards the screen must match the last tap (Settings open) and the
+    /// player must still respond: outside tap closes, Tracks opens and closes.
+    func test6RapidSwitchReplay() throws {
+        let app = launchPlayer(["-panelStress"])
+        sleep(19)                                                 // replay runs 6 s … 17.6 s after launch
+        XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 4), "Settings (last tap) is not showing")
+        XCTAssertFalse(app.staticTexts["NOW PLAYING"].exists, "an orphaned Now Playing panel is on screen")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
+        XCTAssertFalse(app.staticTexts["Playback"].exists, "panel did not close after the replay (stuck)")
+        app.buttons["Tracks"].tap()
+        XCTAssertTrue(app.staticTexts["Audio"].waitForExistence(timeout: 4), "player unresponsive after the replay")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
+        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close")
+    }
 }
