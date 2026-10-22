@@ -6,6 +6,9 @@ on:
       modes:
         description: 'JSON list of lab modes (metal, gl, noengine, poplab, uitest)'
         default: '["poplab"]'
+      only:
+        description: 'xcodebuild -only-testing filter for uitest modes'
+        default: 'GlassPlayerUITests'
 
 permissions:
   contents: write
@@ -75,7 +78,7 @@ jobs:
           ARGS="-uiLab $EXTRA"; [ "${{ matrix.variant }}" = "poplab" ] && ARGS="-popLab"
           if case "${{ matrix.variant }}" in uitest*) true;; *) false;; esac; then
             xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release \
-              -destination "id=$UDID" -derivedDataPath build -only-testing:GlassPlayerUITests > lab/test.log 2>&1 || echo "::warning::UI test failed (see lab/test.log)"
+              -destination "id=$UDID" -derivedDataPath build -only-testing:${{ github.event.inputs.only || 'GlassPlayerUITests' }} > lab/test.log 2>&1 || echo "::warning::UI test failed (see lab/test.log)"
             grep -E "error:|failed|passed|Test Case|RAPID" lab/test.log | tail -40 | sed 's/^/::notice::/'
             sleep 3
           else

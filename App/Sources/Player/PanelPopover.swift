@@ -136,10 +136,12 @@ final class PanelPresenter {
         if let vc = shown {
             guard wanted?.kind != shownKind else { return }
             let switching = wanted != nil
+            dlog("ui", "panel: dismiss \(shownKind ?? "?")\(switching ? " → \(wanted!.kind)" : "")")
             setBusy(true)
             let finish = { [weak self] in
                 guard let self else { return }
                 if self.shown === vc { self.shown = nil; self.shownKind = nil }
+                dlog("ui", "panel: dismissed")
                 self.setBusy(false)
                 self.reconcile()
             }
@@ -162,8 +164,10 @@ final class PanelPresenter {
         }
         shown = vc
         shownKind = req.kind
+        dlog("ui", "panel: present \(req.kind)")
         setBusy(true)
         host.present(vc, animated: animated) { [weak self] in
+            dlog("ui", "panel: presented \(req.kind)")
             // UIKit resets passthrough views for bar-item popovers on presentation.
             vc.popoverPresentationController?.passthroughViews = vc.passthrough
             self?.setBusy(false)
@@ -173,6 +177,7 @@ final class PanelPresenter {
 
     /// Closed by a tap outside (UIKit dismissed it).
     private func dismissedBySystem(kind: String) {
+        dlog("ui", "panel: closed by outside tap (\(kind))")
         shown = nil
         shownKind = nil
         if wanted?.kind == kind { wanted = nil }      // keep a panel tapped while this one was closing
@@ -189,6 +194,12 @@ final class PanelPresenter {
         let token = busyToken
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             guard let self, self.busy, self.busyToken == token else { return }
+            // Still animating (slow device / simulator): keep waiting — starting
+            // another transition on top of a running one is what breaks UIKit.
+            if let vc = self.shown, vc.isBeingPresented || vc.isBeingDismissed || vc.transitionCoordinator != nil {
+                self.busy = false; self.setBusy(true)
+                return
+            }
             dlog("ui/error", "panel transition did not finish; recovering")
             self.busy = false
             if let vc = self.shown, vc.presentingViewController == nil { self.shown = nil; self.shownKind = nil }
