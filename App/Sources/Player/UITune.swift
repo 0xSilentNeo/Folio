@@ -78,7 +78,6 @@ struct TuneCard: View {
                         row("Pill height", value: $tune.pillHeight, in: 38...58, fmt: "%.0f pt")
                         row("Spring response", value: $tune.response, in: 0.2...1.2, fmt: "%.2f s")
                         row("Spring damping", value: $tune.damping, in: 0.4...1.0, fmt: "%.2f")
-                        row("Start scale", value: $tune.startScale, in: 0.02...0.9, fmt: "%.2f")
                     }
                     HStack {
                         Button {

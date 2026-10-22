@@ -13,11 +13,9 @@ struct PlayerScreen: View {
 
     @State private var showSubtitlePicker = false
     @ObservedObject private var tune = UITune.shared
-    // The panel stays mounted while it animates; `open` drives scale/opacity
-    // explicitly (property animation cannot silently skip like a transition).
-    @State private var mounted: PlayerUIState.Panel?
-    @State private var open = false
-    @State private var switchWork: DispatchWorkItem?
+    /// Shared by the panel buttons and the panels: on iOS 26 the tapped
+    /// button's glass circle morphs into the panel (Liquid Glass morph).
+    @Namespace private var glassNS
 
     var body: some View {
         GeometryReader { geo in
@@ -40,8 +38,18 @@ struct PlayerScreen: View {
                         .offset(y: ui.controlsVisible && !ui.locked ? -10 : 0)
                 }
 
-                if ui.controlsVisible && !ui.locked {
-                    controls(geo, compact: compact).transition(.opacity)
+                GlassStage {
+                    ZStack {
+                        if ui.controlsVisible && !ui.locked {
+                            controls(geo, compact: compact).transition(.opacity)
+                        }
+                        if let panel = ui.panel {
+                            PlayerPanel(kind: panel, model: model, ui: ui, size: geo.size, safe: geo.safeAreaInsets, compact: compact,
+                                        onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock, glassNS: glassNS)
+                                .id(panel)
+                                .transition(PlayerScreen.panelTransition)
+                        }
+                    }
                 }
 
                 if ui.locked && ui.controlsVisible { lockedOverlay.transition(.opacity) }
@@ -72,13 +80,6 @@ struct PlayerScreen: View {
                 if let error = model.errorMessage { errorView(error) }
                 if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
 
-                if let mounted {
-                    PlayerPanel(kind: mounted, model: model, ui: ui, size: geo.size, safe: geo.safeAreaInsets, compact: compact,
-                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock,
-                                progress: open ? 1 : tune.startScale)
-                        .id(mounted)
-                        .allowsHitTesting(open)
-                }
                 if ui.showTune {
                     TuneCard(ui: ui).transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
                 }
@@ -120,7 +121,6 @@ struct PlayerScreen: View {
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
         .onAppear { ui.scheduleHide() }
-        .onChange(of: ui.panel, initial: true) { _, p in panelChanged(p) }
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
@@ -129,41 +129,12 @@ struct PlayerScreen: View {
         }
     }
 
-    // MARK: Panel animation
-
-    /// Where a panel grows from: roughly its button in the bottom-right pill.
-    private func panelAnchor(_ p: PlayerUIState.Panel, compact: Bool) -> UnitPoint {
-        switch p {
-        case .tracks: return UnitPoint(x: 0.6, y: 1.05)
-        case .settings: return UnitPoint(x: 0.8, y: 1.05)
-        case .nowPlaying: return UnitPoint(x: 1.0, y: 1.05)
-        }
-    }
-
-    private func panelChanged(_ p: PlayerUIState.Panel?) {
-        switchWork?.cancel()
-        if let p {
-            if let m = mounted, m != p, open {
-                // Switching: shrink the old one, then grow the new one.
-                withAnimation(.easeIn(duration: 0.14)) { open = false }
-                let w = DispatchWorkItem {
-                    mounted = p
-                    DispatchQueue.main.async { withAnimation(tune.openSpring) { open = true } }
-                }
-                switchWork = w
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: w)
-            } else {
-                mounted = p
-                // Mount closed first, animate on the next run loop so the start state renders.
-                DispatchQueue.main.async { withAnimation(tune.openSpring) { open = true } }
-            }
-            dlog("ui", "panel open \(p.rawValue) spring=\(String(format: "%.2f/%.2f", tune.response, tune.damping)) from \(tune.startScale)")
-        } else {
-            withAnimation(tune.closeSpring) { open = false }
-            let w = DispatchWorkItem { if ui.panel == nil { mounted = nil } }
-            switchWork = w
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: w)
-        }
+    /// Below iOS 26 there is no glass morph, so the panel scales out of the
+    /// pill; on iOS 26 the glass does the moving and the content just fades.
+    static var panelTransition: AnyTransition {
+        if #available(iOS 26.0, *) { return .opacity }
+        return .asymmetric(insertion: .scale(scale: 0.55, anchor: .bottomTrailing).combined(with: .opacity),
+                           removal: .scale(scale: 0.7, anchor: .bottomTrailing).combined(with: .opacity))
     }
 
     // MARK: Controls
@@ -217,21 +188,21 @@ struct PlayerScreen: View {
     private var stepIcon: Int { [5, 10, 15, 30, 45, 60, 75, 90].contains(step) ? step : 10 }
 
     private var transportPill: some View {
-        GlassGroup {
-            PillIcon("gobackward.\(stepIcon)", size: 18) { model.seek(by: -Double(step)) }
-            PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 21) {
+        GlassGroup(unionID: "transport", ns: glassNS) {
+            PillIcon("gobackward.\(stepIcon)", size: 18, unionID: "transport", ns: glassNS) { model.seek(by: -Double(step)) }
+            PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 21, unionID: "transport", ns: glassNS) {
                 model.togglePause()
                 ui.showControls()
             }
-            PillIcon("goforward.\(stepIcon)", size: 18) { model.seek(by: Double(step)) }
+            PillIcon("goforward.\(stepIcon)", size: 18, unionID: "transport", ns: glassNS) { model.seek(by: Double(step)) }
         }
     }
 
     private var panelPill: some View {
-        GlassGroup {
-            PillIcon("switch.2", size: 17, active: ui.panel == .tracks) { ui.toggle(.tracks) }
-            PillIcon("slider.horizontal.3", size: 17, active: ui.panel == .settings) { ui.toggle(.settings) }
-            PillIcon("list.bullet", size: 17, active: ui.panel == .nowPlaying) { ui.toggle(.nowPlaying) }
+        GlassGroup(unionID: "panels", ns: glassNS) {
+            PillIcon("switch.2", size: 17, active: ui.panel == .tracks, unionID: "panels", ns: glassNS, morphID: PlayerUIState.Panel.tracks.rawValue) { ui.toggle(.tracks) }
+            PillIcon("slider.horizontal.3", size: 17, active: ui.panel == .settings, unionID: "panels", ns: glassNS, morphID: PlayerUIState.Panel.settings.rawValue) { ui.toggle(.settings) }
+            PillIcon("list.bullet", size: 17, active: ui.panel == .nowPlaying, unionID: "panels", ns: glassNS, morphID: PlayerUIState.Panel.nowPlaying.rawValue) { ui.toggle(.nowPlaying) }
         }
     }
 
@@ -512,16 +483,44 @@ struct GlassIcon: View {
     }
 }
 
-/// One glass pill holding a row of buttons (the Outplayer look). The pill is
-/// static; each button presses with the same spring as the Home "+" button.
-struct GlassGroup<Content: View>: View {
+/// Wraps the controls and panels in one Liquid Glass container (iOS 26) so
+/// glass shapes can merge and morph between them. Plain group elsewhere.
+struct GlassStage<Content: View>: View {
     @ViewBuilder var content: Content
     var body: some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            GlassEffectContainer(spacing: 8) { content }
+        } else {
+            content
+        }
+        #else
+        content
+        #endif
+    }
+}
+
+/// A row of buttons that read as one pill. On iOS 26 each button carries its
+/// own glass circle and the circles are unioned into the pill; otherwise the
+/// row sits on a single glass capsule.
+struct GlassGroup<Content: View>: View {
+    let unionID: String
+    let ns: Namespace.ID
+    @ViewBuilder var content: Content
+    init(unionID: String, ns: Namespace.ID, @ViewBuilder content: () -> Content) {
+        self.unionID = unionID; self.ns = ns; self.content = content()
+    }
+    var body: some View {
         let h = UITune.shared.pillHeight
-        HStack(spacing: 0) { content }
-            .padding(.horizontal, 4)
-            .frame(height: h)
-            .glass(cornerRadius: h / 2, interactive: true)
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            HStack(spacing: 0) { content }
+        } else {
+            HStack(spacing: 0) { content }.padding(.horizontal, 4).frame(height: h).glass(cornerRadius: h / 2, interactive: true)
+        }
+        #else
+        HStack(spacing: 0) { content }.padding(.horizontal, 4).frame(height: h).glass(cornerRadius: h / 2, interactive: true)
+        #endif
     }
 }
 
@@ -529,21 +528,50 @@ struct PillIcon: View {
     let icon: String
     var size: CGFloat = 18
     var active = false
+    let unionID: String
+    let ns: Namespace.ID
+    /// When set, this button's glass circle is the morph source of the panel with the same id.
+    var morphID: String? = nil
     let action: () -> Void
-    init(_ icon: String, size: CGFloat = 18, width: CGFloat = 46, active: Bool = false, action: @escaping () -> Void) {
-        self.icon = icon; self.size = size; self.active = active; self.action = action
+    @ObservedObject private var tune = UITune.shared
+
+    init(_ icon: String, size: CGFloat = 18, active: Bool = false, unionID: String, ns: Namespace.ID, morphID: String? = nil, action: @escaping () -> Void) {
+        self.icon = icon; self.size = size; self.active = active; self.unionID = unionID; self.ns = ns; self.morphID = morphID; self.action = action
     }
+
     var body: some View {
+        let h = tune.pillHeight
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: size, weight: .semibold))
                 .contentTransition(.symbolEffect(.replace))
-                .frame(width: UITune.shared.pillHeight, height: UITune.shared.pillHeight)
+                .frame(width: h, height: h)
                 .background(active ? Color.white.opacity(0.2) : Color.clear, in: Circle())
                 .contentShape(Circle())
         }
         .buttonStyle(PressStyle(scale: 0.82))
         .foregroundStyle(.white)
+        .background { glassCircle(h) }
+    }
+
+    @ViewBuilder
+    private func glassCircle(_ h: CGFloat) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            // While the panel is open its glass lives in the panel (same id);
+            // a plain circle keeps the pill shape in the meantime.
+            if let morphID, !active {
+                Color.clear.frame(width: h, height: h)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .glassEffectUnion(id: unionID, namespace: ns)
+                    .glassEffectID(morphID, in: ns)
+            } else {
+                Color.clear.frame(width: h, height: h)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .glassEffectUnion(id: unionID, namespace: ns)
+            }
+        }
+        #endif
     }
 }
 

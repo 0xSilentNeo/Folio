@@ -10,10 +10,9 @@ struct PlayerPanel: View {
     let compact: Bool
     let onLoadSubtitle: () -> Void
     let onRotationLock: (Bool) -> Void
-    /// 0…1 open progress. The glass frame grows with it (a layout change,
-    /// which Liquid Glass morphs properly) while the content scales inside;
-    /// a plain scaleEffect on a glass view leaves the glass behind on iOS 26.
-    var progress: CGFloat = 1
+    /// Namespace shared with the pill buttons: the panel's glass carries the
+    /// same `glassEffectID` as its button, so iOS 26 morphs one into the other.
+    var glassNS: Namespace.ID
 
     @State private var contentHeight: CGFloat = 0
     @MainActor static var lastHeights: [String: CGFloat] = [:]
@@ -28,7 +27,6 @@ struct PlayerPanel: View {
             HStack {
                 Spacer(minLength: 0)
                 let height = min(max(contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260), 120), maxH)
-                let p = max(0.01, progress)
                 ScrollView {
                     content.padding(14)
                         .dynamicTypeSize(tune.typeSize)
@@ -41,11 +39,7 @@ struct PlayerPanel: View {
                 }
                 .scrollIndicators(.hidden)
                 .frame(width: width, height: height)
-                .scaleEffect(p, anchor: .bottomTrailing)                       // content
-                .frame(width: width * p, height: height * p, alignment: .bottomTrailing)   // glass frame (layout)
-                .clipShape(RoundedRectangle(cornerRadius: 24 * max(p, 0.4), style: .continuous))
-                .glass(cornerRadius: 24 * max(p, 0.4))
-                .opacity(Double(min(1, p * 1.6)))
+                .modifier(PanelGlass(id: kind.rawValue, ns: glassNS))
                 .animation(.spring(response: 0.36, dampingFraction: 0.84), value: contentHeight)
                 .padding(.trailing, 20)
                 .padding(.bottom, bottom)
@@ -62,6 +56,26 @@ struct PlayerPanel: View {
         case .tracks: TracksPanelContent(model: model, onLoadSubtitle: onLoadSubtitle)
         case .nowPlaying: NowPlayingPanelContent(model: model, ui: ui)
         }
+    }
+}
+
+/// Panel background: Liquid Glass carrying the morph id on iOS 26, material otherwise.
+struct PanelGlass: ViewModifier {
+    let id: String
+    let ns: Namespace.ID
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content
+                .glassEffect(.regular, in: .rect(cornerRadius: 24))
+                .glassEffectID(id, in: ns)
+        } else {
+            content.glass(cornerRadius: 24)
+        }
+        #else
+        content.glass(cornerRadius: 24)
+        #endif
     }
 }
 

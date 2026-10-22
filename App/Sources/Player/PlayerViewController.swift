@@ -15,13 +15,14 @@ final class PlayerUIState: ObservableObject {
     var menuOpen = false
 
     func toggle(_ p: Panel) {
-        panel = panel == p ? nil : p          // PlayerScreen animates the mounted panel explicitly
+        withAnimation(UITune.shared.openSpring) { panel = panel == p ? nil : p }
+        dlog("ui", "panel \(panel?.rawValue ?? "closed") spring=\(String(format: "%.2f/%.2f", UITune.shared.response, UITune.shared.damping))")
         if panel == nil { scheduleHide() } else { showControls(autoHide: false) }
     }
 
     func closePanel() {
         guard panel != nil else { return }
-        panel = nil
+        withAnimation(UITune.shared.closeSpring) { panel = nil }
         scheduleHide()
     }
     @Published var scrubbing = false
