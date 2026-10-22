@@ -27,7 +27,7 @@ jobs:
           xcrun simctl list runtimes | grep -i ios || true
 
       - name: Fetch engine (stock MPVKit — simulator slices)
-        run: ENGINE=stock bash scripts/fetch-engine.sh
+        run: ENGINE=stock SLICE=simulator bash scripts/fetch-engine.sh
 
       - name: Generate project
         run: |

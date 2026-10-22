@@ -7,10 +7,15 @@ cd "$(dirname "$0")/.."
 FW=Vendor/Frameworks
 OUT=Vendor/engine.xcconfig
 fsp=(); lsp=(); hsp=(); ld=()
+# SLICE=simulator picks the iOS Simulator slice (CI UI lab) instead of the device one.
 for x in "$FW"/*.xcframework; do
-  slice=$(ls -d "$x"/ios-arm64 2>/dev/null || true)
-  [ -z "$slice" ] && slice=$(ls -d "$x"/ios-arm64* 2>/dev/null | grep -v simulator | grep -v maccatalyst | head -1 || true)
-  [ -z "$slice" ] && { echo "warning: no iOS slice in $x" >&2; continue; }
+  if [ "${SLICE:-device}" = "simulator" ]; then
+    slice=$(ls -d "$x"/ios-*simulator* 2>/dev/null | head -1 || true)
+  else
+    slice=$(ls -d "$x"/ios-arm64 2>/dev/null || true)
+    [ -z "$slice" ] && slice=$(ls -d "$x"/ios-arm64* 2>/dev/null | grep -v simulator | grep -v maccatalyst | head -1 || true)
+  fi
+  [ -z "$slice" ] && { echo "warning: no ${SLICE:-device} slice in $x" >&2; continue; }
   rel="\$(PROJECT_DIR)/$slice"
   if ls -d "$slice"/*.framework >/dev/null 2>&1; then
     for f in "$slice"/*.framework; do
