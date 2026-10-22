@@ -67,9 +67,15 @@ struct PanelGlass: ViewModifier {
     func body(content: Content) -> some View {
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
+            // Glass on a plain shape behind the content (not on the scroll
+            // view itself) so the container can morph it.
             content
-                .glassEffect(.regular, in: .rect(cornerRadius: 24))
-                .glassEffectID(id, in: ns)
+                .background {
+                    Color.clear
+                        .glassEffect(.regular, in: .rect(cornerRadius: 24))
+                        .glassEffectID(id, in: ns)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         } else {
             content.glass(cornerRadius: 24)
         }

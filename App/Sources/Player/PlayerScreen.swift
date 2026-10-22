@@ -504,9 +504,7 @@ struct GlassStage<Content: View>: View {
     }
 }
 
-/// A row of buttons that read as one pill. On iOS 26 each button carries its
-/// own glass circle and the circles are unioned into the pill; otherwise the
-/// row sits on a single glass capsule.
+/// A row of buttons on one glass capsule.
 struct GlassGroup<Content: View>: View {
     let unionID: String
     let ns: Namespace.ID
@@ -516,15 +514,7 @@ struct GlassGroup<Content: View>: View {
     }
     var body: some View {
         let h = UITune.shared.pillHeight
-        #if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            HStack(spacing: 0) { content }
-        } else {
-            HStack(spacing: 0) { content }.padding(.horizontal, 4).frame(height: h).glass(cornerRadius: h / 2, interactive: true)
-        }
-        #else
         HStack(spacing: 0) { content }.padding(.horizontal, 4).frame(height: h).glass(cornerRadius: h / 2, interactive: true)
-        #endif
     }
 }
 
@@ -534,7 +524,9 @@ struct PillIcon: View {
     var active = false
     let unionID: String
     let ns: Namespace.ID
-    /// When set, this button's glass circle is the morph source of the panel with the same id.
+    /// When set, a glass circle under this button is the morph source of the
+    /// panel with the same id: it is removed as the panel appears, so Liquid
+    /// Glass morphs the circle into the panel (and back on close).
     var morphID: String? = nil
     let action: () -> Void
     @ObservedObject private var tune = UITune.shared
@@ -555,25 +547,16 @@ struct PillIcon: View {
         }
         .buttonStyle(PressStyle(scale: 0.82))
         .foregroundStyle(.white)
-        .background { glassCircle(h) }
+        .background { morphSource(h) }
     }
 
     @ViewBuilder
-    private func glassCircle(_ h: CGFloat) -> some View {
+    private func morphSource(_ h: CGFloat) -> some View {
         #if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            // While the panel is open its glass lives in the panel (same id);
-            // a plain circle keeps the pill shape in the meantime.
-            if let morphID, !active {
-                Color.clear.frame(width: h, height: h)
-                    .glassEffect(.regular.interactive(), in: .circle)
-                    .glassEffectUnion(id: unionID, namespace: ns)
-                    .glassEffectID(morphID, in: ns)
-            } else {
-                Color.clear.frame(width: h, height: h)
-                    .glassEffect(.regular.interactive(), in: .circle)
-                    .glassEffectUnion(id: unionID, namespace: ns)
-            }
+        if #available(iOS 26.0, *), let morphID, !active {
+            Color.clear.frame(width: h - 8, height: h - 8)
+                .glassEffect(.regular, in: .circle)
+                .glassEffectID(morphID, in: ns)
         }
         #endif
     }
