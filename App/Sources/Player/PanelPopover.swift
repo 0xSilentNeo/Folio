@@ -178,6 +178,7 @@ final class PanelPresenter {
     /// while the panel was still opening) never finished in the simulator
     /// replay of the freeze log, leaving UIKit mid-transition.
     private func settle() {
+        busyToken += 1                                // the transition is done: disarm its watchdog
         let delay: Double = CommandLine.arguments.contains("-panelNoSettle") ? 0 : 0.12
         if delay == 0 { setBusy(false); reconcile(); return }
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
@@ -216,7 +217,12 @@ final class PanelPresenter {
                 return
             }
             dlog("ui/error", "panel transition did not finish; recovering (shown=\(self.shownKind ?? "nil") presented=\(self.shown?.presentingViewController != nil))")
-            if let vc = self.shown, let p = vc.presentingViewController { p.dismiss(animated: false) }
+            // Stuck mid-transition: ask UIKit to drop it. A panel that is simply
+            // up (only the completion was lost) stays as it is.
+            if let vc = self.shown, let p = vc.presentingViewController,
+               vc.isBeingPresented || vc.isBeingDismissed || vc.transitionCoordinator != nil {
+                p.dismiss(animated: false)
+            }
             self.busy = false
             if let vc = self.shown, vc.presentingViewController == nil { self.shown = nil; self.shownKind = nil }
             self.reconcile()
