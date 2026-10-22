@@ -267,7 +267,7 @@ struct MetaDetailView: View {
             PosterImage(url: m.background ?? m.poster, aspect: 16.0 / 9.0, cornerRadius: 0)
                 .overlay(LinearGradient(colors: [.clear, Theme.background], startPoint: .center, endPoint: .bottom))
             if let logo = m.logo, let u = URL(string: logo) {
-                AsyncImage(url: u) { img in img.resizable().scaledToFit() } placeholder: { EmptyView() }
+                CachedImage(url: u, maxPixel: 600) { img in img.resizable().scaledToFit() } placeholder: { EmptyView() }
                     .frame(maxWidth: 220, maxHeight: 80)
                     .padding(16)
             }
@@ -591,7 +591,7 @@ struct AddonsManagerView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             if let logo = a.manifest.logo, let u = URL(string: logo) {
-                                AsyncImage(url: u) { $0.resizable().scaledToFit() } placeholder: { Color.clear }
+                                CachedImage(url: u, maxPixel: 120) { $0.resizable().scaledToFit() } placeholder: { Color.clear }
                                     .frame(width: 28, height: 28).clipShape(RoundedRectangle(cornerRadius: 6))
                             }
                             Text(a.manifest.name).font(.headline)

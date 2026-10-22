@@ -271,11 +271,25 @@ enum PlayerPresenter {
         w.makeKeyAndVisible()
         window = w
         current = vc
-        UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut]) { w.alpha = 1 }
+        HistoryStore.shared.deferPublishing = true
+        UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut]) { w.alpha = 1 } completion: { _ in
+            // The library window underneath is fully covered: hide it so it
+            // does no layout, animation or rendering work during playback.
+            guard window === w else { return }
+            for other in appWindows { other.isHidden = true }
+        }
+    }
+
+    /// The app's own windows (everything but the player's).
+    private static var appWindows: [UIWindow] {
+        UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows).filter { !($0 is PlayerWindowMarker) && $0.windowLevel == .normal }
     }
 
     static func dismiss(animated: Bool) {
         guard let w = window else { return }
+        for other in appWindows { other.isHidden = false }
+        HistoryStore.shared.deferPublishing = false
         let done = {
             w.isHidden = true
             w.rootViewController = nil
@@ -290,6 +304,7 @@ enum PlayerPresenter {
     static func topViewController() -> UIViewController? {
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
         let playerWindow = window
+        if let player = current, playerWindow != nil { return player.topMostPresented }
         let windows = scenes.flatMap(\.windows).filter { $0 !== playerWindow }
         let target = windows.first { $0.isKeyWindow } ?? windows.first
         var vc = target?.rootViewController

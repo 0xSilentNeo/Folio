@@ -356,6 +356,9 @@ final class PlayerModel: ObservableObject {
         c.setOption("ao", "avfoundation,audiounit")
         c.setOption("audio-channels", defaults.bool(forKey: SettingsKey.surroundAudio) ? "auto" : "stereo")
         c.setOption("sub-auto", "fuzzy")
+        if defaults.string(forKey: SettingsKey.subtitlesDefault) == "off" { c.setOption("sid", "no") }
+        c.setOption("audio-normalize-downmix", defaults.bool(forKey: SettingsKey.downmixNormalize) ? "yes" : "no")
+        if defaults.bool(forKey: SettingsKey.lfeInDownmix) { c.setOption("audio-swresample-o", "lfe_mix_level=1") }
         c.setOption("embeddedfonts", "yes")
         c.setOption("sub-fonts-dir", MPVFiles.fontsDir.path)
         if let s = defaults.string(forKey: SettingsKey.subLangs), !s.isEmpty { c.setOption("slang", s) }
@@ -370,21 +373,20 @@ final class PlayerModel: ObservableObject {
         c.setOption("speed", String(defaults.double(forKey: SettingsKey.defaultSpeed)))
         let shaders = Anime4K.currentShaderList()
         if !shaders.isEmpty { c.setOption("glsl-shaders", shaders) }
-        if defaults.bool(forKey: SettingsKey.enhancedQuality) {
-            for (k, v) in EnhancedQuality.options { c.setOption(k, v) }
-        }
+        for (k, v) in PictureMode.current.options { c.setOption(k, v) }
         c.setOption("volume-max", "200")
         let boost = defaults.integer(forKey: SettingsKey.audioBoost)
         if boost > 0 { c.setOption("volume", String(100 + boost)) }
-        dlog("player", "mpv options applied renderer=\(renderer) hwdec=\(defaults.string(forKey: SettingsKey.hwdec) ?? "auto") anime4k=\(Anime4K.mode.rawValue)/\(Anime4K.quality.rawValue) enhanced=\(defaults.bool(forKey: SettingsKey.enhancedQuality))")
+        dlog("player", "mpv options applied renderer=\(renderer) hwdec=\(defaults.string(forKey: SettingsKey.hwdec) ?? "auto") anime4k=\(Anime4K.mode.rawValue)/\(Anime4K.quality.rawValue) picture=\(PictureMode.current.rawValue)")
     }
 
     // MARK: Quality toggles (live)
 
-    @Published var enhancedQuality: Bool = UserDefaults.standard.bool(forKey: SettingsKey.enhancedQuality) {
+    @Published var pictureMode: PictureMode = PictureMode.current {
         didSet {
-            UserDefaults.standard.set(enhancedQuality, forKey: SettingsKey.enhancedQuality)
-            for (k, v) in (enhancedQuality ? EnhancedQuality.options : EnhancedQuality.defaults) { client?.set(k, v) }
+            PictureMode.current = pictureMode
+            for (k, v) in pictureMode.options { client?.set(k, v) }
+            dlog("player", "picture mode \(pictureMode.rawValue)")
         }
     }
     @Published var anime4kMode: Anime4KMode = Anime4K.mode {
@@ -461,6 +463,9 @@ final class PlayerModel: ObservableObject {
         segments = []
         activeSegment = nil
         autoSkipped = []
+        upNext = nil
+        upNextDismissed = false
+        postCredits = false
         segmentsRequested = false
         fileLoaded = false
         isLoading = true
@@ -744,34 +749,99 @@ final class PlayerModel: ObservableObject {
     private func maybeRequestSegments() {
         guard fileLoaded, !segmentsRequested, duration > 0 else { return }
         segmentsRequested = true
-        guard defaults.bool(forKey: SettingsKey.skipEnabled) else { return }
-
+        // Looked up even with the Skip button off: Up Next uses the credits time.
         if defaults.bool(forKey: SettingsKey.skipUseChapters) {
             let s = SkipService.segments(fromChapters: chapters.map { ($0.title, $0.time) }, duration: duration)
-            if !s.isEmpty { segments = s; return }
+            if !s.isEmpty { segments = s; dlog("skip", "from chapters: \(s.map { "\($0.kind.rawValue) \(Int($0.start))-\(Int($0.end))" })"); return }
         }
 
+        let name = item.resolvedURL?.lastPathComponent ?? item.title
+        let fileName = TitleParser.isMedia(name) ? name : item.title
+        let parsed = TitleParser.parse(fileName)
         var hint = item.anime ?? AnimeHint()
-        if hint.title == nil || hint.episode == nil {
-            let name = item.resolvedURL?.lastPathComponent ?? item.title
-            let parsed = TitleParser.parse(TitleParser.isMedia(name) ? name : item.title)
-            if hint.title == nil { hint.title = parsed.title }
-            if hint.episode == nil { hint.episode = parsed.episode }
-        }
-        guard hint.episode != nil else { return }
+        if hint.title == nil { hint.title = parsed.title }
+        if hint.episode == nil { hint.episode = parsed.episode }
+        let explicitAnime = item.anime != nil
+        // Fansub naming ("[Group] Title - 05") is a strong anime signal.
+        let fansubName = fileName.hasPrefix("[") || fileName.range(of: #" - \d{1,4}\b"#, options: .regularExpression) != nil
         let key = item.id
         let dur = duration
         let len = defaults.double(forKey: SettingsKey.skipOATLength)
         Task { [weak self] in
-            let found = await SkipService.shared.lookup(hint: hint, duration: dur, oatLength: len > 0 ? len : 90)
+            var found = SkipLookup()
+            let meta = await MetadataService.shared.lookup(filename: fileName)
+            if let meta, meta.id.hasPrefix("tt") {
+                found = await SkipService.shared.lookupTV(imdbId: meta.id, season: parsed.episode != nil ? (parsed.season ?? 1) : nil,
+                                                          episode: parsed.episode, duration: dur)
+            }
+            // Anime databases only for anime: an explicit hint, animation per
+            // IMDb, or an unknown title with fansub-style naming. Never a
+            // fuzzy anime search for a live-action show.
+            let animation = meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false
+            if found.segments.isEmpty, hint.episode != nil, explicitAnime || animation || (meta == nil && fansubName) {
+                found.segments = await SkipService.shared.lookup(hint: hint, season: parsed.season, duration: dur, oatLength: len > 0 ? len : 90)
+                dlog("skip", "anime lookup \(hint.title ?? "?") s\(parsed.season ?? 1)e\(hint.episode ?? 0): \(found.segments.count) segment(s)")
+            }
             await MainActor.run {
-                guard let self, self.item.id == key, !found.isEmpty else { return }
-                self.segments = found
+                guard let self, self.item.id == key else { return }
+                self.postCredits = found.postCredits
+                guard !found.segments.isEmpty else { return }
+                self.segments = found.segments
                 if self.defaults.bool(forKey: SettingsKey.skipInjectChapters), self.chapters.isEmpty {
-                    self.injectChapters(found)
+                    self.injectChapters(found.segments)
                 }
             }
         }
+    }
+
+    // MARK: Up Next
+
+    struct UpNext: Equatable {
+        let start: Double          // playback time the card appeared at
+        let autoplay: Bool         // counts down and plays the next file
+        let next: MediaItem
+    }
+    @Published var upNext: UpNext?
+    private var upNextDismissed = false
+    private var postCredits = false
+    static let upNextCountdown = 10.0
+
+    /// When the card appears: the start of the credits (file chapters,
+    /// IntroDB / TheIntroDB, AniSkip ending) if known, else 30 s before the end.
+    private var upNextTrigger: (time: Double, autoplay: Bool)? {
+        guard hasNext, playbackMode == "playlist", defaults.bool(forKey: SettingsKey.upNextEnabled), duration > 120 else { return nil }
+        let autoplayOn = defaults.bool(forKey: SettingsKey.autoplayNext)
+        if let outro = segments.filter({ $0.kind == .outro && $0.start > duration * 0.5 }).last {
+            // Story content after the credits (and not a "next episode" preview)
+            // means a post-credits scene: show the card, but don't jump away.
+            let after = duration - outro.end
+            let previewFollows = segments.contains { $0.kind == .preview && $0.start >= outro.end - 2 }
+            let sceneAfter = postCredits || (after > 30 && !previewFollows)
+            return (outro.start, autoplayOn && !sceneAfter)
+        }
+        return (max(duration * 0.9, duration - 30), autoplayOn && !postCredits)
+    }
+
+    private func updateUpNext() {
+        guard !upNextDismissed, let trigger = upNextTrigger else {
+            if upNext != nil { upNext = nil }
+            return
+        }
+        if position >= trigger.time && position < duration - 0.3 {
+            if upNext == nil { upNext = UpNext(start: trigger.time, autoplay: trigger.autoplay, next: queue[queueIndex + 1]) }
+            if trigger.autoplay, !paused, position >= trigger.time + Self.upNextCountdown {
+                upNext = nil
+                dlog("player", "up next: countdown finished")
+                playNext()
+            }
+        } else if upNext != nil {
+            upNext = nil      // seeked back before the credits
+        }
+    }
+
+    func dismissUpNext() {
+        upNextDismissed = true
+        upNext = nil
     }
 
     private func injectChapters(_ segs: [SkipSegment]) {
@@ -787,7 +857,7 @@ final class PlayerModel: ObservableObject {
     }
 
     private func updateActiveSegment() {
-        guard Date() >= skipSuppressedUntil else { return }
+        guard Date() >= skipSuppressedUntil, defaults.bool(forKey: SettingsKey.skipEnabled) else { return }
         let seg = segments.first { position >= $0.start && position < $0.end - 0.5 }
         if seg != activeSegment { activeSegment = seg }
         guard let seg, !autoSkipped.contains(seg.id) else { return }
@@ -1121,6 +1191,7 @@ extension PlayerModel: MPVClientDelegate {
             // Publish at most ~4x per second (skips SwiftUI work per frame).
             if abs(p - clock.position) >= 0.25 || p < clock.position { clock.position = p }
             updateActiveSegment()
+            updateUpNext()
             if Date().timeIntervalSince(lastPiPSync) > 1 {
                 lastPiPSync = Date()
                 pip.updatePlayback(position: p, rate: paused ? 0 : speed)
@@ -1170,6 +1241,7 @@ extension PlayerModel: MPVClientDelegate {
             pendingH = Int(value.int ?? 0); applyVideoSize()
         case "hwdec-current":
             hwdecCurrent = value.string ?? ""
+            dlog("player", "decoder: \(hwdecCurrent.isEmpty || hwdecCurrent == "no" ? "software" : hwdecCurrent)")
         case "video-params/gamma":
             updateVideoFormat(gamma: value.string ?? "")
         case "audio-out-params/channels":

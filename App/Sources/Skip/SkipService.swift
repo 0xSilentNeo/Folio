@@ -25,13 +25,28 @@ struct SkipSegment: Identifiable, Hashable {
     let start: Double
     let end: Double
     let source: String
+
+    /// Live-action databases call the end segment "credits"; anime "ending".
+    var label: String {
+        if kind == .outro, source == "IntroDB" || source == "TheIntroDB" { return "Skip Credits" }
+        return kind.label
+    }
 }
 
-/// Finds OP/ED/recap/preview ranges:
-///   1. chapters already in the file (named Opening/OP/Ending/ED/...)
-///   2. AniSkip (has start AND end; keyed by MyAnimeList id)
-///   3. Open Anime Timestamps (start times only; keyed by AniDB id)
-/// IDs come from the item's hint or AniList title search + ids.moe mapping.
+/// What the online lookup found for one file.
+struct SkipLookup {
+    var segments: [SkipSegment] = []
+    /// A scene follows the credits (IntroDB `post_credits`): Up Next must not auto-play.
+    var postCredits = false
+}
+
+/// Finds intro/credits/recap/preview ranges:
+///   1. chapters already in the file (named Opening/OP/Ending/ED/Credits...)
+///   2. TV & films: IntroDB.app, then TheIntroDB.org — community databases
+///      keyed by IMDb id + season/episode (the sources Infuse uses)
+///   3. Anime: AniSkip (start AND end; MyAnimeList id), then Open Anime
+///      Timestamps (start times only; AniDB id). IDs come from the item's
+///      hint or an AniList search, never for titles that aren't animation.
 actor SkipService {
     static let shared = SkipService()
 
@@ -69,11 +84,88 @@ actor SkipService {
         return out
     }
 
-    // MARK: Online lookup
+    // MARK: TV & films (IntroDB, TheIntroDB)
 
-    func lookup(hint: AnimeHint, duration: Double, oatLength: Double) async -> [SkipSegment] {
+    private var tvCache: [String: SkipLookup] = [:]
+
+    func lookupTV(imdbId: String, season: Int?, episode: Int?, duration: Double) async -> SkipLookup {
+        let key = "\(imdbId)|\(season ?? -1)|\(episode ?? -1)"
+        if let c = tvCache[key] { return c }
+        var r = await introDB(imdbId: imdbId, season: season, episode: episode, duration: duration)
+        if r.segments.isEmpty {
+            let t = await theIntroDB(imdbId: imdbId, season: season, episode: episode, duration: duration)
+            r.segments = t.segments
+        }
+        tvCache[key] = r
+        return r
+    }
+
+    private func introDB(imdbId: String, season: Int?, episode: Int?, duration: Double) async -> SkipLookup {
+        var c = URLComponents(string: "https://api.introdb.app/segments")!
+        c.queryItems = [URLQueryItem(name: "imdb_id", value: imdbId)]
+        if let episode {
+            c.queryItems! += [URLQueryItem(name: "season", value: String(season ?? 1)), URLQueryItem(name: "episode", value: String(episode))]
+        } else {
+            c.queryItems!.append(URLQueryItem(name: "is_movie", value: "true"))
+        }
+        guard let url = c.url, let obj = await json(url) as? [String: Any] else { return SkipLookup() }
+        func seg(_ k: String) -> (Double, Double?)? {
+            guard let o = obj[k] as? [String: Any] else { return nil }
+            let s = (o["start_sec"] as? NSNumber)?.doubleValue ?? (o["start_ms"] as? NSNumber).map { $0.doubleValue / 1000 }
+            let e = (o["end_sec"] as? NSNumber)?.doubleValue ?? (o["end_ms"] as? NSNumber).map { $0.doubleValue / 1000 }
+            guard let s else { return nil }
+            return (s, e)
+        }
+        var out = SkipLookup()
+        let map: [(String, SkipSegment.Kind)] = [("recap", .recap), ("intro", .intro), ("outro", .outro)]
+        for (k, kind) in map {
+            guard let (s, e) = seg(k) else { continue }
+            let end = min(e ?? duration, duration > 0 ? duration : .greatestFiniteMagnitude)
+            if end > s { out.segments.append(SkipSegment(kind: kind, start: s, end: end, source: "IntroDB")) }
+        }
+        out.postCredits = seg("post_credits") != nil
+        out.segments.sort { $0.start < $1.start }
+        dlog("skip", "IntroDB \(imdbId) s\(season ?? 0)e\(episode ?? 0): \(out.segments.map { "\($0.kind.rawValue) \(Int($0.start))-\(Int($0.end))" }) postCredits=\(out.postCredits)")
+        return out
+    }
+
+    private func theIntroDB(imdbId: String, season: Int?, episode: Int?, duration: Double) async -> SkipLookup {
+        var c = URLComponents(string: "https://api.theintrodb.org/v3/media")!
+        c.queryItems = [URLQueryItem(name: "imdb_id", value: imdbId)]
+        if let episode { c.queryItems! += [URLQueryItem(name: "season", value: String(season ?? 1)), URLQueryItem(name: "episode", value: String(episode))] }
+        if duration > 0 { c.queryItems!.append(URLQueryItem(name: "duration_ms", value: String(Int(duration * 1000)))) }
+        guard let url = c.url, let obj = await json(url) as? [String: Any] else { return SkipLookup() }
+        var out = SkipLookup()
+        let map: [(String, SkipSegment.Kind)] = [("recap", .recap), ("intro", .intro), ("credits", .outro), ("preview", .preview)]
+        for (k, kind) in map {
+            for o in (obj[k] as? [[String: Any]]) ?? [] {
+                let sMs = (o["start_ms"] as? NSNumber)?.doubleValue ?? 0
+                let eMs = (o["end_ms"] as? NSNumber)?.doubleValue ?? 0
+                if sMs == 0 && eMs == 0 { continue }                    // "no segment"
+                let start = sMs / 1000
+                var end = eMs > 0 ? eMs / 1000 : duration               // null end = end of the file
+                if duration > 0 { end = min(end, duration) }
+                if end > start { out.segments.append(SkipSegment(kind: kind, start: start, end: end, source: "TheIntroDB")) }
+            }
+        }
+        out.segments.sort { $0.start < $1.start }
+        dlog("skip", "TheIntroDB \(imdbId) s\(season ?? 0)e\(episode ?? 0): \(out.segments.map { "\($0.kind.rawValue) \(Int($0.start))-\(Int($0.end))" })")
+        return out
+    }
+
+    // MARK: Anime (AniSkip, Open Anime Timestamps)
+
+    func lookup(hint: AnimeHint, season: Int? = nil, duration: Double, oatLength: Double) async -> [SkipSegment] {
         guard let episode = hint.episode, episode > 0 else { return [] }
-        let ids = await resolveIDs(hint)
+        var h = hint
+        // Later seasons are separate MyAnimeList entries: search for that
+        // season's entry and refuse a match that isn't clearly it (season 1's
+        // times on a season 2 episode would be wrong).
+        if let season, season > 1, h.malId == nil, h.anilistId == nil, h.kitsuId == nil, let t = h.title {
+            guard let found = await aniListSearch("\(t) Season \(season)", requireSeason: season) else { return [] }
+            h.anilistId = found.0; h.malId = found.1
+        }
+        let ids = await resolveIDs(h)
         if let mal = ids.malId {
             let s = await aniSkip(malId: mal, episode: episode, duration: duration)
             if !s.isEmpty { return s }
@@ -112,14 +204,14 @@ actor SkipService {
         return h
     }
 
-    private func aniListSearch(_ title: String) async -> (Int, Int?)? {
+    private func aniListSearch(_ title: String, requireSeason: Int? = nil) async -> (Int, Int?)? {
         guard let url = URL(string: "https://graphql.anilist.co") else { return nil }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         let body: [String: Any] = [
-            "query": "query($s:String){Media(search:$s,type:ANIME){id idMal}}",
+            "query": "query($s:String){Media(search:$s,type:ANIME){id idMal title{romaji english}}}",
             "variables": ["s": title],
         ]
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
@@ -127,12 +219,23 @@ actor SkipService {
               let obj = try? JSONSerialization.jsonObject(with: result.0) as? [String: Any],
               let media = (obj["data"] as? [String: Any])?["Media"] as? [String: Any],
               let id = media["id"] as? Int else { return nil }
+        if let n = requireSeason {
+            let titles = ((media["title"] as? [String: Any]) ?? [:]).values.compactMap { ($0 as? String)?.lowercased() }
+            let ordinals = ["", "", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"]
+            let roman = ["", "", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix"]
+            let marks = ["season \(n)", "\(n)nd season", "\(n)rd season", "\(n)th season", n < ordinals.count ? ordinals[n] : "\(n)th",
+                         n < roman.count ? " \(roman[n])" : "", " \(n)"].filter { !$0.isEmpty }
+            guard titles.contains(where: { t in marks.contains { t.contains($0) } }) else {
+                dlog("skip", "AniList: no confident match for \(title)")
+                return nil
+            }
+        }
         return (id, media["idMal"] as? Int)
     }
 
     private func aniSkip(malId: Int, episode: Int, duration: Double) async -> [SkipSegment] {
         var comps = URLComponents(string: "https://api.aniskip.com/v2/skip-times/\(malId)/\(episode)")!
-        comps.queryItems = ["op", "ed", "recap", "mixed-op", "mixed-ed"].map { URLQueryItem(name: "types", value: $0) }
+        comps.queryItems = ["op", "ed", "recap", "mixed-op", "mixed-ed"].map { URLQueryItem(name: "types[]", value: $0) }
             + [URLQueryItem(name: "episodeLength", value: String(Int(duration.rounded())))]
         guard let url = comps.url, let obj = await json(url) as? [String: Any],
               (obj["found"] as? Bool) == true,

@@ -17,7 +17,18 @@ struct HistoryEntry: Codable, Identifiable, Hashable {
 final class HistoryStore: ObservableObject {
     static let shared = HistoryStore()
 
-    @Published private(set) var entries: [HistoryEntry] = []
+    /// Not @Published: changes are announced by hand so the player's position
+    /// saves (every few seconds) don't re-render the library while it plays.
+    private(set) var entries: [HistoryEntry] = [] {
+        willSet { if deferPublishing { changedWhileDeferred = true } else { objectWillChange.send() } }
+    }
+    /// True while the player is open; the library catches up when it closes.
+    var deferPublishing = false {
+        didSet {
+            if !deferPublishing && changedWhileDeferred { changedWhileDeferred = false; objectWillChange.send() }
+        }
+    }
+    private var changedWhileDeferred = false
     private let fileURL: URL
     private var saveWork: DispatchWorkItem?
 

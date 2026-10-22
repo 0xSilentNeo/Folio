@@ -91,4 +91,9 @@ struct MediaItem: Codable, Hashable, Identifiable {
     }
 
     var displayTitle: String { title.isEmpty ? (resolvedURL?.lastPathComponent ?? url) : title }
+    /// The file's own name (last path component, percent-decoded).
+    var fileName: String {
+        let name = resolvedURL?.lastPathComponent ?? (url as NSString).lastPathComponent
+        return name.isEmpty ? displayTitle : (name.removingPercentEncoding ?? name)
+    }
 }

@@ -218,3 +218,72 @@ struct CloseDot: View {
         .foregroundStyle(.white)
     }
 }
+
+/// "Up Next" card shown when the credits start: the next episode with its
+/// art, a Play Now button that fills up during the countdown, and a close
+/// button to keep watching the credits.
+struct UpNextCard: View {
+    let upNext: PlayerModel.UpNext
+    @ObservedObject var model: PlayerModel
+    @ObservedObject var clock: PlaybackClock
+    @StateObject private var thumb = ThumbLoader()
+
+    private var remaining: Double { max(0, upNext.start + PlayerModel.upNextCountdown - clock.position) }
+    private var parsed: TitleParser.Parsed { TitleParser.parse(upNext.next.fileName) }
+    private var heading: String {
+        if let e = parsed.episode { return String(format: "S%02dE%02d", parsed.season ?? 1, e) }
+        return "Up Next"
+    }
+    private var title: String { thumb.meta?.episodeTitle ?? thumb.meta?.name ?? TitleParser.clean(upNext.next.fileName) }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() } else { GeneratedArt(seed: upNext.next.displayTitle) }
+            }
+            .frame(width: 112, height: 63)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            VStack(alignment: .leading, spacing: 6) {
+                Text("UP NEXT · \(heading)").font(.caption2.weight(.bold)).tracking(1).foregroundStyle(.white.opacity(0.6))
+                Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
+                HStack(spacing: 8) {
+                    Button { model.dismissUpNext(); model.playNext() } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "play.fill").font(.caption.weight(.bold))
+                            Text(upNext.autoplay && !model.paused ? "Play in \(Int(remaining.rounded(.up)))" : "Play Now")
+                                .font(.caption.weight(.bold)).monospacedDigit()
+                        }
+                        .padding(.horizontal, 12).frame(height: 30)
+                        .background {
+                            GeometryReader { g in
+                                ZStack(alignment: .leading) {
+                                    Capsule().fill(.white.opacity(0.18))
+                                    if upNext.autoplay {
+                                        Capsule().fill(Theme.accent)
+                                            .frame(width: g.size.width * (1 - remaining / PlayerModel.upNextCountdown))
+                                            .animation(.linear(duration: 0.25), value: remaining)
+                                    }
+                                }
+                            }
+                        }
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(PressStyle(scale: 0.95))
+                    Button { model.dismissUpNext() } label: {
+                        Text(upNext.autoplay ? "Watch Credits" : "Close").font(.caption.weight(.semibold))
+                            .padding(.horizontal, 12).frame(height: 30)
+                            .background(.white.opacity(0.12), in: Capsule())
+                    }
+                    .buttonStyle(PressStyle(scale: 0.95))
+                }
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(10)
+        .glass(cornerRadius: 20)
+        .onAppear {
+            let n = upNext.next
+            thumb.load(key: "upnext|" + (n.historyKey ?? n.url), fileURL: nil, artwork: n.artwork, lookupName: n.fileName, preferMeta: true)
+        }
+    }
+}

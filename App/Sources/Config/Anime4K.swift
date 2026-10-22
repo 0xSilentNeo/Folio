@@ -118,3 +118,45 @@ enum EnhancedQuality {
         ("deband", "no"), ("deband-iterations", "1"), ("deband-threshold", "48"), ("dither-depth", "no"),
     ]
 }
+
+/// Picture processing level. Efficient is the default: hardware-filtered
+/// (bilinear) scaling and no extra passes, which is what keeps the GPU — and
+/// the phone — cool. Balanced uses a sharper 4-tap scaler; Enhanced is the
+/// desktop "high quality" set (several full-resolution passes per frame).
+enum PictureMode: String, CaseIterable, Identifiable {
+    case efficient, balanced, enhanced
+    var id: String { rawValue }
+    var title: String {
+        switch self { case .efficient: "Efficient"; case .balanced: "Balanced"; case .enhanced: "Enhanced" }
+    }
+    var hint: String {
+        switch self {
+        case .efficient: "Coolest, longest battery"
+        case .balanced: "Sharper scaling"
+        case .enhanced: "Best scaling, debanding · uses more power"
+        }
+    }
+    var options: [(String, String)] {
+        switch self {
+        case .efficient:
+            return [("scale", "bilinear"), ("cscale", "bilinear"), ("dscale", "bilinear"),
+                    ("correct-downscaling", "no"), ("linear-downscaling", "no"), ("sigmoid-upscaling", "no"),
+                    ("deband", "no"), ("dither-depth", "no")]
+        case .balanced:
+            return [("scale", "catmull_rom"), ("cscale", "bilinear"), ("dscale", "hermite"),
+                    ("correct-downscaling", "no"), ("linear-downscaling", "no"), ("sigmoid-upscaling", "no"),
+                    ("deband", "no"), ("dither-depth", "auto")]
+        case .enhanced:
+            return EnhancedQuality.options
+        }
+    }
+
+    static var current: PictureMode {
+        get {
+            let d = UserDefaults.standard
+            if let raw = d.string(forKey: SettingsKey.pictureMode), let m = PictureMode(rawValue: raw) { return m }
+            return d.bool(forKey: SettingsKey.enhancedQuality) ? .enhanced : .efficient   // 1.9.x toggle
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: SettingsKey.pictureMode) }
+    }
+}

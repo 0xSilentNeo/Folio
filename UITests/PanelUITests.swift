@@ -97,4 +97,18 @@ final class PanelUITests: XCTestCase {
         print("RAPID opened \(ok)/10")
         XCTAssertEqual(ok, 10, "some taps did not open their panel")
     }
+
+    /// Lock button next to PiP: locks the controls, Unlock restores them.
+    func test5LockButton() throws {
+        let app = launchPlayer()
+        let lock = app.buttons["Lock controls"]
+        XCTAssertTrue(lock.waitForExistence(timeout: 5), "lock button missing")
+        lock.tap()
+        XCTAssertTrue(app.buttons["Unlock"].waitForExistence(timeout: 4), "Unlock did not appear")
+        XCTAssertFalse(app.buttons["Settings"].exists, "controls still shown while locked")
+        sleep(1)
+        app.buttons["Unlock"].tap()
+        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 4), "controls did not come back")
+        sleep(1)
+    }
 }

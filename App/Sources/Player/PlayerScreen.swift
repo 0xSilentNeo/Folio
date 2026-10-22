@@ -44,6 +44,7 @@ struct PlayerScreen: View {
                 if ui.locked && ui.controlsVisible { lockedOverlay.transition(.opacity) }
 
                 skipButton(geo)
+                upNextCard(geo)
 
                 if model.holdSpeedActive {
                     topPill(Label(String(format: "%g×", model.holdSpeed), systemImage: "forward.fill"), top: geo.safeAreaInsets.top)
@@ -84,6 +85,7 @@ struct PlayerScreen: View {
             .animation(.spring(response: 0.4, dampingFraction: 0.84), value: ui.showTune)
             .animation(.easeOut(duration: 0.18), value: model.toast)
             .animation(.easeOut(duration: 0.18), value: model.holdSpeedActive)
+            .animation(.spring(response: 0.4, dampingFraction: 0.86), value: model.upNext != nil)
         }
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
@@ -120,7 +122,7 @@ struct PlayerScreen: View {
         let size = window.bounds.size
         let compact = size.width < 640
         let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
-        let maxHeight = max(180, size.height - (compact ? 150 : 76) - window.safeAreaInsets.top - 52)
+        let maxHeight = max(180, size.height - (compact ? 150 : 84) - window.safeAreaInsets.top - 66)
         let body = PlayerPanel(kind: kind, model: model, ui: ui, width: width, maxHeight: maxHeight,
                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock, bare: true)
         var passthrough: [UIView] = []
@@ -195,16 +197,17 @@ struct PlayerScreen: View {
     }
 
     private var step: Int { max(1, UserDefaults.standard.integer(forKey: SettingsKey.seekStep)) }
-    private var stepIcon: Int { [5, 10, 15, 30, 45, 60, 75, 90].contains(step) ? step : 10 }
+    private var backStep: Int { max(1, UserDefaults.standard.integer(forKey: SettingsKey.seekBackStep)) }
+    private func icon(_ s: Int) -> Int { [5, 10, 15, 30, 45, 60, 75, 90].contains(s) ? s : 10 }
 
     private var transportPill: some View {
         GlassGroup(unionID: "transport", ns: glassNS) {
-            PillIcon("gobackward.\(stepIcon)", size: 18, unionID: "transport", ns: glassNS) { model.seek(by: -Double(step)) }
+            PillIcon("gobackward.\(icon(backStep))", size: 18, unionID: "transport", ns: glassNS) { model.seek(by: -Double(backStep)) }
             PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 21, unionID: "transport", ns: glassNS) {
                 model.togglePause()
                 ui.showControls()
             }
-            PillIcon("goforward.\(stepIcon)", size: 18, unionID: "transport", ns: glassNS) { model.seek(by: Double(step)) }
+            PillIcon("goforward.\(icon(step))", size: 18, unionID: "transport", ns: glassNS) { model.seek(by: Double(step)) }
         }
     }
 
@@ -255,14 +258,14 @@ struct PlayerScreen: View {
 
     @ViewBuilder
     private func skipButton(_ geo: GeometryProxy) -> some View {
-        if let seg = model.activeSegment, !ui.locked, ui.panel == nil {
+        if let seg = model.activeSegment, !ui.locked, ui.panel == nil, !(seg.kind == .outro && model.upNext != nil) {
             VStack {
                 Spacer()
                 HStack {
                     Spacer()
                     Button { model.skip(seg) } label: {
                         HStack(spacing: 6) {
-                            Text(seg.kind.label)
+                            Text(seg.label)
                             Image(systemName: "chevron.right.2")
                         }
                         .font(.subheadline.weight(.bold))
@@ -280,6 +283,28 @@ struct PlayerScreen: View {
             .ignoresSafeArea(.container, edges: .horizontal)
             .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottomTrailing)))
             .animation(.spring(response: 0.3, dampingFraction: 0.85), value: model.activeSegment)
+        }
+    }
+
+    @ViewBuilder
+    private func upNextCard(_ geo: GeometryProxy) -> some View {
+        if let next = model.upNext, !ui.locked, ui.panel == nil {
+            let fullWidth = geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
+            let compact = geo.size.width < 640
+            let side: CGFloat = compact ? 16 : max(20, fullWidth * (1 - min(1, max(0.6, controlsWidth))) / 2)
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    UpNextCard(upNext: next, model: model, clock: model.clock)
+                        .frame(maxWidth: 380)
+                }
+                .padding(.trailing, side)
+                .padding(.bottom, ui.controlsVisible ? (compact ? 122 : 74) : 24)
+            }
+            .ignoresSafeArea(.container, edges: .horizontal)
+            .transition(.move(edge: .trailing).combined(with: .opacity))
+            .animation(.spring(response: 0.35, dampingFraction: 0.86), value: ui.controlsVisible)
         }
     }
 

@@ -52,7 +52,7 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
             }
             pc.passthroughViews = passthrough
             // Keep the panel above the button bar so the other buttons stay tappable.
-            pc.popoverLayoutMargins = UIEdgeInsets(top: 52, left: 16, bottom: bottomInset, right: 16)
+            pc.popoverLayoutMargins = UIEdgeInsets(top: 66, left: 16, bottom: bottomInset, right: 16)
         }
     }
 

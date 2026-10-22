@@ -98,6 +98,8 @@ final class IMDbPageLoader: NSObject, WKNavigationDelegate {
         let job = current
         current = nil
         job?.continuation.resume(returning: html)
+        // Nothing queued: drop the page so the hidden web view sits idle.
+        if queue.isEmpty { webView?.loadHTMLString("", baseURL: nil) }
         pump()
     }
 

@@ -76,12 +76,7 @@ struct PosterImage: View {
             .aspectRatio(aspect, contentMode: .fit)
             .overlay {
                 if let url, let u = URL(string: url) {
-                    AsyncImage(url: u, transaction: Transaction(animation: .easeOut(duration: 0.2))) { phase in
-                        switch phase {
-                        case .success(let img): img.resizable().scaledToFill()
-                        default: placeholder
-                        }
-                    }
+                    CachedImage(url: u, maxPixel: 700) { $0.resizable().scaledToFill() } placeholder: { placeholder }
                 } else {
                     placeholder
                 }

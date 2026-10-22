@@ -8,6 +8,16 @@ enum SettingsKey {
     static let defaultSpeed = "defaultSpeed"
     static let seekStep = "seekStep"
     static let autoplayNext = "autoplayNext"
+    static let upNextEnabled = "upNextEnabled"
+    static let seekBackStep = "seekBackStep"
+    static let gestureControl = "gestureControl"
+    static let subtitlesDefault = "subtitlesDefault"   // on | off
+    static let downmixNormalize = "downmixNormalize"
+    static let lfeInDownmix = "lfeInDownmix"
+    static let startupTab = "startupTab"
+    static let metadataFetching = "metadataFetching"
+    static let showRatings = "showRatings"
+    static let hideSpoilers = "hideSpoilers"
     static let backgroundAudio = "backgroundAudio"
     static let holdToSpeed = "holdToSpeed"
     static let holdSpeedValue = "holdSpeedValue"
@@ -47,7 +57,8 @@ enum SettingsKey {
     static let surroundAudio = "surroundAudio"
     static let anime4kMode = "anime4kMode"
     static let anime4kQuality = "anime4kQuality"
-    static let enhancedQuality = "enhancedQuality"
+    static let enhancedQuality = "enhancedQuality"     // 1.9.x; superseded by pictureMode
+    static let pictureMode = "pictureMode"             // efficient | balanced | enhanced
     static let audioBoost = "audioBoost"          // 0 | 50 | 100 (percent)
     static let playbackMode = "playbackMode"      // playlist | single | loop
     static let logLevel = "logLevel"
@@ -65,6 +76,16 @@ enum SettingsKey {
             defaultSpeed: 1.0,
             seekStep: 10,
             autoplayNext: true,
+            upNextEnabled: true,
+            seekBackStep: 10,
+            gestureControl: true,
+            subtitlesDefault: "on",
+            downmixNormalize: false,
+            lfeInDownmix: false,
+            startupTab: 0,
+            metadataFetching: true,
+            showRatings: true,
+            hideSpoilers: false,
             backgroundAudio: true,
             holdToSpeed: true,
             holdSpeedValue: 2.0,

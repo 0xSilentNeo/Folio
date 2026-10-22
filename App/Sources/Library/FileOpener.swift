@@ -195,38 +195,46 @@ final class ThumbLoader: ObservableObject {
         guard loadedKey != key else { return }
         loadedKey = key
         if let c = Self.cache.object(forKey: key as NSString) { image = c }
-        else if let img = ThumbnailStore.image(for: key), !preferMeta { set(img, key) }
-        if image == nil, let artwork, let u = URL(string: artwork) { fetch(u, key) }
-        if let lookupName {
-            Task {
-                guard let m = await MetadataService.shared.lookup(filename: lookupName) else { return }
-                self.meta = m
-                if (self.image == nil || preferMeta), let art = m.wideArt, let u = URL(string: art) { self.fetch(u, key) }
+        Task {
+            // Saved frame (Continue Watching) from disk, decoded off the main thread.
+            if image == nil, !preferMeta, let img = await Self.decodeFile(ThumbnailStore.url(for: key)) { set(img, key) }
+            if image == nil, let artwork, let u = URL(string: artwork) { await fetch(u, key) }
+            if let lookupName {
+                // Metadata is cached on disk forever; artwork on disk too (ImageCache).
+                if let m = await MetadataService.shared.lookup(filename: lookupName) {
+                    self.meta = m
+                    if (self.image == nil || preferMeta), let art = m.wideArt, let u = URL(string: art) { await self.fetch(u, key) }
+                }
             }
-        }
-        if image == nil, artwork == nil, let fileURL, ["mp4", "m4v", "mov"].contains(fileURL.pathExtension.lowercased()) {
-            Task.detached(priority: .utility) {
-                let gen = AVAssetImageGenerator(asset: AVURLAsset(url: fileURL))
-                gen.appliesPreferredTrackTransform = true
-                gen.maximumSize = CGSize(width: 640, height: 360)
-                if let cg = try? await gen.image(at: CMTime(seconds: 30, preferredTimescale: 600)).image {
+            if image == nil, artwork == nil, let fileURL, ["mp4", "m4v", "mov"].contains(fileURL.pathExtension.lowercased()) {
+                let img: UIImage? = await Task.detached(priority: .utility) {
+                    let gen = AVAssetImageGenerator(asset: AVURLAsset(url: fileURL))
+                    gen.appliesPreferredTrackTransform = true
+                    gen.maximumSize = CGSize(width: 640, height: 360)
+                    guard let cg = try? await gen.image(at: CMTime(seconds: 30, preferredTimescale: 600)).image else { return nil }
                     let img = UIImage(cgImage: cg)
                     if let data = img.jpegData(compressionQuality: 0.75) { try? data.write(to: ThumbnailStore.url(for: key)) }
-                    await MainActor.run { if self.image == nil { self.set(img, key) } }
-                }
+                    return img
+                }.value
+                if let img, self.image == nil { set(img, key) }
             }
         }
     }
 
-    private func fetch(_ u: URL, _ key: String) {
-        Task {
-            if let r = try? await URLSession.shared.data(from: u), let img = UIImage(data: r.0) { set(img, key) }
-        }
+    private static func decodeFile(_ url: URL) async -> UIImage? {
+        await Task.detached(priority: .userInitiated) {
+            guard let d = try? Data(contentsOf: url) else { return nil }
+            return ImageCache.downsample(d, maxPixel: 800)
+        }.value
+    }
+
+    private func fetch(_ u: URL, _ key: String) async {
+        if let img = await ImageCache.shared.image(u, maxPixel: 900) { set(img, key) }
     }
 
     private func set(_ img: UIImage, _ key: String) {
         Self.cache.setObject(img, forKey: key as NSString)
-        withAnimation(.easeOut(duration: 0.25)) { image = img }
+        if image == nil { withAnimation(.easeOut(duration: 0.2)) { image = img } } else { image = img }
     }
 }
 

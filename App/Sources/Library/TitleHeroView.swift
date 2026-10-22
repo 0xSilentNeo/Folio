@@ -11,6 +11,16 @@ struct TitleHeroView: View {
     @ObservedObject private var history = HistoryStore.shared
     @StateObject private var thumb = ThumbLoader()
     @AppStorage("heroView") private var viewMode = LibraryViewMode.details.rawValue
+    @AppStorage(SettingsKey.showRatings) private var showRatings = true
+    @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
+
+    /// Episode synopsis, unless spoilers are hidden and it hasn't been watched
+    /// (then the show's own description).
+    private func spoilerSafe(_ m: MediaMeta?) -> String? {
+        guard let m else { return nil }
+        if hideSpoilers, m.episodeOverview != nil, HistoryStore.shared.entry(forURL: file.path)?.isFinished != true { return m.description }
+        return m.synopsis
+    }
     @Environment(\.dismiss) private var dismiss
     @State private var confirmDelete = false
     @State private var season: Int?
@@ -62,7 +72,7 @@ struct TitleHeroView: View {
                                 .buttonStyle(PressStyle())
                             }
                         }
-                        if let s = meta?.synopsis, !s.isEmpty {
+                        if let s = spoilerSafe(meta), !s.isEmpty {
                             Text(s).font(.callout).foregroundStyle(.white.opacity(0.85)).lineSpacing(2)
                         }
                         if let g = meta?.genres, !g.isEmpty {
@@ -103,7 +113,7 @@ struct TitleHeroView: View {
                 .overlay(LinearGradient(colors: [.black.opacity(0.25), .clear, Theme.background.opacity(0.9), Theme.background],
                                         startPoint: .top, endPoint: .bottom))
             if let poster = meta?.poster, let u = URL(string: poster) {
-                AsyncImage(url: u) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
+                CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
                     .frame(width: 84, height: 126)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
@@ -121,7 +131,7 @@ struct TitleHeroView: View {
                 Text(ep).font(.headline).foregroundStyle(.white.opacity(0.8))
             }
             HStack(spacing: 8) {
-                if let r = meta?.rating { chip("★ \(r)", strong: true) }
+                if showRatings, let r = meta?.rating { chip("★ \(r)", strong: true) }
                 if let y = meta?.year ?? parsed.year.map(String.init) { chip(y) }
                 if let res = parsed.resolution { chip(res) }
                 chip(file.pathExtension.uppercased())
@@ -389,7 +399,12 @@ struct LibraryRow: View {
     var fixedTitle: String? = nil
     var fixedSubtitle: String? = nil
     @StateObject private var thumb = ThumbLoader()
+    @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
 
+    /// Unwatched episode with spoilers hidden: no synopsis, blurred frame.
+    private var spoilerHidden: Bool {
+        hideSpoilers && parsed.episode != nil && HistoryStore.shared.entry(forURL: file.path)?.isFinished != true
+    }
     private var parsed: TitleParser.Parsed { TitleParser.parse(file.lastPathComponent) }
     private var episodeTag: String? {
         guard let e = parsed.episode else { return nil }
@@ -406,6 +421,7 @@ struct LibraryRow: View {
             return fixedSubtitle
         }
         if detail {
+            if spoilerHidden { return thumb.meta?.name ?? file.lastPathComponent }
             if let s = thumb.meta?.synopsis, !s.isEmpty { return s }
             return file.lastPathComponent
         }
@@ -440,7 +456,7 @@ struct LibraryRow: View {
         ZStack(alignment: .bottomLeading) {
             Color.clear.frame(width: thumbW, height: thumbH)
                 .overlay {
-                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill().blur(radius: spoilerHidden ? 12 : 0) }
                     else { GeneratedArt(seed: file.lastPathComponent) }
                 }
                 .clipped()

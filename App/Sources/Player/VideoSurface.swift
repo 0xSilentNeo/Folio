@@ -88,9 +88,10 @@ struct VideoSurface: UIViewRepresentable {
             guard !ui.locked, let v = view else { return }
             let x = g.location(in: v).x / max(v.bounds.width, 1)
             let step = Double(UserDefaults.standard.integer(forKey: SettingsKey.seekStep))
+            let back = Double(max(1, UserDefaults.standard.integer(forKey: SettingsKey.seekBackStep)))
             if x < 0.35 {
-                model.seek(by: -step)
-                flashHUD(icon: "gobackward", text: "-\(Int(step))s")
+                model.seek(by: -back)
+                flashHUD(icon: "gobackward", text: "-\(Int(back))s")
             } else if x > 0.65 {
                 model.seek(by: step)
                 flashHUD(icon: "goforward", text: "+\(Int(step))s")
@@ -116,7 +117,7 @@ struct VideoSurface: UIViewRepresentable {
         }
 
         @objc private func pan(_ g: UIPanGestureRecognizer) {
-            guard !ui.locked, let v = view, !longPressActive else { return }
+            guard !ui.locked, let v = view, !longPressActive, UserDefaults.standard.bool(forKey: SettingsKey.gestureControl) else { return }
             let t = g.translation(in: v)
             switch g.state {
             case .began:

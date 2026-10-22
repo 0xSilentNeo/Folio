@@ -202,8 +202,8 @@ struct SettingsPanelContent: View {
             }
 
             PanelHeader(title: "Video")
-            PanelRow(icon: "sparkles.tv", title: "Enhanced Quality", subtitle: "Improved scaling and color processing") {
-                Toggle("", isOn: $model.enhancedQuality).labelsHidden()
+            PanelRow(icon: "sparkles.tv", title: "Picture", subtitle: model.pictureMode.hint) {
+                ValueMenu(options: PictureMode.allCases.map { ($0, $0.title) }, selection: $model.pictureMode)
             }
             PanelRow(icon: "wand.and.stars", title: "Anime4K", subtitle: model.anime4kMode.hint) {
                 ValueMenu(options: Anime4KMode.allCases.map { ($0, $0.title) }, selection: $model.anime4kMode)
@@ -255,7 +255,8 @@ struct SettingsPanelContent: View {
 
             PanelHeader(title: "Interface")
             PanelRow(icon: "arrow.counterclockwise", title: "Skip interval") {
-                SegmentPicker(options: [(5, "5"), (10, "10"), (15, "15"), (30, "30")], selection: $seekStep)
+                SegmentPicker(options: [(5, "5"), (10, "10"), (15, "15"), (30, "30")],
+                              selection: Binding(get: { seekStep }, set: { seekStep = $0; UserDefaults.standard.set($0, forKey: SettingsKey.seekBackStep) }))
                     .frame(width: 168)
             }
             PanelRow(icon: "rectangle.landscape.rotate", title: "Auto-Rotate", subtitle: ui.rotationLocked ? "Locked" : nil) {
@@ -384,11 +385,13 @@ struct NowPlayingPanelContent: View {
     @ObservedObject var ui: PlayerUIState
     @State private var tab = 0
     @AppStorage("screenshotSubs") private var screenshotSubs = true
+    @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("NOW PLAYING").font(.caption.weight(.bold)).tracking(1.5).foregroundStyle(.white.opacity(0.55))
-            Text(model.item.displayTitle).font(.headline).lineLimit(3)
+            Text(playlistNames == "filename" ? model.item.fileName : model.item.displayTitle)
+                .font(playlistNames == "filename" ? .subheadline.weight(.semibold) : .headline).lineLimit(3)
             HStack(spacing: 10) {
                 SegmentPicker(options: [(0, "Playlist"), (1, "Chapters"), (2, "Markers")], selection: $tab)
                     .frame(maxWidth: .infinity)
@@ -468,6 +471,26 @@ struct PlaylistRow: View {
     let active: Bool
     let action: () -> Void
     @StateObject private var thumb = ThumbLoader()
+    @AppStorage(SettingsKey.playlistNames) private var names = "episode"
+
+    private var parsed: TitleParser.Parsed { TitleParser.parse(item.fileName) }
+    /// "S01E02 · Episode title" (or the full file name, per Settings).
+    private var titleLine: String {
+        if names == "filename" { return item.fileName }
+        let p = parsed
+        if let e = p.episode {
+            let code = String(format: "S%02dE%02d", p.season ?? 1, e)
+            if let t = thumb.meta?.episodeTitle ?? item.subtitle, !t.isEmpty { return "\(code) · \(t)" }
+            return "\(code) · \(thumb.meta?.name ?? p.title)"
+        }
+        return thumb.meta?.name ?? item.displayTitle
+    }
+    private var subtitleLine: String? {
+        if names == "filename" { return nil }
+        if parsed.episode != nil { return thumb.meta?.name ?? parsed.title }
+        return thumb.meta?.episodeTitle ?? item.subtitle
+    }
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 10) {
@@ -479,8 +502,9 @@ struct PlaylistRow: View {
                 .frame(width: 64, height: 36)
                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(thumb.meta?.name ?? item.displayTitle).font(.subheadline.weight(active ? .semibold : .regular)).lineLimit(1)
-                    if let sub = thumb.meta?.episodeTitle ?? item.subtitle, !sub.isEmpty {
+                    Text(titleLine).font(.subheadline.weight(active ? .semibold : .regular))
+                        .lineLimit(names == "filename" ? 2 : 1)
+                    if let sub = subtitleLine, !sub.isEmpty {
                         Text(sub).font(.caption2).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
                     }
                 }

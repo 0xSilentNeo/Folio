@@ -40,6 +40,7 @@ actor MetadataService {
     }
 
     func lookup(filename: String) async -> MediaMeta? {
+        guard UserDefaults.standard.bool(forKey: SettingsKey.metadataFetching) else { return nil }
         let p = TitleParser.parse(filename)
         guard p.title.count >= 2 else { return nil }
         let key = [p.title.lowercased(), p.year.map(String.init) ?? "", p.season.map(String.init) ?? "", p.episode.map(String.init) ?? ""].joined(separator: "|")
@@ -101,6 +102,14 @@ actor MetadataService {
         let eps = await IMDbSource.episodes(id: id, season: s)
         return eps.first { $0.episode == episode }
     }
+
+    /// Forget everything looked up (Settings → Library → Refresh Metadata).
+    func clear() {
+        cache = [:]
+        try? FileManager.default.removeItem(at: file)
+    }
+
+    var fileSize: Int64 { Int64((try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
 
     private func save() {
         guard !dirty else { return }

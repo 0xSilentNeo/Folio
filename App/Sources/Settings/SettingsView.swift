@@ -6,9 +6,13 @@ struct SettingsView: View {
         Group {
             List {
                 Section {
+                    row("General", "gearshape", .gray) { GeneralSettings() }
+                    row("Library", "film.stack", .green) { LibrarySettings() }
+                }
+                Section {
                     row("Playback", "play.rectangle", .pink) { PlaybackSettings() }
                     row("Subtitles & Audio", "captions.bubble", .orange) { SubtitleAudioSettings() }
-                    row("Skip Intro", "forward.end", .purple) { SkipSettings() }
+                    row("Skip Intro & Credits", "forward.end", .purple) { SkipSettings() }
                     row("Discover", "sparkles.tv", .cyan) { DiscoverSettings() }
                 }
                 Section {
@@ -62,20 +66,29 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.holdSpeedValue) private var holdSpeedValue = 2.0
     @AppStorage(SettingsKey.pipEnabled) private var pipEnabled = true
     @AppStorage(SettingsKey.pipAuto) private var pipAuto = true
+    @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
+    @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
+    @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
+    @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
+    @AppStorage(SettingsKey.gestureControl) private var gestures = true
 
     var body: some View {
         Form {
             Section {
                 Toggle("Resume where I left off", isOn: $resume)
-                Toggle("Open title page on tap", isOn: $openTitlePage)
                 Toggle("Play next file automatically", isOn: $autoplayNext)
+                Toggle("Up Next card at the credits", isOn: $upNext)
                 Toggle("Open in landscape", isOn: $landscapeOnOpen)
                 Toggle("Keep audio playing in background", isOn: $backgroundAudio)
             }
             Section("Gestures") {
-                Picker("Skip / double-tap", selection: $seekStep) {
+                Picker("Forward skip", selection: $seekStep) {
                     ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
                 }
+                Picker("Backward skip", selection: $seekBackStep) {
+                    ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
+                }
+                Toggle("Swipe for seek, volume & brightness", isOn: $gestures)
                 Toggle("Hold to speed up", isOn: $holdToSpeed)
                 if holdToSpeed {
                     Picker("Hold speed", selection: $holdSpeedValue) {
@@ -85,6 +98,18 @@ struct PlaybackSettings: View {
                 Picker("Default speed", selection: $defaultSpeed) {
                     ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
                 }
+            }
+            Section {
+                Picker("Playlist names", selection: $playlistNames) {
+                    Text("Episode number & title").tag("episode")
+                    Text("File name").tag("filename")
+                }
+                LabeledContent("Controls width") {
+                    Slider(value: $controlsWidth, in: 0.6...1.0, step: 0.05).frame(maxWidth: 170)
+                    Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
+                }
+            } header: { Text("Player") } footer: {
+                Text("Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
             }
             Section("Progress bar") {
                 Picker("Chapter markers", selection: $bar.markerStyle) {
@@ -114,10 +139,16 @@ struct SubtitleAudioSettings: View {
     @AppStorage(SettingsKey.subBox) private var subBox = false
     @AppStorage(SettingsKey.subPos) private var subPos = 100
     @AppStorage(SettingsKey.surroundAudio) private var surround = true
+    @AppStorage(SettingsKey.subtitlesDefault) private var subtitlesDefault = "on"
+    @AppStorage(SettingsKey.downmixNormalize) private var downmixNormalize = false
+    @AppStorage(SettingsKey.lfeInDownmix) private var lfe = false
 
     var body: some View {
         Form {
             Section {
+                Picker("Subtitles", selection: $subtitlesDefault) {
+                    Text("On").tag("on"); Text("Off").tag("off")
+                }
                 TextField("Subtitle languages", text: $subLangs).textInputAutocapitalization(.never).autocorrectionDisabled()
                 TextField("Audio languages", text: $audioLangs).textInputAutocapitalization(.never).autocorrectionDisabled()
             } header: { Text("Preferred languages") } footer: { Text("Comma-separated codes, e.g. eng,en or jpn,ja.") }
@@ -132,6 +163,10 @@ struct SubtitleAudioSettings: View {
             }
             Section {
                 Toggle("Surround & Spatial Audio", isOn: $surround)
+                Picker("Downmix volume", selection: $downmixNormalize) {
+                    Text("Original").tag(false); Text("Normalized").tag(true)
+                }
+                Toggle("LFE in stereo downmix", isOn: $lfe)
             } header: { Text("Audio") } footer: {
                 Text("Plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't rendered.")
             }
@@ -156,7 +191,7 @@ struct SkipSettings: View {
             Section {
                 Toggle("Show Skip button", isOn: $skipEnabled)
             } footer: {
-                Text("Uses chapters in the file, otherwise AniSkip and Open Anime Timestamps (anime).")
+                Text("Uses chapters in the file; otherwise IntroDB and TheIntroDB for TV and films (community databases looked up by IMDb id, the ones Infuse uses), and AniSkip / Open Anime Timestamps for anime only.")
             }
             if skipEnabled {
                 Section("Skip automatically") {
@@ -174,7 +209,7 @@ struct SkipSettings: View {
                 }
             }
         }
-        .navigationTitle("Skip Intro")
+        .navigationTitle("Skip Intro & Credits")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -200,6 +235,7 @@ struct AdvancedSettings: View {
     @AppStorage(SettingsKey.cacheMB) private var cacheMB = 150
     @AppStorage(SettingsKey.logLevel) private var logLevel = "info"
     @AppStorage(SettingsKey.flipVideo) private var flipVideo = false
+    @State private var picture = PictureMode.current
     @State private var confirmClear = false
 
     var body: some View {
@@ -209,6 +245,10 @@ struct AdvancedSettings: View {
                     Text("Metal").tag("metal")
                     Text("OpenGL ES (compatibility)").tag("gl")
                 }
+                Picker("Picture", selection: $picture) {
+                    ForEach(PictureMode.allCases) { Text($0.title).tag($0) }
+                }
+                .onChange(of: picture) { _, m in PictureMode.current = m }
                 Toggle("HDR output", isOn: $hdr).disabled(renderer != "metal")
                 Picker("Hardware decoding", selection: $hwdec) {
                     Text("Auto").tag("auto")
@@ -216,7 +256,7 @@ struct AdvancedSettings: View {
                     Text("Off").tag("no")
                 }
             } header: { Text("Video") } footer: {
-                Text("Metal uses libplacebo: Dolby Vision, HDR tone mapping and compute shaders. OpenGL ES is the fallback if a device has trouble.")
+                Text("Picture: Efficient keeps the phone cool (simple scaling, no extra passes). Enhanced runs several extra full-screen passes per frame and uses noticeably more power. Metal uses libplacebo: Dolby Vision, HDR tone mapping and compute shaders. OpenGL ES is the fallback if a device has trouble.")
             }
             Section("Network") {
                 Stepper("Cache  \(cacheMB) MB", value: $cacheMB, in: 32...1024, step: 32)
@@ -721,5 +761,114 @@ struct DiscoverSettings: View {
         .navigationTitle("Discover")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPlatforms) { PlatformSettingsView() }
+    }
+}
+
+
+struct GeneralSettings: View {
+    @AppStorage(SettingsKey.startupTab) private var startupTab = 0
+    @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
+    @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
+    @AppStorage(SettingsKey.showRatings) private var showRatings = true
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("Startup page", selection: $startupTab) {
+                    Label("Home", systemImage: "play.rectangle.fill").tag(0)
+                    Label("Discover", systemImage: "sparkles.tv").tag(1)
+                    Label("Network", systemImage: "externaldrive.connected.to.line.below").tag(2)
+                }
+                Toggle("Open title page on tap", isOn: $openTitlePage)
+            }
+            Section {
+                Toggle("Hide spoilers", isOn: $hideSpoilers)
+                Toggle("Show IMDb ratings", isOn: $showRatings)
+            } footer: {
+                Text("Hide spoilers blurs the pictures and hides the synopsis of episodes you haven't finished.")
+            }
+        }
+        .navigationTitle("General")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct LibrarySettings: View {
+    @ObservedObject private var store = LocalMediaStore.shared
+    @AppStorage(SettingsKey.metadataFetching) private var fetching = true
+    @State private var cacheBytes: Int64 = 0
+    @State private var working = false
+
+    private var counts: (movies: Int, episodes: Int, other: Int) {
+        var m = 0, e = 0, o = 0
+        let audio: Set<String> = ["mp3", "flac", "m4a", "aac", "ogg", "opus", "wav", "alac", "wma", "ape", "mka"]
+        for f in store.files {
+            if audio.contains(f.pathExtension.lowercased()) { o += 1 }
+            else if TitleParser.parse(f.lastPathComponent).episode != nil { e += 1 }
+            else { m += 1 }
+        }
+        return (m, e, o)
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                HStack(spacing: 10) {
+                    stat(counts.movies, "Movies")
+                    stat(counts.episodes, "TV Episodes")
+                    stat(counts.other, "Other")
+                }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+            }
+            Section {
+                Button("Scan for changes") { store.refresh() }
+                Button("Refresh metadata") {
+                    working = true
+                    Task {
+                        await MetadataService.shared.clear()
+                        ImageCache.shared.clear()
+                        store.refresh()
+                        await measure()
+                        working = false
+                    }
+                }
+                .disabled(!fetching || working)
+            } footer: { Text("Refresh metadata looks every title up again (posters, synopsis, ratings, episode names).") }
+            Section {
+                Toggle("Metadata fetching", isOn: $fetching)
+                HStack {
+                    Text("Library cache")
+                    Spacer()
+                    Text(ByteCountFormatter.string(fromByteCount: cacheBytes, countStyle: .file)).foregroundStyle(.secondary)
+                    Button(role: .destructive) {
+                        ImageCache.shared.clear()
+                        Task { await measure() }
+                    } label: { Image(systemName: "trash") }
+                    .buttonStyle(.borderless)
+                }
+            } header: { Text("Metadata & artwork") } footer: {
+                Text("Titles, posters and episode names come from IMDb, looked up from the file names and kept on this device. The cache holds downloaded artwork; it refills as you browse.")
+            }
+        }
+        .navigationTitle("Library")
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await measure() }
+    }
+
+    private func stat(_ n: Int, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("\(n)").font(.title.weight(.bold)).monospacedDigit()
+            Text(label).font(.subheadline).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func measure() async {
+        let art = await Task.detached { ImageCache.shared.diskSize() }.value
+        let meta = await MetadataService.shared.fileSize
+        cacheBytes = art + meta
     }
 }

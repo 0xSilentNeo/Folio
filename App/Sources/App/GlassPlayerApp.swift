@@ -36,7 +36,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 }
 
 struct RootView: View {
-    @State private var tab = 0
+    @State private var tab = UserDefaults.standard.integer(forKey: SettingsKey.startupTab)
 
     var body: some View {
         TabView(selection: $tab) {
