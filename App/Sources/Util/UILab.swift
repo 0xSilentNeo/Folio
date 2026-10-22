@@ -58,6 +58,7 @@ enum UILab {
         vc.popoverPresentationController?.permittedArrowDirections = [.down]
         testPopover = vc
         root.present(vc, animated: true)
+        DispatchQueue.main.async { AnimTracer.trace("control popover (main window)", view: vc.view) }
         dlog("lab", "test popover presented from main window")
     }
 }

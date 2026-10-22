@@ -154,6 +154,7 @@ struct PlayerScreen: View {
         popover = vc
         dlog("ui", "present popover \(kind.rawValue) \(Int(width))×≤\(Int(maxHeight))")
         root.topMostPresented.present(vc, animated: true)
+        DispatchQueue.main.async { AnimTracer.trace("popover \(kind.rawValue)", view: vc.view) }
     }
 
     // MARK: Controls
