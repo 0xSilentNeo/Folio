@@ -57,7 +57,20 @@ struct MediaItem: Codable, Hashable, Identifiable {
                 return u
             }
         }
-        if url.hasPrefix("/") { return URL(fileURLWithPath: url) }
+        if url.hasPrefix("/") {
+            let u = URL(fileURLWithPath: url)
+            // The app's container path changes on reinstall; a library file is
+            // found again by name under the current Documents/Media.
+            if !FileManager.default.fileExists(atPath: u.path), url.contains("/Documents/") {
+                let rel = url.components(separatedBy: "/Documents/").last ?? u.lastPathComponent
+                let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                let candidate = docs.appendingPathComponent(rel)
+                if FileManager.default.fileExists(atPath: candidate.path) { return candidate }
+                let byName = MPVFiles.mediaDir.appendingPathComponent(u.lastPathComponent)
+                if FileManager.default.fileExists(atPath: byName.path) { return byName }
+            }
+            return u
+        }
         return URL(string: url)
     }
 

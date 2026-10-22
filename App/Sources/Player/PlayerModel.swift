@@ -1080,8 +1080,17 @@ extension PlayerModel: MPVClientDelegate {
             if reason == MPVEndReason.error {
                 isLoading = false
                 var msg = "Playback failed: \(String(cString: mpv_error_string(error)))"
-                if let u = item.resolvedURL, u.isFileURL, !FileManager.default.isReadableFile(atPath: u.path) {
-                    msg += "\n\niOS didn't grant access to this file (\(u.lastPathComponent)). Open it again from Files, or copy it into GlassPlayer → Media."
+                if let u = item.resolvedURL, u.isFileURL {
+                    let fm = FileManager.default
+                    let exists = fm.fileExists(atPath: u.path)
+                    let attrs = (try? fm.attributesOfItem(atPath: u.path)) ?? [:]
+                    let mediaCount = (try? fm.contentsOfDirectory(atPath: MPVFiles.mediaDir.path))?.count ?? -1
+                    dlog("player/error", "local file exists=\(exists) readable=\(fm.isReadableFile(atPath: u.path)) size=\(attrs[.size] ?? 0) protection=\((attrs[.protectionKey] as? FileProtectionType)?.rawValue ?? "?") mediaDirFiles=\(mediaCount) path=\(u.path)")
+                    if !exists {
+                        msg += "\n\nThis file is no longer in the library (\(u.lastPathComponent)). Add it again from Files."
+                    } else if !fm.isReadableFile(atPath: u.path) {
+                        msg += "\n\niOS didn't grant access to this file (\(u.lastPathComponent)). Open it again from Files, or copy it into GlassPlayer → Media."
+                    }
                 }
                 dlog("player/error", msg)
                 errorMessage = msg

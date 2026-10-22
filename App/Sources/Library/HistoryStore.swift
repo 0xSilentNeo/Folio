@@ -42,7 +42,11 @@ final class HistoryStore: ObservableObject {
     }
 
     func entry(forURL url: String) -> HistoryEntry? {
-        entries.first { $0.item.url == url || $0.id == url }
+        if let e = entries.first(where: { $0.item.url == url || $0.id == url }) { return e }
+        // Library files keep their progress across a reinstall (new container path).
+        guard url.contains("/Documents/Media/") else { return nil }
+        let name = (url as NSString).lastPathComponent
+        return entries.first { $0.item.url.contains("/Documents/Media/") && ($0.item.url as NSString).lastPathComponent == name }
     }
 
     func record(_ item: MediaItem, position: Double, duration: Double) {
