@@ -1,0 +1,23 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-22 09:09:08.858 F  GlassPlayer[7911:6be4] [com.apple.runtime-issues:SwiftUI] Adding 'UIView' as a subview of UIHostingController.view is not supported and may result in a broken view hierarchy. Add your view above UIHostingController.view in a common superview or insert it into your SwiftUI content in a UIViewRepresentable instead.
+2026-10-22 09:09:11.950 E  GlassPlayer[7911:6be4] [com.apple.CFBundle:plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x6000002f9760> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+2026-10-22 09:09:23.617 E  GlassPlayer[7911:7565] [com.apple.coremedia:] (Fig) signalled err=-12900 at <>:1233
+2026-10-22 09:09:23.863 E  GlassPlayer[7911:6c00] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-22 09:09:24.441 E  GlassPlayer[7911:6c04] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-22 09:09:25.399 E  GlassPlayer[7911:6c08] [com.apple.extensionkit:default] Failed to resolve host network app id to config: bundleID: com.apple.WebKit.Networking instance ID: Optional([_EXExtensionInstanceIdentifier: D29BB21F-461A-4376-A95E-E6C4BDF314B6])
+2026-10-22 09:09:26.139 E  GlassPlayer[7911:6be4] [com.apple.WebKit:ResourceLoadStatistics] Failed to request storage access quirks from WebPrivacy.
+2026-10-22 09:09:26.139 E  GlassPlayer[7911:6be4] [com.apple.WebKit:ResourceLoadStatistics] Failed to request known fingerprinting scripts from WebPrivacy: Error Domain=WebPrivacyErrorDomain Code=1001 "List data not found" UserInfo={NSLocalizedDescription=List data not found}
+2026-10-22 09:09:26.139 E  GlassPlayer[7911:6be4] [com.apple.WebKit:ResourceLoadStatistics] Failed to request storage access user agent string quirks from WebPrivacy.
+2026-10-22 09:09:26.343 E  GlassPlayer[7911:765a] [com.apple.WebKit:ProcessSuspension] WebContent[8888] 0x10e060150 - [sessionID=1] WebProcess::updateFreezerStatus: isFreezable=1, error=-1
+2026-10-22 09:09:26.396 E  GlassPlayer[7911:6be4] (libCoreFSCache.dylib) fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-22 09:09:26.396 E  GlassPlayer[7911:6be4] (libCoreFSCache.dylib) Errors found! Invalidating cache...
+2026-10-22 09:09:26.450 E  GlassPlayer[7911:6c03] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-22 09:09:26.540 E  GlassPlayer[7911:6c08] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-22 09:09:26.782 E  GlassPlayer[7911:6be4] (libCoreFSCache.dylib) fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-22 09:09:26.782 E  GlassPlayer[7911:6be4] (libCoreFSCache.dylib) Errors found! Invalidating cache...
+2026-10-22 09:09:26.959 E  GlassPlayer[7911:765a] [com.apple.WebKit:ResourceLoadStatistics] WebContent[8888] Unable to filter tracking query parameters (missing data)
+2026-10-22 09:09:27.041 E  GlassPlayer[7911:6be4] [com.apple.WebKit:ResourceLoadStatistics] Failed to request query parameters from WebPrivacy.
+2026-10-22 09:09:27.873 E  GlassPlayer[7911:765a] [com.apple.WebKit:ResourceLoadStatistics] WebContent[8888] Unable to filter tracking query parameters (missing data)
+2026-10-22 09:09:28.180 E  GlassPlayer[7911:765a] [com.apple.WebKit:ResourceLoadStatistics] WebContent[8888] Unable to hide query parameters from script (missing data)
+2026-10-22 09:09:28.217 E  GlassPlayer[7911:6be4] [com.apple.WebKit:ResourceLoadStatistics] Failed to request allowed query parameters from WebPrivacy.
+2026-10-22 09:09:28.682 E  GlassPlayer[7911:6be4] [com.apple.WebKit:ResourceLoadStatistics] Failed to request restricted opener domains from WebPrivacy

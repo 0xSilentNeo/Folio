@@ -1,0 +1,38 @@
+09:09:07.255 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=42.22 GB
+09:09:07.278 [lab] UI lab run
+09:09:08.599 [hang] main thread unresponsive for 1.4 s
+09:09:08.608 [lab] t=0.5 flags
+09:09:08.608 [lab] animationsEnabled=true reduceMotion=false crossFade=false lowPower=false
+09:09:08.618 [app] active
+09:09:08.856 [lab] t=1.5 test popover (main window)
+09:09:08.863 [lab] test popover presented from main window
+09:09:10.404 [lab] t=3.0 dismiss test popover
+09:09:11.475 [lab] t=4.0 play
+09:09:11.475 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/2196F204-C0D8-47E0-806A-16B2B9CED2CA/data/Containers/Bundle/Application/2E537EBC-A4EA-440C-92F2-E189E9B479D5/GlassPlayer.app/lab/lab.mp4
+09:09:12.088 [player] start renderer=metal
+09:09:12.088 [lab] engine not started (lab)
+09:09:15.677 [lab] t=8.0 controls
+09:09:16.727 [lab] t=9.0 open tracks
+09:09:16.727 [ui] panel tracks
+09:09:16.729 [ui] present panel tracks from bar item 340×≤239
+09:09:18.827 [lab] t=11.0 close
+09:09:19.793 [lab] t=12.5 open settings
+09:09:19.793 [ui] panel settings
+09:09:19.795 [ui] present panel settings from bar item 340×≤239
+09:09:22.502 [lab] t=14.5 switch to now playing
+09:09:22.502 [ui] panel nowPlaying
+09:09:22.508 [ui] present panel nowPlaying from bar item 340×≤239
+09:09:23.858 [lab] t=16.5 close
+09:09:24.821 [lab] t=17.5 media info
+09:09:26.330 [lab] t=19.0 stats
+09:09:26.544 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+09:09:26.951 [imdb] webkit load /title/tt35511966
+09:09:27.902 [lab] t=20.5 stats off
+09:09:28.285 [lab] t=21.0 open now playing
+09:09:28.286 [ui] panel nowPlaying
+09:09:28.310 [ui/error] no source for nowPlaying
+09:09:28.820 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+09:09:30.843 [lab] t=23.0 close
+09:09:32.176 [lab] t=24.0 done
+09:09:32.176 [lab] done
+09:09:52.128 [imdb/error] webkit timeout for /title/tt35511966
