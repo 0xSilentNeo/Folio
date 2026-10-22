@@ -117,7 +117,7 @@ final class PanelUITests: XCTestCase {
     /// player must still respond: outside tap closes, Tracks opens and closes.
     func test6RapidSwitchReplay() throws {
         let app = launchPlayer(["-panelStress"])
-        sleep(19)                                                 // replay runs 6 s … 17.6 s after launch
+        sleep(22)                                                 // replay: 3.5 s after landscape settles, lasts 11.6 s
         XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 4), "Settings (last tap) is not showing")
         XCTAssertFalse(app.staticTexts["NOW PLAYING"].exists, "an orphaned Now Playing panel is on screen")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
