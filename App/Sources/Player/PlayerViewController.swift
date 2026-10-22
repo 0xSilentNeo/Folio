@@ -107,7 +107,13 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
     override var canBecomeFirstResponder: Bool { true }
     override var prefersStatusBarHidden: Bool { true }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
-    override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge { .all }
+    // No edge deferral: deferring makes iOS hold back touches near the screen
+    // edges, which delayed or swallowed taps on the bottom-right buttons.
+    // (Outplayer only hides the home indicator, as here.) `-deferEdges` is
+    // for the CI comparison.
+    override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge {
+        CommandLine.arguments.contains("-deferEdges") ? .all : []
+    }
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask { orientationMask }
 
     func closePlayer(animated: Bool = true) {

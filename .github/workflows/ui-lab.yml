@@ -76,7 +76,7 @@ jobs:
           if [ "${{ matrix.variant }}" = "uitest" ]; then
             xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release \
               -destination "id=$UDID" -derivedDataPath build -only-testing:GlassPlayerUITests > lab/test.log 2>&1 || echo "::warning::UI test failed (see lab/test.log)"
-            grep -E "error:|failed|passed|Test Case" lab/test.log | tail -20 | sed 's/^/::notice::/'
+            grep -E "error:|failed|passed|Test Case|RAPID" lab/test.log | tail -40 | sed 's/^/::notice::/'
             sleep 3
           else
             xcrun simctl launch --terminate-running-process "$UDID" dev.silentneo.glassplayer $ARGS

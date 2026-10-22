@@ -93,6 +93,8 @@ final class PanelPresenter {
     func show(content: AnyView, source: PanelSource, from presenter: UIViewController, passthrough: [UIView], bottomInset: CGFloat, onDismiss: @escaping () -> Void) {
         let present = { [weak self] in
             let vc = PanelPopoverController(content: content, source: source, passthrough: passthrough, bottomInset: bottomInset, onDismiss: onDismiss)
+            // Size known before the transition starts (no resize mid-morph).
+            vc.loadViewIfNeeded()
             self?.current = vc
             presenter.topMostPresented.present(vc, animated: true) {
                 // UIKit resets passthrough views for bar-item popovers on presentation.

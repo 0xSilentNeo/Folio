@@ -10,35 +10,41 @@ struct PlayerPanel: View {
     let maxHeight: CGFloat
     let onLoadSubtitle: () -> Void
     let onRotationLock: (Bool) -> Void
-    /// Hosted inside the UIKit glass overlay: no glass of its own, reports its height.
+    /// Hosted in a system popover: no glass of its own.
     var bare = false
-    var onHeight: ((CGFloat) -> Void)? = nil
 
-    @State private var contentHeight: CGFloat = 0
-    @MainActor static var lastHeights: [String: CGFloat] = [:]
     @ObservedObject private var tune = UITune.shared
 
     var body: some View {
-        // Now Playing keeps a fixed height so switching tabs doesn't resize the panel.
-        let measured = contentHeight > 0 ? contentHeight : (PlayerPanel.lastHeights[kind.rawValue] ?? 260)
-        let height = kind == .nowPlaying ? maxHeight : min(max(measured, 120), maxHeight)
-        ScrollView {
-            content.padding(14)
-                .dynamicTypeSize(tune.typeSize)
-                .background(GeometryReader { g in
-                    Color.clear.preference(key: HeightKey.self, value: g.size.height)
-                })
-        }
-        .onPreferenceChange(HeightKey.self) { h in
-            if h > 0 { contentHeight = h; PlayerPanel.lastHeights[kind.rawValue] = h; if kind != .nowPlaying { onHeight?(min(max(h, 120), maxHeight)) } }
+        Group {
+            if kind == .nowPlaying {
+                // Fixed height so switching tabs never resizes the panel.
+                ScrollView { padded }.frame(width: width, height: maxHeight)
+            } else {
+                // Sized to its content on the very first layout (the popover reads
+                // it before presenting, so it never resizes mid-animation);
+                // scrolls only when taller than the screen allows.
+                ViewThatFits(in: .vertical) {
+                    padded
+                    ScrollView { padded }
+                }
+                .frame(width: width)
+                .frame(maxHeight: maxHeight)
+            }
         }
         .scrollIndicators(.hidden)
-        .frame(width: width, height: height)
         .modifier(OptionalGlass(enabled: !bare))
         .foregroundStyle(.white)
         .tint(Theme.accent)
         .preferredColorScheme(.dark)
         .environment(\.colorScheme, .dark)
+    }
+
+    private var padded: some View {
+        content
+            .padding(.horizontal, 16).padding(.top, 22).padding(.bottom, 16)
+            .dynamicTypeSize(tune.typeSize)
+            .frame(width: width, alignment: .leading)
     }
 
     @ViewBuilder
@@ -261,7 +267,6 @@ struct SettingsPanelContent: View {
             PanelRow(icon: "camera.viewfinder", title: "Screenshots") {
                 ValueMenu(options: [(true, "With Subtitles"), (false, "Video Only")], selection: $screenshotSubs)
             }
-            PanelLink(icon: "lock", title: "Lock controls") { ui.locked = true; ui.closePanel(); ui.showControls() }
 
             PanelHeader(title: "Subtitles")
             PanelRow(icon: "textformat.size", title: "Size") {
@@ -493,7 +498,3 @@ struct PlaylistRow: View {
     }
 }
 
-struct HeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
-}

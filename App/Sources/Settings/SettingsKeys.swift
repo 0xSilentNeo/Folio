@@ -13,6 +13,8 @@ enum SettingsKey {
     static let holdSpeedValue = "holdSpeedValue"
     static let cacheMB = "cacheMB"
     static let landscapeOnOpen = "landscapeOnOpen"
+    static let controlsWidth = "controlsWidth"          // fraction of the landscape width the controls span
+    static let playlistNames = "playlistNames"          // "episode" | "filename"
 
     // PiP
     static let pipEnabled = "pipEnabled"
@@ -68,6 +70,8 @@ enum SettingsKey {
             holdSpeedValue: 2.0,
             cacheMB: 150,
             landscapeOnOpen: true,
+            controlsWidth: 0.8,
+            playlistNames: "episode",
             pipEnabled: true,
             pipAuto: true,
             subLangs: "eng,en",

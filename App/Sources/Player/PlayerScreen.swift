@@ -12,6 +12,7 @@ struct PlayerScreen: View {
     var onRotationLock: (Bool) -> Void = { _ in }
 
     @State private var showSubtitlePicker = false
+    @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @ObservedObject private var tune = UITune.shared
     @Namespace private var glassNS
 
@@ -71,30 +72,6 @@ struct PlayerScreen: View {
                 if ui.showTune {
                     TuneCard(ui: ui).transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
                 }
-                if ui.showStats || ui.showInfo {
-                    MediaCard(model: model, ui: ui)
-                        .transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
-                }
-                if let toast = model.toast, ui.gestureHUD == nil, !model.holdSpeedActive {
-                    topPill(Text(toast), top: geo.safeAreaInsets.top + (ui.controlsVisible ? 56 : 0))
-                }
-
-                if let error = model.errorMessage { errorView(error) }
-                if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
-
-                if ui.showTune {
-                    TuneCard(ui: ui).transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
-                }
-                if ui.showStats || ui.showInfo {
-                    MediaCard(model: model, ui: ui)
-                        .transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
-                }
-                if let toast = model.toast, ui.gestureHUD == nil, !model.holdSpeedActive {
-                    topPill(Text(toast), top: geo.safeAreaInsets.top + (ui.controlsVisible ? 56 : 0))
-                }
-
-                if let error = model.errorMessage { errorView(error) }
-                if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
 
                 if ui.showConsole {
                     ConsoleBar(model: model, ui: ui).transition(.move(edge: .bottom).combined(with: .opacity))
@@ -166,13 +143,20 @@ struct PlayerScreen: View {
 
     @ViewBuilder
     private func controls(_ geo: GeometryProxy, compact: Bool) -> some View {
-        // Like Outplayer: the pills span the screen, 20 pt from the physical
-        // edges, ignoring the horizontal safe area (the notch sits higher).
-        let side: CGFloat = 20
+        // Landscape: the controls span `controlsWidth` of the screen (default
+        // 80%), centred, ignoring the horizontal safe area. Portrait: 16 pt.
+        let fullWidth = geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
+        let side: CGFloat = compact ? 16 : max(20, fullWidth * (1 - min(1, max(0.6, controlsWidth))) / 2)
         VStack(spacing: 0) {
-            HStack {
+            HStack(spacing: 10) {
                 GlassIcon("xmark", size: 17) { onClose() }
                 Spacer()
+                GlassIcon("lock", size: 16) {
+                    ui.closePanel()
+                    ui.locked = true
+                    ui.showControls()
+                }
+                .accessibilityLabel("Lock controls")
                 if PiPManager.isSupported && UserDefaults.standard.bool(forKey: SettingsKey.pipEnabled) {
                     GlassIcon(model.isPiPActive ? "pip.exit" : "pip.enter", size: 17) {
                         model.isPiPActive ? model.stopPiP() : model.startPiP()
@@ -182,7 +166,7 @@ struct PlayerScreen: View {
                 }
             }
             .padding(.horizontal, side)
-            .padding(.top, geo.safeAreaInsets.top > 0 ? 4 : 10)
+            .padding(.top, geo.safeAreaInsets.top > 0 ? 4 : 14)
             Spacer()
             if compact {
                 VStack(spacing: 8) {
@@ -194,7 +178,7 @@ struct PlayerScreen: View {
                     }
                 }
                 .padding(.horizontal, side)
-                .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 4 : 12)
+                .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 6 : 14)
             } else {
                 HStack(spacing: 10) {
                     transportPill
@@ -202,7 +186,8 @@ struct PlayerScreen: View {
                     panelPill
                 }
                 .padding(.horizontal, side)
-                .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 2 : 12)
+                // Clear of the home-indicator strip so taps are never eaten by it.
+                .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 10 : 18)
             }
         }
         .foregroundStyle(.white)

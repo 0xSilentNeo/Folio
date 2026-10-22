@@ -8,11 +8,14 @@ import UIKit
 @MainActor
 enum PopLab {
     static var enabled: Bool { CommandLine.arguments.contains("-popLab") }
+    /// UI test: just show the lab screen; the test presses its toolbar items.
+    static var isStatic: Bool { CommandLine.arguments.contains("-popLabStatic") }
     private static var vc: PopLabViewController?
 
     static func start() {
         guard enabled else { return }
         dlog("lab", "pop lab")
+        if isStatic { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { open() }; return }
         let steps: [(Double, () -> Void)] = [
             (1.5, { open() }),
             (3.0, { vc?.run(1) }), (5.0, { vc?.dismissAll() }),
@@ -125,9 +128,16 @@ final class PopLabViewController: UIViewController {
         host.didMove(toParent: self)
 
         // Toolbar with three bar button items (Outplayer's construction on Liquid Glass).
-        let a = UIBarButtonItem(image: UIImage(systemName: "switch.2"), style: .plain, target: nil, action: nil)
-        let b = UIBarButtonItem(image: UIImage(systemName: "slider.horizontal.3"), style: .plain, target: nil, action: nil)
-        let c = UIBarButtonItem(image: UIImage(systemName: "list.bullet"), style: .plain, target: nil, action: nil)
+        func item(_ symbol: String, _ label: String) -> UIBarButtonItem {
+            let i = UIBarButtonItem(primaryAction: UIAction(title: label, image: UIImage(systemName: symbol)) { [weak self] action in
+                guard let self, let it = self.barItems.first(where: { $0.title == label || $0.accessibilityLabel == label }) else { return }
+                self.label.text = "UIKit toolbar → \(label)"
+                self.presentFromBar(it, clear: false)
+            })
+            i.accessibilityLabel = label
+            return i
+        }
+        let a = item("switch.2", "LabTracks"), b = item("slider.horizontal.3", "LabSettings"), c = item("list.bullet", "LabNowPlaying")
         barItems = [a, b, c]
         toolbar.items = [.flexibleSpace(), a, b, c]
         toolbar.tintColor = .white
