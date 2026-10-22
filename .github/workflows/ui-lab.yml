@@ -39,7 +39,7 @@ jobs:
 
       - name: Build for simulator
         run: |
-          ACTION=build; [ "${{ matrix.variant }}" = "uitest" ] && ACTION=build-for-testing
+          ACTION=build; case "${{ matrix.variant }}" in uitest*) ACTION=build-for-testing;; esac
           xcodebuild -project GlassPlayer.xcodeproj -scheme GlassPlayer -sdk iphonesimulator -configuration Release \
             -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
             CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" $ACTION > build.log 2>&1 || {
@@ -73,9 +73,9 @@ jobs:
           sleep 10
           EXTRA=""; [ "${{ matrix.variant }}" = "gl" ] && EXTRA="-labGL"; [ "${{ matrix.variant }}" = "noengine" ] && EXTRA="-labNoEngine"; [ "${{ matrix.variant }}" = "poplab" ] && EXTRA="-popLab"
           ARGS="-uiLab $EXTRA"; [ "${{ matrix.variant }}" = "poplab" ] && ARGS="-popLab"
-          if [ "${{ matrix.variant }}" = "uitest" ]; then
+          if case "${{ matrix.variant }}" in uitest*) true;; *) false;; esac; then
             xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release \
-              -destination "id=$UDID" -derivedDataPath build -only-testing:GlassPlayerUITests > lab/test.log 2>&1 || echo "::warning::UI test failed (see lab/test.log)"
+              -destination "id=$UDID" -derivedDataPath build -only-testing:GlassPlayerUITests/PanelUITests/test6RapidSwitchReplay > lab/test.log 2>&1 || echo "::warning::UI test failed (see lab/test.log)"
             grep -E "error:|failed|passed|Test Case|RAPID" lab/test.log | tail -40 | sed 's/^/::notice::/'
             sleep 3
           else

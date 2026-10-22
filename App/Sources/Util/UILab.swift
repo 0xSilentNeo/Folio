@@ -19,6 +19,7 @@ enum UILab {
                 PlayerPresenter.play(m)
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { PlayerPresenter.current?.ui.showControls(autoHide: false) }
+            if CommandLine.arguments.contains("-panelStress") { scheduleStress(after: 6) }
             return
         }
         dlog("lab", "UI lab run")
@@ -58,6 +59,25 @@ enum UILab {
     }
 
     private static var ui: PlayerUIState? { PlayerPresenter.current?.ui }
+
+    /// Replays the button taps from the 1.10.0 freeze log (23 Oct, 05:09:49–05:10:01)
+    /// at their real intervals: each entry is a tap on that panel's button
+    /// (tapping the open panel's own button closes it, as in the log).
+    private static func scheduleStress(after start: Double) {
+        let taps: [(Double, PlayerUIState.Panel)] = [
+            (49.851, .settings), (50.684, .nowPlaying), (51.534, .nowPlaying), (52.617, .tracks), (53.201, .tracks),
+            (53.873, .nowPlaying), (54.768, .nowPlaying), (55.384, .nowPlaying), (56.135, .settings), (56.901, .tracks),
+            (57.468, .tracks), (57.985, .tracks), (58.810, .tracks), (59.426, .tracks), (59.843, .settings),
+            (60.343, .nowPlaying), (61.060, .nowPlaying), (61.410, .settings),
+        ]
+        let t0 = taps[0].0
+        for (t, kind) in taps {
+            DispatchQueue.main.asyncAfter(deadline: .now() + start + (t - t0)) {
+                dlog("lab", "stress tap \(kind.rawValue)")
+                ui?.toggle(kind)
+            }
+        }
+    }
 
     private static var testPopover: UIViewController?
 
