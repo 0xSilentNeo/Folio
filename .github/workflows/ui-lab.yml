@@ -8,6 +8,9 @@ on:
       - 'App/Sources/Util/UILab.swift'
       - '.github/workflows/ui-lab.yml'
 
+permissions:
+  contents: write
+
 jobs:
   record:
     runs-on: macos-15
@@ -33,10 +36,13 @@ jobs:
 
       - name: Build for simulator
         run: |
-          set -o pipefail
           xcodebuild -project GlassPlayer.xcodeproj -scheme GlassPlayer -sdk iphonesimulator -configuration Debug \
             -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tail -40
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build > build.log 2>&1 || {
+              grep -E "error:|ld: |Undefined symbol" build.log | sort -u | head -40 | sed 's/^/::error::/'
+              tail -60 build.log | sed 's/^/::warning::/'
+              exit 1
+            }
           ls build/Build/Products/Debug-iphonesimulator
 
       - name: Boot simulator
@@ -67,7 +73,18 @@ jobs:
           cp "$CONT"/Library/Application\ Support/app.log lab/app.log 2>/dev/null || find "$CONT" -name app.log -exec cp {} lab/app.log \; || true
           ls -la lab
 
+      - name: Publish results to the lab-results branch
+        if: always()
+        run: |
+          git config user.name lab-bot
+          git config user.email lab@users.noreply.github.com
+          mkdir -p out && cp -R lab/* out/ 2>/dev/null || true
+          cp build.log out/ 2>/dev/null || true
+          cd out && git init -q && git checkout -q -b lab-results && git add -A && git commit -qm "lab run ${{ github.run_id }}" \
+            && git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" lab-results
+
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: ui-lab
           path: lab/
