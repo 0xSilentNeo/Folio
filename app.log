@@ -1,0 +1,195 @@
+10:53:41.820 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=42.22 GB
+10:53:41.836 [av] A/V lab, ao -labAO=avfoundation
+10:53:42.877 [app] first screen 1796 ms after process start
+10:53:43.455 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/AF9CBF77-60BE-494E-9533-E4B52813AE56/data/Containers/Bundle/Application/F10E7A87-D295-4826-BB18-EFE0A05A2AC4/GlassPlayer.app/lab/lab-av.mkv
+10:53:43.957 [app] active
+10:53:44.672 [player] start renderer=metal
+10:53:44.696 [player] mpv options applied renderer=metal hwdec=auto anime4k=off/fast picture=efficient
+10:53:44.757 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/AF9CBF77-60BE-494E-9533-E4B52813AE56/data/Containers/Bundle/Application/F10E7A87-D295-4826-BB18-EFE0A05A2AC4/GlassPlayer.app/lab/lab-av.mkv source=local opts=[] -> 0
+10:53:44.774 [player] decoder: software
+10:53:45.009 [av] t=- a=- avsync=- speed=1.000 drops=-1/-1 ao=-
+10:53:45.009 [av] t=- a=- avsync=- speed=1.000 drops=-1/-1 ao=-
+10:53:45.040 [av] t=- a=- avsync=- speed=1.000 drops=-1/-1 ao=-
+10:53:45.778 [av] t=- a=- avsync=- speed=1.000 drops=-1/-1 ao=-
+10:53:45.778 [av] t=- a=- avsync=- speed=1.000 drops=-1/-1 ao=-
+10:53:45.778 [av] t=- a=- avsync=- speed=1.000 drops=-1/-1 ao=-
+10:53:49.745 [player] file loaded in 4993 ms
+10:53:49.770 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.770 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.770 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.770 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.770 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.773 [player] decoder: software
+10:53:49.773 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.773 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.774 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.774 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:49.779 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=-
+10:53:52.499 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.505 [av] t=0.000 a=- avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.604 [av] t=0.042 a=0.035 avsync=-0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.640 [av] t=0.042 a=0.100 avsync=-0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:52.871 [av] t=0.042 a=0.265 avsync=-0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:53.039 [av] t=0.042 a=0.432 avsync=-0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:53.083 [imdb] HTTP 202 for /title/tt23623230/ (1997 bytes) → web view
+10:53:53.083 [imdb] webkit load /title/tt23623230
+10:53:53.241 [av] t=0.042 a=0.635 avsync=-0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:53.440 [av] t=0.042 a=0.833 avsync=-0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:53.640 [av] t=0.042 a=1.033 avsync=-0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:53.840 [av] t=0.042 a=1.233 avsync=-0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:54.040 [av] t=0.042 a=1.433 avsync=-0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:53:54.106 [av] == hold 2x
+10:53:54.248 [av] t=0.042 a=-2.057 avsync=-0.000 speed=2.000 drops=0/0 ao=avfoundation
+10:53:54.441 [av] t=0.042 a=-1.671 avsync=-0.000 speed=2.000 drops=0/0 ao=avfoundation
+10:53:54.645 [av] t=0.042 a=-1.262 avsync=-0.000 speed=2.000 drops=0/0 ao=avfoundation
+10:53:54.838 [av] t=0.042 a=-0.875 avsync=-0.000 speed=2.000 drops=0/0 ao=avfoundation
+10:53:55.040 [av] t=0.042 a=-0.472 avsync=-0.000 speed=2.000 drops=0/0 ao=avfoundation
+10:53:55.240 [av] t=0.042 a=-0.072 avsync=-0.000 speed=2.000 drops=0/0 ao=avfoundation
+10:53:55.439 [av] t=0.167 a=0.327 avsync=-0.000 speed=2.000 drops=0/0 ao=avfoundation
+10:53:55.659 [av] t=0.250 a=0.766 avsync=0.516 speed=2.000 drops=2/0 ao=avfoundation
+10:53:55.840 [av] t=0.292 a=1.128 avsync=0.476 speed=2.000 drops=2/0 ao=avfoundation
+10:53:56.039 [av] t=0.292 a=1.526 avsync=0.476 speed=2.000 drops=2/0 ao=avfoundation
+10:53:56.240 [av] t=1.958 a=1.928 avsync=0.000 speed=2.000 drops=34/0 ao=avfoundation
+10:53:56.439 [av] t=2.375 a=2.327 avsync=0.000 speed=2.000 drops=34/0 ao=avfoundation
+10:53:56.643 [av] t=2.667 a=2.735 avsync=0.027 speed=2.000 drops=35/0 ao=avfoundation
+10:53:56.840 [av] t=3.167 a=3.129 avsync=0.000 speed=2.000 drops=35/0 ao=avfoundation
+10:53:57.040 [av] t=3.583 a=3.528 avsync=0.000 speed=2.000 drops=35/0 ao=avfoundation
+10:53:57.240 [av] t=3.958 a=3.927 avsync=0.000 speed=2.000 drops=35/0 ao=avfoundation
+10:53:57.440 [av] t=4.333 a=4.328 avsync=0.000 speed=2.000 drops=35/0 ao=avfoundation
+10:53:57.811 [av] t=4.625 a=5.070 avsync=0.401 speed=2.000 drops=35/0 ao=avfoundation
+10:53:57.841 [av] t=5.125 a=5.128 avsync=0.000 speed=2.000 drops=44/0 ao=avfoundation
+10:53:57.925 [av] == release
+10:53:58.074 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+10:53:58.107 [av] t=6.583 a=8.989 avsync=2.396 speed=1.000 drops=76/0 ao=avfoundation
+10:53:58.240 [av] t=6.625 a=9.121 avsync=2.365 speed=1.000 drops=76/0 ao=avfoundation
+10:53:58.450 [av] t=7.625 a=9.330 avsync=1.662 speed=1.000 drops=100/0 ao=avfoundation
+10:53:58.642 [av] t=9.542 a=9.523 avsync=0.000 speed=1.000 drops=139/0 ao=avfoundation
+10:53:58.840 [av] t=9.625 a=9.721 avsync=0.000 speed=1.000 drops=139/0 ao=avfoundation
+10:53:59.040 [av] t=9.917 a=9.921 avsync=0.000 speed=1.000 drops=140/0 ao=avfoundation
+10:53:59.240 [av] t=10.125 a=10.121 avsync=0.000 speed=1.000 drops=140/0 ao=avfoundation
+10:53:59.440 [av] t=10.333 a=10.321 avsync=0.000 speed=1.000 drops=140/0 ao=avfoundation
+10:53:59.641 [av] t=10.542 a=10.522 avsync=0.000 speed=1.000 drops=140/0 ao=avfoundation
+10:53:59.844 [av] t=10.667 a=10.726 avsync=0.000 speed=1.000 drops=140/0 ao=avfoundation
+10:54:00.041 [av] t=10.750 a=10.922 avsync=0.112 speed=1.000 drops=141/0 ao=avfoundation
+10:54:00.247 [av] t=10.917 a=11.128 avsync=0.194 speed=1.000 drops=144/0 ao=avfoundation
+10:54:00.440 [av] t=11.208 a=11.321 avsync=0.000 speed=1.000 drops=149/0 ao=avfoundation
+10:54:00.640 [av] t=11.208 a=11.521 avsync=0.000 speed=1.000 drops=149/0 ao=avfoundation
+10:54:00.840 [av] t=11.208 a=11.721 avsync=0.000 speed=1.000 drops=149/0 ao=avfoundation
+10:54:01.039 [av] t=11.208 a=11.920 avsync=0.000 speed=1.000 drops=149/0 ao=avfoundation
+10:54:01.240 [av] t=12.083 a=12.122 avsync=0.000 speed=1.000 drops=169/0 ao=avfoundation
+10:54:01.439 [av] t=12.333 a=12.320 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:01.639 [av] t=12.542 a=12.520 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:01.839 [av] t=12.750 a=12.721 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:02.040 [av] t=12.917 a=12.921 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:02.239 [av] t=13.125 a=13.121 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:02.440 [av] t=13.333 a=13.321 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:02.640 [av] t=13.542 a=13.521 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:02.840 [av] t=13.750 a=13.722 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:03.040 [av] t=13.917 a=13.922 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:03.240 [av] t=14.125 a=14.121 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:03.439 [av] t=14.333 a=14.321 avsync=0.000 speed=1.000 drops=171/0 ao=avfoundation
+10:54:03.640 [av] t=14.542 a=14.521 avsync=0.000 speed=1.000 drops=172/0 ao=avfoundation
+10:54:03.838 [av] t=14.750 a=14.720 avsync=0.000 speed=1.000 drops=172/0 ao=avfoundation
+10:54:03.924 [av] == renderer → software (PiP path)
+10:54:04.017 [player] decoder: software
+10:54:04.040 [av] t=14.921 a=14.921 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:04.044 [player] decoder: software
+10:54:04.240 [av] t=15.000 a=15.121 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:04.440 [av] t=15.000 a=15.321 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:04.640 [av] t=15.000 a=15.521 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:04.840 [av] t=15.000 a=15.721 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:05.041 [av] t=15.000 a=15.922 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:05.240 [av] t=15.000 a=16.121 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:05.438 [av] t=15.000 a=16.320 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:05.639 [av] t=15.000 a=16.520 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:05.839 [av] t=15.000 a=16.720 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:06.040 [av] t=15.000 a=16.921 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:06.239 [av] t=15.000 a=17.121 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:06.440 [av] t=15.000 a=17.321 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:06.640 [av] t=15.000 a=17.522 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:06.839 [av] t=15.000 a=17.720 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:07.040 [av] t=15.000 a=17.921 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:07.239 [av] t=15.000 a=18.121 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:07.439 [av] t=15.000 a=18.321 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:07.641 [av] t=15.333 a=18.522 avsync=3.214 speed=1.000 drops=0/0 ao=avfoundation
+10:54:07.839 [av] t=15.667 a=18.720 avsync=3.081 speed=1.000 drops=0/0 ao=avfoundation
+10:54:07.974 [av] == renderer → main
+10:54:08.012 [player] decoder: software
+10:54:08.029 [player] decoder: software
+10:54:08.040 [av] t=18.922 a=18.922 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:08.240 [av] t=18.958 a=19.121 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:08.440 [av] t=18.958 a=19.321 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:08.638 [av] t=18.958 a=19.520 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:08.840 [av] t=18.958 a=19.721 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:09.038 [av] t=18.958 a=19.919 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:09.240 [av] t=18.958 a=20.121 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:09.440 [av] t=18.958 a=20.321 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:09.639 [av] t=18.958 a=20.520 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:09.838 [av] t=18.958 a=20.719 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:10.040 [av] t=18.958 a=20.921 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:10.242 [av] t=18.958 a=21.123 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:10.440 [av] t=18.958 a=21.321 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:10.638 [av] t=18.958 a=21.519 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:10.839 [av] t=18.958 a=21.720 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:11.040 [av] t=18.958 a=21.921 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:11.240 [av] t=18.958 a=22.121 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:11.440 [av] t=18.958 a=22.321 avsync=0.000 speed=1.000 drops=0/0 ao=avfoundation
+10:54:11.640 [av] t=19.292 a=22.521 avsync=3.256 speed=1.000 drops=0/0 ao=avfoundation
+10:54:11.838 [av] t=19.625 a=22.720 avsync=3.123 speed=1.000 drops=0/0 ao=avfoundation
+10:54:12.039 [av] t=19.958 a=22.920 avsync=2.989 speed=1.000 drops=0/0 ao=avfoundation
+10:54:12.240 [av] t=20.292 a=23.121 avsync=2.856 speed=1.000 drops=0/0 ao=avfoundation
+10:54:12.439 [av] t=20.625 a=23.321 avsync=2.723 speed=1.000 drops=0/0 ao=avfoundation
+10:54:12.640 [av] t=20.958 a=23.521 avsync=2.589 speed=1.000 drops=0/0 ao=avfoundation
+10:54:12.839 [av] t=21.292 a=23.720 avsync=2.456 speed=1.000 drops=0/0 ao=avfoundation
+10:54:13.038 [av] t=21.625 a=23.920 avsync=2.323 speed=1.000 drops=0/0 ao=avfoundation
+10:54:13.240 [av] t=21.958 a=24.121 avsync=2.189 speed=1.000 drops=0/0 ao=avfoundation
+10:54:13.440 [av] t=22.292 a=24.321 avsync=2.056 speed=1.000 drops=0/0 ao=avfoundation
+10:54:13.640 [av] t=22.625 a=24.521 avsync=1.923 speed=1.000 drops=0/0 ao=avfoundation
+10:54:13.840 [av] t=22.875 a=24.721 avsync=1.832 speed=1.000 drops=0/0 ao=avfoundation
+10:54:14.040 [av] t=23.292 a=24.921 avsync=1.656 speed=1.000 drops=0/0 ao=avfoundation
+10:54:14.240 [av] t=23.625 a=25.121 avsync=1.523 speed=1.000 drops=0/0 ao=avfoundation
+10:54:14.440 [av] t=23.958 a=25.321 avsync=1.389 speed=1.000 drops=0/0 ao=avfoundation
+10:54:14.640 [av] t=24.292 a=25.521 avsync=1.256 speed=1.000 drops=0/0 ao=avfoundation
+10:54:14.839 [av] t=24.625 a=25.720 avsync=1.123 speed=1.000 drops=0/0 ao=avfoundation
+10:54:15.040 [av] t=24.958 a=25.921 avsync=0.989 speed=1.000 drops=1/0 ao=avfoundation
+10:54:15.239 [av] t=25.292 a=26.120 avsync=0.856 speed=1.000 drops=1/0 ao=avfoundation
+10:54:15.440 [av] t=25.625 a=26.321 avsync=0.723 speed=1.000 drops=1/0 ao=avfoundation
+10:54:15.638 [av] t=25.958 a=26.520 avsync=0.589 speed=1.000 drops=1/0 ao=avfoundation
+10:54:15.840 [av] t=26.292 a=26.721 avsync=0.456 speed=1.000 drops=1/0 ao=avfoundation
+10:54:16.040 [av] t=26.625 a=26.921 avsync=0.323 speed=1.000 drops=1/0 ao=avfoundation
+10:54:16.239 [av] t=26.875 a=27.120 avsync=0.273 speed=1.000 drops=1/0 ao=avfoundation
+10:54:16.440 [av] t=27.083 a=27.322 avsync=0.252 speed=1.000 drops=1/0 ao=avfoundation
+10:54:16.638 [av] t=27.292 a=27.520 avsync=0.231 speed=1.000 drops=1/0 ao=avfoundation
+10:54:16.840 [av] t=27.542 a=27.722 avsync=0.206 speed=1.000 drops=1/0 ao=avfoundation
+10:54:17.040 [av] t=27.750 a=27.921 avsync=0.185 speed=1.000 drops=1/0 ao=avfoundation
+10:54:17.239 [av] t=27.958 a=28.120 avsync=0.164 speed=1.000 drops=1/0 ao=avfoundation
+10:54:17.440 [av] t=28.167 a=28.321 avsync=0.144 speed=1.000 drops=1/0 ao=avfoundation
+10:54:17.640 [av] t=28.417 a=28.521 avsync=0.119 speed=1.000 drops=1/0 ao=avfoundation
+10:54:17.840 [av] t=28.625 a=28.721 avsync=0.098 speed=1.000 drops=1/0 ao=avfoundation
+10:54:18.055 [av] t=28.875 a=28.936 avsync=0.073 speed=1.000 drops=1/0 ao=avfoundation
+10:54:18.149 [imdb/error] webkit timeout for /title/tt23623230
+10:54:18.263 [av] t=29.125 a=29.145 avsync=0.048 speed=1.000 drops=1/0 ao=avfoundation
+10:54:18.440 [av] t=29.292 a=29.322 avsync=0.032 speed=1.000 drops=1/0 ao=avfoundation
+10:54:18.639 [av] t=29.500 a=29.521 avsync=0.019 speed=1.000 drops=1/0 ao=avfoundation
+10:54:18.840 [av] done
+10:54:18.894 [skip] IntroDB tt23623230 s0e0: [] postCredits=false
