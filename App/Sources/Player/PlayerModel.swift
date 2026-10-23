@@ -932,6 +932,9 @@ final class PlayerModel: ObservableObject {
 
     /// Saves the current frame as the Continue Watching thumbnail.
     private func captureThumbnail() {
+        #if targetEnvironment(simulator)
+        return                        // the simulator's Metal driver aborts on readback
+        #endif
         guard fileLoaded, mode == .main, let c = client, !c.isShutDown else { return }
         var w: Int32 = 0, h: Int32 = 0
         guard let bytes = gp_screenshot_bgra(c.handle, 640, &w, &h) else { return }
@@ -949,7 +952,9 @@ final class PlayerModel: ObservableObject {
 
     private var lastSnapshot = Date.distantPast
     private func takeSnapshot() {
-        if UILab.enabled { return }   // the simulator's Metal driver aborts on readback
+        #if targetEnvironment(simulator)
+        return                        // the simulator's Metal driver aborts on readback
+        #endif
         guard renderer == .metal, mode == .main, fileLoaded, !isPiPActive,
               UIApplication.shared.applicationState == .active, let c = client else { return }
         guard Date().timeIntervalSince(lastSnapshot) > 2 else { return }
