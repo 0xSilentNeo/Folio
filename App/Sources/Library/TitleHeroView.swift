@@ -98,7 +98,17 @@ struct TitleHeroView: View {
             thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true)
         }
         .onDisappear { dlog("nav", "title page disappear \(file.lastPathComponent)") }
-        .simultaneousGesture(TapGesture().onEnded { dlog("nav", "tap on title page") })
+        // Swipe from the left edge goes back. iOS's own back swipe is off on
+        // pages that hide the navigation bar (this one draws its own Back).
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 16, coordinateSpace: .global)
+                .onEnded { v in
+                    guard v.startLocation.x < 32, v.translation.width > 80,
+                          abs(v.translation.height) < abs(v.translation.width) * 0.7 else { return }
+                    dlog("nav", "edge swipe back on \(file.lastPathComponent)")
+                    dismiss()
+                }
+        )
         .confirmationDialog("Delete this file from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { local.delete(file); dismiss() }
         }
