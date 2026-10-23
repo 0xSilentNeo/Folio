@@ -90,6 +90,7 @@ struct TitleHeroView: View {
             .ignoresSafeArea(edges: .top)
         }
         .background(HomeBackdrop().ignoresSafeArea())
+        .background(BackSwipeProbe().frame(width: 1, height: 1))
         // The system navigation bar (transparent): its own Back button and the
         // native back swipe that follows your finger.
         .navigationBarTitleDisplayMode(.inline)
@@ -493,4 +494,37 @@ struct LibraryRow: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: detail ? 12 : 8, style: .continuous))
     }
+}
+
+/// Logs the navigation controller's back swipe (enabled? did it start?) so a
+/// report shows whether a swipe reached it.
+struct BackSwipeProbe: UIViewRepresentable {
+    final class Probe: UIView {
+        private weak var watched: UIGestureRecognizer?
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            guard window != nil, watched == nil else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                var r: UIResponder? = self
+                while let n = r, !(n is UINavigationController) { r = n.next }
+                guard let nav = r as? UINavigationController else { dlog("nav", "back swipe probe: no navigation controller"); return }
+                let g = nav.interactivePopGestureRecognizer
+                var content = "n/a"
+                #if compiler(>=6.2)
+                if #available(iOS 26.0, *) { content = nav.interactiveContentPopGestureRecognizer.map { "\($0.isEnabled)" } ?? "nil" }
+                #endif
+                dlog("nav", "back swipe: edge enabled=\(g?.isEnabled ?? false) content=\(content) pages=\(nav.viewControllers.count) barHidden=\(nav.isNavigationBarHidden)")
+                g?.addTarget(self, action: #selector(self.changed(_:)))
+                self.watched = g
+            }
+        }
+        @objc func changed(_ g: UIGestureRecognizer) {
+            if g.state == .began || g.state == .ended || g.state == .cancelled || g.state == .failed {
+                dlog("nav", "back swipe state \(g.state.rawValue)")
+            }
+        }
+    }
+    func makeUIView(context: Context) -> Probe { let p = Probe(); p.isUserInteractionEnabled = false; return p }
+    func updateUIView(_ uiView: Probe, context: Context) {}
 }
