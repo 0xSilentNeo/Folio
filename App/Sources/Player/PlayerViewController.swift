@@ -62,7 +62,7 @@ final class PlayerUIState: ObservableObject {
 
     func scheduleHide(after seconds: Double = 4) {
         hideWork?.cancel()
-        if UILab.uiTest { return }   // keep controls up while the UI test taps
+        if UILab.keepControls { return }   // keep controls up while the UI test taps
         let w = DispatchWorkItem { [weak self] in
             guard let self, !self.showInfo, !self.showStats, !self.showTune, !self.scrubbing, !self.showConsole, !self.menuOpen, self.panel == nil else { return }
             withAnimation(.easeOut(duration: 0.25)) { self.controlsVisible = false }

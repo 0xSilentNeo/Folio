@@ -156,6 +156,7 @@ struct PlayerScreen: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 GlassIcon("xmark", size: 17) { onClose() }
+                    .accessibilityLabel("Close player")
                 Spacer()
                 GlassIcon("lock", size: 16) {
                     ui.closePanel()

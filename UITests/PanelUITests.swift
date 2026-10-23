@@ -133,4 +133,42 @@ final class PanelUITests: XCTestCase {
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
         XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close")
     }
+
+    /// Title page: open it, play an episode, close the player, then Back must
+    /// return to Home; and the edge swipe must work too.
+    func test8TitlePageBack() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+        tile.tap()
+        let back = app.buttons["Back"]
+        XCTAssertTrue(back.waitForExistence(timeout: 6), "title page did not open")
+        sleep(1)
+        let play = app.descendants(matching: .any)["heroPlay"]
+        XCTAssertTrue(play.waitForExistence(timeout: 5), "play button not found")
+        play.tap()
+        let close = app.buttons["Close player"]
+        XCTAssertTrue(close.waitForExistence(timeout: 20), "player did not open")
+        sleep(10)                                                  // let it play and save progress
+        close.tap()
+        sleep(4)                                                   // history updates → Home rebuilds underneath
+        XCTAssertTrue(back.waitForExistence(timeout: 6), "title page gone after closing the player")
+        back.tap()
+        sleep(2)
+        XCTAssertFalse(app.buttons["Back"].exists, "Back did not leave the title page")
+        XCTAssertTrue(app.staticTexts["Lab Show"].firstMatch.waitForExistence(timeout: 4), "not back on Home")
+
+        // Again, leaving with the edge swipe this time.
+        app.staticTexts["Lab Show"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open (2nd time)")
+        sleep(1)
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)))
+        sleep(2)
+        XCTAssertFalse(app.buttons["Back"].exists, "edge swipe did not leave the title page")
+    }
 }

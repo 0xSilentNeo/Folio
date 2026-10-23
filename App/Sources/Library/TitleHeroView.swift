@@ -194,6 +194,7 @@ struct TitleHeroView: View {
         }
         .buttonStyle(PressStyle())
         .foregroundStyle(.white)
+        .accessibilityLabel("Back")
         .padding(.leading, 16).padding(.top, 8)
     }
 
@@ -290,6 +291,9 @@ struct TiltPlayButton: View {
                     }
                 }
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("heroPlay")
         .onAppear { motion.start() }
         .onDisappear { motion.stop() }
     }
