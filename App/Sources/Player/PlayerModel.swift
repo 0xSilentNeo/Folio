@@ -356,7 +356,11 @@ final class PlayerModel: ObservableObject {
         c.setOption("hr-seek-framedrop", "yes")
         // Audio: multichannel PCM out (AirPlay / HDMI surround, Spatial Audio on AirPods).
         let aoOverride = CommandLine.arguments.first { $0.hasPrefix("-labAO=") }.map { String($0.dropFirst(7)) }
-        c.setOption("ao", aoOverride ?? "avfoundation,audiounit")
+        // AudioUnit first: measured in the CI A/V lab, the AVFoundation output
+        // froze the picture for seconds on a speed change (hold for 2×) or a
+        // renderer switch (PiP), and left audio up to 3 s out of sync for ~10 s.
+        // AudioUnit stayed within 0.17 s and recovered in about a second.
+        c.setOption("ao", aoOverride ?? "audiounit,avfoundation")
         c.setOption("audio-channels", defaults.bool(forKey: SettingsKey.surroundAudio) ? "auto" : "stereo")
         c.setOption("sub-auto", "fuzzy")
         if defaults.string(forKey: SettingsKey.subtitlesDefault) == "off" { c.setOption("sid", "no") }
