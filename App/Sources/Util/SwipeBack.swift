@@ -8,6 +8,7 @@ import UIKit
 extension UINavigationController: @retroactive UIGestureRecognizerDelegate {
     override open func viewDidLoad() {
         super.viewDidLoad()
+        dlog("nav", "navigation controller \(type(of: self)): back swipe \(interactivePopGestureRecognizer != nil ? "re-enabled" : "missing")")
         interactivePopGestureRecognizer?.delegate = self
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) { interactiveContentPopGestureRecognizer?.delegate = self }
@@ -15,7 +16,9 @@ extension UINavigationController: @retroactive UIGestureRecognizerDelegate {
     }
 
     public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        viewControllers.count > 1 && transitionCoordinator == nil
+        let ok = viewControllers.count > 1 && transitionCoordinator == nil
+        dlog("nav", "back swipe begin? \(ok) (\(viewControllers.count) pages)")
+        return ok
     }
 
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,

@@ -174,7 +174,8 @@ final class PanelUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open (2nd time)")
         sleep(1)
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
-        start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)))
+        start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)),
+                    withVelocity: .slow, thenHoldForDuration: 0.1)
         sleep(2)
         XCTAssertFalse(app.buttons["Back"].exists, "edge swipe did not leave the title page")
     }
