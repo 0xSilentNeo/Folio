@@ -1,0 +1,109 @@
+Command line invocation:
+    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=F547F09D-FF14-4CDA-979B-838055278553 -derivedDataPath build "-only-testing:GlassPlayerUITests/PanelUITests/test8TitlePageBack"
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS Simulator, arch:arm64, id:F547F09D-FF14-4CDA-979B-838055278553, OS:26.2, name:lab }
+{ platform:iOS Simulator, arch:x86_64, id:F547F09D-FF14-4CDA-979B-838055278553, OS:26.2, name:lab }
+2026-10-23 05:09:55.638088+0000 GlassPlayerUITests-Runner[13179:41936] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-23 05:10:02.290.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-23 05:10:02.291.
+Test Suite 'PanelUITests' started at 2026-10-23 05:10:02.292.
+Test Case '-[GlassPlayerUITests.PanelUITests test8TitlePageBack]' started.
+    t =     0.00s Start Test at 2026-10-23 05:10:02.296
+    t =     0.67s Set Up
+    t =     0.67s Open dev.silentneo.glassplayer
+    t =     0.67s     Launch dev.silentneo.glassplayer
+    t =    12.09s         Setting up automation session
+    t =    15.05s         Wait for dev.silentneo.glassplayer to idle
+    t =    17.96s Setting device orientation to Portrait
+    t =    18.00s     Device orientation changed to Portrait
+    t =    18.08s     Wait for dev.silentneo.glassplayer to idle
+    t =    18.10s Waiting 25.0s for "Lab Show" StaticText to exist
+    t =    19.11s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =    19.11s         Checking existence of `"Lab Show" StaticText`
+    t =    21.49s Tap "Lab Show" StaticText
+    t =    21.49s     Wait for dev.silentneo.glassplayer to idle
+    t =    21.49s     Find the "Lab Show" StaticText
+    t =    21.65s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    21.72s     Synthesize event
+    t =    22.20s     Wait for dev.silentneo.glassplayer to idle
+    t =    22.45s Waiting 6.0s for "Back" Button to exist
+    t =    23.53s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    23.53s         Checking existence of `"Back" Button`
+    t =    24.72s Waiting 5.0s for "heroPlay" Any to exist
+    t =    25.78s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    25.78s         Checking existence of `"heroPlay" Any`
+    t =    25.84s Tap "heroPlay" Any
+    t =    25.84s     Wait for dev.silentneo.glassplayer to idle
+    t =    25.84s     Find the "heroPlay" Any
+    t =    25.89s     Check for interrupting elements affecting "heroPlay" Button
+    t =    25.99s     Synthesize event
+    t =    26.33s     Wait for dev.silentneo.glassplayer to idle
+    t =    27.33s Waiting 20.0s for "Close player" Button to exist
+    t =    27.75s     Interface orientation changed to Landscape Right
+    t =    28.43s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    28.43s         Checking existence of `"Close player" Button`
+    t =    38.81s Tap "Close player" Button
+    t =    38.82s     Wait for dev.silentneo.glassplayer to idle
+    t =    38.83s     Find the "Close player" Button
+    t =    39.05s     Check for interrupting elements affecting "xmark" Button
+    t =    39.20s     Synthesize event
+    t =    39.58s     Wait for dev.silentneo.glassplayer to idle
+    t =    44.61s Waiting 6.0s for "Back" Button to exist
+    t =    45.66s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    45.66s         Checking existence of `"Back" Button`
+    t =    45.77s Tap "Back" Button
+    t =    45.78s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.78s     Find the "Back" Button
+    t =    45.88s     Check for interrupting elements affecting "chevron.left" Button
+    t =    46.01s     Synthesize event
+    t =    46.37s     Wait for dev.silentneo.glassplayer to idle
+    t =    49.18s Checking existence of `"Back" Button`
+/Users/runner/work/GlassPlayer/GlassPlayer/UITests/PanelUITests.swift:162: error: -[GlassPlayerUITests.PanelUITests test8TitlePageBack] : XCTAssertFalse failed - Back did not leave the title page
+    t =    55.45s Waiting 4.0s for "Lab Show" StaticText to exist
+    t =    56.47s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =    56.47s         Checking existence of `"Lab Show" StaticText`
+    t =    56.80s Tap "Lab Show" StaticText
+    t =    56.80s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.80s     Find the "Lab Show" StaticText
+    t =    57.17s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    57.26s     Synthesize event
+    t =    57.28s         Scroll element to visible
+    t =    57.31s         Find the "Lab Show" StaticText
+    t =    57.98s         Computed hit point {202, 140.5} after scrolling to visible
+    t =    58.29s     Wait for dev.silentneo.glassplayer to idle
+    t =    58.63s Waiting 6.0s for "Back" Button to exist
+    t =    59.67s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    59.67s         Checking existence of `"Back" Button`
+    t =    60.72s Press Target Application 'dev.silentneo.glassplayer'[0.01, 0.50] for 0.1 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.85, 0.50] with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    60.72s     Wait for dev.silentneo.glassplayer to idle
+    t =    60.72s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.75s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    60.79s     Synthesize event
+    t =    60.79s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.81s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.87s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.90s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.93s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    62.64s     Wait for dev.silentneo.glassplayer to idle
+    t =    64.65s Checking existence of `"Back" Button`
+/Users/runner/work/GlassPlayer/GlassPlayer/UITests/PanelUITests.swift:172: error: -[GlassPlayerUITests.PanelUITests test8TitlePageBack] : XCTAssertFalse failed - edge swipe did not leave the title page
+    t =    64.70s Tear Down
+Test Case '-[GlassPlayerUITests.PanelUITests test8TitlePageBack]' failed (65.140 seconds).
+Test Suite 'PanelUITests' failed at 2026-10-23 05:11:07.436.
+	 Executed 1 test, with 2 failures (0 unexpected) in 65.140 (65.144) seconds
+Test Suite 'GlassPlayerUITests.xctest' failed at 2026-10-23 05:11:07.440.
+	 Executed 1 test, with 2 failures (0 unexpected) in 65.140 (65.149) seconds
+Test Suite 'Selected tests' failed at 2026-10-23 05:11:07.441.
+	 Executed 1 test, with 2 failures (0 unexpected) in 65.140 (65.151) seconds
+2026-10-23 05:11:53.557 xcodebuild[11920:38563] [MT] IDETestOperationsObserverDebug: 128.885 elapsed -- Testing started completed.
+2026-10-23 05:11:53.558 xcodebuild[11920:38563] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-23 05:11:53.558 xcodebuild[11920:38563] [MT] IDETestOperationsObserverDebug: 128.885 sec, +128.885 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.23_05-09-38-+0000.xcresult
+
+** TEST EXECUTE FAILED **
+
+Testing started

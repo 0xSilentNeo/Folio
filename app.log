@@ -1,0 +1,9 @@
+05:10:16.126 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=41.93 GB
+05:10:17.290 [hang] main thread unresponsive for 1.2 s
+05:10:19.152 [app] active
+05:10:28.418 [player] play requested: 2 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/F547F09D-FF14-4CDA-979B-838055278553/data/Containers/Data/Application/7EAD015A-0C2E-416B-AAF4-F7DF45B9C99B/Documents/Media/Lab Show S01E01.mp4
+05:10:29.378 [player] start renderer=metal
+05:10:29.403 [player] mpv options applied renderer=metal hwdec=auto anime4k=off/fast picture=efficient
+05:10:29.536 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/F547F09D-FF14-4CDA-979B-838055278553/data/Containers/Data/Application/7EAD015A-0C2E-416B-AAF4-F7DF45B9C99B/Documents/Media/Lab Show S01E01.mp4 source=local opts=[] -> 0
+05:10:29.573 [player] decoder: software
+05:10:41.650 [player] close at 0:00
