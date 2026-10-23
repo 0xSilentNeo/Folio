@@ -285,7 +285,7 @@ enum PlayerPresenter {
         UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut]) { w.alpha = 1 } completion: { _ in
             // The library window underneath is fully covered: hide it so it
             // does no layout, animation or rendering work during playback.
-            guard window === w else { return }
+            guard window === w, !CommandLine.arguments.contains("-keepAppWindow") else { return }
             for other in appWindows { other.isHidden = true }
         }
     }

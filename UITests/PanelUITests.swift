@@ -128,9 +128,14 @@ final class PanelUITests: XCTestCase {
 
     /// Title page: open it, play an episode, close the player, then Back must
     /// return to Home; and the edge swipe must work too.
-    func test8TitlePageBack() throws {
+    func test8TitlePageBack() throws { try titlePageBack([]) }
+
+    /// Same, with the library window left visible during playback (comparison).
+    func test9TitlePageBackWindowKept() throws { try titlePageBack(["-keepAppWindow"]) }
+
+    private func titlePageBack(_ extra: [String]) throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-uiTestLibrary"]
+        app.launchArguments = ["-uiTestLibrary"] + extra
         app.launch()
         XCUIDevice.shared.orientation = .portrait
         let tile = app.staticTexts["Lab Show"].firstMatch
