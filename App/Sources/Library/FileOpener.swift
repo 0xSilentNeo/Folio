@@ -139,24 +139,33 @@ final class LocalMediaStore: ObservableObject {
         }
     }
 
+    private var scanTask: Task<Void, Never>?
+
+    /// Lists the library off the main thread (it used to run on the main
+    /// thread at launch, before Home could draw).
     func refresh() {
+        scanTask?.cancel()
+        scanTask = Task { [weak self] in
+            let media = await Task.detached(priority: .userInitiated) { LocalMediaStore.scan() }.value
+            guard let self, !Task.isCancelled else { return }
+            if media != self.files { self.files = media }
+        }
+    }
+
+    nonisolated static func scan() -> [URL] {
         let fm = FileManager.default
         // Media and any folders added inside it (two levels, hidden files skipped).
-        var items: [URL] = []
+        var items: [(URL, Date)] = []
         if let e = fm.enumerator(at: MPVFiles.mediaDir, includingPropertiesForKeys: [.creationDateKey, .isDirectoryKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]) {
             for case let u as URL in e {
                 if e.level > 2 { e.skipDescendants(); continue }
-                if (try? u.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true { continue }
-                items.append(u)
+                let v = try? u.resourceValues(forKeys: [.isDirectoryKey, .creationDateKey])
+                if v?.isDirectory == true || !TitleParser.isMedia(u.lastPathComponent) { continue }
+                items.append((u, v?.creationDate ?? .distantPast))
             }
         }
-        let media = items.filter { TitleParser.isMedia($0.lastPathComponent) }
-            .sorted {
-                let a = (try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? .distantPast
-                let b = (try? $1.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? .distantPast
-                return a > b
-            }
-        if media != files { files = media }
+        LibraryOrganizer.warmInfo(items.map(\.0))
+        return items.sorted { $0.1 > $1.1 }.map(\.0)
     }
 
     private func watch() {

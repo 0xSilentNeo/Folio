@@ -37,8 +37,17 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
 struct RootView: View {
     @State private var tab = UserDefaults.standard.integer(forKey: SettingsKey.startupTab)
+    @State private var splash = !CommandLine.arguments.contains("-noSplash")
 
     var body: some View {
+        ZStack {
+            tabs
+            if splash { LaunchSplash { splash = false }.transition(.identity).zIndex(1) }
+        }
+        .onAppear { LaunchTiming.firstFrame() }
+    }
+
+    private var tabs: some View {
         TabView(selection: $tab) {
             HomeView()
                 .tabItem { Label("Home", systemImage: "play.rectangle.fill") }

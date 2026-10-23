@@ -302,8 +302,24 @@ struct MetaDetailView: View {
                     .padding(.horizontal, 16)
                 }
             }
+            let seasonEps = videos.filter { allSeasons.isEmpty || $0.season == season }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
+            if seasonEps.count > 1 {
+                // Whole season: starts at the first episode not finished yet.
+                let startAt = seasonEps.firstIndex { history.entry(for: "addon:\($0.id)")?.isFinished != true } ?? 0
+                NavigationLink {
+                    StreamsView(meta: m, video: seasonEps[startAt], seasonVideos: Array(seasonEps[startAt...]))
+                } label: {
+                    Label(startAt == 0 ? (season == 0 ? "Play all specials" : "Play Season \(season)")
+                                       : "Continue Season \(season) · E\(seasonEps[startAt].episode ?? startAt + 1)",
+                          systemImage: "play.square.stack.fill")
+                        .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 13)
+                        .background(Theme.gradient, in: RoundedRectangle(cornerRadius: 16))
+                        .foregroundStyle(.white)
+                }
+                .padding(.horizontal, 16)
+            }
             LazyVStack(spacing: 10) {
-                ForEach(videos.filter { allSeasons.isEmpty || $0.season == season }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }) { v in
+                ForEach(seasonEps) { v in
                     NavigationLink { StreamsView(meta: m, video: v) } label: { EpisodeRow(video: v, entry: history.entry(for: "addon:\(v.id)")) }
                         .buttonStyle(.plain)
                 }
@@ -356,6 +372,8 @@ struct EpisodeRow: View {
 struct StreamsView: View {
     let meta: MetaItem
     let video: MetaVideo?
+    /// Play Season: this episode and the ones after it (first = `video`).
+    var seasonVideos: [MetaVideo] = []
 
     struct StreamGroup: Identifiable { let id: String; let addon: InstalledAddon; var streams: [AddonStream]; var error: String? }
     @State private var groups: [StreamGroup] = []
@@ -366,6 +384,12 @@ struct StreamsView: View {
 
     var body: some View {
         List {
+            if seasonVideos.count > 1 {
+                Section {
+                    Label("Pick a stream for \(video?.label ?? "the first episode"). The other \(seasonVideos.count - 1) episodes follow automatically with the matching stream from the same addon.",
+                          systemImage: "play.square.stack").font(.footnote)
+                }
+            }
             if loading && groups.allSatisfy({ $0.streams.isEmpty }) {
                 HStack { ProgressView(); Text("Asking addons…").foregroundStyle(.secondary) }
             }
@@ -414,56 +438,28 @@ struct StreamsView: View {
         loading = false
     }
 
-    private func play(_ s: AddonStream, from addon: InstalledAddon) {
-        guard let url = s.url else { return }
-        starting = true
-        Task {
-            var item = MediaItem(url: url, title: meta.name, subtitle: video?.label, source: .addon(name: addon.manifest.name))
-            item.artwork = meta.poster
-            item.historyKey = "addon:\(videoId)"
-            item.addonRef = "\(meta.type)|\(meta.id)|\(videoId)"
-            item.headers = s.behaviorHints?.proxyHeaders?.request ?? [:]
-            var subs = (s.subtitles ?? []).map { ExternalSubtitle(url: $0.url, lang: $0.lang, title: $0.lang) }
-            subs += await fetchSubtitles()
-            item.subtitles = Array(subs.prefix(40))
-            if meta.isAnime {
-                var hint = AnimeHint(title: meta.name, episode: video?.episode)
-                let parts = videoId.split(separator: ":")
-                if parts.first == "kitsu", parts.count >= 2 {
-                    hint.kitsuId = Int(parts[1])
-                    if parts.count >= 3 { hint.episode = Int(parts[2]) ?? hint.episode }
-                } else if parts.first == "mal", parts.count >= 2 {
-                    hint.malId = Int(parts[1])
-                    if parts.count >= 3 { hint.episode = Int(parts[2]) ?? hint.episode }
-                }
-                if hint.episode == nil, meta.type == "movie" { hint.episode = 1 }
-                item.anime = hint
-            }
-            starting = false
-            PlayerPresenter.play(item)
-        }
+    private func context(for v: MetaVideo?) -> PlayContext {
+        PlayContext(name: meta.name, poster: meta.poster, type: meta.type, metaId: meta.id, isAnime: meta.isAnime,
+                    videoId: v?.id ?? meta.id, videoLabel: v?.label, episode: v?.episode)
     }
 
-    private func fetchSubtitles() async -> [ExternalSubtitle] {
-        let addons = AddonStore.shared.subtitleAddons(type: meta.type, id: videoId)
-        guard !addons.isEmpty else { return [] }
-        let prefs = (UserDefaults.standard.string(forKey: SettingsKey.subLangs) ?? "")
-            .split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
-        var out: [ExternalSubtitle] = []
-        await withTaskGroup(of: [AddonSubtitle].self) { tg in
-            for a in addons { tg.addTask { (try? await AddonAPI.subtitles(a, type: meta.type, id: videoId)) ?? [] } }
-            for await list in tg {
-                out += list.map { ExternalSubtitle(url: $0.url, lang: $0.lang, title: $0.lang) }
+    private func play(_ s: AddonStream, from addon: InstalledAddon) {
+        starting = true
+        Task {
+            let first = context(for: video)
+            let subs = await AddonPlayback.subtitles(type: meta.type, videoId: videoId)
+            guard let item = AddonPlayback.makeItem(first, stream: s, addon: addon, extraSubtitles: subs) else { starting = false; return }
+            starting = false
+            if seasonVideos.count > 1 {
+                // Play Season: the rest follow, each resolved just before it plays.
+                let pick = AddonPlayback.pick(from: s, addon: addon, context: first)
+                let rest = seasonVideos.dropFirst().map { AddonPlayback.placeholder(context(for: $0), pick: pick) }
+                dlog("player", "season: \(seasonVideos.count) episodes from \(addon.manifest.name), release group \(pick.bingeGroup ?? "none"), \(pick.resolution ?? "?")")
+                PlayerPresenter.play(queue: [item] + rest, index: 0)
+            } else {
+                PlayerPresenter.play(item)
             }
         }
-        if !prefs.isEmpty {
-            out.sort { a, b in
-                let ai = prefs.firstIndex(of: (a.lang ?? "").lowercased()) ?? 99
-                let bi = prefs.firstIndex(of: (b.lang ?? "").lowercased()) ?? 99
-                return ai < bi
-            }
-        }
-        return out
     }
 }
 

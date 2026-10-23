@@ -8,8 +8,24 @@ enum UILab {
     static var enabled: Bool { CommandLine.arguments.contains("-uiLab") || uiTest }
     /// XCUITest run: just open the player with the bundled clip; the test taps.
     static var uiTest: Bool { CommandLine.arguments.contains("-uiTest") }
+    /// XCUITest of the library: two episodes in Media, no autoplay.
+    static var uiTestLibrary: Bool { CommandLine.arguments.contains("-uiTestLibrary") }
+    static var keepControls: Bool { uiTest || uiTestLibrary }
 
     static func start() {
+        if uiTestLibrary {
+            UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
+            if let src = Bundle.main.url(forResource: "lab", withExtension: "mp4", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab", withExtension: "mp4") {
+                let dir = MPVFiles.mediaDir
+                try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                for n in ["Lab Show S01E01.mp4", "Lab Show S01E02.mp4"] {
+                    let d = dir.appendingPathComponent(n)
+                    if !FileManager.default.fileExists(atPath: d.path) { try? FileManager.default.copyItem(at: src, to: d) }
+                }
+                LocalMediaStore.shared.refresh()
+            }
+            return
+        }
         guard enabled else { return }
         if uiTest {
             UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)

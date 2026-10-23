@@ -128,9 +128,10 @@ struct PlayerScreen: View {
         let maxHeight = max(180, size.height - (compact ? 150 : 84) - window.safeAreaInsets.top - 66)
         let body = PlayerPanel(kind: kind, model: model, ui: ui, width: width, maxHeight: maxHeight,
                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock, bare: true)
-        var passthrough: [UIView] = []
-        if let bar = ui.panelBar { passthrough.append(bar) }
-        if let pill = ui.anchors[kind]?.superview?.superview?.superview { passthrough.append(pill) }
+        // No passthrough: while a panel is open the pill is hidden (its glass
+        // became the panel), so its buttons must not react — any tap outside
+        // the panel, including where the pill was, just closes it.
+        let passthrough: [UIView] = []
         dlog("ui", "present panel \(kind.rawValue) from \(ui.barItems[kind] != nil && ui.panelBar?.window != nil ? "bar item" : "view") \(Int(width))×≤\(Int(maxHeight))")
         var bottomInset: CGFloat = 8
         if let bar = sourceView {
@@ -156,6 +157,7 @@ struct PlayerScreen: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 GlassIcon("xmark", size: 17) { onClose() }
+                    .accessibilityLabel("Close player")
                 Spacer()
                 GlassIcon("lock", size: 16) {
                     ui.closePanel()

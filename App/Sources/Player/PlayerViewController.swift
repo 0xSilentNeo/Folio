@@ -62,7 +62,7 @@ final class PlayerUIState: ObservableObject {
 
     func scheduleHide(after seconds: Double = 4) {
         hideWork?.cancel()
-        if UILab.uiTest { return }   // keep controls up while the UI test taps
+        if UILab.keepControls { return }   // keep controls up while the UI test taps
         let w = DispatchWorkItem { [weak self] in
             guard let self, !self.showInfo, !self.showStats, !self.showTune, !self.scrubbing, !self.showConsole, !self.menuOpen, self.panel == nil else { return }
             withAnimation(.easeOut(duration: 0.25)) { self.controlsVisible = false }
@@ -244,6 +244,11 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
 /// never depends on whatever view controller happens to be mid-transition
 /// (document picker closing, sheet dismissing), which is what used to make
 /// "Open file" silently do nothing.
+extension Notification.Name {
+    static let playerWillShow = Notification.Name("GlassPlayer.playerWillShow")
+    static let playerDidHide = Notification.Name("GlassPlayer.playerDidHide")
+}
+
 @MainActor
 enum PlayerPresenter {
     private static var window: UIWindow?
@@ -266,6 +271,7 @@ enum PlayerPresenter {
             dlog("player/error", "no window scene")
             return
         }
+        NotificationCenter.default.post(name: .playerWillShow, object: nil)
         let vc = PlayerViewController(model: model)
         let w = PlayerWindowMarker(windowScene: scene)
         w.windowLevel = .normal + 1
@@ -299,6 +305,7 @@ enum PlayerPresenter {
             w.rootViewController = nil
             if window === w { window = nil }
             current = nil
+            NotificationCenter.default.post(name: .playerDidHide, object: nil)
             // Give focus back to the app window.
             UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first { !($0 is PlayerWindowMarker) }?.makeKey()
         }

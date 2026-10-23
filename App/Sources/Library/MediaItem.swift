@@ -42,6 +42,8 @@ struct MediaItem: Codable, Hashable, Identifiable {
     /// Re-openable reference for addon items: "<type>|<metaId>|<videoId>".
     var addonRef: String?
     var durationHint: Double?
+    /// Play Season: an episode whose stream is resolved when its turn comes.
+    var streamPick: StreamPick?
 
     init(url: String, title: String, subtitle: String? = nil, source: MediaSource = .url) {
         self.url = url

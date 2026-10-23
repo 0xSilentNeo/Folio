@@ -34,6 +34,7 @@ struct NetworkView: View {
             .navigationTitle("Network")
             .sheet(isPresented: $adding) { ServerEditView(server: nil) }
             .sheet(item: $editing) { s in ServerEditView(server: s) }
+            .navigationDestination(for: LibraryRoute.self) { LibraryRoute.destination($0) }
         }
     }
 }
@@ -58,7 +59,7 @@ struct LocalFolderView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     ForEach(folders, id: \.self) { u in
-                        NavigationLink { LocalFolderView(url: u, title: u.lastPathComponent) } label: {
+                        NavigationLink(value: LibraryRoute.folder(u.path)) {
                             Label(u.lastPathComponent, systemImage: "folder.fill").font(.subheadline.weight(.semibold))
                                 .frame(maxWidth: .infinity, alignment: .leading).padding(12)
                                 .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -68,7 +69,7 @@ struct LocalFolderView: View {
                     if mode == .grid {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
                             ForEach(media, id: \.self) { f in
-                                NavigationLink { TitleHeroView(file: f) } label: {
+                                NavigationLink(value: LibraryRoute.file(f.path)) {
                                     MediaTile(title: TitleParser.clean(f.lastPathComponent), subtitle: f.pathExtension.uppercased(),
                                               key: f.path, fileURL: f, lookupName: f.lastPathComponent,
                                               progress: history.entry(forURL: f.path)?.progress)

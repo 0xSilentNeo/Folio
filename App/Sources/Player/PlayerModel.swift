@@ -168,7 +168,9 @@ final class PlayerModel: ObservableObject {
     var duration: Double { clock.duration }
 
     let queue: [MediaItem]
-    var item: MediaItem { queue[queueIndex] }
+    var item: MediaItem { resolvedItems[queueIndex] ?? queue[queueIndex] }
+    /// Play Season: episodes whose stream was found when their turn came.
+    private var resolvedItems: [Int: MediaItem] = [:]
     var hasNext: Bool { queueIndex + 1 < queue.count }
     var hasPrevious: Bool { queueIndex > 0 }
 
@@ -457,6 +459,10 @@ final class PlayerModel: ObservableObject {
 
     func load(_ item: MediaItem) {
         guard let c = client else { return }
+        if item.url.isEmpty, let pick = item.streamPick {
+            resolveAndLoad(pick, index: queueIndex)
+            return
+        }
         saveHistory(force: true)
         ended = false
         errorMessage = nil
@@ -503,6 +509,28 @@ final class PlayerModel: ObservableObject {
         let r = c.command(["loadfile", item.mpvPath, "replace", "-1", opts.joined(separator: ",")])
         dlog("player", "loadfile \(item.mpvPath) source=\(item.source) opts=\(opts) -> \(r)")
         updateNowPlaying()
+    }
+
+    /// Finds the next episode's stream (same addon, matching release), then plays it.
+    private func resolveAndLoad(_ pick: StreamPick, index: Int) {
+        if let done = resolvedItems[index] { load(done); return }
+        saveHistory(force: true)
+        isLoading = true
+        ended = false
+        errorMessage = nil
+        mediaTitle = [pick.context.name, pick.context.videoLabel].compactMap { $0 }.joined(separator: " · ")
+        showToast("Finding \(pick.context.videoLabel ?? "next episode")…")
+        Task { [weak self] in
+            let found = await AddonPlayback.resolve(pick)
+            guard let self, self.queueIndex == index else { return }
+            if let found {
+                self.resolvedItems[index] = found
+                self.load(found)
+            } else {
+                self.isLoading = false
+                self.errorMessage = "No stream found for \(pick.context.videoLabel ?? "this episode") from the same addon. Pick one from the title page."
+            }
+        }
     }
 
     func playNext() {

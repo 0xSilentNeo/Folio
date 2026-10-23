@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// How the library is ordered (Home, All, title pages).
 enum LibrarySort: String, CaseIterable {
@@ -39,9 +40,24 @@ struct LibraryGroup: Identifiable, Hashable {
 }
 
 enum LibraryOrganizer {
+    private static let infoLock = NSLock()
+    private nonisolated(unsafe) static var infoCache: [String: (date: Date, size: Int64)] = [:]
+
+    /// Date added and size; cached (read once per library scan, not on every redraw).
     static func info(_ url: URL) -> (date: Date, size: Int64) {
+        infoLock.lock()
+        if let c = infoCache[url.path] { infoLock.unlock(); return c }
+        infoLock.unlock()
         let v = try? url.resourceValues(forKeys: [.creationDateKey, .addedToDirectoryDateKey, .fileSizeKey])
-        return (v?.addedToDirectoryDate ?? v?.creationDate ?? .distantPast, Int64(v?.fileSize ?? 0))
+        let r = (date: v?.addedToDirectoryDate ?? v?.creationDate ?? .distantPast, size: Int64(v?.fileSize ?? 0))
+        infoLock.lock(); infoCache[url.path] = r; infoLock.unlock()
+        return r
+    }
+
+    /// Re-reads file info for a fresh scan (off the main thread).
+    static func warmInfo(_ urls: [URL]) {
+        infoLock.lock(); infoCache = [:]; infoLock.unlock()
+        for u in urls { _ = info(u) }
     }
 
     static func episodeOrder(_ a: URL, _ b: URL) -> Bool {
@@ -90,6 +106,38 @@ enum LibraryOrganizer {
             case .size: less = info(a).size < info(b).size
             }
             return ascending ? less : !less
+        }
+    }
+}
+
+
+/// Navigation routes for title pages. Pages are pushed by value, so going
+/// back no longer depends on the link that opened them still existing:
+/// with view-building links, Home rebuilding its lists (after you watched
+/// something, or the library refreshed) could orphan the open title page so
+/// neither Back nor the swipe closed it.
+enum LibraryRoute: Hashable {
+    case group(String)        // LibraryGroup.id
+    case file(String)         // file path
+    case folder(String)       // folder path
+    case settings
+
+    @MainActor @ViewBuilder
+    static func destination(_ route: LibraryRoute) -> some View {
+        switch route {
+        case .group(let id):
+            if let g = LibraryOrganizer.groups(LocalMediaStore.shared.files).first(where: { $0.id == id }) {
+                TitleHeroView(group: g)
+            } else {
+                ContentUnavailableView("Not in your library any more", systemImage: "film")
+            }
+        case .file(let path):
+            TitleHeroView(file: URL(fileURLWithPath: path))
+        case .folder(let path):
+            let u = URL(fileURLWithPath: path)
+            LocalFolderView(url: u, title: u.lastPathComponent)
+        case .settings:
+            SettingsView()
         }
     }
 }

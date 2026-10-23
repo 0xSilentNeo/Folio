@@ -194,6 +194,7 @@ struct TitleHeroView: View {
         }
         .buttonStyle(PressStyle())
         .foregroundStyle(.white)
+        .accessibilityLabel("Back")
         .padding(.leading, 16).padding(.top, 8)
     }
 
@@ -290,6 +291,9 @@ struct TiltPlayButton: View {
                     }
                 }
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("heroPlay")
         .onAppear { motion.start() }
         .onDisappear { motion.stop() }
     }
@@ -301,18 +305,46 @@ final class MotionTilt: ObservableObject {
     @Published var tilt = CGSize.zero
     private let manager = CMMotionManager()
     private var base: (roll: Double, pitch: Double)?
+    private var wanted = false
+    private var observers: [NSObjectProtocol] = []
+
+    init() {
+        // Motion updates re-render the button 30× a second: pause them while a
+        // video plays (the page is still alive under the player) or the app
+        // is in the background.
+        let nc = NotificationCenter.default
+        for (name, on) in [(Notification.Name.playerWillShow, false), (.playerDidHide, true),
+                           (UIApplication.didEnterBackgroundNotification, false), (UIApplication.willEnterForegroundNotification, true)] {
+            observers.append(nc.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    if on, self.wanted, PlayerPresenter.current == nil { self.begin() } else if !on { self.pause() }
+                }
+            })
+        }
+    }
 
     func start() {
+        wanted = true
+        guard PlayerPresenter.current == nil else { return }
+        begin()
+    }
+
+    private func pause() { manager.stopDeviceMotionUpdates(); base = nil }
+
+    private func begin() {
         guard manager.isDeviceMotionAvailable, !manager.isDeviceMotionActive else { return }
         manager.deviceMotionUpdateInterval = 1.0 / 30
         manager.startDeviceMotionUpdates(to: .main) { [weak self] m, _ in
             guard let self, let m else { return }
             if base == nil { base = (m.attitude.roll, m.attitude.pitch) }
             let dr = m.attitude.roll - (base?.roll ?? 0), dp = m.attitude.pitch - (base?.pitch ?? 0)
-            tilt = CGSize(width: min(1, max(-1, dr * 1.6)), height: min(1, max(-1, dp * 1.6)))
+            let t = CGSize(width: min(1, max(-1, dr * 1.6)), height: min(1, max(-1, dp * 1.6)))
+            // Only re-render for a visible change.
+            if abs(t.width - tilt.width) > 0.02 || abs(t.height - tilt.height) > 0.02 { tilt = t }
         }
     }
-    func stop() { manager.stopDeviceMotionUpdates(); base = nil; tilt = .zero }
+    func stop() { wanted = false; pause(); tilt = .zero }
 }
 
 // MARK: - View modes shared by Home and the hero page
@@ -372,7 +404,7 @@ struct LibraryList: View {
             ForEach(files, id: \.self) { f in
                 Group {
                     if openTitlePage && group == nil {
-                        NavigationLink { TitleHeroView(file: f) } label: { row(f) }
+                        NavigationLink(value: LibraryRoute.file(f.path)) { row(f) }
                     } else {
                         Button { play(f) } label: { row(f) }
                     }

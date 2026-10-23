@@ -8,8 +8,10 @@ struct HomeView: View {
     @State private var addServer = false
     @State private var showAddFiles = false
 
+    @State private var path: [LibraryRoute] = []
+
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             GeometryReader { geo in
                 let wide = geo.size.width > 700
                 let margin: CGFloat = wide ? 28 : 20
@@ -31,6 +33,13 @@ struct HomeView: View {
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
+            .navigationDestination(for: LibraryRoute.self) { route in
+                if #available(iOS 18.0, *), route == .settings {
+                    SettingsView().navigationTransition(.zoom(sourceID: "settings", in: zoomNS))
+                } else {
+                    LibraryRoute.destination(route)
+                }
+            }
         }
     }
 
@@ -94,15 +103,13 @@ struct HomeView: View {
     @ViewBuilder
     private var settingsLink: some View {
         if #available(iOS 18.0, *) {
-            NavigationLink {
-                SettingsView().navigationTransition(.zoom(sourceID: "settings", in: zoomNS))
-            } label: {
+            NavigationLink(value: LibraryRoute.settings) {
                 Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
             .buttonStyle(PressStyle())
             .matchedTransitionSource(id: "settings", in: zoomNS)
         } else {
-            NavigationLink { SettingsView() } label: {
+            NavigationLink(value: LibraryRoute.settings) {
                 Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
             .buttonStyle(PressStyle())
@@ -122,11 +129,11 @@ struct HomeView: View {
 
     private func continueWatching(width: CGFloat, wide: Bool, margin: CGFloat) -> some View {
         let items = Array(history.continueWatching.prefix(12))
-        let cardW: CGFloat = wide ? 320 : min(340, width - margin * 2 - 28)
+        let cardW: CGFloat = wide ? 320 : min(340, width - margin * 2 - 44)
         return VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Continue Watching", margin)
             ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 14) {
+                LazyHStack(spacing: 20) {
                     ForEach(items) { e in
                         HeroCard(entry: e, height: cardW * 9 / 16 + 8)
                             .frame(width: cardW)
@@ -214,7 +221,7 @@ struct HomeView: View {
     private func groupLink<L: View>(_ g: LibraryGroup, @ViewBuilder label: () -> L) -> some View {
         Group {
             if openTitlePage || g.isSeries {
-                NavigationLink { TitleHeroView(group: g) } label: { label() }
+                NavigationLink(value: LibraryRoute.group(g.id)) { label() }
             } else {
                 Button { playLocal(g.nextUp) } label: { label() }
             }

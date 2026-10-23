@@ -11,7 +11,7 @@ struct SettingsView: View {
                 }
                 Section {
                     row("Playback", "play.rectangle", .pink) { PlaybackSettings() }
-                    row("Subtitles & Audio", "captions.bubble", .orange) { SubtitleAudioSettings() }
+                    row("Audio & Subtitles", "captions.bubble", .orange) { SubtitleAudioSettings() }
                     row("Skip Intro & Credits", "forward.end", .purple) { SkipSettings() }
                     row("Discover", "sparkles.tv", .cyan) { DiscoverSettings() }
                 }
@@ -146,12 +146,36 @@ struct SubtitleAudioSettings: View {
     var body: some View {
         Form {
             Section {
-                Picker("Subtitles", selection: $subtitlesDefault) {
+                NavigationLink {
+                    LanguageListEditor(title: "Audio Languages",
+                                       explanation: "When a file has several audio tracks, the first language on this list that the file has is played. With none of them, the file's default track plays.",
+                                       list: $audioLangs)
+                } label: {
+                    LabeledContent("Preferred audio language", value: PlaybackLanguage.summary(audioLangs))
+                }
+                Toggle("Surround & Spatial Audio", isOn: $surround)
+                Picker("Downmix volume", selection: $downmixNormalize) {
+                    Text("Original").tag(false); Text("Normalized").tag(true)
+                }
+                Toggle("LFE in stereo downmix", isOn: $lfe)
+            } header: { Text("Audio") } footer: {
+                Text("Surround: plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't rendered.")
+            }
+            Section {
+                Picker("Show subtitles", selection: $subtitlesDefault) {
                     Text("On").tag("on"); Text("Off").tag("off")
                 }
-                TextField("Subtitle languages", text: $subLangs).textInputAutocapitalization(.never).autocorrectionDisabled()
-                TextField("Audio languages", text: $audioLangs).textInputAutocapitalization(.never).autocorrectionDisabled()
-            } header: { Text("Preferred languages") } footer: { Text("Comma-separated codes, e.g. eng,en or jpn,ja.") }
+                NavigationLink {
+                    LanguageListEditor(title: "Subtitle Languages",
+                                       explanation: "The first language on this list that the file has subtitles in is shown. Subtitles can always be switched in the player's Tracks menu.",
+                                       list: $subLangs)
+                } label: {
+                    LabeledContent("Preferred subtitle language", value: PlaybackLanguage.summary(subLangs))
+                }
+                .disabled(subtitlesDefault == "off")
+            } header: { Text("Subtitles") } footer: {
+                Text("Show subtitles: whether a subtitle track is turned on when a video starts.")
+            }
             Section("Subtitle style") {
                 LabeledContent("Size") {
                     Slider(value: $subScale, in: 0.5...2.5, step: 0.05).frame(maxWidth: 180)
@@ -161,17 +185,8 @@ struct SubtitleAudioSettings: View {
                 Toggle("Bold", isOn: $subBold)
                 Toggle("Background box", isOn: $subBox)
             }
-            Section {
-                Toggle("Surround & Spatial Audio", isOn: $surround)
-                Picker("Downmix volume", selection: $downmixNormalize) {
-                    Text("Original").tag(false); Text("Normalized").tag(true)
-                }
-                Toggle("LFE in stereo downmix", isOn: $lfe)
-            } header: { Text("Audio") } footer: {
-                Text("Plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't rendered.")
-            }
         }
-        .navigationTitle("Subtitles & Audio")
+        .navigationTitle("Audio & Subtitles")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

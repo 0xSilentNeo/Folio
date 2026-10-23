@@ -261,3 +261,28 @@ extension Diagnostics: MXMetricManagerSubscriber {
 }
 
 func dlog(_ tag: String, _ message: @autoclosure () -> String) { Diagnostics.shared.log(tag, message()) }
+
+/// Launch timing in the app log: process start → first screen. When iOS
+/// prewarmed the process (started it ahead of time), the gap includes the
+/// wait before you tapped, so it's flagged.
+enum LaunchTiming {
+    private nonisolated(unsafe) static var logged = false
+
+    static func processStart() -> Date? {
+        var info = kinfo_proc()
+        var size = MemoryLayout<kinfo_proc>.stride
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
+        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0 else { return nil }
+        let t = info.kp_proc.p_un.__p_starttime
+        return Date(timeIntervalSince1970: Double(t.tv_sec) + Double(t.tv_usec) / 1_000_000)
+    }
+
+    static func firstFrame() {
+        guard !logged else { return }
+        logged = true
+        let prewarmed = ProcessInfo.processInfo.environment["ActivePrewarm"] == "1"
+        guard let start = processStart() else { return }
+        let ms = Int(Date().timeIntervalSince(start) * 1000)
+        dlog("app", "first screen \(ms) ms after process start\(prewarmed ? " (prewarmed by iOS)" : "")")
+    }
+}

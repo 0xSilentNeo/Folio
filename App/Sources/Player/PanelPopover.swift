@@ -167,7 +167,7 @@ final class PanelPresenter {
         setBusy(true)
         host.present(vc, animated: animated) { [weak self] in
             dlog("ui", "panel: presented \(req.kind)")
-            // UIKit resets passthrough views for bar-item popovers on presentation.
+            // UIKit makes the bar passthrough for bar-item popovers on presentation; undo that.
             vc.popoverPresentationController?.passthroughViews = vc.passthrough
             self?.settle()
         }

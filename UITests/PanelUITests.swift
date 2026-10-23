@@ -1,8 +1,9 @@
 import XCTest
 
 /// Drives the player with real touches in the CI simulator while the screen
-/// is recorded: open each panel from its toolbar button, switch panels, drag
-/// and tap the Now Playing segmented control, close by tapping outside.
+/// is recorded: open each panel from its toolbar button, close it by tapping
+/// where the (hidden) pill was, drag and tap the Now Playing segmented
+/// control, close by tapping outside.
 final class PanelUITests: XCTestCase {
     func test0PanelsAndTabs() throws {
         let app = XCUIApplication()
@@ -13,15 +14,28 @@ final class PanelUITests: XCTestCase {
         let tracks = app.buttons["Tracks"]
         XCTAssertTrue(tracks.waitForExistence(timeout: 20), "toolbar button not found")
         sleep(2)
+        // Where the pill's buttons are (they hide while a panel is open).
+        func spot(_ name: String) -> XCUICoordinate {
+            let f = app.buttons[name].frame
+            return app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY))
+        }
+        let settingsSpot = spot("Settings"), nowPlayingSpot = spot("Now Playing"), tracksSpot = spot("Tracks")
+
         tracks.tap()                                                         // open
         XCTAssertTrue(app.staticTexts["Audio"].waitForExistence(timeout: 4), "Tracks panel did not open")
         sleep(2)
-        XCTAssertTrue(app.buttons["Settings"].isHittable, "Settings button covered by the panel")
-        app.buttons["Settings"].tap()                                        // switch
+        settingsSpot.tap(); sleep(2)                                         // where Settings was → just closes
+        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close on a tap where the pill was")
+        XCTAssertFalse(app.staticTexts["Playback"].exists, "a hidden button switched panels")
+
+        app.buttons["Settings"].tap()
         XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 4), "Settings panel did not open")
         sleep(2)
-        XCTAssertTrue(app.buttons["Now Playing"].isHittable, "Now Playing button covered by the panel")
-        app.buttons["Now Playing"].tap()                                     // switch
+        nowPlayingSpot.tap(); sleep(2)                                       // where Now Playing was → closes
+        XCTAssertFalse(app.staticTexts["Playback"].exists, "Settings did not close on a tap where the pill was")
+        XCTAssertFalse(app.staticTexts["NOW PLAYING"].exists, "a hidden button switched panels")
+
+        app.buttons["Now Playing"].tap()
         XCTAssertTrue(app.staticTexts["NOW PLAYING"].waitForExistence(timeout: 4), "Now Playing panel did not open")
         sleep(2)
 
@@ -35,7 +49,8 @@ final class PanelUITests: XCTestCase {
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)   // tap outside → close
         XCTAssertFalse(app.staticTexts["NOW PLAYING"].exists, "panel did not close on outside tap")
         tracks.tap(); sleep(2)
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
+        tracksSpot.tap(); sleep(2)                                           // its own spot also closes
+        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close on its own spot")
     }
 
     private func launchPlayer(_ extra: [String] = []) -> XCUIApplication {
@@ -54,29 +69,6 @@ final class PanelUITests: XCTestCase {
         let app = launchPlayer()
         app.buttons["Settings"].press(forDuration: 1.2)
         XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 4), "Settings did not open after a long press")
-        sleep(2)
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
-    }
-
-    /// Same press on a plain UIKit toolbar (no SwiftUI around it).
-    func test2PressUIKitToolbar() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["-popLab", "-popLabStatic"]
-        app.launch()
-        XCUIDevice.shared.orientation = .landscapeLeft
-        let b = app.buttons["LabSettings"]
-        XCTAssertTrue(b.waitForExistence(timeout: 20), "lab toolbar not found")
-        sleep(2)
-        b.press(forDuration: 1.2)
-        sleep(3)
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.2)).tap(); sleep(2)
-    }
-
-    /// Player with screen-edge deferral on (the 1.9.11 setting), for comparison.
-    func test3PressWithEdgeDeferral() throws {
-        let app = launchPlayer(["-deferEdges"])
-        app.buttons["Settings"].press(forDuration: 1.2)
-        XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 4), "Settings did not open (deferral on)")
         sleep(2)
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
     }
@@ -132,5 +124,43 @@ final class PanelUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Audio"].waitForExistence(timeout: 4), "player unresponsive after the replay")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
         XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close")
+    }
+
+    /// Title page: open it, play an episode, close the player, then Back must
+    /// return to Home; and the edge swipe must work too.
+    func test8TitlePageBack() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+        tile.tap()
+        let back = app.buttons["Back"]
+        XCTAssertTrue(back.waitForExistence(timeout: 6), "title page did not open")
+        sleep(1)
+        let play = app.descendants(matching: .any)["heroPlay"]
+        XCTAssertTrue(play.waitForExistence(timeout: 5), "play button not found")
+        play.tap()
+        let close = app.buttons["Close player"]
+        XCTAssertTrue(close.waitForExistence(timeout: 20), "player did not open")
+        sleep(10)                                                  // let it play and save progress
+        close.tap()
+        sleep(4)                                                   // history updates → Home rebuilds underneath
+        XCTAssertTrue(back.waitForExistence(timeout: 6), "title page gone after closing the player")
+        back.tap()
+        sleep(2)
+        XCTAssertFalse(app.buttons["Back"].exists, "Back did not leave the title page")
+        XCTAssertTrue(app.staticTexts["Lab Show"].firstMatch.waitForExistence(timeout: 4), "not back on Home")
+
+        // Again, leaving with the edge swipe this time.
+        app.staticTexts["Lab Show"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open (2nd time)")
+        sleep(1)
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)))
+        sleep(2)
+        XCTAssertFalse(app.buttons["Back"].exists, "edge swipe did not leave the title page")
     }
 }

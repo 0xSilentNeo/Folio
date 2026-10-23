@@ -26,7 +26,23 @@ enum TitleParser {
         subtitleExtensions.contains((name as NSString).pathExtension.lowercased())
     }
 
+    private static let cacheLock = NSLock()
+    private nonisolated(unsafe) static var cache: [String: Parsed] = [:]
+
+    /// Cached: the library parses every file name on every redraw.
     static func parse(_ rawName: String) -> Parsed {
+        cacheLock.lock()
+        if let p = cache[rawName] { cacheLock.unlock(); return p }
+        cacheLock.unlock()
+        let p = parseUncached(rawName)
+        cacheLock.lock()
+        if cache.count > 5000 { cache.removeAll() }
+        cache[rawName] = p
+        cacheLock.unlock()
+        return p
+    }
+
+    private static func parseUncached(_ rawName: String) -> Parsed {
         var name = rawName
         let ext = (name as NSString).pathExtension.lowercased()
         if mediaExtensions.contains(ext) || subtitleExtensions.contains(ext) {
