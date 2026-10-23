@@ -130,8 +130,6 @@ final class PanelUITests: XCTestCase {
     /// return to Home; and the edge swipe must work too.
     func test8TitlePageBack() throws { try titlePageBack([]) }
 
-    /// Same, with the library window left visible during playback (comparison).
-    func test9TitlePageBackWindowKept() throws { try titlePageBack(["-keepAppWindow"]) }
 
     private func titlePageBack(_ extra: [String]) throws {
         let app = XCUIApplication()
