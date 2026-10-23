@@ -23,6 +23,7 @@ struct GlassBackground: ViewModifier {
         if #available(iOS 26.0, *) {
             if interactive {
                 content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: cornerRadius))
+                    .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             } else {
                 content.glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
             }
@@ -46,7 +47,11 @@ struct GlassCircle: ViewModifier {
     func body(content: Content) -> some View {
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
-            content.glassEffect(.regular.interactive(), in: .circle)
+            // contentShape: the whole circle is the button. Without it a tap on
+            // the interactive glass (not on the icon) went to the glass effect
+            // and the button's action never ran — the title page's Back button
+            // only worked when you hit the chevron itself.
+            content.glassEffect(.regular.interactive(), in: .circle).contentShape(Circle())
         } else {
             content.background(.ultraThinMaterial, in: Circle())
                 .overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 0.5))

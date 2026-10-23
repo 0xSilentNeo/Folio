@@ -195,7 +195,7 @@ struct TitleHeroView: View {
 
     private var backButton: some View {
         Button { dlog("nav", "back tapped on \(file.lastPathComponent)"); dismiss() } label: {
-            Image(systemName: "chevron.left").font(.system(size: 16, weight: .semibold)).frame(width: 40, height: 40).glassCircle()
+            Image(systemName: "chevron.left").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
         }
         .buttonStyle(PressStyle())
         .foregroundStyle(.white)
