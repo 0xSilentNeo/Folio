@@ -13,6 +13,7 @@ enum UILab {
     static var keepControls: Bool { uiTest || uiTestLibrary }
 
     static func start() {
+        if CommandLine.arguments.contains("-avLab") { avLab(); return }
         if uiTestLibrary {
             UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
             if let src = Bundle.main.url(forResource: "lab", withExtension: "mp4", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab", withExtension: "mp4") {
@@ -75,6 +76,41 @@ enum UILab {
     }
 
     private static var ui: PlayerUIState? { PlayerPresenter.current?.ui }
+
+    /// A/V sync lab (real engine): play a clip with 5.1 audio, hold 2× for 4 s,
+    /// release, then switch the renderer the way PiP does and back. Logs
+    /// position, audio position and A/V offset every 0.2 s.
+    private static func avLab() {
+        UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
+        UserDefaults.standard.set(true, forKey: SettingsKey.holdToSpeed)
+        guard let url = Bundle.main.url(forResource: "lab-av", withExtension: "mkv", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab-av", withExtension: "mkv") else { dlog("lab/error", "lab-av.mkv missing"); return }
+        let ao = CommandLine.arguments.first { $0.hasPrefix("-labAO=") } ?? "default"
+        dlog("av", "A/V lab, ao \(ao)")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            var m = MediaItem(url: url.path, title: "A/V lab", source: .local); m.historyKey = "avlab"
+            PlayerPresenter.play(m)
+        }
+        let steps: [(Double, String, () -> Void)] = [
+            (12, "hold 2x", { PlayerPresenter.current?.model.beginHoldSpeed() }),
+            (16, "release", { PlayerPresenter.current?.model.endHoldSpeed() }),
+            (22, "renderer → software (PiP path)", { PlayerPresenter.current?.model.labSwitchRenderer(software: true) }),
+            (26, "renderer → main", { PlayerPresenter.current?.model.labSwitchRenderer(software: false) }),
+        ]
+        for (t, name, f) in steps { DispatchQueue.main.asyncAfter(deadline: .now() + t) { dlog("av", "== \(name)"); f() } }
+        var t0: Date?
+        Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { timer in
+            MainActor.assumeIsolated {
+                guard let model = PlayerPresenter.current?.model, let c = model.client else { return }
+                if t0 == nil { t0 = Date() }
+                if Date().timeIntervalSince(t0!) > 34 { timer.invalidate(); dlog("av", "done"); return }
+                c.query({ c in (c.double("time-pos"), c.double("audio-pts"), c.double("avsync"), c.double("speed"),
+                                c.int("frame-drop-count"), c.int("decoder-frame-drop-count"), c.string("current-ao")) }) { r in
+                    func f(_ v: Double?) -> String { v.map { String(format: "%.3f", $0) } ?? "-" }
+                    dlog("av", "t=\(f(r.0)) a=\(f(r.1)) avsync=\(f(r.2)) speed=\(f(r.3)) drops=\(r.4 ?? -1)/\(r.5 ?? -1) ao=\(r.6 ?? "-")")
+                }
+            }
+        }
+    }
 
     /// Replays the button taps from the 1.10.0 freeze log (23 Oct, 05:09:49–05:10:01)
     /// at their real intervals: each entry is a tap on that panel's button

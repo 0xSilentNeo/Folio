@@ -355,7 +355,8 @@ final class PlayerModel: ObservableObject {
         c.setOption("network-timeout", "30")
         c.setOption("hr-seek-framedrop", "yes")
         // Audio: multichannel PCM out (AirPlay / HDMI surround, Spatial Audio on AirPods).
-        c.setOption("ao", "avfoundation,audiounit")
+        let aoOverride = CommandLine.arguments.first { $0.hasPrefix("-labAO=") }.map { String($0.dropFirst(7)) }
+        c.setOption("ao", aoOverride ?? "avfoundation,audiounit")
         c.setOption("audio-channels", defaults.bool(forKey: SettingsKey.surroundAudio) ? "auto" : "stereo")
         c.setOption("sub-auto", "fuzzy")
         if defaults.string(forKey: SettingsKey.subtitlesDefault) == "off" { c.setOption("sid", "no") }
@@ -986,6 +987,9 @@ final class PlayerModel: ObservableObject {
     }
 
     // MARK: Renderer switching (PiP)
+
+    /// A/V lab: the same renderer switch PiP does, without PiP.
+    func labSwitchRenderer(software: Bool) { software ? switchToSoftware() : switchToMain() }
 
     private func switchToSoftware() {
         guard mode == .main, let c = client else { return }
