@@ -355,7 +355,7 @@ final class PlayerModel: ObservableObject {
         c.setOption("network-timeout", "30")
         c.setOption("hr-seek-framedrop", "yes")
         // Audio: multichannel PCM out (AirPlay / HDMI surround, Spatial Audio on AirPods).
-        let aoOverride = CommandLine.arguments.first { $0.hasPrefix("-labAO=") }.map { String($0.dropFirst(7)) }
+        let aoOverride = CommandLine.arguments.first { $0.hasPrefix("-labAO=") }.map { String($0.dropFirst(7)) }.flatMap { $0 == "default" ? nil : $0 }
         // AudioUnit first: measured in the CI A/V lab, the AVFoundation output
         // froze the picture for seconds on a speed change (hold for 2×) or a
         // renderer switch (PiP), and left audio up to 3 s out of sync for ~10 s.
