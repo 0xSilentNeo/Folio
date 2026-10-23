@@ -145,6 +145,12 @@ final class PanelUITests: XCTestCase {
         let back = app.buttons["Back"]
         XCTAssertTrue(back.waitForExistence(timeout: 6), "title page did not open")
         sleep(1)
+        // Baseline: Back before anything was played.
+        print("BACK frame \(back.frame) hittable=\(back.isHittable)")
+        back.tap(); sleep(2)
+        XCTAssertFalse(app.buttons["Back"].exists, "Back did not work even before playing")
+        if app.buttons["Back"].exists { app.buttons["Back"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap(); sleep(2) }
+        if !app.buttons["Back"].exists { tile.tap(); XCTAssertTrue(back.waitForExistence(timeout: 6), "title page did not reopen"); sleep(1) }
         let play = app.descendants(matching: .any)["heroPlay"]
         XCTAssertTrue(play.waitForExistence(timeout: 5), "play button not found")
         play.tap()
