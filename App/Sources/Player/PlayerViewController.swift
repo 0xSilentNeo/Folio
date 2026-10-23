@@ -317,11 +317,26 @@ enum PlayerPresenter {
             if window === w { window = nil }
             current = nil
             NotificationCenter.default.post(name: .playerDidHide, object: nil)
+            restoreOrientation()
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dumpWindows("after player closed") }
             // Give focus back to the app window.
             UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first { !($0 is PlayerWindowMarker) }?.makeKey()
         }
         if animated { UIView.animate(withDuration: 0.2, animations: { w.alpha = 0 }, completion: { _ in done() }) } else { done() }
+    }
+
+    /// The player turns the screen to landscape. Back in the library, follow
+    /// the phone again: if it's upright, return to portrait. Otherwise the
+    /// library stayed in landscape on an upright phone, and taps landed in
+    /// the wrong place (Back and the edge swipe stopped working).
+    private static func restoreOrientation() {
+        guard UIDevice.current.userInterfaceIdiom == .phone,
+              let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else { return }
+        let d = UIDevice.current.orientation
+        guard !d.isLandscape, scene.interfaceOrientation.isLandscape else { return }
+        dlog("nav", "player closed: back to portrait (phone is upright)")
+        scene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { e in dlog("nav/error", "portrait request: \(e.localizedDescription)") }
+        for w in scene.windows { w.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations() }
     }
 
     static func topViewController() -> UIViewController? {
