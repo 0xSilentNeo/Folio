@@ -93,7 +93,11 @@ struct TitleHeroView: View {
         .toolbar(.hidden, for: .navigationBar)
         .overlay(alignment: .topLeading) { backButton }
         .overlay(alignment: .topTrailing) { moreButton }
-        .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true) }
+        .onAppear {
+            dlog("nav", "title page appear \(file.lastPathComponent)")
+            thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true)
+        }
+        .onDisappear { dlog("nav", "title page disappear \(file.lastPathComponent)") }
         .confirmationDialog("Delete this file from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { local.delete(file); dismiss() }
         }
@@ -189,7 +193,7 @@ struct TitleHeroView: View {
     }
 
     private var backButton: some View {
-        Button { dismiss() } label: {
+        Button { dlog("nav", "back tapped on \(file.lastPathComponent)"); dismiss() } label: {
             Image(systemName: "chevron.left").font(.system(size: 16, weight: .semibold)).frame(width: 40, height: 40).glassCircle()
         }
         .buttonStyle(PressStyle())

@@ -33,6 +33,7 @@ struct HomeView: View {
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
+            .onChange(of: path) { old, new in dlog("nav", "home path \(old.count) → \(new.count): \(new)") }
             .navigationDestination(for: LibraryRoute.self) { route in
                 if #available(iOS 18.0, *), route == .settings {
                     SettingsView().navigationTransition(.zoom(sourceID: "settings", in: zoomNS))
