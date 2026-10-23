@@ -674,12 +674,37 @@ final class PlayerModel: ObservableObject {
         speedBeforeHold = speed
         holdSpeedActive = true
         setSpeed(holdSpeed)
+        traceAV("hold \(holdSpeed)x")
     }
 
     func endHoldSpeed() {
         guard holdSpeedActive else { return }
         holdSpeedActive = false
         setSpeed(speedBeforeHold)
+        traceAV("release")
+    }
+
+    /// For 3 s after a speed or renderer change, samples A/V offset and
+    /// whether the picture advances; logs one summary line (for the log you send).
+    func traceAV(_ label: String) {
+        guard let c = client else { return }
+        var samples: [(t: Double, a: Double, sync: Double)] = []
+        let start = Date()
+        func sample() {
+            c.query({ c in (c.double("time-pos") ?? -1, c.double("audio-pts") ?? -1, c.double("avsync") ?? 0) }) { [weak self] r in
+                samples.append((r.0, r.1, r.2))
+                if Date().timeIntervalSince(start) < 3 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { sample() }
+                } else {
+                    var stalled = 0.0
+                    for i in 1..<max(1, samples.count) where abs(samples[i].t - samples[i - 1].t) < 0.01 { stalled += 0.2 }
+                    let worst = samples.map { abs($0.sync) }.max() ?? 0
+                    let ao = self.map { _ in c.string("current-ao") ?? "?" } ?? "?"
+                    dlog("av", String(format: "%@: worst A/V offset %.0f ms, picture still for %.1f s of 3 (ao %@)", label, worst * 1000, stalled, ao))
+                }
+            }
+        }
+        sample()
     }
 
     func setVolume(_ v: Double) { client?.set("volume", min(150, max(0, v))) }
@@ -993,6 +1018,7 @@ final class PlayerModel: ObservableObject {
 
     private func switchToSoftware() {
         guard mode == .main, let c = client else { return }
+        defer { traceAV("renderer → PiP") }
         if let vid = c.string("vid"), vid != "no" { vidSaved = vid }
         stopPiPFeed()
         snapshotQueue.sync {}
@@ -1017,6 +1043,7 @@ final class PlayerModel: ObservableObject {
 
     private func switchToMain() {
         guard let c = client else { return }
+        defer { traceAV("renderer → main (PiP ended)") }
         c.set("vid", "no")
         if mode == .sw { sw.detach() }
         switch renderer {

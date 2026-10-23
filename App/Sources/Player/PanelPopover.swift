@@ -110,16 +110,19 @@ final class PanelPresenter {
     private var shownKind: String?
     private var busy = false
     private var busyToken = 0
+    private let frames = FrameMonitor()
+    private var tapTime: CFTimeInterval = 0
 
     /// `immediate`: called straight from the button's action (not from inside
     /// a SwiftUI update), so start in this run-loop turn — no extra frame.
     func show(kind: String, content: AnyView, source: PanelSource, from presenter: UIViewController, passthrough: [UIView], bottomInset: CGFloat,
               immediate: Bool = false, onDismiss: @escaping () -> Void) {
         if wanted?.kind == kind { return }            // the tap already asked; SwiftUI's onChange asks again
+        tapTime = CACurrentMediaTime()
         wanted = Request(kind: kind, presenter: presenter) { [weak self] in
             let vc = PanelPopoverController(content: content, source: source, passthrough: passthrough, bottomInset: bottomInset,
                                             onDismiss: { [weak self] in self?.dismissedBySystem(kind: kind); onDismiss() })
-            vc.onWillDismiss = { [weak self] in self?.setBusy(true) }
+            vc.onWillDismiss = { [weak self] in self?.frames.begin("panel close \(kind) (outside tap)"); self?.setBusy(true) }
             return vc
         }
         if immediate { reconcile() } else { DispatchQueue.main.async { [weak self] in self?.reconcile() } }
@@ -137,11 +140,13 @@ final class PanelPresenter {
             guard wanted?.kind != shownKind else { return }
             let switching = wanted != nil
             dlog("ui", "panel: dismiss \(shownKind ?? "?")\(switching ? " → \(wanted!.kind)" : "")")
+            frames.begin("panel close \(shownKind ?? "?")")
             setBusy(true)
             let finish = { [weak self] in
                 guard let self else { return }
                 if self.shown === vc { self.shown = nil; self.shownKind = nil }
                 dlog("ui", "panel: dismissed")
+                self.frames.end()
                 self.settle()
             }
             if switching, animated, let container = vc.presentationController?.containerView {
@@ -154,8 +159,10 @@ final class PanelPresenter {
             return
         }
         guard let req = wanted else { return }
+        let buildStart = CACurrentMediaTime()
         let vc = req.make()
         vc.loadViewIfNeeded()                         // size known before the transition starts (no resize mid-morph)
+        let buildMs = (CACurrentMediaTime() - buildStart) * 1000
         let host = req.presenter.topMostPresented
         guard host.view.window != nil, !host.isBeingDismissed, !host.isBeingPresented else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in self?.reconcile() }
@@ -164,9 +171,12 @@ final class PanelPresenter {
         shown = vc
         shownKind = req.kind
         dlog("ui", "panel: present \(req.kind)")
+        frames.begin("panel open \(req.kind)")
+        frames.note(String(format: "built in %.0f ms, %.0f ms after the tap", buildMs, (CACurrentMediaTime() - tapTime) * 1000))
         setBusy(true)
         host.present(vc, animated: animated) { [weak self] in
             dlog("ui", "panel: presented \(req.kind)")
+            self?.frames.end()
             // UIKit makes the bar passthrough for bar-item popovers on presentation; undo that.
             vc.popoverPresentationController?.passthroughViews = vc.passthrough
             self?.settle()
@@ -190,6 +200,7 @@ final class PanelPresenter {
     /// Closed by a tap outside (UIKit dismissed it).
     private func dismissedBySystem(kind: String) {
         dlog("ui", "panel: closed by outside tap (\(kind))")
+        frames.end()
         shown = nil
         shownKind = nil
         if wanted?.kind == kind { wanted = nil }      // keep a panel tapped while this one was closing

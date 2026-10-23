@@ -90,25 +90,16 @@ struct TitleHeroView: View {
             .ignoresSafeArea(edges: .top)
         }
         .background(HomeBackdrop().ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
-        .overlay(alignment: .topLeading) { backButton }
-        .overlay(alignment: .topTrailing) { moreButton }
+        // The system navigation bar (transparent): its own Back button and the
+        // native back swipe that follows your finger.
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar { ToolbarItem(placement: .topBarTrailing) { moreButton } }
         .onAppear {
             dlog("nav", "title page appear \(file.lastPathComponent)")
             thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true)
         }
         .onDisappear { dlog("nav", "title page disappear \(file.lastPathComponent)") }
-        // Swipe from the left edge goes back. iOS's own back swipe is off on
-        // pages that hide the navigation bar (this one draws its own Back).
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 16, coordinateSpace: .global)
-                .onEnded { v in
-                    guard v.startLocation.x < 32, v.translation.width > 80,
-                          abs(v.translation.height) < abs(v.translation.width) * 0.7 else { return }
-                    dlog("nav", "edge swipe back on \(file.lastPathComponent)")
-                    dismiss()
-                }
-        )
         .confirmationDialog("Delete this file from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { local.delete(file); dismiss() }
         }
@@ -203,26 +194,15 @@ struct TitleHeroView: View {
         .padding(.top, 10)
     }
 
-    private var backButton: some View {
-        Button { dlog("nav", "back tapped on \(file.lastPathComponent)"); dismiss() } label: {
-            Image(systemName: "chevron.left").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
-        }
-        .buttonStyle(PressStyle())
-        .foregroundStyle(.white)
-        .accessibilityLabel("Back")
-        .padding(.leading, 16).padding(.top, 8)
-    }
-
     private var moreButton: some View {
         Menu {
             Button { play(file) } label: { Label("Play", systemImage: "play") }
             if let e = entry { Button { history.markWatched(e) } label: { Label("Mark as watched", systemImage: "checkmark.circle") } }
             Button(role: .destructive) { confirmDelete = true } label: { Label("Delete file", systemImage: "trash") }
         } label: {
-            Image(systemName: "ellipsis").font(.system(size: 16, weight: .semibold)).frame(width: 40, height: 40).glassCircle()
+            Image(systemName: "ellipsis")
         }
-        .foregroundStyle(.white)
-        .padding(.trailing, 16).padding(.top, 8)
+        .accessibilityLabel("More")
     }
 
     // MARK: Actions
