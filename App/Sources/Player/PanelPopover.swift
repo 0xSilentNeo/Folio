@@ -29,57 +29,79 @@ enum PanelSource {
 
 final class PanelPopoverController: UIViewController, UIPopoverPresentationControllerDelegate {
     private let host: UIHostingController<AnyView>
-    private let onDismiss: () -> Void
+    private var onDismiss: () -> Void = {}
     var onWillDismiss: (() -> Void)?
-    let passthrough: [UIView]
+    private(set) var passthrough: [UIView] = []
 
-    init(content: AnyView, source: PanelSource, passthrough: [UIView], bottomInset: CGFloat = 8, onDismiss: @escaping () -> Void) {
+    /// Built once per panel and kept: building the SwiftUI content (Settings
+    /// especially) took up to 0.6 s in the simulator, on the main thread,
+    /// before the animation could start. Each presentation only re-points the
+    /// popover at its button.
+    init(content: AnyView) {
         host = UIHostingController(rootView: content)
-        self.onDismiss = onDismiss
-        self.passthrough = passthrough
         super.init(nibName: nil, bundle: nil)
-        modalPresentationStyle = .popover
         overrideUserInterfaceStyle = .dark
         host.view.backgroundColor = .clear
         host.sizingOptions = [.preferredContentSize]
         if #available(iOS 16.4, *) { host.safeAreaRegions = [] }
-        if let pc = popoverPresentationController {
-            pc.delegate = self
-            switch source {
-            case .item(let item):
-                pc.sourceItem = item
-            case .view(let v):
-                pc.sourceView = v
-                pc.sourceRect = v.bounds
-                pc.permittedArrowDirections = [.down]
-            }
-            pc.passthroughViews = passthrough
-            // Keep the panel above the button bar so the other buttons stay tappable.
-            pc.popoverLayoutMargins = UIEdgeInsets(top: 66, left: 16, bottom: bottomInset, right: 16)
-        }
     }
 
     required init?(coder: NSCoder) { fatalError() }
 
+    func configure(source: PanelSource, passthrough: [UIView], bottomInset: CGFloat, onDismiss: @escaping () -> Void) {
+        self.passthrough = passthrough
+        self.onDismiss = onDismiss
+        modalPresentationStyle = .popover
+        guard let pc = popoverPresentationController else { return }
+        pc.delegate = self
+        switch source {
+        case .item(let item):
+            pc.sourceItem = item
+        case .view(let v):
+            pc.sourceView = v
+            pc.sourceRect = v.bounds
+            pc.permittedArrowDirections = [.down]
+        }
+        pc.passthroughViews = passthrough
+        // Keep the panel clear of the top buttons and the button bar.
+        pc.popoverLayoutMargins = UIEdgeInsets(top: 66, left: 16, bottom: bottomInset, right: 16)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .clear
+        view.clipsToBounds = true
         addChild(host)
-        host.view.translatesAutoresizingMaskIntoConstraints = false
+        // Fixed size, not pinned to the edges: while the glass morphs, the
+        // popover's bounds change every frame, and pinned content was laid out
+        // again on every one of them (the late frames during opening).
+        host.view.translatesAutoresizingMaskIntoConstraints = true
+        host.view.autoresizingMask = []
         view.addSubview(host.view)
-        NSLayoutConstraint.activate([
-            host.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            host.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            host.view.topAnchor.constraint(equalTo: view.topAnchor),
-            host.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-        ])
         host.didMove(toParent: self)
         preferredContentSize = host.sizeThatFits(in: CGSize(width: 10_000, height: 10_000))
+        host.view.frame = CGRect(origin: .zero, size: preferredContentSize)
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let size = preferredContentSize
+        guard size.width > 0 else { return }
+        if host.view.bounds.size != size { host.view.bounds.size = size }
+        host.view.center = CGPoint(x: view.bounds.midX, y: view.bounds.midY)
+    }
+
+    /// Lays the content out ahead of time (called while the player is idle).
+    func prewarm() {
+        loadViewIfNeeded()
+        host.view.setNeedsLayout()
+        host.view.layoutIfNeeded()
     }
 
     override func preferredContentSizeDidChange(forChildContentContainer container: UIContentContainer) {
         super.preferredContentSizeDidChange(forChildContentContainer: container)
         preferredContentSize = container.preferredContentSize
+        view.setNeedsLayout()
     }
 
     func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle { .none }
@@ -105,6 +127,33 @@ final class PanelPresenter {
         let presenter: UIViewController
         let make: () -> PanelPopoverController
     }
+    /// Built panels, per player and size (rebuilt after rotation or a new player).
+    private var cache: [String: PanelPopoverController] = [:]
+    private var cacheOwner: ObjectIdentifier?
+
+    private func controller(kind: String, sizeKey: String, owner: ObjectIdentifier, content: () -> AnyView) -> PanelPopoverController {
+        if cacheOwner != owner { cache = [:]; cacheOwner = owner }
+        let key = kind + "|" + sizeKey
+        if let c = cache[key] { return c }
+        let c = PanelPopoverController(content: content())
+        cache[key] = c
+        return c
+    }
+
+    /// Builds and lays out a panel while nothing is happening, so the first
+    /// tap doesn't pay for it.
+    func prewarm(kind: String, sizeKey: String, owner: ObjectIdentifier, content: () -> AnyView) {
+        let t = CACurrentMediaTime()
+        controller(kind: kind, sizeKey: sizeKey, owner: owner, content: content).prewarm()
+        dlog("perf", String(format: "panel %@ prebuilt in %.0f ms", kind, (CACurrentMediaTime() - t) * 1000))
+    }
+
+    /// Player closed: drop the built panels.
+    func reset() {
+        hide(animated: false)
+        cache = [:]
+        cacheOwner = nil
+    }
     private var wanted: Request?
     private var shown: PanelPopoverController?
     private var shownKind: String?
@@ -115,13 +164,16 @@ final class PanelPresenter {
 
     /// `immediate`: called straight from the button's action (not from inside
     /// a SwiftUI update), so start in this run-loop turn — no extra frame.
-    func show(kind: String, content: AnyView, source: PanelSource, from presenter: UIViewController, passthrough: [UIView], bottomInset: CGFloat,
+    func show(kind: String, sizeKey: String, owner: ObjectIdentifier, content: @escaping () -> AnyView, source: PanelSource,
+              from presenter: UIViewController, passthrough: [UIView], bottomInset: CGFloat,
               immediate: Bool = false, onDismiss: @escaping () -> Void) {
         if wanted?.kind == kind { return }            // the tap already asked; SwiftUI's onChange asks again
         tapTime = CACurrentMediaTime()
         wanted = Request(kind: kind, presenter: presenter) { [weak self] in
-            let vc = PanelPopoverController(content: content, source: source, passthrough: passthrough, bottomInset: bottomInset,
-                                            onDismiss: { [weak self] in self?.dismissedBySystem(kind: kind); onDismiss() })
+            guard let self else { return PanelPopoverController(content: content()) }
+            let vc = self.controller(kind: kind, sizeKey: sizeKey, owner: owner, content: content)
+            vc.configure(source: source, passthrough: passthrough, bottomInset: bottomInset,
+                         onDismiss: { [weak self] in self?.dismissedBySystem(kind: kind); onDismiss() })
             vc.onWillDismiss = { [weak self] in self?.frames.begin("panel close \(kind) (outside tap)"); self?.setBusy(true) }
             return vc
         }

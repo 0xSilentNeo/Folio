@@ -94,11 +94,16 @@ struct PlayerScreen: View {
         .onAppear {
             ui.scheduleHide()
             ui.presentNow = { presentPanel($0, immediate: true) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { prewarmPanels() }
         }
         .onChange(of: ui.panel) { _, new in
             if let new { presentPanel(new) } else { PanelPresenter.shared.hide() }
         }
-        .onDisappear { PanelPresenter.shared.hide(animated: false) }
+        .onDisappear { PanelPresenter.shared.reset() }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            // New size after a rotation: build the panels for it ahead of time.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { prewarmPanels() }
+        }
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
@@ -122,12 +127,8 @@ struct PlayerScreen: View {
             return
         }
         guard let window = sourceView?.window, let root = window.rootViewController else { return }
-        let size = window.bounds.size
-        let compact = size.width < 640
-        let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
-        let maxHeight = max(180, size.height - (compact ? 150 : 84) - window.safeAreaInsets.top - 66)
-        let body = PlayerPanel(kind: kind, model: model, ui: ui, width: width, maxHeight: maxHeight,
-                               onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock, bare: true)
+        let (width, maxHeight, sizeKey) = panelSize(in: window)
+        let content = panelContent(kind, width: width, maxHeight: maxHeight)
         // No passthrough: while a panel is open the pill is hidden (its glass
         // became the panel), so its buttons must not react — any tap outside
         // the panel, including where the pill was, just closes it.
@@ -138,11 +139,44 @@ struct PlayerScreen: View {
             let f = bar.convert(bar.bounds, to: window)
             bottomInset = max(8, window.bounds.height - f.minY + 6)
         }
-        PanelPresenter.shared.show(kind: kind.rawValue, content: AnyView(body), source: source, from: root, passthrough: passthrough,
+        PanelPresenter.shared.show(kind: kind.rawValue, sizeKey: sizeKey, owner: ObjectIdentifier(model), content: content,
+                                   source: source, from: root, passthrough: passthrough,
                                    bottomInset: bottomInset, immediate: immediate) { [weak ui] in
             // Dismissed by a tap outside.
             if ui?.panel == kind { ui?.panel = nil }
             ui?.scheduleHide()
+        }
+    }
+
+    private func panelSize(in window: UIWindow) -> (CGFloat, CGFloat, String) {
+        let size = window.bounds.size
+        let compact = size.width < 640
+        let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
+        let maxHeight = max(180, size.height - (compact ? 150 : 84) - window.safeAreaInsets.top - 66)
+        return (width, maxHeight, "\(Int(width))x\(Int(maxHeight))")
+    }
+
+    private func panelContent(_ kind: PlayerUIState.Panel, width: CGFloat, maxHeight: CGFloat) -> () -> AnyView {
+        { [model, ui, onRotationLock] in
+            AnyView(PlayerPanel(kind: kind, model: model, ui: ui, width: width, maxHeight: maxHeight,
+                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock, bare: true))
+        }
+    }
+
+    /// Builds the three panels in the background of an idle moment (one per
+    /// run-loop turn) so the first tap on each opens straight away.
+    private func prewarmPanels(attempt: Int = 0) {
+        guard let bar = ui.panelBar, let window = bar.window else {
+            if attempt < 20 { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { prewarmPanels(attempt: attempt + 1) } }
+            return
+        }
+        let (width, maxHeight, sizeKey) = panelSize(in: window)
+        for (i, kind) in [PlayerUIState.Panel.tracks, .settings, .nowPlaying].enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 * Double(i)) {
+                guard ui.panel == nil else { return }
+                PanelPresenter.shared.prewarm(kind: kind.rawValue, sizeKey: sizeKey, owner: ObjectIdentifier(model),
+                                              content: panelContent(kind, width: width, maxHeight: maxHeight))
+            }
         }
     }
 
