@@ -1,0 +1,171 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-23 10:52:58.789 E  GlassPlayer[9867:8361] [com.apple.CFBundle:plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x6000002e9d20> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+2026-10-23 10:53:00.599 E  GlassPlayer[9867:83e9] (libCoreFSCache.dylib) fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-23 10:53:00.599 E  GlassPlayer[9867:83e9] (libCoreFSCache.dylib) Errors found! Invalidating cache...
+2026-10-23 10:53:05.146 E  GlassPlayer[9867:83e9] [com.apple.Metal:Metal Compiler Warning] Warning: Compilation succeeded with: 
+
+program_source:50:1788: warning: unused function 'decompressDXTnBlock' [-Wunused-function]
+static bool isBC1Format(VkFormat format) { return format == VK_FORMAT_BC1_RGB_UNORM_BLOCK || format == VK_FORMAT_BC1_RGB_SRGB_BLOCK || format == VK_FORMAT_BC1_RGBA_UNORM_BLOCK || format == VK_FORMAT_BC1_RGBA_SRGB_BLOCK; } static bool isBC2Format(VkFormat format) { return format == VK_FORMAT_BC2_UNORM_BLOCK || format == VK_FORMAT_BC2_SRGB_BLOCK; } static bool isBC3Format(VkFormat format) { return format == VK_FORMAT_BC3_UNORM_BLOCK || format == VK_FORMAT_BC3_SRGB_BLOCK; } static bool isSRGBFormat(VkFormat format) { return format == VK_FORMAT_BC1_RGB_SRGB_BLOCK || format == VK_FORMAT_BC1_RGBA_SRGB_BLOCK || format == VK_FORMAT_BC2_SRGB_BLOCK || format == VK_FORMAT_BC3_SRGB_BLOCK; } static void buildDXTnColourTable(uint16_t colour0, uint16_t colour1, thread float3* pColourTable, VkFormat format) { pColourTable[0] = unpack_unorm565_to_float(colour0); pColourTable[1] = unpack_unorm565_to<…>
+2026-10-23 10:53:05.417 E  GlassPlayer[9867:8546] [com.apple.coremedia:] <<<< VT-DS >>>> signalled err=-12906 at <>:2615
+2026-10-23 10:53:05.428 E  GlassPlayer[9867:8555] [com.apple.coremedia:] <<<< VT-DS >>>> signalled err=-12906 at <>:2615
+2026-10-23 10:53:05.881 E  GlassPlayer[9867:8569] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-23 10:53:05.981 E  GlassPlayer[9867:83e9] [com.apple.UIKit:Assert] Modifying properties of a view's layer off the main thread is not allowed: view <GlassPlayer.MetalVideoView: 0x106a392f0> with nearest ancestor view controller <GlassPlayer.PlayerViewController: 0x10787da00>; backtrace: 
+(
+	0   UIKitCore                           0x000000018691fc04 -[UIView(UIKitManual) _raiseExceptionForBackgroundThreadLayerPropertyModification] + 404
+	1   UIKitCore                           0x0000000186920134 -[UIView(UIKitManual) actionForLayer:forKey:] + 576
+	2   QuartzCore                          0x000000018c7dc240 -[CALayer actionForKey:] + 148
+	3   QuartzCore                          0x000000018c7e2fcc _ZN2CA5Layer12begin_changeEPNS_11TransactionEjP11objc_objectRS4_ + 204
+	4   QuartzCore                          0x000000018c7e72f8 _ZN2CA5Layer6setterEj12_CAValueTypePKv + 348
+	5   QuartzCore                          0x000000018c7e1358 -[CALayer setMinificationFilter:] + 52
+	6   GlassPlayer                         0x000000010468710c _ZN12MVKSwapchain16initCAMetalLayerEPK24VkSwapchainCreateInfoKHRP38VkSwapchainPresentScalingCreateInfoKHRj + 328
+	7   GlassPlayer                         0x0000000104686f10 _ZN12MVKSwapchainC2EP9MVKDevicePK24VkSwapchainCreateInfoKHR + 812
+	8   GlassPlayer                         0x0000000104640918 _ZN9MVKDevice15createSwapchainEPK24VkSwapchainCreateInfoKHRPK21VkAllocationCallbacks + 48
+	9   GlassPlayer                         0x00000001045e7578 vkCreateSwapchainKHR + 112
+	10  GlassPlayer                         0x0000000103cbd6e8 vk_sw_recreate + 1244
+	11  GlassPlayer                         0x0000000103cbc750 vk_sw_resize + 160
+	12  GlassPlayer                         0x0000000103c84c54 pl_swapchain_resize + 68
+	13  GlassPlayer                         0x0000000103c2d1a4 ra_vk_ctx_resize + 52
+	14  GlassPlayer                         0x0000000103c2d73c moltenvk_reconfig + 44
+	15  GlassPlayer                         0x0000000103c19588 reconfig + 36
+	16  GlassPlayer                         0x0000000103c0be80 run_reconfig + 532
+	17  GlassPlayer                         0x0000000103b8deac mp_dispatch_queue_process + 248
+	18  GlassPlayer                         0x0000000103c0d520 vo_thread + 548
+	19  libsystem_pthread.dylib             0x00000001062925ac _pthread_start + 104
+	20  libsystem_pthread.dylib             0x000000010628d998 thread_start + 8
+)
+2026-10-23 10:53:05.984 E  GlassPlayer[9867:83e9] [com.apple.UIKit:Assert] Modifying properties of a view's layer off the main thread is not allowed: view <GlassPlayer.MetalVideoView: 0x106a392f0> with nearest ancestor view controller <GlassPlayer.PlayerViewController: 0x10787da00>; backtrace: 
+(
+	0   UIKitCore                           0x000000018691fc04 -[UIView(UIKitManual) _raiseExceptionForBackgroundThreadLayerPropertyModification] + 404
+	1   UIKitCore                           0x0000000186920134 -[UIView(UIKitManual) actionForLayer:forKey:] + 576
+	2   QuartzCore                          0x000000018c7dc240 -[CALayer actionForKey:] + 148
+	3   QuartzCore                          0x000000018c7e2fcc _ZN2CA5Layer12begin_changeEPNS_11TransactionEjP11objc_objectRS4_ + 204
+	4   QuartzCore                          0x000000018c7e72f8 _ZN2CA5Layer6setterEj12_CAValueTypePKv + 348
+	5   QuartzCore                          0x000000018c7e129c -[CALayer setMagnificationFilter:] + 52
+	6   GlassPlayer                         0x0000000104687118 _ZN12MVKSwapchain16initCAMetalLayerEPK24VkSwapchainCreateInfoKHRP38VkSwapchainPresentScalingCreateInfoKHRj + 340
+	7   GlassPlayer                         0x0000000104686f10 _ZN12MVKSwapchainC2EP9MVKDevicePK24VkSwapchainCreateInfoKHR + 812
+	8   GlassPlayer                         0x0000000104640918 _ZN9MVKDevice15createSwapchainEPK24VkSwapchainCreateInfoKHRPK21VkAllocationCallbacks + 48
+	9   GlassPlayer                         0x00000001045e7578 vkCreateSwapchainKHR + 112
+	10  GlassPlayer                         0x0000000103cbd6e8 vk_sw_recreate + 1244
+	11  GlassPlayer                         0x0000000103cbc750 vk_sw_resize + 160
+	12  GlassPlayer                         0x0000000103c84c54 pl_swapchain_resize + 68
+	13  GlassPlayer                         0x0000000103c2d1a4 ra_vk_ctx_resize + 52
+	14  GlassPlayer                         0x0000000103c2d73c moltenvk_reconfig + 44
+	15  GlassPlayer                         0x0000000103c19588 reconfig + 36
+	16  GlassPlayer                         0x0000000103c0be80 run_reconfig + 532
+	17  GlassPlayer                         0x0000000103b8deac mp_dispatch_queue_process + 248
+	18  GlassPlayer                         0x0000000103c0d520 vo_thread + 548
+	19  libsystem_pthread.dylib             0x00000001062925ac _pthread_start + 104
+	20  libsystem_pthread.dylib             0x000000010628d998 thread_start + 8
+)
+2026-10-23 10:53:05.986 E  GlassPlayer[9867:83e9] [com.apple.UIKit:Assert] Modifying properties of a view's layer off the main thread is not allowed: view <GlassPlayer.MetalVideoView: 0x106a392f0> with nearest ancestor view controller <GlassPlayer.PlayerViewController: 0x10787da00>; backtrace: 
+(
+	0   UIKitCore                           0x000000018691fc04 -[UIView(UIKitManual) _raiseExceptionForBackgroundThreadLayerPropertyModification] + 404
+	1   UIKitCore                           0x0000000186920134 -[UIView(UIKitManual) actionForLayer:forKey:] + 576
+	2   QuartzCore                          0x000000018c7dc240 -[CALayer actionForKey:] + 148
+	3   QuartzCore                          0x000000018c7e2fcc _ZN2CA5Layer12begin_changeEPNS_11TransactionEjP11objc_objectRS4_ + 204
+	4   QuartzCore                          0x000000018c7e70c4 _ZN2CA5Layer11set_bit_intEjjjjj + 184
+	5   GlassPlayer                         0x0000000104687158 _ZN12MVKSwapchain16initCAMetalLayerEPK24VkSwapchainCreateInfoKHRP38VkSwapchainPresentScalingCreateInfoKHRj + 404
+	6   GlassPlayer                         0x0000000104686f10 _ZN12MVKSwapchainC2EP9MVKDevicePK24VkSwapchainCreateInfoKHR + 812
+	7   GlassPlayer                         0x0000000104640918 _ZN9MVKDevice15createSwapchainEPK24VkSwapchainCreateInfoKHRPK21VkAllocationCallbacks + 48
+	8   GlassPlayer                         0x00000001045e7578 vkCreateSwapchainKHR + 112
+	9   GlassPlayer                         0x0000000103cbd6e8 vk_sw_recreate + 1244
+	10  GlassPlayer                         0x0000000103cbc750 vk_sw_resize + 160
+	11  GlassPlayer                         0x0000000103c84c54 pl_swapchain_resize + 68
+	12  GlassPlayer                         0x0000000103c2d1a4 ra_vk_ctx_resize + 52
+	13  GlassPlayer                         0x0000000103c2d73c moltenvk_reconfig + 44
+	14  GlassPlayer                         0x0000000103c19588 reconfig + 36
+	15  GlassPlayer                         0x0000000103c0be80 run_reconfig + 532
+	16  GlassPlayer                         0x0000000103b8deac mp_dispatch_queue_process + 248
+	17  GlassPlayer                         0x0000000103c0d520 vo_thread + 548
+	18  libsystem_pthread.dylib             0x00000001062925ac _pthread_start + 104
+	19  libsystem_pthread.dylib             0x000000010628d998 thread_start + 8
+)
+2026-10-23 10:53:05.989 E  GlassPlayer[9867:83e9] [com.apple.UIKit:Assert] Modifying properties of a view's layer off the main thread is not allowed: view <GlassPlayer.MetalVideoView: 0x106a392f0> with nearest ancestor view controller <GlassPlayer.PlayerViewController: 0x10787da00>; backtrace: 
+(
+	0   UIKitCore                           0x000000018691fc04 -[UIView(UIKitManual) _raiseExceptionForBackgroundThreadLayerPropertyModification] + 404
+	1   UIKitCore                           0x0000000186920134 -[UIView(UIKitManual) actionForLayer:forKey:] + 576
+	2   QuartzCore                          0x000000018c7dc240 -[CALayer actionForKey:] + 148
+	3   QuartzCore                          0x000000018c7e2fcc _ZN2CA5Layer12begin_changeEPNS_11TransactionEjP11objc_objectRS4_ + 204
+	4   QuartzCore                          0x000000018c7e2dfc _ZN2CA5Layer7set_bitEjjjbMS0_FvPNS_11TransactionEE + 188
+	5   GlassPlayer                         0x000000010468719c _ZN12MVKSwapchain16initCAMetalLayerEPK24VkSwapchainCreateInfoKHRP38VkSwapchainPresentScalingCreateInfoKHRj + 472
+	6   GlassPlayer                         0x0000000104686f10 _ZN12MVKSwapchainC2EP9MVKDevicePK24VkSwapchainCreateInfoKHR + 812
+	7   GlassPlayer                         0x0000000104640918 _ZN9MVKDevice15createSwapchainEPK24VkSwapchainCreateInfoKHRPK21VkAllocationCallbacks + 48
+	8   GlassPlayer                         0x00000001045e7578 vkCreateSwapchainKHR + 112
+	9   GlassPlayer                         0x0000000103cbd6e8 vk_sw_recreate + 1244
+	10  GlassPlayer                         0x0000000103cbc750 vk_sw_resize + 160
+	11  GlassPlayer                         0x0000000103c84c54 pl_swapchain_resize + 68
+	12  GlassPlayer                         0x0000000103c2d1a4 ra_vk_ctx_resize + 52
+	13  GlassPlayer                         0x0000000103c2d73c moltenvk_reconfig + 44
+	14  GlassPlayer                         0x0000000103c19588 reconfig + 36
+	15  GlassPlayer                         0x0000000103c0be80 run_reconfig + 532
+	16  GlassPlayer                         0x0000000103b8deac mp_dispatch_queue_process + 248
+	17  GlassPlayer                         0x0000000103c0d520 vo_thread + 548
+	18  libsystem_pthread.dylib             0x00000001062925ac _pthread_start + 104
+	19  libsystem_pthread.dylib             0x000000010628d998 thread_start + 8
+)
+2026-10-23 10:53:05.995 E  GlassPlayer[9867:83e9] [com.apple.UIKit:Assert] Modifying properties of a view's layer off the main thread is not allowed: view <GlassPlayer.MetalVideoView: 0x106a392f0> with nearest ancestor view controller <GlassPlayer.PlayerViewController: 0x10787da00>; backtrace: 
+(
+	0   UIKitCore                           0x000000018691fc04 -[UIView(UIKitManual) _raiseExceptionForBackgroundThreadLayerPropertyModification] + 404
+	1   UIKitCore                           0x0000000186920134 -[UIView(UIKitManual) actionForLayer:forKey:] + 576
+	2   QuartzCore                          0x000000018c7dc240 -[CALayer actionForKey:] + 148
+	3   QuartzCore                          0x000000018c7e2fcc _ZN2CA5Layer12begin_changeEPNS_11TransactionEjP11objc_objectRS4_ + 204
+	4   QuartzCore                          0x000000018c7e72f8 _ZN2CA5Layer6setterEj12_CAValueTypePKv + 348
+	5   QuartzCore                          0x000000018c7b2ea4 -[CAMetalLayer(CAMetalLayerPrivate) setNonDefaultColorspace:] + 96
+	6   GlassPlayer                         0x000000010469c458 -[CAMetalLayer(MoltenVK) setColorspaceNameMVK:] + 40
+	7   GlassPlayer                         0x00000001046872b0 _ZN12MVKSwapchain16initCAMetalLayerEPK24VkSwapchainCreateInfoKHRP38VkSwapchainPresentScalingCreateInfoKHRj + 748
+	8   GlassPlayer                         0x0000000104686f10 _ZN12MVKSwapchainC2EP9MVKDevicePK24VkSwapchainCreateInfoKHR + 812
+	9   GlassPlayer                         0x0000000104640918 _ZN9MVKDevice15createSwapchainEPK24VkSwapchainCreateInfoKHRPK21VkAllocationCallbacks + 48
+	10  GlassPlayer                         0x00000001045e7578 vkCreateSwapchainKHR + 112
+	11  GlassPlayer                         0x0000000103cbd6e8 vk_sw_recreate + 1244
+	12  GlassPlayer                         0x0000000103cbc750 vk_sw_resize + 160
+	13  GlassPlayer                         0x0000000103c84c54 pl_swapchain_resize + 68
+	14  GlassPlayer                         0x0000000103c2d1a4 ra_vk_ctx_resize + 52
+	15  GlassPlayer                         0x0000000103c2d73c moltenvk_reconfig + 44
+	16  GlassPlayer                         0x0000000103c19588 reconfig + 36
+	17  GlassPlayer                         0x0000000103c0be80 run_reconfig + 532
+	18  GlassPlayer                         0x0000000103b8deac mp_dispatch_queue_process + 248
+	19  GlassPlayer                         0x0000000103c0d520 vo_thread + 548
+	20  libsystem_pthread.dylib             0x00000001062925ac _pthread_start + 104
+	21  libsystem_pthread.dylib             0x000000010628d998 thread_start + 8
+)
+2026-10-23 10:53:06.352 E  GlassPlayer[9867:8374] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-23 10:53:07.141 E  GlassPlayer[9867:8569] (libCoreFSCache.dylib) fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-23 10:53:07.141 E  GlassPlayer[9867:8569] (libCoreFSCache.dylib) Errors found! Invalidating cache...
+2026-10-23 10:53:07.293 E  GlassPlayer[9867:836e] [com.apple.extensionkit:default] Failed to resolve host network app id to config: bundleID: com.apple.WebKit.Networking instance ID: Optional([_EXExtensionInstanceIdentifier: 108F34F3-9C1E-4269-BC63-4580B6603132])
+2026-10-23 10:53:08.856 E  GlassPlayer[9867:85cb] [com.apple.WebKit:ProcessSuspension] WebContent[10005] 0x110060150 - [sessionID=1] WebProcess::updateFreezerStatus: isFreezable=1, error=-1
+2026-10-23 10:53:09.010 E  GlassPlayer[9867:8361] [com.apple.WebKit:ResourceLoadStatistics] Failed to request storage access quirks from WebPrivacy.
+2026-10-23 10:53:09.010 E  GlassPlayer[9867:8361] [com.apple.WebKit:ResourceLoadStatistics] Failed to request known fingerprinting scripts from WebPrivacy: Error Domain=WebPrivacyErrorDomain Code=1001 "List data not found" UserInfo={NSLocalizedDescription=List data not found}
+2026-10-23 10:53:09.010 E  GlassPlayer[9867:8361] [com.apple.WebKit:ResourceLoadStatistics] Failed to request storage access user agent string quirks from WebPrivacy.
+2026-10-23 10:53:09.264 E  GlassPlayer[9867:8590] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-23 10:53:09.328 E  GlassPlayer[9867:8374] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-23 10:53:09.366 E  GlassPlayer[9867:85cb] [com.apple.WebKit:ResourceLoadStatistics] WebContent[10005] Unable to filter tracking query parameters (missing data)
+2026-10-23 10:53:09.516 E  GlassPlayer[9867:8361] [com.apple.WebKit:ResourceLoadStatistics] Failed to request query parameters from WebPrivacy.
+2026-10-23 10:53:10.636 E  GlassPlayer[9867:85cb] [com.apple.WebKit:ResourceLoadStatistics] WebContent[10005] Unable to filter tracking query parameters (missing data)
+2026-10-23 10:53:12.333 E  GlassPlayer[9867:8361] [com.apple.WebKit:Process] 0x12410c1e0 - GPUProcessProxy::gpuProcessExited: reason=IdleExit
+2026-10-23 10:53:12.333 E  GlassPlayer[9867:8361] [com.apple.WebKit:Process] 0x1240c00c0 - [PID=10005] WebProcessProxy::gpuProcessExited: reason=IdleExit
+2026-10-23 10:53:12.333 E  GlassPlayer[9867:8361] [com.apple.WebKit:ProcessSuspension] ProcessAssertion::remainingRunTimeInSeconds failed to get identifier for process with PID=0
+2026-10-23 10:53:12.342 E  GlassPlayer[9867:8569] [com.apple.runningboard:assertion] Error acquiring assertion: <Error Domain=RBSAssertionErrorDomain Code=2 "Specified target process 10006 does not exist" UserInfo={NSLocalizedFailureReason=Specified target process 10006 does not exist}>
+2026-10-23 10:53:12.342 E  GlassPlayer[9867:8569] [com.apple.WebKit:ProcessSuspension] 0x1241bc3c0 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'GPUProcess Background Assertion' for process with PID=0, error: (null)
+2026-10-23 10:53:13.124 E  GlassPlayer[9867:85cb] [com.apple.WebKit:ResourceLoadStatistics] WebContent[10005] Unable to hide query parameters from script (missing data)
+2026-10-23 10:53:13.165 E  GlassPlayer[9867:8361] [com.apple.WebKit:ResourceLoadStatistics] Failed to request allowed query parameters from WebPrivacy.
+2026-10-23 10:53:13.558 E  GlassPlayer[9867:8361] [com.apple.WebKit:ResourceLoadStatistics] Failed to request restricted opener domains from WebPrivacy
+2026-10-23 10:53:17.702 E  GlassPlayer[9867:83e9] [com.apple.coreanimation:API] warning, deleted thread with uncommitted CATransaction; set CA_DEBUG_TRANSACTIONS=1 in environment to log backtraces, or set CA_ASSERT_MAIN_THREAD_TRANSACTIONS=1 to abort when an implicit transaction isn't created on a main thread.
+2026-10-23 10:53:17.709 E  GlassPlayer[9867:8838] [com.apple.coremedia:] <<<< VT-DS >>>> signalled err=-12906 at <>:2615
+2026-10-23 10:53:21.722 E  GlassPlayer[9867:8a51] [com.apple.coremedia:] <<<< VT-DS >>>> signalled err=-12906 at <>:2615
+2026-10-23 10:53:21.726 E  GlassPlayer[9867:8a55] [com.apple.coremedia:] <<<< VT-DS >>>> signalled err=-12906 at <>:2615
+2026-10-23 10:53:34.695 E  GlassPlayer[9867:85cb] [com.apple.WebKit:IPC] WebContent[10005] Connection::waitForSyncReply: Timed-out while waiting for reply for RemoteRenderingBackend_NativeImageBitmap from process 0, id=35
+2026-10-23 10:53:34.722 E  GlassPlayer[9867:8361] [com.apple.WebKit:Process] 0x1240c00c0 - [PID=10005] WebProcessProxy::gpuProcessConnectionDidBecomeUnresponsive
+2026-10-23 10:53:34.722 E  GlassPlayer[9867:8361] [com.apple.WebKit:Process] 0x12410c1e0 - GPUProcessProxy::childConnectionDidBecomeUnresponsive:
+2026-10-23 10:53:34.722 E  GlassPlayer[9867:8361] [com.apple.WebKit:Process] 0x12410c1e0 - GPUProcessProxy::didBecomeUnresponsive: GPUProcess with PID 10090 became unresponsive, terminating it
+2026-10-23 10:53:34.726 E  GlassPlayer[9867:8361] [com.apple.WebKit:Process] 0x12410c1e0 - GPUProcessProxy::gpuProcessExited: reason=Unresponsive
+2026-10-23 10:53:34.726 E  GlassPlayer[9867:8361] [com.apple.WebKit:Process] 0x1240c00c0 - [PID=10005] WebProcessProxy::gpuProcessExited: reason=Unresponsive
+2026-10-23 10:53:34.727 E  GlassPlayer[9867:8361] [com.apple.WebKit:ProcessSuspension] ProcessAssertion::remainingRunTimeInSeconds failed to get identifier for process with PID=0
+2026-10-23 10:53:34.902 E  GlassPlayer[9867:85cb] [com.apple.WebKit:ProcessSuspension] WebContent[10005] 0x110060150 - [sessionID=1] WebProcess::updateFreezerStatus: isFreezable=1, error=-1
+2026-10-23 10:53:34.910 E  GlassPlayer[9867:85cb] [com.apple.WebKit:Process] WebContent[10005] 0x110625ce0 - GPUProcessConnection::didClose
+2026-10-23 10:53:35.174 E  GlassPlayer[9867:8370] [com.apple.network:connection] nw_socket_set_connection_idle [C3.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-23 10:53:35.294 E  GlassPlayer[9867:836a] [com.apple.network:connection] nw_socket_set_connection_idle [C3.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-23 10:53:35.420 E  GlassPlayer[9867:836a] [com.apple.network:connection] nw_socket_set_connection_idle [C4.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-23 10:53:35.466 E  GlassPlayer[9867:836d] [com.apple.network:connection] nw_socket_set_connection_idle [C4.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-23 10:53:35.838 E  GlassPlayer[9867:85cb] [com.apple.WebKit:ResourceLoadStatistics] WebContent[10005] Unable to hide query parameters from script (missing data)
+2026-10-23 10:53:40.868 E  GlassPlayer[9867:83ac] [com.apple.coreaudio:AMCP]          HALC_ProxyIOContext.cpp:1623  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-10-23 10:53:42.337 E  GlassPlayer[9867:8361] [com.apple.browserEngineKit:general] Failed to terminate process: Error Domain=com.apple.extensionKit.errorDomain Code=18 "(null)" UserInfo={NSUnderlyingError=0x600000ce9110 {Error Domain=RBSRequestErrorDomain Code=3 "No such process found" UserInfo={NSLocalizedFailureReason=No such process found}}}
