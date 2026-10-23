@@ -98,6 +98,7 @@ struct TitleHeroView: View {
             thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true)
         }
         .onDisappear { dlog("nav", "title page disappear \(file.lastPathComponent)") }
+        .simultaneousGesture(TapGesture().onEnded { dlog("nav", "tap on title page") })
         .confirmationDialog("Delete this file from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { local.delete(file); dismiss() }
         }

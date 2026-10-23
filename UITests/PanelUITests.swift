@@ -156,6 +156,10 @@ final class PanelUITests: XCTestCase {
         XCTAssertTrue(back.waitForExistence(timeout: 6), "title page gone after closing the player")
         back.tap()
         sleep(2)
+        if app.buttons["Back"].exists {
+            // Diagnose: does any touch reach the page? (logged by the app)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap(); sleep(1)
+        }
         XCTAssertFalse(app.buttons["Back"].exists, "Back did not leave the title page")
         XCTAssertTrue(app.staticTexts["Lab Show"].firstMatch.waitForExistence(timeout: 4), "not back on Home")
 

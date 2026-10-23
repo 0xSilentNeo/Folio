@@ -244,6 +244,17 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
 /// never depends on whatever view controller happens to be mid-transition
 /// (document picker closing, sheet dismissing), which is what used to make
 /// "Open file" silently do nothing.
+/// Window / orientation state, for the log.
+@MainActor
+func dumpWindows(_ why: String) {
+    for scene in UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }) {
+        dlog("nav", "\(why): scene orientation=\(scene.interfaceOrientation.rawValue) device=\(UIDevice.current.orientation.rawValue) bounds=\(scene.coordinateSpace.bounds.size)")
+        for w in scene.windows {
+            dlog("nav", "  window \(type(of: w)) level=\(w.windowLevel.rawValue) hidden=\(w.isHidden) alpha=\(w.alpha) key=\(w.isKeyWindow) touch=\(w.isUserInteractionEnabled) frame=\(w.frame) root=\(w.rootViewController.map { String(describing: type(of: $0)) } ?? "nil") presented=\(w.rootViewController?.presentedViewController.map { String(describing: type(of: $0)) } ?? "nil")")
+        }
+    }
+}
+
 extension Notification.Name {
     static let playerWillShow = Notification.Name("GlassPlayer.playerWillShow")
     static let playerDidHide = Notification.Name("GlassPlayer.playerDidHide")
@@ -306,6 +317,7 @@ enum PlayerPresenter {
             if window === w { window = nil }
             current = nil
             NotificationCenter.default.post(name: .playerDidHide, object: nil)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dumpWindows("after player closed") }
             // Give focus back to the app window.
             UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first { !($0 is PlayerWindowMarker) }?.makeKey()
         }
