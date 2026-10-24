@@ -24,12 +24,15 @@ final class PanelUITests: XCTestCase {
         tracks.tap()                                                         // open
         XCTAssertTrue(app.staticTexts["Audio"].waitForExistence(timeout: 4), "Tracks panel did not open")
         sleep(2)
-        settingsSpot.tap()                                                   // another button's spot → switch
-        XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 4), "tap on Settings spot did not switch")
-        sleep(2)
-        XCTAssertFalse(app.staticTexts["Audio"].isHittable, "Tracks still showing after the switch")
-        settingsSpot.tap(); sleep(2)                                         // its own spot → close
-        XCTAssertFalse(app.staticTexts["Playback"].isHittable, "Settings did not close on its own spot")
+        settingsSpot.tap(); sleep(1)                                         // another button's spot → just closes
+        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close on a tap where the pill was")
+        XCTAssertFalse(app.staticTexts["Playback"].exists, "a tap where the pill was opened Settings (hidden button)")
+        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 3), "pill not back after the close")
+        app.buttons["Settings"].tap()                                        // now a real tap on Settings
+        XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 3), "Settings did not open")
+        sleep(1)
+        settingsSpot.tap(); sleep(1)                                         // its own spot → close
+        XCTAssertFalse(app.staticTexts["Playback"].exists, "Settings did not close on its own spot")
 
         XCTAssertTrue(app.buttons["Now Playing"].waitForExistence(timeout: 5), "pill not back after closing from its own spot")
         app.buttons["Now Playing"].tap()
@@ -178,6 +181,49 @@ final class PanelUITests: XCTestCase {
             app.swipeRight(); sleep(2)
         }
         XCTAssertFalse(app.buttons["Back"].exists, "edge swipe did not leave the title page")
+    }
+
+    /// The 1.12.0 black screen (24 Oct, 19:08:20): a panel finishes opening and
+    /// the user taps outside at once. Ten times, at different delays around
+    /// the end of the opening: each single tap must close the panel, and no
+    /// panel may be left up (full screen or otherwise).
+    func test9TapOutsideAsItOpens() throws {
+        let app = launchPlayer()
+        var closedFirstTap = 0
+        for i in 0..<10 {
+            app.buttons["Settings"].tap()
+            usleep(UInt32(150_000 + i * 40_000))                       // 0.15 … 0.51 s after the tap
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()
+            sleep(1)
+            if !app.staticTexts["Playback"].exists { closedFirstTap += 1 } else {
+                print("OUTSIDE still open after one tap at \(150 + i * 40) ms")
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(1)
+            }
+            XCTAssertFalse(app.staticTexts["Playback"].exists, "panel stuck on screen (round \(i))")
+            XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 3), "pill gone (round \(i))")
+        }
+        print("OUTSIDE closed with one tap \(closedFirstTap)/10")
+        XCTAssertEqual(closedFirstTap, 10, "an outside tap during/at the end of opening did not close the panel")
+    }
+
+    /// One outside tap closes a fully open panel, and the pill comes back fast
+    /// enough that a button tap 0.3 s later opens the next panel.
+    func test10OneTapCloseThenOpen() throws {
+        let app = launchPlayer()
+        var ok = 0
+        let names: [(String, String)] = [("Tracks", "Audio"), ("Settings", "Playback"), ("Now Playing", "NOW PLAYING")]
+        for i in 0..<9 {
+            let (button, marker) = names[i % 3]
+            app.buttons[button].tap()
+            XCTAssertTrue(app.staticTexts[marker].waitForExistence(timeout: 3), "\(button) did not open")
+            usleep(800_000)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()
+            usleep(300_000)
+            if !app.staticTexts[marker].exists { ok += 1 } else { print("ONETAP \(button) still open 0.3 s after one tap") }
+            usleep(300_000)
+        }
+        print("ONETAP closed \(ok)/9")
+        XCTAssertEqual(ok, 9, "one outside tap did not close the panel within 0.3 s")
     }
 
     /// The lost tap from the 24 Oct recording: close with an outside tap, then

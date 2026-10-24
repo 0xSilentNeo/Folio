@@ -24,7 +24,7 @@ enum SettingsKey {
     static let cacheMB = "cacheMB"
     static let landscapeOnOpen = "landscapeOnOpen"
     static let controlsWidth = "controlsWidth"
-    static let panelTransition = "panelTransition"      // morph | morphFrozen | fade
+    static let panelTransition = "panelTransition"      // quick | morph | morphFrozen
     static let tileArtwork = "tileArtwork"              // poster | frame
     static let castPosition = "castPosition"            // top | bottom (title pages)
     static let playlistNames = "playlistNames"          // "episode" | "filename"
@@ -95,7 +95,7 @@ enum SettingsKey {
             cacheMB: 150,
             landscapeOnOpen: true,
             controlsWidth: 0.8,
-            panelTransition: "morphFrozen",
+            panelTransition: "quick",
             tileArtwork: "poster",
             castPosition: "bottom",
             playlistNames: "episode",

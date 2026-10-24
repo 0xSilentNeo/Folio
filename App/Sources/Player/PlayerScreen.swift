@@ -130,13 +130,9 @@ struct PlayerScreen: View {
         guard let window = sourceView?.window, let root = window.rootViewController else { return }
         let (width, maxHeight, sizeKey) = panelSize(in: window)
         let content = panelContent(kind, width: width, maxHeight: maxHeight)
-        // The pill stays tappable while a panel is open: a tap on another
-        // button switches panels in one motion (the panel closes and the new
-        // one grows out of the tapped button). Its own button closes it.
-        // Anywhere else closes. The pill is hidden by iOS while its glass is
-        // the panel, so the user is tapping the spot they remember.
-        var passthrough: [UIView] = []
-        if let bar = ui.panelBar { passthrough.append(bar) }
+        // Any tap outside the panel closes it, including where the pill was
+        // (the pill is hidden by iOS while a panel is open); the popover
+        // asks the presenter, which closes it itself.
         dlog("ui", "present panel \(kind.rawValue) from \(ui.barItems[kind] != nil && ui.panelBar?.window != nil ? "bar item" : "view") \(Int(width))×≤\(Int(maxHeight))")
         var bottomInset: CGFloat = 8
         if let bar = sourceView {
@@ -144,9 +140,9 @@ struct PlayerScreen: View {
             bottomInset = max(8, window.bounds.height - f.minY + 6)
         }
         PanelPresenter.shared.show(kind: kind.rawValue, sizeKey: sizeKey, owner: ObjectIdentifier(model), content: content,
-                                   source: source, from: root, passthrough: passthrough,
+                                   source: source, anchor: sourceView, from: root,
                                    bottomInset: bottomInset, immediate: immediate) { [weak ui] in
-            // Dismissed by a tap outside.
+            // Closed by a tap outside.
             if ui?.panel == kind { ui?.panel = nil }
             ui?.scheduleHide()
         }

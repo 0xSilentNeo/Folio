@@ -7,6 +7,12 @@ struct GlassPlayerApp: App {
 
     init() {
         SettingsKey.registerDefaults()
+        // 1.13: the quick panel transition replaces the 1 s morph as the default
+        // (once; a later choice in Settings sticks).
+        if !UserDefaults.standard.bool(forKey: "migrated.panelTransition.113") {
+            UserDefaults.standard.set("quick", forKey: SettingsKey.panelTransition)
+            UserDefaults.standard.set(true, forKey: "migrated.panelTransition.113")
+        }
         Diagnostics.shared.start()
         EnergyMonitor.shared.start()
         UILab.start()

@@ -46,6 +46,8 @@ targets:
         UIRequiresFullScreen: false
         UIStatusBarStyle: UIStatusBarStyleLightContent
         UIViewControllerBasedStatusBarAppearance: true
+        # ProMotion: without this, an app's own animations are capped at 60 Hz on iPhone.
+        CADisableMinimumFrameDurationOnPhone: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
