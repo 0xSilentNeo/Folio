@@ -333,23 +333,22 @@ enum IMDbSource {
             let fromData = nextTitles(page, type: hint).first { $0.id == id }
             var m2 = m ?? fromData
             if m2 != nil {
-                if let n = fromData?.name, !n.isEmpty { m2!.name = n }
                 if m2!.releaseInfo == nil { m2!.releaseInfo = fromData?.releaseInfo }
                 if m2!.runtime == nil { m2!.runtime = fromData?.runtime }
                 // One pass over the whole page data. Nothing is skipped: 1.13.0
                 // stopped descending at the object holding `countriesOfOrigin`,
                 // which is the main title object — and the cast with photos
                 // lives inside it, so only the photo-less "Stars" were found.
-                var originals: [(score: Int, text: String)] = []
+                var mains: [(score: Int, d: [String: Any])] = []
                 var castLists: [(path: String, members: [CastMember])] = []
                 walkPaths(next, path: "") { d, path in
                     // The show's original title: from the object that IS this
                     // title (it carries year/rating/genres), not one that merely
                     // references it (an episode's "series" link carried the
                     // episode's own original title into the show in 1.13.0).
-                    if (d["id"] as? String) == id, let o = text(d["originalTitleText"]) {
-                        let score = ["releaseYear", "ratingsSummary", "titleType", "genres", "plot", "runtimeSeconds", "releaseDate"].filter { d[$0] != nil }.count
-                        originals.append((score, o))
+                    if (d["id"] as? String) == id, d["titleText"] != nil || d["originalTitleText"] != nil {
+                        let score = ["titleText", "releaseYear", "ratingsSummary", "titleType", "genres", "plot", "runtimeSeconds", "releaseDate"].filter { d[$0] != nil }.count
+                        mains.append((score, d))
                     }
                     for (key, value) in d {
                         guard let arr = value as? [[String: Any]], arr.count >= 2 else { continue }
@@ -369,8 +368,10 @@ enum IMDbSource {
                         m2!.background = sized(thumb, width: 1280)
                     }
                 }
-                if let best = originals.max(by: { $0.score < $1.score }), best.text != m2!.name {
-                    m2!.originalName = best.text
+                // Name and original title from the object that IS this title.
+                if let best = mains.max(by: { $0.score < $1.score })?.d {
+                    if let n = text(best["titleText"]), !n.isEmpty { m2!.name = unescape(n) }
+                    if let o = text(best["originalTitleText"]), o != m2!.name { m2!.originalName = unescape(o) }
                 }
                 // The cast list with the most photos, then the most roles (actors
                 // have characters; writer/director lists don't), then the longest.
@@ -383,7 +384,7 @@ enum IMDbSource {
                 } else {
                     dlog("imdb", "cast \(id): no cast list found in page data")
                 }
-                dlog("imdb", "original title \(id): \(originals.count) candidate(s), chose \(m2!.originalName ?? "none")")
+                dlog("imdb", "title \(id): \(mains.count) candidate object(s); name \(m2!.name), original \(m2!.originalName ?? "none")")
                 if (m2!.genres ?? []).contains(where: { $0.caseInsensitiveCompare("Animation") == .orderedSame }),
                    (m2!.countries ?? []).contains("JP") {
                     m2!.genres = (m2!.genres ?? []) + ["Anime"]
