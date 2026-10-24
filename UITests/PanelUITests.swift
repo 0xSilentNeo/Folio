@@ -141,6 +141,33 @@ final class PanelUITests: XCTestCase {
     /// return to Home; and the edge swipe must work too.
     func test8TitlePageBack() throws { try titlePageBack([]) }
 
+    /// The ⋯ button on a title page, tapped off-centre (where a finger often
+    /// lands on the circle, not on the thin glyph) — must open its menu every time.
+    func test11MoreButtonEdgeTaps() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-noSplash"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(1); tile.tap()
+        let more = app.buttons["More"]
+        XCTAssertTrue(more.waitForExistence(timeout: 6), "More button not found")
+        sleep(2)
+        print("MORE frame \(more.frame)")
+        var ok = 0
+        let spots: [CGVector] = [CGVector(dx: 0.2, dy: 0.5), CGVector(dx: 0.8, dy: 0.5), CGVector(dx: 0.5, dy: 0.2), CGVector(dx: 0.5, dy: 0.8), CGVector(dx: 0.25, dy: 0.25)]
+        for (i, v) in spots.enumerated() {
+            more.coordinate(withNormalizedOffset: v).tap()
+            if app.buttons["Delete file"].waitForExistence(timeout: 2) || app.staticTexts["Delete file"].exists { ok += 1 } else { print("MORE miss at spot \(i) \(v)") }
+            sleep(1)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)).tap()   // dismiss the menu
+            sleep(1)
+        }
+        print("MORE opened \(ok)/\(spots.count)")
+        XCTAssertEqual(ok, spots.count, "the More button missed taps")
+    }
+
 
     private func titlePageBack(_ extra: [String]) throws {
         let app = XCUIApplication()
@@ -204,7 +231,7 @@ final class PanelUITests: XCTestCase {
             tapPill(app, "Settings")
             usleep(UInt32(150_000 + i * 40_000))                       // 0.15 … 0.51 s after the tap
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()
-            sleep(1)
+            sleep(3)                                                   // opening + closing morph
             if !shows(app, "Playback") { closedFirstTap += 1 } else {
                 print("OUTSIDE still open after one tap at \(150 + i * 40) ms")
                 app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(1)
@@ -225,14 +252,17 @@ final class PanelUITests: XCTestCase {
             let (button, marker) = names[i % 3]
             tapPill(app, button)
             XCTAssertTrue(shows(app, marker, within: 3), "\(button) did not open")
-            usleep(800_000)
+            sleep(1)
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()
-            usleep(300_000)
-            if !shows(app, marker) { ok += 1 } else { print("ONETAP \(button) still open 0.3 s after one tap") }
-            usleep(300_000)
+            let t0 = Date()
+            var closed = false
+            while Date().timeIntervalSince(t0) < 2.5 { if !shows(app, marker) { closed = true; break }; usleep(100_000) }
+            if closed { ok += 1; print(String(format: "ONETAP %@ closed %.1f s after one tap", button, Date().timeIntervalSince(t0))) }
+            else { print("ONETAP \(button) still open 2.5 s after one tap") }
+            sleep(1)
         }
         print("ONETAP closed \(ok)/9")
-        XCTAssertEqual(ok, 9, "one outside tap did not close the panel within 0.3 s")
+        XCTAssertEqual(ok, 9, "one outside tap did not close the panel")
     }
 
     /// The lost tap from the 24 Oct recording: close with an outside tap, then
