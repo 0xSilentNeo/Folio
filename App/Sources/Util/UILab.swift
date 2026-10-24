@@ -95,6 +95,7 @@ enum UILab {
             (16, "release", { PlayerPresenter.current?.model.endHoldSpeed() }),
             (22, "renderer → software (PiP path)", { PlayerPresenter.current?.model.labSwitchRenderer(software: true) }),
             (26, "renderer → main", { PlayerPresenter.current?.model.labSwitchRenderer(software: false) }),
+            (29, "park video (PiP closed in background) then return", { PlayerPresenter.current?.model.labParkThenReturn() }),
         ]
         for (t, name, f) in steps { DispatchQueue.main.asyncAfter(deadline: .now() + t) { dlog("av", "== \(name)"); f() } }
         var t0: Date?
@@ -102,7 +103,7 @@ enum UILab {
             MainActor.assumeIsolated {
                 guard let model = PlayerPresenter.current?.model, let c = model.client else { return }
                 if t0 == nil { t0 = Date() }
-                if Date().timeIntervalSince(t0!) > 34 { timer.invalidate(); dlog("av", "done"); return }
+                if Date().timeIntervalSince(t0!) > 38 { timer.invalidate(); dlog("av", "done"); return }
                 c.query({ c in (c.double("time-pos"), c.double("audio-pts"), c.double("avsync"), c.double("speed"),
                                 c.int("frame-drop-count"), c.int("decoder-frame-drop-count"), c.string("current-ao")) }) { r in
                     func f(_ v: Double?) -> String { v.map { String(format: "%.3f", $0) } ?? "-" }

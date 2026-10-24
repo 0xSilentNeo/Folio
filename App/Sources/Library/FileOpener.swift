@@ -200,9 +200,12 @@ final class ThumbLoader: ObservableObject {
     private static let cache = NSCache<NSString, UIImage>()
     private var loadedKey: String?
 
-    func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool = false) {
+    func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool? = nil) {
         guard loadedKey != key else { return }
         loadedKey = key
+        // Poster / episode still first (Settings → Library → Tile artwork);
+        // the saved player frame is the fallback, not the default.
+        let preferMeta = preferMeta ?? (UserDefaults.standard.string(forKey: SettingsKey.tileArtwork) != "frame")
         if let c = Self.cache.object(forKey: key as NSString) { image = c }
         Task {
             // Saved frame (Continue Watching) from disk, decoded off the main thread.

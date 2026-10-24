@@ -1047,6 +1047,19 @@ final class PlayerModel: ObservableObject {
     /// A/V lab: the same renderer switch PiP does, without PiP.
     func labSwitchRenderer(software: Bool) { software ? switchToSoftware() : switchToMain() }
 
+    /// A/V lab: the "closed PiP from the background, then came back" path,
+    /// without PiP or a real background transition.
+    func labParkThenReturn() {
+        if mode == .sw { sw.detach() }
+        mode = .none
+        pendingMain = true
+        client?.set("vid", "no")
+        setPaused(true)
+        setPiPLayerOnTop(true)
+        scheduleParkedCheck()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.setPaused(false) }
+    }
+
     private func switchToSoftware() {
         guard mode == .main, let c = client else { return }
         defer { traceAV("renderer → PiP") }
@@ -1143,8 +1156,22 @@ final class PlayerModel: ObservableObject {
         }
     }
 
+    /// Safety net for the parked state: if the app is on screen with the video
+    /// still parked (the active event raced the PiP stop), restore it.
+    private func scheduleParkedCheck() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self, self.pendingMain, UIApplication.shared.applicationState != .background else {
+                if self?.pendingMain == true { self?.scheduleParkedCheck() }
+                return
+            }
+            dlog("player", "video was parked while on screen; restoring")
+            self.switchToMain()
+            self.setPiPLayerOnTop(false)
+        }
+    }
+
     private func didBecomeActive() {
-        if pendingMain { switchToMain(); return }
+        if pendingMain { switchToMain(); setPiPLayerOnTop(false); return }
         guard mode == .main else { return }
         if renderer == .gl { glView?.setRenderingAllowed(true) }
         if videoOffForBackground, let c = client {
@@ -1402,12 +1429,19 @@ extension PlayerModel: PiPManagerDelegate {
         onMain { [weak self] in
             guard let self else { return }
             self.isPiPActive = false
-            if UIApplication.shared.applicationState == .background {
+            let state = UIApplication.shared.applicationState
+            dlog("player", "pip stopped (app \(state == .active ? "active" : state == .inactive ? "inactive" : "background"), restoring=\(self.pipRestoring))")
+            // Only a truly backgrounded app parks the video. `.inactive` is the
+            // moment the user is already coming back (switcher, PiP's ✕ while
+            // returning): parking there left the picture off with audio on,
+            // because the "became active" event that un-parks had already fired.
+            if state == .background && !self.pipRestoring {
                 if self.mode == .sw { self.sw.detach() }
                 self.mode = .none
                 self.pendingMain = true
                 self.client?.set("vid", "no")
-                if !self.pipRestoring { self.setPaused(true) }
+                self.setPaused(true)
+                self.scheduleParkedCheck()
             } else {
                 self.awaitingFirstFrameAfterPiP = true
                 self.switchToMain()

@@ -18,6 +18,8 @@ struct MediaMeta: Codable, Hashable {
     var episodeTitle: String?
     var episodeThumb: String?
     var episodeOverview: String?
+    /// The show's title in its own language (romaji for anime), if different.
+    var originalName: String?
 
     /// Best 16:9 art for a tile; poster as a last resort.
     var wideArt: String? { episodeThumb ?? background ?? poster }
@@ -62,6 +64,7 @@ actor MetadataService {
             guard let item = await search(title: p.title, year: p.year, type: type) else { continue }
             var meta = MediaMeta(id: item.id, type: item.type, name: item.name, poster: item.poster, background: item.background,
                                  logo: item.logo, description: item.description, year: item.releaseInfo, rating: item.imdbRating, genres: item.genres)
+            meta.originalName = item.originalName
             if type == "series", let ep = p.episode, let video = await episode(of: item.id, season: p.season, episode: ep) {
                 meta.episodeTitle = video.title
                 meta.episodeThumb = video.thumbnail
@@ -93,6 +96,7 @@ actor MetadataService {
             best.genres = full.genres
             best.background = full.background ?? best.background
             best.poster = full.poster ?? best.poster
+            best.originalName = full.originalName
         }
         return best
     }

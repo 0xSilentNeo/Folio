@@ -228,7 +228,12 @@ struct MetaDetailView: View {
                 id = imdb
             }
             if id.hasPrefix("tt") {
-                if var full = await IMDbSource.details(id: id, type: preview.type) {
+                let t0 = CACurrentMediaTime()
+                // Details and the season list don't depend on each other: fetch both at once.
+                loadingEpisodes = preview.type != "movie"
+                async let detailsTask = IMDbSource.details(id: id, type: preview.type)
+                async let seasonsTask: [Int] = preview.type == "movie" ? [] : IMDbSource.seasons(id: id)
+                if var full = await detailsTask {
                     if full.poster == nil { full.poster = preview.poster }
                     if full.background == nil { full.background = preview.background }
                     if full.type == "movie" && preview.type == "series" { full.type = "series" }
@@ -237,14 +242,14 @@ struct MetaDetailView: View {
                     var p = preview; p.id = id; meta = p
                 }
                 if m.type != "movie" {
-                    loadingEpisodes = true
-                    seasons = await IMDbSource.seasons(id: id)
+                    seasons = await seasonsTask
                     if let first = seasons.first {
                         season = first
                         episodes = await IMDbSource.episodes(id: id, season: first)
                     }
                     loadingEpisodes = false
                 }
+                dlog("perf", String(format: "title page %@ ready in %.0f ms", id, (CACurrentMediaTime() - t0) * 1000))
             } else {
                 guard let addon = AddonStore.shared.metaAddon(type: preview.type, id: id, preferred: sourceAddon) else { return }
                 if var full = try? await AddonAPI.meta(addon, type: preview.type, id: id) {

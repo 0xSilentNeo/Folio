@@ -54,10 +54,12 @@ enum IMDbSource {
         var req = URLRequest(url: url)
         req.setValue(language + ",en;q=0.8", forHTTPHeaderField: "Accept-Language")
         if let ua = await IMDbPageLoader.shared.userAgent { req.setValue(ua, forHTTPHeaderField: "User-Agent") }
+        let t0 = CACurrentMediaTime()
         do {
             let (data, resp) = try await session.data(for: req)
             let status = (resp as? HTTPURLResponse)?.statusCode ?? 0
             if status == 200, let s = String(data: data, encoding: .utf8), s.contains("__NEXT_DATA__") || s.contains("ld+json") {
+                dlog("perf", String(format: "imdb %@ plain HTTP %.0f ms (%d KB)", path, (CACurrentMediaTime() - t0) * 1000, data.count / 1024))
                 return s
             }
             dlog("imdb", "HTTP \(status) for \(path) (\(data.count) bytes) → web view")
@@ -66,7 +68,19 @@ enum IMDbSource {
             dlog("imdb", "\(path): \(error.localizedDescription) → web view")
         }
         if Task.isCancelled { return nil }
-        return await IMDbPageLoader.shared.load(url)
+        let r = await IMDbPageLoader.shared.load(url)
+        dlog("perf", String(format: "imdb %@ via web view %.0f ms", path, (CACurrentMediaTime() - t0) * 1000))
+        return r
+    }
+
+    /// Gets the WAF token at launch (one web-view load of a tiny page) so the
+    /// first Discover request can be plain HTTP instead of a browser page load.
+    static func warmUp() {
+        Task.detached(priority: .utility) {
+            let t0 = CACurrentMediaTime()
+            _ = await html("/chart/moviemeter/")   // also fills the Trending cache
+            dlog("perf", String(format: "imdb warm-up done in %.0f ms", (CACurrentMediaTime() - t0) * 1000))
+        }
     }
 
     // MARK: - Cache
@@ -83,6 +97,9 @@ enum IMDbSource {
         let h = SHA256.hash(data: Data((cacheVersion + key).utf8)).compactMap { String(format: "%02x", $0) }.joined().prefix(32)
         return dir.appendingPathComponent(String(h) + ".json")
     }
+    /// Any cached value, however old (for showing something at once while a fresh copy loads).
+    static func cachedStale<T: Decodable>(_ key: String, as: T.Type) -> T? { cached(key, ttl: .greatestFiniteMagnitude, as: T.self) }
+
     private static func cached<T: Decodable>(_ key: String, ttl: TimeInterval, as: T.Type) -> T? {
         lock.lock(); let m = memory[key]; lock.unlock()
         if let m, Date().timeIntervalSince(m.0) < ttl, let v = try? JSONDecoder().decode(T.self, from: m.1) { return v }
@@ -128,12 +145,14 @@ enum IMDbSource {
 
     /// Discover grid. Mirrors IMDb itself: Most Popular / Top 250 charts when
     /// no genre is chosen, otherwise IMDb advanced search with the same rules.
-    static func browse(sort: Sort, type: String, genre: String?, year: String) async -> [MetaItem] {
+    /// `staleOnly`: return whatever the cache holds (any age) without a request,
+    /// so the grid can show the last list at once while a fresh one loads.
+    static func browse(sort: Sort, type: String, genre: String?, year: String, staleOnly: Bool = false) async -> [MetaItem] {
         let series = type == "series"
         if genre == nil {
             switch sort {
-            case .trending: return await chart(series ? "/chart/tvmeter/" : "/chart/moviemeter/", type: type)
-            case .topRated: return await chart(series ? "/chart/toptv/" : "/chart/top/", type: type)
+            case .trending: return await chart(series ? "/chart/tvmeter/" : "/chart/moviemeter/", type: type, staleOnly: staleOnly)
+            case .topRated: return await chart(series ? "/chart/toptv/" : "/chart/top/", type: type, staleOnly: staleOnly)
             case .new: break
             }
         }
@@ -160,7 +179,10 @@ enum IMDbSource {
             q["sort"] = "moviemeter,asc"
         }
         let key = "search|" + q.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: "&") + "|" + language
+        if staleOnly { return cachedStale(key, as: [MetaItem].self) ?? [] }
         if let hit = cached(key, ttl: 3 * 3600, as: [MetaItem].self) { return hit }
+        let t0 = CACurrentMediaTime()
+        defer { dlog("perf", String(format: "imdb search %@ %@ in %.0f ms", type, genre ?? "-", (CACurrentMediaTime() - t0) * 1000)) }
         guard let page = await html("/search/title/", q) else { return [] }
         var items = nextTitles(page, type: type)
         if items.isEmpty { items = jsonLDList(page, type: type) }
@@ -171,9 +193,12 @@ enum IMDbSource {
         return items
     }
 
-    static func chart(_ path: String, type: String) async -> [MetaItem] {
+    static func chart(_ path: String, type: String, staleOnly: Bool = false) async -> [MetaItem] {
         let key = "chart|\(path)|\(language)"
+        if staleOnly { return cachedStale(key, as: [MetaItem].self) ?? [] }
         if let hit = cached(key, ttl: 6 * 3600, as: [MetaItem].self) { return hit }
+        let t0 = CACurrentMediaTime()
+        defer { dlog("perf", String(format: "imdb chart %@ in %.0f ms", path, (CACurrentMediaTime() - t0) * 1000)) }
         guard let page = await html(path) else { return [] }
         var items = nextTitles(page, type: type)
         if items.isEmpty { items = jsonLDList(page, type: type) }
@@ -219,7 +244,7 @@ enum IMDbSource {
             case "tvSeries", "tvMiniSeries": type = "series"
             default: return nil
             }
-            var m = MetaItem(id: s.id, type: type, name: name, poster: sized(s.i?.imageUrl, width: 342),
+            var m = MetaItem(id: s.id, type: type, name: name, poster: sized(s.i?.imageUrl, width: 240),
                              description: s.s, releaseInfo: s.yr ?? s.y.map(String.init), imdbRating: nil, genres: nil)
             m.background = sized(s.i?.imageUrl, width: 780)
             return m
@@ -263,6 +288,9 @@ enum IMDbSource {
                 if m2!.releaseInfo == nil { m2!.releaseInfo = fromData?.releaseInfo }
                 if m2!.runtime == nil { m2!.runtime = fromData?.runtime }
                 walk(next) { d in
+                    if m2!.originalName == nil, (d["id"] as? String) == id, let o = text(d["originalTitleText"]), o != m2!.name {
+                        m2!.originalName = o
+                    }
                     if let c = d["countriesOfOrigin"] as? [String: Any], let list = c["countries"] as? [[String: Any]] {
                         m2!.countries = list.compactMap { $0["id"] as? String }
                         return false
@@ -329,12 +357,18 @@ enum IMDbSource {
         var out: [MetaVideo] = []
         if let next = nextData(page) {
             walk(next) { d in
-                guard let epId = (d["id"] as? String), epId.hasPrefix("tt"), let title = text(d["titleText"]) ?? text(d["originalTitleText"]) else { return true }
+                guard let epId = (d["id"] as? String), epId.hasPrefix("tt") else { return true }
+                let localized = text(d["titleText"]), original = text(d["originalTitleText"])
+                // Prefer the title in the user's language; IMDb's `titleText` is
+                // sometimes the original one (Japanese, romanised) for anime episodes,
+                // so when both exist and `titleText` looks like the original, swap.
+                guard let title = localized ?? original else { return true }
                 let numbers = (d["series"] as? [String: Any])?["episodeNumber"] as? [String: Any]
                 let ep = int(d["episode"]) ?? int(numbers?["episodeNumber"])
                 let se = int(d["season"]) ?? int(numbers?["seasonNumber"]) ?? season
                 guard let ep else { return true }
                 var v = MetaVideo(id: "\(id):\(se):\(ep)", title: title, season: se, episode: ep)
+                if let original, original != title { v.originalTitle = original }
                 v.thumbnail = sized(imageURL(d["image"]) ?? imageURL(d["primaryImage"]), width: 480)
                 v.overview = (d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String
                 if let rd = d["releaseDate"] as? [String: Any], let y = rd["year"] as? Int {
@@ -377,7 +411,7 @@ enum IMDbSource {
                 let genres = (item["genre"] as? [String]) ?? (item["genre"] as? String).map { [$0] }
                 let t = (item["@type"] as? String) ?? ""
                 let itemType = t == "TVSeries" || t == "TVMiniSeries" ? "series" : (t == "Movie" || t == "TVMovie" ? "movie" : type)
-                out.append(MetaItem(id: id, type: itemType, name: name, poster: sized(item["image"] as? String, width: 342),
+                out.append(MetaItem(id: id, type: itemType, name: name, poster: sized(item["image"] as? String, width: 240),
                                     description: unescape(item["description"] as? String), releaseInfo: nil, imdbRating: rating, genres: genres, rank: i + 1))
             }
             if !out.isEmpty { return out }
@@ -410,7 +444,7 @@ enum IMDbSource {
             if itemType == "episode" { return false }
             let rating = (d["ratingSummary"] as? [String: Any])?["aggregateRating"] ?? (d["ratingsSummary"] as? [String: Any])?["aggregateRating"] ?? d["aggregateRating"]
             var m = MetaItem(id: id, type: itemType, name: unescape(name),
-                             poster: sized(imageURL(d["primaryImage"]) ?? imageURL(d["image"]) ?? imageURL(d["poster"]), width: 342),
+                             poster: sized(imageURL(d["primaryImage"]) ?? imageURL(d["image"]) ?? imageURL(d["poster"]), width: 240),
                              description: (d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String,
                              releaseInfo: (int(d["releaseYear"]) ?? int((d["releaseYear"] as? [String: Any])?["year"])).map(String.init),
                              imdbRating: Self.rating(rating),

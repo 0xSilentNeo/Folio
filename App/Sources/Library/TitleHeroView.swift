@@ -60,7 +60,6 @@ struct TitleHeroView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     backdrop(width: geo.size.width, wide: wide)
                     VStack(alignment: .leading, spacing: 18) {
-                        titleBlock
                         HStack(alignment: .top, spacing: 16) {
                             TiltPlayButton(title: entry?.canResume == true ? "Resume" : "Play",
                                            subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { play(file) }
@@ -73,7 +72,7 @@ struct TitleHeroView: View {
                             }
                         }
                         if let s = spoilerSafe(meta), !s.isEmpty {
-                            Text(s).font(.callout).foregroundStyle(.white.opacity(0.85)).lineSpacing(2)
+                            ExpandableText(text: s, lines: 3)
                         }
                         if let g = meta?.genres, !g.isEmpty {
                             Text(g.prefix(5).joined(separator: " · ")).font(.footnote).foregroundStyle(.secondary)
@@ -119,22 +118,31 @@ struct TitleHeroView: View {
                 .clipped()
                 .overlay(LinearGradient(colors: [.black.opacity(0.25), .clear, Theme.background.opacity(0.9), Theme.background],
                                         startPoint: .top, endPoint: .bottom))
-            if let poster = meta?.poster, let u = URL(string: poster) {
-                CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
-                    .frame(width: 84, height: 126)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
-                    .padding(.leading, wide ? 28 : 20)
-                    .offset(y: 40)
+            HStack(alignment: .bottom, spacing: 14) {
+                if let poster = meta?.poster, let u = URL(string: poster) {
+                    CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
+                        .frame(width: 96, height: 144)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
+                }
+                titleBlock.padding(.bottom, 6)
             }
+            .padding(.leading, wide ? 28 : 20)
+            .padding(.trailing, 20)
+            .offset(y: 40)
         }
-        .padding(.bottom, meta?.poster != nil ? 30 : 0)
+        .padding(.bottom, 44)
     }
+
+    private var isAnime: Bool { meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false }
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.system(size: 30, weight: .bold, design: .rounded)).lineLimit(2)
-            if let ep = meta?.episodeTitle ?? episodeLabel {
+            DecipherText(text: title, font: .system(size: 28, weight: .bold, design: .rounded)).lineLimit(2)
+            // Anime: the show's own (romaji) title; otherwise the episode name.
+            if isAnime, let o = meta?.originalName, !o.isEmpty {
+                Text(o).font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.7)).lineLimit(2)
+            } else if let ep = meta?.episodeTitle ?? episodeLabel {
                 Text(ep).font(.headline).foregroundStyle(.white.opacity(0.8))
             }
             HStack(spacing: 8) {

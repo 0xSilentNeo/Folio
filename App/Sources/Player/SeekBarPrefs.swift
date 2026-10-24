@@ -60,9 +60,21 @@ final class MarkerStore {
 
 /// Frame thumbnails captured when you stop watching (Continue Watching art).
 enum ThumbnailStore {
+    /// Application Support, not Caches: iOS may empty Caches when the app is
+    /// killed from the switcher, which made Home tiles lose their picture.
     static var dir: URL {
-        let d = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("thumbs", isDirectory: true)
-        try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let d = base.appendingPathComponent("thumbs", isDirectory: true)
+        if !FileManager.default.fileExists(atPath: d.path) {
+            try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+            // One-time move of what Caches still holds.
+            let old = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("thumbs", isDirectory: true)
+            for f in (try? FileManager.default.contentsOfDirectory(at: old, includingPropertiesForKeys: nil)) ?? [] {
+                try? FileManager.default.moveItem(at: f, to: d.appendingPathComponent(f.lastPathComponent))
+            }
+            var v = URLResourceValues(); v.isExcludedFromBackup = true
+            var dd = d; try? dd.setResourceValues(v)
+        }
         return d
     }
 

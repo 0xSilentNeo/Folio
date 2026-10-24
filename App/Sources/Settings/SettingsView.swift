@@ -817,6 +817,7 @@ struct GeneralSettings: View {
 struct LibrarySettings: View {
     @ObservedObject private var store = LocalMediaStore.shared
     @AppStorage(SettingsKey.metadataFetching) private var fetching = true
+    @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
     @State private var cacheBytes: Int64 = 0
     @State private var working = false
 
@@ -858,6 +859,10 @@ struct LibrarySettings: View {
             } footer: { Text("Refresh metadata looks every title up again (posters, synopsis, ratings, episode names).") }
             Section {
                 Toggle("Metadata fetching", isOn: $fetching)
+                Picker("Tile artwork", selection: $tileArtwork) {
+                    Text("Poster / episode still").tag("poster")
+                    Text("Last frame watched").tag("frame")
+                }
                 HStack {
                     Text("Library cache")
                     Spacer()

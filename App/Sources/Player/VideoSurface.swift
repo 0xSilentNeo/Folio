@@ -122,7 +122,13 @@ struct VideoSurface: UIViewRepresentable {
             switch g.state {
             case .began:
                 let vel = g.velocity(in: v)
-                if abs(vel.x) > abs(vel.y) {
+                let start = g.location(in: v)
+                // A swipe that starts at the bottom edge is the home gesture (or
+                // the app switcher); from the top it's Control Centre. Never seek
+                // on those, even when the first movement is slightly sideways.
+                if start.y > v.bounds.height - 28 || start.y < 28 { panMode = .none; return }
+                // Commit to seeking only for a clearly horizontal start.
+                if abs(vel.x) > abs(vel.y) * 1.5 {
                     guard model.duration > 0 else { panMode = .none; return }
                     panMode = .seek
                     panStartValue = model.position

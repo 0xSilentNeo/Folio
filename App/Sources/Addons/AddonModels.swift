@@ -172,6 +172,8 @@ struct MetaVideo: Codable, Hashable, Identifiable {
     var overview: String?
     var rating: String?
     var imdbId: String?
+    /// Title in the production's own language (romaji for anime), when IMDb has one that differs.
+    var originalTitle: String?
 
     init(id: String, title: String?, season: Int?, episode: Int?) {
         self.id = id; self.title = title; self.season = season; self.episode = episode
@@ -229,6 +231,8 @@ struct MetaItem: Codable, Hashable, Identifiable {
     var rank: Int?
     // Extra facts from the built-in IMDb source.
     var cast: [String]?
+    /// Title in the production's own language (romaji for anime), when it differs from `name`.
+    var originalName: String?
     var director: [String]?
     var contentRating: String?
     var countries: [String]?

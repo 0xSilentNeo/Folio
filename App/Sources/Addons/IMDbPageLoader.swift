@@ -83,7 +83,11 @@ final class IMDbPageLoader: NSObject, WKNavigationDelegate {
         navigations = 0
         let wv = makeWebView()
         dlog("imdb", "webkit load \(job.url.path)")
-        wv.load(URLRequest(url: job.url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 20))
+        var req = URLRequest(url: job.url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 20)
+        // Same language as the plain requests; without it IMDb picked the page
+        // language itself and episode titles came back in the original language.
+        req.setValue(IMDbSource.language + ",en;q=0.8", forHTTPHeaderField: "Accept-Language")
+        wv.load(req)
         let t = DispatchWorkItem { [weak self] in
             dlog("imdb/error", "webkit timeout for \(job.url.path)")
             self?.finish(nil)

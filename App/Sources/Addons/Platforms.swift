@@ -136,11 +136,14 @@ final class BrowseModel: ObservableObject {
         }
         // IMDb lists come whole (100–250 items); nothing to page.
         guard initial || metas.isEmpty else { exhausted = true; return }
+        // Last list first (any age), fresh one when it arrives.
+        let stale = await IMDbSource.browse(sort: sort.imdb, type: type, genre: genre, year: year, staleOnly: true)
+        if gen == generation, !stale.isEmpty, metas.isEmpty { metas = stale }
         let list = await IMDbSource.browse(sort: sort.imdb, type: type, genre: genre, year: year)
         guard gen == generation else { return }
-        metas = list
+        if !list.isEmpty || metas.isEmpty { metas = list }
         exhausted = true
-        failed = list.isEmpty
+        failed = metas.isEmpty
     }
 }
 
