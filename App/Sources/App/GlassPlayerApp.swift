@@ -48,11 +48,20 @@ struct RootView: View {
     var body: some View {
         ZStack {
             tabs
+            glassLab
             if splash { LaunchSplash { splash = false }.transition(.identity).zIndex(1) }
         }
         .background(AppearanceProbe(mode: appearance).frame(width: 1, height: 1))
         .toggleStyle(BrandSwitchStyle())
         .onAppear { LaunchTiming.firstFrame() }
+    }
+
+    /// `-glassLab`: the Liquid Glass morph test screen over everything (CI only).
+    @ViewBuilder
+    private var glassLab: some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *), CommandLine.arguments.contains("-glassLab") { GlassLab().zIndex(2) }
+        #endif
     }
 
     private var tabs: some View {
