@@ -342,13 +342,15 @@ final class PanelPresenter {
             }
         }
         guard animated else { finishDismiss(); return }
-        if quick || switching, let pv {
+        let isQuick = quick
+        if isQuick || switching, let pv {
             // Quick: shrink back toward the bar and fade (0.16 s). Switching in
             // the morph style: fade in place so the pill never flashes between panels.
-            UIView.animate(withDuration: switching && !quick ? 0.10 : 0.16, delay: 0,
+            let shrink = vc.towardAnchor(scale: 0.9, pull: 0.3)
+            UIView.animate(withDuration: switching && !isQuick ? 0.10 : 0.16, delay: 0,
                            options: [.curveEaseIn, .beginFromCurrentState, .allowUserInteraction]) {
                 pv.alpha = 0
-                if quick { pv.transform = vc.towardAnchor(scale: 0.9, pull: 0.3) }
+                if isQuick { pv.transform = shrink }
             } completion: { _ in finishDismiss() }
         } else {
             if style == "morphFrozen" { onTransitionStart?(0.45) }
