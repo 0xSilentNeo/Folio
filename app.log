@@ -1,0 +1,33 @@
+22:56:52.812 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=41.94 GB
+22:56:52.832 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+22:56:54.152 [app] first screen 2126 ms after process start
+22:56:54.661 [lab] glass lab
+22:56:54.671 [app] active
+22:56:57.345 [lab] glass lab toggle → true
+22:56:59.950 [lab] glass lab toggle → false
+22:57:02.673 [lab] glass lab toggle → true
+22:57:05.412 [lab] glass lab toggle → false
+22:57:08.034 [lab] glass lab toggle → true
+22:57:10.700 [lab] glass lab toggle → false
+22:57:13.350 [lab] glass lab toggle → true
+22:57:15.952 [lab] glass lab toggle → false
+22:57:18.649 [lab] glass lab toggle → true
+22:57:21.257 [lab] glass lab toggle → false
+22:57:23.966 [lab] glass lab toggle → true
+22:57:25.043 [energy] cpu 40% (main 40%) thermal=nominal playing=no
+22:57:26.599 [lab] glass lab toggle → false
+22:57:29.346 [lab] glass lab toggle → true
+22:57:31.981 [lab] glass lab toggle → false
+22:57:34.680 [lab] glass lab toggle → true
+22:57:37.298 [lab] glass lab toggle → false
+22:57:40.028 [lab] glass lab toggle → true
+22:57:42.634 [lab] glass lab toggle → false
+22:57:45.311 [lab] glass lab toggle → true
+22:57:47.995 [lab] glass lab toggle → false
+22:57:50.695 [lab] glass lab toggle → true
+22:57:53.320 [lab] glass lab toggle → false
+22:57:54.819 [energy] cpu 42% (main 42%) thermal=nominal playing=no
+22:57:55.958 [lab] glass lab toggle → true
+22:57:58.583 [lab] glass lab toggle → false
+22:58:01.267 [lab] glass lab toggle → true
+22:58:03.873 [lab] glass lab toggle → false
