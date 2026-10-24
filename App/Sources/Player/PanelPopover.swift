@@ -132,19 +132,21 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
 
     func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle { .none }
     func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle { .none }
-    private static var stacksLogged = 0
-    func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
-        if Self.stacksLogged < 4 {
-            Self.stacksLogged += 1
-            let stack = Thread.callStackSymbols.prefix(40).map { line -> String in
-                // "3  UIKitCore  0x… -[UIPopoverPresentationController _…] + 12" → the symbol part
-                let parts = line.split(separator: " ", omittingEmptySubsequences: true)
-                return parts.count > 3 ? parts[1] + " " + parts[3...].joined(separator: " ") : line
-            }.joined(separator: " | ")
-            dlog("ui", "panel: dismiss asked by: \(stack)")
-        }
+    /// A question, not a request: iOS accessibility (VoiceOver, Switch Control,
+    /// UI-test snapshots) asks it whenever it reads the screen. Answering with
+    /// a close shut panels by themselves ~1 s after opening in CI. The answer
+    /// is always "no"; a real tap outside then arrives as an *attempt* below.
+    func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool { false }
+
+    /// The user tapped outside the panel (anywhere, including where the pill was).
+    func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
         onOutsideTap?()
-        return false
+    }
+
+    /// VoiceOver's escape gesture (two-finger Z) closes the panel the same way.
+    override func accessibilityPerformEscape() -> Bool {
+        onOutsideTap?()
+        return true
     }
 }
 
