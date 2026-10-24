@@ -138,7 +138,7 @@ struct HomeView: View {
                     ForEach(items) { e in
                         HeroCard(entry: e, height: cardW * 9 / 16 + 8)
                             .frame(width: cardW)
-                            .onTapGesture { PlayerPresenter.play(e.item) }
+                            .onTapGesture { ContinueQueue.play(e.item) }
                             .contextMenu { historyMenu(e) }
                     }
                 }
@@ -265,7 +265,7 @@ struct HomeView: View {
 
     @ViewBuilder
     private func historyMenu(_ e: HistoryEntry) -> some View {
-        Button { PlayerPresenter.play(e.item) } label: { Label(e.canResume ? "Resume" : "Play", systemImage: "play") }
+        Button { ContinueQueue.play(e.item) } label: { Label(e.canResume ? "Resume" : "Play", systemImage: "play") }
         Button { history.markWatched(e) } label: { Label("Mark as watched", systemImage: "checkmark.circle") }
         Button(role: .destructive) { history.remove(e) } label: { Label("Remove", systemImage: "trash") }
     }

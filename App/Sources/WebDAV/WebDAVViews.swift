@@ -355,7 +355,7 @@ struct LibrarySearchView: View {
             }
             ForEach(results) { item in
                 Button {
-                    PlayerPresenter.play(WebDAVClient(server: server).mediaItem(for: item, cleanTitles: cleanTitles))
+                    ContinueQueue.play(WebDAVClient(server: server).mediaItem(for: item, cleanTitles: cleanTitles))   // with its folder as the queue
                 } label: {
                     VStack(alignment: .leading, spacing: 2) {
                         DAVRow(item: item, clean: cleanTitles, entry: HistoryStore.shared.entry(forURL: item.url.absoluteString))

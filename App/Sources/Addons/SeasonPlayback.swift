@@ -35,6 +35,10 @@ enum AddonPlayback {
         item.headers = s.behaviorHints?.proxyHeaders?.request ?? [:]
         let subs = (s.subtitles ?? []).map { ExternalSubtitle(url: $0.url, lang: $0.lang, title: $0.lang) } + extraSubtitles
         item.subtitles = Array(subs.prefix(40))
+        // Remembered with the history entry, so Continue Watching can queue the
+        // rest of the season from the same addon and release (the URL is set,
+        // so the player plays it directly; the pick is only for what follows).
+        item.streamPick = pick(from: s, addon: addon, context: c)
         if c.isAnime {
             var hint = AnimeHint(title: c.name, episode: c.episode)
             let parts = c.videoId.split(separator: ":")
