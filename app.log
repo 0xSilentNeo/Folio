@@ -1,0 +1,16 @@
+06:43:55.401 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=42.16 GB
+06:43:55.438 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+06:43:56.798 [app] first screen 2395 ms after process start
+06:43:57.566 [app] active
+06:43:58.283 [lab] wikipedia Game of Thrones → https://en.wikipedia.org/wiki/Game_of_Thrones (search: https://en.wikipedia.org/w/index.php?search=Game%20of%20Thrones%202011%20TV%20series)
+06:43:58.621 [lab] wikipedia Classroom of the Elite → https://en.wikipedia.org/wiki/Classroom_of_the_Elite_(TV_series) (search: https://en.wikipedia.org/w/index.php?search=Classroom%20of%20the%20Elite%202017%20TV%20series)
+06:43:58.936 [lab] wikipedia Dune: Part Two → https://en.wikipedia.org/wiki/Dune%3A_Part_Two (search: https://en.wikipedia.org/w/index.php?search=Dune:%20Part%20Two%202024%20film)
+06:44:02.243 [imdb] HTTP 202 for /title/tt0944947/ (1997 bytes) → web view
+06:44:02.244 [imdb] webkit load /title/tt0944947
+06:44:06.596 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+06:44:27.596 [imdb/error] webkit timeout for /title/tt0944947
+06:44:27.642 [energy] cpu 0% thermal=nominal playing=no
+06:44:27.810 [perf] imdb /title/tt0944947/ via web view 25948 ms
+06:44:27.811 [lab] probe tt0944947: nil cast=0 photos=0 roles=0 in 28874 ms
+06:44:28.088 [lab]   wikipedia=nil
+06:44:28.088 [lab] probe done

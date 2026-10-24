@@ -1,0 +1,40 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-24 06:43:57.893 E  GlassPlayer[9330:7f83] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-24 06:43:58.273 E  GlassPlayer[9330:7f83] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-24 06:43:58.287 E  GlassPlayer[9330:7f86] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-24 06:43:58.617 E  GlassPlayer[9330:7f87] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-24 06:43:58.621 E  GlassPlayer[9330:7f83] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-24 06:43:58.934 E  GlassPlayer[9330:7f8e] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-24 06:44:00.088 E  GlassPlayer[9330:7f93] [com.apple.extensionkit:default] Failed to resolve host network app id to config: bundleID: com.apple.WebKit.Networking instance ID: Optional([_EXExtensionInstanceIdentifier: 3BBB4CB0-D740-47AF-BB4D-7302042442CF])
+2026-10-24 06:44:01.417 E  GlassPlayer[9330:7f68] [com.apple.WebKit:ResourceLoadStatistics] Failed to request storage access quirks from WebPrivacy.
+2026-10-24 06:44:01.417 E  GlassPlayer[9330:7f68] [com.apple.WebKit:ResourceLoadStatistics] Failed to request known fingerprinting scripts from WebPrivacy: Error Domain=WebPrivacyErrorDomain Code=1001 "List data not found" UserInfo={NSLocalizedDescription=List data not found}
+2026-10-24 06:44:01.418 E  GlassPlayer[9330:7f68] [com.apple.WebKit:ResourceLoadStatistics] Failed to request storage access user agent string quirks from WebPrivacy.
+2026-10-24 06:44:01.717 E  GlassPlayer[9330:8062] [com.apple.WebKit:ProcessSuspension] WebContent[9388] 0x110060150 - [sessionID=1] WebProcess::updateFreezerStatus: isFreezable=1, error=-1
+2026-10-24 06:44:02.088 E  GlassPlayer[9330:8022] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-24 06:44:02.171 E  GlassPlayer[9330:8022] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-24 06:44:02.268 E  GlassPlayer[9330:8062] [com.apple.WebKit:ResourceLoadStatistics] WebContent[9388] Unable to filter tracking query parameters (missing data)
+2026-10-24 06:44:02.339 E  GlassPlayer[9330:7f68] [com.apple.WebKit:ResourceLoadStatistics] Failed to request query parameters from WebPrivacy.
+2026-10-24 06:44:03.359 E  GlassPlayer[9330:8062] [com.apple.WebKit:ResourceLoadStatistics] WebContent[9388] Unable to filter tracking query parameters (missing data)
+2026-10-24 06:44:05.110 E  GlassPlayer[9330:7f68] [com.apple.WebKit:Process] 0x11e10c1e0 - GPUProcessProxy::gpuProcessExited: reason=IdleExit
+2026-10-24 06:44:05.110 E  GlassPlayer[9330:7f68] [com.apple.WebKit:Process] 0x11e0d00c0 - [PID=9388] WebProcessProxy::gpuProcessExited: reason=IdleExit
+2026-10-24 06:44:05.111 E  GlassPlayer[9330:7f68] [com.apple.WebKit:ProcessSuspension] ProcessAssertion::remainingRunTimeInSeconds failed to get identifier for process with PID=0
+2026-10-24 06:44:05.117 E  GlassPlayer[9330:7f93] [com.apple.runningboard:assertion] Error acquiring assertion: <Error Domain=RBSAssertionErrorDomain Code=2 "Specified target process 9390 does not exist" UserInfo={NSLocalizedFailureReason=Specified target process 9390 does not exist}>
+2026-10-24 06:44:05.118 E  GlassPlayer[9330:7f93] [com.apple.WebKit:ProcessSuspension] 0x11e1ac3c0 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'GPUProcess Background Assertion' for process with PID=0, error: (null)
+2026-10-24 06:44:05.627 E  GlassPlayer[9330:8062] [com.apple.WebKit:ResourceLoadStatistics] WebContent[9388] Unable to hide query parameters from script (missing data)
+2026-10-24 06:44:05.720 E  GlassPlayer[9330:7f68] [com.apple.WebKit:ResourceLoadStatistics] Failed to request allowed query parameters from WebPrivacy.
+2026-10-24 06:44:06.474 E  GlassPlayer[9330:7f68] [com.apple.WebKit:ResourceLoadStatistics] Failed to request restricted opener domains from WebPrivacy
+2026-10-24 06:44:27.644 E  GlassPlayer[9330:8062] [com.apple.WebKit:IPC] WebContent[9388] Connection::waitForSyncReply: Timed-out while waiting for reply for RemoteRenderingBackend_NativeImageBitmap from process 0, id=35
+2026-10-24 06:44:27.687 E  GlassPlayer[9330:7f68] [com.apple.WebKit:Process] 0x11e0d00c0 - [PID=9388] WebProcessProxy::gpuProcessConnectionDidBecomeUnresponsive
+2026-10-24 06:44:27.687 E  GlassPlayer[9330:7f68] [com.apple.WebKit:Process] 0x11e10c1e0 - GPUProcessProxy::childConnectionDidBecomeUnresponsive:
+2026-10-24 06:44:27.687 E  GlassPlayer[9330:7f68] [com.apple.WebKit:Process] 0x11e10c1e0 - GPUProcessProxy::didBecomeUnresponsive: GPUProcess with PID 9473 became unresponsive, terminating it
+2026-10-24 06:44:27.714 E  GlassPlayer[9330:7f68] [com.apple.WebKit:Process] 0x11e10c1e0 - GPUProcessProxy::gpuProcessExited: reason=Unresponsive
+2026-10-24 06:44:27.714 E  GlassPlayer[9330:7f68] [com.apple.WebKit:Process] 0x11e0d00c0 - [PID=9388] WebProcessProxy::gpuProcessExited: reason=Unresponsive
+2026-10-24 06:44:27.715 E  GlassPlayer[9330:7f68] [com.apple.WebKit:ProcessSuspension] ProcessAssertion::remainingRunTimeInSeconds failed to get identifier for process with PID=0
+2026-10-24 06:44:27.732 E  GlassPlayer[9330:7f83] [com.apple.runningboard:assertion] Error acquiring assertion: <Error Domain=RBSAssertionErrorDomain Code=2 "Specified target process 9473 does not exist" UserInfo={NSLocalizedFailureReason=Specified target process 9473 does not exist}>
+2026-10-24 06:44:27.745 E  GlassPlayer[9330:7f83] [com.apple.WebKit:ProcessSuspension] 0x11e1ac600 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'XPCConnectionTerminationWatchdog' for process with PID=9473, error: (null)
+2026-10-24 06:44:27.833 E  GlassPlayer[9330:7f8e] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-24 06:44:28.039 E  GlassPlayer[9330:8062] [com.apple.WebKit:ProcessSuspension] WebContent[9388] 0x110060150 - [sessionID=1] WebProcess::updateFreezerStatus: isFreezable=1, error=-1
+2026-10-24 06:44:28.045 E  GlassPlayer[9330:8062] [com.apple.WebKit:Process] WebContent[9388] 0x110646220 - GPUProcessConnection::didClose
+2026-10-24 06:44:28.083 E  GlassPlayer[9330:7f8e] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-24 06:44:29.365 E  GlassPlayer[9330:8062] [com.apple.WebKit:ResourceLoadStatistics] WebContent[9388] Unable to hide query parameters from script (missing data)
+2026-10-24 06:44:35.121 E  GlassPlayer[9330:7f68] [com.apple.browserEngineKit:general] Failed to terminate process: Error Domain=com.apple.extensionKit.errorDomain Code=18 "(null)" UserInfo={NSUnderlyingError=0x600000c81f50 {Error Domain=RBSRequestErrorDomain Code=3 "No such process found" UserInfo={NSLocalizedFailureReason=No such process found}}}
