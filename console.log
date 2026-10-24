@@ -1,0 +1,3 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-24 08:38:15.416 E  GlassPlayer[13240:a521] [com.apple.app_launch_measurement:General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
+2026-10-24 08:38:15.517 E  GlassPlayer[13240:a51f] [com.apple.app_launch_measurement:General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics

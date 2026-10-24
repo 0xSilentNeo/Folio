@@ -1,0 +1,19 @@
+08:38:13.407 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=42.07 GB
+08:38:13.441 [lab] skip CotE e1: Skip Ending 1345-1438
+08:38:13.441 [lab] skip CotE e4: Skip Opening 171-261, Skip Ending 1345-1435
+08:38:13.443 [lab] skip named chapters: Skip Opening 95-185, Skip Ending 1330-1420, Skip Next Episode Preview 1420-1440
+08:38:13.443 [lab] skip live action: Skip Intro 60-120, Skip Credits 2500-2600
+08:38:13.443 [lab] skip name Chapter 4 → nil
+08:38:13.443 [lab] skip name Part B → nil
+08:38:13.443 [lab] skip name OP → Opening
+08:38:13.443 [lab] skip name ED2 → Ending
+08:38:13.443 [lab] skip name Opening → Opening
+08:38:13.443 [lab] skip name Ending Credits → Ending Credits
+08:38:13.443 [lab] skip name 00:22:26.053 → nil
+08:38:13.443 [lab] skip name Episode → nil
+08:38:13.443 [lab] skip name Recap → Recap
+08:38:13.443 [lab] skip probe done
+08:38:13.454 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+08:38:14.721 [app] first screen 2180 ms after process start
+08:38:15.581 [app] active
+08:38:45.628 [energy] cpu 0% thermal=nominal playing=no
