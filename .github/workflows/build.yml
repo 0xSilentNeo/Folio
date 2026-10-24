@@ -77,13 +77,13 @@ jobs:
           file "$APP/GlassPlayer"
           mkdir -p ipa/Payload
           cp -R "$APP" ipa/Payload/
-          (cd ipa && zip -qry "../GlassPlayer-$VERSION.ipa" Payload)
-          ls -lh GlassPlayer-*.ipa
+          (cd ipa && zip -qry "../Folio-$VERSION.ipa" Payload)
+          ls -lh Folio-*.ipa
 
       - uses: actions/upload-artifact@v4
         with:
-          name: GlassPlayer-${{ env.VERSION }}-${{ github.run_number }}
-          path: GlassPlayer-*.ipa
+          name: Folio-${{ env.VERSION }}-${{ github.run_number }}
+          path: Folio-*.ipa
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v4
@@ -107,7 +107,7 @@ jobs:
           fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-              gh release upload "$TAG" GlassPlayer-*.ipa --clobber
+              gh release upload "$TAG" Folio-*.ipa --clobber
             else
               echo "Release $TAG already exists; bump VERSION to publish a new one."
             fi
@@ -117,9 +117,9 @@ jobs:
           if [ -f "docs/release-notes/$TAG.md" ]; then
             cp "docs/release-notes/$TAG.md" "$NOTES_FILE"
           else
-            echo "GlassPlayer $TAG" > "$NOTES_FILE"
+            echo "Folio $TAG" > "$NOTES_FILE"
           fi
-          gh release create "$TAG" GlassPlayer-*.ipa \
+          gh release create "$TAG" Folio-*.ipa \
             --target "$GITHUB_SHA" \
-            --title "GlassPlayer $TAG" \
+            --title "Folio $TAG" \
             --notes-file "$NOTES_FILE"

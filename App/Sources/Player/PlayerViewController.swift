@@ -301,6 +301,7 @@ enum PlayerPresenter {
         let w = PlayerWindowMarker(windowScene: scene)
         w.windowLevel = .normal + 1
         w.backgroundColor = .black
+        w.overrideUserInterfaceStyle = .dark
         w.rootViewController = vc
         w.alpha = 0
         w.makeKeyAndVisible()
@@ -365,4 +366,5 @@ enum PlayerPresenter {
     }
 }
 
-private class PlayerWindowMarker: UIWindow {}
+/// The player's own window: always dark, whatever the app's appearance.
+final class PlayerWindowMarker: UIWindow {}

@@ -25,13 +25,16 @@ struct SettingsView: View {
                 }
                 Section {
                     HStack {
-                        Text("GlassPlayer")
+                        HStack(spacing: 8) {
+                            FolioLeaf().frame(width: 22, height: 22)
+                            Wordmark(size: 15)
+                        }
                         Spacer()
                         Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
                             .foregroundStyle(.secondary)
                     }
                 } footer: {
-                    Text("Your mpv folder is in Files → On My iPhone → GlassPlayer → mpv.")
+                    Text("Your mpv folder is in Files → On My iPhone → Folio → mpv.")
                 }
             }
             .navigationTitle("Settings")
@@ -475,7 +478,7 @@ struct ShadersView: View {
                             Text(name).font(.footnote.monospaced()).foregroundStyle(.primary)
                             Spacer()
                             if let idx {
-                                Text("#\(idx + 1)").font(.caption.weight(.bold)).foregroundStyle(.white)
+                                Text("#\(idx + 1)").font(.caption.weight(.bold)).foregroundStyle(Theme.onAccent)
                                     .padding(.horizontal, 8).padding(.vertical, 3).background(Theme.accent, in: Capsule())
                             }
                         }
@@ -798,9 +801,21 @@ struct GeneralSettings: View {
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
     @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
     @AppStorage(SettingsKey.episodeTitleLanguage) private var episodeTitles = "english"
+    @AppStorage(SettingsKey.appearance) private var appearance = AppearanceMode.system.rawValue
 
     var body: some View {
         Form {
+            Section {
+                Picker("Appearance", selection: $appearance) {
+                    ForEach(AppearanceMode.allCases) { Text($0.title).tag($0.rawValue) }
+                }
+                .pickerStyle(.segmented)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                AppIconPicker()
+            } header: { Text("Appearance") } footer: {
+                Text("Automatic follows your iPhone's Light or Dark setting. The player is always dark.")
+            }
             Section {
                 Picker("Startup page", selection: $startupTab) {
                     Label("Home", systemImage: "play.rectangle.fill").tag(0)
@@ -912,5 +927,48 @@ struct LibrarySettings: View {
         let art = await Task.detached { ImageCache.shared.diskSize() }.value
         let meta = await MetadataService.shared.fileSize
         cacheBytes = art + meta
+    }
+}
+
+/// Home Screen icon: Folio (adapts to Light, Dark and Tinted), Monochrome
+/// or Alternative (UIApplication.setAlternateIconName; iOS confirms with
+/// its own alert).
+struct AppIconPicker: View {
+    struct Option: Identifiable { let id: String?; let title: String; let preview: String }
+    static let options: [Option] = [
+        Option(id: nil, title: "Folio", preview: "IconPreview-primary"),
+        Option(id: "AppIconMono", title: "Monochrome", preview: "IconPreview-mono"),
+        Option(id: "AppIconAlt", title: "Alternative", preview: "IconPreview-alt"),
+    ]
+    @State private var current: String? = UIApplication.shared.alternateIconName
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Self.options) { o in
+                Button {
+                    guard UIApplication.shared.supportsAlternateIcons, o.id != current else { return }
+                    UIApplication.shared.setAlternateIconName(o.id) { error in
+                        if let error { dlog("ui/error", "app icon: \(error.localizedDescription)") }
+                        else { DispatchQueue.main.async { current = o.id } }
+                    }
+                } label: {
+                    VStack(spacing: 6) {
+                        Image(o.preview).resizable().frame(width: 58, height: 58)
+                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(Theme.hairline))
+                            .padding(3)
+                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(current == o.id ? Theme.accent : .clear, lineWidth: 2))
+                        Text(o.title).font(.caption).foregroundStyle(current == o.id ? Color.primary : Color.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(o.title) icon")
+                .accessibilityAddTraits(current == o.id ? .isSelected : [])
+            }
+        }
+        .padding(.vertical, 6)
     }
 }

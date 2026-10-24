@@ -126,7 +126,8 @@ enum IMDbSource {
     /// UI tests: fill the cache with a chart, a film and a series shaped like
     /// real IMDb results (cast without photos, as phones get them), so the
     /// Discover → title page path runs with no network.
-    static func seedForLab() {
+    /// `art`: poster/backdrop URLs for the film and the series (the screenshot run).
+    static func seedForLab(art: (String, String, String, String)? = nil) {
         let cast = [CastMember(id: "nm0000001", name: "Lab Actor One", character: "Hero", photo: nil),
                     CastMember(id: "nm0000002", name: "Lab Actor Two", character: "Rival", photo: nil),
                     CastMember(id: "nm0000003", name: "Lab Actor Three", character: nil, photo: nil),
@@ -135,9 +136,11 @@ enum IMDbSource {
                             description: String(repeating: "A long synopsis so the more button shows. ", count: 8),
                             releaseInfo: "2025", imdbRating: "7.5", genres: ["Drama", "Thriller"])
         film.runtime = "1h 52m"; film.contentRating = "M"; film.credits = cast; film.director = ["Lab Director"]
+        if let art { film.poster = art.2; film.background = art.3 }
         var show = MetaItem(id: "tt9000002", type: "series", name: "Lab Series", poster: nil,
                             description: "A short synopsis.", releaseInfo: "2024", imdbRating: "9.3", genres: ["Animation", "Anime"])
         show.originalName = "Rabo Shirīzu"; show.contentRating = "TV-MA"; show.credits = cast; show.countries = ["JP"]
+        if let art { show.poster = art.0; show.background = art.1 }
         let lang = language
         store("chart|/chart/moviemeter/|\(lang)", [film, show])
         store("chart|/chart/tvmeter/|\(lang)", [show, film])

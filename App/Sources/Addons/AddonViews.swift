@@ -3,6 +3,7 @@ import SwiftUI
 struct CatalogRow: View {
     let addon: InstalledAddon
     let catalog: AddonManifest.Catalog
+    @Namespace private var zoomNS
     @State private var metas: [MetaItem] = []
     @State private var failed = false
     @State private var loaded = false
@@ -31,8 +32,8 @@ struct CatalogRow: View {
                         }
                     }
                     ForEach(metas) { m in
-                        NavigationLink { MetaDetailView(preview: m, sourceAddon: addon) } label: {
-                            PosterCard(meta: m, width: catalogShape == "landscape" ? 210 : 118)
+                        NavigationLink { MetaDetailView(preview: m, sourceAddon: addon).zoomDestination(m.id, in: zoomNS) } label: {
+                            PosterCard(meta: m, width: catalogShape == "landscape" ? 210 : 118, zoom: ZoomSource(m.id, zoomNS))
                         }
                         .buttonStyle(.plain)
                     }
@@ -62,6 +63,8 @@ struct CatalogRow: View {
 struct PosterCard: View {
     let meta: MetaItem
     var width: CGFloat? = 118
+    /// The title page zooms out of this poster.
+    var zoom: ZoomSource? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -69,7 +72,7 @@ struct PosterCard: View {
                 .frame(width: width)
                 .overlay(alignment: .topLeading) {
                     if let rank = meta.rank {
-                        Text("#\(rank)").font(.caption2.weight(.heavy))
+                        Text("#\(rank)").font(.caption2.weight(.heavy)).foregroundStyle(.white)
                             .padding(.horizontal, 7).padding(.vertical, 3)
                             .background(.black.opacity(0.65), in: Capsule())
                             .padding(6)
@@ -77,7 +80,8 @@ struct PosterCard: View {
                 }
                 // No drop shadow: every blurred shadow in a grid is re-rendered
                 // on each scroll frame; a hairline edge reads the same on dark.
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 0.5))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 0.5))
+                .zoomSource(zoom)
             Text(meta.name).font(.caption.weight(.medium)).lineLimit(1).frame(width: width, alignment: .leading)
             let sub = [meta.imdbRating.map { "★ \($0)" }, meta.releaseInfo].compactMap { $0 }.joined(separator: " · ")
             if !sub.isEmpty {
@@ -95,6 +99,7 @@ struct CatalogGridView: View {
     @State private var loading = false
     @State private var exhausted = false
     @State private var genre: String?
+    @Namespace private var zoomNS
 
     var body: some View {
         ScrollView {
@@ -112,8 +117,8 @@ struct CatalogGridView: View {
             }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
                 ForEach(metas) { m in
-                    NavigationLink { MetaDetailView(preview: m, sourceAddon: addon) } label: {
-                        PosterCard(meta: m, width: 108)
+                    NavigationLink { MetaDetailView(preview: m, sourceAddon: addon).zoomDestination(m.id, in: zoomNS) } label: {
+                        PosterCard(meta: m, width: 108, zoom: ZoomSource(m.id, zoomNS))
                     }
                     .buttonStyle(.plain)
                     .onAppear { if m.id == metas.last?.id { Task { await loadMore() } } }
@@ -138,6 +143,7 @@ struct CatalogGridView: View {
     private func chip(_ t: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(t).font(.caption.weight(.semibold)).padding(.horizontal, 12).padding(.vertical, 7)
+                .foregroundStyle(selected ? Theme.onAccent : .primary)
                 .background(selected ? Theme.accent : Theme.card, in: Capsule())
         }
         .buttonStyle(.plain)
@@ -174,10 +180,7 @@ struct EpisodeRow: View {
                 .frame(width: 130)
                 .overlay(alignment: .bottom) {
                     if let entry, entry.progress > 0.01 {
-                        GeometryReader { g in
-                            Rectangle().fill(Theme.accent).frame(width: g.size.width * entry.progress, height: 3)
-                                .frame(maxHeight: .infinity, alignment: .bottom)
-                        }
+                        ArtProgressBar(progress: entry.progress)
                     }
                 }
             VStack(alignment: .leading, spacing: 4) {
@@ -327,6 +330,7 @@ struct AddonSearchView: View {
     @State private var results: [SearchResult] = []
     @State private var searching = false
     @State private var task: Task<Void, Never>?
+    @Namespace private var zoomNS
 
     var body: some View {
         ScrollView {
@@ -338,7 +342,10 @@ struct AddonSearchView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             LazyHStack(spacing: 12) {
                                 ForEach(r.metas) { m in
-                                    NavigationLink { MetaDetailView(preview: m, sourceAddon: r.addon) } label: { PosterCard(meta: m) }
+                                    let zid = r.id + "|" + m.id
+                                    NavigationLink { MetaDetailView(preview: m, sourceAddon: r.addon).zoomDestination(zid, in: zoomNS) } label: {
+                                        PosterCard(meta: m, zoom: ZoomSource(zid, zoomNS))
+                                    }
                                         .buttonStyle(.plain)
                                 }
                             }

@@ -34,13 +34,20 @@ struct HomeView: View {
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
             .onChange(of: path) { old, new in dlog("nav", "home path \(old.count) → \(new.count): \(new)") }
-            .navigationDestination(for: LibraryRoute.self) { route in
-                if #available(iOS 18.0, *), route == .settings {
-                    SettingsView().navigationTransition(.zoom(sourceID: "settings", in: zoomNS))
-                } else {
-                    LibraryRoute.destination(route)
-                }
-            }
+            .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
+        }
+    }
+
+    /// Settings zooms out of its button, a title page out of its poster (iOS 18+).
+    @ViewBuilder
+    private func destination(_ route: LibraryRoute) -> some View {
+        switch route {
+        case .settings:
+            if #available(iOS 18.0, *) { SettingsView().navigationTransition(.zoom(sourceID: "settings", in: zoomNS)) } else { SettingsView() }
+        case .group(let id):
+            LibraryRoute.destination(route).zoomDestination(id, in: zoomNS)
+        default:
+            LibraryRoute.destination(route)
         }
     }
 
@@ -62,7 +69,7 @@ struct HomeView: View {
             Image(systemName: "plus").font(.system(size: large ? 16 : 14, weight: .bold))
             Text("Add files").font(.system(size: large ? 17 : 15, weight: .semibold, design: .rounded))
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
         .padding(.horizontal, large ? 24 : 16)
         .frame(height: large ? 52 : 40)
         .glass(cornerRadius: large ? 26 : 20, interactive: true)
@@ -79,9 +86,12 @@ struct HomeView: View {
 
     private func header(_ margin: CGFloat) -> some View {
         HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(greeting).font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
-                Text("GlassPlayer").font(.system(size: 28, weight: .bold, design: .rounded))
+                HStack(spacing: 8) {
+                    FolioLeaf().frame(width: 30, height: 30).padding(.leading, -5)
+                    Wordmark(size: 24)
+                }
             }
             Spacer()
             Menu {
@@ -93,6 +103,7 @@ struct HomeView: View {
             } label: {
                 Image(systemName: "plus").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
+            .accessibilityLabel("Add")
             settingsLink
         }
         .padding(.horizontal, margin)
@@ -108,6 +119,7 @@ struct HomeView: View {
                 Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
             .buttonStyle(PressStyle())
+            .accessibilityLabel("Settings")
             .matchedTransitionSource(id: "settings", in: zoomNS)
         } else {
             NavigationLink(value: LibraryRoute.settings) {
@@ -154,7 +166,7 @@ struct HomeView: View {
         VStack(spacing: 10) {
             Image(systemName: "film.stack").font(.system(size: 34, weight: .light)).foregroundStyle(Theme.accent)
             Text("Your library is empty").font(.headline)
-            Text("Add videos from the Files app, paste a link with **+**, or copy files into\n**Files → On My iPhone → GlassPlayer → Media**.\nWebDAV servers like Real-Debrid live under Network.")
+            Text("Add videos from the Files app, paste a link with **+**, or copy files into\n**Files → On My iPhone → Folio → Media**.\nWebDAV servers like Real-Debrid live under Network.")
                 .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
             addFilesButton(large: true).padding(.top, 10)
         }
@@ -198,7 +210,7 @@ struct HomeView: View {
                                       key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
                                       progress: history.entry(forURL: g.nextUp.path)?.progress,
                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                      poster: posters)
+                                      poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil)
                         }
                     }
                 }
@@ -209,7 +221,7 @@ struct HomeView: View {
                         groupLink(g) {
                             LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
                                        fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                       poster: posters)
+                                       poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil)
                         }
                     }
                 }
@@ -223,10 +235,12 @@ struct HomeView: View {
         return "\(g.count) episode\(g.count == 1 ? "" : "s")" + (s > 1 ? " · \(s) seasons" : "")
     }
 
+    private func opensPage(_ g: LibraryGroup) -> Bool { openTitlePage || g.isSeries }
+
     @ViewBuilder
     private func groupLink<L: View>(_ g: LibraryGroup, @ViewBuilder label: () -> L) -> some View {
         Group {
-            if openTitlePage || g.isSeries {
+            if opensPage(g) {
                 NavigationLink(value: LibraryRoute.group(g.id)) { label() }
             } else {
                 Button { playLocal(g.nextUp) } label: { label() }
@@ -298,12 +312,32 @@ struct HomeView: View {
 
 // MARK: - Components
 
+/// Page background: the palette's cream (or ink) with a soft taupe glow in
+/// the top corners, like light on paper.
 struct HomeBackdrop: View {
+    @Environment(\.colorScheme) private var scheme
     var body: some View {
         ZStack {
             Theme.background
-            RadialGradient(colors: [Theme.accent.opacity(0.16), .clear], center: .topLeading, startRadius: 0, endRadius: 420)
-            RadialGradient(colors: [Color(red: 0.45, green: 0.35, blue: 1.0).opacity(0.12), .clear], center: .topTrailing, startRadius: 0, endRadius: 380)
+            RadialGradient(colors: [Theme.taupe.opacity(scheme == .dark ? 0.10 : 0.38), .clear], center: .topLeading, startRadius: 0, endRadius: 420)
+            RadialGradient(colors: [(scheme == .dark ? Theme.graphite : Color.white).opacity(scheme == .dark ? 0.08 : 0.55), .clear], center: .topTrailing, startRadius: 0, endRadius: 380)
+        }
+    }
+}
+
+/// Watched-progress bar drawn over artwork: white on a dark track, so it reads
+/// on any picture in either appearance.
+struct ArtProgressBar: View {
+    let progress: Double
+    var height: CGFloat = 3
+    var body: some View {
+        GeometryReader { g in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(.black.opacity(0.35))
+                Rectangle().fill(.white).frame(width: g.size.width * min(1, max(0, progress)))
+            }
+            .frame(height: height)
+            .frame(maxHeight: .infinity, alignment: .bottom)
         }
     }
 }
@@ -343,7 +377,9 @@ struct HeroCard: View {
         }
         .frame(height: height)
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08)))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.hairline))
+        // Text and glass sit on a dark scrim over the picture: dark in both appearances.
+        .environment(\.colorScheme, .dark)
         .onAppear {
             thumb.load(key: entry.item.id, fileURL: entry.item.resolvedURL?.isFileURL == true ? entry.item.resolvedURL : nil,
                        artwork: entry.item.artwork, lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title)
@@ -363,6 +399,8 @@ struct MediaTile: View {
     var fixedSubtitle: String? = nil
     /// Portrait poster (library grid) instead of 16:9 art.
     var poster = false
+    /// The title page zooms out of this tile's picture.
+    var zoom: ZoomSource? = nil
     @StateObject private var thumb = ThumbLoader()
 
     var body: some View {
@@ -374,14 +412,10 @@ struct MediaTile: View {
                         else { GeneratedArt(seed: title) }
                     }
                     .clipped()
-                if let progress, progress > 0.01 {
-                    GeometryReader { g in
-                        Rectangle().fill(Theme.accent).frame(width: g.size.width * progress, height: 3)
-                            .frame(maxHeight: .infinity, alignment: .bottom)
-                    }
-                }
+                if let progress, progress > 0.01 { ArtProgressBar(progress: progress) }
             }
             .clipShape(RoundedRectangle(cornerRadius: poster ? 12 : 16, style: .continuous))
+            .zoomSource(zoom, cornerRadius: poster ? 12 : 16)
             Text(fixedTitle ?? thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)
             Text(fixedSubtitle ?? (poster ? nil : thumb.meta?.episodeTitle) ?? subtitle).font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
         }
@@ -411,7 +445,7 @@ struct PrimaryChip: View {
             Label(title, systemImage: icon).font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 14).padding(.vertical, 10)
                 .background(Theme.accent, in: Capsule())
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.onAccent)
         }
         .buttonStyle(.plain)
     }
@@ -442,7 +476,7 @@ struct SourceCard: View {
                 } else {
                     Image(systemName: icon).font(.system(size: 18, weight: .semibold))
                         .frame(width: 40, height: 40)
-                        .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .background(Theme.fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
             }
             VStack(alignment: .leading, spacing: 2) {
@@ -456,7 +490,7 @@ struct SourceCard: View {
         .overlay {
             if dashed {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [5, 4])).foregroundStyle(.white.opacity(0.25))
+                    .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [5, 4])).foregroundStyle(.secondary)
             }
         }
         .onAppear { brand.load(host: host) }

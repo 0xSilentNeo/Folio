@@ -34,17 +34,18 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: GlassPlayer
+        CFBundleDisplayName: Folio
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UILaunchScreen:
           UIColorName: LaunchBackground
+          UIImageName: LaunchMark
         UIBackgroundModes: [audio, picture-in-picture]
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         UISupportsDocumentBrowser: false
         UIRequiresFullScreen: false
-        UIStatusBarStyle: UIStatusBarStyleLightContent
+        UIStatusBarStyle: UIStatusBarStyleDefault
         UIViewControllerBasedStatusBarAppearance: true
         # ProMotion: without this, an app's own animations are capped at 60 Hz on iPhone.
         CADisableMinimumFrameDurationOnPhone: true
@@ -60,7 +61,7 @@ targets:
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
           NSAllowsArbitraryLoadsForMedia: true
-        NSLocalNetworkUsageDescription: GlassPlayer streams media from servers on your local network.
+        NSLocalNetworkUsageDescription: Folio streams media from servers on your local network.
         NSBonjourServices: [_webdav._tcp, _webdavs._tcp]
         CFBundleDocumentTypes:
           - CFBundleTypeName: Media
@@ -120,7 +121,7 @@ targets:
               public.filename-extension: [glsl, hook]
         CFBundleURLTypes:
           - CFBundleURLName: dev.silentneo.glassplayer
-            CFBundleURLSchemes: [glassplayer]
+            CFBundleURLSchemes: [glassplayer, folio]
     settings:
       base:
         PRODUCT_NAME: GlassPlayer
@@ -130,6 +131,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_OBJC_BRIDGING_HEADER: App/Sources/Bridging/GlassPlayer-Bridging-Header.h
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Settings → General → App Icon (UIApplication.setAlternateIconName).
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIconMono AppIconAlt"
         ENABLE_BITCODE: NO
         DEAD_CODE_STRIPPING: YES
         GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "GL_SILENCE_DEPRECATION=1", "GLES_SILENCE_DEPRECATION=1"]

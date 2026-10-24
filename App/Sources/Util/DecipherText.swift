@@ -55,7 +55,7 @@ struct ExpandableText: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(text)
-                .font(.callout).foregroundStyle(.white.opacity(0.85)).lineSpacing(2)
+                .font(.callout).foregroundStyle(.primary.opacity(0.85)).lineSpacing(2)
                 .lineLimit(expanded ? nil : lines)
                 .background(
                     // Measures whether the full text is taller than the limit.
@@ -150,7 +150,7 @@ struct HeroHeader<Art: View, Content: View>: View {
                 .frame(height: height)
                 .overlay { art() }
                 .clipped()
-                .overlay(LinearGradient(colors: [.black.opacity(0.25), .clear, Theme.background.opacity(0.9), Theme.background],
+                .overlay(LinearGradient(colors: [Theme.topScrim, .clear, Theme.background.opacity(0.9), Theme.background],
                                         startPoint: .top, endPoint: .bottom))
         }
     }

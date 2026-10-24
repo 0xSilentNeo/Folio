@@ -66,7 +66,7 @@ enum FileOpener {
             }
             if items.isEmpty {
                 dlog("open/error", "no readable items")
-                showAlert("Couldn't open file", "iOS didn't give GlassPlayer access to the selected file. Try copying it to On My iPhone → GlassPlayer → Media.")
+                showAlert("Couldn't open file", "iOS didn't give Folio access to the selected file. Try copying it to On My iPhone → Folio → Media.")
                 return
             }
             PlayerPresenter.play(queue: items, index: 0)

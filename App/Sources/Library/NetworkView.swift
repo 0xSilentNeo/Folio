@@ -62,7 +62,7 @@ struct LocalFolderView: View {
                         NavigationLink(value: LibraryRoute.folder(u.path)) {
                             Label(u.lastPathComponent, systemImage: "folder.fill").font(.subheadline.weight(.semibold))
                                 .frame(maxWidth: .infinity, alignment: .leading).padding(12)
-                                .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .background(Theme.card, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                         .buttonStyle(PressStyle(scale: 0.98))
                     }
@@ -85,7 +85,7 @@ struct LocalFolderView: View {
                         LibraryList(files: media, mode: mode) { play($0) }
                     }
                     if items.isEmpty {
-                        Text("Empty. Add files from Home, or copy them with the Files app (On My iPhone → GlassPlayer → \(title)).")
+                        Text("Empty. Add files from Home, or copy them with the Files app (On My iPhone → Folio → \(title)).")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                 }

@@ -1,0 +1,91 @@
+name: Screenshots (Light & Dark)
+
+# Runs UITests/ShotsUITests in the simulator: every screen in Light, Dark and
+# Automatic, plus the player, with a screen recording of the whole run (the
+# launch animation and the poster zoom). Results go to the `lab-shots` branch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'xcodebuild -only-testing filter'
+        default: 'GlassPlayerUITests/ShotsUITests'
+
+permissions:
+  contents: write
+
+jobs:
+  shots:
+    runs-on: macos-15
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          [ -z "$XC" ] && XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+
+      - name: Fetch engine (stock MPVKit — simulator slices)
+        run: ENGINE=stock SLICE=simulator bash scripts/fetch-engine.sh
+
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+
+      - name: Build for testing
+        run: |
+          xcodebuild -project GlassPlayer.xcodeproj -scheme GlassPlayer -sdk iphonesimulator -configuration Release \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+            CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" build-for-testing > build.log 2>&1 || {
+              grep -E "error:|ld: |Undefined symbol" build.log | sort -u | head -60 | sed 's/^/::error::/'
+              tail -60 build.log | sed 's/^/::warning::/'
+              exit 1
+            }
+
+      - name: Boot simulator (system appearance Dark)
+        id: sim
+        run: |
+          RT=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x["platform"]=="iOS" and x["isAvailable"]]; r.sort(key=lambda x:[int(p) for p in x["version"].split(".")]); print(r[-1]["identifier"])')
+          DT=$(xcrun simctl list devicetypes -j | python3 -c 'import json,sys; d=[x for x in json.load(sys.stdin)["devicetypes"] if x["name"].startswith("iPhone 1") and "Pro" in x["name"] and "Max" not in x["name"]]; print(d[-1]["identifier"])')
+          echo "runtime=$RT devicetype=$DT"
+          UDID=$(xcrun simctl create shots "$DT" "$RT")
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl ui "$UDID" appearance dark
+          xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 || true
+          open -a Simulator --args -CurrentDeviceUDID "$UDID"
+          sleep 15
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Run the tour
+        run: |
+          UDID=${{ steps.sim.outputs.udid }}
+          mkdir -p lab/shots
+          xcrun simctl io "$UDID" recordVideo --codec h264 --force lab/run.mp4 &
+          REC=$!
+          sleep 3
+          python3 -c 'import time; print("RECSTART %.3f" % time.time())' | tee lab/recstart.txt
+          TEST_RUNNER_SHOTS_DIR="$PWD/lab/shots" xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release \
+            -destination "id=$UDID" -derivedDataPath build -resultBundlePath lab/shots.xcresult \
+            -only-testing:${{ github.event.inputs.only || 'GlassPlayerUITests/ShotsUITests' }} > lab/test.log 2>&1 || echo "::warning::some checks failed (see lab/test.log)"
+          grep -E "error:|failed|passed|LAUNCH|SHOT" lab/test.log | tail -120 | sed 's/^/::notice::/'
+          kill -INT $REC; wait $REC || true
+          # Attachments too, in case the runner couldn't write to SHOTS_DIR.
+          xcrun xcresulttool export attachments --path lab/shots.xcresult --output-path lab/attachments > /dev/null 2>&1 || true
+          xcrun simctl spawn "$UDID" log show --last 15m --predicate 'process == "GlassPlayer" AND (messageType == error OR messageType == fault OR eventMessage CONTAINS "[lab]")' --style compact > lab/console.log 2>/dev/null || true
+          rm -rf lab/shots.xcresult
+          ls -la lab lab/shots | head -120
+
+      - name: Publish to the lab-shots branch
+        if: always()
+        run: |
+          git config user.name lab-bot
+          git config user.email lab@users.noreply.github.com
+          mkdir -p out && cp -R lab/* out/ 2>/dev/null || true
+          cp build.log out/ 2>/dev/null || true
+          cd out && git init -q && git checkout -q -b lab-shots && git add -A && git commit -qm "shots ${{ github.run_id }}" \
+            && git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" lab-shots

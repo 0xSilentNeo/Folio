@@ -125,7 +125,7 @@ struct TitleHeroView: View {
                         CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
                             .frame(width: 122, height: 191)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
+                            .shadow(color: Theme.shadow, radius: 12, y: 6)
                     }
                     titleBlock.padding(.bottom, 6)
                 }
@@ -141,9 +141,9 @@ struct TitleHeroView: View {
             DecipherText(text: title, font: .system(size: 28, weight: .bold, design: .rounded)).lineLimit(2)
             // Anime: the show's own (romaji) title; otherwise the episode name.
             if isAnime, let o = meta?.originalName, !o.isEmpty {
-                Text(o).font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.7)).lineLimit(2)
+                Text(o).font(.subheadline.weight(.medium)).foregroundStyle(.secondary).lineLimit(2)
             } else if let ep = meta?.episodeTitle ?? episodeLabel {
-                Text(ep).font(.headline).foregroundStyle(.white.opacity(0.8))
+                Text(ep).font(.headline).foregroundStyle(.primary.opacity(0.8))
             }
             FlowLayout(spacing: 8, lineSpacing: 8) {
                 if showRatings, let r = meta?.rating { chip("★ \(r)", strong: true) }
@@ -163,8 +163,9 @@ struct TitleHeroView: View {
 
     private func chip(_ s: String, strong: Bool = false) -> some View {
         Text(s).font(.caption.weight(.semibold)).lineLimit(1).fixedSize()
+            .foregroundStyle(strong ? Theme.onAccent : .primary)
             .padding(.horizontal, 9).padding(.vertical, 5)
-            .background(strong ? Theme.accent.opacity(0.85) : Color.white.opacity(0.12), in: Capsule())
+            .background(strong ? Theme.accent : Theme.fill, in: Capsule())
     }
 
     private var episodes: some View {
@@ -180,9 +181,11 @@ struct TitleHeroView: View {
                     HStack(spacing: 8) {
                         ForEach(seasons, id: \.self) { s in
                             Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { season = s } } label: {
+                                let on = (season ?? seasons[0]) == s
                                 Text(s == 0 ? "Specials" : "Season \(s)").font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(on ? Theme.onAccent : .primary)
                                     .padding(.horizontal, 14).frame(height: 34)
-                                    .background((season ?? seasons[0]) == s ? Theme.accent : Color.white.opacity(0.1), in: Capsule())
+                                    .background(on ? Theme.accent : Theme.fill, in: Capsule())
                             }
                             .buttonStyle(PressStyle())
                         }
@@ -249,7 +252,7 @@ struct SortMenu: View {
         } label: {
             Image(systemName: "arrow.up.arrow.down").font(.system(size: 13, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
     }
 }
 
@@ -264,7 +267,7 @@ struct ViewModeMenu: View {
             Image(systemName: LibraryViewMode(rawValue: mode)?.icon ?? "square.grid.2x2")
                 .font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
     }
 }
 
@@ -315,7 +318,7 @@ struct LibraryList: View {
                          progress: history.entry(forURL: f.path)?.progress, fixedTitle: tag)
             .overlay(alignment: .topTrailing) {
                 if f == current {
-                    Image(systemName: "play.fill").font(.caption2.weight(.bold)).foregroundStyle(.white)
+                    Image(systemName: "play.fill").font(.caption2.weight(.bold)).foregroundStyle(Theme.onAccent)
                         .padding(6).background(Theme.accent, in: Circle()).padding(6)
                 }
             }
@@ -335,6 +338,8 @@ struct LibraryRow: View {
     var fixedSubtitle: String? = nil
     /// Home library rows: the show's portrait poster instead of the episode still.
     var poster = false
+    /// The title page zooms out of this row's picture.
+    var zoom: ZoomSource? = nil
     @StateObject private var thumb = ThumbLoader()
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
 
@@ -386,7 +391,7 @@ struct LibraryRow: View {
 
     private var rowBackground: some View {
         RoundedRectangle(cornerRadius: detail ? 16 : 12, style: .continuous)
-            .fill(highlighted ? Theme.accent.opacity(0.14) : Color.white.opacity(0.05))
+            .fill(highlighted ? Theme.accentSoft : Theme.card)
     }
 
     private var thumbnail: some View {
@@ -397,11 +402,10 @@ struct LibraryRow: View {
                     else { GeneratedArt(seed: file.lastPathComponent) }
                 }
                 .clipped()
-            if let progress, progress > 0.01 {
-                Rectangle().fill(Theme.accent).frame(width: thumbW * progress, height: 3)
-            }
+            if let progress, progress > 0.01 { ArtProgressBar(progress: progress).frame(width: thumbW, height: thumbH) }
         }
         .clipShape(RoundedRectangle(cornerRadius: detail ? 12 : 8, style: .continuous))
+        .zoomSource(zoom, cornerRadius: detail ? 12 : 8)
     }
 }
 

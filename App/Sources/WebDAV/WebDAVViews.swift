@@ -289,7 +289,7 @@ struct DAVRow: View {
                 } else {
                     RoundedRectangle(cornerRadius: 10).fill(item.isDirectory ? Theme.accentSoft : Theme.card)
                         .frame(width: item.isMedia ? 72 : 40, height: item.isMedia ? 42 : 40)
-                    Image(systemName: icon).foregroundStyle(item.isDirectory ? Theme.accent : .white.opacity(0.8))
+                    Image(systemName: icon).foregroundStyle(item.isDirectory ? Theme.accent : .primary.opacity(0.8))
                 }
             }
             .frame(width: item.isMedia ? 72 : 40, height: item.isMedia ? 42 : 40)

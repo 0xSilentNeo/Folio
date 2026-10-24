@@ -13,10 +13,11 @@ struct SegmentPicker<T: Hashable>: UIViewRepresentable {
 
     func makeUIView(context: Context) -> UISegmentedControl {
         let c = UISegmentedControl(items: options.map(\.1))
-        c.selectedSegmentTintColor = UIColor(Theme.accent)
-        c.setTitleTextAttributes([.foregroundColor: UIColor.white.withAlphaComponent(0.85), .font: UIFont.systemFont(ofSize: 14, weight: .semibold)], for: .normal)
-        c.setTitleTextAttributes([.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 14, weight: .semibold)], for: .selected)
-        c.overrideUserInterfaceStyle = .dark
+        // Dynamic colours: ink thumb with cream text on light, the reverse on
+        // dark (the player's window is always dark).
+        c.selectedSegmentTintColor = Theme.uiAccent
+        c.setTitleTextAttributes([.foregroundColor: UIColor.label.withAlphaComponent(0.85), .font: UIFont.systemFont(ofSize: 14, weight: .semibold)], for: .normal)
+        c.setTitleTextAttributes([.foregroundColor: Theme.uiOnAccent, .font: UIFont.systemFont(ofSize: 14, weight: .semibold)], for: .selected)
         c.selectedSegmentIndex = options.firstIndex { $0.0 == selection } ?? 0
         c.addAction(UIAction { [weak c] _ in
             guard let c, c.selectedSegmentIndex >= 0, c.selectedSegmentIndex < context.coordinator.options.count else { return }

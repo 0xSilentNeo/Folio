@@ -1339,7 +1339,7 @@ extension PlayerModel: MPVClientDelegate {
                     if !exists {
                         msg += "\n\nThis file is no longer in the library (\(u.lastPathComponent)). Add it again from Files."
                     } else if !fm.isReadableFile(atPath: u.path) {
-                        msg += "\n\niOS didn't grant access to this file (\(u.lastPathComponent)). Open it again from Files, or copy it into GlassPlayer → Media."
+                        msg += "\n\niOS didn't grant access to this file (\(u.lastPathComponent)). Open it again from Files, or copy it into Folio → Media."
                     }
                 }
                 dlog("player/error", msg)

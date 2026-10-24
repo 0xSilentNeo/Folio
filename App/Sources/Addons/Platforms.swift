@@ -150,6 +150,7 @@ final class BrowseModel: ObservableObject {
 
 struct DiscoverView: View {
     @ObservedObject private var store = AddonStore.shared
+    @Namespace private var zoomNS
     @StateObject private var browse = BrowseModel()
     @State private var showPlatformSettings = false
 
@@ -173,7 +174,9 @@ struct DiscoverView: View {
                         .padding(.horizontal, margin)
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: cols), spacing: 18) {
                             ForEach(browse.metas) { m in
-                                NavigationLink { MetaDetailView(preview: m, sourceAddon: nil) } label: { PosterCard(meta: m, width: nil) }
+                                NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS) } label: {
+                                    PosterCard(meta: m, width: nil, zoom: ZoomSource(m.id, zoomNS))
+                                }
                                     .buttonStyle(.plain)
                                     .onAppear { if m.id == browse.metas.last?.id { Task { await browse.loadMore() } } }
                             }
@@ -226,6 +229,7 @@ struct DiscoverView: View {
                 Image(systemName: "magnifyingglass").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Search")
             Menu {
                 Button { showPlatformSettings = true } label: { Label("Streaming services", systemImage: "rectangle.grid.2x2") }
                 NavigationLink { AddonsManagerView() } label: { Label("Addons", systemImage: "puzzlepiece.extension") }
@@ -293,9 +297,9 @@ struct FilterChip: View {
             Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
             Image(systemName: "chevron.down").font(.caption2.weight(.bold))
         }
-        .foregroundStyle(active ? .white : .white.opacity(0.7))
+        .foregroundStyle(active ? Color.primary : Color.secondary)
         .padding(.horizontal, 12).frame(height: 38)
-        .background(active ? Color.white.opacity(0.14) : Color.clear, in: Capsule())
+        .background(active ? Theme.fill : Color.clear, in: Capsule())
         .contentShape(Capsule())          // a clear background isn't tappable: only the text was
     }
 }
@@ -319,6 +323,7 @@ struct PlatformBadge: View {
 
 struct PlatformDetailView: View {
     let platform: StreamingPlatform
+    @Namespace private var zoomNS
     @State private var type = "series"
     @State private var metas: [MetaItem] = []
     @State private var loading = true
@@ -326,14 +331,18 @@ struct PlatformDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ZStack(alignment: .bottomLeading) {
-                    LinearGradient(colors: [platform.color, platform.color2, Theme.background], startPoint: .top, endPoint: .bottom)
-                        .frame(height: 170)
-                    HStack(spacing: 12) {
-                        PlatformBadge(platform: platform, size: 54)
-                        Text(platform.name).font(.largeTitle.weight(.heavy))
+                // The service's colours with its name in white, then a fade into the page.
+                VStack(spacing: 0) {
+                    ZStack(alignment: .bottomLeading) {
+                        LinearGradient(colors: [platform.color, platform.color2], startPoint: .top, endPoint: .bottom)
+                            .frame(height: 170)
+                        HStack(spacing: 12) {
+                            PlatformBadge(platform: platform, size: 54)
+                            Text(platform.name).font(.largeTitle.weight(.heavy)).foregroundStyle(.white)
+                        }
+                        .padding(20)
                     }
-                    .padding(20)
+                    LinearGradient(colors: [platform.color2, Theme.background], startPoint: .top, endPoint: .bottom).frame(height: 36)
                 }
                 Picker("", selection: $type) {
                     Text("Shows").tag("series")
@@ -344,7 +353,9 @@ struct PlatformDetailView: View {
                 if loading { ProgressView().frame(maxWidth: .infinity).padding() }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
                     ForEach(metas) { m in
-                        NavigationLink { MetaDetailView(preview: m, sourceAddon: nil) } label: { PosterCard(meta: m, width: 108) }
+                        NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS) } label: {
+                            PosterCard(meta: m, width: 108, zoom: ZoomSource(m.id, zoomNS))
+                        }
                             .buttonStyle(.plain)
                     }
                 }

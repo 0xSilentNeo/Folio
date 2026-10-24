@@ -16,7 +16,7 @@ struct GlassPlayerApp: App {
         UILab.start()
         PopLab.start()
         MPVFiles.bootstrap()
-        if !["-uiTest", "-uiTestLibrary", "-labDiscover"].contains(where: CommandLine.arguments.contains) { IMDbSource.warmUp() }
+        if !["-uiTest", "-uiTestLibrary", "-labDiscover", "-shots"].contains(where: CommandLine.arguments.contains) { IMDbSource.warmUp() }
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
         UITabBar.appearance().scrollEdgeAppearance = tab
@@ -25,7 +25,6 @@ struct GlassPlayerApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
-                .preferredColorScheme(.dark)
                 .tint(Theme.accent)
         }
     }
@@ -44,12 +43,14 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 struct RootView: View {
     @State private var tab = UserDefaults.standard.integer(forKey: SettingsKey.startupTab)
     @State private var splash = !CommandLine.arguments.contains("-noSplash")
+    @AppStorage(SettingsKey.appearance) private var appearance = AppearanceMode.system.rawValue
 
     var body: some View {
         ZStack {
             tabs
             if splash { LaunchSplash { splash = false }.transition(.identity).zIndex(1) }
         }
+        .background(AppearanceProbe(mode: appearance).frame(width: 1, height: 1))
         .onAppear { LaunchTiming.firstFrame() }
     }
 

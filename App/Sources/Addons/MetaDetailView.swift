@@ -94,7 +94,7 @@ struct MetaDetailView: View {
                         CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
                             .frame(width: 122, height: 191)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
+                            .shadow(color: Theme.shadow, radius: 12, y: 6)
                     }
                     titleBlock.padding(.bottom, 6)
                 }
@@ -107,7 +107,7 @@ struct MetaDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             DecipherText(text: m.name, font: .system(size: 28, weight: .bold, design: .rounded)).lineLimit(2)
             if m.isAnime, let o = m.originalName, !o.isEmpty {
-                Text(o).font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.7)).lineLimit(2)
+                Text(o).font(.subheadline.weight(.medium)).foregroundStyle(.secondary).lineLimit(2)
             }
             FlowLayout(spacing: 8, lineSpacing: 8) {
                 if showRatings, let r = m.imdbRating { chip("★ \(r)", strong: true) }
@@ -121,8 +121,9 @@ struct MetaDetailView: View {
 
     private func chip(_ s: String, strong: Bool = false) -> some View {
         Text(s).font(.caption.weight(.semibold)).lineLimit(1).fixedSize()
+            .foregroundStyle(strong ? Theme.onAccent : .primary)
             .padding(.horizontal, 9).padding(.vertical, 5)
-            .background(strong ? Theme.accent.opacity(0.85) : Color.white.opacity(0.12), in: Capsule())
+            .background(strong ? Theme.accent : Theme.fill, in: Capsule())
     }
 
     // MARK: Find streams
@@ -171,8 +172,9 @@ struct MetaDetailView: View {
                         ForEach(allSeasons, id: \.self) { s in
                             Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { season = s } } label: {
                                 Text(s == 0 ? "Specials" : "Season \(s)").font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(season == s ? Theme.onAccent : .primary)
                                     .padding(.horizontal, 14).frame(height: 34)
-                                    .background(season == s ? Theme.accent : Color.white.opacity(0.1), in: Capsule())
+                                    .background(season == s ? Theme.accent : Theme.fill, in: Capsule())
                             }
                             .buttonStyle(PressStyle())
                         }

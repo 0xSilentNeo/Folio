@@ -15,6 +15,7 @@ enum SettingsKey {
     static let downmixNormalize = "downmixNormalize"
     static let lfeInDownmix = "lfeInDownmix"
     static let startupTab = "startupTab"
+    static let appearance = "appearance"             // system | light | dark
     static let metadataFetching = "metadataFetching"
     static let showRatings = "showRatings"
     static let hideSpoilers = "hideSpoilers"

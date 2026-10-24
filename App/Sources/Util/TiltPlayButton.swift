@@ -34,11 +34,11 @@ struct TiltPlayButton: View {
             Image(systemName: icon).font(.system(size: 20, weight: .bold))
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).font(.headline).lineLimit(1)
-                if let subtitle { Text(subtitle).font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(1) }
+                if let subtitle { Text(subtitle).font(.caption).foregroundStyle(Theme.onAccent.opacity(0.75)).lineLimit(1) }
             }
         }
-        .foregroundStyle(.white)
-        .shadow(color: .black.opacity(0.25), radius: 1, x: -tx * 1.5, y: 1 - ty * 1.5)   // label floats above the face
+        .foregroundStyle(Theme.onAccent)
+        .shadow(color: Theme.labelEmboss, radius: 1, x: -tx * 1.5, y: 1 - ty * 1.5)   // label floats above the face
         .padding(.horizontal, 26).frame(height: 56)
         .background {
             ZStack {
@@ -67,7 +67,7 @@ struct TiltPlayButton: View {
             }
             .clipShape(shape)
             // Depth shadow under the capsule, shifting with the tilt.
-            .shadow(color: .black.opacity(pressed ? 0.25 : 0.4), radius: pressed ? 4 : 9, x: -tx * 6, y: 6 - ty * 5)
+            .shadow(color: Theme.shadow.opacity(pressed ? 0.6 : 1), radius: pressed ? 4 : 9, x: -tx * 6, y: 6 - ty * 5)
         }
         .scaleEffect(pressed ? 0.96 : 1)
         .rotation3DEffect(.degrees(-ty * maxDegrees), axis: (x: 1, y: 0, z: 0), perspective: 1)

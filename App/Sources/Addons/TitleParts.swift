@@ -29,10 +29,10 @@ struct CastStrip: View {
                                 }
                                 .frame(width: 72, height: 72)
                                 .clipShape(Circle())
-                                .overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1))
-                                Text(c.name).font(.caption.weight(.semibold)).foregroundStyle(.white).lineLimit(2)
+                                .overlay(Circle().strokeBorder(Theme.hairline, lineWidth: 1))
+                                Text(c.name).font(.caption.weight(.semibold)).foregroundStyle(.primary).lineLimit(2)
                                 if let ch = c.character {
-                                    Text(ch).font(.caption2).foregroundStyle(.white.opacity(0.6)).lineLimit(2)
+                                    Text(ch).font(.caption2).foregroundStyle(.secondary).lineLimit(2)
                                 }
                             }
                             .frame(width: 84)
@@ -48,7 +48,7 @@ struct CastStrip: View {
 
     private func initials(_ name: String) -> some View {
         Text(name.split(separator: " ").prefix(2).compactMap { $0.first }.map(String.init).joined())
-            .font(.headline).foregroundStyle(.white.opacity(0.5))
+            .font(.headline).foregroundStyle(.secondary)
     }
 }
 
@@ -76,11 +76,11 @@ struct TitleLinks: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Text(symbol).font(.system(size: 13, weight: .heavy, design: .serif))
-                    .frame(width: 22, height: 22).background(Color.white.opacity(0.14), in: Circle())
+                    .frame(width: 22, height: 22).background(Theme.fill, in: Circle())
                 Text(title).font(.subheadline.weight(.semibold))
                 Image(systemName: "arrow.up.right").font(.caption2.weight(.bold)).foregroundStyle(.secondary)
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
             .padding(.leading, 8).padding(.trailing, 14).frame(height: 40)
             .glass(cornerRadius: 20, interactive: true)
         }
