@@ -86,6 +86,10 @@ enum UILab {
     /// log what the parser found (cast, photos, roles), to check the page shape.
     static func imdbProbe(ids: [String]) {
         Task {
+            for (n, y, t) in [("Game of Thrones", "2011", "series"), ("Classroom of the Elite", "2017", "series"), ("Dune: Part Two", "2024", "movie")] {
+                let w = await Wikipedia.article(name: n, year: y, type: t)
+                dlog("lab", "wikipedia \(n) → \(w?.absoluteString ?? "nil") (search: \(Wikipedia.searchURL(name: n, year: y, type: t).absoluteString))")
+            }
             for id in ids {
                 let t0 = CACurrentMediaTime()
                 let m = await IMDbSource.details(id: id, type: "series")
@@ -96,10 +100,6 @@ enum UILab {
                 if let m { dlog("lab", "  original=\(m.originalName ?? "-") rating=\(m.contentRating ?? "-") genres=\((m.genres ?? []).joined(separator: ","))") }
                 let wiki = await Wikipedia.article(name: m?.name ?? id, year: m?.releaseInfo, type: "series")
                 dlog("lab", "  wikipedia=\(wiki?.absoluteString ?? "nil")")
-            }
-            for (n, y, t) in [("Game of Thrones", "2011", "series"), ("Classroom of the Elite", "2017", "series"), ("Dune: Part Two", "2024", "movie")] {
-                let w = await Wikipedia.article(name: n, year: y, type: t)
-                dlog("lab", "wikipedia \(n) → \(w?.absoluteString ?? "nil") (search: \(Wikipedia.searchURL(name: n, year: y, type: t).absoluteString))")
             }
             dlog("lab", "probe done")
         }
