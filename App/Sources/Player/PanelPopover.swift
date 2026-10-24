@@ -242,9 +242,10 @@ final class PanelPresenter {
                 self.settle(delayed: false)
             }
             if switching, animated, let container = vc.presentationController?.containerView {
-                // Switching panels: fade the old one out quickly, then the new
-                // one morphs out of the button that was tapped.
-                UIView.animate(withDuration: 0.12, animations: { container.alpha = 0 }) { _ in vc.dismiss(animated: false, completion: finish) }
+                // Switching panels: the old panel fades out in place (no shrink
+                // back into the pill, so the pill never flashes between the two)
+                // and the new one grows out of the button right after.
+                UIView.animate(withDuration: 0.10, animations: { container.alpha = 0 }) { _ in vc.dismiss(animated: false, completion: finish) }
             } else {
                 vc.dismiss(animated: animated, completion: finish)
             }
