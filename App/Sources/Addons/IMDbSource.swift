@@ -328,6 +328,15 @@ enum IMDbSource {
                 }
                 return found.isEmpty
             }
+            if found.isEmpty {
+                // Last resort: any credit-shaped node anywhere in the page data.
+                var nodes: [[String: Any]] = []
+                walk(next) { d in
+                    if let person = d["name"] as? [String: Any], person["nameText"] != nil, d["characters"] != nil { nodes.append(d); return false }
+                    return nodes.count < 24
+                }
+                found = castMembers(nodes)
+            }
             if !found.isEmpty { m2.credits = found; m = m2 }
         }
         if let m { store(key, m); dlog("imdb", "details \(id): \(m.name) rating=\(m.imdbRating ?? "-") cast=\(m.credits?.count ?? 0)\((m.credits?.first?.photo != nil) ? " with photos" : "")") } else { dlog("imdb/error", "details \(id): nothing parsed (\(page.count) chars)") }
