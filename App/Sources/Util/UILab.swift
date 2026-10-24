@@ -218,7 +218,9 @@ enum UILab {
     private static func waitForSteadyLandscape(count: Int) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             let b = PlayerPresenter.current?.view.window?.bounds ?? .zero
-            let landscape = b.width > b.height && ui?.panelBar?.window != nil
+            // The player in landscape. (Until 1.14 this also waited for the UIKit
+            // panel toolbar, which iOS 26 no longer has: the replay never started.)
+            let landscape = b.width > b.height && PlayerPresenter.current != nil
             if landscape && count >= 6 { dlog("lab", "landscape steady; replay starts"); scheduleStress(after: 0.5) }
             else { waitForSteadyLandscape(count: landscape ? count + 1 : 0) }
         }
