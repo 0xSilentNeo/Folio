@@ -77,6 +77,14 @@ enum IMDbSource {
     /// Gets the WAF token at launch (one web-view load of a tiny page) so the
     /// first Discover request can be plain HTTP instead of a browser page load.
     static func warmUp() {
+        // Only worth the radio and (sometimes) a browser page load when Discover
+        // is actually in use: skipped if it hasn't been opened in a week or the
+        // phone is in Low Power Mode. Discover itself fetches on open anyway.
+        let last = UserDefaults.standard.double(forKey: "discoverLastUsed")
+        guard last > 0, Date().timeIntervalSince1970 - last < 7 * 86400, !ProcessInfo.processInfo.isLowPowerModeEnabled else {
+            dlog("imdb", "warm-up skipped (Discover not used recently or Low Power Mode)")
+            return
+        }
         Task.detached(priority: .utility) {
             let t0 = CACurrentMediaTime()
             _ = await html("/chart/moviemeter/")   // also fills the Trending cache

@@ -199,7 +199,10 @@ struct DiscoverView: View {
             .background(HomeBackdrop().ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
             .safeAreaInset(edge: .bottom) { filterBar }
-            .task { if browse.metas.isEmpty { browse.reload() } }
+            .task {
+                UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "discoverLastUsed")
+                if browse.metas.isEmpty { browse.reload() }
+            }
             .refreshable { browse.reload() }
             .sheet(isPresented: $showPlatformSettings) { PlatformSettingsView() }
         }
