@@ -23,6 +23,7 @@ enum SettingsKey {
     static let holdSpeedValue = "holdSpeedValue"
     static let cacheMB = "cacheMB"
     static let landscapeOnOpen = "landscapeOnOpen"
+    static let stayLandscape = "stayLandscape"          // player never turns to portrait
     static let controlsWidth = "controlsWidth"
     static let panelTransition = "panelTransition"      // quick | morph | morphFrozen
     static let tileArtwork = "tileArtwork"              // poster | frame
@@ -94,6 +95,7 @@ enum SettingsKey {
             holdSpeedValue: 2.0,
             cacheMB: 150,
             landscapeOnOpen: true,
+            stayLandscape: false,
             controlsWidth: 0.8,
             panelTransition: "quick",
             tileArtwork: "poster",

@@ -298,7 +298,9 @@ struct PlayerScreen: View {
 
     @ViewBuilder
     private func skipButton(_ geo: GeometryProxy) -> some View {
-        if let seg = model.activeSegment, !ui.locked, ui.panel == nil, !(seg.kind == .outro && model.upNext != nil) {
+        // The Up Next card replaces the Skip pill while it is up (it covers the
+        // same moment: credits / preview at the end of an episode).
+        if let seg = model.activeSegment, !ui.locked, ui.panel == nil, model.upNext == nil {
             VStack {
                 Spacer()
                 HStack {

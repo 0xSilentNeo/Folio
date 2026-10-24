@@ -60,6 +60,7 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.autoplayNext) private var autoplayNext = true
     @AppStorage(SettingsKey.backgroundAudio) private var backgroundAudio = true
     @AppStorage(SettingsKey.landscapeOnOpen) private var landscapeOnOpen = true
+    @AppStorage(SettingsKey.stayLandscape) private var stayLandscape = false
     @AppStorage(SettingsKey.seekStep) private var seekStep = 10
     @AppStorage(SettingsKey.defaultSpeed) private var defaultSpeed = 1.0
     @AppStorage(SettingsKey.holdToSpeed) private var holdToSpeed = true
@@ -80,7 +81,10 @@ struct PlaybackSettings: View {
                 Toggle("Play next file automatically", isOn: $autoplayNext)
                 Toggle("Up Next card at the credits", isOn: $upNext)
                 Toggle("Open in landscape", isOn: $landscapeOnOpen)
+                Toggle("Stay in landscape", isOn: $stayLandscape)
                 Toggle("Keep audio playing in background", isOn: $backgroundAudio)
+            } footer: {
+                Text("Stay in landscape: playback starts in landscape and stays there when you turn the phone upright (it still flips between the two landscape sides).")
             }
             Section("Gestures") {
                 Picker("Forward skip", selection: $seekStep) {

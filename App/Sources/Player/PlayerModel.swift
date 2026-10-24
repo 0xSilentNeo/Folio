@@ -841,8 +841,9 @@ final class PlayerModel: ObservableObject {
         segmentsRequested = true
         // Looked up even with the Skip button off: Up Next uses the credits time.
         if defaults.bool(forKey: SettingsKey.skipUseChapters) {
-            let s = SkipService.segments(fromChapters: chapters.map { ($0.title, $0.time) }, duration: duration)
-            if !s.isEmpty { segments = s; dlog("skip", "from chapters: \(s.map { "\($0.kind.rawValue) \(Int($0.start))-\(Int($0.end))" })"); return }
+            let chs = chapters.map { ($0.title, $0.time) }
+            let s = SkipService.tidy(SkipService.segments(fromChapters: chs, duration: duration), duration: duration, chapters: chs, anime: item.anime != nil)
+            if !s.isEmpty { segments = s; dlog("skip", "from chapters: \(s.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })"); return }
         }
 
         let name = item.resolvedURL?.lastPathComponent ?? item.title
@@ -876,7 +877,9 @@ final class PlayerModel: ObservableObject {
                 guard let self, self.item.id == key else { return }
                 self.postCredits = found.postCredits
                 guard !found.segments.isEmpty else { return }
-                self.segments = found.segments
+                let anime = explicitAnime || animation || found.segments.contains { $0.source == "AniSkip" || $0.source == "OAT" }
+                self.segments = SkipService.tidy(found.segments, duration: dur, chapters: self.chapters.map { ($0.title, $0.time) }, anime: anime)
+                dlog("skip", "segments: \(self.segments.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })")
                 if self.defaults.bool(forKey: SettingsKey.skipInjectChapters), self.chapters.isEmpty {
                     self.injectChapters(found.segments)
                 }
@@ -901,13 +904,18 @@ final class PlayerModel: ObservableObject {
     private var upNextTrigger: (time: Double, autoplay: Bool)? {
         guard hasNext, playbackMode == "playlist", defaults.bool(forKey: SettingsKey.upNextEnabled), duration > 120 else { return nil }
         let autoplayOn = defaults.bool(forKey: SettingsKey.autoplayNext)
-        if let outro = segments.filter({ $0.kind == .outro && $0.start > duration * 0.5 }).last {
+        if let outro = segments.filter({ $0.kind == .outro && $0.start > duration * 0.5 }).first {
             // Story content after the credits (and not a "next episode" preview)
             // means a post-credits scene: show the card, but don't jump away.
             let after = duration - outro.end
             let previewFollows = segments.contains { $0.kind == .preview && $0.start >= outro.end - 2 }
             let sceneAfter = postCredits || (after > 30 && !previewFollows)
             return (outro.start, autoplayOn && !sceneAfter)
+        }
+        // No credits known but a skippable preview closes the episode: the card
+        // takes over there instead of a "Skip Preview" pill.
+        if let preview = segments.filter({ $0.kind == .preview && $0.start > duration * 0.6 }).first {
+            return (preview.start, autoplayOn && !postCredits)
         }
         return (max(duration * 0.9, duration - 30), autoplayOn && !postCredits)
     }

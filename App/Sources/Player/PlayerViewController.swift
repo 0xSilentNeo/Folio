@@ -102,7 +102,12 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
         // Start once the video surface has its real size (the Metal
         // swapchain is created from it).
         model.start()
-        if UserDefaults.standard.bool(forKey: SettingsKey.landscapeOnOpen), UIDevice.current.userInterfaceIdiom == .phone,
+        if Self.stayLandscape {
+            // Settings → Playback → Stay in landscape: turn now and never go to
+            // portrait while playing (the phone still flips between the two landscapes).
+            orientationMask = .landscape
+            requestOrientation(.landscape)
+        } else if UserDefaults.standard.bool(forKey: SettingsKey.landscapeOnOpen), UIDevice.current.userInterfaceIdiom == .phone,
            model.videoSize == .zero || model.videoSize.width >= model.videoSize.height {
             requestOrientation(.landscape)
         }
@@ -134,9 +139,13 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
             default: orientationMask = .portrait
             }
         } else {
-            orientationMask = .allButUpsideDown
+            orientationMask = Self.stayLandscape ? .landscape : .allButUpsideDown
         }
         setNeedsUpdateOfSupportedInterfaceOrientations()
+    }
+
+    static var stayLandscape: Bool {
+        UIDevice.current.userInterfaceIdiom == .phone && UserDefaults.standard.bool(forKey: SettingsKey.stayLandscape)
     }
 
     private func requestOrientation(_ mask: UIInterfaceOrientationMask) {

@@ -21,13 +21,16 @@ struct SkipSegment: Identifiable, Hashable {
         }
     }
     var id: String { "\(kind.rawValue)-\(start)" }
-    let kind: Kind
-    let start: Double
-    let end: Double
+    var kind: Kind
+    var start: Double
+    var end: Double
     let source: String
+    /// What the pill calls it: the file's own chapter name when it has a real
+    /// one ("Opening", "Next Episode Preview"), else set by `SkipService.tidy`.
+    var name: String? = nil
 
-    /// Live-action databases call the end segment "credits"; anime "ending".
     var label: String {
+        if let name { return "Skip " + name }
         if kind == .outro, source == "IntroDB" || source == "TheIntroDB" { return "Skip Credits" }
         return kind.label
     }
@@ -82,6 +85,71 @@ actor SkipService {
             if let kind { out.append(SkipSegment(kind: kind, start: ch.time, end: end, source: "Chapters")) }
         }
         return out
+    }
+
+    /// Makes the segments from any source agree with where they sit and with
+    /// the file's chapters, and names each one for the Skip pill.
+    ///
+    /// - An "intro" in the last 40% is the ending (anime episode 1s often
+    ///   play the opening song over the end credits; IntroDB then reports
+    ///   intro 1345–1435 AND outro 1345–1438 for Classroom of the Elite S1E1,
+    ///   and the pill said "Skip Intro" over the credits).
+    /// - Segments covering the same stretch are merged into one.
+    /// - Name: the file's chapter starting at the same moment, if its title
+    ///   says what it is ("Opening", "Ending", "Preview"…); generic titles
+    ///   ("Chapter 4") don't count. Otherwise Opening/Ending for anime,
+    ///   Intro/Credits for everything else.
+    static func tidy(_ input: [SkipSegment], duration: Double, chapters: [(title: String, time: Double)], anime: Bool) -> [SkipSegment] {
+        guard duration > 0 else { return input }
+        var segs = input.map { seg -> SkipSegment in
+            var s = seg
+            if s.kind == .intro, s.start >= duration * 0.6 { s.kind = .outro }
+            if s.kind == .outro, s.end <= duration * 0.35 { s.kind = .intro }
+            return s
+        }.sorted { $0.start < $1.start }
+        // Merge overlapping segments of the same kind (or any two that mostly overlap).
+        var merged: [SkipSegment] = []
+        for s in segs {
+            if var last = merged.last {
+                let overlap = min(last.end, s.end) - max(last.start, s.start)
+                let shorter = min(last.end - last.start, s.end - s.start)
+                if overlap > 0, last.kind == s.kind || overlap > shorter * 0.5 {
+                    last.end = max(last.end, s.end)
+                    if s.kind == .outro { last.kind = .outro }
+                    merged[merged.count - 1] = last
+                    continue
+                }
+            }
+            merged.append(s)
+        }
+        segs = merged
+        for i in segs.indices {
+            if let ch = chapters.first(where: { abs($0.time - segs[i].start) < 4 }), let n = meaningfulName(ch.title) {
+                segs[i].name = n
+            } else {
+                switch segs[i].kind {
+                case .intro: segs[i].name = anime ? "Opening" : "Intro"
+                case .outro: segs[i].name = anime ? "Ending" : "Credits"
+                case .recap: segs[i].name = "Recap"
+                case .preview: segs[i].name = "Preview"
+                }
+            }
+        }
+        return segs
+    }
+
+    /// A chapter title worth showing on the pill: one that names a skippable
+    /// part. "OP"/"ED" are spelled out; "Chapter 4", "Part B", "00:22:26" are not names.
+    static func meaningfulName(_ raw: String) -> String? {
+        let t = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty, t.count <= 32 else { return nil }
+        let low = t.lowercased()
+        if low.range(of: #"^(chapter|chap\.?|ch\.?|kapitel|chapitre|cap[ií]tulo|episode|part|teil)\s*[0-9a-z]?\d*$"#, options: .regularExpression) != nil { return nil }
+        if low.range(of: #"^[\d:.\s]+$"#, options: .regularExpression) != nil { return nil }
+        let segs = segments(fromChapters: [(t, 0), ("x", 10)], duration: 20)
+        guard let kind = segs.first?.kind else { return nil }
+        if low.range(of: #"^(op|ed|oped|pv)\s?\d*$"#, options: .regularExpression) != nil { return kind.chapterTitle }
+        return t.prefix(1).uppercased() + t.dropFirst()
     }
 
     // MARK: TV & films (IntroDB, TheIntroDB)
