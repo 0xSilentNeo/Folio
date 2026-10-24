@@ -30,8 +30,8 @@ final class PanelUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Audio"].isHittable, "Tracks still showing after the switch")
         settingsSpot.tap(); sleep(2)                                         // its own spot → close
         XCTAssertFalse(app.staticTexts["Playback"].isHittable, "Settings did not close on its own spot")
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(1)
 
+        XCTAssertTrue(app.buttons["Now Playing"].waitForExistence(timeout: 5), "pill not back after closing from its own spot")
         app.buttons["Now Playing"].tap()
         XCTAssertTrue(app.staticTexts["NOW PLAYING"].waitForExistence(timeout: 4), "Now Playing panel did not open")
         sleep(2)
