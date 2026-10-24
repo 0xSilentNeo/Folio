@@ -10,8 +10,11 @@ struct PlayerPanel: View {
     let maxHeight: CGFloat
     let onLoadSubtitle: () -> Void
     let onRotationLock: (Bool) -> Void
-    /// Hosted in a system popover: no glass of its own.
+    /// Drawn on someone else's glass (popover, or the glass panel pill): no glass of its own.
     var bare = false
+    /// Receives the content's full height (before any scrolling), so the
+    /// glass panel opens at its content's height (GlassPanels.swift).
+    var onNaturalHeight: ((CGFloat) -> Void)? = nil
 
     @ObservedObject private var tune = UITune.shared
 
@@ -33,6 +36,15 @@ struct PlayerPanel: View {
             }
         }
         .scrollIndicators(.hidden)
+        .background {
+            if let onNaturalHeight, kind != .nowPlaying {
+                // Ideal height of the unscrolled content (fixedSize proposes no height).
+                padded.fixedSize(horizontal: false, vertical: true).hidden()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { onNaturalHeight($0) }
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+        }
         .modifier(OptionalGlass(enabled: !bare))
         .foregroundStyle(.white)
         .tint(Theme.accent)

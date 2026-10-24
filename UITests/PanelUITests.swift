@@ -43,6 +43,35 @@ final class PanelUITests: XCTestCase {
         XCTAssertFalse(shows(app, "Audio"), "Tracks did not close on an outside tap")
     }
 
+    /// iOS 26 (SwiftUI glass panels): a tap while a panel is still moving
+    /// works at once. Open, then 0.15 s later tap outside (closes); 0.15 s into
+    /// that close, tap the button again (reopens).
+    func test12TapsWhileMoving() throws {
+        let app = launchPlayer()
+        let names: [(String, String)] = [("Tracks", "Audio"), ("Settings", "Playback"), ("Now Playing", "NOW PLAYING")]
+        var closed = 0, reopened = 0
+        let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
+        for i in 0..<6 {
+            let (b, marker) = names[i % 3]
+            tapPill(app, b)
+            usleep(150_000)
+            outside.tap()                                              // mid-opening → closes
+            usleep(600_000)
+            if !shows(app, marker) { closed += 1 } else { print("MOVING close miss \(b)") }
+            tapPill(app, b)
+            usleep(250_000)
+            outside.tap()                                              // close…
+            usleep(150_000)
+            tapPill(app, b)                                            // …and 0.15 s into it, reopen
+            if shows(app, marker, within: 1.5) { reopened += 1 } else { print("MOVING reopen miss \(b)") }
+            outside.tap()
+            sleep(1)
+        }
+        print("MOVING closed \(closed)/6 reopened \(reopened)/6")
+        XCTAssertEqual(closed, 6, "a tap outside while a panel was opening was lost")
+        XCTAssertEqual(reopened, 6, "a tap on the button while a panel was closing was lost")
+    }
+
     private func launchPlayer(_ extra: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTest", "-labNoEngine"] + extra

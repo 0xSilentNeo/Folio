@@ -37,6 +37,20 @@ struct PlayerScreen: View {
                         .offset(y: ui.controlsVisible && !ui.locked ? -10 : 0)
                 }
 
+                // iOS 26: while a panel is open, a tap anywhere outside it closes
+                // it. Under the controls (the panel is part of them), whose other
+                // buttons ignore touches while a panel is open, so those taps land here.
+                if !legacyPanels && ui.panel != nil {
+                    Color.black.opacity(0.001)
+                        .ignoresSafeArea()
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            dlog("ui", "panel: tap outside")
+                            ui.closePanel()
+                        }
+                        .accessibilityHidden(true)
+                }
+
                 if ui.controlsVisible && !ui.locked {
                     controls(geo, compact: compact).transition(.opacity)
                 }
@@ -88,7 +102,7 @@ struct PlayerScreen: View {
                 // "replaces the specified item until … dismisses"), so a tap on a
                 // button's spot is taken here and opens that panel as soon as the
                 // close ends, instead of falling through to the video.
-                if ui.panel != nil || ui.panelClosing {
+                if legacyPanels && (ui.panel != nil || ui.panelClosing) {
                     Color.black.opacity(0.001)
                         .ignoresSafeArea()
                         .contentShape(Rectangle())
@@ -120,18 +134,20 @@ struct PlayerScreen: View {
         .persistentSystemOverlays(.hidden)
         .onAppear {
             ui.scheduleHide()
+            guard legacyPanels else { return }          // iOS 26: GlassPanelPill draws the panels
             ui.presentNow = { presentPanel($0, immediate: true) }
             PanelPresenter.shared.onTransitionStart = { [weak model] in model?.freezeVideo(for: $0) }
             PanelPresenter.shared.onClosing = { [weak ui] closing in if ui?.panelClosing != closing { ui?.panelClosing = closing } }
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { prewarmPanels() }
         }
         .onChange(of: ui.panel) { _, new in
+            guard legacyPanels else { return }
             if let new { presentPanel(new) } else { PanelPresenter.shared.hide() }
         }
-        .onDisappear { PanelPresenter.shared.reset() }
+        .onDisappear { if legacyPanels { PanelPresenter.shared.reset() } }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             // New size after a rotation: build the panels for it ahead of time.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { prewarmPanels() }
+            if legacyPanels { DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { prewarmPanels() } }
         }
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
@@ -239,23 +255,24 @@ struct PlayerScreen: View {
             }
             .padding(.horizontal, side)
             .padding(.top, geo.safeAreaInsets.top > 0 ? 4 : 14)
+            .allowsHitTesting(otherControlsLive)
             Spacer()
             if compact {
                 VStack(spacing: 8) {
-                    TimeBar(model: model, ui: ui, clock: model.clock)
+                    TimeBar(model: model, ui: ui, clock: model.clock).allowsHitTesting(otherControlsLive)
                     HStack {
-                        transportPill
+                        transportPill.allowsHitTesting(otherControlsLive)
                         Spacer()
-                        panelPill
+                        panelPill(geo, compact: compact)
                     }
                 }
                 .padding(.horizontal, side)
                 .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 6 : 14)
             } else {
                 HStack(spacing: 10) {
-                    transportPill
-                    TimeBar(model: model, ui: ui, clock: model.clock)
-                    panelPill
+                    transportPill.allowsHitTesting(otherControlsLive)
+                    TimeBar(model: model, ui: ui, clock: model.clock).allowsHitTesting(otherControlsLive)
+                    panelPill(geo, compact: compact)
                 }
                 .padding(.horizontal, side)
                 // Clear of the home-indicator strip so taps are never eaten by it.
@@ -281,15 +298,35 @@ struct PlayerScreen: View {
         }
     }
 
+    /// iOS 26: while a panel is open, the other controls let taps through to
+    /// the tap-catcher under them, which closes the panel (as with the popover).
+    private var otherControlsLive: Bool { legacyPanels || ui.panel == nil }
+
+    /// iOS 26: SwiftUI glass panels (GlassPanels.swift). Earlier iOS: the
+    /// system popover from a UIKit pill (PanelPopover.swift).
+    private var legacyPanels: Bool {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) { return false }
+        #endif
+        return true
+    }
+
     @ViewBuilder
-    private var panelPill: some View {
+    private func panelPill(_ geo: GeometryProxy, compact: Bool) -> some View {
+        #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
-            PanelToolbarView(ui: ui)
-                .frame(width: 176, height: 50)
+            GlassPanelPill(model: model, ui: ui, ns: glassNS,
+                           width: compact ? max(240, geo.size.width - 40) : min(tune.panelMax, geo.size.width * tune.panelWidth),
+                           maxHeight: max(180, geo.size.height - (tune.pillHeight + 26) - 58),
+                           onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
         } else {
             PanelPillView(ui: ui, height: tune.pillHeight)
                 .frame(width: tune.pillHeight * 3 + 8, height: tune.pillHeight)
         }
+        #else
+        PanelPillView(ui: ui, height: tune.pillHeight)
+            .frame(width: tune.pillHeight * 3 + 8, height: tune.pillHeight)
+        #endif
     }
 
     // MARK: Overlays
