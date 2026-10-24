@@ -174,8 +174,11 @@ struct HomeView: View {
         LibraryOrganizer.groups(local.files, sort: LibrarySort(rawValue: librarySort) ?? .name, ascending: librarySortAsc)
     }
 
+    @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
+
     private func library(width: CGFloat, margin: CGFloat) -> some View {
-        let cols = max(2, Int((width - margin * 2 + 14) / 184))
+        let posters = tileArtwork == "poster"
+        let cols = posters ? max(3, Int((width - margin * 2 + 14) / 124)) : max(2, Int((width - margin * 2 + 14) / 184))
         let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
         let groups = self.groups
         return VStack(alignment: .leading, spacing: 12) {
@@ -194,7 +197,8 @@ struct HomeView: View {
                             MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
                                       key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
                                       progress: history.entry(forURL: g.nextUp.path)?.progress,
-                                      fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil)
+                                      fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
+                                      poster: posters)
                         }
                     }
                 }
@@ -204,7 +208,8 @@ struct HomeView: View {
                     ForEach(groups) { g in
                         groupLink(g) {
                             LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
-                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil)
+                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
+                                       poster: posters)
                         }
                     }
                 }
@@ -356,12 +361,14 @@ struct MediaTile: View {
     let progress: Double?
     var fixedTitle: String? = nil
     var fixedSubtitle: String? = nil
+    /// Portrait poster (library grid) instead of 16:9 art.
+    var poster = false
     @StateObject private var thumb = ThumbLoader()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .bottomLeading) {
-                Color.clear.aspectRatio(16.0 / 9.0, contentMode: .fit)
+                Color.clear.aspectRatio(poster ? 2.0 / 3.0 : 16.0 / 9.0, contentMode: .fit)
                     .overlay {
                         if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
                         else { GeneratedArt(seed: title) }
@@ -374,11 +381,11 @@ struct MediaTile: View {
                     }
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: poster ? 12 : 16, style: .continuous))
             Text(fixedTitle ?? thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)
-            Text(fixedSubtitle ?? thumb.meta?.episodeTitle ?? subtitle).font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
+            Text(fixedSubtitle ?? (poster ? nil : thumb.meta?.episodeTitle) ?? subtitle).font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
         }
-        .onAppear { thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName) }
+        .onAppear { thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName, art: poster ? .poster : .wide) }
     }
 }
 

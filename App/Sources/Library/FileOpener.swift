@@ -200,25 +200,34 @@ final class ThumbLoader: ObservableObject {
     private static let cache = NSCache<NSString, UIImage>()
     private var loadedKey: String?
 
-    func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool? = nil) {
-        guard loadedKey != key else { return }
-        loadedKey = key
+    /// Which picture a view wants from the metadata.
+    enum Art { case wide, poster }
+
+    /// - `art: .poster`: the show/film's portrait poster (library tiles). Falls
+    ///   back to the backdrop, never to an episode still or a saved frame.
+    /// - `art: .wide`: 16:9 art — episode still, then backdrop, then poster.
+    func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool? = nil, art: Art = .wide) {
+        let cacheKey = art == .poster ? key + "|poster" : key
+        guard loadedKey != cacheKey else { return }
+        loadedKey = cacheKey
         // Poster / episode still first (Settings → Library → Tile artwork);
         // the saved player frame is the fallback, not the default.
-        let preferMeta = preferMeta ?? (UserDefaults.standard.string(forKey: SettingsKey.tileArtwork) != "frame")
-        if let c = Self.cache.object(forKey: key as NSString) { image = c }
+        let preferMeta = art == .poster || (preferMeta ?? (UserDefaults.standard.string(forKey: SettingsKey.tileArtwork) != "frame"))
+        if let c = Self.cache.object(forKey: cacheKey as NSString) { image = c }
         Task {
             // Saved frame (Continue Watching) from disk, decoded off the main thread.
-            if image == nil, !preferMeta, let img = await Self.decodeFile(ThumbnailStore.url(for: key)) { set(img, key) }
-            if image == nil, let artwork, let u = URL(string: artwork) { await fetch(u, key) }
+            if image == nil, !preferMeta, let img = await Self.decodeFile(ThumbnailStore.url(for: key)) { set(img, cacheKey) }
+            if image == nil, art == .wide, let artwork, let u = URL(string: artwork) { await fetch(u, cacheKey) }
             if let lookupName {
                 // Metadata is cached on disk forever; artwork on disk too (ImageCache).
                 if let m = await MetadataService.shared.lookup(filename: lookupName) {
                     self.meta = m
-                    if (self.image == nil || preferMeta), let art = m.wideArt, let u = URL(string: art) { await self.fetch(u, key) }
+                    let pick = art == .poster ? (m.poster ?? m.background) : m.wideArt
+                    if (self.image == nil || preferMeta), let pick, let u = URL(string: pick) { await self.fetch(u, cacheKey) }
                 }
             }
-            if image == nil, artwork == nil, let fileURL, ["mp4", "m4v", "mov"].contains(fileURL.pathExtension.lowercased()) {
+            if art == .poster, image == nil, let artwork, let u = URL(string: artwork) { await fetch(u, cacheKey) }
+            if image == nil, artwork == nil, art == .wide, let fileURL, ["mp4", "m4v", "mov"].contains(fileURL.pathExtension.lowercased()) {
                 let img: UIImage? = await Task.detached(priority: .utility) {
                     let gen = AVAssetImageGenerator(asset: AVURLAsset(url: fileURL))
                     gen.appliesPreferredTrackTransform = true
@@ -228,7 +237,7 @@ final class ThumbLoader: ObservableObject {
                     if let data = img.jpegData(compressionQuality: 0.75) { try? data.write(to: ThumbnailStore.url(for: key)) }
                     return img
                 }.value
-                if let img, self.image == nil { set(img, key) }
+                if let img, self.image == nil { set(img, cacheKey) }
             }
         }
     }

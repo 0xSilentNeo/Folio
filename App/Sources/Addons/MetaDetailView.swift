@@ -116,7 +116,7 @@ struct MetaDetailView: View {
             if m.isAnime, let o = m.originalName, !o.isEmpty {
                 Text(o).font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.7)).lineLimit(2)
             }
-            HStack(spacing: 8) {
+            FlowLayout(spacing: 8, lineSpacing: 8) {
                 if showRatings, let r = m.imdbRating { chip("★ \(r)", strong: true) }
                 if let y = m.releaseInfo { chip(y) }
                 if let c = m.contentRating { chip(c) }
@@ -127,7 +127,7 @@ struct MetaDetailView: View {
     }
 
     private func chip(_ s: String, strong: Bool = false) -> some View {
-        Text(s).font(.caption.weight(.semibold))
+        Text(s).font(.caption.weight(.semibold)).lineLimit(1).fixedSize()
             .padding(.horizontal, 9).padding(.vertical, 5)
             .background(strong ? Theme.accent.opacity(0.85) : Color.white.opacity(0.12), in: Capsule())
     }
@@ -210,10 +210,13 @@ struct MetaDetailView: View {
         if id.hasPrefix("tt") {
             let t0 = CACurrentMediaTime()
             // Details and the season list don't depend on each other: fetch both at once.
+            // Not `async let`: 1.12.0 left the season `async let` un-awaited on the
+            // film path, and the Swift runtime aborted the app on every title
+            // (swift_task_dealloc in asyncLet_finish — same stack on device and in CI).
             loadingEpisodes = preview.type != "movie"
-            async let detailsTask = IMDbSource.details(id: id, type: preview.type)
-            async let seasonsTask: [Int] = preview.type == "movie" ? [] : IMDbSource.seasons(id: id)
-            if var full = await detailsTask {
+            let seasonsTask: Task<[Int], Never>? = preview.type == "movie" ? nil : Task { await IMDbSource.seasons(id: id) }
+            defer { seasonsTask?.cancel() }
+            if var full = await IMDbSource.details(id: id, type: preview.type) {
                 if full.poster == nil { full.poster = preview.poster }
                 if full.background == nil { full.background = preview.background }
                 if full.type == "movie" && preview.type == "series" { full.type = "series" }
@@ -222,7 +225,7 @@ struct MetaDetailView: View {
                 var p = preview; p.id = id; meta = p
             }
             if m.type != "movie" {
-                seasons = await seasonsTask
+                seasons = await (seasonsTask ?? Task { await IMDbSource.seasons(id: id) }).value
                 if let first = seasons.first {
                     season = first
                     episodes = await IMDbSource.episodes(id: id, season: first)

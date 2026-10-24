@@ -79,3 +79,34 @@ struct ExpandableText: View {
         }
     }
 }
+
+/// Lays children out left to right and wraps to a new line when the row is
+/// full (chips under a title: never squeezes "1080p" onto two lines).
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    var lineSpacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxW = proposal.width ?? .infinity
+        var x: CGFloat = 0, y: CGFloat = 0, lineH: CGFloat = 0, widest: CGFloat = 0
+        for v in subviews {
+            let sz = v.sizeThatFits(.unspecified)
+            if x > 0, x + sz.width > maxW { y += lineH + lineSpacing; x = 0; lineH = 0 }
+            x += (x > 0 ? spacing : 0) + sz.width
+            lineH = max(lineH, sz.height)
+            widest = max(widest, x)
+        }
+        return CGSize(width: min(widest, maxW), height: y + lineH)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX, y = bounds.minY, lineH: CGFloat = 0
+        for v in subviews {
+            let sz = v.sizeThatFits(.unspecified)
+            if x > bounds.minX, x + sz.width > bounds.maxX { y += lineH + lineSpacing; x = bounds.minX; lineH = 0 }
+            v.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(sz))
+            x += sz.width + spacing
+            lineH = max(lineH, sz.height)
+        }
+    }
+}

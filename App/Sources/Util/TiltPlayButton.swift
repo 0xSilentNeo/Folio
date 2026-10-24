@@ -1,14 +1,13 @@
 import SwiftUI
 import CoreMotion
 
-/// Glass play button that tilts a little toward the finger (and, more
-/// gently, with the device), with a light sweep that crosses it every few
-/// seconds so it reads as the thing to press.
+/// Pill-shaped play button with depth: it tilts toward the finger and with
+/// the phone, a highlight slides across it opposite the tilt, and every few
+/// seconds it rocks gently while a band of light sweeps over it.
 ///
-/// Energy: nothing animates between sweeps; the sweep itself is a single
-/// 1.1 s animation every 4 s. Motion updates run at 20 Hz only while the
-/// page is on screen with no video playing over it, and re-render the
-/// button only when the tilt visibly changes.
+/// Energy: nothing animates between sweeps (one ~1 s animation every ~4.5 s).
+/// Motion updates run at 20 Hz only while the page is on screen with no video
+/// over it, and re-render the button only when the tilt visibly changes.
 struct TiltPlayButton: View {
     let title: String
     var subtitle: String? = nil
@@ -16,19 +15,22 @@ struct TiltPlayButton: View {
     var shimmer: Bool = true
     let action: () -> Void
 
-    @State private var tilt = CGSize.zero          // -1…1
+    @State private var touch = CGSize.zero         // -1…1, where the finger is on the button
     @State private var pressed = false
     @State private var size = CGSize(width: 160, height: 56)
     @State private var sweep: CGFloat = -1         // -1 (off left) … 1 (off right)
     @State private var glow: CGFloat = 0
+    @State private var rock: CGFloat = 0           // -1…1, the idle rock that goes with the sweep
     @StateObject private var motion = MotionTilt()
 
-    private let maxDegrees: CGFloat = 6            // small: the button must still read as a button
-    private let shape = RoundedRectangle(cornerRadius: 28, style: .continuous)
+    /// Degrees at full tilt. The finger and the idle rock use all of it; the
+    /// phone's own movement up to ~70% (it is always moving a little).
+    private let maxDegrees: CGFloat = 10
 
     var body: some View {
-        let tx = tilt.width + motion.tilt.width * 0.35
-        let ty = tilt.height + motion.tilt.height * 0.35
+        let tx = clamp(touch.width + motion.tilt.width * 0.7 + rock)
+        let ty = clamp(touch.height + motion.tilt.height * 0.7)
+        let shape = Capsule(style: .continuous)
         HStack(spacing: 12) {
             Image(systemName: icon).font(.system(size: 20, weight: .bold))
             VStack(alignment: .leading, spacing: 1) {
@@ -37,59 +39,58 @@ struct TiltPlayButton: View {
             }
         }
         .foregroundStyle(.white)
+        .shadow(color: .black.opacity(0.25), radius: 1, x: -tx * 1.5, y: 1 - ty * 1.5)   // label floats above the face
         .padding(.horizontal, 26).frame(height: 56)
         .background {
             ZStack {
                 shape.fill(Theme.gradient)
-                // Moving highlight = the parallax layer.
-                shape.fill(LinearGradient(colors: [.white.opacity(0.42), .clear, .white.opacity(0.08)],
-                                          startPoint: UnitPoint(x: 0.5 - tx * 0.5, y: 0.5 - ty * 0.6),
-                                          endPoint: UnitPoint(x: 0.5 + tx * 0.5 + 0.4, y: 0.5 + ty * 0.6 + 0.6)))
-                // The sweep: a soft diagonal band that crosses the face.
+                // Specular highlight that slides opposite the tilt: what makes it read as 3D.
+                shape.fill(RadialGradient(colors: [.white.opacity(0.55), .white.opacity(0.0)],
+                                          center: UnitPoint(x: 0.5 - tx * 0.45, y: 0.15 - ty * 0.35),
+                                          startRadius: 0, endRadius: max(size.width, 60) * 0.55))
+                    .blendMode(.plusLighter)
+                // The sweep: a soft diagonal band of light crossing the face.
                 if shimmer {
                     GeometryReader { g in
                         let w = g.size.width
                         Rectangle()
-                            .fill(LinearGradient(colors: [.clear, .white.opacity(0.55), .white.opacity(0.9), .white.opacity(0.55), .clear],
+                            .fill(LinearGradient(colors: [.clear, .white.opacity(0.6), .white.opacity(0.95), .white.opacity(0.6), .clear],
                                                  startPoint: .leading, endPoint: .trailing))
-                            .frame(width: w * 0.45, height: g.size.height * 2.4)
+                            .frame(width: w * 0.35, height: g.size.height * 2.4)
                             .rotationEffect(.degrees(22))
-                            .offset(x: sweep * w * 1.1 + w * 0.28, y: -g.size.height * 0.7)
-                            .blendMode(.plusLighter)
-                            .opacity(0.55)
+                            .offset(x: sweep * w * 1.1 + w * 0.32, y: -g.size.height * 0.7)
+                            .opacity(0.6)
                     }
-                    .clipShape(shape)
+                    .blendMode(.plusLighter)
                 }
-                shape.strokeBorder(.white.opacity(0.35), lineWidth: 1)
+                // Rim: brighter on the edge facing the light.
+                shape.strokeBorder(LinearGradient(colors: [.white.opacity(0.7), .white.opacity(0.12)],
+                                                  startPoint: UnitPoint(x: 0.5 - tx, y: 0 - ty), endPoint: UnitPoint(x: 0.5 + tx, y: 1 + ty)),
+                                   lineWidth: 1.2)
             }
+            .clipShape(shape)
+            // Glow and depth shadow follow the capsule's outline (no box around it).
+            .shadow(color: Theme.accent.opacity(0.35 + glow * 0.4), radius: 10 + glow * 8)
+            .shadow(color: .black.opacity(pressed ? 0.25 : 0.4), radius: pressed ? 4 : 9, x: -tx * 7, y: 7 - ty * 6)
         }
-        .background {
-            // Glow that breathes with the sweep. A gradient, not a blur filter:
-            // Core Animation would re-run a blur every frame the page scrolls.
-            EllipticalGradient(colors: [Theme.accent.opacity(0.55), Theme.accent.opacity(0.18), .clear], center: .center, startRadiusFraction: 0.35, endRadiusFraction: 0.75)
-                .padding(-26)
-                .opacity(0.5 + glow * 0.5)
-                .allowsHitTesting(false)
-        }
-        .shadow(color: .black.opacity(0.35), radius: pressed ? 4 : 10, x: -tx * 4, y: 6 - ty * 4)
-        .scaleEffect(pressed ? 0.97 : 1)
-        .rotation3DEffect(.degrees(-ty * maxDegrees), axis: (x: 1, y: 0, z: 0), perspective: 0.6)
-        .rotation3DEffect(.degrees(tx * maxDegrees), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
-        .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.7), value: tilt)
+        .scaleEffect(pressed ? 0.96 : 1)
+        .rotation3DEffect(.degrees(-ty * maxDegrees), axis: (x: 1, y: 0, z: 0), perspective: 1)
+        .rotation3DEffect(.degrees(tx * maxDegrees), axis: (x: 0, y: 1, z: 0), perspective: 1)
+        .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.7), value: touch)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: pressed)
-        .animation(.easeOut(duration: 0.2), value: motion.tilt)
+        .animation(.easeOut(duration: 0.25), value: motion.tilt)
         .contentShape(shape)
         .background(GeometryReader { g in Color.clear.onAppear { size = g.size } })
         .gesture(
             DragGesture(minimumDistance: 0, coordinateSpace: .local)
                 .onChanged { v in
                     pressed = true
-                    tilt = CGSize(width: min(1, max(-1, (v.location.x / max(size.width, 1) - 0.5) * 2)),
-                                  height: min(1, max(-1, (v.location.y / max(size.height, 1) - 0.5) * 2)))
+                    touch = CGSize(width: clamp((v.location.x / max(size.width, 1) - 0.5) * 2),
+                                   height: clamp((v.location.y / max(size.height, 1) - 0.5) * 2))
                 }
                 .onEnded { v in
                     pressed = false
-                    tilt = .zero
+                    touch = .zero
                     if hypot(v.translation.width, v.translation.height) < 12 {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         action()
@@ -104,19 +105,24 @@ struct TiltPlayButton: View {
         .task { await runShimmer() }
     }
 
+    private func clamp(_ v: CGFloat) -> CGFloat { min(1, max(-1, v)) }
+
+    /// Every ~4.5 s: the button rocks to one side and back while a band of
+    /// light sweeps across it and the glow breathes. Nothing runs in between,
+    /// nor while a video plays over the page or the app is in the background.
     private func runShimmer() async {
         guard shimmer else { return }
-        try? await Task.sleep(nanoseconds: 1_200_000_000)   // let the page settle first
+        try? await Task.sleep(nanoseconds: 700_000_000)     // let the page settle first
+        var side: CGFloat = 1
         while !Task.isCancelled {
-            // Skip the sweep while a video plays over the page or the app is inactive:
-            // nobody sees it and it would wake the display pipeline for nothing.
             if PlayerPresenter.current == nil, UIApplication.shared.applicationState == .active {
                 sweep = -1
-                withAnimation(.easeInOut(duration: 1.1)) { sweep = 1 }
-                withAnimation(.easeInOut(duration: 0.55)) { glow = 1 }
-                try? await Task.sleep(nanoseconds: 550_000_000)
-                withAnimation(.easeInOut(duration: 0.7)) { glow = 0 }
-                try? await Task.sleep(nanoseconds: 3_600_000_000)
+                withAnimation(.easeInOut(duration: 1.0)) { sweep = 1 }
+                withAnimation(.easeInOut(duration: 0.5)) { glow = 1; rock = 0.6 * side }
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                withAnimation(.spring(response: 0.7, dampingFraction: 0.5)) { glow = 0; rock = 0 }
+                side = -side
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
             } else {
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
             }
@@ -162,8 +168,11 @@ final class MotionTilt: ObservableObject {
         manager.startDeviceMotionUpdates(to: .main) { [weak self] m, _ in
             guard let self, let m else { return }
             if base == nil { base = (m.attitude.roll, m.attitude.pitch) }
+            // Drift the rest position toward how the phone is held now, so after
+            // you settle into a new grip the button comes back level.
+            if let b = base { base = (b.roll + (m.attitude.roll - b.roll) * 0.02, b.pitch + (m.attitude.pitch - b.pitch) * 0.02) }
             let dr = m.attitude.roll - (base?.roll ?? 0), dp = m.attitude.pitch - (base?.pitch ?? 0)
-            let t = CGSize(width: min(1, max(-1, dr * 1.6)), height: min(1, max(-1, dp * 1.6)))
+            let t = CGSize(width: min(1, max(-1, dr * 4.5)), height: min(1, max(-1, dp * 4.5)))   // full tilt at ~13° of phone rotation
             // Only re-render for a visible change.
             if abs(t.width - tilt.width) > 0.03 || abs(t.height - tilt.height) > 0.03 { tilt = t }
         }

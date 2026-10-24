@@ -60,7 +60,15 @@ struct TitleHeroView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     backdrop(width: geo.size.width, wide: wide)
                     VStack(alignment: .leading, spacing: 18) {
-                        HStack(alignment: .top, spacing: 16) {
+                        if let s = spoilerSafe(meta), !s.isEmpty {
+                            ExpandableText(text: s, lines: 3)
+                        }
+                        if let g = meta?.genres, !g.isEmpty {
+                            Text(g.prefix(5).joined(separator: " · ")).font(.footnote).foregroundStyle(.secondary)
+                        }
+                        // Play sits under the description, centred (as on Discover).
+                        HStack(spacing: 14) {
+                            Spacer(minLength: 0)
                             TiltPlayButton(title: entry?.canResume == true ? "Resume" : "Play",
                                            subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { play(file) }
                             if entry?.canResume == true {
@@ -70,13 +78,9 @@ struct TitleHeroView: View {
                                 }
                                 .buttonStyle(PressStyle())
                             }
+                            Spacer(minLength: 0)
                         }
-                        if let s = spoilerSafe(meta), !s.isEmpty {
-                            ExpandableText(text: s, lines: 3)
-                        }
-                        if let g = meta?.genres, !g.isEmpty {
-                            Text(g.prefix(5).joined(separator: " · ")).font(.footnote).foregroundStyle(.secondary)
-                        }
+                        .padding(.vertical, 4)
                         fileFacts
                         if castPosition == "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, wide ? -28 : -20) }
                         if siblings.count > 1 { episodes }
@@ -150,7 +154,7 @@ struct TitleHeroView: View {
             } else if let ep = meta?.episodeTitle ?? episodeLabel {
                 Text(ep).font(.headline).foregroundStyle(.white.opacity(0.8))
             }
-            HStack(spacing: 8) {
+            FlowLayout(spacing: 8, lineSpacing: 8) {
                 if showRatings, let r = meta?.rating { chip("★ \(r)", strong: true) }
                 if let y = meta?.year ?? parsed.year.map(String.init) { chip(y) }
                 if let c = meta?.contentRating { chip(c) }
@@ -167,7 +171,7 @@ struct TitleHeroView: View {
     }
 
     private func chip(_ s: String, strong: Bool = false) -> some View {
-        Text(s).font(.caption.weight(.semibold))
+        Text(s).font(.caption.weight(.semibold)).lineLimit(1).fixedSize()
             .padding(.horizontal, 9).padding(.vertical, 5)
             .background(strong ? Theme.accent.opacity(0.85) : Color.white.opacity(0.12), in: Capsule())
     }
@@ -323,6 +327,8 @@ struct LibraryRow: View {
     let progress: Double?
     var fixedTitle: String? = nil
     var fixedSubtitle: String? = nil
+    /// Home library rows: the show's portrait poster instead of the episode still.
+    var poster = false
     @StateObject private var thumb = ThumbLoader()
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
 
@@ -337,8 +343,8 @@ struct LibraryRow: View {
     }
 
     private var detail: Bool { mode == .details }
-    private var thumbW: CGFloat { detail ? 150 : 78 }
-    private var thumbH: CGFloat { detail ? 84 : 44 }
+    private var thumbW: CGFloat { poster ? (detail ? 64 : 32) : (detail ? 150 : 78) }
+    private var thumbH: CGFloat { poster ? (detail ? 96 : 48) : (detail ? 84 : 44) }
     private var headline: String { fixedTitle ?? thumb.meta?.episodeTitle ?? thumb.meta?.name ?? TitleParser.clean(file.lastPathComponent) }
     private var secondary: String {
         if let fixedSubtitle {
@@ -369,7 +375,7 @@ struct LibraryRow: View {
         }
         .padding(detail ? 8 : 6)
         .background(rowBackground)
-        .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent) }
+        .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide) }
     }
 
     private var rowBackground: some View {
@@ -381,7 +387,7 @@ struct LibraryRow: View {
         ZStack(alignment: .bottomLeading) {
             Color.clear.frame(width: thumbW, height: thumbH)
                 .overlay {
-                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill().blur(radius: spoilerHidden ? 12 : 0) }
+                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill().blur(radius: spoilerHidden && !poster ? 12 : 0) }
                     else { GeneratedArt(seed: file.lastPathComponent) }
                 }
                 .clipped()

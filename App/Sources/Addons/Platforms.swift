@@ -62,9 +62,10 @@ enum PlatformCatalogs {
 
     /// Series and movies interleaved (series first), de-duplicated.
     static func mixed(_ id: String, limit: Int = 30) async -> [MetaItem] {
-        async let s = catalog(type: "series", id: id)
-        async let m = catalog(type: "movie", id: id)
-        let (series, movies) = await (s, m)
+        // Two plain tasks rather than `async let` (see MetaDetailView.load).
+        let s = Task { await catalog(type: "series", id: id) }
+        let m = Task { await catalog(type: "movie", id: id) }
+        let series = await s.value, movies = await m.value
         var out: [MetaItem] = []
         var seen = Set<String>()
         for i in 0..<max(series.count, movies.count) {

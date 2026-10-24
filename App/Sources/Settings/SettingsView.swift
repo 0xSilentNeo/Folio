@@ -865,7 +865,8 @@ struct LibrarySettings: View {
             Section {
                 Toggle("Metadata fetching", isOn: $fetching)
                 Picker("Tile artwork", selection: $tileArtwork) {
-                    Text("Poster / episode still").tag("poster")
+                    Text("Poster").tag("poster")
+                    Text("Episode still").tag("still")
                     Text("Last frame watched").tag("frame")
                 }
                 HStack {
