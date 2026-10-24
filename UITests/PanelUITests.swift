@@ -1,4 +1,5 @@
 import XCTest
+import ObjectiveC
 
 /// Drives the player with real touches in the CI simulator while the screen
 /// is recorded: open each panel from its toolbar button, close it by tapping
@@ -6,52 +7,40 @@ import XCTest
 /// control, close by tapping outside.
 final class PanelUITests: XCTestCase {
     func test0PanelsAndTabs() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["-uiTest", "-labNoEngine"]
-        app.launch()
-        XCUIDevice.shared.orientation = .landscapeLeft
+        let app = launchPlayer()
+        let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
 
-        let tracks = app.buttons["Tracks"]
-        XCTAssertTrue(tracks.waitForExistence(timeout: 20), "toolbar button not found")
+        tapPill(app, "Tracks")                                               // open
+        XCTAssertTrue(shows(app, "Audio", within: 4), "Tracks panel did not open")
         sleep(2)
-        // Where the pill's buttons are (they hide while a panel is open).
-        func spot(_ name: String) -> XCUICoordinate {
-            let f = app.buttons[name].frame
-            return app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY))
-        }
-        let settingsSpot = spot("Settings"), nowPlayingSpot = spot("Now Playing"), tracksSpot = spot("Tracks")
-
-        tracks.tap()                                                         // open
-        XCTAssertTrue(app.staticTexts["Audio"].waitForExistence(timeout: 4), "Tracks panel did not open")
-        sleep(2)
-        settingsSpot.tap(); sleep(1)                                         // another button's spot → just closes
-        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close on a tap where the pill was")
-        XCTAssertFalse(app.staticTexts["Playback"].exists, "a tap where the pill was opened Settings (hidden button)")
-        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 3), "pill not back after the close")
-        app.buttons["Settings"].tap()                                        // now a real tap on Settings
-        XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 3), "Settings did not open")
+        tapPill(app, "Settings"); sleep(1)                                   // another button's spot → just closes
+        XCTAssertFalse(shows(app, "Audio"), "Tracks did not close on a tap where the pill was")
+        XCTAssertFalse(shows(app, "Playback"), "a tap where the pill was opened Settings (hidden button)")
+        tapPill(app, "Settings")                                             // now a real tap on Settings
+        XCTAssertTrue(shows(app, "Playback", within: 3), "Settings did not open")
         sleep(1)
-        settingsSpot.tap(); sleep(1)                                         // its own spot → close
-        XCTAssertFalse(app.staticTexts["Playback"].exists, "Settings did not close on its own spot")
+        tapPill(app, "Settings"); sleep(1)                                   // its own spot → close
+        XCTAssertFalse(shows(app, "Playback"), "Settings did not close on its own spot")
 
-        XCTAssertTrue(app.buttons["Now Playing"].waitForExistence(timeout: 5), "pill not back after closing from its own spot")
-        app.buttons["Now Playing"].tap()
-        XCTAssertTrue(app.staticTexts["NOW PLAYING"].waitForExistence(timeout: 4), "Now Playing panel did not open")
+        tapPill(app, "Now Playing")
+        XCTAssertTrue(shows(app, "NOW PLAYING", within: 4), "Now Playing panel did not open")
         sleep(2)
-
         let seg = app.segmentedControls.firstMatch
         XCTAssertTrue(seg.waitForExistence(timeout: 5), "segmented control not found")
-        let first = seg.buttons.element(boundBy: 0), last = seg.buttons.element(boundBy: 2), mid = seg.buttons.element(boundBy: 1)
-        first.press(forDuration: 0.4, thenDragTo: last); sleep(2)  // drag the thumb across
-        mid.tap(); sleep(2)                                        // tap
-        first.tap(); sleep(2)
-
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)   // tap outside → close
-        XCTAssertFalse(app.staticTexts["NOW PLAYING"].exists, "panel did not close on outside tap")
-        tracks.tap(); sleep(2)
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)   // outside → close
-        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close on an outside tap")
-        _ = nowPlayingSpot; _ = tracksSpot
+        if seg.exists {
+            let first = seg.buttons.element(boundBy: 0), last = seg.buttons.element(boundBy: 2), mid = seg.buttons.element(boundBy: 1)
+            first.press(forDuration: 0.4, thenDragTo: last); sleep(2)  // drag the thumb across
+            mid.tap(); sleep(2)                                        // tap
+            first.tap(); sleep(2)
+            XCTAssertTrue(shows(app, "NOW PLAYING"), "using the segmented control closed the panel")
+        }
+        outside.tap(); sleep(1)                                        // tap outside → close
+        XCTAssertFalse(shows(app, "NOW PLAYING"), "panel did not close on outside tap")
+        tapPill(app, "Tracks")
+        XCTAssertTrue(shows(app, "Audio", within: 3), "Tracks did not open")
+        sleep(1)
+        outside.tap(); sleep(1)
+        XCTAssertFalse(shows(app, "Audio"), "Tracks did not close on an outside tap")
     }
 
     private func launchPlayer(_ extra: [String] = []) -> XCUIApplication {
@@ -61,7 +50,28 @@ final class PanelUITests: XCTestCase {
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 20), "toolbar button not found")
         sleep(2)
+        spots = [:]
+        for n in ["Tracks", "Settings", "Now Playing"] {
+            let f = app.buttons[n].frame
+            spots[n] = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY))
+        }
         return app
+    }
+
+    /// Where each pill button is, captured once: tapped like a finger (the
+    /// accessibility tree can lag behind a non-animated close).
+    private var spots: [String: XCUICoordinate] = [:]
+    private func tapPill(_ app: XCUIApplication, _ name: String) { spots[name]!.tap() }
+    /// The panel's content is on screen (the built panel is kept in memory
+    /// between openings, so `exists` alone can lag).
+    private func shows(_ app: XCUIApplication, _ marker: String, within t: TimeInterval = 0) -> Bool {
+        let e = app.staticTexts[marker]
+        let end = Date().addingTimeInterval(t)
+        repeat {
+            if e.exists && e.isHittable { return true }
+            if t > 0 { usleep(100_000) }
+        } while Date() < end
+        return false
     }
 
     /// Long press on the player's Settings button (the recording shows whether
@@ -81,8 +91,8 @@ final class PanelUITests: XCTestCase {
         var ok = 0
         for i in 0..<10 {
             let (button, marker) = names[i % 3]
-            app.buttons[button].tap()
-            if app.staticTexts[marker].waitForExistence(timeout: 2) { ok += 1 } else { print("RAPID miss at \(i) (\(button))") }
+            tapPill(app, button)
+            if shows(app, marker, within: 2) { ok += 1 } else { print("RAPID miss at \(i) (\(button))") }
             usleep(400_000)
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()
             usleep(700_000)
@@ -117,14 +127,14 @@ final class PanelUITests: XCTestCase {
     private func replay(_ extra: [String]) throws {
         let app = launchPlayer(["-panelStress"] + extra)
         sleep(22)                                                 // replay: 3.5 s after landscape settles, lasts 11.6 s
-        XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 4), "Settings (last tap) is not showing")
-        XCTAssertFalse(app.staticTexts["NOW PLAYING"].exists, "an orphaned Now Playing panel is on screen")
+        XCTAssertTrue(shows(app, "Playback", within: 4), "Settings (last tap) is not showing")
+        XCTAssertFalse(shows(app, "NOW PLAYING"), "an orphaned Now Playing panel is on screen")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
-        XCTAssertFalse(app.staticTexts["Playback"].exists, "panel did not close after the replay (stuck)")
-        app.buttons["Tracks"].tap()
-        XCTAssertTrue(app.staticTexts["Audio"].waitForExistence(timeout: 4), "player unresponsive after the replay")
+        XCTAssertFalse(shows(app, "Playback"), "panel did not close after the replay (stuck)")
+        tapPill(app, "Tracks")
+        XCTAssertTrue(shows(app, "Audio", within: 4), "player unresponsive after the replay")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
-        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close")
+        XCTAssertFalse(shows(app, "Audio"), "Tracks did not close")
     }
 
     /// Title page: open it, play an episode, close the player, then Back must
@@ -191,16 +201,15 @@ final class PanelUITests: XCTestCase {
         let app = launchPlayer()
         var closedFirstTap = 0
         for i in 0..<10 {
-            app.buttons["Settings"].tap()
+            tapPill(app, "Settings")
             usleep(UInt32(150_000 + i * 40_000))                       // 0.15 … 0.51 s after the tap
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()
             sleep(1)
-            if !app.staticTexts["Playback"].exists { closedFirstTap += 1 } else {
+            if !shows(app, "Playback") { closedFirstTap += 1 } else {
                 print("OUTSIDE still open after one tap at \(150 + i * 40) ms")
                 app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(1)
             }
-            XCTAssertFalse(app.staticTexts["Playback"].exists, "panel stuck on screen (round \(i))")
-            XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 3), "pill gone (round \(i))")
+            XCTAssertFalse(shows(app, "Playback"), "panel stuck on screen (round \(i))")
         }
         print("OUTSIDE closed with one tap \(closedFirstTap)/10")
         XCTAssertEqual(closedFirstTap, 10, "an outside tap during/at the end of opening did not close the panel")
@@ -214,12 +223,12 @@ final class PanelUITests: XCTestCase {
         let names: [(String, String)] = [("Tracks", "Audio"), ("Settings", "Playback"), ("Now Playing", "NOW PLAYING")]
         for i in 0..<9 {
             let (button, marker) = names[i % 3]
-            app.buttons[button].tap()
-            XCTAssertTrue(app.staticTexts[marker].waitForExistence(timeout: 3), "\(button) did not open")
+            tapPill(app, button)
+            XCTAssertTrue(shows(app, marker, within: 3), "\(button) did not open")
             usleep(800_000)
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()
             usleep(300_000)
-            if !app.staticTexts[marker].exists { ok += 1 } else { print("ONETAP \(button) still open 0.3 s after one tap") }
+            if !shows(app, marker) { ok += 1 } else { print("ONETAP \(button) still open 0.3 s after one tap") }
             usleep(300_000)
         }
         print("ONETAP closed \(ok)/9")
@@ -234,8 +243,8 @@ final class PanelUITests: XCTestCase {
         var ok = 0
         for i in 0..<20 {
             let (button, marker) = names[i % 3]
-            app.buttons[button].tap()
-            let opened = app.staticTexts[marker].waitForExistence(timeout: 3)
+            tapPill(app, button)
+            let opened = shows(app, marker, within: 3)
             if opened { ok += 1 } else { print("HALFSEC miss at \(i) (\(button))") }
             sleep(1)
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()   // outside → close
@@ -273,4 +282,71 @@ final class DiscoverUITests: XCTestCase {
             sleep(2)
         }
     }
+}
+
+
+/// Taps that land WHILE a panel is still animating, like a person's. The UI
+/// test runner normally waits for every animation to finish before it taps,
+/// which is why the earlier tests passed while taps on the phone were lost
+/// (15-13-07 recording: a tap ~0.2 s after a close showed the pill's press
+/// highlight and did nothing). Here that wait is switched off.
+final class TapDuringAnimationTests: XCTestCase {
+    private var saved: [(Method, IMP)] = []
+
+    override func setUp() {
+        super.setUp()
+        guard let cls = NSClassFromString("XCUIApplicationProcess") else { print("MIDTAP no XCUIApplicationProcess"); return }
+        let one: @convention(block) (AnyObject, Bool) -> Void = { _, _ in }
+        let two: @convention(block) (AnyObject, Bool, Bool) -> Void = { _, _, _ in }
+        for (name, block) in [("waitForQuiescenceIncludingAnimationsIdle:", one as Any), ("waitForQuiescenceIncludingAnimationsIdle:isPreEvent:", two as Any)] {
+            guard let m = class_getInstanceMethod(cls, NSSelectorFromString(name)) else { continue }
+            saved.append((m, method_getImplementation(m)))
+            method_setImplementation(m, imp_implementationWithBlock(block))
+            print("MIDTAP idle wait off: \(name)")
+        }
+    }
+
+    override func tearDown() {
+        for (m, imp) in saved { method_setImplementation(m, imp) }
+        saved = []
+        super.tearDown()
+    }
+
+    private func run(style: String, assert: Bool) {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTest", "-labNoEngine", "-panelTransition", style]
+        app.launch()
+        XCUIDevice.shared.orientation = .landscapeLeft
+        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 20), "toolbar button not found")
+        sleep(3)
+        let f = app.buttons["Settings"].frame
+        let settings = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY))
+        let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
+        func open(within t: TimeInterval) -> Bool {
+            let e = app.staticTexts["Playback"], end = Date().addingTimeInterval(t)
+            repeat { if e.exists && e.isHittable { return true }; usleep(50_000) } while Date() < end
+            return false
+        }
+        var ok = 0
+        let delays: [UInt32] = [150, 250, 350, 500, 700, 150, 250, 350, 500, 700]
+        for (i, d) in delays.enumerated() {
+            settings.tap()
+            guard open(within: 3) else { print("MIDTAP \(style) round \(i): first open failed"); outside.tap(); sleep(2); continue }
+            sleep(2)
+            outside.tap()                                   // dismiss…
+            usleep(d * 1000)                                // …and tap the button again this soon after
+            settings.tap()
+            let t0 = Date()
+            if open(within: 1.5) { ok += 1; print(String(format: "MIDTAP %@ round %d: tap %d ms after close → open in %.0f ms", style, i, d, Date().timeIntervalSince(t0) * 1000)) }
+            else { print("MIDTAP \(style) round \(i): tap \(d) ms after close was LOST") }
+            sleep(2)
+            outside.tap()
+            sleep(2)
+        }
+        print("MIDTAP \(style) opened \(ok)/\(delays.count)")
+        if assert { XCTAssertEqual(ok, delays.count, "taps during the close animation were lost (\(style))") }
+    }
+
+    func testQuick() { run(style: "quick", assert: true) }
+    func testMorphForComparison() { run(style: "morphFrozen", assert: false) }
 }

@@ -263,6 +263,9 @@ final class PanelPresenter {
                 if self.shown === vc { self.shown = nil; self.shownKind = nil; self.shownRequest = nil }
                 dlog("ui", "panel: closed \(kind)")
                 self.frames.end()
+                // A non-animated dismiss leaves VoiceOver (and UI tests) seeing the
+                // panel for seconds unless told the screen changed.
+                UIAccessibility.post(notification: .screenChanged, argument: nil)
                 self.finish()
             }
             return
@@ -293,6 +296,7 @@ final class PanelPresenter {
             guard let self, self.generation == g else { return }
             dlog("ui", "panel: opened \(req.kind)")
             self.frames.end()
+            UIAccessibility.post(notification: .screenChanged, argument: vc.view)
             // Never leave a panel that came up as anything but a popover.
             if !(vc.presentationController is UIPopoverPresentationController) || vc.popoverView?.bounds.width ?? 0 >= (host.view.window?.bounds.width ?? .infinity) - 1 {
                 dlog("ui/error", "panel \(req.kind) came up full screen; closing it")
