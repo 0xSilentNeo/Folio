@@ -13,11 +13,9 @@ final class PanelUITests: XCTestCase {
         tapPill(app, "Tracks")                                               // open
         XCTAssertTrue(shows(app, "Audio", within: 4), "Tracks panel did not open")
         sleep(2)
-        tapPill(app, "Settings"); sleep(1)                                   // another button's spot → just closes
-        XCTAssertFalse(shows(app, "Audio"), "Tracks did not close on a tap where the pill was")
-        XCTAssertFalse(shows(app, "Playback"), "a tap where the pill was opened Settings (hidden button)")
-        tapPill(app, "Settings")                                             // now a real tap on Settings
-        XCTAssertTrue(shows(app, "Playback", within: 3), "Settings did not open")
+        tapPill(app, "Settings")                                             // another button → switches to it (1.14.1: the pill stays visible)
+        XCTAssertTrue(shows(app, "Playback", within: 3), "Settings did not open from the pill while Tracks was open")
+        XCTAssertFalse(shows(app, "Audio"), "Tracks stayed open after switching")
         sleep(1)
         tapPill(app, "Settings"); sleep(1)                                   // its own spot → close
         XCTAssertFalse(shows(app, "Playback"), "Settings did not close on its own spot")
@@ -41,6 +39,31 @@ final class PanelUITests: XCTestCase {
         sleep(1)
         outside.tap(); sleep(1)
         XCTAssertFalse(shows(app, "Audio"), "Tracks did not close on an outside tap")
+    }
+
+    /// 1.14.1: the panels are drawn by the app, so a tap while one is still
+    /// moving works at once. Open → 0.15 s later another button; close → 0.15 s
+    /// later the same button reopens it (the close reverses).
+    func test12TapsWhileMoving() throws {
+        let app = launchPlayer()
+        let names: [(String, String)] = [("Tracks", "Audio"), ("Settings", "Playback"), ("Now Playing", "NOW PLAYING")]
+        var switched = 0, reopened = 0
+        for i in 0..<6 {
+            let (a, _) = names[i % 3], (b, mb) = names[(i + 1) % 3]
+            tapPill(app, a)
+            usleep(150_000)
+            tapPill(app, b)                                            // mid-opening
+            if shows(app, mb, within: 1.2) { switched += 1 } else { print("MOVING switch miss \(a)→\(b)") }
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()   // close
+            usleep(150_000)
+            tapPill(app, b)                                            // mid-closing
+            if shows(app, mb, within: 1.2) { reopened += 1 } else { print("MOVING reopen miss \(b)") }
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()
+            sleep(1)
+        }
+        print("MOVING switched \(switched)/6 reopened \(reopened)/6")
+        XCTAssertEqual(switched, 6, "a tap while a panel was opening was lost")
+        XCTAssertEqual(reopened, 6, "a tap while a panel was closing was lost")
     }
 
     private func launchPlayer(_ extra: [String] = []) -> XCUIApplication {
