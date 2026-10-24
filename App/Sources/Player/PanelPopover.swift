@@ -56,8 +56,12 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
     /// panel came back full screen and black).
     var isInUse: Bool { presentingViewController != nil || isBeingPresented || isBeingDismissed }
 
-    func configure(source: PanelSource, anchor: UIView?, bottomInset: CGFloat) {
+    /// `passthrough`: the player's view. Touches outside the panel go to the
+    /// player, whose tap-catcher closes the panel (UIKit never dismisses it).
+    private(set) var passthrough: [UIView] = []
+    func configure(source: PanelSource, anchor: UIView?, passthrough: [UIView], bottomInset: CGFloat) {
         self.anchor = anchor
+        self.passthrough = passthrough
         modalPresentationStyle = .popover
         guard let pc = popoverPresentationController else { return }
         pc.delegate = self
@@ -69,8 +73,7 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
             pc.sourceRect = v.bounds
             pc.permittedArrowDirections = [.down]
         }
-        // Nothing passes through: any tap outside the panel closes it.
-        pc.passthroughViews = []
+        pc.passthroughViews = passthrough
         // Keep the panel clear of the top buttons and the button bar.
         pc.popoverLayoutMargins = UIEdgeInsets(top: 66, left: 16, bottom: bottomInset, right: 16)
     }
@@ -138,7 +141,8 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
     /// is always "no"; a real tap outside then arrives as an *attempt* below.
     func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool { false }
 
-    /// The user tapped outside the panel (anywhere, including where the pill was).
+    /// Not sent for popovers in practice (CI: never called); kept in case a
+    /// future iOS routes outside taps here instead of through the passthrough.
     func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
         onOutsideTap?()
     }
@@ -240,7 +244,7 @@ final class PanelPresenter {
         wanted = Request(kind: kind, presenter: presenter, make: { [weak self] in
             guard let self else { return PanelPopoverController(content: content()) }
             let vc = self.controller(kind: kind, sizeKey: sizeKey, owner: owner, content: content)
-            vc.configure(source: source, anchor: anchor, bottomInset: bottomInset)
+            vc.configure(source: source, anchor: anchor, passthrough: [presenter.topMostPresented.view], bottomInset: bottomInset)
             vc.onOutsideTap = { [weak self, weak vc] in
                 guard let self, let vc, vc === self.shown else { return }
                 dlog("ui", "panel: outside tap closes \(kind)")
@@ -326,7 +330,7 @@ final class PanelPresenter {
     private func open(_ vc: PanelPopoverController, from host: UIViewController, animated: Bool, done: @escaping () -> Void) {
         if quick || !animated {
             host.present(vc, animated: false) {
-                vc.popoverPresentationController?.passthroughViews = []
+                vc.popoverPresentationController?.passthroughViews = vc.passthrough
                 guard animated, let pv = vc.popoverView else { done(); return }
                 pv.alpha = 0
                 pv.transform = vc.towardAnchor(scale: 0.86, pull: 0.35)
@@ -340,7 +344,7 @@ final class PanelPresenter {
             if style == "morphFrozen" { onTransitionStart?(0.45) }
             host.present(vc, animated: true) {
                 // UIKit makes the bar passthrough for bar-item popovers on presentation; undo that.
-                vc.popoverPresentationController?.passthroughViews = []
+                vc.popoverPresentationController?.passthroughViews = vc.passthrough
                 // A dismiss started from inside a present's completion never
                 // finished in the replay of the 1.10.0 freeze log: pause first.
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { done() }

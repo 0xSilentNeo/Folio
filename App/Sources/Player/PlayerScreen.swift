@@ -77,6 +77,21 @@ struct PlayerScreen: View {
                 if ui.showConsole {
                     ConsoleBar(model: model, ui: ui).transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+
+                // While a panel is open (or opening), every tap outside it lands
+                // here and closes it — including where the pill is. The panel
+                // itself lets touches through to the player, so this does not
+                // depend on how UIKit treats a tap outside a popover.
+                if ui.panel != nil {
+                    Color.black.opacity(0.001)
+                        .ignoresSafeArea()
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            dlog("ui", "panel: tap outside")
+                            ui.closePanel()
+                        }
+                        .accessibilityHidden(true)
+                }
             }
             .animation(.easeOut(duration: 0.18), value: ui.controlsVisible)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD != nil)
