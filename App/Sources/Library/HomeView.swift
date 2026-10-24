@@ -325,20 +325,26 @@ struct HomeBackdrop: View {
     }
 }
 
-/// Watched-progress bar drawn over artwork: white on a dark track, so it reads
-/// on any picture in either appearance.
+/// Watched-progress bar drawn over artwork: a white capsule on a dark track,
+/// inset from the picture's edges so it always has picture around it. (Flush
+/// with the bottom edge, the white bar merged with the cream page in light
+/// mode — reported 25 Oct.)
 struct ArtProgressBar: View {
     let progress: Double
-    var height: CGFloat = 3
+    var height: CGFloat = 4
     var body: some View {
         GeometryReader { g in
+            let inset = max(5, min(8, g.size.width * 0.05))
+            let w = max(0, g.size.width - inset * 2)
             ZStack(alignment: .leading) {
-                Rectangle().fill(.black.opacity(0.35))
-                Rectangle().fill(.white).frame(width: g.size.width * min(1, max(0, progress)))
+                Capsule().fill(.black.opacity(0.45))
+                Capsule().fill(.white).frame(width: max(height, w * min(1, max(0, progress))))
             }
-            .frame(height: height)
-            .frame(maxHeight: .infinity, alignment: .bottom)
+            .frame(width: w, height: height)
+            .shadow(color: .black.opacity(0.35), radius: 1.5, y: 0.5)
+            .position(x: g.size.width / 2, y: g.size.height - inset - height / 2)
         }
+        .allowsHitTesting(false)
     }
 }
 
