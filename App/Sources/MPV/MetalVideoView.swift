@@ -29,6 +29,16 @@ final class GPMetalLayer: CAMetalLayer {
     }
 
     private func setEDR(_ v: Bool) { super.wantsExtendedDynamicRangeContent = v }
+
+    /// A Core Animation commit on one of mpv's threads must not run UIKit
+    /// layout (Auto Layout throws off the main thread): do it on main instead.
+    override func layoutSublayers() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.setNeedsLayout() }
+            return
+        }
+        super.layoutSublayers()
+    }
 }
 
 /// Video surface for the Metal (gpu-next / libplacebo) renderer. mpv owns

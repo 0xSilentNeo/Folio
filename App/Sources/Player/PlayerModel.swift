@@ -301,6 +301,7 @@ final class PlayerModel: ObservableObject {
         let scoped = scopedURL
         scopedURL = nil
         client?.delegate = nil
+        if renderer == .metal { detachMetalView() }   // mpv's Metal thread ends during shutdown
         client?.shutdown {
             scoped?.stopAccessingSecurityScopedResource()
         }
@@ -1083,6 +1084,7 @@ final class PlayerModel: ObservableObject {
         case .gl:
             glView?.detach()
         case .metal:
+            detachMetalView()           // before mpv's Metal thread ends (see detachMetalView)
             c.set("vid", "no")          // tear down the Metal VO first
         }
         do {
@@ -1105,6 +1107,7 @@ final class PlayerModel: ObservableObject {
         if mode == .sw { sw.detach() }
         switch renderer {
         case .metal:
+            reattachMetalView()
             c.set("vo", "gpu-next")
         case .gl:
             do { try glView?.attach(to: c) } catch {
@@ -1119,6 +1122,29 @@ final class PlayerModel: ObservableObject {
         videoOffForBackground = false
         c.set("vid", vidSaved ?? "auto")
         startPiPFeed()
+    }
+
+    /// mpv's Metal video thread changes the layer's properties (MoltenVK); Core
+    /// Animation commits those changes on that thread when it ends. If the
+    /// window has a layout pending at that moment — iOS snapshotting the app
+    /// as you swipe home — UIKit runs Auto Layout off the main thread and the
+    /// app is killed (SIGTRAP, 24 Oct 20:23:40, PiP starting). So the Metal
+    /// view leaves the window before that thread ends, and comes back before
+    /// a new one starts; a commit then only reaches this detached view.
+    private func detachMetalView() {
+        guard let mv = metalView, mv.superview != nil else { return }
+        mv.removeFromSuperview()
+        dlog("player", "metal view detached")
+    }
+
+    private func reattachMetalView() {
+        guard let mv = metalView, mv.superview == nil, let container = videoContainer else { return }
+        mv.frame = container.bounds
+        mv.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        container.addSubview(mv)
+        container.sendSubviewToBack(pip.view)
+        mv.setNeedsLayout()
+        dlog("player", "metal view attached")
     }
 
     /// While PiP hands back to the main renderer, keep the (correctly
@@ -1165,6 +1191,7 @@ final class PlayerModel: ObservableObject {
             if let vid = c.string("vid"), vid != "no" {
                 vidSaved = vid
                 videoOffForBackground = true
+                if renderer == .metal { detachMetalView() }
                 c.set("vid", "no")
             }
         } else {
@@ -1203,6 +1230,7 @@ final class PlayerModel: ObservableObject {
         if renderer == .gl { glView?.setRenderingAllowed(true) }
         if videoOffForBackground, let c = client {
             videoOffForBackground = false
+            if renderer == .metal { reattachMetalView() }
             c.set("vid", vidSaved ?? "auto")
         }
         videoView.setNeedsLayout()

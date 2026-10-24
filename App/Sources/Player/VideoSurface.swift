@@ -24,15 +24,14 @@ struct VideoSurface: UIViewRepresentable {
     func updateUIView(_ uiView: ContainerView, context: Context) {}
 
     final class ContainerView: UIView {
+        /// Frame-based, not Auto Layout: the video layers are touched by mpv's
+        /// threads, and a layout pass that reaches them off the main thread
+        /// must never involve the constraint engine.
         func install(_ sub: UIView) {
-            sub.translatesAutoresizingMaskIntoConstraints = false
+            sub.translatesAutoresizingMaskIntoConstraints = true
+            sub.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            sub.frame = bounds
             addSubview(sub)
-            NSLayoutConstraint.activate([
-                sub.leadingAnchor.constraint(equalTo: leadingAnchor),
-                sub.trailingAnchor.constraint(equalTo: trailingAnchor),
-                sub.topAnchor.constraint(equalTo: topAnchor),
-                sub.bottomAnchor.constraint(equalTo: bottomAnchor),
-            ])
         }
     }
 
