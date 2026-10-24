@@ -1,0 +1,16 @@
+11:26:31.010 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=42.55 GB
+11:26:31.069 [imdb] cast tt7263328: 2 list(s); chose .props.pageProps.mainColumnData.cast.edges — 3 people, 3 photos, 3 roles
+11:26:31.069 [imdb] title tt7263328: 2 candidate object(s); name Classroom of the Elite, original Yôkoso jitsuryoku shijô shugi no kyôshitsu e
+11:26:31.069 [lab] parse shape A (cast.edges in mainColumnData): name=Classroom of the Elite original=Yôkoso jitsuryoku shijô shugi no kyôshitsu e countries=JP cast=3 photos=3 roles=Kiyotaka Ayanokoji | Suzune Horikita | Kikyo Kushida
+11:26:31.070 [imdb] cast tt6262770: 2 list(s); chose .props.pageProps.mainColumnData.castV2[].credits — 2 people, 2 photos, 2 roles
+11:26:31.070 [imdb] title tt6262770: 1 candidate object(s); name Tenzing, original none
+11:26:31.070 [lab] parse shape B (castV2): name=Tenzing original=- countries=AU cast=2 photos=2 roles=George Band | Eric Shipton
+11:26:31.081 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+11:26:32.127 [app] first screen 2565 ms after process start
+11:26:32.426 [tvmaze] tt7263328 Classroom of the Elite: show 29180, 54 English episode titles
+11:26:32.607 [lab] tvmaze CotE: 54 titles; S1E1=What is evil? Whatever springs from weakness.; S1E4=We should not be upset that others hide the truth from us, when we hide it so often from ourselves.
+11:26:32.614 [app] active
+11:26:32.950 [tvmaze] tt0944947 Game of Thrones: show 82, 73 English episode titles
+11:26:32.951 [lab] tvmaze GoT (by IMDb id): 73 titles; S1E1=Winter is Coming
+11:26:32.951 [lab] parse probe done
+11:27:02.723 [energy] cpu 0% thermal=nominal playing=no
