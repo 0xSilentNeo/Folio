@@ -47,12 +47,18 @@ struct GlassPanelPill: View {
     private var pillSize: CGSize { CGSize(width: tune.pillHeight * 3 + 8, height: tune.pillHeight) }
 
     var body: some View {
-        GlassEffectContainer(spacing: 4) {
+        // Apple: matchedGeometry (the morph) is the default for shapes "within the
+        // container's assigned spacing"; farther apart they materialize (fade and
+        // blur in place, which is what spacing 4 did across the 8 pt gap between
+        // panel and pill). Only one of the two exists at a time, so a wide spacing
+        // can't make them blend together at rest.
+        GlassEffectContainer(spacing: 40) {
             ZStack {
                 if displayed == nil {
                     pill
                         .glassEffect(.regular.interactive(), in: .capsule)
                         .glassEffectID(glassID, in: ns)
+                        .glassEffectTransition(.matchedGeometry)
                 } else {
                     Color.clear       // keeps the pill's place in the row while a panel is open
                 }
@@ -66,6 +72,7 @@ struct GlassPanelPill: View {
                         .frame(width: width, height: height(k))
                         .glassEffect(.regular, in: .rect(cornerRadius: 28))
                         .glassEffectID(glassID, in: ns)
+                        .glassEffectTransition(.matchedGeometry)
                         .padding(.bottom, pillSize.height + 8)       // just above where the pill is
                 }
             }
