@@ -98,7 +98,9 @@ jobs:
           git config user.name lab-bot
           git config user.email lab@users.noreply.github.com
           mkdir -p out && cp -R lab/* out/ 2>/dev/null || true
-          cp build.log out/ 2>/dev/null || true
+          tail -3000 build.log > out/build-tail.log 2>/dev/null || true
+          # GitHub refuses files over 100 MB: split big ones (cat them back together).
+          find out -type f -size +90M | while read f; do split -b 90m "$f" "$f.part-" && rm "$f"; done
           cd out && git init -q && git checkout -q -b "lab-${{ matrix.variant }}" && git add -A && git commit -qm "lab run ${{ github.run_id }}" \
             && git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "lab-${{ matrix.variant }}"
 
