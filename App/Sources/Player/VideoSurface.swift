@@ -133,16 +133,16 @@ struct VideoSurface: UIViewRepresentable {
                     panStartValue = model.position
                     ui.scrubbing = true
                 } else {
-                    // Vertical swipes: brightness on the outer left, volume on the
-                    // outer right, nothing in the middle third — a swipe near the
-                    // centre is almost always accidental. Judged from where the
-                    // finger first touched (the pan begins ~10 pt later).
+                    // Vertical swipes: brightness on the outer left 25%, volume on
+                    // the outer right 25%, nothing in the middle half — a swipe
+                    // near the centre is almost always accidental. Judged from where
+                    // the finger first touched (the pan begins ~10 pt later).
                     let downX = start.x - t.x
                     let w = v.bounds.width
-                    if downX < w * 0.35 {
+                    if downX < w * 0.25 {
                         panMode = .brightness
                         panStartValue = Double(v.window?.windowScene?.screen.brightness ?? UIScreen.main.brightness)
-                    } else if downX > w * 0.65 {
+                    } else if downX > w * 0.75 {
                         panMode = .volume
                         SystemVolume.attach(to: v.window)
                         panStartValue = Double(SystemVolume.current)

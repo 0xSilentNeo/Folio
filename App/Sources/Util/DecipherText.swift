@@ -110,3 +110,34 @@ struct FlowLayout: Layout {
         }
     }
 }
+
+/// Title-page header: a backdrop picture with the poster and title rising
+/// into its lower part. The backdrop is a *background*, the poster/title row
+/// is real content — so when the title block grows (chips wrapping, a long
+/// original title) it pushes what follows down instead of drawing over it.
+/// (1.13.0 placed the row with `.offset`, which per SwiftUI's docs doesn't
+/// change a view's layout, and reserved a fixed 44 pt: extra rows overlapped
+/// the description.)
+struct HeroHeader<Art: View, Content: View>: View {
+    let height: CGFloat
+    /// How far the content rises into the backdrop.
+    var overlap: CGFloat = 104
+    @ViewBuilder var art: () -> Art
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Color.clear.frame(height: max(0, height - overlap))
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(alignment: .top) {
+            Color.clear
+                .frame(height: height)
+                .overlay { art() }
+                .clipped()
+                .overlay(LinearGradient(colors: [.black.opacity(0.25), .clear, Theme.background.opacity(0.9), Theme.background],
+                                        startPoint: .top, endPoint: .bottom))
+        }
+    }
+}

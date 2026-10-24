@@ -81,7 +81,6 @@ struct TitleHeroView: View {
                             Spacer(minLength: 0)
                         }
                         .padding(.vertical, 4)
-                        fileFacts
                         if castPosition == "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, wide ? -28 : -20) }
                         if siblings.count > 1 { episodes }
                         if castPosition != "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, wide ? -28 : -20) }
@@ -117,30 +116,22 @@ struct TitleHeroView: View {
     // MARK: Pieces
 
     private func backdrop(width: CGFloat, wide: Bool) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            Color.clear
-                .frame(height: wide ? 360 : width * 9 / 16 + 40)
-                .overlay {
-                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
-                    else { GeneratedArt(seed: title) }
+        HeroHeader(height: wide ? 360 : width * 9 / 16 + 40) {
+            if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+            else { GeneratedArt(seed: title) }
+        } content: {
+                HStack(alignment: .bottom, spacing: 14) {
+                    if let poster = meta?.poster, let u = URL(string: poster) {
+                        CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
+                            .frame(width: 96, height: 144)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
+                    }
+                    titleBlock.padding(.bottom, 6)
                 }
-                .clipped()
-                .overlay(LinearGradient(colors: [.black.opacity(0.25), .clear, Theme.background.opacity(0.9), Theme.background],
-                                        startPoint: .top, endPoint: .bottom))
-            HStack(alignment: .bottom, spacing: 14) {
-                if let poster = meta?.poster, let u = URL(string: poster) {
-                    CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
-                        .frame(width: 96, height: 144)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
-                }
-                titleBlock.padding(.bottom, 6)
-            }
-            .padding(.leading, wide ? 28 : 20)
-            .padding(.trailing, 20)
-            .offset(y: 40)
+                .padding(.leading, wide ? 28 : 20)
+                .padding(.trailing, 20)
         }
-        .padding(.bottom, 44)
     }
 
     private var isAnime: Bool { meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false }
@@ -174,15 +165,6 @@ struct TitleHeroView: View {
         Text(s).font(.caption.weight(.semibold)).lineLimit(1).fixedSize()
             .padding(.horizontal, 9).padding(.vertical, 5)
             .background(strong ? Theme.accent.opacity(0.85) : Color.white.opacity(0.12), in: Capsule())
-    }
-
-    private var fileFacts: some View {
-        let size = (try? FileManager.default.attributesOfItem(atPath: file.path)[.size] as? Int64) ?? 0
-        return HStack(spacing: 14) {
-            Label(ByteCountFormatter.string(fromByteCount: size, countStyle: .file), systemImage: "internaldrive")
-            Label(file.lastPathComponent, systemImage: "doc").lineLimit(1).truncationMode(.middle)
-        }
-        .font(.caption).foregroundStyle(.secondary)
     }
 
     private var episodes: some View {

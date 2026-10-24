@@ -115,22 +115,13 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
         view.setNeedsLayout()
     }
 
-    /// The popover's own view (glass background + this controller's view):
-    /// what the quick transition fades and scales.
+    /// The popover's own view (glass background + this controller's view),
+    /// faded out when panels are switched programmatically.
     var popoverView: UIView? {
         guard let container = presentationController?.containerView else { return nil }
         var v: UIView? = view
         while let cur = v, cur.superview !== container { v = cur.superview }
         return v
-    }
-
-    /// A transform that moves the popover a little toward its button and
-    /// shrinks it, so it appears to grow out of / go back into the bar.
-    func towardAnchor(scale: CGFloat, pull: CGFloat) -> CGAffineTransform {
-        guard let pv = popoverView, let a = anchor, let container = pv.superview else { return CGAffineTransform(scaleX: scale, y: scale) }
-        let ac = a.convert(CGPoint(x: a.bounds.midX, y: a.bounds.midY), to: container)
-        let dx = (ac.x - pv.center.x) * pull, dy = (ac.y - pv.center.y) * pull
-        return CGAffineTransform(translationX: dx, y: dy).scaledBy(x: scale, y: scale)
     }
 
     func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle { .none }
@@ -163,12 +154,11 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
 /// panel ran after an outside tap had begun closing it, cleared the busy flag
 /// and re-presented the same panel mid-close → full-screen black panel.)
 ///
-/// Styles (Settings → Player → Menu animation):
-/// - quick (default): present/dismiss without UIKit animation; the panel
-///   grows out of the bar in 0.24 s and shrinks back in 0.16 s. No glass
-///   blob, and a tap is never kept waiting behind a 1 s system animation.
-/// - morph / morphFrozen: the system Liquid Glass morph (≈1–1.25 s per
-///   open or close on an iPhone 17 Pro, measured from the device log).
+/// Open and close are the system's Liquid Glass morph from the bar item
+/// (≈1–1.25 s each on an iPhone 17 Pro, from the device log). A button tap
+/// that lands while a panel is still closing is kept and opens its panel as
+/// soon as the close ends. (1.13.0's "Quick" fade drew two panels on a
+/// re-open and lost the morph; removed.)
 @MainActor
 final class PanelPresenter {
     static let shared = PanelPresenter()
@@ -203,6 +193,7 @@ final class PanelPresenter {
 
     /// Player closed: drop the built panels.
     func reset() {
+        onClosing?(false)
         wanted = nil
         if let vc = shown, vc.presentingViewController != nil { vc.dismiss(animated: false) }
         shown = nil; shownKind = nil; busy = false; generation += 1
@@ -224,11 +215,11 @@ final class PanelPresenter {
     private var tapTime: CFTimeInterval = 0
     /// Called just before a morph starts (the player freezes the video picture).
     var onTransitionStart: ((Double) -> Void)?
+    /// A close is running / finished (the player keeps its tap-catcher up meanwhile).
+    var onClosing: ((Bool) -> Void)?
     private var style: String {
-        let s = UserDefaults.standard.string(forKey: SettingsKey.panelTransition) ?? "quick"
-        return ["morph", "morphFrozen"].contains(s) ? s : "quick"
+        UserDefaults.standard.string(forKey: SettingsKey.panelTransition) == "morph" ? "morph" : "morphFrozen"
     }
-    private var quick: Bool { style == "quick" }
 
     /// `immediate`: called straight from the button's action (not from inside
     /// a SwiftUI update), so start in this run-loop turn — no extra frame.
@@ -274,8 +265,11 @@ final class PanelPresenter {
             dlog("ui", "panel: close \(kind)\(switching ? " → \(wanted!.kind)" : "")")
             frames.begin("panel close \(kind) [\(style)]")
             let g = begin()
+            onClosing?(true)
             close(vc, animated: animated, switching: switching) { [weak self] in
-                guard let self, self.generation == g else { return }
+                guard let self else { return }
+                if !self.busy || self.generation == g { self.onClosing?(false) }
+                guard self.generation == g else { return }
                 if self.shown === vc { self.shown = nil; self.shownKind = nil; self.shownRequest = nil }
                 dlog("ui", "panel: closed \(kind)")
                 self.frames.end()
@@ -327,54 +321,36 @@ final class PanelPresenter {
 
     // MARK: Transitions
 
+    /// The system's own presentation: on iOS 26 the popover "animates from
+    /// and replaces" its bar item (UIPopoverPresentationController.sourceItem
+    /// docs) — the button's glass grows into the panel.
     private func open(_ vc: PanelPopoverController, from host: UIViewController, animated: Bool, done: @escaping () -> Void) {
-        if quick || !animated {
-            host.present(vc, animated: false) {
-                vc.popoverPresentationController?.passthroughViews = vc.passthrough
-                guard animated, let pv = vc.popoverView else { done(); return }
-                pv.alpha = 0
-                pv.transform = vc.towardAnchor(scale: 0.86, pull: 0.35)
-                UIView.animate(withDuration: 0.24, delay: 0, usingSpringWithDamping: 0.86, initialSpringVelocity: 0,
-                               options: [.allowUserInteraction, .beginFromCurrentState]) {
-                    pv.alpha = 1
-                    pv.transform = .identity
-                } completion: { _ in done() }
-            }
-        } else {
-            if style == "morphFrozen" { onTransitionStart?(0.45) }
-            host.present(vc, animated: true) {
-                // UIKit makes the bar passthrough for bar-item popovers on presentation; undo that.
-                vc.popoverPresentationController?.passthroughViews = vc.passthrough
-                // A dismiss started from inside a present's completion never
-                // finished in the replay of the 1.10.0 freeze log: pause first.
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { done() }
-            }
+        if animated, style == "morphFrozen" { onTransitionStart?(0.45) }
+        host.present(vc, animated: animated) {
+            // UIKit makes the bar passthrough for bar-item popovers on presentation;
+            // set ours back (the player's view: its tap-catcher closes the panel).
+            vc.popoverPresentationController?.passthroughViews = vc.passthrough
+            // A dismiss started from inside a present's completion never
+            // finished in the replay of the 1.10.0 freeze log: pause first.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { done() }
         }
     }
 
+    /// The system's own dismissal: the panel goes back into its button. Only
+    /// a programmatic switch (no tap can do that now; the replay test does)
+    /// fades the old panel out first so two morphs never overlap.
     private func close(_ vc: PanelPopoverController, animated: Bool, switching: Bool, done: @escaping () -> Void) {
-        let pv = vc.popoverView
-        let finishDismiss = {
-            vc.dismiss(animated: false) {
-                pv?.alpha = 1; pv?.transform = .identity
-                // Next step on the next run-loop turn, not inside UIKit's completion.
-                DispatchQueue.main.async { done() }
-            }
-        }
-        guard animated else { finishDismiss(); return }
-        let isQuick = quick
-        if isQuick || switching, let pv {
-            // Quick: shrink back toward the bar and fade (0.16 s). Switching in
-            // the morph style: fade in place so the pill never flashes between panels.
-            let shrink = vc.towardAnchor(scale: 0.9, pull: 0.3)
-            UIView.animate(withDuration: switching && !isQuick ? 0.10 : 0.16, delay: 0,
-                           options: [.curveEaseIn, .beginFromCurrentState, .allowUserInteraction]) {
+        let next = { DispatchQueue.main.async { done() } }      // never start the next step inside UIKit's completion
+        guard animated else { vc.dismiss(animated: false, completion: next); return }
+        if switching, let pv = vc.popoverView {
+            UIView.animate(withDuration: 0.10, delay: 0, options: [.curveEaseIn, .beginFromCurrentState]) {
                 pv.alpha = 0
-                if isQuick { pv.transform = shrink }
-            } completion: { _ in finishDismiss() }
+            } completion: { _ in
+                vc.dismiss(animated: false) { pv.alpha = 1; next() }
+            }
         } else {
             if style == "morphFrozen" { onTransitionStart?(0.45) }
-            vc.dismiss(animated: true, completion: done)
+            vc.dismiss(animated: true, completion: next)
         }
     }
 
@@ -386,7 +362,7 @@ final class PanelPresenter {
         busy = true
         generation += 1
         let g = generation
-        DispatchQueue.main.asyncAfter(deadline: .now() + (quick ? 1.0 : 2.5)) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
             guard let self, self.busy, self.generation == g else { return }
             if let vc = self.shown, vc.isBeingPresented || vc.isBeingDismissed {
                 // Still animating: give it one more chance.
@@ -402,6 +378,7 @@ final class PanelPresenter {
     }
 
     private func recover() {
+        onClosing?(false)
         dlog("ui/error", "panel transition did not finish; recovering (shown=\(shownKind ?? "nil") presented=\(shown?.presentingViewController != nil))")
         generation += 1
         if let vc = shown {
@@ -413,6 +390,7 @@ final class PanelPresenter {
     }
 
     private func finish() {
+        onClosing?(false)                              // whatever finished, no close is running now
         busy = false
         reconcile()
     }

@@ -25,7 +25,7 @@ enum SettingsKey {
     static let landscapeOnOpen = "landscapeOnOpen"
     static let stayLandscape = "stayLandscape"          // player never turns to portrait
     static let controlsWidth = "controlsWidth"
-    static let panelTransition = "panelTransition"      // quick | morph | morphFrozen
+    static let panelTransition = "panelTransition"      // morphFrozen | morph
     static let tileArtwork = "tileArtwork"              // poster | frame
     static let castPosition = "castPosition"            // top | bottom (title pages)
     static let playlistNames = "playlistNames"          // "episode" | "filename"
@@ -98,7 +98,7 @@ enum SettingsKey {
             landscapeOnOpen: true,
             stayLandscape: false,
             controlsWidth: 0.8,
-            panelTransition: "quick",
+            panelTransition: "morphFrozen",
             tileArtwork: "poster",
             castPosition: "bottom",
             playlistNames: "episode",

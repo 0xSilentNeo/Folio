@@ -18,6 +18,11 @@ final class PlayerUIState: ObservableObject {
     var barItems: [Panel: UIBarButtonItem] = [:]
     weak var panelBar: UIView?
     var menuOpen = false
+    /// A panel's closing morph is running (the pill buttons aren't back yet).
+    @Published var panelClosing = false
+    /// Where each pill button is, in window coordinates (taken when a panel
+    /// opens: while a popover is up iOS replaces its bar item).
+    var pillFrames: [Panel: CGRect] = [:]
 
     /// Set by the player screen: presents a panel right away (from the tap).
     var presentNow: ((Panel) -> Void)?

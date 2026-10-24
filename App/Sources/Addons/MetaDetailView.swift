@@ -83,31 +83,23 @@ struct MetaDetailView: View {
     // MARK: Header
 
     private func backdrop(width: CGFloat, wide: Bool) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            Color.clear
-                .frame(height: wide ? 360 : width * 9 / 16 + 40)
-                .overlay {
-                    if let art = m.background ?? m.poster, let u = URL(string: art) {
-                        CachedImage(url: u, maxPixel: 1280) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
-                    } else { Theme.card }
+        HeroHeader(height: wide ? 360 : width * 9 / 16 + 40) {
+            if let art = m.background ?? m.poster, let u = URL(string: art) {
+                CachedImage(url: u, maxPixel: 1280) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
+            } else { Theme.card }
+        } content: {
+                HStack(alignment: .bottom, spacing: 14) {
+                    if let poster = m.poster, let u = URL(string: poster) {
+                        CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
+                            .frame(width: 96, height: 144)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
+                    }
+                    titleBlock.padding(.bottom, 6)
                 }
-                .clipped()
-                .overlay(LinearGradient(colors: [.black.opacity(0.25), .clear, Theme.background.opacity(0.9), Theme.background],
-                                        startPoint: .top, endPoint: .bottom))
-            HStack(alignment: .bottom, spacing: 14) {
-                if let poster = m.poster, let u = URL(string: poster) {
-                    CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
-                        .frame(width: 96, height: 144)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
-                }
-                titleBlock.padding(.bottom, 6)
-            }
-            .padding(.leading, wide ? 28 : 16)
-            .padding(.trailing, 16)
-            .offset(y: 40)
+                .padding(.leading, wide ? 28 : 16)
+                .padding(.trailing, 16)
         }
-        .padding(.bottom, 44)
     }
 
     private var titleBlock: some View {

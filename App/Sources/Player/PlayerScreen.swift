@@ -82,13 +82,25 @@ struct PlayerScreen: View {
                 // here and closes it — including where the pill is. The panel
                 // itself lets touches through to the player, so this does not
                 // depend on how UIKit treats a tap outside a popover.
-                if ui.panel != nil {
+                //
+                // It stays up while the panel's closing morph runs: iOS has not
+                // given the pill buttons back yet (sourceItem docs: the popover
+                // "replaces the specified item until … dismisses"), so a tap on a
+                // button's spot is taken here and opens that panel as soon as the
+                // close ends, instead of falling through to the video.
+                if ui.panel != nil || ui.panelClosing {
                     Color.black.opacity(0.001)
                         .ignoresSafeArea()
                         .contentShape(Rectangle())
-                        .onTapGesture {
-                            dlog("ui", "panel: tap outside")
-                            ui.closePanel()
+                        .onTapGesture(coordinateSpace: .global) { point in
+                            if ui.panel != nil {
+                                dlog("ui", "panel: tap outside")
+                                ui.closePanel()
+                            } else if let kind = ui.pillFrames.first(where: { $0.value.insetBy(dx: -6, dy: -8).contains(point) })?.key {
+                                dlog("ui", "panel: \(kind.rawValue) tapped while the last panel was closing")
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                ui.toggle(kind)
+                            }
                         }
                         .accessibilityHidden(true)
                 }
@@ -110,6 +122,7 @@ struct PlayerScreen: View {
             ui.scheduleHide()
             ui.presentNow = { presentPanel($0, immediate: true) }
             PanelPresenter.shared.onTransitionStart = { [weak model] in model?.freezeVideo(for: $0) }
+            PanelPresenter.shared.onClosing = { [weak ui] closing in if ui?.panelClosing != closing { ui?.panelClosing = closing } }
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { prewarmPanels() }
         }
         .onChange(of: ui.panel) { _, new in
@@ -143,6 +156,8 @@ struct PlayerScreen: View {
             return
         }
         guard let window = sourceView?.window, let root = window.rootViewController else { return }
+        // Remember where the pill buttons are (iOS replaces the item while its panel is up).
+        for (k, item) in ui.barItems { if let f = item.frame(in: window), f.width > 0 { ui.pillFrames[k] = f } }
         let (width, maxHeight, sizeKey) = panelSize(in: window)
         let content = panelContent(kind, width: width, maxHeight: maxHeight)
         // Any tap outside the panel closes it, including where the pill was
