@@ -1139,6 +1139,9 @@ final class PlayerModel: ObservableObject {
         observers.append(nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.didBecomeActive() }
         })
+        observers.append(nc.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.willEnterForeground() }
+        })
         observers.append(nc.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             guard let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
                   AVAudioSession.InterruptionType(rawValue: raw) == .began else { return }
@@ -1181,6 +1184,17 @@ final class PlayerModel: ObservableObject {
             self.switchToMain()
             self.setPiPLayerOnTop(false)
         }
+    }
+
+    /// Coming back to the app (from the background, not Control Centre) while
+    /// PiP plays: end PiP and carry on in the player. The PiP window animates
+    /// back into the player and the picture stays up until the player's own
+    /// first frame is drawn, so there is no black flash or jump.
+    private func willEnterForeground() {
+        guard isPiPActive, defaults.bool(forKey: SettingsKey.pipReturnOnOpen) else { return }
+        dlog("player", "app opened while in PiP: back to the player")
+        pipRestoring = true
+        stopPiP()
     }
 
     private func didBecomeActive() {

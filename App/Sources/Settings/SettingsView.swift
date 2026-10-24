@@ -67,6 +67,7 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.holdSpeedValue) private var holdSpeedValue = 2.0
     @AppStorage(SettingsKey.pipEnabled) private var pipEnabled = true
     @AppStorage(SettingsKey.pipAuto) private var pipAuto = true
+    @AppStorage(SettingsKey.pipReturnOnOpen) private var pipReturnOnOpen = true
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @AppStorage(SettingsKey.panelTransition) private var panelTransition = "quick"
@@ -133,6 +134,7 @@ struct PlaybackSettings: View {
             Section {
                 Toggle("Picture in Picture", isOn: $pipEnabled)
                 Toggle("Start automatically when leaving", isOn: $pipAuto).disabled(!pipEnabled)
+                Toggle("Back to the player when you open the app", isOn: $pipReturnOnOpen).disabled(!pipEnabled)
             } header: { Text("Picture in Picture") }
         }
         .navigationTitle("Playback")

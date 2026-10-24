@@ -33,6 +33,7 @@ enum SettingsKey {
     // PiP
     static let pipEnabled = "pipEnabled"
     static let pipAuto = "pipAuto"
+    static let pipReturnOnOpen = "pipReturnOnOpen"      // opening the app ends PiP, video continues in the player
 
     // Subtitles / audio
     static let subLangs = "subLangs"
@@ -103,6 +104,7 @@ enum SettingsKey {
             playlistNames: "episode",
             pipEnabled: true,
             pipAuto: true,
+            pipReturnOnOpen: true,
             subLangs: "eng,en",
             audioLangs: "jpn,ja,eng,en",
             subScale: 1.0,
