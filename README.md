@@ -1,6 +1,8 @@
-<p align="center"><img src="App/Assets.xcassets/AppIcon.appiconset/icon-1024.png" width="128" alt="GlassPlayer icon"></p>
+<p align="center"><img src="App/Assets.xcassets/AppIcon.appiconset/icon-1024.png" width="128" alt="Folio icon"></p>
 
-<h1 align="center">GlassPlayer</h1>
+<h1 align="center">Folio</h1>
+
+<p align="center"><em>All your media, together.</em></p>
 
 <p align="center">An mpv-powered media player for iPhone and iPad: every format, your Lua scripts and GLSL shaders, WebDAV, Stremio-style addons, intro skipping and Picture in Picture that keeps working outside the app.</p>
 
@@ -35,7 +37,7 @@
 **Sources**
 - **WebDAV**: Real-Debrid, TorBox, Premiumize presets or any server. Per-folder sort memory, clean titles, watched/progress badges, folder filter and a background **library-wide search** index. Passwords live in the Keychain.
 - **Discover** powered by IMDb directly (Most Popular, Top 250, genres incl. Anime, search, details, episodes) with an optional TMDB key. **Addons** (Stremio protocol, the same ones Nuvio uses) provide streams: Torrentio/Comet/MediaFusion (with your debrid key), OpenSubtitles, anime catalogs… addon subtitles attached automatically.
-- Local files (Files app → GlassPlayer → Media), "Open in…" from other apps, URLs, `glassplayer://play?url=…`
+- Local files (Files app → Folio → Media), "Open in…" from other apps, URLs, `glassplayer://play?url=…`
 
 **Skip intro / outro**
 - Uses chapters in the file when present (Opening/OP/Ending/ED/Recap/Preview)
@@ -44,13 +46,13 @@
 
 ## Install
 
-GlassPlayer isn't on the App Store. Download `GlassPlayer-x.y.z.ipa` from [Releases](../../releases) and sideload it with **AltStore / SideStore**, **Sideloadly**, **TrollStore**, or your own developer account. The IPA is unsigned; the sideloading tool signs it.
+Folio (formerly GlassPlayer) isn't on the App Store. Download `Folio-x.y.z.ipa` from [Releases](../../releases) and sideload it with **AltStore / SideStore**, **Sideloadly**, **TrollStore**, or your own developer account. The IPA is unsigned; the sideloading tool signs it.
 
 Requires iOS 17 or later.
 
 ## The mpv folder
 
-Open **Files → On My iPhone → GlassPlayer → mpv**:
+Open **Files → On My iPhone → Folio → mpv**:
 
 ```
 mpv/
@@ -72,9 +74,9 @@ mpv/
 | OSD messages and `mp.create_osd_overlay` (ASS drawing) | `io.popen`, `os.execute` (no curl, yt-dlp, ffmpeg) |
 | `script-message`, `script-binding`, `user-data` | JavaScript (`.js`) scripts |
 | Key bindings (hardware keyboard or saved Commands) | Mouse-only UIs (osc/uosc need a pointer) |
-| Chapters from GlassPlayer's skip lookup | |
+| Chapters from Folio's skip lookup | |
 
-Scripts that need network access should use mpv's own stream loading, or let GlassPlayer do it (e.g. the built-in AniSkip/OAT lookup replaces curl-based OAT scripts).
+Scripts that need network access should use mpv's own stream loading, or let Folio do it (e.g. the built-in AniSkip/OAT lookup replaces curl-based OAT scripts).
 
 ### Shaders
 
@@ -103,4 +105,4 @@ open GlassPlayer.xcodeproj
 - [Anime4K](https://github.com/bloc97/Anime4K), [FSRCNNX](https://github.com/igv/FSRCNN-TensorFlow)
 - Addon protocol by [Stremio](https://github.com/Stremio/stremio-addon-sdk)
 
-The bundled FFmpeg is built with `--enable-gpl --enable-version3`, so GlassPlayer is distributed under the **GNU GPL v3** (see [LICENSE](LICENSE)).
+The bundled FFmpeg is built with `--enable-gpl --enable-version3`, so Folio is distributed under the **GNU GPL v3** (see [LICENSE](LICENSE)).
