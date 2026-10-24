@@ -91,27 +91,36 @@ struct FlowLayout: Layout {
     var spacing: CGFloat = 8
     var lineSpacing: CGFloat = 8
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxW = proposal.width ?? .infinity
+    // Measuring and placing share one row-breaking pass. (They used to wrap
+    // differently: measuring left out the gap before a chip, placing counted
+    // it, so a chip that fit only without the gap was measured on row 1 but
+    // drawn on row 2, below the space the layout had reserved, over the
+    // genres line.)
+    private func frames(_ subviews: Subviews, maxWidth: CGFloat) -> (frames: [CGRect], size: CGSize) {
+        var out: [CGRect] = []
         var x: CGFloat = 0, y: CGFloat = 0, lineH: CGFloat = 0, widest: CGFloat = 0
         for v in subviews {
             let sz = v.sizeThatFits(.unspecified)
-            if x > 0, x + sz.width > maxW { y += lineH + lineSpacing; x = 0; lineH = 0 }
-            x += (x > 0 ? spacing : 0) + sz.width
+            if x > 0, x + spacing + sz.width > maxWidth + 0.5 { y += lineH + lineSpacing; x = 0; lineH = 0 }
+            if x > 0 { x += spacing }
+            out.append(CGRect(origin: CGPoint(x: x, y: y), size: sz))
+            x += sz.width
             lineH = max(lineH, sz.height)
             widest = max(widest, x)
         }
-        return CGSize(width: min(widest, maxW), height: y + lineH)
+        return (out, CGSize(width: widest, height: y + lineH))
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxW = proposal.width ?? .infinity
+        let s = frames(subviews, maxWidth: maxW).size
+        return CGSize(width: min(s.width, maxW), height: s.height)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX, y = bounds.minY, lineH: CGFloat = 0
-        for v in subviews {
-            let sz = v.sizeThatFits(.unspecified)
-            if x > bounds.minX, x + sz.width > bounds.maxX { y += lineH + lineSpacing; x = bounds.minX; lineH = 0 }
-            v.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(sz))
-            x += sz.width + spacing
-            lineH = max(lineH, sz.height)
+        let f = frames(subviews, maxWidth: proposal.width ?? bounds.width).frames
+        for (v, r) in zip(subviews, f) {
+            v.place(at: CGPoint(x: bounds.minX + r.minX, y: bounds.minY + r.minY), proposal: ProposedViewSize(r.size))
         }
     }
 }
