@@ -64,10 +64,14 @@ struct TiltPlayButton: View {
             }
         }
         .background {
-            // Glow that breathes with the sweep (blurred once; only its opacity animates).
-            shape.fill(Theme.accent).blur(radius: 18).opacity(0.25 + glow * 0.45).padding(-4)
+            // Glow that breathes with the sweep. A gradient, not a blur filter:
+            // Core Animation would re-run a blur every frame the page scrolls.
+            EllipticalGradient(colors: [Theme.accent.opacity(0.55), Theme.accent.opacity(0.18), .clear], center: .center, startRadiusFraction: 0.35, endRadiusFraction: 0.75)
+                .padding(-26)
+                .opacity(0.5 + glow * 0.5)
+                .allowsHitTesting(false)
         }
-        .shadow(color: Theme.accent.opacity(0.35), radius: pressed ? 6 : 14, x: -tx * 6, y: 6 - ty * 6)
+        .shadow(color: .black.opacity(0.35), radius: pressed ? 4 : 10, x: -tx * 4, y: 6 - ty * 4)
         .scaleEffect(pressed ? 0.97 : 1)
         .rotation3DEffect(.degrees(-ty * maxDegrees), axis: (x: 1, y: 0, z: 0), perspective: 0.6)
         .rotation3DEffect(.degrees(tx * maxDegrees), axis: (x: 0, y: 1, z: 0), perspective: 0.6)

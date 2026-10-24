@@ -172,19 +172,23 @@ final class Diagnostics: NSObject {
     }
 
     private func startWatchdog() {
-        // Main-thread heartbeat every 250 ms.
-        let t = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in self?.heartbeat() }
+        // Main-thread heartbeat twice a second (with tolerance, so it rides
+        // along with other timers instead of waking the CPU on its own).
+        let t = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in self?.heartbeat() }
+        t.tolerance = 0.2
         RunLoop.main.add(t, forMode: .common)
         let thread = Thread { [weak self] in
             while true {
-                Thread.sleep(forTimeInterval: 0.5)
                 guard let self else { return }
+                self.heartbeatLock.lock(); let active = self.isActive; self.heartbeatLock.unlock()
+                // Nothing to watch in the background: sleep long there.
+                Thread.sleep(forTimeInterval: active ? 1.0 : 5.0)
                 self.heartbeatLock.lock()
                 let stalled = self.isActive ? Date().timeIntervalSince(self.lastHeartbeat) : 0
                 let reported = self.hangReported
-                if stalled > 1.0 && !reported { self.hangReported = true }
+                if stalled > 1.5 && !reported { self.hangReported = true }
                 self.heartbeatLock.unlock()
-                if stalled > 1.0 && !reported {
+                if stalled > 1.5 && !reported {
                     self.log("hang", String(format: "main thread unresponsive for %.1f s", stalled))
                     let text = "\(Date()) main thread stalled \(String(format: "%.1f", stalled)) s\n\n"
                     if let h = try? FileHandle(forWritingTo: self.hangLog) { try? h.seekToEnd(); h.write(text.data(using: .utf8)!); try? h.close() }

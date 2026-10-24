@@ -8,6 +8,7 @@ struct GlassPlayerApp: App {
     init() {
         SettingsKey.registerDefaults()
         Diagnostics.shared.start()
+        EnergyMonitor.shared.start()
         UILab.start()
         PopLab.start()
         MPVFiles.bootstrap()

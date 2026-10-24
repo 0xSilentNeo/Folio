@@ -75,7 +75,9 @@ struct PosterCard: View {
                             .padding(6)
                     }
                 }
-                .shadow(color: .black.opacity(0.4), radius: 6, y: 3)
+                // No drop shadow: every blurred shadow in a grid is re-rendered
+                // on each scroll frame; a hairline edge reads the same on dark.
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 0.5))
             Text(meta.name).font(.caption.weight(.medium)).lineLimit(1).frame(width: width, alignment: .leading)
             let sub = [meta.imdbRating.map { "★ \($0)" }, meta.releaseInfo].compactMap { $0 }.joined(separator: " · ")
             if !sub.isEmpty {

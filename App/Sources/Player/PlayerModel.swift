@@ -278,6 +278,8 @@ final class PlayerModel: ObservableObject {
         setUpRemoteCommands()
         load(item)
         UIApplication.shared.isIdleTimerDisabled = true
+        EnergyMonitor.shared.playing = true
+        EnergyMonitor.shared.note = "renderer=\(renderer) picture=\(PictureMode.current.rawValue)"
     }
 
     func close() {
@@ -304,6 +306,9 @@ final class PlayerModel: ObservableObject {
         }
         client = nil
         UIApplication.shared.isIdleTimerDisabled = false
+        EnergyMonitor.shared.sample(reason: "player closing")
+        EnergyMonitor.shared.playing = false
+        EnergyMonitor.shared.note = ""
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
         onClose?()
@@ -1364,6 +1369,11 @@ extension PlayerModel: MPVClientDelegate {
         case "hwdec-current":
             hwdecCurrent = value.string ?? ""
             dlog("player", "decoder: \(hwdecCurrent.isEmpty || hwdecCurrent == "no" ? "software" : hwdecCurrent)")
+            EnergyMonitor.shared.note = "renderer=\(renderer) picture=\(PictureMode.current.rawValue) decoder=\(hwdecCurrent.isEmpty ? "sw" : hwdecCurrent)"
+            // A minute into playback: one line that says what this file costs.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 60) { [weak self] in
+                if self?.closed == false { EnergyMonitor.shared.sample(reason: "1 min into playback") }
+            }
         case "video-params/gamma":
             updateVideoFormat(gamma: value.string ?? "")
         case "audio-out-params/channels":
