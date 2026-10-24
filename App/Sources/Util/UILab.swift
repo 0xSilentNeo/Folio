@@ -1,4 +1,5 @@
 import UIKit
+import QuartzCore
 
 /// Scripted run for the CI simulator recording (launch argument `-uiLab`):
 /// plays the bundled clip and drives the player chrome on a timer so the
@@ -14,6 +15,7 @@ enum UILab {
 
     static func start() {
         if CommandLine.arguments.contains("-avLab") { avLab(); return }
+        if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-imdbProbe=") }) { imdbProbe(ids: arg.dropFirst("-imdbProbe=".count).split(separator: ",").map(String.init)); return }
         if uiTestLibrary {
             UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
             if let src = Bundle.main.url(forResource: "lab", withExtension: "mp4", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab", withExtension: "mp4") {
@@ -80,6 +82,25 @@ enum UILab {
     /// A/V sync lab (real engine): play a clip with 5.1 audio, hold 2× for 4 s,
     /// release, then switch the renderer the way PiP does and back. Logs
     /// position, audio position and A/V offset every 0.2 s.
+    /// `-imdbProbe=tt…,tt…`: fetch each title page through the real source and
+    /// log what the parser found (cast, photos, roles), to check the page shape.
+    static func imdbProbe(ids: [String]) {
+        Task {
+            for id in ids {
+                let t0 = CACurrentMediaTime()
+                let m = await IMDbSource.details(id: id, type: "series")
+                let cast = m?.credits ?? []
+                dlog("lab", String(format: "probe %@: %@ cast=%d photos=%d roles=%d in %.0f ms", id, m?.name ?? "nil", cast.count,
+                                   cast.filter { $0.photo != nil }.count, cast.filter { $0.character != nil }.count, (CACurrentMediaTime() - t0) * 1000))
+                for c in cast.prefix(4) { dlog("lab", "  \(c.name) as \(c.character ?? "-") \(c.photo ?? "no photo")") }
+                if let m { dlog("lab", "  original=\(m.originalName ?? "-") rating=\(m.contentRating ?? "-") genres=\((m.genres ?? []).joined(separator: ","))") }
+                let wiki = await Wikipedia.article(name: m?.name ?? id, year: m?.releaseInfo, type: "series")
+                dlog("lab", "  wikipedia=\(wiki?.absoluteString ?? "nil")")
+            }
+            dlog("lab", "probe done")
+        }
+    }
+
     private static func avLab() {
         UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
         UserDefaults.standard.set(true, forKey: SettingsKey.holdToSpeed)
