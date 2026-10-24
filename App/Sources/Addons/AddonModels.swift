@@ -213,6 +213,15 @@ struct MetaVideo: Codable, Hashable, Identifiable {
     }
 }
 
+/// One cast credit: who, whom they play, a headshot.
+struct CastMember: Codable, Hashable, Identifiable {
+    var id: String          // IMDb name id (nm…)
+    var name: String
+    var character: String?
+    var photo: String?
+    var imdbURL: URL? { URL(string: "https://www.imdb.com/name/\(id)/") }
+}
+
 struct MetaItem: Codable, Hashable, Identifiable {
     var id: String
     var type: String
@@ -236,6 +245,10 @@ struct MetaItem: Codable, Hashable, Identifiable {
     var director: [String]?
     var contentRating: String?
     var countries: [String]?
+    /// Top-billed cast with headshots and roles (IMDb title page).
+    var credits: [CastMember]?
+    /// Wikipedia article, when IMDb's data names one.
+    var wikipedia: String?
 
     init(id: String, type: String, name: String, poster: String?, description: String?, releaseInfo: String?, imdbRating: String?, genres: [String]?, rank: Int? = nil) {
         self.id = id; self.type = type; self.name = name; self.poster = poster; self.description = description
@@ -262,11 +275,13 @@ struct MetaItem: Codable, Hashable, Identifiable {
         director = c.flexStrings(.director)
         contentRating = c.flexString(.contentRating)
         countries = c.flexStrings(.countries)
+        credits = try? c.decodeIfPresent([CastMember].self, forKey: .credits)
+        wikipedia = c.flexString(.wikipedia)
     }
 
     enum CodingKeys: String, CodingKey {
         case id, type, name, poster, posterShape, background, logo, description, releaseInfo, year, imdbRating, runtime, genres, genre, videos
-        case rank, cast, director, contentRating, countries
+        case rank, cast, director, contentRating, countries, credits, wikipedia
     }
 
     func encode(to encoder: Encoder) throws {
@@ -289,6 +304,8 @@ struct MetaItem: Codable, Hashable, Identifiable {
         try c.encodeIfPresent(director, forKey: .director)
         try c.encodeIfPresent(contentRating, forKey: .contentRating)
         try c.encodeIfPresent(countries, forKey: .countries)
+        try c.encodeIfPresent(credits, forKey: .credits)
+        try c.encodeIfPresent(wikipedia, forKey: .wikipedia)
     }
 
     var isAnime: Bool {

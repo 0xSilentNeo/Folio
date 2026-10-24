@@ -20,6 +20,8 @@ struct MediaMeta: Codable, Hashable {
     var episodeOverview: String?
     /// The show's title in its own language (romaji for anime), if different.
     var originalName: String?
+    var credits: [CastMember]?
+    var contentRating: String?
 
     /// Best 16:9 art for a tile; poster as a last resort.
     var wideArt: String? { episodeThumb ?? background ?? poster }
@@ -46,7 +48,10 @@ actor MetadataService {
         let p = TitleParser.parse(filename)
         guard p.title.count >= 2 else { return nil }
         let key = [p.title.lowercased(), p.year.map(String.init) ?? "", p.season.map(String.init) ?? "", p.episode.map(String.init) ?? ""].joined(separator: "|")
-        if let e = cache[key], e.meta != nil || Date().timeIntervalSince(e.date) < 86400 * 3 { return e.meta }
+        if let e = cache[key], e.meta != nil || Date().timeIntervalSince(e.date) < 86400 * 3 {
+            if let m = e.meta, m.credits == nil { backfillCredits(key: key, meta: m) }
+            return e.meta
+        }
         if let t = inflight[key] { return await t.value }
         let task = Task<MediaMeta?, Never> { await resolve(p) }
         inflight[key] = task
@@ -65,6 +70,8 @@ actor MetadataService {
             var meta = MediaMeta(id: item.id, type: item.type, name: item.name, poster: item.poster, background: item.background,
                                  logo: item.logo, description: item.description, year: item.releaseInfo, rating: item.imdbRating, genres: item.genres)
             meta.originalName = item.originalName
+            meta.credits = item.credits
+            meta.contentRating = item.contentRating
             if type == "series", let ep = p.episode, let video = await episode(of: item.id, season: p.season, episode: ep) {
                 meta.episodeTitle = video.title
                 meta.episodeThumb = video.thumbnail
@@ -97,6 +104,8 @@ actor MetadataService {
             best.background = full.background ?? best.background
             best.poster = full.poster ?? best.poster
             best.originalName = full.originalName
+            best.credits = full.credits
+            best.contentRating = full.contentRating
         }
         return best
     }
@@ -105,6 +114,24 @@ actor MetadataService {
         let s = season ?? 1
         let eps = await IMDbSource.episodes(id: id, season: s)
         return eps.first { $0.episode == episode }
+    }
+
+    private var backfilling = Set<String>()
+
+    /// Entries saved before cast lists existed get them on their next use,
+    /// one title at a time, without blocking the page.
+    private func backfillCredits(key: String, meta: MediaMeta) {
+        guard meta.id.hasPrefix("tt"), backfilling.count < 2, backfilling.insert(key).inserted else { return }
+        Task {
+            if let full = await IMDbSource.details(id: meta.id, type: meta.type), var e = cache[key], var m = e.meta {
+                m.credits = full.credits ?? []
+                m.contentRating = m.contentRating ?? full.contentRating
+                e.meta = m
+                cache[key] = e
+                save()
+            }
+            backfilling.remove(key)
+        }
     }
 
     /// Forget everything looked up (Settings → Library → Refresh Metadata).

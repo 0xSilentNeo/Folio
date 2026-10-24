@@ -25,7 +25,8 @@ enum SettingsKey {
     static let landscapeOnOpen = "landscapeOnOpen"
     static let controlsWidth = "controlsWidth"
     static let panelTransition = "panelTransition"      // morph | morphFrozen | fade
-    static let tileArtwork = "tileArtwork"              // poster | frame          // fraction of the landscape width the controls span
+    static let tileArtwork = "tileArtwork"              // poster | frame
+    static let castPosition = "castPosition"            // top | bottom (title pages)
     static let playlistNames = "playlistNames"          // "episode" | "filename"
 
     // PiP
@@ -96,6 +97,7 @@ enum SettingsKey {
             controlsWidth: 0.8,
             panelTransition: "morphFrozen",
             tileArtwork: "poster",
+            castPosition: "bottom",
             playlistNames: "episode",
             pipEnabled: true,
             pipAuto: true,

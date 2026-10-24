@@ -257,7 +257,7 @@ enum IMDbSource {
     // MARK: - Title details
 
     static func details(id: String, type hint: String) async -> MetaItem? {
-        let key = "title|\(id)|\(language)"
+        let key = "title2|\(id)|\(language)"
         if let hit = cached(key, ttl: 7 * 86400, as: MetaItem.self) { return hit }
         guard let page = await html("/title/\(id)/") else { return nil }
         var m: MetaItem?
@@ -292,6 +292,11 @@ enum IMDbSource {
                     if m2!.originalName == nil, (d["id"] as? String) == id, let o = text(d["originalTitleText"]), o != m2!.name {
                         m2!.originalName = o
                     }
+                    // Top cast with headshots: `cast { edges { node { name, characters } } }`.
+                    if (m2!.credits ?? []).isEmpty, let cast = d["cast"] as? [String: Any], let edges = cast["edges"] as? [[String: Any]] {
+                        let list = castMembers(edges.compactMap { $0["node"] as? [String: Any] })
+                        if !list.isEmpty { m2!.credits = list }
+                    }
                     if let c = d["countriesOfOrigin"] as? [String: Any], let list = c["countries"] as? [[String: Any]] {
                         m2!.countries = list.compactMap { $0["id"] as? String }
                         return false
@@ -313,7 +318,19 @@ enum IMDbSource {
                 m = m2
             }
         }
-        if let m { store(key, m); dlog("imdb", "details \(id): \(m.name) rating=\(m.imdbRating ?? "-")") } else { dlog("imdb/error", "details \(id): nothing parsed (\(page.count) chars)") }
+        if var m2 = m, (m2.credits ?? []).isEmpty, let next = nextData(page) {
+            // No photo cast list on this page shape: fall back to the "Stars" credits (names only).
+            var found: [CastMember] = []
+            walk(next) { d in
+                guard found.isEmpty, let pcs = d["principalCredits"] as? [[String: Any]] else { return true }
+                for pc in pcs where typeID(pc["category"]) == "cast" {
+                    found = castMembers((pc["credits"] as? [[String: Any]]) ?? [])
+                }
+                return found.isEmpty
+            }
+            if !found.isEmpty { m2.credits = found; m = m2 }
+        }
+        if let m { store(key, m); dlog("imdb", "details \(id): \(m.name) rating=\(m.imdbRating ?? "-") cast=\(m.credits?.count ?? 0)\((m.credits?.first?.photo != nil) ? " with photos" : "")") } else { dlog("imdb/error", "details \(id): nothing parsed (\(page.count) chars)") }
         return m
     }
 
@@ -478,6 +495,21 @@ enum IMDbSource {
         if let s = v as? String { return Int(s) }
         return nil
     }
+    /// Credit nodes (`{ name: { id, nameText, primaryImage }, characters: [{ name }] }`) → cast members.
+    private static func castMembers(_ nodes: [[String: Any]]) -> [CastMember] {
+        var out: [CastMember] = []
+        var seen = Set<String>()
+        for n in nodes {
+            guard let person = n["name"] as? [String: Any], let pid = person["id"] as? String, pid.hasPrefix("nm"),
+                  let name = text(person["nameText"]), seen.insert(pid).inserted else { continue }
+            let chars = ((n["characters"] as? [[String: Any]]) ?? []).compactMap { $0["name"] as? String }
+            let photo = sized(imageURL(person["primaryImage"]), width: 180)
+            out.append(CastMember(id: pid, name: unescape(name), character: chars.isEmpty ? nil : unescape(chars.prefix(2).joined(separator: " / ")), photo: photo))
+            if out.count >= 24 { break }
+        }
+        return out
+    }
+
     private static func imageURL(_ v: Any?) -> String? {
         if let s = v as? String, s.hasPrefix("http") { return s }
         if let d = v as? [String: Any] { return d["url"] as? String }

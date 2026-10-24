@@ -1,5 +1,4 @@
 import SwiftUI
-import CoreMotion
 
 /// Landing page for a library file: backdrop, poster, synopsis, rating, a
 /// 3D play button, and the other files of the same title (episodes) in the
@@ -13,6 +12,7 @@ struct TitleHeroView: View {
     @AppStorage("heroView") private var viewMode = LibraryViewMode.details.rawValue
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
+    @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
 
     /// Episode synopsis, unless spoilers are hidden and it hasn't been watched
     /// (then the show's own description).
@@ -78,7 +78,12 @@ struct TitleHeroView: View {
                             Text(g.prefix(5).joined(separator: " · ")).font(.footnote).foregroundStyle(.secondary)
                         }
                         fileFacts
+                        if castPosition == "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, wide ? -28 : -20) }
                         if siblings.count > 1 { episodes }
+                        if castPosition != "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, wide ? -28 : -20) }
+                        if let m = meta, m.id.hasPrefix("tt") {
+                            TitleLinks(name: m.name, year: m.year.map { String($0.prefix(4)) }, type: m.type, imdbID: m.id)
+                        }
                     }
                     .padding(.horizontal, wide ? 28 : 20)
                     .padding(.top, 14)
@@ -148,6 +153,7 @@ struct TitleHeroView: View {
             HStack(spacing: 8) {
                 if showRatings, let r = meta?.rating { chip("★ \(r)", strong: true) }
                 if let y = meta?.year ?? parsed.year.map(String.init) { chip(y) }
+                if let c = meta?.contentRating { chip(c) }
                 if let res = parsed.resolution { chip(res) }
                 chip(file.pathExtension.uppercased())
                 if let e = entry, e.isFinished { chip("Watched") }
@@ -232,123 +238,6 @@ struct TitleHeroView: View {
         if let e = entry { history.remove(e) }
         play(file)
     }
-}
-
-// MARK: - 3D play button
-
-/// Glass play button that tilts toward the finger (and, gently, with the
-/// device) with a highlight that slides across like light on a bevel.
-struct TiltPlayButton: View {
-    let title: String
-    var subtitle: String? = nil
-    let action: () -> Void
-    @State private var tilt = CGSize.zero          // -1…1
-    @State private var pressed = false
-    @State private var size = CGSize(width: 160, height: 56)
-    @StateObject private var motion = MotionTilt()
-
-    var body: some View {
-        let tx = tilt.width + motion.tilt.width * 0.35
-        let ty = tilt.height + motion.tilt.height * 0.35
-        HStack(spacing: 12) {
-            Image(systemName: "play.fill").font(.system(size: 20, weight: .bold))
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.headline)
-                if let subtitle { Text(subtitle).font(.caption).foregroundStyle(.white.opacity(0.75)) }
-            }
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 26).frame(height: 56)
-        .background {
-            ZStack {
-                RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Theme.gradient)
-                // moving highlight = the parallax layer
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(LinearGradient(colors: [.white.opacity(0.45), .clear, .white.opacity(0.08)],
-                                         startPoint: UnitPoint(x: 0.5 - tx * 0.5, y: 0.5 - ty * 0.6),
-                                         endPoint: UnitPoint(x: 0.5 + tx * 0.5 + 0.4, y: 0.5 + ty * 0.6 + 0.6)))
-                RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.35), lineWidth: 1)
-            }
-        }
-        .shadow(color: Theme.accent.opacity(0.45), radius: pressed ? 8 : 18, x: -tx * 10, y: 8 - ty * 10)
-        .scaleEffect(pressed ? 0.96 : 1)
-        .rotation3DEffect(.degrees(-ty * 12), axis: (x: 1, y: 0, z: 0), perspective: 0.6)
-        .rotation3DEffect(.degrees(tx * 12), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
-        .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.7), value: tilt)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: pressed)
-        .animation(.easeOut(duration: 0.15), value: motion.tilt)
-        .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .background(GeometryReader { g in Color.clear.onAppear { size = g.size } })
-        .gesture(
-            DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                .onChanged { v in
-                    pressed = true
-                    tilt = CGSize(width: min(1, max(-1, (v.location.x / max(size.width, 1) - 0.5) * 2)),
-                                  height: min(1, max(-1, (v.location.y / max(size.height, 1) - 0.5) * 2)))
-                }
-                .onEnded { v in
-                    pressed = false
-                    tilt = .zero
-                    if hypot(v.translation.width, v.translation.height) < 12 {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        action()
-                    }
-                }
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityIdentifier("heroPlay")
-        .onAppear { motion.start() }
-        .onDisappear { motion.stop() }
-    }
-}
-
-/// Device attitude → small tilt offset, for the parallax on the play button.
-@MainActor
-final class MotionTilt: ObservableObject {
-    @Published var tilt = CGSize.zero
-    private let manager = CMMotionManager()
-    private var base: (roll: Double, pitch: Double)?
-    private var wanted = false
-    private var observers: [NSObjectProtocol] = []
-
-    init() {
-        // Motion updates re-render the button 30× a second: pause them while a
-        // video plays (the page is still alive under the player) or the app
-        // is in the background.
-        let nc = NotificationCenter.default
-        for (name, on) in [(Notification.Name.playerWillShow, false), (.playerDidHide, true),
-                           (UIApplication.didEnterBackgroundNotification, false), (UIApplication.willEnterForegroundNotification, true)] {
-            observers.append(nc.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    if on, self.wanted, PlayerPresenter.current == nil { self.begin() } else if !on { self.pause() }
-                }
-            })
-        }
-    }
-
-    func start() {
-        wanted = true
-        guard PlayerPresenter.current == nil else { return }
-        begin()
-    }
-
-    private func pause() { manager.stopDeviceMotionUpdates(); base = nil }
-
-    private func begin() {
-        guard manager.isDeviceMotionAvailable, !manager.isDeviceMotionActive else { return }
-        manager.deviceMotionUpdateInterval = 1.0 / 30
-        manager.startDeviceMotionUpdates(to: .main) { [weak self] m, _ in
-            guard let self, let m else { return }
-            if base == nil { base = (m.attitude.roll, m.attitude.pitch) }
-            let dr = m.attitude.roll - (base?.roll ?? 0), dp = m.attitude.pitch - (base?.pitch ?? 0)
-            let t = CGSize(width: min(1, max(-1, dr * 1.6)), height: min(1, max(-1, dp * 1.6)))
-            // Only re-render for a visible change.
-            if abs(t.width - tilt.width) > 0.02 || abs(t.height - tilt.height) > 0.02 { tilt = t }
-        }
-    }
-    func stop() { wanted = false; pause(); tilt = .zero }
 }
 
 // MARK: - View modes shared by Home and the hero page

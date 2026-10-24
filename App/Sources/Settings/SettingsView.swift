@@ -791,6 +791,7 @@ struct GeneralSettings: View {
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
+    @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
 
     var body: some View {
         Form {
@@ -805,6 +806,10 @@ struct GeneralSettings: View {
             Section {
                 Toggle("Hide spoilers", isOn: $hideSpoilers)
                 Toggle("Show IMDb ratings", isOn: $showRatings)
+                Picker("Cast on title pages", selection: $castPosition) {
+                    Text("Above the episodes").tag("top")
+                    Text("At the bottom").tag("bottom")
+                }
             } footer: {
                 Text("Hide spoilers blurs the pictures and hides the synopsis of episodes you haven't finished.")
             }
