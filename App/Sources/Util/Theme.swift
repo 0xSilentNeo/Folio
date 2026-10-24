@@ -69,9 +69,12 @@ struct TopScrollScrim: ViewModifier {
                     withAnimation(.easeOut(duration: 0.2)) { shown = v }
                 }
                 .overlay(alignment: .top) {
-                    LinearGradient(stops: [.init(color: Theme.background, location: 0), .init(color: Theme.background.opacity(0.92), location: 0.55),
+                    // Solid behind the Back / ⋯ buttons (to ~56 pt below the safe
+                    // area), then fades out: 64 pt left the Resume button showing
+                    // under Back (screenshot run 2).
+                    LinearGradient(stops: [.init(color: Theme.background, location: 0), .init(color: Theme.background, location: 0.62),
                                            .init(color: Theme.background.opacity(0), location: 1)], startPoint: .top, endPoint: .bottom)
-                        .frame(height: 64)
+                        .frame(height: 92)
                         .ignoresSafeArea(edges: .top)
                         .opacity(shown ? 1 : 0)
                         .allowsHitTesting(false)
