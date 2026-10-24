@@ -192,6 +192,7 @@ final class PlayerModel: ObservableObject {
     private var videoOffForBackground = false
     private var pendingMain = false
     private var pipRestoring = false
+    private var energyNoteFor: String?
     private var awaitingFirstFrameAfterPiP = false
 
     private var snapshotTimer: Timer?
@@ -1420,9 +1421,14 @@ extension PlayerModel: MPVClientDelegate {
             hwdecCurrent = value.string ?? ""
             dlog("player", "decoder: \(hwdecCurrent.isEmpty || hwdecCurrent == "no" ? "software" : hwdecCurrent)")
             EnergyMonitor.shared.note = "renderer=\(renderer) picture=\(PictureMode.current.rawValue) decoder=\(hwdecCurrent.isEmpty ? "sw" : hwdecCurrent)"
-            // A minute into playback: one line that says what this file costs.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 60) { [weak self] in
-                if self?.closed == false { EnergyMonitor.shared.sample(reason: "1 min into playback") }
+            // A minute into playback: one line that says what this file costs
+            // (once per file, not once per decoder change).
+            if energyNoteFor != item.id {
+                energyNoteFor = item.id
+                let id = item.id
+                DispatchQueue.main.asyncAfter(deadline: .now() + 60) { [weak self] in
+                    if let self, !self.closed, self.item.id == id { EnergyMonitor.shared.sample(reason: "1 min into playback\(self.isPiPActive ? " (PiP)" : "")") }
+                }
             }
         case "video-params/gamma":
             updateVideoFormat(gamma: value.string ?? "")
