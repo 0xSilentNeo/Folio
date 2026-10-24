@@ -132,7 +132,17 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
 
     func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle { .none }
     func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle { .none }
+    private static var stacksLogged = 0
     func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
+        if Self.stacksLogged < 4 {
+            Self.stacksLogged += 1
+            let stack = Thread.callStackSymbols.prefix(40).map { line -> String in
+                // "3  UIKitCore  0x… -[UIPopoverPresentationController _…] + 12" → the symbol part
+                let parts = line.split(separator: " ", omittingEmptySubsequences: true)
+                return parts.count > 3 ? parts[1] + " " + parts[3...].joined(separator: " ") : line
+            }.joined(separator: " | ")
+            dlog("ui", "panel: dismiss asked by: \(stack)")
+        }
         onOutsideTap?()
         return false
     }
