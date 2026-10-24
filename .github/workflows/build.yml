@@ -77,16 +77,7 @@ jobs:
           file "$APP/GlassPlayer"
           mkdir -p ipa/Payload
           cp -R "$APP" ipa/Payload/
-          # Store the main binary and .car uncompressed (type 0) so signing
-          # tools like kSign can extract the IPA without errors.  Everything
-          # else is deflated normally.
-          (cd ipa \
-            && zip -qry "../GlassPlayer-$VERSION.ipa" Payload \
-               -x "Payload/GlassPlayer.app/GlassPlayer" \
-               -x "Payload/GlassPlayer.app/Assets.car" \
-            && zip -qr0 "../GlassPlayer-$VERSION.ipa" \
-               "Payload/GlassPlayer.app/GlassPlayer" \
-               "Payload/GlassPlayer.app/Assets.car")
+          (cd ipa && zip -qry "../GlassPlayer-$VERSION.ipa" Payload)
           ls -lh GlassPlayer-*.ipa
 
       - uses: actions/upload-artifact@v4
