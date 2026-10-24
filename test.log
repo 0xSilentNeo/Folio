@@ -1,0 +1,374 @@
+Command line invocation:
+    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=63431EE4-163E-4629-AC61-51E89581F17A -derivedDataPath build "-only-testing:GlassPlayerUITests/TapDuringAnimationTests/testMorphForComparison"
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS Simulator, arch:arm64, id:63431EE4-163E-4629-AC61-51E89581F17A, OS:26.2, name:lab }
+{ platform:iOS Simulator, arch:x86_64, id:63431EE4-163E-4629-AC61-51E89581F17A, OS:26.2, name:lab }
+2026-10-24 10:57:35.992136+0000 GlassPlayerUITests-Runner[14301:46554] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-24 10:57:42.374.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-24 10:57:42.376.
+Test Suite 'TapDuringAnimationTests' started at 2026-10-24 10:57:42.376.
+Test Case '-[GlassPlayerUITests.TapDuringAnimationTests testMorphForComparison]' started.
+    t =     0.00s Start Test at 2026-10-24 10:57:42.377
+    t =     0.57s Set Up
+MIDTAP idle wait off: waitForQuiescenceIncludingAnimationsIdle:isPreEvent:
+    t =     0.60s Open dev.silentneo.glassplayer
+    t =     0.60s     Launch dev.silentneo.glassplayer
+    t =    11.09s         Setting up automation session
+    t =    12.69s Setting device orientation to Landscape Left
+    t =    12.72s     Device orientation changed to Landscape Left
+    t =    12.77s Waiting 20.0s for "Settings" Button to exist
+    t =    13.42s     Interface orientation changed to Landscape Right
+    t =    13.85s     Checking `Expect predicate `existsNoRetry == 1` for object "Settings" Button`
+    t =    13.85s         Checking existence of `"Settings" Button`
+    t =    17.96s Find the "Settings" Button
+    t =    19.19s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    19.19s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    19.32s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    19.39s     Synthesize event
+    t =    19.39s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    19.42s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    19.49s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.17s Checking existence of `"Playback" StaticText`
+    t =    22.63s Find the "Playback" StaticText
+    t =    25.99s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    25.99s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.08s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    26.19s     Synthesize event
+    t =    26.19s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.25s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.34s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.88s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    26.88s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    27.15s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    27.54s     Synthesize event
+    t =    27.56s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    27.96s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    28.64s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    29.16s Checking existence of `"Playback" StaticText`
+    t =    30.54s Find the "Playback" StaticText
+MIDTAP morphFrozen round 0: tap 150 ms after close → open in 2242 ms
+    t =    33.43s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    33.44s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    33.53s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    33.67s     Synthesize event
+    t =    33.68s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    33.76s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    33.89s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    36.33s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    36.33s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    36.37s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    36.42s     Synthesize event
+    t =    36.42s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    36.45s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    36.49s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    36.86s Checking existence of `"Playback" StaticText`
+    t =    38.10s Find the "Playback" StaticText
+    t =    40.51s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    40.51s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    40.56s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    40.65s     Synthesize event
+    t =    40.65s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    40.70s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    40.80s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    41.46s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    41.47s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    42.19s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    42.24s     Synthesize event
+    t =    42.27s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    42.33s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    42.38s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    42.88s Checking existence of `"Playback" StaticText`
+    t =    44.03s Find the "Playback" StaticText
+MIDTAP morphFrozen round 1: tap 250 ms after close → open in 1288 ms
+    t =    46.17s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    46.17s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    46.25s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    46.31s     Synthesize event
+    t =    46.31s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    46.39s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    46.45s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    48.83s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    48.83s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    48.91s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    48.99s     Synthesize event
+    t =    49.05s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    49.09s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    49.29s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    49.62s Checking existence of `"Playback" StaticText`
+    t =    50.71s Find the "Playback" StaticText
+    t =    53.42s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    53.42s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    53.55s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    53.70s     Synthesize event
+    t =    53.70s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    53.78s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    53.86s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    54.60s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    54.60s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    54.88s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    55.14s     Synthesize event
+    t =    55.15s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    55.21s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    55.35s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    55.76s Checking existence of `"Playback" StaticText`
+    t =    57.02s Find the "Playback" StaticText
+MIDTAP morphFrozen round 2: tap 350 ms after close → open in 1509 ms
+    t =    59.28s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    59.28s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    59.76s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    60.00s     Synthesize event
+    t =    60.01s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.14s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.25s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    62.78s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    62.78s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    62.81s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    62.86s     Synthesize event
+    t =    62.86s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    62.88s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    62.93s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    63.34s Checking existence of `"Playback" StaticText`
+    t =    65.62s Find the "Playback" StaticText
+    t =    67.96s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    67.96s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    68.14s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    68.56s     Synthesize event
+    t =    68.56s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    68.74s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    68.94s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    69.87s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    69.87s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    70.11s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    70.25s     Synthesize event
+    t =    70.26s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    70.33s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    70.39s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    70.87s Checking existence of `"Playback" StaticText`
+    t =    72.19s Find the "Playback" StaticText
+MIDTAP morphFrozen round 3: tap 500 ms after close → open in 1604 ms
+    t =    74.48s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    74.48s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    74.59s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    74.68s     Synthesize event
+    t =    74.69s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    74.78s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    74.85s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    77.23s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    77.23s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    77.26s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    77.29s     Synthesize event
+    t =    77.29s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    77.31s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    77.34s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    77.68s Checking existence of `"Playback" StaticText`
+    t =    78.12s Find the "Playback" StaticText
+    t =    80.50s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    80.50s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    80.63s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    80.74s     Synthesize event
+    t =    80.76s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    80.83s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    80.91s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    81.99s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    81.99s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.19s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    82.21s     Synthesize event
+    t =    82.22s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.23s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.27s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.64s Checking existence of `"Playback" StaticText`
+    t =    83.21s Find the "Playback" StaticText
+MIDTAP morphFrozen round 4: tap 700 ms after close → open in 954 ms
+    t =    85.60s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    85.60s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    85.73s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    85.86s     Synthesize event
+    t =    85.87s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    85.96s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    86.04s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.42s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    88.42s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.55s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    88.59s     Synthesize event
+    t =    88.60s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.62s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.67s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.99s Checking existence of `"Playback" StaticText`
+    t =    89.61s Find the "Playback" StaticText
+    t =    92.09s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    92.09s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    92.20s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    92.31s     Synthesize event
+    t =    92.31s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    92.38s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    92.46s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    93.02s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    93.02s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    93.32s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    93.49s     Synthesize event
+    t =    93.49s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    93.65s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    93.69s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    94.04s Checking existence of `"Playback" StaticText`
+    t =    94.65s Find the "Playback" StaticText
+MIDTAP morphFrozen round 5: tap 150 ms after close → open in 826 ms
+    t =    96.88s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =    96.88s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    97.01s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    97.16s     Synthesize event
+    t =    97.16s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    97.25s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    97.34s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    99.71s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =    99.72s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    99.78s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =    99.82s     Synthesize event
+    t =    99.84s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    99.86s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    99.88s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   100.19s Checking existence of `"Playback" StaticText`
+    t =   100.96s Find the "Playback" StaticText
+    t =   103.36s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =   103.36s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   103.46s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   103.58s     Synthesize event
+    t =   103.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   103.65s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   103.72s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   104.38s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =   104.38s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   105.10s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   105.15s     Synthesize event
+    t =   105.15s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   105.21s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   105.24s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   105.56s Checking existence of `"Playback" StaticText`
+    t =   106.09s Find the "Playback" StaticText
+MIDTAP morphFrozen round 6: tap 250 ms after close → open in 1246 ms
+    t =   108.81s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =   108.81s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   108.98s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   109.11s     Synthesize event
+    t =   109.12s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   109.17s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   109.25s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   111.67s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =   111.67s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   111.71s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   111.75s     Synthesize event
+    t =   111.75s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   111.78s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   111.81s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   112.16s Checking existence of `"Playback" StaticText`
+    t =   113.66s Find the "Playback" StaticText
+    t =   115.82s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =   115.82s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   115.89s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   116.00s     Synthesize event
+    t =   116.01s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   116.11s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   116.17s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   116.90s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =   116.90s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   117.13s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   117.33s     Synthesize event
+    t =   117.34s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   117.36s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   117.40s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   117.72s Checking existence of `"Playback" StaticText`
+    t =   117.91s Find the "Playback" StaticText
+MIDTAP morphFrozen round 7: tap 350 ms after close → open in 1091 ms
+    t =   120.81s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =   120.81s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   120.90s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   121.03s     Synthesize event
+    t =   121.04s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   121.10s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   121.17s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   123.59s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =   123.59s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   123.61s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   123.65s     Synthesize event
+    t =   123.65s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   123.67s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   123.70s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   124.04s Checking existence of `"Playback" StaticText`
+    t =   124.65s Find the "Playback" StaticText
+    t =   127.07s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =   127.07s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   127.19s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   127.32s     Synthesize event
+    t =   127.33s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   127.39s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   127.49s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   128.35s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =   128.35s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   128.48s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   128.67s     Synthesize event
+    t =   128.68s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   128.70s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   128.76s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   129.09s Checking existence of `"Playback" StaticText`
+    t =   129.49s Find the "Playback" StaticText
+MIDTAP morphFrozen round 8: tap 500 ms after close → open in 980 ms
+    t =   132.08s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =   132.08s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   132.18s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   132.25s     Synthesize event
+    t =   132.26s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   132.33s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   132.40s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   134.74s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =   134.74s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   134.78s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   134.81s     Synthesize event
+    t =   134.82s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   134.84s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   134.88s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   135.20s Checking existence of `"Playback" StaticText`
+    t =   135.80s Find the "Playback" StaticText
+    t =   138.10s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =   138.11s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   138.23s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   138.35s     Synthesize event
+    t =   138.36s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   138.42s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   138.49s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   139.55s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (642.0, 317.0)
+    t =   139.55s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   139.64s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   139.68s     Synthesize event
+    t =   139.69s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   139.73s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   139.77s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   140.09s Checking existence of `"Playback" StaticText`
+    t =   140.85s Find the "Playback" StaticText
+MIDTAP morphFrozen round 9: tap 700 ms after close → open in 1067 ms
+    t =   143.17s Tap Target Application 'dev.silentneo.glassplayer'[0.25, 0.45]
+    t =   143.18s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   143.34s     Check for interrupting elements affecting "GlassPlayer" Application
+    t =   143.46s     Synthesize event
+    t =   143.47s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   143.56s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   143.64s         Find the Target Application 'dev.silentneo.glassplayer'
+MIDTAP morphFrozen opened 10/10
+    t =   146.03s Tear Down
+Test Case '-[GlassPlayerUITests.TapDuringAnimationTests testMorphForComparison]' passed (146.516 seconds).
+Test Suite 'TapDuringAnimationTests' passed at 2026-10-24 11:00:08.893.
+	 Executed 1 test, with 0 failures (0 unexpected) in 146.516 (146.517) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-24 11:00:08.896.
+	 Executed 1 test, with 0 failures (0 unexpected) in 146.516 (146.520) seconds
+Test Suite 'Selected tests' passed at 2026-10-24 11:00:08.896.
+	 Executed 1 test, with 0 failures (0 unexpected) in 146.516 (146.522) seconds
+2026-10-24 11:00:11.414 xcodebuild[12532:41660] [MT] IDETestOperationsObserverDebug: 168.035 elapsed -- Testing started completed.
+2026-10-24 11:00:11.415 xcodebuild[12532:41660] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-24 11:00:11.415 xcodebuild[12532:41660] [MT] IDETestOperationsObserverDebug: 168.035 sec, +168.035 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.24_10-57-11-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

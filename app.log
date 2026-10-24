@@ -1,0 +1,242 @@
+10:57:53.161 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=41.67 GB
+10:57:54.731 [hang] main thread unresponsive for 1.6 s
+10:57:54.766 [app] first screen 3990 ms after process start
+10:57:55.719 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/63431EE4-163E-4629-AC61-51E89581F17A/data/Containers/Bundle/Application/13B7F487-5F4C-4ABF-9461-DEA283213F19/GlassPlayer.app/lab/lab.mp4
+10:57:55.897 [app] active
+10:57:56.894 [player] start renderer=metal
+10:57:56.895 [lab] engine not started (lab)
+10:57:58.367 [perf] panel tracks prebuilt in 100 ms
+10:57:58.368 [perf] panel tracks prebuilt in 0 ms
+10:57:59.043 [perf] panel settings prebuilt in 466 ms
+10:57:59.043 [perf] panel settings prebuilt in 0 ms
+10:57:59.124 [perf] panel nowPlaying prebuilt in 76 ms
+10:57:59.124 [perf] panel nowPlaying prebuilt in 0 ms
+10:58:02.118 [ui] panel settings
+10:58:02.126 [ui] present panel settings from bar item 340×≤225
+10:58:02.127 [ui] panel: want settings (shown=none busy=false)
+10:58:02.150 [ui] panel: open settings
+10:58:02.291 [ui] present panel settings from bar item 340×≤225
+10:58:03.850 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+10:58:04.307 [imdb] webkit load /title/tt35511966
+10:58:04.424 [ui] panel: opened settings
+10:58:04.432 [perf] panel open settings [morphFrozen]: 30 frames in 2274 ms, worst 912 ms, 12 late (frame 16.7 ms) · built in 23 ms, 24 ms after the tap
+10:58:08.890 [ui] panel: tap outside
+10:58:08.919 [ui] panel: close settings
+10:58:09.867 [ui] panel: closed settings
+10:58:09.868 [perf] panel close settings [morphFrozen]: 29 frames in 949 ms, worst 187 ms, 3 late (frame 16.7 ms)
+10:58:10.985 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+10:58:11.240 [ui] panel settings
+10:58:11.241 [ui] present panel settings from bar item 340×≤225
+10:58:11.241 [ui] panel: want settings (shown=none busy=false)
+10:58:11.242 [ui] panel: open settings
+10:58:11.258 [ui] present panel settings from bar item 340×≤225
+10:58:12.742 [ui] panel: opened settings
+10:58:12.743 [perf] panel open settings [morphFrozen]: 28 frames in 1501 ms, worst 464 ms, 12 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+10:58:16.458 [ui] panel: tap outside
+10:58:16.496 [ui] panel: close settings
+10:58:17.437 [ui] panel: closed settings
+10:58:17.437 [perf] panel close settings [morphFrozen]: 46 frames in 941 ms, worst 24 ms, 0 late (frame 16.7 ms)
+10:58:18.975 [ui] panel settings
+10:58:18.976 [ui] present panel settings from bar item 340×≤225
+10:58:18.976 [ui] panel: want settings (shown=none busy=false)
+10:58:18.977 [ui] panel: open settings
+10:58:18.995 [ui] present panel settings from bar item 340×≤225
+10:58:20.341 [ui] panel: opened settings
+10:58:20.341 [perf] panel open settings [morphFrozen]: 34 frames in 1363 ms, worst 319 ms, 11 late (frame 16.7 ms) · built in 1 ms, 2 ms after the tap
+10:58:23.372 [ui] panel: tap outside
+10:58:23.383 [ui] panel: close settings
+10:58:24.360 [ui] panel: closed settings
+10:58:24.360 [perf] panel close settings [morphFrozen]: 23 frames in 977 ms, worst 501 ms, 2 late (frame 16.7 ms)
+10:58:25.040 [ui] panel settings
+10:58:25.041 [ui] present panel settings from bar item 340×≤225
+10:58:25.041 [ui] panel: want settings (shown=none busy=false)
+10:58:25.041 [ui] panel: open settings
+10:58:25.055 [ui] present panel settings from bar item 340×≤225
+10:58:26.006 [energy] cpu 38% (main 32%, com.apple.UIKit.in 5%, other 1%) thermal=nominal playing=no
+10:58:26.294 [ui] panel: opened settings
+10:58:26.294 [perf] panel open settings [morphFrozen]: 22 frames in 1252 ms, worst 403 ms, 2 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+10:58:29.006 [ui] panel: tap outside
+10:58:29.027 [ui] panel: close settings
+10:58:29.330 [imdb/error] webkit timeout for /title/tt35511966
+10:58:29.337 [perf] imdb /title/tt35511966/ via web view 26566 ms
+10:58:29.969 [ui] panel: closed settings
+10:58:29.969 [perf] panel close settings [morphFrozen]: 45 frames in 942 ms, worst 43 ms, 3 late (frame 16.7 ms)
+10:58:31.791 [ui] panel settings
+10:58:31.793 [ui] present panel settings from bar item 340×≤225
+10:58:31.793 [ui] panel: want settings (shown=none busy=false)
+10:58:31.794 [ui] panel: open settings
+10:58:31.817 [ui] present panel settings from bar item 340×≤225
+10:58:33.306 [ui] panel: opened settings
+10:58:33.310 [perf] panel open settings [morphFrozen]: 22 frames in 1512 ms, worst 384 ms, 8 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+10:58:36.422 [ui] panel: tap outside
+10:58:36.433 [ui] panel: close settings
+10:58:37.316 [ui] panel: closed settings
+10:58:37.316 [perf] panel close settings [morphFrozen]: 40 frames in 883 ms, worst 116 ms, 2 late (frame 16.7 ms)
+10:58:37.924 [ui] panel settings
+10:58:37.924 [ui] present panel settings from bar item 340×≤225
+10:58:37.924 [ui] panel: want settings (shown=none busy=false)
+10:58:37.924 [ui] panel: open settings
+10:58:37.934 [ui] present panel settings from bar item 340×≤225
+10:58:39.059 [ui] panel: opened settings
+10:58:39.059 [perf] panel open settings [morphFrozen]: 32 frames in 1135 ms, worst 226 ms, 6 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+10:58:42.939 [ui] panel: tap outside
+10:58:42.960 [ui] panel: close settings
+10:58:43.857 [ui] panel: closed settings
+10:58:43.857 [perf] panel close settings [morphFrozen]: 47 frames in 896 ms, worst 28 ms, 1 late (frame 16.7 ms)
+10:58:45.409 [ui] panel settings
+10:58:45.410 [ui] present panel settings from bar item 340×≤225
+10:58:45.410 [ui] panel: want settings (shown=none busy=false)
+10:58:45.411 [ui] panel: open settings
+10:58:45.426 [ui] present panel settings from bar item 340×≤225
+10:58:47.193 [ui] panel: opened settings
+10:58:47.193 [perf] panel open settings [morphFrozen]: 35 frames in 1782 ms, worst 705 ms, 10 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+10:58:51.539 [ui] panel: tap outside
+10:58:51.560 [ui] panel: close settings
+10:58:52.502 [ui] panel: closed settings
+10:58:52.503 [perf] panel close settings [morphFrozen]: 42 frames in 942 ms, worst 81 ms, 2 late (frame 16.7 ms)
+10:58:52.989 [ui] panel settings
+10:58:52.989 [ui] present panel settings from bar item 340×≤225
+10:58:52.989 [ui] panel: want settings (shown=none busy=false)
+10:58:52.990 [ui] panel: open settings
+10:58:52.995 [ui] present panel settings from bar item 340×≤225
+10:58:54.275 [ui] panel: opened settings
+10:58:54.275 [perf] panel open settings [morphFrozen]: 36 frames in 1285 ms, worst 220 ms, 7 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+10:58:56.371 [energy] cpu 0% thermal=nominal playing=no
+10:58:57.408 [ui] panel: tap outside
+10:58:57.421 [ui] panel: close settings
+10:58:58.292 [ui] panel: closed settings
+10:58:58.292 [perf] panel close settings [morphFrozen]: 46 frames in 871 ms, worst 24 ms, 0 late (frame 16.7 ms)
+10:58:59.823 [ui] panel settings
+10:58:59.824 [ui] present panel settings from bar item 340×≤225
+10:58:59.824 [ui] panel: want settings (shown=none busy=false)
+10:58:59.825 [ui] panel: open settings
+10:58:59.835 [ui] present panel settings from bar item 340×≤225
+10:59:01.023 [ui] panel: opened settings
+10:59:01.023 [perf] panel open settings [morphFrozen]: 21 frames in 1198 ms, worst 222 ms, 10 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+10:59:03.458 [ui] panel: tap outside
+10:59:03.488 [ui] panel: close settings
+10:59:04.523 [ui] panel: closed settings
+10:59:04.523 [perf] panel close settings [morphFrozen]: 45 frames in 1035 ms, worst 37 ms, 2 late (frame 16.7 ms)
+10:59:04.808 [ui] panel settings
+10:59:04.808 [ui] present panel settings from bar item 340×≤225
+10:59:04.808 [ui] panel: want settings (shown=none busy=false)
+10:59:04.809 [ui] panel: open settings
+10:59:04.818 [ui] present panel settings from bar item 340×≤225
+10:59:05.971 [ui] panel: opened settings
+10:59:05.972 [perf] panel open settings [morphFrozen]: 20 frames in 1163 ms, worst 320 ms, 5 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+10:59:08.589 [ui] panel: tap outside
+10:59:08.609 [ui] panel: close settings
+10:59:09.505 [ui] panel: closed settings
+10:59:09.505 [perf] panel close settings [morphFrozen]: 47 frames in 895 ms, worst 17 ms, 0 late (frame 16.7 ms)
+10:59:11.157 [ui] panel settings
+10:59:11.158 [ui] present panel settings from bar item 340×≤225
+10:59:11.158 [ui] panel: want settings (shown=none busy=false)
+10:59:11.159 [ui] panel: open settings
+10:59:11.176 [ui] present panel settings from bar item 340×≤225
+10:59:12.346 [ui] panel: opened settings
+10:59:12.346 [perf] panel open settings [morphFrozen]: 20 frames in 1187 ms, worst 247 ms, 11 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+10:59:15.022 [ui] panel: tap outside
+10:59:15.035 [ui] panel: close settings
+10:59:15.986 [ui] panel: closed settings
+10:59:15.986 [perf] panel close settings [morphFrozen]: 27 frames in 951 ms, worst 190 ms, 4 late (frame 16.7 ms)
+10:59:16.224 [ui] panel settings
+10:59:16.224 [ui] present panel settings from bar item 340×≤225
+10:59:16.225 [ui] panel: want settings (shown=none busy=false)
+10:59:16.226 [ui] panel: open settings
+10:59:16.234 [ui] present panel settings from bar item 340×≤225
+10:59:17.506 [ui] panel: opened settings
+10:59:17.507 [perf] panel open settings [morphFrozen]: 38 frames in 1280 ms, worst 148 ms, 6 late (frame 16.7 ms) · built in 1 ms, 2 ms after the tap
+10:59:19.873 [ui] panel: tap outside
+10:59:19.890 [ui] panel: close settings
+10:59:20.799 [ui] panel: closed settings
+10:59:20.799 [perf] panel close settings [morphFrozen]: 45 frames in 909 ms, worst 54 ms, 1 late (frame 16.7 ms)
+10:59:22.372 [ui] panel settings
+10:59:22.372 [ui] present panel settings from bar item 340×≤225
+10:59:22.372 [ui] panel: want settings (shown=none busy=false)
+10:59:22.373 [ui] panel: open settings
+10:59:22.379 [ui] present panel settings from bar item 340×≤225
+10:59:23.691 [ui] panel: opened settings
+10:59:23.691 [perf] panel open settings [morphFrozen]: 34 frames in 1319 ms, worst 187 ms, 5 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+10:59:26.230 [energy] cpu 61% (main 54%, other 7%) thermal=nominal playing=no
+10:59:26.289 [ui] panel: tap outside
+10:59:26.310 [ui] panel: close settings
+10:59:27.236 [ui] panel: closed settings
+10:59:27.237 [perf] panel close settings [morphFrozen]: 37 frames in 926 ms, worst 144 ms, 2 late (frame 16.7 ms)
+10:59:27.722 [ui] panel settings
+10:59:27.723 [ui] present panel settings from bar item 340×≤225
+10:59:27.723 [ui] panel: want settings (shown=none busy=false)
+10:59:27.723 [ui] panel: open settings
+10:59:27.731 [ui] present panel settings from bar item 340×≤225
+10:59:28.931 [ui] panel: opened settings
+10:59:28.931 [perf] panel open settings [morphFrozen]: 23 frames in 1208 ms, worst 236 ms, 2 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+10:59:31.806 [ui] panel: tap outside
+10:59:31.843 [ui] panel: close settings
+10:59:32.752 [ui] panel: closed settings
+10:59:32.753 [perf] panel close settings [morphFrozen]: 43 frames in 910 ms, worst 24 ms, 0 late (frame 16.7 ms)
+10:59:34.324 [ui] panel settings
+10:59:34.324 [ui] present panel settings from bar item 340×≤225
+10:59:34.324 [ui] panel: want settings (shown=none busy=false)
+10:59:34.325 [ui] panel: open settings
+10:59:34.332 [ui] present panel settings from bar item 340×≤225
+10:59:35.565 [ui] panel: opened settings
+10:59:35.565 [perf] panel open settings [morphFrozen]: 23 frames in 1240 ms, worst 320 ms, 6 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+10:59:38.705 [ui] panel: tap outside
+10:59:38.724 [ui] panel: close settings
+10:59:39.657 [ui] panel: closed settings
+10:59:39.657 [perf] panel close settings [morphFrozen]: 33 frames in 933 ms, worst 173 ms, 4 late (frame 16.7 ms)
+10:59:39.889 [ui] panel settings
+10:59:39.890 [ui] present panel settings from bar item 340×≤225
+10:59:39.890 [ui] panel: want settings (shown=none busy=false)
+10:59:39.890 [ui] panel: open settings
+10:59:39.897 [ui] present panel settings from bar item 340×≤225
+10:59:41.168 [ui] panel: opened settings
+10:59:41.168 [perf] panel open settings [morphFrozen]: 35 frames in 1278 ms, worst 197 ms, 3 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+10:59:43.757 [ui] panel: tap outside
+10:59:43.772 [ui] panel: close settings
+10:59:44.674 [ui] panel: closed settings
+10:59:44.674 [perf] panel close settings [morphFrozen]: 47 frames in 901 ms, worst 26 ms, 1 late (frame 16.7 ms)
+10:59:46.174 [ui] panel settings
+10:59:46.174 [ui] present panel settings from bar item 340×≤225
+10:59:46.174 [ui] panel: want settings (shown=none busy=false)
+10:59:46.175 [ui] panel: open settings
+10:59:46.185 [ui] present panel settings from bar item 340×≤225
+10:59:47.402 [ui] panel: opened settings
+10:59:47.402 [perf] panel open settings [morphFrozen]: 24 frames in 1226 ms, worst 283 ms, 5 late (frame 16.7 ms) · built in 0 ms, 1 ms after the tap
+10:59:50.006 [ui] panel: tap outside
+10:59:50.017 [ui] panel: close settings
+10:59:50.936 [ui] panel: closed settings
+10:59:50.936 [perf] panel close settings [morphFrozen]: 44 frames in 919 ms, worst 84 ms, 1 late (frame 16.7 ms)
+10:59:51.256 [ui] panel settings
+10:59:51.256 [ui] present panel settings from bar item 340×≤225
+10:59:51.256 [ui] panel: want settings (shown=none busy=false)
+10:59:51.256 [ui] panel: open settings
+10:59:51.261 [ui] present panel settings from bar item 340×≤225
+10:59:52.387 [ui] panel: opened settings
+10:59:52.387 [perf] panel open settings [morphFrozen]: 20 frames in 1131 ms, worst 258 ms, 6 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+10:59:54.906 [ui] panel: tap outside
+10:59:54.942 [ui] panel: close settings
+10:59:55.888 [ui] panel: closed settings
+10:59:55.888 [perf] panel close settings [morphFrozen]: 48 frames in 946 ms, worst 20 ms, 0 late (frame 16.7 ms)
+10:59:55.913 [energy] cpu 31% (main 26%, com.apple.UIKit.in 4%, other 1%) thermal=nominal playing=no
+10:59:57.358 [ui] panel settings
+10:59:57.358 [ui] present panel settings from bar item 340×≤225
+10:59:57.358 [ui] panel: want settings (shown=none busy=false)
+10:59:57.359 [ui] panel: open settings
+10:59:57.368 [ui] present panel settings from bar item 340×≤225
+10:59:58.506 [ui] panel: opened settings
+10:59:58.507 [perf] panel open settings [morphFrozen]: 22 frames in 1147 ms, worst 319 ms, 4 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+11:00:01.005 [ui] panel: tap outside
+11:00:01.026 [ui] panel: close settings
+11:00:01.926 [ui] panel: closed settings
+11:00:01.927 [perf] panel close settings [morphFrozen]: 47 frames in 901 ms, worst 43 ms, 1 late (frame 16.7 ms)
+11:00:02.258 [ui] panel settings
+11:00:02.258 [ui] present panel settings from bar item 340×≤225
+11:00:02.258 [ui] panel: want settings (shown=none busy=false)
+11:00:02.258 [ui] panel: open settings
+11:00:02.267 [ui] present panel settings from bar item 340×≤225
+11:00:03.442 [ui] panel: opened settings
+11:00:03.442 [perf] panel open settings [morphFrozen]: 23 frames in 1184 ms, worst 307 ms, 5 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+11:00:06.189 [ui] panel: tap outside
+11:00:06.207 [ui] panel: close settings
+11:00:07.110 [ui] panel: closed settings
+11:00:07.111 [perf] panel close settings [morphFrozen]: 48 frames in 904 ms, worst 18 ms, 0 late (frame 16.7 ms)
