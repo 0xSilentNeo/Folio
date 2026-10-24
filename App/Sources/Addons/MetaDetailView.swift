@@ -151,6 +151,10 @@ struct MetaDetailView: View {
         } else if !isSeries || (!loadingEpisodes && allSeasons.isEmpty) {
             let resume = resumeLabel(for: m.id)
             TiltPlayButton(title: resume == nil ? "Find streams" : "Resume", subtitle: resume) { go = StreamsTarget(video: nil, queue: []) }
+        } else {
+            // Episodes still loading: keep the button's place so the page doesn't jump.
+            TiltPlayButton(title: "Find streams", subtitle: "loading episodes…", shimmer: false) {}
+                .opacity(0.55).allowsHitTesting(false)
         }
     }
 
