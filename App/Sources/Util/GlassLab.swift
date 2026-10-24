@@ -27,8 +27,8 @@ struct GlassLab: View {
                     cell("B pill→panel overlay") { overlayVariant(interactivePill: true) }
                 }
                 HStack(alignment: .bottom, spacing: 12) {
-                    cell("C overlay, same glass") { overlayVariant(interactivePill: false) }
-                    cell("D VStack, same glass") { stackVariant }
+                    cell("E emerge, gap=spacing 12") { emerge(gap: 12, ns: nsE) }
+                    cell("F emerge, gap=spacing 20") { emerge(gap: 20, ns: nsF) }
                 }
             }
         }
@@ -117,6 +117,28 @@ struct GlassLab: View {
                         .padding(.bottom, 42)
                 }
             }
+        }
+    }
+
+    // E/F: Apple's pattern applied to the pill: the pill stays, the panel is a
+    // second glass shape (its own ID) inserted above it, the gap between them
+    // equal to the container's spacing ("morphs ... when the eraser's nearest
+    // edge is less than or equal to the container's spacing").
+    @Namespace private var nsE
+    @Namespace private var nsF
+    private func emerge(gap: CGFloat, ns: Namespace.ID) -> some View {
+        GlassEffectContainer(spacing: gap) {
+            VStack(alignment: .trailing, spacing: gap) {
+                if open {
+                    panelContent.frame(width: 170, height: 200)
+                        .glassEffect(.regular, in: .rect(cornerRadius: 22))
+                        .glassEffectID("panel", in: ns)
+                }
+                pill
+                    .glassEffect(.regular.interactive(), in: .capsule)
+                    .glassEffectID("pill", in: ns)
+            }
+            .frame(width: 180, height: 300, alignment: .bottomTrailing)
         }
     }
 
