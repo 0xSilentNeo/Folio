@@ -504,8 +504,9 @@ enum IMDbSource {
                   let name = text(person["nameText"]), seen.insert(pid).inserted else { continue }
             let chars = ((n["characters"] as? [[String: Any]]) ?? []).compactMap { $0["name"] as? String }
             let photo = sized(imageURL(person["primaryImage"]), width: 180)
-            let role: String? = chars.isEmpty ? nil : unescape(chars.prefix(2).joined(separator: " / "))
-            out.append(CastMember(id: pid, name: unescape(name), character: role, photo: photo))
+            let role: String? = chars.isEmpty ? nil : unescape(Optional(chars.prefix(2).joined(separator: " / ")))
+            let clean: String = unescape(Optional(name)) ?? name
+            out.append(CastMember(id: pid, name: clean, character: role, photo: photo))
             if out.count >= 24 { break }
         }
         return out
