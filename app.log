@@ -1,0 +1,426 @@
+08:52:13.738 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=40.73 GB
+08:52:15.526 [app] first screen 8071 ms after process start
+08:52:15.953 [hang] main thread unresponsive for 2.2 s
+08:52:16.519 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/A4367469-7943-4BD7-9251-11F2525F5FCE/data/Containers/Bundle/Application/8C3A2901-6E18-499E-BAD1-AF8E3F1D4F5B/GlassPlayer.app/lab/lab.mp4
+08:52:16.802 [app] active
+08:52:17.773 [player] start renderer=metal
+08:52:17.774 [lab] engine not started (lab)
+08:52:19.293 [perf] panel tracks prebuilt in 82 ms
+08:52:20.047 [perf] panel settings prebuilt in 533 ms
+08:52:20.126 [perf] panel nowPlaying prebuilt in 62 ms
+08:52:20.145 [perf] panel tracks prebuilt in 0 ms
+08:52:20.456 [perf] panel settings prebuilt in 0 ms
+08:52:20.983 [perf] panel nowPlaying prebuilt in 0 ms
+08:52:23.596 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+08:52:23.599 [imdb] webkit load /title/tt35511966
+08:52:28.078 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+08:52:29.734 [ui] panel tracks
+08:52:29.734 [ui] present panel tracks from bar item 340×≤225
+08:52:29.734 [ui] panel: want tracks (shown=none busy=false)
+08:52:29.738 [ui] panel: open tracks
+08:52:29.790 [ui] present panel tracks from bar item 340×≤225
+08:52:30.379 [ui] panel: opened tracks
+08:52:30.382 [perf] panel open tracks [quick]: 28 frames in 641 ms, worst 19 ms, 0 late (frame 16.7 ms) · built in 4 ms, 5 ms after the tap
+08:52:31.073 [ui] panel: outside tap closes tracks
+08:52:31.076 [ui] panel: close tracks
+08:52:31.083 [ui] panel: outside tap closes tracks
+08:52:31.595 [ui] panel: closed tracks
+08:52:31.595 [perf] panel close tracks [quick]: 16 frames in 519 ms, worst 114 ms, 2 late (frame 16.7 ms)
+08:52:38.758 [ui] panel settings
+08:52:38.759 [ui] present panel settings from bar item 340×≤225
+08:52:38.759 [ui] panel: want settings (shown=none busy=false)
+08:52:38.760 [ui] panel: open settings
+08:52:38.783 [ui] present panel settings from bar item 340×≤225
+08:52:39.445 [ui] panel: opened settings
+08:52:39.445 [perf] panel open settings [quick]: 25 frames in 685 ms, worst 74 ms, 2 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+08:52:40.622 [ui] panel: outside tap closes settings
+08:52:40.623 [ui] panel: close settings
+08:52:40.631 [ui] panel: outside tap closes settings
+08:52:40.775 [ui] panel: outside tap closes settings
+08:52:40.776 [ui] panel: outside tap closes settings
+08:52:41.187 [ui] panel: closed settings
+08:52:41.187 [perf] panel close settings [quick]: 15 frames in 564 ms, worst 109 ms, 4 late (frame 16.7 ms)
+08:52:43.357 [ui] panel settings
+08:52:43.358 [ui] present panel settings from bar item 340×≤225
+08:52:43.358 [ui] panel: want settings (shown=none busy=false)
+08:52:43.358 [ui] panel: open settings
+08:52:43.366 [ui] present panel settings from bar item 340×≤225
+08:52:43.995 [ui] panel: opened settings
+08:52:43.995 [perf] panel open settings [quick]: 27 frames in 637 ms, worst 66 ms, 1 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+08:52:44.197 [ui] panel: outside tap closes settings
+08:52:44.198 [ui] panel: close settings
+08:52:44.201 [ui] panel: outside tap closes settings
+08:52:44.717 [ui] panel: closed settings
+08:52:44.717 [perf] panel close settings [quick]: 22 frames in 519 ms, worst 40 ms, 2 late (frame 16.7 ms)
+08:52:46.948 [energy] cpu 7% (main 5%, other 2%) thermal=nominal playing=no
+08:52:48.545 [ui] panel settings
+08:52:48.545 [ui] present panel settings from bar item 340×≤225
+08:52:48.545 [ui] panel: want settings (shown=none busy=false)
+08:52:48.546 [ui] panel: open settings
+08:52:48.558 [ui] present panel settings from bar item 340×≤225
+08:52:48.655 [imdb/error] webkit timeout for /title/tt35511966
+08:52:48.701 [perf] imdb /title/tt35511966/ via web view 25577 ms
+08:52:49.468 [ui] panel: opened settings
+08:52:49.468 [perf] panel open settings [quick]: 17 frames in 922 ms, worst 340 ms, 2 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+08:52:50.540 [ui] panel: outside tap closes settings
+08:52:50.542 [ui] panel: close settings
+08:52:50.556 [ui] panel: outside tap closes settings
+08:52:50.766 [ui] panel: outside tap closes settings
+08:52:50.766 [ui] panel: outside tap closes settings
+08:52:51.136 [ui] panel: closed settings
+08:52:51.139 [perf] panel close settings [quick]: 20 frames in 594 ms, worst 73 ms, 3 late (frame 16.7 ms)
+08:52:53.291 [ui] panel nowPlaying
+08:52:53.292 [ui] present panel nowPlaying from bar item 340×≤225
+08:52:53.292 [ui] panel: want nowPlaying (shown=none busy=false)
+08:52:53.293 [ui] panel: open nowPlaying
+08:52:53.305 [ui] present panel nowPlaying from bar item 340×≤225
+08:52:53.850 [ui] panel: opened nowPlaying
+08:52:53.850 [perf] panel open nowPlaying [quick]: 26 frames in 557 ms, worst 28 ms, 1 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+08:52:54.143 [ui] panel: outside tap closes nowPlaying
+08:52:54.143 [ui] panel: close nowPlaying
+08:52:54.148 [ui] panel: outside tap closes nowPlaying
+08:52:54.274 [ui] panel: outside tap closes nowPlaying
+08:52:54.274 [ui] panel: outside tap closes nowPlaying
+08:52:54.611 [ui] panel: closed nowPlaying
+08:52:54.611 [perf] panel close nowPlaying [quick]: 22 frames in 468 ms, worst 33 ms, 1 late (frame 16.7 ms)
+08:53:18.073 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=40.61 GB
+08:53:20.267 [hang] main thread unresponsive for 2.2 s
+08:53:20.431 [app] first screen 4704 ms after process start
+08:53:21.489 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/A4367469-7943-4BD7-9251-11F2525F5FCE/data/Containers/Bundle/Application/8C3A2901-6E18-499E-BAD1-AF8E3F1D4F5B/GlassPlayer.app/lab/lab.mp4
+08:53:21.696 [app] active
+08:53:22.719 [player] start renderer=metal
+08:53:22.720 [lab] engine not started (lab)
+08:53:24.068 [perf] panel tracks prebuilt in 94 ms
+08:53:24.818 [perf] panel settings prebuilt in 537 ms
+08:53:24.914 [perf] panel nowPlaying prebuilt in 76 ms
+08:53:25.509 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+08:53:25.947 [imdb] webkit load /title/tt35511966
+08:53:27.896 [ui] panel tracks
+08:53:27.901 [ui] present panel tracks from bar item 340×≤225
+08:53:27.902 [ui] panel: want tracks (shown=none busy=false)
+08:53:27.908 [ui] panel: open tracks
+08:53:27.977 [ui] present panel tracks from bar item 340×≤225
+08:53:28.583 [ui] panel: opened tracks
+08:53:28.589 [perf] panel open tracks [quick]: 23 frames in 675 ms, worst 33 ms, 1 late (frame 16.7 ms) · built in 6 ms, 6 ms after the tap
+08:53:28.825 [ui] panel: outside tap closes tracks
+08:53:28.827 [ui] panel: close tracks
+08:53:28.836 [ui] panel: outside tap closes tracks
+08:53:29.155 [ui] panel: outside tap closes tracks
+08:53:29.156 [ui] panel: outside tap closes tracks
+08:53:29.446 [ui] panel: closed tracks
+08:53:29.446 [perf] panel close tracks [quick]: 18 frames in 619 ms, worst 202 ms, 3 late (frame 16.7 ms)
+08:53:29.927 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+08:53:51.291 [imdb/error] webkit timeout for /title/tt35511966
+08:53:51.304 [perf] imdb /title/tt35511966/ via web view 26311 ms
+08:53:51.804 [energy] cpu 7% (main 6%, other 1%) thermal=nominal playing=no
+08:54:25.842 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=40.55 GB
+08:54:27.066 [app] first screen 3712 ms after process start
+08:54:27.925 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/A4367469-7943-4BD7-9251-11F2525F5FCE/data/Containers/Bundle/Application/8C3A2901-6E18-499E-BAD1-AF8E3F1D4F5B/GlassPlayer.app/lab/lab.mp4
+08:54:28.647 [app] active
+08:54:29.369 [player] start renderer=metal
+08:54:29.369 [lab] engine not started (lab)
+08:54:30.625 [perf] panel tracks prebuilt in 91 ms
+08:54:31.250 [perf] panel settings prebuilt in 411 ms
+08:54:31.316 [perf] panel nowPlaying prebuilt in 63 ms
+08:54:31.646 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+08:54:31.906 [imdb] webkit load /title/tt35511966
+08:54:34.203 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+08:54:35.984 [ui] panel settings
+08:54:35.985 [ui] present panel settings from bar item 340×≤225
+08:54:35.986 [ui] panel: want settings (shown=none busy=false)
+08:54:35.988 [ui] panel: open settings
+08:54:36.036 [ui] present panel settings from bar item 340×≤225
+08:54:36.860 [ui] panel: opened settings
+08:54:36.861 [perf] panel open settings [quick]: 23 frames in 872 ms, worst 61 ms, 2 late (frame 16.7 ms) · built in 2 ms, 2 ms after the tap
+08:54:38.018 [ui] panel: outside tap closes settings
+08:54:38.018 [ui] panel: close settings
+08:54:38.031 [ui] panel: outside tap closes settings
+08:54:38.674 [ui] panel: closed settings
+08:54:38.674 [perf] panel close settings [quick]: 21 frames in 656 ms, worst 42 ms, 3 late (frame 16.7 ms)
+08:54:47.123 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=40.54 GB
+08:54:48.550 [app] first screen 3642 ms after process start
+08:54:49.382 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/A4367469-7943-4BD7-9251-11F2525F5FCE/data/Containers/Bundle/Application/8C3A2901-6E18-499E-BAD1-AF8E3F1D4F5B/GlassPlayer.app/lab/lab.mp4
+08:54:50.070 [app] active
+08:54:50.732 [player] start renderer=metal
+08:54:50.732 [lab] engine not started (lab)
+08:54:52.011 [perf] panel tracks prebuilt in 61 ms
+08:54:52.650 [perf] panel settings prebuilt in 393 ms
+08:54:52.706 [perf] panel nowPlaying prebuilt in 54 ms
+08:54:53.089 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+08:54:53.318 [imdb] webkit load /title/tt35511966
+08:54:55.493 [ui] panel tracks
+08:54:55.496 [ui] present panel tracks from bar item 340×≤225
+08:54:55.496 [ui] panel: want tracks (shown=none busy=false)
+08:54:55.497 [ui] panel: open tracks
+08:54:55.518 [ui] present panel tracks from bar item 340×≤225
+08:54:55.642 [imdb] webkit nav 1: no data yet (waf=true, 2181 chars)
+08:54:56.078 [ui] panel: opened tracks
+08:54:56.081 [perf] panel open tracks [quick]: 26 frames in 581 ms, worst 33 ms, 1 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+08:54:56.420 [ui] panel: outside tap closes tracks
+08:54:56.421 [ui] panel: close tracks
+08:54:56.426 [ui] panel: outside tap closes tracks
+08:54:56.927 [ui] panel: closed tracks
+08:54:56.927 [perf] panel close tracks [quick]: 16 frames in 506 ms, worst 75 ms, 3 late (frame 16.7 ms)
+08:55:18.581 [imdb/error] webkit timeout for /title/tt35511966
+08:55:18.583 [perf] imdb /title/tt35511966/ via web view 25837 ms
+08:55:20.323 [energy] cpu 5% (main 4%, other 1%) thermal=nominal playing=no
+08:55:42.181 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=40.44 GB
+08:55:43.420 [app] first screen 3856 ms after process start
+08:55:44.134 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/A4367469-7943-4BD7-9251-11F2525F5FCE/data/Containers/Bundle/Application/8C3A2901-6E18-499E-BAD1-AF8E3F1D4F5B/GlassPlayer.app/lab/lab.mp4
+08:55:44.258 [app] active
+08:55:44.935 [player] start renderer=metal
+08:55:44.935 [lab] engine not started (lab)
+08:55:46.646 [perf] panel tracks prebuilt in 71 ms
+08:55:47.206 [perf] panel settings prebuilt in 321 ms
+08:55:47.289 [perf] panel nowPlaying prebuilt in 35 ms
+08:55:47.561 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+08:55:47.659 [imdb] webkit load /title/tt35511966
+08:55:49.310 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+08:55:59.999 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=40.41 GB
+08:56:01.297 [app] first screen 2694 ms after process start
+08:56:01.873 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/A4367469-7943-4BD7-9251-11F2525F5FCE/data/Containers/Bundle/Application/8C3A2901-6E18-499E-BAD1-AF8E3F1D4F5B/GlassPlayer.app/lab/lab.mp4
+08:56:02.371 [app] active
+08:56:02.739 [player] start renderer=metal
+08:56:02.739 [lab] engine not started (lab)
+08:56:04.330 [perf] panel tracks prebuilt in 47 ms
+08:56:04.862 [perf] panel settings prebuilt in 273 ms
+08:56:04.977 [perf] panel nowPlaying prebuilt in 30 ms
+08:56:05.211 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+08:56:05.284 [imdb] webkit load /title/tt35511966
+08:56:05.558 [lab] landscape steady; replay starts
+08:56:06.063 [lab] stress tap settings
+08:56:06.065 [ui] panel settings
+08:56:06.067 [ui] present panel settings from bar item 340×≤225
+08:56:06.067 [ui] panel: want settings (shown=none busy=false)
+08:56:06.070 [ui] panel: open settings
+08:56:06.119 [ui] present panel settings from bar item 340×≤225
+08:56:06.764 [ui] panel: opened settings
+08:56:06.769 [perf] panel open settings [quick]: 26 frames in 695 ms, worst 61 ms, 1 late (frame 16.7 ms) · built in 3 ms, 3 ms after the tap
+08:56:06.956 [lab] stress tap nowPlaying
+08:56:06.956 [ui] panel nowPlaying
+08:56:06.959 [ui] present panel nowPlaying from bar item 340×≤225
+08:56:06.959 [ui] panel: want nowPlaying (shown=settings busy=false)
+08:56:06.959 [ui] panel: close settings → nowPlaying
+08:56:07.016 [ui] present panel nowPlaying from bar item 340×≤225
+08:56:07.182 [ui] panel: outside tap closes settings
+08:56:07.183 [ui] panel: outside tap closes settings
+08:56:07.490 [ui] panel: closed settings
+08:56:07.490 [perf] panel close settings [quick]: 17 frames in 530 ms, worst 108 ms, 2 late (frame 16.7 ms)
+08:56:07.491 [ui] panel: open nowPlaying
+08:56:07.692 [ui] panel: outside tap closes nowPlaying
+08:56:07.692 [ui] panel: outside tap closes nowPlaying
+08:56:07.785 [lab] stress tap nowPlaying
+08:56:07.785 [ui] panel nowPlaying
+08:56:07.785 [ui] present panel nowPlaying from bar item 340×≤225
+08:56:07.785 [ui] panel: want nowPlaying (shown=nowPlaying busy=true)
+08:56:07.822 [ui] present panel nowPlaying from bar item 340×≤225
+08:56:08.119 [imdb] webkit ok after 1 nav(s): next=921081 ld=1
+08:56:08.120 [perf] imdb /title/tt35511966/ via web view 3125 ms
+08:56:08.127 [ui] panel: opened nowPlaying
+08:56:08.127 [perf] panel open nowPlaying [quick]: 20 frames in 635 ms, worst 131 ms, 4 late (frame 16.7 ms) · built in 1 ms, 532 ms after the tap
+08:56:08.370 [imdb] details tt35511966: La bola negra rating=8.2 cast=4
+08:56:08.939 [lab] stress tap tracks
+08:56:08.940 [ui] panel tracks
+08:56:08.940 [ui] present panel tracks from bar item 340×≤225
+08:56:08.940 [ui] panel: want tracks (shown=nowPlaying busy=false)
+08:56:08.940 [ui] panel: close nowPlaying → tracks
+08:56:08.985 [ui] present panel tracks from bar item 340×≤225
+08:56:09.411 [ui] panel: closed nowPlaying
+08:56:09.412 [perf] panel close nowPlaying [quick]: 22 frames in 471 ms, worst 41 ms, 2 late (frame 16.7 ms)
+08:56:09.412 [ui] panel: open tracks
+08:56:09.414 [lab] stress tap tracks
+08:56:09.414 [ui] panel closed
+08:56:09.948 [ui] panel: opened tracks
+08:56:09.948 [perf] panel open tracks [quick]: 28 frames in 536 ms, worst 66 ms, 1 late (frame 16.7 ms) · built in 1 ms, 472 ms after the tap
+08:56:09.948 [ui] panel: close tracks
+08:56:10.114 [lab] stress tap nowPlaying
+08:56:10.115 [ui] panel nowPlaying
+08:56:10.116 [ui] present panel nowPlaying from bar item 340×≤225
+08:56:10.116 [ui] panel: want nowPlaying (shown=tracks busy=true)
+08:56:10.150 [ui] present panel nowPlaying from bar item 340×≤225
+08:56:10.397 [ui] panel: closed tracks
+08:56:10.397 [perf] panel close tracks [quick]: 22 frames in 448 ms, worst 77 ms, 1 late (frame 16.7 ms)
+08:56:10.397 [ui] panel: open nowPlaying
+08:56:10.927 [ui] panel: opened nowPlaying
+08:56:10.927 [perf] panel open nowPlaying [quick]: 29 frames in 530 ms, worst 48 ms, 1 late (frame 16.7 ms) · built in 0 ms, 281 ms after the tap
+08:56:10.997 [lab] stress tap nowPlaying
+08:56:10.998 [ui] panel closed
+08:56:11.010 [ui] panel: close nowPlaying
+08:56:11.444 [ui] panel: closed nowPlaying
+08:56:11.445 [perf] panel close nowPlaying [quick]: 25 frames in 435 ms, worst 35 ms, 1 late (frame 16.7 ms)
+08:56:11.669 [lab] stress tap nowPlaying
+08:56:11.669 [ui] panel nowPlaying
+08:56:11.669 [ui] present panel nowPlaying from bar item 340×≤225
+08:56:11.669 [ui] panel: want nowPlaying (shown=none busy=false)
+08:56:11.669 [ui] panel: open nowPlaying
+08:56:11.678 [ui] present panel nowPlaying from bar item 340×≤225
+08:56:12.179 [ui] panel: opened nowPlaying
+08:56:12.179 [perf] panel open nowPlaying [quick]: 27 frames in 510 ms, worst 23 ms, 0 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+08:56:12.673 [lab] stress tap settings
+08:56:12.674 [ui] panel settings
+08:56:12.674 [ui] present panel settings from bar item 340×≤225
+08:56:12.674 [ui] panel: want settings (shown=nowPlaying busy=false)
+08:56:12.674 [ui] panel: close nowPlaying → settings
+08:56:12.711 [ui] present panel settings from bar item 340×≤225
+08:56:13.139 [lab] stress tap tracks
+08:56:13.140 [ui] panel tracks
+08:56:13.141 [ui] present panel tracks from bar item 340×≤225
+08:56:13.141 [ui] panel: want tracks (shown=nowPlaying busy=true)
+08:56:13.147 [ui] present panel tracks from bar item 340×≤225
+08:56:13.166 [ui] panel: closed nowPlaying
+08:56:13.166 [perf] panel close nowPlaying [quick]: 23 frames in 492 ms, worst 51 ms, 1 late (frame 16.7 ms)
+08:56:13.166 [ui] panel: open tracks
+08:56:13.690 [lab] stress tap tracks
+08:56:13.691 [ui] panel closed
+08:56:13.714 [ui] panel: opened tracks
+08:56:13.715 [perf] panel open tracks [quick]: 28 frames in 548 ms, worst 56 ms, 3 late (frame 16.7 ms) · built in 0 ms, 26 ms after the tap
+08:56:13.715 [ui] panel: close tracks
+08:56:14.145 [ui] panel: closed tracks
+08:56:14.145 [perf] panel close tracks [quick]: 23 frames in 430 ms, worst 34 ms, 1 late (frame 16.7 ms)
+08:56:14.214 [lab] stress tap tracks
+08:56:14.214 [ui] panel tracks
+08:56:14.214 [ui] present panel tracks from bar item 340×≤225
+08:56:14.215 [ui] panel: want tracks (shown=none busy=false)
+08:56:14.215 [ui] panel: open tracks
+08:56:14.225 [ui] present panel tracks from bar item 340×≤225
+08:56:14.744 [ui] panel: opened tracks
+08:56:14.745 [perf] panel open tracks [quick]: 29 frames in 530 ms, worst 43 ms, 1 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+08:56:15.198 [lab] stress tap tracks
+08:56:15.198 [ui] panel closed
+08:56:15.202 [ui] panel: close tracks
+08:56:15.638 [lab] stress tap tracks
+08:56:15.638 [ui] panel tracks
+08:56:15.638 [ui] present panel tracks from bar item 340×≤225
+08:56:15.638 [ui] panel: want tracks (shown=tracks busy=true)
+08:56:15.640 [ui] present panel tracks from bar item 340×≤225
+08:56:15.655 [ui] panel: closed tracks
+08:56:15.655 [perf] panel close tracks [quick]: 23 frames in 453 ms, worst 48 ms, 1 late (frame 16.7 ms)
+08:56:15.656 [ui] panel: open tracks
+08:56:16.158 [lab] stress tap settings
+08:56:16.158 [ui] panel settings
+08:56:16.159 [ui] present panel settings from bar item 340×≤225
+08:56:16.159 [ui] panel: want settings (shown=tracks busy=true)
+08:56:16.164 [ui] present panel settings from bar item 340×≤225
+08:56:16.193 [ui] panel: opened tracks
+08:56:16.194 [perf] panel open tracks [quick]: 28 frames in 538 ms, worst 57 ms, 2 late (frame 16.7 ms) · built in 0 ms, 17 ms after the tap
+08:56:16.194 [ui] panel: close tracks → settings
+08:56:16.614 [lab] stress tap nowPlaying
+08:56:16.614 [ui] panel nowPlaying
+08:56:16.615 [ui] present panel nowPlaying from bar item 340×≤225
+08:56:16.615 [ui] panel: want nowPlaying (shown=tracks busy=true)
+08:56:16.627 [ui] present panel nowPlaying from bar item 340×≤225
+08:56:16.632 [ui] panel: closed tracks
+08:56:16.632 [perf] panel close tracks [quick]: 22 frames in 437 ms, worst 44 ms, 1 late (frame 16.7 ms)
+08:56:16.632 [ui] panel: open nowPlaying
+08:56:17.161 [ui] panel: opened nowPlaying
+08:56:17.162 [perf] panel open nowPlaying [quick]: 28 frames in 529 ms, worst 59 ms, 1 late (frame 16.7 ms) · built in 0 ms, 17 ms after the tap
+08:56:17.681 [lab] stress tap nowPlaying
+08:56:17.681 [ui] panel closed
+08:56:17.681 [lab] stress tap settings
+08:56:17.682 [ui] panel settings
+08:56:17.682 [ui] present panel settings from bar item 340×≤225
+08:56:17.682 [ui] panel: want settings (shown=nowPlaying busy=false)
+08:56:17.682 [ui] panel: close nowPlaying → settings
+08:56:17.704 [ui] present panel settings from bar item 340×≤225
+08:56:18.161 [ui] panel: closed nowPlaying
+08:56:18.161 [perf] panel close nowPlaying [quick]: 21 frames in 479 ms, worst 68 ms, 1 late (frame 16.7 ms)
+08:56:18.162 [ui] panel: open settings
+08:56:18.778 [ui] panel: opened settings
+08:56:18.779 [perf] panel open settings [quick]: 28 frames in 617 ms, worst 86 ms, 3 late (frame 16.7 ms) · built in 1 ms, 480 ms after the tap
+08:56:30.472 [ui] panel: outside tap closes settings
+08:56:30.476 [ui] panel: close settings
+08:56:30.500 [ui] panel: outside tap closes settings
+08:56:30.932 [ui] panel: outside tap closes settings
+08:56:30.933 [ui] panel: outside tap closes settings
+08:56:31.287 [ui] panel: closed settings
+08:56:31.287 [perf] panel close settings [quick]: 20 frames in 810 ms, worst 101 ms, 2 late (frame 16.7 ms)
+08:56:32.698 [energy] cpu 2% (main 2%) thermal=nominal playing=no
+08:56:50.952 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=40.39 GB
+08:56:53.065 [app] first screen 5330 ms after process start
+08:56:53.259 [hang] main thread unresponsive for 2.3 s
+08:56:54.066 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/A4367469-7943-4BD7-9251-11F2525F5FCE/data/Containers/Bundle/Application/8C3A2901-6E18-499E-BAD1-AF8E3F1D4F5B/GlassPlayer.app/lab/lab.mp4
+08:56:54.328 [app] active
+08:56:55.482 [player] start renderer=metal
+08:56:55.482 [lab] engine not started (lab)
+08:56:56.913 [perf] panel tracks prebuilt in 194 ms
+08:56:57.435 [perf] panel settings prebuilt in 410 ms
+08:56:57.508 [perf] panel nowPlaying prebuilt in 63 ms
+08:57:00.525 [ui] panel settings
+08:57:00.528 [ui] present panel settings from bar item 340×≤225
+08:57:00.528 [ui] panel: want settings (shown=none busy=false)
+08:57:00.531 [ui] panel: open settings
+08:57:00.596 [ui] present panel settings from bar item 340×≤225
+08:57:01.466 [ui] panel: opened settings
+08:57:01.468 [perf] panel open settings [quick]: 24 frames in 935 ms, worst 89 ms, 2 late (frame 16.7 ms) · built in 4 ms, 4 ms after the tap
+08:57:01.555 [ui] panel: outside tap closes settings
+08:57:01.555 [ui] panel: close settings
+08:57:01.567 [ui] panel: outside tap closes settings
+08:57:02.057 [ui] panel: outside tap closes settings
+08:57:02.057 [ui] panel: outside tap closes settings
+08:57:02.391 [ui] panel: closed settings
+08:57:02.391 [perf] panel close settings [quick]: 21 frames in 836 ms, worst 114 ms, 2 late (frame 16.7 ms)
+08:57:24.664 [energy] cpu 10% (main 7%, other 3%) thermal=nominal playing=no
+08:57:54.664 [energy] cpu 12% (main 8%, other 4%) thermal=nominal playing=no
+08:58:24.664 [energy] cpu 13% (main 12%, other 1%) thermal=nominal playing=no
+08:58:56.650 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=40.17 GB
+08:58:58.632 [app] first screen 5015 ms after process start
+08:58:58.840 [hang] main thread unresponsive for 2.2 s
+08:58:59.662 [app] active
+08:59:06.737 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:59:06.752 [nav] title page appear Lab Show S01E01.mp4
+08:59:07.016 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=false
+08:59:10.710 [nav] home path 1 → 0: []
+08:59:11.249 [nav] title page disappear Lab Show S01E01.mp4
+08:59:14.837 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:59:14.843 [nav] title page appear Lab Show S01E01.mp4
+08:59:15.128 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=false
+08:59:19.232 [player] play requested: 2 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/A4367469-7943-4BD7-9251-11F2525F5FCE/data/Containers/Data/Application/26E065C1-5C66-46F7-88B7-BE215F6E0D1C/Documents/Media/Lab Show S01E01.mp4
+08:59:20.299 [player] start renderer=metal
+08:59:20.316 [player] mpv options applied renderer=metal hwdec=auto anime4k=off/fast picture=efficient
+08:59:20.428 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/A4367469-7943-4BD7-9251-11F2525F5FCE/data/Containers/Data/Application/26E065C1-5C66-46F7-88B7-BE215F6E0D1C/Documents/Media/Lab Show S01E01.mp4 source=local opts=[] -> 0
+08:59:20.455 [player] decoder: software
+08:59:21.801 [perf] panel tracks prebuilt in 96 ms
+08:59:22.774 [perf] panel settings prebuilt in 760 ms
+08:59:22.954 [perf] panel nowPlaying prebuilt in 54 ms
+08:59:26.487 [player] file loaded in 6080 ms
+08:59:27.188 [skip] anime lookup Lab Show s1e1: 0 segment(s)
+08:59:27.288 [player] decoder: software
+08:59:29.760 [energy] cpu 38% (other 33%, vo 2%, main 2%) thermal=nominal playing=yes renderer=metal picture=efficient decoder=no
+08:59:33.692 [player] close at 0:05
+08:59:33.700 [energy] cpu 24% (main 14%, other 6%, vo 2%, core 1%, com.apple.uikit.ev 1%) thermal=nominal playing=yes renderer=metal picture=efficient decoder=no · player closing
+08:59:34.124 [nav] player closed: back to portrait (phone is upright)
+08:59:35.733 [nav] after player closed: scene orientation=1 device=1 bounds=(375.0, 812.0)
+08:59:35.748 [nav]   window UIWindow level=0.0 hidden=false alpha=1.0 key=•••• touch=true frame=(0.0, 0.0, 375.0, 812.0) root=UIHostingController<ModifiedContent<AnyView, RootModifier>> presented=nil
+08:59:42.297 [nav] home path 1 → 0: []
+08:59:42.805 [nav] title page disappear Lab Show S01E02.mp4
+08:59:46.725 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:59:46.729 [nav] title page appear Lab Show S01E02.mp4
+08:59:46.875 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=false
+08:59:51.098 [nav] back swipe state 1
+08:59:51.610 [nav] back swipe state 3
+08:59:51.623 [nav] home path 1 → 0: []
+08:59:52.038 [nav] title page disappear Lab Show S01E02.mp4
+08:59:59.977 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=40.13 GB
+09:00:01.803 [app] first screen 5088 ms after process start
+09:00:02.424 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/A4367469-7943-4BD7-9251-11F2525F5FCE/data/Containers/Bundle/Application/8C3A2901-6E18-499E-BAD1-AF8E3F1D4F5B/GlassPlayer.app/lab/lab.mp4
+09:00:02.496 [app] active
+09:00:03.055 [player] start renderer=metal
+09:00:03.055 [lab] engine not started (lab)
+09:00:04.830 [perf] panel tracks prebuilt in 53 ms
+09:00:05.429 [perf] panel settings prebuilt in 340 ms
+09:00:05.468 [perf] panel nowPlaying prebuilt in 30 ms
+09:00:05.487 [perf] panel tracks prebuilt in 0 ms
+09:00:05.800 [perf] panel settings prebuilt in 0 ms
+09:00:06.114 [perf] panel nowPlaying prebuilt in 0 ms
+09:00:08.332 [ui] panel settings
+09:00:08.332 [ui] present panel settings from bar item 340×≤225
+09:00:08.333 [ui] panel: want settings (shown=none busy=false)
+09:00:08.337 [ui] panel: open settings
+09:00:08.382 [ui] present panel settings from bar item 340×≤225
+09:00:09.161 [ui] panel: opened settings
+09:00:09.167 [perf] panel open settings [quick]: 25 frames in 824 ms, worst 109 ms, 1 late (frame 16.7 ms) · built in 5 ms, 5 ms after the tap
+09:00:09.444 [ui] panel: outside tap closes settings
+09:00:09.444 [ui] panel: close settings
+09:00:10.154 [ui] panel: closed settings
+09:00:10.154 [perf] panel close settings [quick]: 16 frames in 710 ms, worst 145 ms, 5 late (frame 16.7 ms)
+09:00:32.681 [energy] cpu 5% (main 5%) thermal=nominal playing=no
