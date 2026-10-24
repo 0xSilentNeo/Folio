@@ -24,7 +24,7 @@ struct TiltPlayButton: View {
 
     /// Degrees at full tilt. The finger and the idle rock use all of it; the
     /// phone's own movement up to ~70% (it is always moving a little).
-    private let maxDegrees: CGFloat = 7
+    private let maxDegrees: CGFloat = 6
 
     var body: some View {
         let tx = clamp(touch.width + motion.tilt.width * 0.7 + rock)

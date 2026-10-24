@@ -9,7 +9,7 @@ struct TitleHeroView: View {
     @ObservedObject private var local = LocalMediaStore.shared
     @ObservedObject private var history = HistoryStore.shared
     @StateObject private var thumb = ThumbLoader()
-    @AppStorage("heroView") private var viewMode = LibraryViewMode.details.rawValue
+    @AppStorage("heroView") private var viewMode = LibraryViewMode.grid.rawValue
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
     @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
@@ -60,15 +60,15 @@ struct TitleHeroView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     backdrop(width: geo.size.width, wide: wide)
                     VStack(alignment: .leading, spacing: 18) {
-                        if let s = spoilerSafe(meta), !s.isEmpty {
-                            ExpandableText(text: s, lines: 3)
-                        }
+                        // Genres above the description (from the title-page mockup).
                         if let g = meta?.genres, !g.isEmpty {
                             Text(g.prefix(5).joined(separator: " · ")).font(.footnote).foregroundStyle(.secondary)
                         }
-                        // Play sits under the description, centred (as on Discover).
+                        if let s = spoilerSafe(meta), !s.isEmpty {
+                            ExpandableText(text: s, lines: 2)
+                        }
+                        // Play sits under the description, left-aligned (from the mockup).
                         HStack(spacing: 14) {
-                            Spacer(minLength: 0)
                             TiltPlayButton(title: entry?.canResume == true ? "Resume" : "Play",
                                            subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { play(file) }
                             if entry?.canResume == true {
@@ -123,7 +123,7 @@ struct TitleHeroView: View {
                 HStack(alignment: .bottom, spacing: 14) {
                     if let poster = meta?.poster, let u = URL(string: poster) {
                         CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
-                            .frame(width: 96, height: 144)
+                            .frame(width: 122, height: 191)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
                     }

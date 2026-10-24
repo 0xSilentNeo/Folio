@@ -40,13 +40,14 @@ struct MetaDetailView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     backdrop(width: geo.size.width, wide: wide)
                     VStack(alignment: .leading, spacing: 18) {
-                        if let d = m.description, !d.isEmpty {
-                            ExpandableText(text: d, lines: 3)
-                        }
+                        // Genres above the description (from the title-page mockup).
                         if let g = m.genres, !g.isEmpty {
                             Text(g.prefix(5).joined(separator: " · ")).font(.footnote).foregroundStyle(.secondary)
                         }
-                        HStack { Spacer(); findButton; Spacer() }
+                        if let d = m.description, !d.isEmpty {
+                            ExpandableText(text: d, lines: 2)
+                        }
+                        HStack(spacing: 0) { findButton; Spacer(minLength: 0) }
                         if castPosition == "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, -16) }
                         if isSeries && (!allVideos.isEmpty || !allSeasons.isEmpty) { episodeList }
                         if loadingEpisodes && allVideos.isEmpty { ProgressView().frame(maxWidth: .infinity).padding() }
@@ -91,7 +92,7 @@ struct MetaDetailView: View {
                 HStack(alignment: .bottom, spacing: 14) {
                     if let poster = m.poster, let u = URL(string: poster) {
                         CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
-                            .frame(width: 96, height: 144)
+                            .frame(width: 122, height: 191)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
                     }
