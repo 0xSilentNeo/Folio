@@ -88,25 +88,22 @@ struct PlayerScreen: View {
                 // "replaces the specified item until … dismisses"), so a tap on a
                 // button's spot is taken here and opens that panel as soon as the
                 // close ends, instead of falling through to the video.
-                if ui.panel != nil {
+                if ui.panel != nil || ui.panelClosing {
                     Color.black.opacity(0.001)
                         .ignoresSafeArea()
                         .contentShape(Rectangle())
-                        .onTapGesture(coordinateSpace: .named("player")) { point in
-                            if let kind = ui.pillFrames.first(where: { $0.value.insetBy(dx: -4, dy: -8).contains(point) })?.key {
-                                // A pill button: switch to its panel (or close its own).
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                ui.toggle(kind)
-                            } else {
+                        .onTapGesture(coordinateSpace: .global) { point in
+                            if ui.panel != nil {
                                 dlog("ui", "panel: tap outside")
                                 ui.closePanel()
+                            } else if let kind = ui.pillFrames.first(where: { $0.value.insetBy(dx: -6, dy: -8).contains(point) })?.key {
+                                dlog("ui", "panel: \(kind.rawValue) tapped while the last panel was closing")
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                ui.toggle(kind)
                             }
                         }
                         .accessibilityHidden(true)
                 }
-                // The panels: our own glass, springing out of their buttons.
-                PanelLayer(model: model, ui: ui, area: geo.size, compact: compact,
-                           onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
             }
             .animation(.easeOut(duration: 0.18), value: ui.controlsVisible)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD != nil)
@@ -116,7 +113,6 @@ struct PlayerScreen: View {
             .animation(.easeOut(duration: 0.18), value: model.toast)
             .animation(.easeOut(duration: 0.18), value: model.holdSpeedActive)
             .animation(.spring(response: 0.4, dampingFraction: 0.86), value: model.upNext != nil)
-            .coordinateSpace(name: "player")
         }
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
@@ -124,13 +120,93 @@ struct PlayerScreen: View {
         .persistentSystemOverlays(.hidden)
         .onAppear {
             ui.scheduleHide()
-            ui.presentNow = nil
+            ui.presentNow = { presentPanel($0, immediate: true) }
+            PanelPresenter.shared.onTransitionStart = { [weak model] in model?.freezeVideo(for: $0) }
+            PanelPresenter.shared.onClosing = { [weak ui] closing in if ui?.panelClosing != closing { ui?.panelClosing = closing } }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { prewarmPanels() }
+        }
+        .onChange(of: ui.panel) { _, new in
+            if let new { presentPanel(new) } else { PanelPresenter.shared.hide() }
+        }
+        .onDisappear { PanelPresenter.shared.reset() }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            // New size after a rotation: build the panels for it ahead of time.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { prewarmPanels() }
         }
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
         .fileImporter(isPresented: $showSubtitlePicker, allowedContentTypes: [.item]) { result in
             if case .success(let url) = result { model.addSubtitle(url: url) }
+        }
+    }
+
+    /// Presents the panel as a system popover from its button (a bar item on
+    /// iOS 26, so the button's glass morphs into the panel).
+    private func presentPanel(_ kind: PlayerUIState.Panel, immediate: Bool = false) {
+        let source: PanelSource
+        let sourceView: UIView?
+        if let item = ui.barItems[kind], ui.panelBar?.window != nil {
+            source = .item(item); sourceView = ui.panelBar
+        } else if let anchor = ui.anchors[kind], anchor.window != nil {
+            source = .view(anchor); sourceView = anchor
+        } else {
+            dlog("ui/error", "no source for \(kind.rawValue)")
+            ui.panel = nil
+            return
+        }
+        guard let window = sourceView?.window, let root = window.rootViewController else { return }
+        // Remember where the pill buttons are (iOS replaces the item while its panel is up).
+        for (k, item) in ui.barItems { if let f = item.frame(in: window), f.width > 0 { ui.pillFrames[k] = f } }
+        let (width, maxHeight, sizeKey) = panelSize(in: window)
+        let content = panelContent(kind, width: width, maxHeight: maxHeight)
+        // Any tap outside the panel closes it, including where the pill was
+        // (the pill is hidden by iOS while a panel is open); the popover
+        // asks the presenter, which closes it itself.
+        dlog("ui", "present panel \(kind.rawValue) from \(ui.barItems[kind] != nil && ui.panelBar?.window != nil ? "bar item" : "view") \(Int(width))×≤\(Int(maxHeight))")
+        var bottomInset: CGFloat = 8
+        if let bar = sourceView {
+            let f = bar.convert(bar.bounds, to: window)
+            bottomInset = max(8, window.bounds.height - f.minY + 6)
+        }
+        PanelPresenter.shared.show(kind: kind.rawValue, sizeKey: sizeKey, owner: ObjectIdentifier(model), content: content,
+                                   source: source, anchor: sourceView, from: root,
+                                   bottomInset: bottomInset, immediate: immediate) { [weak ui] in
+            // Closed by a tap outside.
+            if ui?.panel == kind { ui?.panel = nil }
+            ui?.scheduleHide()
+        }
+    }
+
+    private func panelSize(in window: UIWindow) -> (CGFloat, CGFloat, String) {
+        let size = window.bounds.size
+        let compact = size.width < 640
+        let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
+        let maxHeight = max(180, size.height - (compact ? 150 : 84) - window.safeAreaInsets.top - 66)
+        return (width, maxHeight, "\(Int(width))x\(Int(maxHeight))")
+    }
+
+    private func panelContent(_ kind: PlayerUIState.Panel, width: CGFloat, maxHeight: CGFloat) -> () -> AnyView {
+        { [model, ui, onRotationLock] in
+            AnyView(PlayerPanel(kind: kind, model: model, ui: ui, width: width, maxHeight: maxHeight,
+                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock, bare: true))
+        }
+    }
+
+    /// Builds the three panels in the background of an idle moment (one per
+    /// run-loop turn) so the first tap on each opens straight away.
+    private func prewarmPanels(attempt: Int = 0) {
+        guard let bar = ui.panelBar, let window = bar.window else {
+            if attempt < 20 { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { prewarmPanels(attempt: attempt + 1) } }
+            return
+        }
+        let (width, maxHeight, sizeKey) = panelSize(in: window)
+        for (i, kind) in [PlayerUIState.Panel.tracks, .settings, .nowPlaying].enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 * Double(i)) {
+                guard ui.panel == nil else { return }
+                PanelPresenter.shared.prewarm(kind: kind.rawValue, sizeKey: sizeKey, owner: ObjectIdentifier(model),
+                                              content: panelContent(kind, width: width, maxHeight: maxHeight))
+            }
         }
     }
 
@@ -205,7 +281,16 @@ struct PlayerScreen: View {
         }
     }
 
-    private var panelPill: some View { PanelPill(ui: ui, ns: glassNS) }
+    @ViewBuilder
+    private var panelPill: some View {
+        if #available(iOS 26.0, *) {
+            PanelToolbarView(ui: ui)
+                .frame(width: 176, height: 50)
+        } else {
+            PanelPillView(ui: ui, height: tune.pillHeight)
+                .frame(width: tune.pillHeight * 3 + 8, height: tune.pillHeight)
+        }
+    }
 
     // MARK: Overlays
 

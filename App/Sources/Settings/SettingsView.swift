@@ -74,6 +74,7 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.pipReturnOnOpen) private var pipReturnOnOpen = true
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
+    @AppStorage(SettingsKey.panelTransition) private var panelTransition = "morphFrozen"
     @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
     @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
     @AppStorage(SettingsKey.gestureControl) private var gestures = true
@@ -113,12 +114,16 @@ struct PlaybackSettings: View {
                     Text("Episode number & title").tag("episode")
                     Text("File name").tag("filename")
                 }
+                Picker("Menu animation", selection: $panelTransition) {
+                    Text("Morph (still picture)").tag("morphFrozen")
+                    Text("Morph (live picture)").tag("morph")
+                }
                 LabeledContent("Controls width") {
                     Slider(value: $controlsWidth, in: 0.6...1.0, step: 0.05).frame(maxWidth: 170)
                     Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
                 }
             } header: { Text("Player") } footer: {
-                Text("Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
+                Text("Menu animation: the button's glass grows into the panel. \"Still picture\" holds the video frame during the morph so the animation stays smooth. Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
             }
             Section("Progress bar") {
                 Picker("Chapter markers", selection: $bar.markerStyle) {

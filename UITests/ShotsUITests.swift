@@ -28,14 +28,8 @@ final class ShotsUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 25), "player controls not found")
         sleep(2)
         shot("player")
-        app.buttons["Tracks"].tap()
-        burst("player-opening", count: 4)            // the glass springing out of the button
-        sleep(2)
+        app.buttons["Tracks"].tap(); sleep(2)
         shot("player-tracks")
-        app.buttons["Settings"].tap()                // switch while open
-        burst("player-switch", count: 3)
-        sleep(2)
-        shot("player-settings")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(1)
         XCUIDevice.shared.orientation = .portrait
     }
