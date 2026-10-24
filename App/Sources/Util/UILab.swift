@@ -16,6 +16,7 @@ enum UILab {
     static func start() {
         if CommandLine.arguments.contains("-avLab") { avLab(); return }
         if CommandLine.arguments.contains("-labDiscover") { IMDbSource.seedForLab(); return }
+        if CommandLine.arguments.contains("-skipProbe") { skipProbe(); return }
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-imdbProbe=") }) { imdbProbe(ids: arg.dropFirst("-imdbProbe=".count).split(separator: ",").map(String.init)); return }
         if uiTestLibrary {
             UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
@@ -83,6 +84,26 @@ enum UILab {
     /// A/V sync lab (real engine): play a clip with 5.1 audio, hold 2× for 4 s,
     /// release, then switch the renderer the way PiP does and back. Logs
     /// position, audio position and A/V offset every 0.2 s.
+    /// `-skipProbe`: the Skip-pill naming and merging on real inputs (logged).
+    static func skipProbe() {
+        func show(_ label: String, _ segs: [SkipSegment], _ dur: Double, _ chs: [(String, Double)], anime: Bool) {
+            let out = SkipService.tidy(segs, duration: dur, chapters: chs, anime: anime)
+            dlog("lab", "skip \(label): " + out.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" }.joined(separator: ", "))
+        }
+        let generic: [(String, Double)] = [("Chapter 1", 0), ("Chapter 2", 171.05), ("Chapter 3", 261.01), ("Chapter 4", 660.08), ("Chapter 5", 1346.05)]
+        // Classroom of the Elite S1E1 and S1E4, IntroDB answers from the 24 Oct log.
+        show("CotE e1", [SkipSegment(kind: .intro, start: 1345, end: 1435, source: "IntroDB"), SkipSegment(kind: .outro, start: 1345, end: 1438, source: "IntroDB")], 1440, generic, anime: true)
+        show("CotE e4", [SkipSegment(kind: .intro, start: 171, end: 261, source: "IntroDB"), SkipSegment(kind: .outro, start: 1345, end: 1435, source: "IntroDB")], 1440, generic, anime: true)
+        let named: [(String, Double)] = [("Prologue", 0), ("OP", 95), ("Part A", 185), ("Part B", 800), ("ED", 1330), ("Next Episode Preview", 1420)]
+        let fromChapters = SkipService.segments(fromChapters: named, duration: 1440)
+        show("named chapters", fromChapters, 1440, named, anime: true)
+        show("live action", [SkipSegment(kind: .intro, start: 60, end: 120, source: "IntroDB"), SkipSegment(kind: .outro, start: 2500, end: 2600, source: "IntroDB")], 2640, [], anime: false)
+        for t in ["Chapter 4", "Part B", "OP", "ED2", "Opening", "Ending Credits", "00:22:26.053", "Episode", "Recap"] {
+            dlog("lab", "skip name \(t) → \(SkipService.meaningfulName(t) ?? "nil")")
+        }
+        dlog("lab", "skip probe done")
+    }
+
     /// `-imdbProbe=tt…,tt…`: fetch each title page through the real source and
     /// log what the parser found (cast, photos, roles), to check the page shape.
     static func imdbProbe(ids: [String]) {

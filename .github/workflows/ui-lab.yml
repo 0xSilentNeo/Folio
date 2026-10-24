@@ -75,7 +75,7 @@ jobs:
           REC=$!
           sleep 10
           EXTRA=""; case "${{ matrix.variant }}" in av-*) EXTRA="-avLab -labAO=${{ matrix.variant }}";; esac; EXTRA="${EXTRA/-labAO=av-/-labAO=}"; [ "${{ matrix.variant }}" = "gl" ] && EXTRA="-labGL"; [ "${{ matrix.variant }}" = "noengine" ] && EXTRA="-labNoEngine"; [ "${{ matrix.variant }}" = "poplab" ] && EXTRA="-popLab"
-          ARGS="-uiLab $EXTRA"; [ "${{ matrix.variant }}" = "poplab" ] && ARGS="-popLab"; case "${{ matrix.variant }}" in av-*) ARGS="$EXTRA";; imdb) ARGS="-noSplash -imdbProbe=tt0944947";; esac
+          ARGS="-uiLab $EXTRA"; [ "${{ matrix.variant }}" = "poplab" ] && ARGS="-popLab"; case "${{ matrix.variant }}" in av-*) ARGS="$EXTRA";; imdb) ARGS="-noSplash -imdbProbe=tt0944947";; skip) ARGS="-noSplash -skipProbe";; esac
           if case "${{ matrix.variant }}" in uitest*) true;; *) false;; esac; then
             xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release \
               -destination "id=$UDID" -derivedDataPath build -only-testing:${{ github.event.inputs.only || 'GlassPlayerUITests' }} > lab/test.log 2>&1 || echo "::warning::UI test failed (see lab/test.log)"
