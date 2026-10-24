@@ -1,4 +1,5 @@
 import Foundation
+import QuartzCore
 import CryptoKit
 
 /// Built-in IMDb metadata source: charts, filtered browsing, search, title
