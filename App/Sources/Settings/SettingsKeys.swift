@@ -28,6 +28,7 @@ enum SettingsKey {
     static let panelTransition = "panelTransition"      // morphFrozen | morph
     static let tileArtwork = "tileArtwork"              // poster | frame
     static let castPosition = "castPosition"            // top | bottom (title pages)
+    static let episodeTitleLanguage = "episodeTitleLanguage"   // english | original
     static let playlistNames = "playlistNames"          // "episode" | "filename"
 
     // PiP
@@ -101,6 +102,7 @@ enum SettingsKey {
             panelTransition: "morphFrozen",
             tileArtwork: "poster",
             castPosition: "bottom",
+            episodeTitleLanguage: "english",
             playlistNames: "episode",
             pipEnabled: true,
             pipAuto: true,

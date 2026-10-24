@@ -141,8 +141,8 @@ enum IMDbSource {
         let lang = language
         store("chart|/chart/moviemeter/|\(lang)", [film, show])
         store("chart|/chart/tvmeter/|\(lang)", [show, film])
-        store("title2|\(film.id)|\(lang)", film)
-        store("title2|\(show.id)|\(lang)", show)
+        store("title3|\(film.id)|\(lang)", film)
+        store("title3|\(show.id)|\(lang)", show)
         store("seasons|\(show.id)", SeasonList(seasons: [1, 2]))
         for season in [1, 2] {
             let eps = (1...6).map { e -> MetaVideo in
@@ -297,9 +297,17 @@ enum IMDbSource {
     // MARK: - Title details
 
     static func details(id: String, type hint: String) async -> MetaItem? {
-        let key = "title2|\(id)|\(language)"
+        let key = "title3|\(id)|\(language)"
         if let hit = cached(key, ttl: 7 * 86400, as: MetaItem.self) { return hit }
         guard let page = await html("/title/\(id)/") else { return nil }
+        let m = parseDetails(page: page, id: id, hint: hint)
+        if let m { store(key, m); dlog("imdb", "details \(id): \(m.name) rating=\(m.imdbRating ?? "-") cast=\(m.credits?.count ?? 0)\((m.credits?.first?.photo != nil) ? " with photos" : "")") } else { dlog("imdb/error", "details \(id): nothing parsed (\(page.count) chars)") }
+        return m
+    }
+
+    /// The title page → a title (separate from the fetch so the lab can feed
+    /// it page data in IMDb's shapes).
+    static func parseDetails(page: String, id: String, hint: String) -> MetaItem? {
         var m: MetaItem?
         for obj in jsonLD(page) {
             let t = (obj["@type"] as? String) ?? ""
@@ -328,18 +336,29 @@ enum IMDbSource {
                 if let n = fromData?.name, !n.isEmpty { m2!.name = n }
                 if m2!.releaseInfo == nil { m2!.releaseInfo = fromData?.releaseInfo }
                 if m2!.runtime == nil { m2!.runtime = fromData?.runtime }
-                walk(next) { d in
-                    if m2!.originalName == nil, (d["id"] as? String) == id, let o = text(d["originalTitleText"]), o != m2!.name {
-                        m2!.originalName = o
+                // One pass over the whole page data. Nothing is skipped: 1.13.0
+                // stopped descending at the object holding `countriesOfOrigin`,
+                // which is the main title object — and the cast with photos
+                // lives inside it, so only the photo-less "Stars" were found.
+                var originals: [(score: Int, text: String)] = []
+                var castLists: [(path: String, members: [CastMember])] = []
+                walkPaths(next, path: "") { d, path in
+                    // The show's original title: from the object that IS this
+                    // title (it carries year/rating/genres), not one that merely
+                    // references it (an episode's "series" link carried the
+                    // episode's own original title into the show in 1.13.0).
+                    if (d["id"] as? String) == id, let o = text(d["originalTitleText"]) {
+                        let score = ["releaseYear", "ratingsSummary", "titleType", "genres", "plot", "runtimeSeconds", "releaseDate"].filter { d[$0] != nil }.count
+                        originals.append((score, o))
                     }
-                    // Top cast with headshots: `cast { edges { node { name, characters } } }`.
-                    if (m2!.credits ?? []).isEmpty, let cast = d["cast"] as? [String: Any], let edges = cast["edges"] as? [[String: Any]] {
-                        let list = castMembers(edges.compactMap { $0["node"] as? [String: Any] })
-                        if !list.isEmpty { m2!.credits = list }
+                    for (key, value) in d {
+                        guard let arr = value as? [[String: Any]], arr.count >= 2 else { continue }
+                        let nodes = arr.map { ($0["node"] as? [String: Any]) ?? $0 }
+                        let list = castMembers(nodes)
+                        if list.count >= 2 { castLists.append((path + "." + key, list)) }
                     }
                     if let c = d["countriesOfOrigin"] as? [String: Any], let list = c["countries"] as? [[String: Any]] {
                         m2!.countries = list.compactMap { $0["id"] as? String }
-                        return false
                     }
                     if m2!.description == nil, let plot = d["plot"] as? [String: Any], let pt = plot["plotText"] as? [String: Any], let s = pt["plainText"] as? String {
                         m2!.description = s
@@ -349,8 +368,22 @@ enum IMDbSource {
                        let node = edges.first?["node"] as? [String: Any], let thumb = (node["thumbnail"] as? [String: Any])?["url"] as? String {
                         m2!.background = sized(thumb, width: 1280)
                     }
-                    return true
                 }
+                if let best = originals.max(by: { $0.score < $1.score }), best.text != m2!.name {
+                    m2!.originalName = best.text
+                }
+                // The cast list with the most photos, then the most roles (actors
+                // have characters; writer/director lists don't), then the longest.
+                func rank(_ l: [CastMember]) -> (Int, Int, Int) {
+                    (l.filter { $0.photo != nil }.count, l.filter { $0.character != nil }.count, l.count)
+                }
+                if let best = castLists.max(by: { rank($0.members) < rank($1.members) }) {
+                    m2!.credits = best.members
+                    dlog("imdb", "cast \(id): \(castLists.count) list(s); chose \(best.path) — \(best.members.count) people, \(best.members.filter { $0.photo != nil }.count) photos, \(best.members.filter { $0.character != nil }.count) roles")
+                } else {
+                    dlog("imdb", "cast \(id): no cast list found in page data")
+                }
+                dlog("imdb", "original title \(id): \(originals.count) candidate(s), chose \(m2!.originalName ?? "none")")
                 if (m2!.genres ?? []).contains(where: { $0.caseInsensitiveCompare("Animation") == .orderedSame }),
                    (m2!.countries ?? []).contains("JP") {
                     m2!.genres = (m2!.genres ?? []) + ["Anime"]
@@ -358,28 +391,6 @@ enum IMDbSource {
                 m = m2
             }
         }
-        if var m2 = m, (m2.credits ?? []).isEmpty, let next = nextData(page) {
-            // No photo cast list on this page shape: fall back to the "Stars" credits (names only).
-            var found: [CastMember] = []
-            walk(next) { d in
-                guard found.isEmpty, let pcs = d["principalCredits"] as? [[String: Any]] else { return true }
-                for pc in pcs where typeID(pc["category"]) == "cast" {
-                    found = castMembers((pc["credits"] as? [[String: Any]]) ?? [])
-                }
-                return found.isEmpty
-            }
-            if found.isEmpty {
-                // Last resort: any credit-shaped node anywhere in the page data.
-                var nodes: [[String: Any]] = []
-                walk(next) { d in
-                    if let person = d["name"] as? [String: Any], person["nameText"] != nil, d["characters"] != nil { nodes.append(d); return false }
-                    return nodes.count < 24
-                }
-                found = castMembers(nodes)
-            }
-            if !found.isEmpty { m2.credits = found; m = m2 }
-        }
-        if let m { store(key, m); dlog("imdb", "details \(id): \(m.name) rating=\(m.imdbRating ?? "-") cast=\(m.credits?.count ?? 0)\((m.credits?.first?.photo != nil) ? " with photos" : "")") } else { dlog("imdb/error", "details \(id): nothing parsed (\(page.count) chars)") }
         return m
     }
 
@@ -417,7 +428,15 @@ enum IMDbSource {
     }
 
     /// Episodes of one season as Stremio-style videos (`ttSERIES:season:episode`).
+    /// A season's episodes; titles in English where IMDb only has the
+    /// original-language one (Settings → General → Episode titles).
     static func episodes(id: String, season: Int) async -> [MetaVideo] {
+        let raw = await imdbEpisodes(id: id, season: season)
+        let show = cachedStale("title3|\(id)|\(language)", as: MetaItem.self)
+        return await EpisodeTitles.apply(raw, imdbID: id, name: show?.name, year: show?.releaseInfo)
+    }
+
+    private static func imdbEpisodes(id: String, season: Int) async -> [MetaVideo] {
         let key = "episodes|\(id)|\(season)|\(language)"
         if let hit = cached(key, ttl: 86400, as: [MetaVideo].self) { return hit }
         guard let page = await html("/title/\(id)/episodes/", ["season": String(season)]) else { return [] }
@@ -551,7 +570,7 @@ enum IMDbSource {
         for n in nodes {
             guard let person = n["name"] as? [String: Any], let pid = person["id"] as? String, pid.hasPrefix("nm"),
                   let name = text(person["nameText"]), seen.insert(pid).inserted else { continue }
-            let chars = ((n["characters"] as? [[String: Any]]) ?? []).compactMap { $0["name"] as? String }
+            let chars = characters(in: n)
             let photo = sized(imageURL(person["primaryImage"]), width: 180)
             let role: String? = chars.isEmpty ? nil : unescape(Optional(chars.prefix(2).joined(separator: " / ")))
             let clean: String = unescape(Optional(name)) ?? name
@@ -559,6 +578,38 @@ enum IMDbSource {
             if out.count >= 24 { break }
         }
         return out
+    }
+
+    /// Role names in either shape IMDb uses: `characters: [{name}]` or
+    /// `creditedRoles.edges[].node.characters.edges[].node.name`.
+    private static func characters(in credit: [String: Any]) -> [String] {
+        if let list = credit["characters"] as? [[String: Any]] {
+            let names = list.compactMap { ($0["name"] as? String) ?? (($0["node"] as? [String: Any])?["name"] as? String) }
+            if !names.isEmpty { return names }
+        }
+        if let c = credit["characters"] as? [String: Any], let edges = c["edges"] as? [[String: Any]] {
+            let names = edges.compactMap { ($0["node"] as? [String: Any])?["name"] as? String }
+            if !names.isEmpty { return names }
+        }
+        if let roles = credit["creditedRoles"] as? [String: Any], let edges = roles["edges"] as? [[String: Any]] {
+            for e in edges {
+                if let node = e["node"] as? [String: Any] {
+                    let names = characters(in: node)
+                    if !names.isEmpty { return names }
+                }
+            }
+        }
+        return []
+    }
+
+    /// Like `walk`, with the key path (for the log).
+    static func walkPaths(_ node: Any, path: String, _ visit: ([String: Any], String) -> Void) {
+        if let d = node as? [String: Any] {
+            visit(d, path)
+            for (k, v) in d { walkPaths(v, path: path + "." + k, visit) }
+        } else if let a = node as? [Any] {
+            for v in a { walkPaths(v, path: path + "[]", visit) }
+        }
     }
 
     private static func imageURL(_ v: Any?) -> String? {

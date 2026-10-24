@@ -17,6 +17,7 @@ enum UILab {
         if CommandLine.arguments.contains("-avLab") { avLab(); return }
         if CommandLine.arguments.contains("-labDiscover") { IMDbSource.seedForLab(); return }
         if CommandLine.arguments.contains("-skipProbe") { skipProbe(); return }
+        if CommandLine.arguments.contains("-parseProbe") { parseProbe(); return }
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-imdbProbe=") }) { imdbProbe(ids: arg.dropFirst("-imdbProbe=".count).split(separator: ",").map(String.init)); return }
         if uiTestLibrary {
             UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
@@ -84,6 +85,54 @@ enum UILab {
     /// A/V sync lab (real engine): play a clip with 5.1 audio, hold 2× for 4 s,
     /// release, then switch the renderer the way PiP does and back. Logs
     /// position, audio position and A/V offset every 0.2 s.
+    /// `-parseProbe`: the title-page parser on page data in IMDb's shapes —
+    /// photo cast inside the main title object (next to countriesOfOrigin,
+    /// where 1.13.0 stopped looking), photo-less "Stars", an episode's link back
+    /// to the show carrying the episode's own original title, and the castV2
+    /// shape. Then English episode titles from TVmaze (real network).
+    static func parseProbe() {
+        func page(_ next: String) -> String {
+            #"<script type="application/ld+json">{"@type":"TVSeries","name":"Classroom of the Elite","actor":[{"name":"Star One"}]}</script>"#
+            + #"<script id="__NEXT_DATA__" type="application/json">"# + next + "</script>"
+        }
+        let img = "https://m.media-amazon.com/images/M/MV5Babc._V1_.jpg"
+        let shapeA = """
+        {"props":{"pageProps":{
+          "aboveTheFoldData":{"id":"tt7263328","titleText":{"text":"Classroom of the Elite"},"originalTitleText":{"text":"Yôkoso jitsuryoku shijô shugi no kyôshitsu e"},
+            "titleType":{"id":"tvSeries"},"releaseYear":{"year":2017},"ratingsSummary":{"aggregateRating":7.7},"genres":{"genres":[{"text":"Animation"}]},
+            "principalCredits":[{"category":{"id":"cast"},"credits":[{"name":{"id":"nm1","nameText":{"text":"Shoya Chiba"}}},{"name":{"id":"nm2","nameText":{"text":"Akari Kito"}}}]}]},
+          "mainColumnData":{"id":"tt7263328","countriesOfOrigin":{"countries":[{"id":"JP"}]},
+            "cast":{"edges":[
+              {"node":{"name":{"id":"nm1","nameText":{"text":"Shoya Chiba"},"primaryImage":{"url":"\(img)"}},"characters":[{"name":"Kiyotaka Ayanokoji"}]}},
+              {"node":{"name":{"id":"nm2","nameText":{"text":"Akari Kito"},"primaryImage":{"url":"\(img)"}},"characters":[{"name":"Suzune Horikita"}]}},
+              {"node":{"name":{"id":"nm3","nameText":{"text":"Yurika Kubo"},"primaryImage":{"url":"\(img)"}},"characters":[{"name":"Kikyo Kushida"}]}}]},
+            "episodes":{"episodes":{"edges":[{"node":{"id":"tt9000004","series":{"series":{"id":"tt7263328","originalTitleText":{"text":"Tanin ga Shinjitsu o Inpei Suru Koto ni Taishite"}}}}}]}}}
+        }}}
+        """
+        let shapeB = """
+        {"props":{"pageProps":{
+          "aboveTheFoldData":{"id":"tt6262770","titleText":{"text":"Tenzing"},"originalTitleText":{"text":"Tenzing"},"releaseYear":{"year":2026},"ratingsSummary":{"aggregateRating":7.5}},
+          "mainColumnData":{"id":"tt6262770","countriesOfOrigin":{"countries":[{"id":"AU"}]},
+            "castV2":[{"grouping":{"text":"Cast"},"credits":[
+              {"name":{"id":"nm10","nameText":{"text":"Tom Hiddleston"},"primaryImage":{"url":"\(img)"}},"creditedRoles":{"edges":[{"node":{"characters":{"edges":[{"node":{"name":"George Band"}}]}}}]}},
+              {"name":{"id":"nm11","nameText":{"text":"Willem Dafoe"},"primaryImage":{"url":"\(img)"}},"creditedRoles":{"edges":[{"node":{"characters":{"edges":[{"node":{"name":"Eric Shipton"}}]}}}]}}]}],
+            "writers":[{"credits":[{"name":{"id":"nm20","nameText":{"text":"A Writer"}}},{"name":{"id":"nm21","nameText":{"text":"B Writer"}}}]}]}
+        }}}
+        """
+        for (label, next, id, hint) in [("shape A (cast.edges in mainColumnData)", shapeA, "tt7263328", "series"), ("shape B (castV2)", shapeB, "tt6262770", "movie")] {
+            let m = IMDbSource.parseDetails(page: page(next), id: id, hint: hint)
+            let cast = m?.credits ?? []
+            dlog("lab", "parse \(label): name=\(m?.name ?? "nil") original=\(m?.originalName ?? "-") countries=\((m?.countries ?? []).joined(separator: ",")) cast=\(cast.count) photos=\(cast.filter { $0.photo != nil }.count) roles=\(cast.compactMap(\.character).joined(separator: " | "))")
+        }
+        Task {
+            let t = await EpisodeTitles.titles(imdbID: "tt7263328", name: "Classroom of the Elite", year: "2017")
+            dlog("lab", "tvmaze CotE: \(t.count) titles; S1E1=\(t["1:1"] ?? "nil"); S1E4=\(t["1:4"] ?? "nil")")
+            let g = await EpisodeTitles.titles(imdbID: "tt0944947", name: "Game of Thrones", year: "2011")
+            dlog("lab", "tvmaze GoT (by IMDb id): \(g.count) titles; S1E1=\(g["1:1"] ?? "nil")")
+            dlog("lab", "parse probe done")
+        }
+    }
+
     /// `-skipProbe`: the Skip-pill naming and merging on real inputs (logged).
     static func skipProbe() {
         func show(_ label: String, _ segs: [SkipSegment], _ dur: Double, _ chs: [(String, Double)], anime: Bool) {

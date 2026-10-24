@@ -171,8 +171,11 @@ struct VideoSurface: UIViewRepresentable {
                     // volume stays at 100 so nothing is scaled in software).
                     let value = min(1, max(0, panStartValue - Double(t.y / (v.bounds.height * 0.7))))
                     SystemVolume.set(Float(value))
-                    setHUD(.init(icon: value == 0 ? "speaker.slash.fill" : value < 0.34 ? "speaker.wave.1.fill" : value < 0.67 ? "speaker.wave.2.fill" : "speaker.wave.3.fill",
-                                 text: "\(Int(value * 100))%", progress: value, kind: .volume))
+                    // iOS shows its own volume indicator; the player's HUD only as a fallback.
+                    if !SystemVolume.nativeHUD {
+                        setHUD(.init(icon: value == 0 ? "speaker.slash.fill" : value < 0.34 ? "speaker.wave.1.fill" : value < 0.67 ? "speaker.wave.2.fill" : "speaker.wave.3.fill",
+                                     text: "\(Int(value * 100))%", progress: value, kind: .volume))
+                    }
                 case .none: break
                 }
             case .ended, .cancelled:
@@ -225,13 +228,23 @@ struct VideoSurface: UIViewRepresentable {
 /// MPVolumeView's slider — the only public way to change it).
 @MainActor
 enum SystemVolume {
+    /// The volume view sets the device volume (like the hardware buttons). It
+    /// is *hidden* so iOS shows its own volume indicator for swipes too — a
+    /// visible MPVolumeView in the window makes iOS suppress that indicator.
+    /// Apple's MPVolumeView docs don't describe the indicator rules and volume
+    /// can't be changed in the Simulator, so the first swipe checks that the
+    /// volume really moved; if a hidden view can't set it on this iOS, it falls
+    /// back to an invisible-but-unhidden view and the player's own HUD.
     private static let view: MPVolumeView = {
         let v = MPVolumeView(frame: CGRect(x: -3000, y: -3000, width: 10, height: 10))
-        v.alpha = 0.01
         v.isUserInteractionEnabled = false
+        v.isHidden = true
         return v
     }()
     private static var slider: UISlider? { view.subviews.compactMap { $0 as? UISlider }.first }
+    private static var checked = false
+    /// iOS's own indicator is in use (so the player doesn't draw its HUD for volume).
+    private(set) static var nativeHUD = true
 
     static func attach(to window: UIWindow?) {
         guard let window, view.superview !== window else { return }
@@ -246,5 +259,20 @@ enum SystemVolume {
         guard let slider else { return }
         slider.value = value
         slider.sendActions(for: .valueChanged)
+        guard !checked else { return }
+        checked = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            let now = current
+            if abs(now - value) > 0.04 && nativeHUD {
+                dlog("player", String(format: "volume: hidden volume view didn't set the volume (wanted %.2f, got %.2f); using the player's HUD", value, now))
+                nativeHUD = false
+                view.isHidden = false
+                view.alpha = 0.01
+                slider.value = value
+                slider.sendActions(for: .valueChanged)
+            } else {
+                dlog("player", String(format: "volume: set through the hidden volume view (%.2f); iOS shows its indicator", now))
+            }
+        }
     }
 }

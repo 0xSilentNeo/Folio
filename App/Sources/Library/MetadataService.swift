@@ -22,6 +22,11 @@ struct MediaMeta: Codable, Hashable {
     var originalName: String?
     var credits: [CastMember]?
     var contentRating: String?
+    /// How this entry was made: older entries are looked up again on their
+    /// next use (1.13.1 fixed the cast photos and the original title).
+    var version: Int?
+    var titleLanguage: String?
+    static let currentVersion = 2
 
     /// Best 16:9 art for a tile; poster as a last resort.
     var wideArt: String? { episodeThumb ?? background ?? poster }
@@ -49,7 +54,9 @@ actor MetadataService {
         guard p.title.count >= 2 else { return nil }
         let key = [p.title.lowercased(), p.year.map(String.init) ?? "", p.season.map(String.init) ?? "", p.episode.map(String.init) ?? ""].joined(separator: "|")
         if let e = cache[key], e.meta != nil || Date().timeIntervalSince(e.date) < 86400 * 3 {
-            if let m = e.meta, m.credits == nil { backfillCredits(key: key, meta: m) }
+            if let m = e.meta, (m.version ?? 0) < MediaMeta.currentVersion || m.titleLanguage != EpisodeTitles.language {
+                refresh(key: key, parsed: p)
+            }
             return e.meta
         }
         if let t = inflight[key] { return await t.value }
@@ -72,6 +79,8 @@ actor MetadataService {
             meta.originalName = item.originalName
             meta.credits = item.credits
             meta.contentRating = item.contentRating
+            meta.version = MediaMeta.currentVersion
+            meta.titleLanguage = EpisodeTitles.language
             if type == "series", let ep = p.episode, let video = await episode(of: item.id, season: p.season, episode: ep) {
                 meta.episodeTitle = video.title
                 meta.episodeThumb = video.thumbnail
@@ -116,21 +125,19 @@ actor MetadataService {
         return eps.first { $0.episode == episode }
     }
 
-    private var backfilling = Set<String>()
+    private var refreshing = Set<String>()
 
-    /// Entries saved before cast lists existed get them on their next use,
-    /// one title at a time, without blocking the page.
-    private func backfillCredits(key: String, meta: MediaMeta) {
-        guard meta.id.hasPrefix("tt"), backfilling.count < 2, backfilling.insert(key).inserted else { return }
+    /// Looks an outdated entry up again in the background (two at a time);
+    /// the page shows the new one next time it reads it.
+    private func refresh(key: String, parsed: TitleParser.Parsed) {
+        guard refreshing.count < 2, refreshing.insert(key).inserted else { return }
         Task {
-            if let full = await IMDbSource.details(id: meta.id, type: meta.type), var e = cache[key], var m = e.meta {
-                m.credits = full.credits ?? []
-                m.contentRating = m.contentRating ?? full.contentRating
-                e.meta = m
-                cache[key] = e
+            if let fresh = await resolve(parsed) {
+                cache[key] = Entry(meta: fresh, date: Date())
                 save()
+                dlog("meta", "refreshed \(fresh.name)\(fresh.episodeTitle.map { " · " + $0 } ?? "") (original: \(fresh.originalName ?? "-"), cast \(fresh.credits?.count ?? 0))")
             }
-            backfilling.remove(key)
+            refreshing.remove(key)
         }
     }
 

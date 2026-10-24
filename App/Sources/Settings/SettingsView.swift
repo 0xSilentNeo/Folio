@@ -797,6 +797,7 @@ struct GeneralSettings: View {
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
     @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
+    @AppStorage(SettingsKey.episodeTitleLanguage) private var episodeTitles = "english"
 
     var body: some View {
         Form {
@@ -815,8 +816,12 @@ struct GeneralSettings: View {
                     Text("Above the episodes").tag("top")
                     Text("At the bottom").tag("bottom")
                 }
+                Picker("Episode titles", selection: $episodeTitles) {
+                    Text("English").tag("english")
+                    Text("Original language").tag("original")
+                }
             } footer: {
-                Text("Hide spoilers blurs the pictures and hides the synopsis of episodes you haven't finished.")
+                Text("Hide spoilers blurs the pictures and hides the synopsis of episodes you haven't finished. English episode titles come from TVmaze (tvmaze.com, CC BY-SA) when IMDb only has the original-language title.")
             }
         }
         .navigationTitle("General")
