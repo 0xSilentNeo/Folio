@@ -100,3 +100,17 @@ struct PosterImage: View {
 extension Int64 {
     var byteString: String { ByteCountFormatter.string(fromByteCount: self, countStyle: .file) }
 }
+
+/// Icon for a toolbar item. On iOS 26 an icon-only toolbar button reacts only
+/// to taps on the glyph itself, though the system draws a full circle around
+/// it (Apple Developer Forums thread 815492) — a thin glyph like "ellipsis"
+/// was hit-or-miss. The whole 44 pt square is made tappable.
+struct ToolbarGlyph: View {
+    let systemName: String
+    init(_ systemName: String) { self.systemName = systemName }
+    var body: some View {
+        Image(systemName: systemName)
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+    }
+}

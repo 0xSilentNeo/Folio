@@ -71,10 +71,15 @@ struct ExpandableText: View {
                         .hidden()
                 )
             if truncatable {
-                Button(expanded ? "less" : "+ more") {
+                Button {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { expanded.toggle() }
+                } label: {
+                    Text(expanded ? "less" : "+ more")
+                        .padding(.vertical, 8).padding(.trailing, 24)   // a finger-sized target, not just the word
+                        .contentShape(Rectangle())
                 }
                 .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
+                .padding(.vertical, -8)
             }
         }
     }

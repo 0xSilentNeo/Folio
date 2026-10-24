@@ -236,7 +236,7 @@ struct SettingsPanelContent: View {
                                 if model.activeShaders.contains(name) { Label(name, systemImage: "checkmark") } else { Text(name) }
                             }
                         }
-                    } label: { Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.white.opacity(0.6)).padding(8) }
+                    } label: { Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.white.opacity(0.6)).frame(width: 44, height: 44).contentShape(Rectangle()) }
                     .tint(.white)
                 }
             }

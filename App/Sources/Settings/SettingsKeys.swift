@@ -106,7 +106,7 @@ enum SettingsKey {
             pipAuto: true,
             pipReturnOnOpen: true,
             subLangs: "eng,en",
-            audioLangs: "jpn,ja,eng,en",
+            audioLangs: "eng,en",
             subScale: 1.0,
             subBold: true,
             subBox: false,

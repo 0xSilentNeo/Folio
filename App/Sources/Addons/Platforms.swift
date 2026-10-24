@@ -296,6 +296,7 @@ struct FilterChip: View {
         .foregroundStyle(active ? .white : .white.opacity(0.7))
         .padding(.horizontal, 12).frame(height: 38)
         .background(active ? Color.white.opacity(0.14) : Color.clear, in: Capsule())
+        .contentShape(Capsule())          // a clear background isn't tappable: only the text was
     }
 }
 

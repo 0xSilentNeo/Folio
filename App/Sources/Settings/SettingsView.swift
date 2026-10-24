@@ -418,7 +418,7 @@ struct ScriptOptsView: View {
         .navigationTitle("script-opts")
         .onAppear { files = MPVFiles.scriptOptFiles() }
         .toolbar {
-            Button { showNew = true } label: { Image(systemName: "plus") }
+            Button { showNew = true } label: { ToolbarGlyph("plus") }
         }
         .alert("New option file", isPresented: $showNew) {
             TextField("scriptname", text: $newName).textInputAutocapitalization(.never).autocorrectionDisabled()

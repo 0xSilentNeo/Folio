@@ -201,7 +201,7 @@ struct TitleHeroView: View {
             if let e = entry { Button { history.markWatched(e) } label: { Label("Mark as watched", systemImage: "checkmark.circle") } }
             Button(role: .destructive) { confirmDelete = true } label: { Label("Delete file", systemImage: "trash") }
         } label: {
-            Image(systemName: "ellipsis")
+            ToolbarGlyph("ellipsis")
         }
         .accessibilityLabel("More")
     }
@@ -279,22 +279,46 @@ struct LibraryList: View {
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
 
     var body: some View {
-        LazyVStack(spacing: mode == .details ? 12 : 4) {
-            ForEach(files, id: \.self) { f in
-                Group {
-                    if openTitlePage && group == nil {
-                        NavigationLink(value: LibraryRoute.file(f.path)) { row(f) }
-                    } else {
-                        Button { play(f) } label: { row(f) }
-                    }
-                }
-                .buttonStyle(PressStyle(scale: 0.98))
-                .contextMenu {
-                    Button { play(f) } label: { Label("Play", systemImage: "play") }
-                    Button(role: .destructive) { LocalMediaStore.shared.delete(f) } label: { Label("Delete", systemImage: "trash") }
-                }
+        if mode == .grid {
+            // Thumbnails: a grid of episode stills (until 1.13.1 this mode drew
+            // the same rows as List).
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 16) {
+                ForEach(files, id: \.self) { f in item(f) { tile(f) } }
+            }
+        } else {
+            LazyVStack(spacing: mode == .details ? 12 : 4) {
+                ForEach(files, id: \.self) { f in item(f) { row(f) } }
             }
         }
+    }
+
+    @ViewBuilder
+    private func item<L: View>(_ f: URL, @ViewBuilder label: () -> L) -> some View {
+        Group {
+            if openTitlePage && group == nil {
+                NavigationLink(value: LibraryRoute.file(f.path)) { label() }
+            } else {
+                Button { play(f) } label: { label() }
+            }
+        }
+        .buttonStyle(PressStyle(scale: 0.98))
+        .contextMenu {
+            Button { play(f) } label: { Label("Play", systemImage: "play") }
+            Button(role: .destructive) { LocalMediaStore.shared.delete(f) } label: { Label("Delete", systemImage: "trash") }
+        }
+    }
+
+    private func tile(_ f: URL) -> some View {
+        let p = TitleParser.parse(f.lastPathComponent)
+        let tag = p.episode.map { "S\(p.season ?? 1) · E\($0)" } ?? TitleParser.clean(f.lastPathComponent)
+        return MediaTile(title: tag, subtitle: f.pathExtension.uppercased(), key: f.path, fileURL: f, lookupName: f.lastPathComponent,
+                         progress: history.entry(forURL: f.path)?.progress, fixedTitle: tag)
+            .overlay(alignment: .topTrailing) {
+                if f == current {
+                    Image(systemName: "play.fill").font(.caption2.weight(.bold)).foregroundStyle(.white)
+                        .padding(6).background(Theme.accent, in: Circle()).padding(6)
+                }
+            }
     }
 
     private func row(_ f: URL) -> some View {

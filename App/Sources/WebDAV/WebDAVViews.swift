@@ -193,12 +193,12 @@ struct WebDAVBrowserView: View {
                     Divider()
                     Toggle("Clean titles", isOn: $cleanTitles)
                     Toggle("Only media files", isOn: $onlyMedia)
-                } label: { Image(systemName: "arrow.up.arrow.down.circle") }
+                } label: { ToolbarGlyph("arrow.up.arrow.down.circle") }
             }
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     LibrarySearchView(server: server, root: url)
-                } label: { Image(systemName: "magnifyingglass.circle") }
+                } label: { ToolbarGlyph("magnifyingglass.circle") }
             }
         }
         .task {
