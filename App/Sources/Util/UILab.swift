@@ -15,6 +15,7 @@ enum UILab {
 
     static func start() {
         if CommandLine.arguments.contains("-avLab") { avLab(); return }
+        if CommandLine.arguments.contains("-labDiscover") { IMDbSource.seedForLab(); return }
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-imdbProbe=") }) { imdbProbe(ids: arg.dropFirst("-imdbProbe=".count).split(separator: ",").map(String.init)); return }
         if uiTestLibrary {
             UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)

@@ -123,6 +123,38 @@ enum IMDbSource {
         lock.lock(); memory[key] = (Date(), d); lock.unlock()
         try? d.write(to: cacheFile(key), options: .atomic)
     }
+    /// UI tests: fill the cache with a chart, a film and a series shaped like
+    /// real IMDb results (cast without photos, as phones get them), so the
+    /// Discover → title page path runs with no network.
+    static func seedForLab() {
+        let cast = [CastMember(id: "nm0000001", name: "Lab Actor One", character: "Hero", photo: nil),
+                    CastMember(id: "nm0000002", name: "Lab Actor Two", character: "Rival", photo: nil),
+                    CastMember(id: "nm0000003", name: "Lab Actor Three", character: nil, photo: nil),
+                    CastMember(id: "nm0000004", name: "Lab Actor Four", character: "Friend / Narrator", photo: nil)]
+        var film = MetaItem(id: "tt9000001", type: "movie", name: "Lab Movie", poster: nil,
+                            description: String(repeating: "A long synopsis so the more button shows. ", count: 8),
+                            releaseInfo: "2025", imdbRating: "7.5", genres: ["Drama", "Thriller"])
+        film.runtime = "1h 52m"; film.contentRating = "M"; film.credits = cast; film.director = ["Lab Director"]
+        var show = MetaItem(id: "tt9000002", type: "series", name: "Lab Series", poster: nil,
+                            description: "A short synopsis.", releaseInfo: "2024", imdbRating: "9.3", genres: ["Animation", "Anime"])
+        show.originalName = "Rabo Shirīzu"; show.contentRating = "TV-MA"; show.credits = cast; show.countries = ["JP"]
+        let lang = language
+        store("chart|/chart/moviemeter/|\(lang)", [film, show])
+        store("chart|/chart/tvmeter/|\(lang)", [show, film])
+        store("title2|\(film.id)|\(lang)", film)
+        store("title2|\(show.id)|\(lang)", show)
+        store("seasons|\(show.id)", SeasonList(seasons: [1, 2]))
+        for season in [1, 2] {
+            let eps = (1...6).map { e -> MetaVideo in
+                var v = MetaVideo(id: "\(show.id):\(season):\(e)", title: "Episode title \(e)", season: season, episode: e)
+                v.overview = "What happens in episode \(e)."
+                return v
+            }
+            store("episodes|\(show.id)|\(season)|\(lang)", eps)
+        }
+        dlog("lab", "IMDb cache seeded (Lab Movie, Lab Series)")
+    }
+
     static func clearCache() {
         lock.lock(); memory = [:]; lock.unlock()
         try? FileManager.default.removeItem(at: dir)

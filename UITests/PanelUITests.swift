@@ -199,3 +199,32 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(ok, 20, "some taps after a close were lost")
     }
 }
+
+/// Discover → title page, the path that crashed 1.12.0 on device. The IMDb
+/// cache is seeded (`-labDiscover`), so no network is needed.
+final class DiscoverUITests: XCTestCase {
+    func testOpenTitlesFromDiscover() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-labDiscover", "-noSplash"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tab = app.tabBars.buttons["Discover"].exists ? app.tabBars.buttons["Discover"] : app.buttons["Discover"]
+        XCTAssertTrue(tab.waitForExistence(timeout: 20), "Discover tab not found")
+        tab.tap()
+        for name in ["Lab Movie", "Lab Series"] {
+            let tile = app.staticTexts[name].firstMatch
+            XCTAssertTrue(tile.waitForExistence(timeout: 15), "\(name) tile not in the grid")
+            sleep(1)
+            tile.tap()
+            sleep(6)                                                   // let the page load, decipher, lay out
+            XCTAssertEqual(app.state, .runningForeground, "app is gone after opening \(name)")
+            print("TITLEPAGE \(name) alive=\(app.state == .runningForeground)")
+            XCTAssertTrue(app.descendants(matching: .any)["heroPlay"].waitForExistence(timeout: 5), "\(name): play button missing")
+            app.swipeUp(); sleep(2)                                    // scroll to cast + links
+            XCTAssertEqual(app.state, .runningForeground, "app is gone after scrolling \(name)")
+            let back = app.navigationBars.buttons.firstMatch
+            if back.exists { back.tap() } else { app.swipeRight() }
+            sleep(2)
+        }
+    }
+}

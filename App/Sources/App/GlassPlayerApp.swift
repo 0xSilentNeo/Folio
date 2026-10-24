@@ -12,7 +12,7 @@ struct GlassPlayerApp: App {
         UILab.start()
         PopLab.start()
         MPVFiles.bootstrap()
-        if !CommandLine.arguments.contains("-uiTest") && !CommandLine.arguments.contains("-uiTestLibrary") { IMDbSource.warmUp() }
+        if !["-uiTest", "-uiTestLibrary", "-labDiscover"].contains(where: CommandLine.arguments.contains) { IMDbSource.warmUp() }
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
         UITabBar.appearance().scrollEdgeAppearance = tab
