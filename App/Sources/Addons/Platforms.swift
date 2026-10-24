@@ -404,6 +404,7 @@ struct PlatformSettingsView: View {
                 } header: { Text("Region") }
             }
             .environment(\.editMode, .constant(.active))
+            .brandListBackground()
             .navigationTitle("Streaming Services")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -128,6 +128,7 @@ struct CatalogGridView: View {
             if loading { ProgressView().padding() }
         }
         .background(Theme.background)
+        .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -245,6 +246,7 @@ struct StreamsView: View {
             }
         }
         .overlay { if starting { ProgressView().controlSize(.large).padding(20).glass() } }
+        .brandListBackground()
         .navigationTitle(video?.label ?? meta.name)
         .navigationBarTitleDisplayMode(.inline)
         .task { if groups.isEmpty { await load() } }
@@ -360,6 +362,7 @@ struct AddonSearchView: View {
             .padding(.vertical, 12)
         }
         .background(Theme.background)
+        .brandListBackground()
         .navigationTitle("Search")
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Movies, shows, anime")
         .onSubmit(of: .search) { run() }
@@ -450,6 +453,7 @@ struct AddonsManagerView: View {
                 .onMove { store.move(from: $0, to: $1) }
             }
         }
+        .brandListBackground()
         .navigationTitle("Addons")
         .toolbar { EditButton() }
     }

@@ -31,6 +31,7 @@ struct NetworkView: View {
                     Text("Real-Debrid, TorBox, Premiumize, Nextcloud, Synology, rclone serve webdav… Passwords are stored in the iOS Keychain.")
                 }
             }
+            .brandListBackground()
             .navigationTitle("Network")
             .sheet(isPresented: $adding) { ServerEditView(server: nil) }
             .sheet(item: $editing) { s in ServerEditView(server: s) }
@@ -94,6 +95,7 @@ struct LocalFolderView: View {
             }
         }
         .background(HomeBackdrop().ignoresSafeArea())
+        .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

@@ -34,6 +34,52 @@ enum Theme {
                                          startPoint: .topLeading, endPoint: .bottomTrailing)
 
     static let wordmarkFont = "AvenirNext-Regular"
+    /// Switch track when on. Ink on light; on dark a warm taupe, not the cream
+    /// accent: the white knob vanished on a cream track (screenshot run).
+    static let switchTint = Color(light: 0x1B1A18, dark: 0xA08D77)
+}
+
+/// Every switch in the app: the system switch with `Theme.switchTint`.
+struct BrandSwitchStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Toggle(configuration).toggleStyle(SwitchToggleStyle()).tint(Theme.switchTint)
+    }
+}
+
+extension View {
+    /// Lists and forms on the page colour (cream / ink) instead of the
+    /// system's grouped grey, so they match Home and the title pages.
+    func brandListBackground() -> some View {
+        scrollContentBackground(.hidden).background(Theme.background.ignoresSafeArea())
+    }
+
+    /// A fade from the page colour under the status bar and the Back button,
+    /// shown once the page has scrolled past its header (iOS 18+), so text
+    /// never slides under them with nothing behind it.
+    func topScrollScrim(after offset: CGFloat = 140) -> some View { modifier(TopScrollScrim(threshold: offset)) }
+}
+
+struct TopScrollScrim: ViewModifier {
+    let threshold: CGFloat
+    @State private var shown = false
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content
+                .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top > threshold } action: { _, v in
+                    withAnimation(.easeOut(duration: 0.2)) { shown = v }
+                }
+                .overlay(alignment: .top) {
+                    LinearGradient(stops: [.init(color: Theme.background, location: 0), .init(color: Theme.background.opacity(0.92), location: 0.55),
+                                           .init(color: Theme.background.opacity(0), location: 1)], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 64)
+                        .ignoresSafeArea(edges: .top)
+                        .opacity(shown ? 1 : 0)
+                        .allowsHitTesting(false)
+                }
+        } else {
+            content
+        }
+    }
 }
 
 extension UIColor {

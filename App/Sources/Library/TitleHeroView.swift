@@ -95,6 +95,7 @@ struct TitleHeroView: View {
             }
             .scrollIndicators(.hidden)
             .ignoresSafeArea(edges: .top)
+            .topScrollScrim()
         }
         .background(HomeBackdrop().ignoresSafeArea())
         .background(BackSwipeProbe().frame(width: 1, height: 1))

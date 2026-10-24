@@ -569,6 +569,7 @@ struct OpenURLSheet: View {
                     TextField("Referer", text: $referer).textInputAutocapitalization(.never).autocorrectionDisabled()
                 }
             }
+            .brandListBackground()
             .navigationTitle("Open URL")
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!url.isEmpty)

@@ -37,6 +37,7 @@ struct SettingsView: View {
                     Text("Your mpv folder is in Files → On My iPhone → Folio → mpv.")
                 }
             }
+            .brandListBackground()
             .navigationTitle("Settings")
         }
     }
@@ -140,6 +141,7 @@ struct PlaybackSettings: View {
                 Toggle("Back to the player when you open the app", isOn: $pipReturnOnOpen).disabled(!pipEnabled)
             } header: { Text("Picture in Picture") }
         }
+        .brandListBackground()
         .navigationTitle("Playback")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -200,6 +202,7 @@ struct SubtitleAudioSettings: View {
                 Toggle("Background box", isOn: $subBox)
             }
         }
+        .brandListBackground()
         .navigationTitle("Audio & Subtitles")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -238,6 +241,7 @@ struct SkipSettings: View {
                 }
             }
         }
+        .brandListBackground()
         .navigationTitle("Skip Intro & Credits")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -252,6 +256,7 @@ struct MPVConfigSettings: View {
             NavigationLink { CommandsEditorView() } label: { Label("Player commands", systemImage: "command") }
             NavigationLink { LogView() } label: { Label("Last playback log", systemImage: "text.alignleft") }
         }
+        .brandListBackground()
         .navigationTitle("mpv Config")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -302,6 +307,7 @@ struct AdvancedSettings: View {
                     }
             }
         }
+        .brandListBackground()
         .navigationTitle("Advanced")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -362,6 +368,7 @@ struct ScriptsView: View {
                 """)
             }
         }
+        .brandListBackground()
         .navigationTitle("Scripts")
         .onAppear(perform: reload)
         .toolbar { EditButton() }
@@ -418,6 +425,7 @@ struct ScriptOptsView: View {
             }
             if files.isEmpty { Text("No option files. Create one named after the script, e.g. stats.conf.").foregroundStyle(.secondary) }
         }
+        .brandListBackground()
         .navigationTitle("script-opts")
         .onAppear { files = MPVFiles.scriptOptFiles() }
         .toolbar {
@@ -528,6 +536,7 @@ struct ShadersView: View {
                 if let message { Text(message).font(.caption).foregroundStyle(.secondary) }
             }
         }
+        .brandListBackground()
         .navigationTitle("Shaders")
         .onAppear(perform: reload)
         .toolbar { EditButton() }
@@ -594,6 +603,7 @@ struct CommandsEditorView: View {
                 Button("Restore defaults") { commands = ScriptCommandStore.defaults; save() }
             }
         }
+        .brandListBackground()
         .navigationTitle("Commands")
         .toolbar { EditButton() }
         .sheet(item: $editing) { c in
@@ -620,6 +630,7 @@ struct CommandEditSheet: View {
                     .font(.body.monospaced())
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
             }
+            .brandListBackground()
             .navigationTitle(command.name.isEmpty ? "New Command" : command.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -649,6 +660,7 @@ struct ConfigEditorView: View {
             .autocorrectionDisabled()
             .scrollContentBackground(.hidden)
             .background(Theme.background)
+            .brandListBackground()
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .onAppear { text = MPVFiles.readText(url) }
@@ -677,6 +689,7 @@ struct LogView: View {
                 .padding(12)
         }
         .background(Theme.background)
+        .brandListBackground()
         .navigationTitle("Last log")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -742,6 +755,7 @@ struct DiagnosticsView: View {
                 }
             }
         }
+        .brandListBackground()
         .navigationTitle("Diagnostics")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -787,6 +801,7 @@ struct DiscoverSettings: View {
                 NavigationLink("Addons") { AddonsManagerView() }
             }
         }
+        .brandListBackground()
         .navigationTitle("Discover")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPlatforms) { PlatformSettingsView() }
@@ -839,6 +854,7 @@ struct GeneralSettings: View {
                 Text("Hide spoilers blurs the pictures and hides the synopsis of episodes you haven't finished. English episode titles come from TVmaze (tvmaze.com, CC BY-SA) when IMDb only has the original-language title.")
             }
         }
+        .brandListBackground()
         .navigationTitle("General")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -908,6 +924,7 @@ struct LibrarySettings: View {
                 Text("Titles, posters and episode names come from IMDb, looked up from the file names and kept on this device. The cache holds downloaded artwork; it refills as you browse.")
             }
         }
+        .brandListBackground()
         .navigationTitle("Library")
         .navigationBarTitleDisplayMode(.inline)
         .task { await measure() }

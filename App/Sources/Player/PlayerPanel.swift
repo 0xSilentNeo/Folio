@@ -36,6 +36,7 @@ struct PlayerPanel: View {
         .modifier(OptionalGlass(enabled: !bare))
         .foregroundStyle(.white)
         .tint(Theme.accent)
+        .toggleStyle(BrandSwitchStyle())
         .preferredColorScheme(.dark)
         .environment(\.colorScheme, .dark)
     }

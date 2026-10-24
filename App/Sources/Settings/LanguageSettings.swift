@@ -99,6 +99,7 @@ struct LanguageListEditor: View {
             } footer: { Text(explanation) }
         }
         .environment(\.editMode, .constant(.active))
+        .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { langs = PlaybackLanguage.parse(list) }
@@ -109,6 +110,7 @@ struct LanguageListEditor: View {
                         langs.append(l); save(); adding = false
                     } label: { Text(l.name).foregroundStyle(.primary) }
                 }
+                .brandListBackground()
                 .navigationTitle("Add language")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { adding = false } } }

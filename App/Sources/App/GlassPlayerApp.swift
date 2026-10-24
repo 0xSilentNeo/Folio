@@ -51,6 +51,7 @@ struct RootView: View {
             if splash { LaunchSplash { splash = false }.transition(.identity).zIndex(1) }
         }
         .background(AppearanceProbe(mode: appearance).frame(width: 1, height: 1))
+        .toggleStyle(BrandSwitchStyle())
         .onAppear { LaunchTiming.firstFrame() }
     }
 

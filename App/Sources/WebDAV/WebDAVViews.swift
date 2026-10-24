@@ -85,6 +85,7 @@ struct ServerEditView: View {
                     if let testResult { Text(testResult).font(.footnote).foregroundStyle(.secondary) }
                 }
             }
+            .brandListBackground()
             .navigationTitle(isNew ? "Add WebDAV" : "Edit Server")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -179,6 +180,7 @@ struct WebDAVBrowserView: View {
         }
         .listStyle(.plain)
         .overlay { if loading && items.isEmpty { ProgressView() } }
+        .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $filter, prompt: "Filter this folder")
@@ -368,6 +370,7 @@ struct LibrarySearchView: View {
         }
         .listStyle(.plain)
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search all files")
+        .brandListBackground()
         .navigationTitle("Search Library")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { if crawlTask == nil { startCrawl() } }
