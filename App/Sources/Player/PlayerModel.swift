@@ -415,6 +415,33 @@ final class PlayerModel: ObservableObject {
         }
     }
 
+    /// Shows a still of the current picture over the video for a moment. The
+    /// Liquid Glass morph re-blurs whatever is under it on every frame; with a
+    /// moving video under it every frame of the morph was late on the phone
+    /// (120 Hz log: 57 of 57 late). A still under it costs nothing to blur.
+    /// Audio and playback continue; the live picture is back when the still lifts.
+    private var freezeView: UIView?
+    private var freezeWork: DispatchWorkItem?
+    func freezeVideo(for seconds: Double) {
+        guard renderer == .metal, mode == .main, let container = videoContainer else { return }
+        freezeWork?.cancel()
+        if freezeView == nil {
+            // A snapshot of the video view: CAMetalLayer contents are not
+            // readable, but the snapshot API captures what's on screen.
+            guard let snap = videoView.snapshotView(afterScreenUpdates: false) else { return }
+            snap.frame = videoView.frame
+            snap.isUserInteractionEnabled = false
+            container.insertSubview(snap, aboveSubview: videoView)
+            freezeView = snap
+        }
+        let w = DispatchWorkItem { [weak self] in
+            self?.freezeView?.removeFromSuperview()
+            self?.freezeView = nil
+        }
+        freezeWork = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: w)
+    }
+
     /// Forces the VO to re-render at the new drawable size even while paused
     /// (otherwise the old frame stays stretched until the next decoded frame).
     private var nudgeWork: DispatchWorkItem?

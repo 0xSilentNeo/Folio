@@ -94,6 +94,7 @@ struct PlayerScreen: View {
         .onAppear {
             ui.scheduleHide()
             ui.presentNow = { presentPanel($0, immediate: true) }
+            PanelPresenter.shared.onTransitionStart = { [weak model] in model?.freezeVideo(for: $0) }
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { prewarmPanels() }
         }
         .onChange(of: ui.panel) { _, new in
@@ -129,10 +130,13 @@ struct PlayerScreen: View {
         guard let window = sourceView?.window, let root = window.rootViewController else { return }
         let (width, maxHeight, sizeKey) = panelSize(in: window)
         let content = panelContent(kind, width: width, maxHeight: maxHeight)
-        // No passthrough: while a panel is open the pill is hidden (its glass
-        // became the panel), so its buttons must not react — any tap outside
-        // the panel, including where the pill was, just closes it.
-        let passthrough: [UIView] = []
+        // The pill stays tappable while a panel is open: a tap on another
+        // button switches panels in one motion (the panel closes and the new
+        // one grows out of the tapped button). Its own button closes it.
+        // Anywhere else closes. The pill is hidden by iOS while its glass is
+        // the panel, so the user is tapping the spot they remember.
+        var passthrough: [UIView] = []
+        if let bar = ui.panelBar { passthrough.append(bar) }
         dlog("ui", "present panel \(kind.rawValue) from \(ui.barItems[kind] != nil && ui.panelBar?.window != nil ? "bar item" : "view") \(Int(width))×≤\(Int(maxHeight))")
         var bottomInset: CGFloat = 8
         if let bar = sourceView {

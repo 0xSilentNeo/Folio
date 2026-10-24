@@ -54,9 +54,17 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
         modalPresentationStyle = .popover
         guard let pc = popoverPresentationController else { return }
         pc.delegate = self
+        let fade = UserDefaults.standard.string(forKey: SettingsKey.panelTransition) == "fade"
         switch source {
         case .item(let item):
-            pc.sourceItem = item
+            if fade, let bar = passthrough.first {
+                // Plain popover from the toolbar's frame: no glass morph (comparison style).
+                pc.sourceView = bar
+                pc.sourceRect = bar.bounds
+                pc.permittedArrowDirections = [.down]
+            } else {
+                pc.sourceItem = item
+            }
         case .view(let v):
             pc.sourceView = v
             pc.sourceRect = v.bounds
@@ -155,26 +163,55 @@ final class PanelPresenter {
         cacheOwner = nil
     }
     private var wanted: Request?
+    /// Serial number of the last tap; a request is only "already asked" when it
+    /// came from this same tap (SwiftUI's onChange re-asks after the button did).
+    private var tapSerial = 0
+    private var wantedSerial = -1
     private var shown: PanelPopoverController?
     private var shownKind: String?
+    private var closing: PanelPopoverController?      // dismiss in flight (outside tap or ours)
     private var busy = false
     private var busyToken = 0
     private let frames = FrameMonitor()
     private var tapTime: CFTimeInterval = 0
+    /// Called just before a transition starts (the player freezes the video picture).
+    var onTransitionStart: ((Double) -> Void)?
+    private var style: String { UserDefaults.standard.string(forKey: SettingsKey.panelTransition) ?? "morphFrozen" }
+    private func beforeTransition() {
+        if style == "morphFrozen" { onTransitionStart?(0.45) }
+    }
 
     /// `immediate`: called straight from the button's action (not from inside
     /// a SwiftUI update), so start in this run-loop turn — no extra frame.
     func show(kind: String, sizeKey: String, owner: ObjectIdentifier, content: @escaping () -> AnyView, source: PanelSource,
               from presenter: UIViewController, passthrough: [UIView], bottomInset: CGFloat,
               immediate: Bool = false, onDismiss: @escaping () -> Void) {
-        if wanted?.kind == kind { return }            // the tap already asked; SwiftUI's onChange asks again
+        // Same kind, same tap (the button's action already asked, then SwiftUI's
+        // onChange asked again): one request. A NEW tap for the same kind is a
+        // new request even if the old one is still pending — a tap is never
+        // dropped because a panel of that kind was just closing.
+        if immediate { tapSerial += 1 }
+        if wanted?.kind == kind, wantedSerial == tapSerial { return }
+        wantedSerial = tapSerial
         tapTime = CACurrentMediaTime()
+        dlog("ui", "panel: want \(kind) (shown=\(shownKind ?? "none") busy=\(busy) closing=\(closing != nil))")
         wanted = Request(kind: kind, presenter: presenter) { [weak self] in
             guard let self else { return PanelPopoverController(content: content()) }
             let vc = self.controller(kind: kind, sizeKey: sizeKey, owner: owner, content: content)
             vc.configure(source: source, passthrough: passthrough, bottomInset: bottomInset,
                          onDismiss: { [weak self] in self?.dismissedBySystem(kind: kind); onDismiss() })
-            vc.onWillDismiss = { [weak self] in self?.frames.begin("panel close \(kind) (outside tap)"); self?.setBusy(true) }
+            vc.onWillDismiss = { [weak self] in
+                guard let self else { return }
+                self.frames.begin("panel close \(kind) (outside tap)")
+                self.beforeTransition()
+                // From now on this panel is going away: a tap that lands before
+                // UIKit reports the dismiss done is a request for the NEXT panel.
+                self.closing = vc
+                if self.shown === vc { self.shown = nil; self.shownKind = nil }
+                self.closeSerial = self.tapSerial + 1
+                self.tapSerial += 1
+                self.setBusy(true)
+            }
             return vc
         }
         if immediate { reconcile() } else { DispatchQueue.main.async { [weak self] in self?.reconcile() } }
@@ -187,19 +224,22 @@ final class PanelPresenter {
 
     private func reconcile(animated: Bool = true) {
         guard !busy else { return }                   // a transition is running; it calls back here when done
-        if let vc = shown, vc.presentingViewController == nil { shown = nil; shownKind = nil }   // went away on its own
+        if let vc = shown, vc.presentingViewController == nil, !vc.isBeingPresented { shown = nil; shownKind = nil }   // went away on its own
         if let vc = shown {
             guard wanted?.kind != shownKind else { return }
             let switching = wanted != nil
             dlog("ui", "panel: dismiss \(shownKind ?? "?")\(switching ? " → \(wanted!.kind)" : "")")
             frames.begin("panel close \(shownKind ?? "?")")
+            beforeTransition()
             setBusy(true)
             let finish = { [weak self] in
                 guard let self else { return }
                 if self.shown === vc { self.shown = nil; self.shownKind = nil }
                 dlog("ui", "panel: dismissed")
                 self.frames.end()
-                self.settle()
+                // Our own dismiss is already serialized behind the present it
+                // follows; the pause is only needed after a present.
+                self.settle(delayed: false)
             }
             if switching, animated, let container = vc.presentationController?.containerView {
                 // Switching panels: fade the old one out quickly, then the new
@@ -223,7 +263,8 @@ final class PanelPresenter {
         shown = vc
         shownKind = req.kind
         dlog("ui", "panel: present \(req.kind)")
-        frames.begin("panel open \(req.kind)")
+        frames.begin("panel open \(req.kind) [\(style)]")
+        beforeTransition()
         frames.note(String(format: "built in %.0f ms, %.0f ms after the tap", buildMs, (CACurrentMediaTime() - tapTime) * 1000))
         setBusy(true)
         host.present(vc, animated: animated) { [weak self] in
@@ -239,9 +280,9 @@ final class PanelPresenter {
     /// a dismiss started from inside a present's completion (a second tap
     /// while the panel was still opening) never finished in the simulator
     /// replay of the freeze log, leaving UIKit mid-transition.
-    private func settle() {
+    private func settle(delayed: Bool = true) {
         busyToken += 1                                // the transition is done: disarm its watchdog
-        let delay: Double = CommandLine.arguments.contains("-panelNoSettle") ? 0 : 0.12
+        let delay: Double = (!delayed || CommandLine.arguments.contains("-panelNoSettle")) ? 0 : 0.12
         if delay == 0 { setBusy(false); reconcile(); return }
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             self?.setBusy(false)
@@ -253,12 +294,18 @@ final class PanelPresenter {
     private func dismissedBySystem(kind: String) {
         dlog("ui", "panel: closed by outside tap (\(kind))")
         frames.end()
-        shown = nil
-        shownKind = nil
-        if wanted?.kind == kind { wanted = nil }      // keep a panel tapped while this one was closing
-        setBusy(false)
+        if shownKind == kind { shown = nil; shownKind = nil }
+        closing = nil
+        // A request made BEFORE this close began was for the panel that just
+        // closed (the user's own panel state); one made after it began is a
+        // new tap and stays. willDismiss bumps the serial so the two differ.
+        if wanted?.kind == kind, wantedSerial < closeSerial { wanted = nil }
+        // An outside-tap close has already finished its animation: no settle.
+        busyToken += 1
+        busy = false
         reconcile()
     }
+    private var closeSerial = 0
 
     /// While busy, taps only update `wanted`. A watchdog clears a transition
     /// UIKit never completed, so the player can't get stuck behind it.

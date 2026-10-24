@@ -24,16 +24,13 @@ final class PanelUITests: XCTestCase {
         tracks.tap()                                                         // open
         XCTAssertTrue(app.staticTexts["Audio"].waitForExistence(timeout: 4), "Tracks panel did not open")
         sleep(2)
-        settingsSpot.tap(); sleep(2)                                         // where Settings was → just closes
-        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close on a tap where the pill was")
-        XCTAssertFalse(app.staticTexts["Playback"].exists, "a hidden button switched panels")
-
-        app.buttons["Settings"].tap()
-        XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 4), "Settings panel did not open")
+        settingsSpot.tap()                                                   // another button's spot → switch
+        XCTAssertTrue(app.staticTexts["Playback"].waitForExistence(timeout: 4), "tap on Settings spot did not switch")
         sleep(2)
-        nowPlayingSpot.tap(); sleep(2)                                       // where Now Playing was → closes
-        XCTAssertFalse(app.staticTexts["Playback"].exists, "Settings did not close on a tap where the pill was")
-        XCTAssertFalse(app.staticTexts["NOW PLAYING"].exists, "a hidden button switched panels")
+        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks still showing after the switch")
+        settingsSpot.tap(); sleep(2)                                         // its own spot → close
+        XCTAssertFalse(app.staticTexts["Playback"].exists, "Settings did not close on its own spot")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(1)
 
         app.buttons["Now Playing"].tap()
         XCTAssertTrue(app.staticTexts["NOW PLAYING"].waitForExistence(timeout: 4), "Now Playing panel did not open")
@@ -49,8 +46,9 @@ final class PanelUITests: XCTestCase {
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)   // tap outside → close
         XCTAssertFalse(app.staticTexts["NOW PLAYING"].exists, "panel did not close on outside tap")
         tracks.tap(); sleep(2)
-        tracksSpot.tap(); sleep(2)                                           // its own spot also closes
-        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close on its own spot")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)   // outside → close
+        XCTAssertFalse(app.staticTexts["Audio"].exists, "Tracks did not close on an outside tap")
+        _ = nowPlayingSpot; _ = tracksSpot
     }
 
     private func launchPlayer(_ extra: [String] = []) -> XCUIApplication {
@@ -180,5 +178,24 @@ final class PanelUITests: XCTestCase {
             app.swipeRight(); sleep(2)
         }
         XCTAssertFalse(app.buttons["Back"].exists, "edge swipe did not leave the title page")
+    }
+
+    /// The lost tap from the 24 Oct recording: close with an outside tap, then
+    /// 0.5 s later tap a button. Every one of 20 such taps must open its panel.
+    func test7CloseThenTapHalfSecond() throws {
+        let app = launchPlayer()
+        let names: [(String, String)] = [("Settings", "Playback"), ("Now Playing", "NOW PLAYING"), ("Tracks", "Audio")]
+        var ok = 0
+        for i in 0..<20 {
+            let (button, marker) = names[i % 3]
+            app.buttons[button].tap()
+            let opened = app.staticTexts[marker].waitForExistence(timeout: 3)
+            if opened { ok += 1 } else { print("HALFSEC miss at \(i) (\(button))") }
+            sleep(1)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()   // outside → close
+            usleep(500_000)                                                            // the timing from the recording
+        }
+        print("HALFSEC opened \(ok)/20")
+        XCTAssertEqual(ok, 20, "some taps after a close were lost")
     }
 }
