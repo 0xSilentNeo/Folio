@@ -1,6 +1,20 @@
 import SwiftUI
 import UIKit
 
+/// Legacy transparent background (kept for the pop lab comparison only).
+final class ClearPopoverBackground: UIPopoverBackgroundView {
+    private var _offset: CGFloat = 0
+    private var _direction: UIPopoverArrowDirection = .down
+    override var arrowOffset: CGFloat { get { _offset } set { _offset = newValue } }
+    override var arrowDirection: UIPopoverArrowDirection { get { _direction } set { _direction = newValue } }
+    override class func arrowBase() -> CGFloat { 0 }
+    override class func arrowHeight() -> CGFloat { 0 }
+    override class func contentViewInsets() -> UIEdgeInsets { .zero }
+    override class var wantsDefaultContentAppearance: Bool { false }
+    override init(frame: CGRect) { super.init(frame: frame); backgroundColor = .clear; layer.shadowOpacity = 0 }
+    required init?(coder: NSCoder) { fatalError() }
+}
+
 /// Animates the panel morphing in and out from the anchor source (e.g., the pill button)
 /// with a fully customizable, snappy duration, bypassing UIKit's hardcoded 1s popover delay.
 final class PillMorphAnimator: NSObject, UIViewControllerAnimatedTransitioning {
