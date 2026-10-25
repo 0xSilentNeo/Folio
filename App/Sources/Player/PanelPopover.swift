@@ -260,7 +260,7 @@ final class PanelPresenter {
     }
 
     private func reconcile(animated: Bool = true) {
-        guard phase == .idle else { return }          // a transition is running; it calls back here when done
+        guard phase == .idle else { return }         // a transition is running; it calls back here when done
         if let vc = shown, vc.presentingViewController == nil, !vc.isBeingPresented {
             shown = nil; shownKind = nil; shownRequest = nil   // went away on its own
         }
@@ -292,7 +292,7 @@ final class PanelPresenter {
             NextFrame.run { [weak self] in self?.reconcile() }
             return
         }
-        vc.loadViewIfNeeded()                         // size known before the transition starts
+        vc.loadViewIfNeeded()                       // size known before the transition starts
         let buildMs = (CACurrentMediaTime() - buildStart) * 1000
         let host = req.presenter.topMostPresented
         guard host.view.window != nil, !host.isBeingDismissed, !host.isBeingPresented, host !== vc else {
@@ -325,24 +325,17 @@ final class PanelPresenter {
 
     // MARK: Transitions
 
-    /// The system's own presentation: on iOS 26 the popover "animates from
-    /// and replaces" its bar item (UIPopoverPresentationController.sourceItem
-    /// docs) — the button's glass grows into the panel. Nothing else runs on
-    /// the main thread at the tap (1.15.0 took a snapshot of the video here).
     private func open(_ vc: PanelPopoverController, from host: UIViewController, animated: Bool, done: @escaping () -> Void) {
         host.present(vc, animated: animated) {
             // UIKit makes the bar passthrough for bar-item popovers on presentation;
             // set ours back (the player's view: its tap-catcher closes the panel).
             vc.popoverPresentationController?.passthroughViews = vc.passthrough
-            Self.afterTransition(of: vc, then: done)
+            Self.afterTransition(then: done)
         }
     }
 
-    /// The system's own dismissal: the panel goes back into its button. Only
-    /// a programmatic switch (no tap can do that now; the replay test does)
-    /// fades the old panel out first so two morphs never overlap.
     private func close(_ vc: PanelPopoverController, animated: Bool, switching: Bool, done: @escaping () -> Void) {
-        let next = { Self.afterTransition(of: vc, then: done) }
+        let next = { Self.afterTransition(then: done) }
         guard animated else { vc.dismiss(animated: false, completion: next); return }
         if switching, let pv = vc.popoverView {
             UIView.animate(withDuration: 0.10, delay: 0, options: [.curveEaseIn, .beginFromCurrentState]) {
@@ -355,27 +348,16 @@ final class PanelPresenter {
         }
     }
 
-    /// Runs `done` once UIKit has let go of `vc`'s transition: never inside
-    /// UIKit's completion (1.10.0 freeze replay: a dismiss started from inside
-    /// a present's completion never finished), but on the next run-loop turn,
-    /// or the first frame after that on which UIKit's transition state is clear.
-    /// Replaces 1.15.0's fixed 0.12 s pause after every open.
-    private static func afterTransition(of vc: UIViewController, then done: @escaping () -> Void, frames: Int = 0) {
+    /// Replaces the multi-frame polling loop with an immediate dispatch 
+    /// once UIKit reports the transition completion.
+    private static func afterTransition(then done: @escaping () -> Void) {
         DispatchQueue.main.async {
-            let busy = vc.isBeingPresented || vc.isBeingDismissed || vc.transitionCoordinator != nil
-            if busy && frames < 30 {
-                NextFrame.run { afterTransition(of: vc, then: done, frames: frames + 1) }
-            } else {
-                if busy { dlog("ui/error", "panel: UIKit still mid-transition after 30 frames; going on") }
-                done()
-            }
+            done()
         }
     }
 
     // MARK: Phase / watchdog
 
-    /// Starts a transition: it runs until its completion (matching generation)
-    /// calls `finish()`. A watchdog recovers if UIKit never reports back.
     private func begin(_ p: Phase, _ vc: PanelPopoverController) -> Int {
         phase = p
         inFlight = vc
@@ -415,7 +397,7 @@ final class PanelPresenter {
     private func endTransition() {
         phase = .idle
         inFlight = nil
-        onClosing?(false)                              // whatever finished, no close is running now
+        onClosing?(false)                       // whatever finished, no close is running now
     }
 }
 
