@@ -19,6 +19,7 @@ enum UILab {
         if CommandLine.arguments.contains("-labDiscover") { IMDbSource.seedForLab(); return }
         if CommandLine.arguments.contains("-skipProbe") { skipProbe(); return }
         if CommandLine.arguments.contains("-parseProbe") { parseProbe(); return }
+        if CommandLine.arguments.contains("-nameProbe") { nameProbe(); return }
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-imdbProbe=") }) { imdbProbe(ids: arg.dropFirst("-imdbProbe=".count).split(separator: ",").map(String.init)); return }
         if uiTestLibrary {
             UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
@@ -86,6 +87,28 @@ enum UILab {
     /// A/V sync lab (real engine): play a clip with 5.1 audio, hold 2× for 4 s,
     /// release, then switch the renderer the way PiP does and back. Logs
     /// position, audio position and A/V offset every 0.2 s.
+    /// `-nameProbe`: file names from the Real-Debrid Attack on Titan folder
+    /// (25 Oct report): the tag each row shows, then the metadata lookup for
+    /// absolute episode numbers past season 1 (real network).
+    static func nameProbe() {
+        UserDefaults.standard.set(true, forKey: SettingsKey.metadataFetching)
+        let names = ["[Anime Time] Attack on Titan - 01.mkv", "[Anime Time] Attack on Titan - 25.mkv", "[Anime Time] Attack on Titan - 26.mkv",
+                     "[Anime Time] Attack on Titan - 38.mkv", "[Anime Time] Attack on Titan OAD - 05.mkv", "[Anime Time] Attack on Titan Junior High - 01.mkv",
+                     "[Anime Time] Attack on Titan Movie 01 - Guren no Yumiya.mkv", "[Anime Time] Junior High - Creditless Ending.mkv",
+                     "Classroom.of.the.Elite.S01E05.Hell.is.other.people.1080p.FLAC.2.0.AVC.REMUX-FraMeSToR.mkv"]
+        for n in names {
+            let p = TitleParser.parse(n)
+            dlog("lab", "name \(n) → title=\(p.title) s=\(p.season.map(String.init) ?? "-") e=\(p.episode.map(String.init) ?? "-") extra=\(p.extra ?? "-") part=\(p.part.map(String.init) ?? "-") sub=\(p.subtitle ?? "-") tag=\(TitleParser.tag(p) ?? "-") clean=\(TitleParser.clean(n))")
+        }
+        Task {
+            for n in names.prefix(7) {
+                let m = await MetadataService.shared.lookup(filename: n)
+                let p = TitleParser.parse(n)
+                dlog("lab", "meta \(n) → \(m?.name ?? "nil") [\(m?.id ?? "-")] tag=\(TitleParser.tag(p, season: m?.episodeSeason, episode: m?.episodeNumber) ?? "-") ep=\(m?.episodeTitle ?? "-")")
+            }
+        }
+    }
+
     /// `-parseProbe`: the title-page parser on page data in IMDb's shapes —
     /// photo cast inside the main title object (next to countriesOfOrigin,
     /// where 1.13.0 stopped looking), photo-less "Stars", an episode's link back
