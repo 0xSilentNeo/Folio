@@ -122,9 +122,17 @@ final class ShotsUITests: XCTestCase {
             back(app)
         }
 
-        // Network
+        // Network, then Downloads
         tab(app, "Network").tap(); sleep(2)
         shot("network")
+        let dlRow = app.staticTexts["Downloads"].firstMatch
+        if dlRow.waitForExistence(timeout: 3) {
+            dlRow.tap(); sleep(2)
+            shot("downloads")
+            let settings = app.buttons["Download settings"]
+            if settings.waitForExistence(timeout: 3) { settings.tap(); sleep(2); shot("downloads-settings"); back(app) }
+            back(app)
+        }
         tab(app, "Home").tap(); sleep(1)
     }
 

@@ -59,7 +59,31 @@ enum ShotsSeed {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
         if let d = try? JSONEncoder().encode(entries) { try? d.write(to: support.appendingPathComponent("metadata.json"), options: .atomic) }
+        // A folder of different titles (1.15.0 folder tile).
+        let mixed = dir.appendingPathComponent("Weekend picks", isDirectory: true)
+        try? FileManager.default.createDirectory(at: mixed, withIntermediateDirectories: true)
+        for n in ["Lab Show S01E04.mp4", "Bright Movie 2024.mp4", "Another Film 2019.mp4"] {
+            let d = mixed.appendingPathComponent(n)
+            if !FileManager.default.fileExists(atPath: d.path) { try? FileManager.default.copyItem(at: src, to: d) }
+        }
         LocalMediaStore.shared.refresh()
+
+        // Downloads screen: finished, paused and failed files (nothing that
+        // would start a real transfer).
+        let remote = URL(string: "https://dav.example.com/Lab%20Show/")!
+        func dl(_ name: String, _ state: DownloadItem.State, _ got: Int64, _ size: Int64, _ err: String? = nil) -> DownloadItem {
+            var d = DownloadItem(url: remote.appendingPathComponent(name), serverID: nil, fileName: name, package: "[Lab] Lab Show",
+                                 expected: size, destination: DownloadManager.destination(fileName: name, package: "[Lab] Lab Show"))
+            d.state = state; d.received = got; d.error = err
+            if state == .done { d.finished = Date() }
+            return d
+        }
+        let mb: Int64 = 1_048_576
+        let seeded = [dl("[Lab] Lab Show - 05.mkv", .done, 543 * mb, 543 * mb), dl("[Lab] Lab Show - 06.mkv", .paused, 212 * mb, 497 * mb),
+                      dl("[Lab] Lab Show - 07.mkv", .paused, 0, 512 * mb), dl("[Lab] Lab Show - 08.mkv", .failed, 88 * mb, 530 * mb, "The network connection was lost.")]
+        if let d = try? JSONEncoder().encode(seeded) {
+            try? d.write(to: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("downloads.json"), options: .atomic)
+        }
 
         // Continue Watching: episode 1, a third of the way in.
         var item = MediaItem(url: dir.appendingPathComponent(files[0]).path, title: "Lab Show S01E01", source: .local)
