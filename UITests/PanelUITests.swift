@@ -432,11 +432,33 @@ final class PanelUITests: XCTestCase {
 
     // MARK: Native menu morph (system popover) — 1.15.1
 
+    /// XCUITest waits for the app's animations to settle before every tap, so a
+    /// tap "0.15 s into the close" really landed after the whole morph (25 Oct
+    /// lab: the app logged it 1.3 s late). These tests tap like a finger: no wait.
+    private var swizzled: [(Method, IMP)] = []
+    private func tapsDontWaitForAnimations() {
+        guard swizzled.isEmpty, let cls = NSClassFromString("XCUIApplicationProcess") else { return }
+        let one: @convention(block) (AnyObject, Bool) -> Void = { _, _ in }
+        let two: @convention(block) (AnyObject, Bool, Bool) -> Void = { _, _, _ in }
+        for (name, block) in [("waitForQuiescenceIncludingAnimationsIdle:", one as Any), ("waitForQuiescenceIncludingAnimationsIdle:isPreEvent:", two as Any)] {
+            guard let m = class_getInstanceMethod(cls, NSSelectorFromString(name)) else { continue }
+            swizzled.append((m, method_getImplementation(m)))
+            method_setImplementation(m, imp_implementationWithBlock(block))
+        }
+    }
+
+    override func tearDown() {
+        for (m, imp) in swizzled { method_setImplementation(m, imp) }
+        swizzled = []
+        super.tearDown()
+    }
+
     /// A button tapped while the last panel is still closing opens its panel
     /// without waiting out the close morph (it is fast-forwarded). Once 0.15 s
     /// and once 0.4 s into the close; also the same button again.
     func test17NativeSwitchWhileClosing() throws {
         let app = launchPlayer(native: true)
+        tapsDontWaitForAnimations()
         let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
         let pairs: [(String, String, String, String)] = [
             ("Tracks", "Audio", "Settings", "Playback"), ("Settings", "Playback", "Now Playing", "NOW PLAYING"),
@@ -469,6 +491,7 @@ final class PanelUITests: XCTestCase {
     /// tap, soon (the open is fast-forwarded, then the close morph runs).
     func test18NativeTapOutsideWhileOpening() throws {
         let app = launchPlayer(native: true)
+        tapsDontWaitForAnimations()
         let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
         var ok = 0
         for i in 0..<6 {
@@ -491,6 +514,7 @@ final class PanelUITests: XCTestCase {
     /// tap a button; every tap opens its panel.
     func test19NativeCloseThenTapHalfSecond() throws {
         let app = launchPlayer(native: true)
+        tapsDontWaitForAnimations()
         let names: [(String, String)] = [("Settings", "Playback"), ("Now Playing", "NOW PLAYING"), ("Tracks", "Audio")]
         var ok = 0
         for i in 0..<9 {
