@@ -43,7 +43,7 @@ struct HomeView: View {
     private func destination(_ route: LibraryRoute) -> some View {
         switch route {
         case .settings:
-            if #available(iOS 18.0, *) { SettingsView().navigationTransition(.zoom(sourceID: "settings", in: zoomNS)) } else { SettingsView() }
+            if #available(iOS 18.0, *) { SettingsView().navigationTransition(.zoom(sourceID: "settings", in: zoomNS)).ignoresTapsWhileLeaving() } else { SettingsView() }
         case .group(let id):
             LibraryRoute.destination(route).zoomDestination(id, in: zoomNS)
         default:
@@ -407,6 +407,8 @@ struct MediaTile: View {
     var poster = false
     /// The title page zooms out of this tile's picture.
     var zoom: ZoomSource? = nil
+    /// Right-aligned on the subtitle line (episode tiles: the file size).
+    var trailingNote: String? = nil
     @StateObject private var thumb = ThumbLoader()
 
     var body: some View {
@@ -423,7 +425,14 @@ struct MediaTile: View {
             .clipShape(RoundedRectangle(cornerRadius: poster ? 12 : 16, style: .continuous))
             .zoomSource(zoom, cornerRadius: poster ? 12 : 16)
             Text(fixedTitle ?? thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)
-            Text(fixedSubtitle ?? (poster ? nil : thumb.meta?.episodeTitle) ?? subtitle).font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(fixedSubtitle ?? (poster ? nil : thumb.meta?.episodeTitle) ?? subtitle).lineLimit(1)
+                if let trailingNote {
+                    Spacer(minLength: 0)
+                    Text(trailingNote).monospacedDigit().lineLimit(1).fixedSize()
+                }
+            }
+            .font(.caption2.weight(.medium)).foregroundStyle(.secondary)
         }
         .onAppear { thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName, art: poster ? .poster : .wide) }
     }

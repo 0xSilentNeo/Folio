@@ -224,8 +224,45 @@ extension View {
     @ViewBuilder
     func zoomDestination(_ id: some Hashable, in ns: Namespace.ID) -> some View {
         // Same AnyHashable wrapping as ZoomSource, so the ids always match.
-        if #available(iOS 18.0, *) { navigationTransition(.zoom(sourceID: AnyHashable(id), in: ns)) } else { self }
+        if #available(iOS 18.0, *) { navigationTransition(.zoom(sourceID: AnyHashable(id), in: ns)).ignoresTapsWhileLeaving() } else { self.ignoresTapsWhileLeaving() }
     }
+
+    /// A pushed page stops taking taps the moment it starts going away.
+    ///
+    /// 1.14.1 report: after a swipe closed a title page, the zoom finished on
+    /// screen but the pop committed ~1.3 s later; meanwhile the invisible page
+    /// still took taps, so tapping the next title's row hit this page's Resume
+    /// button (same spot) and played it. UIKit calls viewWillDisappear when the
+    /// pop begins ("before any animations are configured"), and on a cancelled
+    /// interactive pop calls viewWillAppear again (transition coordinator docs).
+    func ignoresTapsWhileLeaving() -> some View { modifier(LeaveGuard()) }
+}
+
+private struct LeaveGuard: ViewModifier {
+    @State private var leaving = false
+    func body(content: Content) -> some View {
+        content
+            .allowsHitTesting(!leaving)
+            .background(LeavingProbe { leaving = $0 }.frame(width: 0, height: 0).accessibilityHidden(true))
+    }
+}
+
+/// A child view controller of the page's hosting controller: it receives the
+/// page's appearance callbacks (automatic forwarding).
+private struct LeavingProbe: UIViewControllerRepresentable {
+    let onChange: (Bool) -> Void
+    final class Probe: UIViewController {
+        var onChange: ((Bool) -> Void)?
+        override func loadView() { view = UIView(); view.isUserInteractionEnabled = false }
+        override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); onChange?(false) }
+        override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            dlog("nav", "page leaving: taps off")
+            onChange?(true)
+        }
+    }
+    func makeUIViewController(context: Context) -> Probe { let p = Probe(); p.onChange = onChange; return p }
+    func updateUIViewController(_ vc: Probe, context: Context) { vc.onChange = onChange }
 }
 
 /// Frosted "glass" background. Uses Liquid Glass on iOS 26 when built with

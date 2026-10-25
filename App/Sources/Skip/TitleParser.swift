@@ -9,6 +9,12 @@ enum TitleParser {
         var episode: Int?
         var year: Int?
         var resolution: String?
+        /// A side release of the show: "OAD", "OVA", "ONA", "Special" (its
+        /// episode numbers are its own, not the show's) or "Movie".
+        var extra: String? = nil
+        /// "Movie 02 - Jiyuu no Tsubasa": 2 and "Jiyuu no Tsubasa".
+        var part: Int? = nil
+        var subtitle: String? = nil
     }
 
     static let mediaExtensions: Set<String> = [
@@ -54,6 +60,19 @@ enum TitleParser {
 
         // Drop bracketed groups: [SubsPlease], (1080p), {tags}
         name = name.replacingOccurrences(of: #"\[[^\]]*\]|\{[^}]*\}"#, with: " ", options: .regularExpression)
+
+        // "Show Movie 01 - Name": a film of the series, not episode 1.
+        if let m = match(#"(?i)^\s*(.+?)\s+(?:the\s+)?movie\s*(\d{1,2})\s*[-–:]\s*(.+?)\s*$"#, in: name) {
+            let title = m.groups[0].replacingOccurrences(of: #"[._]"#, with: " ", options: .regularExpression)
+                .trimmingCharacters(in: CharacterSet(charactersIn: " -–_."))
+            var sub = m.groups[2].replacingOccurrences(of: #"[._]"#, with: " ", options: .regularExpression)
+            if let r = sub.range(of: #"(?i)[ \(](2160p|1080p|720p|480p|4k|web[ .-]?dl|webrip|bluray|bdrip|x264|x265|hevc)\b.*$"#, options: .regularExpression) { sub.removeSubrange(r) }
+            sub = sub.trimmingCharacters(in: CharacterSet(charactersIn: " -–_."))
+            if !title.isEmpty {
+                return Parsed(title: title, season: nil, episode: nil, year: nil, resolution: resolution,
+                              extra: "Movie", part: Int(m.groups[1]), subtitle: sub.isEmpty ? nil : sub)
+            }
+        }
 
         var season: Int?
         var episode: Int?
@@ -102,14 +121,40 @@ enum TitleParser {
             episode = n
         }
 
-        return Parsed(title: title, season: season, episode: episode, year: year, resolution: resolution)
+        var extra: String?
+        if let m = match(#"(?i)\b(OAD|OVA|ONA|Specials?)$"#, in: title) {
+            let w = m.groups[0].uppercased()
+            extra = w.hasPrefix("SPECIAL") ? "Special" : w
+        }
+
+        return Parsed(title: title, season: season, episode: episode, year: year, resolution: resolution, extra: extra)
+    }
+
+    /// The title without a trailing OAD / OVA / ONA / Special marker (the show it belongs to).
+    static func baseTitle(_ p: Parsed) -> String {
+        guard p.extra != nil, p.extra != "Movie" else { return p.title }
+        return p.title.replacingOccurrences(of: #"(?i)\s*\b(OAD|OVA|ONA|Specials?)$"#, with: "", options: .regularExpression)
+    }
+
+    /// Short episode tag for lists: "S2 · E1", "E26", "OAD 5", "Movie 2".
+    /// `season`/`episode`: the numbers metadata mapped an absolute episode to.
+    static func tag(_ p: Parsed, season: Int? = nil, episode: Int? = nil) -> String? {
+        if p.extra == "Movie" { return p.part.map { "Movie \($0)" } ?? "Movie" }
+        if let x = p.extra, let e = p.episode { return "\(x) \(e)" }
+        if let e = episode ?? p.episode {
+            if let s = season ?? p.season { return "S\(s) · E\(e)" }
+            return "E\(e)"
+        }
+        return nil
     }
 
     /// Short display title, e.g. "Frieren · S01E05" or "Dune (2021)".
     static func clean(_ rawName: String) -> String {
         let p = parse(rawName)
         var s = p.title
-        if let e = p.episode {
+        if p.extra == "Movie" {
+            s += " · " + (tag(p) ?? "Movie") + (p.subtitle.map { " · " + $0 } ?? "")
+        } else if let e = p.episode {
             if let season = p.season {
                 s += String(format: " · S%02dE%02d", season, e)
             } else {

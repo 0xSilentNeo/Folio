@@ -70,6 +70,14 @@ struct ExpandableText: View {
                         })
                         .hidden()
                 )
+                // The text itself expands / collapses too, not only "+ more".
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    guard truncatable else { return }
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { expanded.toggle() }
+                }
+                .accessibilityAddTraits(truncatable ? .isButton : [])
+                .accessibilityHint(truncatable ? (expanded ? "Shows less" : "Shows the full description") : "")
             if truncatable {
                 Button {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { expanded.toggle() }

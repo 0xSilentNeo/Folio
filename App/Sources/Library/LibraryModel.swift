@@ -30,12 +30,24 @@ struct LibraryGroup: Identifiable, Hashable {
     var count: Int { files.count }
     var seasons: [Int] { Array(Set(files.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted() }
 
-    /// The file a tap should land on: the one being watched, else the first unfinished, else the first.
-    @MainActor var nextUp: URL {
+    /// The file a tap should land on (see `nextUp(in:)`).
+    @MainActor var nextUp: URL { Self.nextUp(in: files) }
+
+    /// The episode watched last; if that one is finished, the episode after
+    /// it. Nothing watched yet: the first unfinished, else the first.
+    /// (Until 1.14.1 this took the FIRST resumable episode, so an episode
+    /// left half-watched long ago kept the highlight.)
+    @MainActor static func nextUp(in files: [URL]) -> URL {
         let h = HistoryStore.shared
-        if let e = files.first(where: { h.entry(forURL: $0.path)?.canResume == true }) { return e }
-        if let e = files.first(where: { h.entry(forURL: $0.path)?.isFinished != true }) { return e }
-        return files[0]
+        let watched = files.compactMap { f in h.entry(forURL: f.path).map { (file: f, entry: $0) } }
+        if let last = watched.max(by: { $0.entry.updated < $1.entry.updated }) {
+            guard last.entry.isFinished else { return last.file }
+            if let i = files.firstIndex(of: last.file) {
+                if let next = files[(i + 1)...].first(where: { h.entry(forURL: $0.path)?.isFinished != true }) { return next }
+            }
+            return last.file
+        }
+        return files.first(where: { h.entry(forURL: $0.path)?.isFinished != true }) ?? files[0]
     }
 }
 

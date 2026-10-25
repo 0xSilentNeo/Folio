@@ -27,6 +27,7 @@ enum SettingsKey {
     static let stayLandscape = "stayLandscape"          // player never turns to portrait
     static let controlsWidth = "controlsWidth"
     static let panelTransition = "panelTransition"      // morphFrozen | morph
+    static let nativePanelMorph = "nativePanelMorph"    // iOS 26: system popover morph (true) or the app's SwiftUI glass
     static let tileArtwork = "tileArtwork"              // poster | frame
     static let castPosition = "castPosition"            // top | bottom (title pages)
     static let episodeTitleLanguage = "episodeTitleLanguage"   // english | original
@@ -101,6 +102,7 @@ enum SettingsKey {
             stayLandscape: false,
             controlsWidth: 0.8,
             panelTransition: "morphFrozen",
+            nativePanelMorph: true,
             tileArtwork: "poster",
             castPosition: "bottom",
             episodeTitleLanguage: "english",

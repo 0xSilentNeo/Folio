@@ -297,8 +297,7 @@ struct DAVRow: View {
             .frame(width: item.isMedia ? 72 : 40, height: item.isMedia ? 42 : 40)
             .onAppear { if item.isMedia && clean { thumb.load(key: item.url.absoluteString, fileURL: nil, artwork: nil, lookupName: item.name) } }
             VStack(alignment: .leading, spacing: 3) {
-                Text(item.isMedia && clean ? (thumb.meta.map { m in m.episodeTitle.map { "\(m.name) · \($0)" } ?? m.name } ?? displayName) : displayName)
-                    .font(.subheadline.weight(.medium)).lineLimit(2)
+                label.font(.subheadline.weight(.medium)).lineLimit(2)
                 HStack(spacing: 6) {
                     if let size = item.size, !item.isDirectory { Text(size.byteString) }
                     if let d = item.modified { Text(d, format: .dateTime.day().month().year()) }
@@ -316,6 +315,22 @@ struct DAVRow: View {
         }
         .padding(.vertical, 2)
         .contentShape(Rectangle())
+    }
+
+    /// "S2 · E1  Beast Titan", "OAD 5  Attack on Titan", "Movie 1  Guren no Yumiya".
+    /// The episode number always shows (1.14.1 dropped it, and files past
+    /// season 1 showed only the show's name).
+    private var label: Text {
+        guard item.isMedia, clean else { return Text(displayName) }
+        let p = TitleParser.parse(item.name)
+        let m = thumb.meta
+        let tag = TitleParser.tag(p, season: m?.episodeSeason, episode: m?.episodeNumber)
+        let rest: String
+        if p.extra == "Movie" { rest = p.subtitle ?? m?.name ?? p.title }
+        else if let t = m?.episodeTitle { rest = t }
+        else { rest = m?.name ?? p.title }
+        guard let tag else { return Text(m?.name ?? displayName) }
+        return Text("\(Text(tag).fontWeight(.bold))  \(rest)")
     }
 
     private var displayName: String {

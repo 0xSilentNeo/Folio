@@ -33,6 +33,10 @@ struct GlassPanelPill: View {
     /// The glass is the panel (true) or the pill (false). Animated.
     @State private var open = false
     @State private var contentOpacity = 0.0
+    /// The pill's buttons. They sit at their resting place over the glass (not
+    /// inside it), so a button can be tapped while a panel is still closing:
+    /// the shrinking glass then reshapes straight into that button's panel.
+    @State private var pillOpacity = 1.0
     /// Each panel's content height, measured before it first opens.
     @State private var natural: [PlayerUIState.Panel: CGFloat] = [:]
     @State private var measuring: PlayerUIState.Panel?
@@ -61,6 +65,13 @@ struct GlassPanelPill: View {
         Color.clear
             .frame(width: pillSize.width, height: pillSize.height)
             .overlay(alignment: .bottomTrailing) { glass }
+            .overlay {
+                pill
+                    .frame(width: pillSize.width, height: pillSize.height)
+                    .opacity(pillOpacity)
+                    .allowsHitTesting(!open)
+                    .accessibilityHidden(open)
+            }
             .background {
                 // A panel's height, measured off screen the first time it opens.
                 if let m = measuring {
@@ -90,11 +101,6 @@ struct GlassPanelPill: View {
                     .allowsHitTesting(open)
                     .accessibilityHidden(!open)
             }
-            pill
-                .frame(width: pillSize.width, height: pillSize.height)
-                .opacity(open ? 0 : 1)
-                .allowsHitTesting(!open)
-                .accessibilityHidden(open)
         }
         .frame(width: size.width, height: size.height, alignment: .bottomTrailing)
         .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
@@ -143,6 +149,9 @@ struct GlassPanelPill: View {
             var t = Transaction(); t.disablesAnimations = true
             withTransaction(t) { contentOpacity = 0; displayed = k }
         }
+        withAnimation(.easeOut(duration: 0.1)) { pillOpacity = 0 }
+        // From wherever the glass is now: the pill, or a panel still shrinking
+        // (a button tapped mid-close) — the same glass reshapes into this panel.
         withAnimation(morph) { open = true }
         withAnimation(.easeOut(duration: 0.2).delay(0.12)) { contentOpacity = 1 }
     }
@@ -153,6 +162,7 @@ struct GlassPanelPill: View {
         generation += 1
         let gen = generation
         withAnimation(.easeOut(duration: 0.12)) { contentOpacity = 0 }
+        withAnimation(.easeOut(duration: 0.2).delay(0.1)) { pillOpacity = 1 }
         withAnimation(morph, completionCriteria: .logicallyComplete) {
             open = false
         } completion: {

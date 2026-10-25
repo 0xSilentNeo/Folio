@@ -42,8 +42,29 @@ final class HistoryStore: ObservableObject {
         }
     }
 
+    /// One card per show: the most recently watched resumable episode of each.
+    /// Library files are also matched by file name, so a reinstall (new
+    /// container path) never makes a second card for the same file.
     var continueWatching: [HistoryEntry] {
-        entries.filter { $0.canResume }.sorted { $0.updated > $1.updated }
+        var seen = Set<String>()
+        return entries.filter { $0.canResume }
+            .sorted { $0.updated > $1.updated }
+            .filter { seen.insert(Self.showKey($0)).inserted }
+    }
+
+    /// Groups history entries that belong to the same show (or the same file).
+    static func showKey(_ e: HistoryEntry) -> String {
+        if let ref = e.item.addonRef {
+            let parts = ref.split(separator: "|", omittingEmptySubsequences: false)
+            if parts.count >= 2 { return "a|" + parts[1] }
+        }
+        let raw = (e.item.url as NSString).lastPathComponent
+        let name = raw.removingPercentEncoding ?? raw
+        let p = TitleParser.parse(name)
+        if p.episode != nil, !p.title.isEmpty { return "s|" + p.title.lowercased() }
+        if let t = e.item.anime?.title, !t.isEmpty { return "s|" + t.lowercased() }
+        if e.item.url.contains("/Documents/Media/") { return "f|" + name }
+        return "i|" + e.id
     }
 
     var recent: [HistoryEntry] { entries.sorted { $0.updated > $1.updated } }

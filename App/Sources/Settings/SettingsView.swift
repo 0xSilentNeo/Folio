@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import UIKit
 
 struct SettingsView: View {
     var body: some View {
@@ -38,6 +39,7 @@ struct SettingsView: View {
                 }
             }
             .brandListBackground()
+            .background(TopEdgeNoBounce().frame(width: 0, height: 0).accessibilityHidden(true))
             .navigationTitle("Settings")
         }
     }
@@ -75,9 +77,16 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @AppStorage(SettingsKey.panelTransition) private var panelTransition = "morphFrozen"
+    @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
     @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
     @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
     @AppStorage(SettingsKey.gestureControl) private var gestures = true
+
+    /// The player uses the system popover for its menus (always before iOS 26).
+    private var usesSystemPopover: Bool {
+        if #available(iOS 26.0, *) { return nativePanelMorph }
+        return true
+    }
 
     var body: some View {
         Form {
@@ -114,9 +123,12 @@ struct PlaybackSettings: View {
                     Text("Episode number & title").tag("episode")
                     Text("File name").tag("filename")
                 }
-                if #unavailable(iOS 26.0) {
-                    // Only the system popover (before iOS 26) uses this; on iOS 26
-                    // the panels are SwiftUI glass and the video is never frozen.
+                if #available(iOS 26.0, *) {
+                    Toggle("Native menu morph", isOn: $nativePanelMorph)
+                }
+                if usesSystemPopover {
+                    // Only the system popover uses this; the app's own glass
+                    // never freezes the video.
                     Picker("Menu animation", selection: $panelTransition) {
                         Text("Morph (still picture)").tag("morphFrozen")
                         Text("Morph (live picture)").tag("morph")
@@ -127,7 +139,7 @@ struct PlaybackSettings: View {
                     Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
                 }
             } header: { Text("Player") } footer: {
-                Text("Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
+                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation, as in Outplayer); taps wait until it finishes. Off: the app's own glass, which can be interrupted at any moment. Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
             }
             Section("Progress bar") {
                 Picker("Chapter markers", selection: $bar.markerStyle) {
@@ -992,4 +1004,52 @@ struct AppIconPicker: View {
         }
         .padding(.vertical, 6)
     }
+}
+
+
+/// Settings closes with a pull down (the zoom transition's swipe back into its
+/// button). 1.14.1: hit or miss — a pull at the top was often taken by the
+/// list itself (its rubber-band bounce, or a flick still bouncing off the top),
+/// so the page stayed. Near the top the list doesn't bounce: per UIScrollView's
+/// `bounces` docs, scrolling then "stops immediately at the content boundary",
+/// so a pull at the top is left to the page's swipe-down every time. Further
+/// down (the bottom edge) the list bounces as usual.
+private struct TopEdgeNoBounce: UIViewRepresentable {
+    final class Probe: UIView {
+        private var observation: NSKeyValueObservation?
+        private weak var scrollView: UIScrollView?
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            guard window != nil, scrollView == nil else { return }
+            DispatchQueue.main.async { [weak self] in self?.attach() }
+        }
+
+        private func attach() {
+            var r: UIResponder? = self
+            while let n = r, !(n is UIViewController) { r = n.next }
+            guard let root = (r as? UIViewController)?.view, let sv = Self.firstScrollView(in: root) else {
+                dlog("ui", "settings: no list to tune for swipe-down")
+                return
+            }
+            scrollView = sv
+            update(sv)
+            observation = sv.observe(\.contentOffset, options: [.new]) { [weak self] sv, _ in
+                MainActor.assumeIsolated { self?.update(sv) }
+            }
+        }
+
+        private func update(_ sv: UIScrollView) {
+            let nearTop = sv.contentOffset.y <= -sv.adjustedContentInset.top + 60
+            if sv.bounces == nearTop { sv.bounces = !nearTop }
+        }
+
+        private static func firstScrollView(in v: UIView) -> UIScrollView? {
+            if let s = v as? UIScrollView { return s }
+            for sub in v.subviews { if let s = firstScrollView(in: sub) { return s } }
+            return nil
+        }
+    }
+    func makeUIView(context: Context) -> Probe { let p = Probe(); p.isUserInteractionEnabled = false; return p }
+    func updateUIView(_ uiView: Probe, context: Context) {}
 }

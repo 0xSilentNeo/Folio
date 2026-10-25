@@ -5,7 +5,13 @@ import SwiftUI
 /// chosen view style.
 struct TitleHeroView: View {
     let group: LibraryGroup
-    let file: URL
+    /// The file the page was opened on (a file page), or nil for a series
+    /// page, which follows the episode watched last.
+    private let focus: URL?
+    /// Live: a series page's highlight, header and Resume move to the episode
+    /// you just watched when you come back from the player (1.14.1 fixed it
+    /// at the moment the page was built).
+    private var file: URL { focus ?? LibraryGroup.nextUp(in: group.files) }
     @ObservedObject private var local = LocalMediaStore.shared
     @ObservedObject private var history = HistoryStore.shared
     @StateObject private var thumb = ThumbLoader()
@@ -28,7 +34,7 @@ struct TitleHeroView: View {
     /// A series page (all episodes merged) or a single file.
     init(group: LibraryGroup, focus: URL? = nil) {
         self.group = group
-        self.file = focus ?? group.nextUp
+        self.focus = focus
     }
     init(file: URL) {
         let g = LibraryOrganizer.groups(LocalMediaStore.shared.files).first { $0.files.contains(file) }
@@ -107,6 +113,10 @@ struct TitleHeroView: View {
         .onAppear {
             dlog("nav", "title page appear \(file.lastPathComponent)")
             thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true)
+        }
+        .onChange(of: file) { _, f in
+            // Came back from the player on a later episode: show that one.
+            thumb.load(key: f.path, fileURL: f, artwork: nil, lookupName: f.lastPathComponent, preferMeta: true)
         }
         .onDisappear { dlog("nav", "title page disappear \(file.lastPathComponent)") }
         .confirmationDialog("Delete this file from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -314,9 +324,10 @@ struct LibraryList: View {
 
     private func tile(_ f: URL) -> some View {
         let p = TitleParser.parse(f.lastPathComponent)
-        let tag = p.episode.map { "S\(p.season ?? 1) · E\($0)" } ?? TitleParser.clean(f.lastPathComponent)
+        let tag = TitleParser.tag(p) ?? TitleParser.clean(f.lastPathComponent)
         return MediaTile(title: tag, subtitle: f.pathExtension.uppercased(), key: f.path, fileURL: f, lookupName: f.lastPathComponent,
-                         progress: history.entry(forURL: f.path)?.progress, fixedTitle: tag)
+                         progress: history.entry(forURL: f.path)?.progress, fixedTitle: tag,
+                         trailingNote: LibraryOrganizer.info(f).size.byteString)
             .overlay(alignment: .topTrailing) {
                 if f == current {
                     Image(systemName: "play.fill").font(.caption2.weight(.bold)).foregroundStyle(Theme.onAccent)
@@ -326,7 +337,7 @@ struct LibraryList: View {
     }
 
     private func row(_ f: URL) -> some View {
-        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress)
+        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, showSize: true)
     }
 }
 
@@ -341,6 +352,8 @@ struct LibraryRow: View {
     var poster = false
     /// The title page zooms out of this row's picture.
     var zoom: ZoomSource? = nil
+    /// The file's size at the bottom right, level with the picture's bottom edge.
+    var showSize = false
     @StateObject private var thumb = ThumbLoader()
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
 
@@ -349,10 +362,7 @@ struct LibraryRow: View {
         hideSpoilers && parsed.episode != nil && HistoryStore.shared.entry(forURL: file.path)?.isFinished != true
     }
     private var parsed: TitleParser.Parsed { TitleParser.parse(file.lastPathComponent) }
-    private var episodeTag: String? {
-        guard let e = parsed.episode else { return nil }
-        return "S\(parsed.season ?? 1) · E\(e)"
-    }
+    private var episodeTag: String? { parsed.episode == nil ? nil : TitleParser.tag(parsed) }
 
     private var detail: Bool { mode == .details }
     private var thumbW: CGFloat { poster ? (detail ? 64 : 32) : (detail ? 150 : 78) }
@@ -383,7 +393,18 @@ struct LibraryRow: View {
                 Text(secondary).font(.caption).foregroundStyle(.secondary).lineLimit(detail ? 3 : 1)
             }
             Spacer(minLength: 0)
-            if highlighted { Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent).padding(.top, 4) }
+            if showSize {
+                VStack(alignment: .trailing, spacing: 0) {
+                    if highlighted { Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent).padding(.top, 4) }
+                    Spacer(minLength: 4)
+                    Text(LibraryOrganizer.info(file).size.byteString)
+                        .font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.secondary)
+                        .lineLimit(1).fixedSize()
+                }
+                .frame(height: thumbH)
+            } else if highlighted {
+                Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent).padding(.top, 4)
+            }
         }
         .padding(detail ? 8 : 6)
         .background(rowBackground)

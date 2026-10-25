@@ -72,9 +72,110 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(reopened, 6, "a tap on the button while a panel was closing was lost")
     }
 
-    private func launchPlayer(_ extra: [String] = []) -> XCUIApplication {
+    /// Native menu morph (system popover, 1.15.0 default): opens and closes
+    /// from each button; a tap where another button is just closes.
+    func test13NativeMorph() throws {
+        let app = launchPlayer(native: true)
+        let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
+        for (b, marker) in [("Tracks", "Audio"), ("Settings", "Playback"), ("Now Playing", "NOW PLAYING")] {
+            tapPill(app, b)
+            XCTAssertTrue(shows(app, marker, within: 4), "\(b) did not open (native morph)")
+            sleep(2)
+            outside.tap(); sleep(2)
+            XCTAssertFalse(shows(app, marker), "\(b) did not close (native morph)")
+        }
+    }
+
+    /// 1.15.0 (#6, app glass): a button tapped while the last panel is still
+    /// closing opens its own panel — the glass reshapes, no second tap needed.
+    func test14SwitchWhileClosing() throws {
+        let app = launchPlayer()
+        let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
+        let pairs: [(String, String, String, String)] = [("Tracks", "Audio", "Settings", "Playback"), ("Settings", "Playback", "Now Playing", "NOW PLAYING"), ("Now Playing", "NOW PLAYING", "Tracks", "Audio")]
+        var ok = 0
+        for (a, am, b, bm) in pairs {
+            tapPill(app, a)
+            XCTAssertTrue(shows(app, am, within: 3), "\(a) did not open")
+            sleep(1)
+            outside.tap()                                              // starts closing
+            usleep(120_000)
+            tapPill(app, b)                                            // mid-close → straight into b
+            if shows(app, bm, within: 2) { ok += 1 } else { print("SWITCH miss \(a) → \(b)") }
+            sleep(1)
+            outside.tap(); sleep(1)
+        }
+        print("SWITCH while closing \(ok)/\(pairs.count)")
+        XCTAssertEqual(ok, pairs.count, "a button tapped while a panel was closing did not open its panel")
+    }
+
+    /// 1.15.0 (#5): Settings closes with a pull down every time — a plain pull,
+    /// and a pull right after flicking the list back to the top.
+    func test15SettingsPullDown() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-uiTest", "-labNoEngine"] + extra
+        app.launchArguments = ["-uiTestLibrary", "-noSplash"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        XCTAssertTrue(app.staticTexts["Lab Show"].firstMatch.waitForExistence(timeout: 25), "library not found")
+        sleep(1)
+        var ok = 0
+        let tries = 6
+        for i in 0..<tries {
+            app.buttons["Settings"].firstMatch.tap()
+            XCTAssertTrue(app.staticTexts["General"].waitForExistence(timeout: 5), "Settings did not open")
+            sleep(1)
+            let mid = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))
+            if i % 2 == 1 {
+                // Flick up a little, flick back to the top, then pull at once.
+                mid.press(forDuration: 0.01, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)), withVelocity: .fast, thenHoldForDuration: 0)
+                usleep(150_000)
+                mid.press(forDuration: 0.01, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7)), withVelocity: .fast, thenHoldForDuration: 0)
+                usleep(250_000)
+            }
+            mid.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)), withVelocity: .default, thenHoldForDuration: 0)
+            sleep(2)
+            if !app.staticTexts["General"].exists || !app.staticTexts["General"].isHittable { ok += 1 } else {
+                print("PULL miss on try \(i)")
+                app.navigationBars.buttons.element(boundBy: 0).tap(); sleep(2)
+            }
+        }
+        print("PULL closed \(ok)/\(tries)")
+        XCTAssertEqual(ok, tries, "a pull down did not close Settings")
+    }
+
+    /// 1.15.0 (#9): a page that is going away takes no taps. Back, then a tap
+    /// where its Play button was, must not start playback.
+    func test16NoTapsOnLeavingPage() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-noSplash"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        var played = 0
+        for delay in [50_000, 150_000, 300_000] as [useconds_t] {
+            sleep(1); tile.tap()
+            let play = app.descendants(matching: .any)["heroPlay"]
+            XCTAssertTrue(play.waitForExistence(timeout: 6), "title page did not open")
+            sleep(1)
+            let spot = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: play.frame.midX, dy: play.frame.midY))
+            app.buttons["Back"].tap()
+            usleep(delay)
+            spot.tap()
+            if app.buttons["Close player"].waitForExistence(timeout: 3) {
+                played += 1
+                print("LEAVING page played after \(delay) µs")
+                app.buttons["Close player"].tap(); sleep(3)
+                if app.buttons["Back"].exists { app.buttons["Back"].tap() }
+            }
+            sleep(2)
+            if app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
+        }
+        XCTAssertEqual(played, 0, "a tap on a page that was going away started playback")
+    }
+
+    private func launchPlayer(_ extra: [String] = [], native: Bool = false) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTest", "-labNoEngine", "-nativePanelMorph", native ? "YES" : "NO"] + extra
         app.launch()
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 20), "toolbar button not found")

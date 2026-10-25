@@ -15,6 +15,9 @@ struct PlayerScreen: View {
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @ObservedObject private var tune = UITune.shared
     @Namespace private var glassNS
+    /// Read once when the player opens: switching path mid-playback would
+    /// leave a panel from the other path on screen.
+    @State private var nativeMorph = UserDefaults.standard.object(forKey: SettingsKey.nativePanelMorph) as? Bool ?? true
 
     var body: some View {
         GeometryReader { geo in
@@ -302,11 +305,12 @@ struct PlayerScreen: View {
     /// the tap-catcher under them, which closes the panel (as with the popover).
     private var otherControlsLive: Bool { legacyPanels || ui.panel == nil }
 
-    /// iOS 26: SwiftUI glass panels (GlassPanels.swift). Earlier iOS: the
-    /// system popover from a UIKit pill (PanelPopover.swift).
+    /// The system popover from a UIKit pill (PanelPopover.swift): always before
+    /// iOS 26; on iOS 26 when "Native menu morph" is on (its Liquid Glass morph
+    /// out of the bar button). Off: SwiftUI glass panels (GlassPanels.swift).
     private var legacyPanels: Bool {
         #if compiler(>=6.2)
-        if #available(iOS 26.0, *) { return false }
+        if #available(iOS 26.0, *) { return nativeMorph }
         #endif
         return true
     }
@@ -314,11 +318,16 @@ struct PlayerScreen: View {
     @ViewBuilder
     private func panelPill(_ geo: GeometryProxy, compact: Bool) -> some View {
         #if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, *), !legacyPanels {
             GlassPanelPill(model: model, ui: ui, ns: glassNS,
                            width: compact ? max(240, geo.size.width - 40) : min(tune.panelMax, geo.size.width * tune.panelWidth),
                            maxHeight: max(180, geo.size.height - (tune.pillHeight + 26) - 58),
                            onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
+        } else if #available(iOS 26.0, *) {
+            // Native menu morph: bar items in a toolbar; the popover morphs
+            // out of the item's Liquid Glass (as in 1.14.0).
+            PanelToolbarView(ui: ui)
+                .frame(width: 176, height: 50)
         } else {
             PanelPillView(ui: ui, height: tune.pillHeight)
                 .frame(width: tune.pillHeight * 3 + 8, height: tune.pillHeight)

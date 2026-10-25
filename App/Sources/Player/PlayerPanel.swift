@@ -21,8 +21,11 @@ struct PlayerPanel: View {
     var body: some View {
         Group {
             if kind == .nowPlaying {
-                // Fixed height so switching tabs never resizes the panel.
-                ScrollView { padded }.frame(width: width, height: maxHeight)
+                // Fixed height so switching tabs never resizes the panel. The
+                // header and tabs stay put; only the list under them scrolls.
+                NowPlayingPanelContent(model: model, ui: ui, pinnedHeader: true)
+                    .dynamicTypeSize(tune.typeSize)
+                    .frame(width: width, height: maxHeight, alignment: .top)
             } else {
                 // Sized to its content on the very first layout (the popover reads
                 // it before presenting, so it never resizes mid-animation);
@@ -396,11 +399,38 @@ struct TrackRow: View {
 struct NowPlayingPanelContent: View {
     @ObservedObject var model: PlayerModel
     @ObservedObject var ui: PlayerUIState
+    /// The title and tabs stay pinned at the top and only the list scrolls
+    /// (until 1.14.1 the whole panel scrolled and the tabs went off screen).
+    var pinnedHeader = false
     @State private var tab = 0
     @AppStorage("screenshotSubs") private var screenshotSubs = true
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
 
     var body: some View {
+        Group {
+            if pinnedHeader {
+                VStack(alignment: .leading, spacing: 12) {
+                    header.padding(.horizontal, 16).padding(.top, 22)
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            list.padding(.horizontal, 16).padding(.bottom, 16)
+                        }
+                        .scrollIndicators(.hidden)
+                        .onAppear {
+                            // Open on the playing episode, not on episode 1.
+                            if tab == 0, model.queue.count > 3 { proxy.scrollTo(model.queueIndex, anchor: .center) }
+                        }
+                    }
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 12) { header; list }
+            }
+        }
+        .animation(.spring(response: 0.36, dampingFraction: 0.84), value: tab)
+        .onAppear { if !model.chapters.isEmpty && model.queue.count <= 1 { tab = 1 } }
+    }
+
+    private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("NOW PLAYING").font(.caption.weight(.bold)).tracking(1.5).foregroundStyle(.white.opacity(0.55))
             Text(playlistNames == "filename" ? model.item.fileName : model.item.displayTitle)
@@ -416,8 +446,13 @@ struct NowPlayingPanelContent: View {
                         .frame(width: 38, height: 38).background(Color.accentColor, in: Circle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Take screenshot")
             }
-            Group {
+        }
+    }
+
+    private var list: some View {
+        VStack(alignment: .leading, spacing: 12) {
             switch tab {
             case 0:
                 ForEach(Array(model.queue.enumerated()), id: \.offset) { i, item in
@@ -425,6 +460,7 @@ struct NowPlayingPanelContent: View {
                         model.queueIndex = i
                         model.load(item)
                     }
+                    .id(i)
                 }
             case 1:
                 if model.chapters.isEmpty { Text("No chapters").foregroundStyle(.white.opacity(0.5)).padding(.vertical, 8) }
@@ -446,12 +482,10 @@ struct NowPlayingPanelContent: View {
                 .buttonStyle(.plain)
                 Text("Long-press a marker to remove it.").font(.caption2).foregroundStyle(.white.opacity(0.45))
             }
-            }
-            .id(tab)
-            .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
         }
-        .animation(.spring(response: 0.36, dampingFraction: 0.84), value: tab)
-        .onAppear { if !model.chapters.isEmpty && model.queue.count <= 1 { tab = 1 } }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .id(tab)
+        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
     }
 }
 

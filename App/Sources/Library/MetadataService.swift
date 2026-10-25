@@ -18,6 +18,10 @@ struct MediaMeta: Codable, Hashable {
     var episodeTitle: String?
     var episodeThumb: String?
     var episodeOverview: String?
+    /// The season and episode IMDb numbers the episode with, when the file
+    /// used an absolute number ("Show - 26" → S2 E1).
+    var episodeSeason: Int?
+    var episodeNumber: Int?
     /// The show's title in its own language (romaji for anime), if different.
     var originalName: String?
     var credits: [CastMember]?
@@ -26,7 +30,7 @@ struct MediaMeta: Codable, Hashable {
     /// next use (1.13.1 fixed the cast photos and the original title).
     var version: Int?
     var titleLanguage: String?
-    static let currentVersion = 2
+    static let currentVersion = 3   // 3: absolute episode numbers mapped to seasons; OAD/Movie files
 
     /// Best 16:9 art for a tile; poster as a last resort.
     var wideArt: String? { episodeThumb ?? background ?? poster }
@@ -52,7 +56,8 @@ actor MetadataService {
         guard UserDefaults.standard.bool(forKey: SettingsKey.metadataFetching) else { return nil }
         let p = TitleParser.parse(filename)
         guard p.title.count >= 2 else { return nil }
-        let key = [p.title.lowercased(), p.year.map(String.init) ?? "", p.season.map(String.init) ?? "", p.episode.map(String.init) ?? ""].joined(separator: "|")
+        var key = [p.title.lowercased(), p.year.map(String.init) ?? "", p.season.map(String.init) ?? "", p.episode.map(String.init) ?? ""].joined(separator: "|")
+        if let x = p.extra { key += "|" + x.lowercased() + (p.part.map { String($0) } ?? "") + "|" + (p.subtitle?.lowercased() ?? "") }
         if let e = cache[key], e.meta != nil || Date().timeIntervalSince(e.date) < 86400 * 3 {
             if let m = e.meta, (m.version ?? 0) < MediaMeta.currentVersion || m.titleLanguage != EpisodeTitles.language {
                 refresh(key: key, parsed: p)
@@ -70,10 +75,21 @@ actor MetadataService {
     }
 
     private func resolve(_ p: TitleParser.Parsed) async -> MediaMeta? {
-        let wantsSeries = p.episode != nil
-        let order = wantsSeries ? ["series", "movie"] : ["movie", "series"]
-        for type in order {
-            guard let item = await search(title: p.title, year: p.year, type: type) else { continue }
+        let wantsSeries = p.episode != nil && p.extra != "Movie"
+        // A film of a series: its own title first ("Show Name Subtitle"), then
+        // the series (art only). An OAD / OVA: the show it belongs to, but
+        // never the show's episode of the same number.
+        var attempts: [(title: String, type: String)]
+        if p.extra == "Movie" {
+            attempts = []
+            if let sub = p.subtitle { attempts.append(("\(p.title) \(sub)", "movie")) }
+            attempts += [(p.title, "movie"), (p.title, "series")]
+        } else {
+            let t = TitleParser.baseTitle(p)
+            attempts = (wantsSeries ? ["series", "movie"] : ["movie", "series"]).map { (t, $0) }
+        }
+        for (title, type) in attempts {
+            guard let item = await search(title: title, year: p.year, type: type) else { continue }
             var meta = MediaMeta(id: item.id, type: item.type, name: item.name, poster: item.poster, background: item.background,
                                  logo: item.logo, description: item.description, year: item.releaseInfo, rating: item.imdbRating, genres: item.genres)
             meta.originalName = item.originalName
@@ -81,10 +97,12 @@ actor MetadataService {
             meta.contentRating = item.contentRating
             meta.version = MediaMeta.currentVersion
             meta.titleLanguage = EpisodeTitles.language
-            if type == "series", let ep = p.episode, let video = await episode(of: item.id, season: p.season, episode: ep) {
+            if type == "series", p.extra == nil, let ep = p.episode, let video = await episode(of: item.id, season: p.season, episode: ep) {
                 meta.episodeTitle = video.title
                 meta.episodeThumb = video.thumbnail
                 meta.episodeOverview = video.overview
+                meta.episodeSeason = video.season
+                meta.episodeNumber = video.episode
             }
             return meta
         }
@@ -119,10 +137,32 @@ actor MetadataService {
         return best
     }
 
+    /// The episode; with no season in the file name and a number past the
+    /// end of season 1, the number counts on through the next seasons
+    /// ("Attack on Titan - 26" is S2 E1 when season 1 has 25).
     private func episode(of id: String, season: Int?, episode: Int) async -> MetaVideo? {
         let s = season ?? 1
         let eps = await IMDbSource.episodes(id: id, season: s)
-        return eps.first { $0.episode == episode }
+        if let v = eps.first(where: { $0.episode == episode }) { return v }
+        guard season == nil, !eps.isEmpty else { return nil }
+        var remaining = episode - (eps.map { $0.episode ?? 0 }.max() ?? eps.count)
+        var next = 2
+        while remaining > 0, next <= 12 {
+            let list = await IMDbSource.episodes(id: id, season: next)
+            // IMDb shows another season for one it doesn't have: stop there.
+            guard !list.isEmpty, list.allSatisfy({ $0.season == next }) else { return nil }
+            let count = list.map { $0.episode ?? 0 }.max() ?? list.count
+            if remaining <= count {
+                if let v = list.first(where: { $0.episode == remaining }) {
+                    dlog("meta", "absolute episode \(episode) → S\(next) E\(remaining)")
+                    return v
+                }
+                return nil
+            }
+            remaining -= count
+            next += 1
+        }
+        return nil
     }
 
     private var refreshing = Set<String>()
