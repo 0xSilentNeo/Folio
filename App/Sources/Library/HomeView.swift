@@ -46,6 +46,8 @@ struct HomeView: View {
             if #available(iOS 18.0, *) { SettingsView().navigationTransition(.zoom(sourceID: "settings", in: zoomNS)).ignoresTapsWhileLeaving() } else { SettingsView() }
         case .group(let id):
             LibraryRoute.destination(route).zoomDestination(id, in: zoomNS)
+        case .folder(let path):
+            LibraryRoute.destination(route).zoomDestination("d|" + path, in: zoomNS)
         default:
             LibraryRoute.destination(route)
         }
@@ -205,6 +207,9 @@ struct HomeView: View {
             if mode == .grid {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
                     ForEach(groups) { g in
+                        if let folder = g.folder {
+                            folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(g.id, zoomNS)) }
+                        } else {
                         groupLink(g) {
                             MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
                                       key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
@@ -212,22 +217,33 @@ struct HomeView: View {
                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
                                       poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil)
                         }
+                        }
                     }
                 }
                 .padding(.horizontal, margin)
             } else {
                 LazyVStack(spacing: mode == .details ? 12 : 4) {
                     ForEach(groups) { g in
+                        if let folder = g.folder {
+                            folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: ZoomSource(g.id, zoomNS)) }
+                        } else {
                         groupLink(g) {
                             LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
                                        fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
                                        poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil)
+                        }
                         }
                     }
                 }
                 .padding(.horizontal, margin)
             }
         }
+    }
+
+    private func folderLink<L: View>(_ g: LibraryGroup, _ folder: URL, @ViewBuilder label: () -> L) -> some View {
+        NavigationLink(value: LibraryRoute.folder(folder.path)) { label() }
+            .buttonStyle(PressStyle(scale: 0.97))
+            .accessibilityLabel("\(g.title), folder, \(g.count) items, \(g.size.byteString)")
     }
 
     private func seriesSubtitle(_ g: LibraryGroup) -> String {
@@ -602,5 +618,105 @@ struct OpenURLSheet: View {
                 }
             }
         }
+    }
+}
+
+
+/// A folder of different titles (1.15.0, #10/#11): four of its own pictures in
+/// a 2 × 2 grid on a see-through card, the folder's total size at the bottom
+/// right, its name and item count under it (Outplayer's folder tile).
+struct FolderTile: View {
+    let group: LibraryGroup
+    /// The library shows posters (portrait cells) or frames (16:9 cells).
+    var poster: Bool
+    var zoom: ZoomSource? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Color.clear
+                .aspectRatio(poster ? 2.0 / 3.0 : 16.0 / 9.0, contentMode: .fit)
+                .overlay { FolderCollage(files: Array(group.files.prefix(4)), poster: poster, gap: poster ? 4 : 6, cell: poster ? 7 : 9) .padding(poster ? 5 : 7) }
+                .overlay(alignment: .bottomTrailing) { SizeBadge(size: group.size).padding(poster ? 8 : 11) }
+                .background(Theme.fill, in: RoundedRectangle(cornerRadius: poster ? 12 : 18, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: poster ? 12 : 18, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 0.5))
+                .zoomSource(zoom, cornerRadius: poster ? 12 : 18)
+            Text(group.title).font(.subheadline.weight(.semibold)).lineLimit(1)
+            Text("\(group.count) item\(group.count == 1 ? "" : "s")").font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
+        }
+    }
+}
+
+/// List / details mode: the collage as the row's picture, size on the right.
+struct FolderRow: View {
+    let group: LibraryGroup
+    let detail: Bool
+    var zoom: ZoomSource? = nil
+
+    var body: some View {
+        HStack(spacing: 12) {
+            FolderCollage(files: Array(group.files.prefix(4)), poster: false, gap: 3, cell: 5)
+                .padding(4)
+                .frame(width: detail ? 150 : 78, height: detail ? 84 : 44)
+                .background(Theme.fill, in: RoundedRectangle(cornerRadius: detail ? 12 : 8, style: .continuous))
+                .zoomSource(zoom, cornerRadius: detail ? 12 : 8)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(group.title).font(.subheadline.weight(.semibold)).lineLimit(1)
+                Text("Folder · \(group.count) item\(group.count == 1 ? "" : "s")").font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            Text(group.size.byteString).font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.secondary)
+        }
+        .padding(detail ? 8 : 6)
+        .background(RoundedRectangle(cornerRadius: detail ? 16 : 12, style: .continuous).fill(Theme.card))
+    }
+}
+
+struct FolderCollage: View {
+    let files: [URL]
+    let poster: Bool
+    let gap: CGFloat
+    let cell: CGFloat
+
+    var body: some View {
+        let cols = [GridItem(.flexible(), spacing: gap), GridItem(.flexible(), spacing: gap)]
+        GeometryReader { geo in
+            let h = (geo.size.height - gap) / 2
+            LazyVGrid(columns: cols, spacing: gap) {
+                ForEach(0..<4, id: \.self) { i in
+                    Group {
+                        if i < files.count { FolderThumb(file: files[i], poster: poster) } else { Theme.fill }
+                    }
+                    .frame(height: max(0, h))
+                    .clipShape(RoundedRectangle(cornerRadius: cell, style: .continuous))
+                }
+            }
+        }
+    }
+}
+
+private struct FolderThumb: View {
+    let file: URL
+    let poster: Bool
+    @StateObject private var thumb = ThumbLoader()
+    var body: some View {
+        Color.clear
+            .overlay {
+                if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() } else { GeneratedArt(seed: file.lastPathComponent) }
+            }
+            .clipped()
+            .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide) }
+    }
+}
+
+/// The folder's total size, bottom right (local folders only).
+struct SizeBadge: View {
+    let size: Int64
+    var body: some View {
+        Text(size.byteString)
+            .font(.caption2.weight(.bold).monospacedDigit())
+            .foregroundStyle(.white)
+            .padding(.horizontal, 7).padding(.vertical, 3)
+            .background(.black.opacity(0.55), in: Capsule())
+            .environment(\.colorScheme, .dark)
     }
 }

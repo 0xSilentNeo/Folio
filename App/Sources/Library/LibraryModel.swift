@@ -26,6 +26,9 @@ struct LibraryGroup: Identifiable, Hashable {
     let isSeries: Bool
     let date: Date
     let size: Int64
+    /// A folder in Media whose files are different titles: shown as one
+    /// folder tile (four of its pictures in a 2 × 2 grid), not merged.
+    var folder: URL? = nil
 
     var count: Int { files.count }
     var seasons: [Int] { Array(Set(files.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted() }
@@ -79,10 +82,33 @@ enum LibraryOrganizer {
         return a.lastPathComponent.localizedStandardCompare(b.lastPathComponent) == .orderedAscending
     }
 
+    private static func key(_ f: URL) -> String {
+        let p = TitleParser.parse(f.lastPathComponent)
+        return p.episode != nil ? "s|" + p.title.lowercased() : "f|" + f.path
+    }
+
     static func groups(_ files: [URL], sort: LibrarySort = .current, ascending: Bool = LibrarySort.ascending) -> [LibraryGroup] {
+        // Folders whose files are more than one title become folder tiles.
+        let media = MPVFiles.mediaDir.standardizedFileURL.path
+        var byFolder: [String: [URL]] = [:]
+        for f in files {
+            let dir = f.deletingLastPathComponent().standardizedFileURL
+            if dir.path != media, dir.deletingLastPathComponent().standardizedFileURL.path == media { byFolder[dir.path, default: []].append(f) }
+        }
+        var folderGroups: [LibraryGroup] = []
+        var inFolders = Set<URL>()
+        for (dir, list) in byFolder where list.count > 1 && Set(list.map(key)).count > 1 {
+            let sortedList = list.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+            let infos = sortedList.map(info)
+            let u = URL(fileURLWithPath: dir, isDirectory: true)
+            folderGroups.append(LibraryGroup(id: "d|" + dir, title: u.lastPathComponent, files: sortedList, isSeries: false,
+                                             date: infos.map(\.date).max() ?? .distantPast, size: infos.map(\.size).reduce(0, +), folder: u))
+            inFolders.formUnion(list)
+        }
+
         var buckets: [String: [URL]] = [:]
         var order: [String] = []
-        for f in files {
+        for f in files where !inFolders.contains(f) {
             let p = TitleParser.parse(f.lastPathComponent)
             // Only episodes merge; two movies with the same name stay separate tiles.
             let key = p.episode != nil ? "s|" + p.title.lowercased() : "f|" + f.path
@@ -97,6 +123,7 @@ enum LibraryOrganizer {
                                 files: list, isSeries: key.hasPrefix("s|"),
                                 date: infos.map(\.date).max() ?? .distantPast, size: infos.map(\.size).reduce(0, +))
         }
+        out += folderGroups
         out.sort { a, b in
             let less: Bool
             switch sort {

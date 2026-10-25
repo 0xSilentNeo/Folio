@@ -12,6 +12,8 @@ struct MetaDetailView: View {
     @State private var episodes: [MetaVideo] = []
     @State private var loadingEpisodes = false
     @State private var go: StreamsTarget?
+    /// The streams page zooms out of what was tapped (1.15.0, #2), like Add files.
+    @Namespace private var streamsNS
     @ObservedObject private var history = HistoryStore.shared
     @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
@@ -30,6 +32,8 @@ struct MetaDetailView: View {
     struct StreamsTarget: Hashable, Identifiable {
         var video: MetaVideo?
         var queue: [MetaVideo]
+        /// The view the page zooms out of: "find" (the big button) or "ep|<id>" (an episode row).
+        var source = "find"
         var id: String { video?.id ?? "title" }
     }
 
@@ -47,7 +51,7 @@ struct MetaDetailView: View {
                         if let d = m.description, !d.isEmpty {
                             ExpandableText(text: d, lines: 2)
                         }
-                        HStack(spacing: 0) { findButton; Spacer(minLength: 0) }
+                        HStack(spacing: 0) { findButton.zoomSource(ZoomSource("find", streamsNS), cornerRadius: 28); Spacer(minLength: 0) }
                         if castPosition == "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, -16) }
                         if isSeries && (!allVideos.isEmpty || !allSeasons.isEmpty) { episodeList }
                         if loadingEpisodes && allVideos.isEmpty { ProgressView().frame(maxWidth: .infinity).padding() }
@@ -72,6 +76,7 @@ struct MetaDetailView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .navigationDestination(item: $go) { t in
             StreamsView(meta: m, video: t.video, seasonVideos: t.queue)
+                .zoomDestination(t.source, in: streamsNS)
         }
         .task { await load() }
         .task(id: season) {
@@ -184,8 +189,9 @@ struct MetaDetailView: View {
             }
             LazyVStack(spacing: 10) {
                 ForEach(seasonEpisodes) { v in
-                    Button { go = StreamsTarget(video: v, queue: []) } label: {
+                    Button { go = StreamsTarget(video: v, queue: [], source: "ep|" + v.id) } label: {
                         EpisodeRow(video: v, entry: history.entry(for: "addon:\(v.id)"))
+                            .zoomSource(ZoomSource("ep|" + v.id, streamsNS), cornerRadius: 14)
                     }
                     .buttonStyle(.plain)
                 }
