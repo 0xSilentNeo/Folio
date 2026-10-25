@@ -270,8 +270,8 @@ final class PanelUITests: XCTestCase {
     /// transition never completes); kept for comparison, rename to test… to run.
     func comparisonReplayNoSettle() throws { try replay(["-panelNoSettle"]) }
 
-    private func replay(_ extra: [String]) throws {
-        let app = launchPlayer(["-panelStress"] + extra)
+    private func replay(_ extra: [String], native: Bool = false) throws {
+        let app = launchPlayer(["-panelStress"] + extra, native: native)
         sleep(22)                                                 // replay: 3.5 s after landscape settles, lasts 11.6 s
         XCTAssertTrue(shows(app, "Playback", within: 4), "Settings (last tap) is not showing")
         XCTAssertFalse(shows(app, "NOW PLAYING"), "an orphaned Now Playing panel is on screen")
@@ -429,6 +429,88 @@ final class PanelUITests: XCTestCase {
         print("HALFSEC opened \(ok)/20")
         XCTAssertEqual(ok, 20, "some taps after a close were lost")
     }
+
+    // MARK: Native menu morph (system popover) — 1.15.1
+
+    /// A button tapped while the last panel is still closing opens its panel
+    /// without waiting out the close morph (it is fast-forwarded). Once 0.15 s
+    /// and once 0.4 s into the close; also the same button again.
+    func test17NativeSwitchWhileClosing() throws {
+        let app = launchPlayer(native: true)
+        let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
+        let pairs: [(String, String, String, String)] = [
+            ("Tracks", "Audio", "Settings", "Playback"), ("Settings", "Playback", "Now Playing", "NOW PLAYING"),
+            ("Now Playing", "NOW PLAYING", "Tracks", "Audio"), ("Settings", "Playback", "Settings", "Playback"),
+        ]
+        var ok = 0, total = 0
+        for delay: UInt32 in [150_000, 400_000] {
+            for (a, am, b, bm) in pairs {
+                total += 1
+                tapPill(app, a)
+                XCTAssertTrue(shows(app, am, within: 4), "\(a) did not open (native)")
+                sleep(2)
+                outside.tap()                                          // starts the close morph
+                usleep(delay)
+                let t0 = Date()
+                tapPill(app, b)                                        // mid-close
+                if shows(app, bm, within: 3) {
+                    ok += 1
+                    print(String(format: "NATIVE SWITCH %@ → %@ (%d ms into the close): showing %.0f ms after the tap", a, b, delay / 1000, Date().timeIntervalSince(t0) * 1000))
+                } else { print("NATIVE SWITCH miss \(a) → \(b) at \(delay / 1000) ms") }
+                sleep(2)
+                outside.tap(); sleep(2)
+            }
+        }
+        print("NATIVE SWITCH while closing \(ok)/\(total)")
+        XCTAssertEqual(ok, total, "a button tapped while a native panel was closing did not open its panel")
+    }
+
+    /// An outside tap while a panel is still opening closes it with that one
+    /// tap, soon (the open is fast-forwarded, then the close morph runs).
+    func test18NativeTapOutsideWhileOpening() throws {
+        let app = launchPlayer(native: true)
+        let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
+        var ok = 0
+        for i in 0..<6 {
+            let (b, marker) = [("Tracks", "Audio"), ("Settings", "Playback"), ("Now Playing", "NOW PLAYING")][i % 3]
+            tapPill(app, b)
+            usleep(UInt32(150_000 + i * 60_000))                       // 0.15 … 0.45 s into the open
+            outside.tap()
+            let t0 = Date()
+            var closed = false
+            while Date().timeIntervalSince(t0) < 3 { if !shows(app, marker) { closed = true; break }; usleep(100_000) }
+            if closed { ok += 1; print(String(format: "NATIVE MOVING %@: closed %.0f ms after the outside tap", b, Date().timeIntervalSince(t0) * 1000)) }
+            else { print("NATIVE MOVING \(b) still open 3 s after the outside tap"); outside.tap() }
+            sleep(2)
+        }
+        print("NATIVE MOVING closed \(ok)/6")
+        XCTAssertEqual(ok, 6, "an outside tap while a native panel was opening did not close it")
+    }
+
+    /// test7's lost-tap timing with the native morph: close, then 0.5 s later
+    /// tap a button; every tap opens its panel.
+    func test19NativeCloseThenTapHalfSecond() throws {
+        let app = launchPlayer(native: true)
+        let names: [(String, String)] = [("Settings", "Playback"), ("Now Playing", "NOW PLAYING"), ("Tracks", "Audio")]
+        var ok = 0
+        for i in 0..<9 {
+            let (button, marker) = names[i % 3]
+            let t0 = Date()
+            tapPill(app, button)
+            if shows(app, marker, within: 3) { ok += 1; print(String(format: "NATIVE HALFSEC %@: showing %.0f ms after the tap", button, Date().timeIntervalSince(t0) * 1000)) }
+            else { print("NATIVE HALFSEC miss at \(i) (\(button))") }
+            sleep(1)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()
+            usleep(500_000)
+        }
+        sleep(2)
+        print("NATIVE HALFSEC opened \(ok)/9")
+        XCTAssertEqual(ok, 9, "some taps after a native close were lost")
+    }
+
+    /// The freeze-log tap sequence with the native morph: it must end on the
+    /// last tap's panel and leave the player responsive.
+    func test20NativeRapidSwitchReplay() throws { try replay([], native: true) }
 }
 
 /// Discover → title page, the path that crashed 1.12.0 on device. The IMDb
