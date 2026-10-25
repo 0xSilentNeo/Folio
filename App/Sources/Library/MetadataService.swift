@@ -61,6 +61,12 @@ actor MetadataService {
         if let e = cache[key], e.meta != nil || Date().timeIntervalSince(e.date) < 86400 * 3 {
             if let m = e.meta, (m.version ?? 0) < MediaMeta.currentVersion || m.titleLanguage != EpisodeTitles.language {
                 refresh(key: key, parsed: p)
+            } else if let m = e.meta, m.type == "series", m.episodeTitle == nil, p.episode != nil, p.extra == nil,
+                      Date().timeIntervalSince(e.date) > 3600 * 6 {
+                // The show was found but not the episode: often a failed
+                // episode-list request (IMDb's bot check), not a missing
+                // episode. Try again now and then instead of never.
+                refresh(key: key, parsed: p)
             }
             return e.meta
         }

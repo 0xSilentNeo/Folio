@@ -107,6 +107,13 @@ enum UILab {
                 let p = TitleParser.parse(n)
                 dlog("lab", "meta \(n) → \(m?.name ?? "nil") [\(m?.id ?? "-")] tag=\(TitleParser.tag(p, season: m?.episodeSeason, episode: m?.episodeNumber) ?? "-") ep=\(m?.episodeTitle ?? "-")")
             }
+            // Second pass once IMDb answers (its bot check slows the first requests in CI).
+            await MetadataService.shared.clear()
+            for n in [names[2], names[3]] {
+                let m = await MetadataService.shared.lookup(filename: n)
+                let p = TitleParser.parse(n)
+                dlog("lab", "meta2 \(n) → tag=\(TitleParser.tag(p, season: m?.episodeSeason, episode: m?.episodeNumber) ?? "-") ep=\(m?.episodeTitle ?? "-")")
+            }
         }
     }
 
