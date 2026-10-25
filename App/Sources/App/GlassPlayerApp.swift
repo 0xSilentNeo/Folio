@@ -7,10 +7,6 @@ struct GlassPlayerApp: App {
 
     init() {
         SettingsKey.registerDefaults()
-        // 1.13.1: the morph is back (1.13.0 set "quick", which no longer exists).
-        if UserDefaults.standard.string(forKey: SettingsKey.panelTransition) == "quick" {
-            UserDefaults.standard.set("morphFrozen", forKey: SettingsKey.panelTransition)
-        }
         Diagnostics.shared.start()
         EnergyMonitor.shared.start()
         UILab.start()

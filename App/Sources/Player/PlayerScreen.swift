@@ -139,7 +139,6 @@ struct PlayerScreen: View {
             ui.scheduleHide()
             guard legacyPanels else { return }          // iOS 26: GlassPanelPill draws the panels
             ui.presentNow = { presentPanel($0, immediate: true) }
-            PanelPresenter.shared.onTransitionStart = { [weak model] in model?.freezeVideo(for: $0) }
             PanelPresenter.shared.onClosing = { [weak ui] closing in if ui?.panelClosing != closing { ui?.panelClosing = closing } }
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { prewarmPanels() }
         }

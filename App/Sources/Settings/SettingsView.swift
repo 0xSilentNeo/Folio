@@ -77,17 +77,10 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.pipReturnOnOpen) private var pipReturnOnOpen = true
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
-    @AppStorage(SettingsKey.panelTransition) private var panelTransition = "morphFrozen"
     @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
     @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
     @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
     @AppStorage(SettingsKey.gestureControl) private var gestures = true
-
-    /// The player uses the system popover for its menus (always before iOS 26).
-    private var usesSystemPopover: Bool {
-        if #available(iOS 26.0, *) { return nativePanelMorph }
-        return true
-    }
 
     var body: some View {
         Form {
@@ -127,20 +120,12 @@ struct PlaybackSettings: View {
                 if #available(iOS 26.0, *) {
                     Toggle("Native menu morph", isOn: $nativePanelMorph)
                 }
-                if usesSystemPopover {
-                    // Only the system popover uses this; the app's own glass
-                    // never freezes the video.
-                    Picker("Menu animation", selection: $panelTransition) {
-                        Text("Morph (still picture)").tag("morphFrozen")
-                        Text("Morph (live picture)").tag("morph")
-                    }
-                }
                 LabeledContent("Controls width") {
                     Slider(value: $controlsWidth, in: 0.6...1.0, step: 0.05).frame(maxWidth: 170)
                     Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
                 }
             } header: { Text("Player") } footer: {
-                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation, as in Outplayer); taps wait until it finishes. Off: the app's own glass, which can be interrupted at any moment. Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
+                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation, as in Outplayer); a tap while one is moving hurries it along. Off: the app's own glass, which can be interrupted at any moment. Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
             }
             Section("Progress bar") {
                 Picker("Chapter markers", selection: $bar.markerStyle) {
