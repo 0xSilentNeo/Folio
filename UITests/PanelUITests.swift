@@ -78,6 +78,14 @@ final class PanelUITests: XCTestCase {
         app.launch()
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 20), "toolbar button not found")
+        // Wait for the rotation to finish: spots taken in portrait missed in
+        // landscape (25 Oct replay run: the Tracks tap hit the video).
+        let end = Date().addingTimeInterval(10)
+        while Date() < end {
+            let w = app.windows.firstMatch.frame
+            if w.width > w.height { break }
+            usleep(200_000)
+        }
         sleep(2)
         spots = [:]
         for n in ["Tracks", "Settings", "Now Playing"] {
@@ -90,7 +98,15 @@ final class PanelUITests: XCTestCase {
     /// Where each pill button is, captured once: tapped like a finger (the
     /// accessibility tree can lag behind a non-animated close).
     private var spots: [String: XCUICoordinate] = [:]
-    private func tapPill(_ app: XCUIApplication, _ name: String) { spots[name]!.tap() }
+    private func tapPill(_ app: XCUIApplication, _ name: String) {
+        // Where the button is now, when it's on screen (it can move with a
+        // rotation); otherwise where it was (hidden while its panel is open).
+        let e = app.buttons[name]
+        if e.exists, e.isHittable, e.frame.width > 0 {
+            spots[name] = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: e.frame.midX, dy: e.frame.midY))
+        }
+        spots[name]!.tap()
+    }
     /// The panel's content is on screen (the built panel is kept in memory
     /// between openings, so `exists` alone can lag).
     private func shows(_ app: XCUIApplication, _ marker: String, within t: TimeInterval = 0) -> Bool {
