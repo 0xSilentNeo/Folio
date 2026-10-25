@@ -1,25 +1,80 @@
 import SwiftUI
 import UIKit
 
-/// Player panels are UIKit popovers with the SYSTEM popover background,
-/// presented from bar button items in a UIToolbar — Outplayer's construction
-/// on Liquid Glass (`videoMenuBarButtonItem` in `toolbar`). On iOS 26 the
-/// bar item's own glass then morphs into the panel. Verified in the CI pop
-/// lab: a custom (transparent) popover background, which 1.9.6–1.9.8 used,
-/// switches that morph off and the panel just appears.
+/// Animates the panel morphing in and out from the anchor source (e.g., the pill button)
+/// with a fully customizable, snappy duration, bypassing UIKit's hardcoded 1s popover delay.
+final class PillMorphAnimator: NSObject, UIViewControllerAnimatedTransitioning {
+    let presenting: Bool
+    let sourceView: UIView?
 
-/// Legacy transparent background (kept for the pop lab comparison only).
-final class ClearPopoverBackground: UIPopoverBackgroundView {
-    private var _offset: CGFloat = 0
-    private var _direction: UIPopoverArrowDirection = .down
-    override var arrowOffset: CGFloat { get { _offset } set { _offset = newValue } }
-    override var arrowDirection: UIPopoverArrowDirection { get { _direction } set { _direction = newValue } }
-    override class func arrowBase() -> CGFloat { 0 }
-    override class func arrowHeight() -> CGFloat { 0 }
-    override class func contentViewInsets() -> UIEdgeInsets { .zero }
-    override class var wantsDefaultContentAppearance: Bool { false }
-    override init(frame: CGRect) { super.init(frame: frame); backgroundColor = .clear; layer.shadowOpacity = 0 }
-    required init?(coder: NSCoder) { fatalError() }
+    init(presenting: Bool, sourceView: UIView?) {
+        self.presenting = presenting
+        self.sourceView = sourceView
+    }
+
+    func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
+        return 0.35 // Snappy, iOS-like custom duration
+    }
+
+    func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
+        if presenting {
+            guard let toVC = transitionContext.viewController(forKey: .to) else {
+                transitionContext.completeTransition(false)
+                return
+            }
+            let containerView = transitionContext.containerView
+            containerView.addSubview(toVC.view)
+            
+            toVC.view.frame = containerView.bounds
+            toVC.view.layoutIfNeeded()
+
+            // Calculate starting transform from the anchor view if available
+            let finalFrame = toVC.view.frame
+            if let sourceView = sourceView, let window = sourceView.window {
+                let sourceRect = sourceView.convert(sourceView.bounds, to: window)
+                let targetCenter = CGPoint(x: finalFrame.midX, y: finalFrame.midY)
+                let sourceCenter = CGPoint(x: sourceRect.midX, y: sourceRect.midY)
+                
+                // Position initial center at the button and scale down
+                toVC.view.center = sourceCenter
+                let scaleX = sourceRect.width / max(finalFrame.width, 1)
+                let scaleY = sourceRect.height / max(finalFrame.height, 1)
+                toVC.view.transform = CGAffineTransform(scaleX: max(scaleX, 0.1), y: max(scaleY, 0.1))
+            } else {
+                toVC.view.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+            }
+            
+            toVC.view.alpha = 0
+            
+            UIView.animate(withDuration: transitionDuration(using: transitionContext),
+                           delay: 0,
+                           usingSpringWithDamping: 0.82,
+                           initialSpringVelocity: 0.4,
+                           options: [.curveEaseInOut, .allowUserInteraction]) {
+                toVC.view.transform = .identity
+                toVC.view.center = CGPoint(x: finalFrame.midX, y: finalFrame.midY)
+                toVC.view.alpha = 1
+            } completion: { finished in
+                transitionContext.completeTransition(finished)
+            }
+
+        } else {
+            guard let fromVC = transitionContext.viewController(forKey: .from) else {
+                transitionContext.completeTransition(false)
+                return
+            }
+
+            UIView.animate(withDuration: transitionDuration(using: transitionContext),
+                           delay: 0,
+                           options: [.curveEaseIn]) {
+                fromVC.view.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+                fromVC.view.alpha = 0
+            } completion: { finished in
+                fromVC.view.removeFromSuperview()
+                transitionContext.completeTransition(finished)
+            }
+        }
+    }
 }
 
 enum PanelSource {
@@ -27,19 +82,12 @@ enum PanelSource {
     case view(UIView)
 }
 
-final class PanelPopoverController: UIViewController, UIPopoverPresentationControllerDelegate {
+final class PanelPopoverController: UIViewController, UIViewControllerTransitioningDelegate {
     private let host: UIHostingController<AnyView>
-    /// UIKit wants to close the panel (a tap outside it, including where the
-    /// pill was). The presenter closes it itself, so a close never races with
-    /// one UIKit started on its own.
     var onOutsideTap: (() -> Void)?
-    /// The view the panel grows out of / shrinks into (the button bar).
     weak var anchor: UIView?
+    private var sourceViewForAnimation: UIView?
 
-    /// Built once per panel and kept: building the SwiftUI content (Settings
-    /// especially) took up to 0.6 s in the simulator, on the main thread,
-    /// before the animation could start. Each presentation only re-points the
-    /// popover at its button.
     init(content: AnyView) {
         host = UIHostingController(rootView: content)
         super.init(nibName: nil, bundle: nil)
@@ -47,35 +95,28 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
         host.view.backgroundColor = .clear
         host.sizingOptions = [.preferredContentSize]
         if #available(iOS 16.4, *) { host.safeAreaRegions = [] }
+        
+        // Use custom presentation style to unlock custom animation durations
+        modalPresentationStyle = .custom
+        transitioningDelegate = self
     }
 
     required init?(coder: NSCoder) { fatalError() }
 
-    /// True while UIKit still has this controller on screen or mid-transition:
-    /// it must not be presented again until that is over (1.12.0 did, and the
-    /// panel came back full screen and black).
     var isInUse: Bool { presentingViewController != nil || isBeingPresented || isBeingDismissed }
 
-    /// `passthrough`: the player's view. Touches outside the panel go to the
-    /// player, whose tap-catcher closes the panel (UIKit never dismisses it).
     private(set) var passthrough: [UIView] = []
+    
     func configure(source: PanelSource, anchor: UIView?, passthrough: [UIView], bottomInset: CGFloat) {
         self.anchor = anchor
         self.passthrough = passthrough
-        modalPresentationStyle = .popover
-        guard let pc = popoverPresentationController else { return }
-        pc.delegate = self
+        
         switch source {
         case .item(let item):
-            pc.sourceItem = item
+            self.sourceViewForAnimation = item.value(forKey: "view") as? UIView
         case .view(let v):
-            pc.sourceView = v
-            pc.sourceRect = v.bounds
-            pc.permittedArrowDirections = [.down]
+            self.sourceViewForAnimation = v
         }
-        pc.passthroughViews = passthrough
-        // Keep the panel clear of the top buttons and the button bar.
-        pc.popoverLayoutMargins = UIEdgeInsets(top: 66, left: 16, bottom: bottomInset, right: 16)
     }
 
     override func viewDidLoad() {
@@ -83,9 +124,6 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
         view.backgroundColor = .clear
         view.clipsToBounds = true
         addChild(host)
-        // Fixed size, not pinned to the edges: while the glass morphs, the
-        // popover's bounds change every frame, and pinned content was laid out
-        // again on every one of them (the late frames during opening).
         host.view.translatesAutoresizingMaskIntoConstraints = true
         host.view.autoresizingMask = []
         view.addSubview(host.view)
@@ -102,7 +140,6 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
         host.view.center = CGPoint(x: view.bounds.midX, y: view.bounds.midY)
     }
 
-    /// Lays the content out ahead of time (called while the player is idle).
     func prewarm() {
         loadViewIfNeeded()
         host.view.setNeedsLayout()
@@ -115,53 +152,22 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
         view.setNeedsLayout()
     }
 
-    /// The popover's own view (glass background + this controller's view),
-    /// faded out when panels are switched programmatically.
-    var popoverView: UIView? {
-        guard let container = presentationController?.containerView else { return nil }
-        var v: UIView? = view
-        while let cur = v, cur.superview !== container { v = cur.superview }
-        return v
+    // MARK: UIViewControllerTransitioningDelegate
+    
+    func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+        return PillMorphAnimator(presenting: true, sourceView: sourceViewForAnimation ?? anchor)
     }
 
-    func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle { .none }
-    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle { .none }
-    /// A question, not a request: iOS accessibility (VoiceOver, Switch Control,
-    /// UI-test snapshots) asks it whenever it reads the screen. Answering with
-    /// a close shut panels by themselves ~1 s after opening in CI. The answer
-    /// is always "no"; a real tap outside then arrives as an *attempt* below.
-    func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool { false }
-
-    /// Not sent for popovers in practice (CI: never called); kept in case a
-    /// future iOS routes outside taps here instead of through the passthrough.
-    func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
-        onOutsideTap?()
+    func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+        return PillMorphAnimator(presenting: false, sourceView: sourceViewForAnimation ?? anchor)
     }
 
-    /// VoiceOver's escape gesture (two-finger Z) closes the panel the same way.
     override func accessibilityPerformEscape() -> Bool {
         onOutsideTap?()
         return true
     }
 }
 
-/// Owns the one open panel popover and moves the screen toward the panel the
-/// user wants, one UIKit transition at a time.
-///
-/// A tap only records which panel is wanted; `reconcile()` moves the screen
-/// toward it (close what's shown, then open the wanted one). Every transition
-/// carries a generation number: a completion from an older transition does
-/// nothing. (1.12.0: the delayed "open finished" step of one panel ran after
-/// an outside tap had begun closing it and re-presented the same panel
-/// mid-close → full-screen black panel.)
-///
-/// Open and close are the system's Liquid Glass morph from the bar item
-/// (≈1–1.25 s each on an iPhone 17 Pro, from the device log). UIKit holds
-/// touches while it runs and can't be hurried: in the 25 Oct simulator lab a
-/// tap 0.15–0.45 s into the morph reached the app only after it ended, and
-/// speeding the popover container's layer (or removing its animations) left
-/// the morph's length unchanged — iOS 26 doesn't drive it from that clock.
-/// A tap that arrives meanwhile is kept and acted on the moment it ends.
 @MainActor
 final class PanelPresenter {
     static let shared = PanelPresenter()
@@ -172,7 +178,7 @@ final class PanelPresenter {
         let make: () -> PanelPopoverController
         let onClosedByTap: () -> Void
     }
-    /// Built panels, per player and size (rebuilt after rotation or a new player).
+    
     private var cache: [String: PanelPopoverController] = [:]
     private var cacheOwner: ObjectIdentifier?
 
@@ -186,15 +192,12 @@ final class PanelPresenter {
         return c
     }
 
-    /// Builds and lays out a panel while nothing is happening, so the first
-    /// tap doesn't pay for it.
     func prewarm(kind: String, sizeKey: String, owner: ObjectIdentifier, content: () -> AnyView) {
         let t = CACurrentMediaTime()
         controller(kind: kind, sizeKey: sizeKey, owner: owner, content: content).prewarm()
         dlog("perf", String(format: "panel %@ prebuilt in %.0f ms", kind, (CACurrentMediaTime() - t) * 1000))
     }
 
-    /// Player closed: drop the built panels.
     func reset() {
         wanted = nil
         for vc in [inFlight, shown].compactMap({ $0 }) where vc.presentingViewController != nil {
@@ -208,13 +211,10 @@ final class PanelPresenter {
     }
 
     private enum Phase: String { case idle, opening, closing }
-    /// The UIKit transition running now (none when idle).
     private var phase = Phase.idle
     private var inFlight: PanelPopoverController?
 
     private var wanted: Request?
-    /// Serial number of the last tap; a request is only "already asked" when it
-    /// came from this same tap (SwiftUI's onChange re-asks after the button did).
     private var tapSerial = 0
     private var wantedSerial = -1
     private var shown: PanelPopoverController?
@@ -223,12 +223,8 @@ final class PanelPresenter {
     private var generation = 0
     private let frames = FrameMonitor()
     private var tapTime: CFTimeInterval = 0
-    /// A close is running / finished (the player keeps its tap-catcher up meanwhile).
     var onClosing: ((Bool) -> Void)?
 
-    /// `immediate`: called straight from the button's action (not from inside
-    /// a SwiftUI update), so start in this run-loop turn — no extra frame.
-    /// `onClosedByTap`: the panel was closed by a tap outside it.
     func show(kind: String, sizeKey: String, owner: ObjectIdentifier, content: @escaping () -> AnyView, source: PanelSource,
               anchor: UIView?, from presenter: UIViewController, bottomInset: CGFloat,
               immediate: Bool = false, onClosedByTap: @escaping () -> Void) {
@@ -260,9 +256,9 @@ final class PanelPresenter {
     }
 
     private func reconcile(animated: Bool = true) {
-        guard phase == .idle else { return }         // a transition is running; it calls back here when done
+        guard phase == .idle else { return }
         if let vc = shown, vc.presentingViewController == nil, !vc.isBeingPresented {
-            shown = nil; shownKind = nil; shownRequest = nil   // went away on its own
+            shown = nil; shownKind = nil; shownRequest = nil
         }
         if let vc = shown {
             guard wanted?.kind != shownKind else { return }
@@ -277,8 +273,6 @@ final class PanelPresenter {
                 if self.shown === vc { self.shown = nil; self.shownKind = nil; self.shownRequest = nil }
                 dlog("ui", "panel: closed \(kind)")
                 self.frames.end()
-                // A non-animated dismiss leaves VoiceOver (and UI tests) seeing the
-                // panel for seconds unless told the screen changed.
                 UIAccessibility.post(notification: .screenChanged, argument: nil)
                 self.finish()
             }
@@ -288,11 +282,10 @@ final class PanelPresenter {
         let buildStart = CACurrentMediaTime()
         let vc = req.make()
         guard !vc.isInUse else {
-            // Still leaving the screen from an earlier close: look again next frame.
             NextFrame.run { [weak self] in self?.reconcile() }
             return
         }
-        vc.loadViewIfNeeded()                       // size known before the transition starts
+        vc.loadViewIfNeeded()
         let buildMs = (CACurrentMediaTime() - buildStart) * 1000
         let host = req.presenter.topMostPresented
         guard host.view.window != nil, !host.isBeingDismissed, !host.isBeingPresented, host !== vc else {
@@ -311,14 +304,6 @@ final class PanelPresenter {
             dlog("ui", "panel: opened \(req.kind)")
             self.frames.end()
             UIAccessibility.post(notification: .screenChanged, argument: vc.view)
-            // Never leave a panel that came up as anything but a popover.
-            if !(vc.presentationController is UIPopoverPresentationController) || vc.popoverView?.bounds.width ?? 0 >= (host.view.window?.bounds.width ?? .infinity) - 1 {
-                dlog("ui/error", "panel \(req.kind) came up full screen; closing it")
-                vc.dismiss(animated: false)
-                self.shown = nil; self.shownKind = nil; self.shownRequest = nil
-                self.wanted = nil
-                req.onClosedByTap()
-            }
             self.finish()
         }
     }
@@ -327,9 +312,6 @@ final class PanelPresenter {
 
     private func open(_ vc: PanelPopoverController, from host: UIViewController, animated: Bool, done: @escaping () -> Void) {
         host.present(vc, animated: animated) {
-            // UIKit makes the bar passthrough for bar-item popovers on presentation;
-            // set ours back (the player's view: its tap-catcher closes the panel).
-            vc.popoverPresentationController?.passthroughViews = vc.passthrough
             Self.afterTransition(then: done)
         }
     }
@@ -337,19 +319,17 @@ final class PanelPresenter {
     private func close(_ vc: PanelPopoverController, animated: Bool, switching: Bool, done: @escaping () -> Void) {
         let next = { Self.afterTransition(then: done) }
         guard animated else { vc.dismiss(animated: false, completion: next); return }
-        if switching, let pv = vc.popoverView {
+        if switching, let view = vc.view {
             UIView.animate(withDuration: 0.10, delay: 0, options: [.curveEaseIn, .beginFromCurrentState]) {
-                pv.alpha = 0
+                view.alpha = 0
             } completion: { _ in
-                vc.dismiss(animated: false) { pv.alpha = 1; next() }
+                vc.dismiss(animated: false) { view.alpha = 1; next() }
             }
         } else {
             vc.dismiss(animated: true, completion: next)
         }
     }
 
-    /// Replaces the multi-frame polling loop with an immediate dispatch 
-    /// once UIKit reports the transition completion.
     private static func afterTransition(then done: @escaping () -> Void) {
         DispatchQueue.main.async {
             done()
@@ -366,7 +346,6 @@ final class PanelPresenter {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self, weak vc] in
             guard let self, self.phase != .idle, self.generation == g else { return }
             if let vc, vc.isBeingPresented || vc.isBeingDismissed {
-                // Still animating: give it one more chance.
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                     guard let self, self.phase != .idle, self.generation == g else { return }
                     self.recover()
@@ -379,11 +358,8 @@ final class PanelPresenter {
     }
 
     private func recover() {
-        dlog("ui/error", "panel \(phase.rawValue) did not finish; recovering (shown=\(shownKind ?? "nil") presented=\(shown?.presentingViewController != nil))")
+        dlog("ui/error", "panel \(phase.rawValue) did not finish; recovering")
         generation += 1
-        for vc in [inFlight, shown].compactMap({ $0 }) {
-            if let pv = vc.popoverView { pv.alpha = 1; pv.transform = .identity }
-        }
         if let vc = shown, vc.presentingViewController == nil { shown = nil; shownKind = nil; shownRequest = nil }
         endTransition()
         reconcile()
@@ -397,12 +373,10 @@ final class PanelPresenter {
     private func endTransition() {
         phase = .idle
         inFlight = nil
-        onClosing?(false)                       // whatever finished, no close is running now
+        onClosing?(false)
     }
 }
 
-/// Runs a closure on the next display frame — for "look again once UIKit has
-/// moved on", instead of a guessed delay.
 @MainActor
 private final class NextFrame: NSObject {
     private var link: CADisplayLink?
@@ -411,7 +385,7 @@ private final class NextFrame: NSObject {
     static func run(_ action: @escaping () -> Void) {
         let f = NextFrame()
         f.action = action
-        let l = CADisplayLink(target: f, selector: #selector(tick))   // the link keeps `f` alive until it fires
+        let l = CADisplayLink(target: f, selector: #selector(tick))
         l.add(to: .main, forMode: .common)
         f.link = l
     }
@@ -425,7 +399,6 @@ private final class NextFrame: NSObject {
     }
 }
 
-/// Zero-cost UIView behind a SwiftUI view, so UIKit has a source view.
 struct AnchorView: UIViewRepresentable {
     let onView: (UIView) -> Void
     func makeUIView(context: Context) -> UIView {
