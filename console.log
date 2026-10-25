@@ -1,0 +1,47 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-25 05:54:46.846 E  GlassPlayer[24909:12411] [com.apple.WebKit:IPC] WebContent[24928] Connection::waitForSyncReply: Timed-out while waiting for reply for RemoteRenderingBackend_NativeImageBitmap from process 0, id=35
+2026-10-25 05:54:46.869 E  GlassPlayer[24909:1239b] [com.apple.WebKit:Process] 0x11f0c40c0 - [PID=24928] WebProcessProxy::gpuProcessConnectionDidBecomeUnresponsive
+2026-10-25 05:54:46.869 E  GlassPlayer[24909:1239b] [com.apple.WebKit:Process] 0x11f1181e0 - GPUProcessProxy::childConnectionDidBecomeUnresponsive:
+2026-10-25 05:54:46.869 E  GlassPlayer[24909:1239b] [com.apple.WebKit:Process] 0x11f1181e0 - GPUProcessProxy::didBecomeUnresponsive: GPUProcess with PID 24929 became unresponsive, terminating it
+2026-10-25 05:54:46.891 E  GlassPlayer[24909:1239b] [com.apple.WebKit:Process] 0x11f1181e0 - GPUProcessProxy::gpuProcessExited: reason=Unresponsive
+2026-10-25 05:54:46.894 E  GlassPlayer[24909:1239b] [com.apple.WebKit:Process] 0x11f0c40c0 - [PID=24928] WebProcessProxy::gpuProcessExited: reason=Unresponsive
+2026-10-25 05:54:46.896 E  GlassPlayer[24909:1239b] [com.apple.WebKit:ProcessSuspension] ProcessAssertion::remainingRunTimeInSeconds failed to get identifier for process with PID=0
+2026-10-25 05:54:46.931 E  GlassPlayer[24909:123b4] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:54:47.037 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:54:47.288 E  GlassPlayer[24909:12411] [com.apple.WebKit:ProcessSuspension] WebContent[24928] 0x110060150 - [sessionID=1] WebProcess::updateFreezerStatus: isFreezable=1, error=-1
+2026-10-25 05:54:47.310 E  GlassPlayer[24909:12411] [com.apple.WebKit:Process] WebContent[24928] 0x11066dce0 - GPUProcessConnection::didClose
+2026-10-25 05:54:48.418 F  GlassPlayer[24909:1239b] [com.apple.WebKit:Process] GPU process (0x11f1181e0) took 1.069186 seconds to launch
+2026-10-25 05:54:48.848 E  GlassPlayer[24909:12411] [com.apple.WebKit:ResourceLoadStatistics] WebContent[24928] Unable to hide query parameters from script (missing data)
+2026-10-25 05:55:12.269 E  GlassPlayer[24909:12411] [com.apple.WebKit:ProcessSuspension] WebContent[24928] 0x110060150 - [sessionID=1] WebProcess::updateFreezerStatus: isFreezable=1, error=-1
+2026-10-25 05:55:12.311 E  GlassPlayer[24909:13ef5] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:12.400 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:12.587 E  GlassPlayer[24909:1239b] [com.apple.WebKit:Process] 0x1078d7018 - [pageProxyID=5, webPageID=6, PID=24928] WebPageProxy::didFailProvisionalLoadForFrame: frameID=4294967297, isMainFrame=1, domain=NSURLErrorDomain, code=-999, isMainFrame=1, willInternallyHandleFailure=0
+2026-10-25 05:55:12.711 E  GlassPlayer[24909:12411] [com.apple.WebKit:ResourceLoadStatistics] WebContent[24928] Unable to hide query parameters from script (missing data)
+2026-10-25 05:55:13.738 E  GlassPlayer[24909:12411] [com.apple.WebKit:ResourceLoadStatistics] WebContent[24928] Unable to hide query parameters from script (missing data)
+2026-10-25 05:55:16.875 E  GlassPlayer[24909:1239b] [com.apple.browserEngineKit:general] Failed to terminate process: Error Domain=com.apple.extensionKit.errorDomain Code=18 "(null)" UserInfo={NSUnderlyingError=0x600000c2c900 {Error Domain=RBSRequestErrorDomain Code=3 "No such process found" UserInfo={NSLocalizedFailureReason=No such process found}}}
+2026-10-25 05:55:37.740 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:37.835 E  GlassPlayer[24909:1239b] [com.apple.WebKit:Loading] 0x1078d7018 - [pageProxyID=5, webPageID=6, PID=24928] WebPageProxy::didFailLoadForFrame: frameID=4294967297, isMainFrame=1, domain=NSURLErrorDomain, code=-999
+2026-10-25 05:55:37.845 E  GlassPlayer[24909:14c64] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:38.456 E  GlassPlayer[24909:12411] [com.apple.WebKit:ResourceLoadStatistics] WebContent[24928] Unable to hide query parameters from script (missing data)
+2026-10-25 05:55:38.977 E  GlassPlayer[24909:12411] [com.apple.WebKit:ResourceLoadStatistics] WebContent[24928] Unable to hide query parameters from script (missing data)
+2026-10-25 05:55:39.710 E  GlassPlayer[24909:123b3] [com.apple.network:connection] nw_socket_set_connection_idle [C3.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:39.866 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C3.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:39.868 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C3.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:40.025 E  GlassPlayer[24909:14c65] [com.apple.network:connection] nw_socket_set_connection_idle [C3.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:40.029 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C3.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:40.344 E  GlassPlayer[24909:14c64] [com.apple.network:connection] nw_socket_set_connection_idle [C3.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:40.355 E  GlassPlayer[24909:14c65] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:41.118 E  GlassPlayer[24909:123b3] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:41.159 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C4.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:41.350 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C4.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:41.357 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:41.858 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:41.923 E  GlassPlayer[24909:123b3] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:42.599 E  GlassPlayer[24909:123b3] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:42.690 E  GlassPlayer[24909:123b8] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:43.432 E  GlassPlayer[24909:14c64] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:43.620 E  GlassPlayer[24909:14c65] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:43.660 E  GlassPlayer[24909:14c64] [com.apple.network:connection] nw_socket_set_connection_idle [C1.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:43.666 E  GlassPlayer[24909:14c64] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-25 05:55:43.929 E  GlassPlayer[24909:12411] [com.apple.WebKit:ProcessSuspension] WebContent[24928] 0x110060150 - [sessionID=1] WebProcess::updateFreezerStatus: isFreezable=1, error=-1
+2026-10-25 05:55:44.451 E  GlassPlayer[24909:14c64] [com.apple.network:connection] nw_socket_set_connection_idle [C2.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]

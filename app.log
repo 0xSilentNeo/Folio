@@ -1,0 +1,63 @@
+05:54:17.593 [app] launch v1.0.0 (1) iOS 26.2 arm64 free=42.33 GB
+05:54:17.607 [lab] name [Anime Time] Attack on Titan - 01.mkv → title=Attack on Titan s=- e=1 extra=- part=- sub=- tag=E1 clean=Attack on Titan · E01
+05:54:17.608 [lab] name [Anime Time] Attack on Titan - 25.mkv → title=Attack on Titan s=- e=25 extra=- part=- sub=- tag=E25 clean=Attack on Titan · E25
+05:54:17.608 [lab] name [Anime Time] Attack on Titan - 26.mkv → title=Attack on Titan s=- e=26 extra=- part=- sub=- tag=E26 clean=Attack on Titan · E26
+05:54:17.608 [lab] name [Anime Time] Attack on Titan - 38.mkv → title=Attack on Titan s=- e=38 extra=- part=- sub=- tag=E38 clean=Attack on Titan · E38
+05:54:17.608 [lab] name [Anime Time] Attack on Titan OAD - 05.mkv → title=Attack on Titan OAD s=- e=5 extra=OAD part=- sub=- tag=OAD 5 clean=Attack on Titan OAD · E05
+05:54:17.609 [lab] name [Anime Time] Attack on Titan Junior High - 01.mkv → title=Attack on Titan Junior High s=- e=1 extra=- part=- sub=- tag=E1 clean=Attack on Titan Junior High · E01
+05:54:17.609 [lab] name [Anime Time] Attack on Titan Movie 01 - Guren no Yumiya.mkv → title=Attack on Titan s=- e=- extra=Movie part=1 sub=Guren no Yumiya tag=Movie 1 clean=Attack on Titan · Movie 1 · Guren no Yumiya
+05:54:17.609 [lab] name [Anime Time] Junior High - Creditless Ending.mkv → title=Junior High - Creditless Ending s=- e=- extra=- part=- sub=- tag=- clean=Junior High - Creditless Ending
+05:54:17.609 [lab] name Classroom.of.the.Elite.S01E05.Hell.is.other.people.1080p.FLAC.2.0.AVC.REMUX-FraMeSToR.mkv → title=Classroom of the Elite s=1 e=5 extra=- part=- sub=- tag=S1 · E5 clean=Classroom of the Elite · S01E05
+05:54:17.617 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+05:54:18.507 [app] first screen 1538 ms after process start
+05:54:18.896 [app] active
+05:54:21.277 [imdb] HTTP 202 for /title/tt2560140/ (1997 bytes) → web view
+05:54:21.277 [imdb] webkit load /title/tt2560140
+05:54:24.100 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+05:54:46.785 [imdb/error] webkit timeout for /title/tt2560140
+05:54:46.910 [perf] imdb /title/tt2560140/ via web view 25854 ms
+05:54:47.039 [imdb] HTTP 202 for /title/tt2560140/episodes/ (1997 bytes) → web view
+05:54:47.040 [imdb] webkit load /title/tt2560140/episodes
+05:54:48.926 [energy] cpu 2% (main 2%, other 0%) thermal=nominal playing=no
+05:54:48.952 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+05:55:12.251 [imdb/error] webkit timeout for /title/tt2560140/episodes
+05:55:12.259 [perf] imdb /title/tt2560140/episodes/ via web view 25337 ms
+05:55:12.274 [lab] meta [Anime Time] Attack on Titan - 26.mkv → Attack on Titan [tt2560140] tag=E26 ep=-
+05:55:12.401 [imdb] HTTP 202 for /title/tt2560140/ (1997 bytes) → web view
+05:55:12.402 [imdb] webkit load /title/tt2560140
+05:55:12.788 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+05:55:19.251 [energy] cpu 0% thermal=nominal playing=no
+05:55:37.718 [imdb/error] webkit timeout for /title/tt2560140
+05:55:37.723 [perf] imdb /title/tt2560140/ via web view 25415 ms
+05:55:37.846 [imdb/error] webkit failed: The operation couldn’t be completed. (NSURLErrorDomain error -999.)
+05:55:37.852 [imdb] HTTP 202 for /title/tt2560140/episodes/ (1997 bytes) → web view
+05:55:37.853 [imdb] webkit load /title/tt2560140/episodes
+05:55:38.921 [imdb] webkit ok after 1 nav(s): next=867535 ld=0
+05:55:38.962 [perf] imdb /title/tt2560140/episodes/ via web view 1237 ms
+05:55:39.010 [imdb] episodes tt2560140 S1: 25
+05:55:40.348 [tvmaze] tt2560140 : show 919, 89 English episode titles
+05:55:41.873 [perf] imdb /title/tt2560140/episodes/ plain HTTP 1518 ms (1335 KB)
+05:55:41.918 [imdb] episodes tt2560140 S2: 12
+05:55:42.620 [perf] imdb /title/tt2560140/episodes/ plain HTTP 697 ms (1403 KB)
+05:55:42.681 [imdb] episodes tt2560140 S3: 22
+05:55:42.683 [meta] absolute episode 38 → S3 E1
+05:55:42.686 [lab] meta [Anime Time] Attack on Titan - 38.mkv → Attack on Titan [tt2560140] tag=S3 · E1 ep=Smoke Signal
+05:55:43.456 [perf] imdb /title/tt2560140/ plain HTTP 766 ms (1824 KB)
+05:55:43.609 [imdb] cast tt2560140: 7 list(s); chose .props.pageProps.mainColumnData.castV2[].credits — 18 people, 17 photos, 18 roles
+05:55:43.609 [imdb] title tt2560140: 4 candidate object(s); name Attack on Titan, original Shingeki no kyojin
+05:55:43.616 [imdb] details tt2560140: Attack on Titan rating=9.1 cast=18 with photos
+05:55:43.619 [lab] meta [Anime Time] Attack on Titan OAD - 05.mkv → Attack on Titan [tt2560140] tag=OAD 5 ep=-
+05:55:44.466 [perf] imdb /title/tt6450560/ plain HTTP 800 ms (1348 KB)
+05:55:44.576 [imdb] cast tt6450560: no cast list found in page data
+05:55:44.576 [imdb] title tt6450560: 2 candidate object(s); name Attack on Titan, original none
+05:55:44.577 [imdb] details tt6450560: Attack on Titan rating=- cast=0
+05:55:44.580 [lab] meta [Anime Time] Attack on Titan Movie 01 - Guren no Yumiya.mkv → Attack on Titan [tt6450560] tag=Movie 1 ep=-
+05:55:44.584 [lab] meta [Anime Time] Attack on Titan - 01.mkv → Attack on Titan [tt2560140] tag=S1 · E1 ep=To You, in 2000 Years - The Fall of Shiganshina (1)
+05:55:44.585 [meta] absolute episode 26 → S2 E1
+05:55:44.585 [lab] meta2 [Anime Time] Attack on Titan - 26.mkv → tag=S2 · E1 ep=Beast Titan
+05:55:44.586 [meta] absolute episode 38 → S3 E1
+05:55:44.586 [lab] meta2 [Anime Time] Attack on Titan - 38.mkv → tag=S3 · E1 ep=Smoke Signal
+05:55:49.251 [energy] cpu 0% thermal=nominal playing=no
+05:56:19.254 [energy] cpu 0% thermal=nominal playing=no
+05:56:49.253 [energy] cpu 0% thermal=nominal playing=no
+05:57:19.268 [energy] cpu 0% thermal=nominal playing=no
