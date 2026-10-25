@@ -156,21 +156,15 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
 /// mid-close → full-screen black panel.)
 ///
 /// Open and close are the system's Liquid Glass morph from the bar item
-/// (≈1–1.25 s each on an iPhone 17 Pro, from the device log). UIKit can't
-/// cancel a modal transition, and won't present while one runs. So when a tap
-/// changes what's wanted mid-transition, the transition is fast-forwarded
-/// (1.15.1): the popover's container layer runs `fastForwardSpeed`× faster,
-/// the morph plays out in a few frames along its own path (completion
-/// included) and the next step starts at once. Until 1.15.0 the tap waited
-/// out the whole morph behind a busy flag.
+/// (≈1–1.25 s each on an iPhone 17 Pro, from the device log). UIKit holds
+/// touches while it runs and can't be hurried: in the 25 Oct simulator lab a
+/// tap 0.15–0.45 s into the morph reached the app only after it ended, and
+/// speeding the popover container's layer (or removing its animations) left
+/// the morph's length unchanged — iOS 26 doesn't drive it from that clock.
+/// A tap that arrives meanwhile is kept and acted on the moment it ends.
 @MainActor
 final class PanelPresenter {
     static let shared = PanelPresenter()
-
-    /// How much faster an interrupted morph runs (≈1 s → ≈0.1 s).
-    private static let fastForwardSpeed: Float = 10
-    /// Still running this long after a fast-forward: its animations are removed.
-    private static let fastForwardBackstop: TimeInterval = 0.2
 
     private struct Request {
         let kind: String
@@ -203,9 +197,8 @@ final class PanelPresenter {
     /// Player closed: drop the built panels.
     func reset() {
         wanted = nil
-        for vc in [inFlight, shown].compactMap({ $0 }) {
-            Self.restoreSpeed(vc)
-            if vc.presentingViewController != nil { vc.dismiss(animated: false) }
+        for vc in [inFlight, shown].compactMap({ $0 }) where vc.presentingViewController != nil {
+            vc.dismiss(animated: false)
         }
         shown = nil; shownKind = nil; shownRequest = nil
         generation += 1
@@ -218,7 +211,6 @@ final class PanelPresenter {
     /// The UIKit transition running now (none when idle).
     private var phase = Phase.idle
     private var inFlight: PanelPopoverController?
-    private var fastForwardedAt: CFTimeInterval?
 
     private var wanted: Request?
     /// Serial number of the last tap; a request is only "already asked" when it
@@ -268,9 +260,7 @@ final class PanelPresenter {
     }
 
     private func reconcile(animated: Bool = true) {
-        // A transition is running: it calls back here when done. If the user
-        // now wants something else, hurry it along instead of waiting it out.
-        guard phase == .idle else { fastForwardIfStale(); return }
+        guard phase == .idle else { return }          // a transition is running; it calls back here when done
         if let vc = shown, vc.presentingViewController == nil, !vc.isBeingPresented {
             shown = nil; shownKind = nil; shownRequest = nil   // went away on its own
         }
@@ -318,7 +308,6 @@ final class PanelPresenter {
         let g = begin(.opening, vc)
         open(vc, from: host, animated: animated) { [weak self] in
             guard let self, self.generation == g else { return }
-            Self.restoreSpeed(vc)                     // before anything else runs in the open panel
             dlog("ui", "panel: opened \(req.kind)")
             self.frames.end()
             UIAccessibility.post(notification: .screenChanged, argument: vc.view)
@@ -356,7 +345,6 @@ final class PanelPresenter {
         let next = { Self.afterTransition(of: vc, then: done) }
         guard animated else { vc.dismiss(animated: false, completion: next); return }
         if switching, let pv = vc.popoverView {
-            fastForwardedAt = CACurrentMediaTime()    // already quick: nothing to hurry
             UIView.animate(withDuration: 0.10, delay: 0, options: [.curveEaseIn, .beginFromCurrentState]) {
                 pv.alpha = 0
             } completion: { _ in
@@ -384,66 +372,6 @@ final class PanelPresenter {
         }
     }
 
-    // MARK: Fast-forward
-
-    /// A transition is running; fast-forward it if what's wanted has changed:
-    /// a panel tapped while the last one closes, or an outside tap (or another
-    /// panel) while one is still opening.
-    private func fastForwardIfStale() {
-        guard let vc = inFlight, fastForwardedAt == nil else { return }
-        let stale: Bool
-        switch phase {
-        case .idle: stale = false
-        case .closing: stale = wanted != nil
-        case .opening: stale = wanted?.kind != shownKind
-        }
-        if stale { fastForward(vc) }
-    }
-
-    /// Plays the rest of `vc`'s running morph `fastForwardSpeed`× faster. The
-    /// morph is the system's own animation in the popover's container view, so
-    /// speeding that layer's clock finishes it along its own path and UIKit's
-    /// completion arrives as usual, a few frames later.
-    private func fastForward(_ vc: PanelPopoverController) {
-        guard let container = vc.presentationController?.containerView else { return }
-        fastForwardedAt = CACurrentMediaTime()
-        let g = generation
-        let what = phase.rawValue
-        dlog("ui", "panel: fast-forward \(what) (want \(wanted?.kind ?? "none"))")
-        frames.note("fast-forwarded")
-        Self.setSpeed(container.layer, Self.fastForwardSpeed)
-        // Backstop, in case UIKit drives part of the morph off the layer clock.
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.fastForwardBackstop) { [weak self, weak vc, weak container] in
-            guard let self, let vc, let container, self.generation == g, self.phase != .idle,
-                  vc.isBeingPresented || vc.isBeingDismissed else { return }
-            dlog("ui", "panel: \(what) still running \(Int(Self.fastForwardBackstop * 1000)) ms after fast-forward; removing its animations")
-            Self.removeAnimations(in: container.layer)
-        }
-    }
-
-    /// Changes a layer's speed without a jump in the progress of its running
-    /// animations (local time stays continuous at "now").
-    private static func setSpeed(_ layer: CALayer, _ speed: Float) {
-        guard layer.speed != speed else { return }
-        let now = CACurrentMediaTime()
-        let local = layer.convertTime(now, from: nil)
-        let parentNow = layer.superlayer?.convertTime(now, from: nil) ?? now
-        layer.speed = speed
-        layer.timeOffset = local
-        layer.beginTime = parentNow
-    }
-
-    /// An open panel's container back at normal speed (its close morph must
-    /// not run fast after a fast-forwarded open).
-    private static func restoreSpeed(_ vc: PanelPopoverController) {
-        if let c = vc.presentationController?.containerView { setSpeed(c.layer, 1) }
-    }
-
-    private static func removeAnimations(in layer: CALayer) {
-        layer.removeAllAnimations()
-        layer.sublayers?.forEach { removeAnimations(in: $0) }
-    }
-
     // MARK: Phase / watchdog
 
     /// Starts a transition: it runs until its completion (matching generation)
@@ -451,15 +379,13 @@ final class PanelPresenter {
     private func begin(_ p: Phase, _ vc: PanelPopoverController) -> Int {
         phase = p
         inFlight = vc
-        fastForwardedAt = nil
         generation += 1
         let g = generation
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self, weak vc] in
             guard let self, self.phase != .idle, self.generation == g else { return }
             if let vc, vc.isBeingPresented || vc.isBeingDismissed {
-                // Still animating: hurry it, then give it one more chance.
-                if self.fastForwardedAt == nil { self.fastForward(vc) }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                // Still animating: give it one more chance.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                     guard let self, self.phase != .idle, self.generation == g else { return }
                     self.recover()
                 }
@@ -474,7 +400,6 @@ final class PanelPresenter {
         dlog("ui/error", "panel \(phase.rawValue) did not finish; recovering (shown=\(shownKind ?? "nil") presented=\(shown?.presentingViewController != nil))")
         generation += 1
         for vc in [inFlight, shown].compactMap({ $0 }) {
-            Self.restoreSpeed(vc)
             if let pv = vc.popoverView { pv.alpha = 1; pv.transform = .identity }
         }
         if let vc = shown, vc.presentingViewController == nil { shown = nil; shownKind = nil; shownRequest = nil }
@@ -488,13 +413,8 @@ final class PanelPresenter {
     }
 
     private func endTransition() {
-        if let t = fastForwardedAt, phase != .idle {
-            dlog("perf", String(format: "panel %@ done %.0f ms after fast-forward (%.0f ms after the tap)",
-                                phase.rawValue, (CACurrentMediaTime() - t) * 1000, (CACurrentMediaTime() - tapTime) * 1000))
-        }
         phase = .idle
         inFlight = nil
-        fastForwardedAt = nil
         onClosing?(false)                              // whatever finished, no close is running now
     }
 }

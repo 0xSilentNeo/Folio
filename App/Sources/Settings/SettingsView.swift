@@ -125,7 +125,7 @@ struct PlaybackSettings: View {
                     Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
                 }
             } header: { Text("Player") } footer: {
-                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation, as in Outplayer); a tap while one is moving hurries it along. Off: the app's own glass, which can be interrupted at any moment. Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
+                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation, as in Outplayer); taps wait until it finishes. Off: the app's own glass, which can be interrupted at any moment. Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
             }
             Section("Progress bar") {
                 Picker("Chapter markers", selection: $bar.markerStyle) {

@@ -454,8 +454,8 @@ final class PanelUITests: XCTestCase {
     }
 
     /// A button tapped while the last panel is still closing opens its panel
-    /// without waiting out the close morph (it is fast-forwarded). Once 0.15 s
-    /// and once 0.4 s into the close; also the same button again.
+    /// (UIKit holds the tap until the morph ends; it must not be lost). Once
+    /// 0.15 s and once 0.4 s into the close; also the same button again.
     func test17NativeSwitchWhileClosing() throws {
         let app = launchPlayer(native: true)
         tapsDontWaitForAnimations()
@@ -488,7 +488,7 @@ final class PanelUITests: XCTestCase {
     }
 
     /// An outside tap while a panel is still opening closes it with that one
-    /// tap, soon (the open is fast-forwarded, then the close morph runs).
+    /// tap (acted on as soon as the opening morph ends).
     func test18NativeTapOutsideWhileOpening() throws {
         let app = launchPlayer(native: true)
         tapsDontWaitForAnimations()
