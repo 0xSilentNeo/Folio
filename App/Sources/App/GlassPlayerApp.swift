@@ -16,6 +16,8 @@ struct GlassPlayerApp: App {
         UILab.start()
         PopLab.start()
         MPVFiles.bootstrap()
+        // Reconnects to downloads that ran while the app was closed.
+        MainActor.assumeIsolated { _ = DownloadManager.shared }
         if !["-uiTest", "-uiTestLibrary", "-labDiscover", "-shots"].contains(where: CommandLine.arguments.contains) { IMDbSource.warmUp() }
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
@@ -35,6 +37,15 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         UIDevice.current.userInterfaceIdiom == .pad ? .all : .allButUpsideDown
     }
 
+    /// A background download session has news while Folio was suspended or
+    /// closed: iOS launches it and waits for the handler (URLSession docs).
+    func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
+        guard identifier == DownloadEngine.identifier else { completionHandler(); return }
+        DownloadEngine.shared.backgroundCompletionHandler = completionHandler
+        MainActor.assumeIsolated { _ = DownloadManager.shared }
+        _ = DownloadEngine.shared.session
+    }
+
     func applicationWillTerminate(_ application: UIApplication) {
         MainActor.assumeIsolated { HistoryStore.shared.flush() }
     }
@@ -48,6 +59,7 @@ struct RootView: View {
     var body: some View {
         ZStack {
             tabs
+            if !splash { DownloadPillOverlay() }
             glassLab
             if splash { LaunchSplash { splash = false }.transition(.identity).zIndex(1) }
         }

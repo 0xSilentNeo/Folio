@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NetworkView: View {
     @ObservedObject private var store = ServerStore.shared
+    @ObservedObject private var downloads = DownloadManager.shared
     @State private var editing: WebDAVServer?
     @State private var adding = false
 
@@ -29,6 +30,15 @@ struct NetworkView: View {
                     Button { adding = true } label: { Label("Add WebDAV server", systemImage: "plus.circle.fill") }
                 } header: { Text("WebDAV") } footer: {
                     Text("Real-Debrid, TorBox, Premiumize, Nextcloud, Synology, rclone serve webdav… Passwords are stored in the iOS Keychain.")
+                }
+                Section {
+                    NavigationLink { DownloadsView() } label: {
+                        HStack {
+                            Label("Downloads", systemImage: "arrow.down.circle")
+                            Spacer()
+                            if downloads.hasWork { Text("\(downloads.active.count) active").font(.subheadline).foregroundStyle(.secondary) }
+                        }
+                    }
                 }
             }
             .brandListBackground()

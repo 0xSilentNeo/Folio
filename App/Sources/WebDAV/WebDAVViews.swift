@@ -159,10 +159,16 @@ struct WebDAVBrowserView: View {
                         DAVRow(item: item, clean: cleanTitles, entry: nil)
                     }
                 } else {
-                    Button { open(item) } label: {
-                        DAVRow(item: item, clean: cleanTitles, entry: history.entry(forURL: item.url.absoluteString))
+                    HStack(spacing: 6) {
+                        Button { open(item) } label: {
+                            DAVRow(item: item, clean: cleanTitles, entry: history.entry(forURL: item.url.absoluteString))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+                        if item.isMedia {
+                            DownloadButton(item: item, server: server, package: title, siblings: items)
+                        }
                     }
-                    .buttonStyle(.plain)
                     .contextMenu {
                         if item.isMedia { Button { open(item) } label: { Label("Play", systemImage: "play") } }
                         Button { UIPasteboard.general.string = item.url.absoluteString } label: { Label("Copy link", systemImage: "link") }
@@ -195,6 +201,13 @@ struct WebDAVBrowserView: View {
                     Divider()
                     Toggle("Clean titles", isOn: $cleanTitles)
                     Toggle("Only media files", isOn: $onlyMedia)
+                    let media = visible.filter(\.isMedia)
+                    if !media.isEmpty {
+                        Divider()
+                        Button {
+                            DownloadManager.shared.enqueue(media + items.filter(\.isSubtitle), server: server, package: title)
+                        } label: { Label("Download all \(media.count) videos", systemImage: "arrow.down.circle") }
+                    }
                 } label: { ToolbarGlyph("arrow.up.arrow.down.circle") }
             }
             ToolbarItem(placement: .topBarTrailing) {

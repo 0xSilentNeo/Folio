@@ -86,6 +86,7 @@ jobs:
           else
             xcrun simctl launch --terminate-running-process "$UDID" dev.silentneo.glassplayer $ARGS
             sleep 42
+            [ "${{ matrix.variant }}" = "names" ] && sleep 150   # IMDb lookups through the web view are slow in CI
           fi
           xcrun simctl spawn "$UDID" log show --last 3m --predicate 'process == "GlassPlayer" AND (messageType == error OR messageType == fault OR eventMessage CONTAINS "[lab]" OR eventMessage CONTAINS "[av]" OR eventMessage CONTAINS "[ui]" OR eventMessage CONTAINS "[player")' --style compact > lab/console.log 2>/dev/null || true
           CONT=$(xcrun simctl get_app_container "$UDID" dev.silentneo.glassplayer data || true)

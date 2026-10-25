@@ -33,6 +33,17 @@ enum SettingsKey {
     static let episodeTitleLanguage = "episodeTitleLanguage"   // english | original
     static let playlistNames = "playlistNames"          // "episode" | "filename"
 
+    // Downloads (WebDAV)
+    static let downloadConcurrent = "downloadConcurrent"
+    static let downloadAutoStart = "downloadAutoStart"
+    static let downloadSaveTo = "downloadSaveTo"          // folder | root
+    static let downloadSkipExisting = "downloadSkipExisting"
+    static let downloadNotify = "downloadNotify"
+    static let downloadCellular = "downloadCellular"
+    static let downloadPauseLowPower = "downloadPauseLowPower"
+    static let downloadOnlyCharging = "downloadOnlyCharging"
+    static let downloadRetries = "downloadRetries"
+
     // PiP
     static let pipEnabled = "pipEnabled"
     static let pipAuto = "pipAuto"
@@ -107,6 +118,15 @@ enum SettingsKey {
             castPosition: "bottom",
             episodeTitleLanguage: "english",
             playlistNames: "episode",
+            downloadConcurrent: 2,
+            downloadAutoStart: true,
+            downloadSaveTo: "folder",
+            downloadSkipExisting: true,
+            downloadNotify: true,
+            downloadCellular: false,
+            downloadPauseLowPower: true,
+            downloadOnlyCharging: false,
+            downloadRetries: 3,
             pipEnabled: true,
             pipAuto: true,
             pipReturnOnOpen: true,

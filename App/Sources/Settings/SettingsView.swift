@@ -15,6 +15,7 @@ struct SettingsView: View {
                     row("Audio & Subtitles", "captions.bubble", .orange) { SubtitleAudioSettings() }
                     row("Skip Intro & Credits", "forward.end", .purple) { SkipSettings() }
                     row("Discover", "sparkles.tv", .cyan) { DiscoverSettings() }
+                    row("Downloads", "arrow.down.circle", .mint) { DownloadSettingsView() }
                 }
                 Section {
                     row("Scripts", "chevron.left.forwardslash.chevron.right", .blue) { ScriptsView() }

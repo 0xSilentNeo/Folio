@@ -101,7 +101,8 @@ enum UILab {
             dlog("lab", "name \(n) → title=\(p.title) s=\(p.season.map(String.init) ?? "-") e=\(p.episode.map(String.init) ?? "-") extra=\(p.extra ?? "-") part=\(p.part.map(String.init) ?? "-") sub=\(p.subtitle ?? "-") tag=\(TitleParser.tag(p) ?? "-") clean=\(TitleParser.clean(n))")
         }
         Task {
-            for n in names.prefix(7) {
+            // Past season 1 first (the point of the probe), then the side releases.
+            for n in [names[2], names[3], names[4], names[6], names[0]] {
                 let m = await MetadataService.shared.lookup(filename: n)
                 let p = TitleParser.parse(n)
                 dlog("lab", "meta \(n) → \(m?.name ?? "nil") [\(m?.id ?? "-")] tag=\(TitleParser.tag(p, season: m?.episodeSeason, episode: m?.episodeNumber) ?? "-") ep=\(m?.episodeTitle ?? "-")")
