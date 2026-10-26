@@ -953,26 +953,34 @@ struct GeneralSettings: View {
                 Text("Automatic follows your iPhone's Light or Dark setting. The player is always dark.")
             }
             Section {
-                Picker("Startup page", selection: $startupTab) {
-                    Label("Home", systemImage: "play.rectangle.fill").tag(0)
-                    Label("Discover", systemImage: "sparkles.tv").tag(1)
-                    Label("Network", systemImage: "externaldrive.connected.to.line.below").tag(2)
+                Explained("The tab the app opens on.") {
+                    Picker("Startup page", selection: $startupTab) {
+                        Label("Home", systemImage: "play.rectangle.fill").tag(0)
+                        Label("Discover", systemImage: "sparkles.tv").tag(1)
+                        Label("Network", systemImage: "externaldrive.connected.to.line.below").tag(2)
+                    }
                 }
-                Toggle("Open title page on tap", isOn: $openTitlePage)
+                Explained("Tapping a film opens its page first. Off: a tap plays it straight away (shows always open their page).") {
+                    Toggle("Open title page on tap", isOn: $openTitlePage)
+                }
             }
             Section {
-                Toggle("Hide spoilers", isOn: $hideSpoilers)
-                Toggle("Show IMDb ratings", isOn: $showRatings)
+                Explained("Blurs the pictures and hides the description of episodes you haven't finished.") {
+                    Toggle("Hide spoilers", isOn: $hideSpoilers)
+                }
+                Explained("Shows the IMDb rating on title pages.") {
+                    Toggle("Show IMDb ratings", isOn: $showRatings)
+                }
                 Picker("Cast on title pages", selection: $castPosition) {
                     Text("Above the episodes").tag("top")
                     Text("At the bottom").tag("bottom")
                 }
-                Picker("Episode titles", selection: $episodeTitles) {
-                    Text("English").tag("english")
-                    Text("Original language").tag("original")
+                Explained("English titles come from TVmaze (tvmaze.com, CC BY-SA) when IMDb only has the original-language one. Original: the title in the show's own language.") {
+                    Picker("Episode titles", selection: $episodeTitles) {
+                        Text("English").tag("english")
+                        Text("Original language").tag("original")
+                    }
                 }
-            } footer: {
-                Text("Hide spoilers blurs the pictures and hides the synopsis of episodes you haven't finished. English episode titles come from TVmaze (tvmaze.com, CC BY-SA) when IMDb only has the original-language title.")
             }
         }
         .brandListBackground()
