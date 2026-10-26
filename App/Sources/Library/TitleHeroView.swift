@@ -19,6 +19,9 @@ struct TitleHeroView: View {
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
     @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
+    @AppStorage(SettingsKey.titlePageStyle) private var titlePageStyle = "full"
+    /// Settings → Library → Title pages → Files only (1.17.0): the title and its files.
+    private var filesOnly: Bool { titlePageStyle == "files" }
 
     /// Episode synopsis, unless spoilers are hidden and it hasn't been watched
     /// (then the show's own description).
@@ -65,8 +68,17 @@ struct TitleHeroView: View {
             let wide = geo.size.width > 700
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    backdrop(geo.size)
+                    if filesOnly {
+                        Text(title).font(.largeTitle.weight(.bold)).lineLimit(2)
+                            .padding(.top, geo.safeAreaInsets.top + 52)
+                            .padding(.horizontal, wide ? 28 : 20)
+                    } else {
+                        backdrop(geo.size)
+                    }
                     VStack(alignment: .leading, spacing: 18) {
+                      if filesOnly {
+                        episodes
+                      } else {
                         // Genres above the description (from the title-page mockup).
                         if let g = meta?.genres, !g.isEmpty {
                             Text(g.prefix(5).joined(separator: " · ")).font(.footnote).foregroundStyle(.secondary)
@@ -94,6 +106,7 @@ struct TitleHeroView: View {
                         if let m = meta, m.id.hasPrefix("tt") {
                             TitleLinks(name: m.name, year: m.year.map { String($0.prefix(4)) }, type: m.type, imdbID: m.id)
                         }
+                      }
                     }
                     .padding(.horizontal, wide ? 28 : 20)
                     .padding(.top, 14)
@@ -185,7 +198,7 @@ struct TitleHeroView: View {
     private var episodes: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Episodes").font(.title3.weight(.bold))
+                Text(group.isSeries || parsed.episode != nil ? "Episodes" : "Files").font(.title3.weight(.bold))
                 Text("\(siblings.count)").font(.subheadline).foregroundStyle(.secondary)
                 Spacer()
                 ViewModeMenu(mode: $viewMode)
@@ -215,7 +228,19 @@ struct TitleHeroView: View {
     private var moreButton: some View {
         Menu {
             Button { play(file) } label: { Label("Play", systemImage: "play") }
-            if let e = entry { Button { history.markWatched(e) } label: { Label("Mark as watched", systemImage: "checkmark.circle") } }
+            if siblings.count > 1 {
+                if history.isWatched(file) {
+                    Button { history.setWatched([file], false) } label: { Label("Mark this episode as unwatched", systemImage: "eye.slash") }
+                } else {
+                    Button { history.setWatched([file], true) } label: { Label("Mark this episode as watched", systemImage: "eye") }
+                }
+                Button { history.setWatched(siblings, true) } label: { Label("Mark all as watched", systemImage: "eye") }
+                Button { history.setWatched(siblings, false) } label: { Label("Mark all as unwatched", systemImage: "eye.slash") }
+            } else if history.isWatched(file) {
+                Button { history.setWatched([file], false) } label: { Label("Mark as unwatched", systemImage: "eye.slash") }
+            } else {
+                Button { history.setWatched([file], true) } label: { Label("Mark as watched", systemImage: "eye") }
+            }
             Button(role: .destructive) { confirmDelete = true } label: { Label("Delete file", systemImage: "trash") }
         } label: {
             ToolbarGlyph("ellipsis")
@@ -334,6 +359,11 @@ struct LibraryList: View {
         .buttonStyle(PressStyle(scale: 0.98))
         .contextMenu {
             Button { play(f) } label: { Label("Play", systemImage: "play") }
+            if history.isWatched(f) {
+                Button { history.setWatched([f], false) } label: { Label("Mark as unwatched", systemImage: "eye.slash") }
+            } else {
+                Button { history.setWatched([f], true) } label: { Label("Mark as watched", systemImage: "eye") }
+            }
             Button(role: .destructive) { LocalMediaStore.shared.delete(f) } label: { Label("Delete", systemImage: "trash") }
         }
     }
@@ -343,7 +373,7 @@ struct LibraryList: View {
         let tag = TitleParser.tag(p) ?? TitleParser.clean(f.lastPathComponent)
         return MediaTile(title: tag, subtitle: f.pathExtension.uppercased(), key: f.path, fileURL: f, lookupName: f.lastPathComponent,
                          progress: history.entry(forURL: f.path)?.progress, fixedTitle: tag,
-                         trailingNote: LibraryOrganizer.info(f).size.byteString)
+                         trailingNote: LibraryOrganizer.info(f).size.byteString, watched: history.isWatched(f))
             .overlay(alignment: .topTrailing) {
                 if f == current {
                     Image(systemName: "play.fill").font(.caption2.weight(.bold)).foregroundStyle(Theme.onAccent)
@@ -353,7 +383,8 @@ struct LibraryList: View {
     }
 
     private func row(_ f: URL) -> some View {
-        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, showSize: true)
+        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, showSize: true,
+                   watched: history.isWatched(f))
     }
 }
 
@@ -370,6 +401,8 @@ struct LibraryRow: View {
     var zoom: ZoomSource? = nil
     /// The file's size at the bottom right, level with the picture's bottom edge.
     var showSize = false
+    /// Watched (for a show's row on Home: every episode): an eye at the end.
+    var watched = false
     @StateObject private var thumb = ThumbLoader()
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
 
@@ -411,20 +444,28 @@ struct LibraryRow: View {
             Spacer(minLength: 0)
             if showSize {
                 VStack(alignment: .trailing, spacing: 0) {
-                    if highlighted { Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent).padding(.top, 4) }
+                    marks.padding(.top, 4)
                     Spacer(minLength: 4)
                     Text(LibraryOrganizer.info(file).size.byteString)
                         .font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.secondary)
                         .lineLimit(1).fixedSize()
                 }
                 .frame(height: thumbH)
-            } else if highlighted {
-                Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent).padding(.top, 4)
+            } else if highlighted || watched {
+                marks.padding(.top, 4)
             }
         }
         .padding(detail ? 8 : 6)
         .background(rowBackground)
         .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide) }
+    }
+
+    /// Top right: the eye when watched, the play mark on the highlighted row.
+    private var marks: some View {
+        HStack(spacing: 6) {
+            if watched { Image(systemName: "eye.fill").font(.caption).foregroundStyle(.secondary).accessibilityLabel("Watched") }
+            if highlighted { Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent) }
+        }
     }
 
     private var rowBackground: some View {
@@ -440,7 +481,7 @@ struct LibraryRow: View {
                     else { GeneratedArt(seed: file.lastPathComponent) }
                 }
                 .clipped()
-            if let progress, progress > 0.01 { ArtProgressBar(progress: progress).frame(width: thumbW, height: thumbH) }
+            if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress).frame(width: thumbW, height: thumbH) }
         }
         .clipShape(RoundedRectangle(cornerRadius: detail ? 12 : 8, style: .continuous))
         .zoomSource(zoom, cornerRadius: detail ? 12 : 8)

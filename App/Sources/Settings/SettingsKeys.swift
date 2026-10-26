@@ -32,6 +32,7 @@ enum SettingsKey {
     static let castPosition = "castPosition"            // top | bottom (title pages)
     static let episodeTitleLanguage = "episodeTitleLanguage"   // english | original
     static let playlistNames = "playlistNames"          // "episode" | "filename"
+    static let titlePageStyle = "titlePageStyle"        // full | files (title, then its files only)
 
     // Downloads (WebDAV)
     static let downloadConcurrent = "downloadConcurrent"
@@ -118,6 +119,7 @@ enum SettingsKey {
             castPosition: "bottom",
             episodeTitleLanguage: "english",
             playlistNames: "episode",
+            titlePageStyle: "full",
             downloadConcurrent: 2,
             downloadAutoStart: true,
             downloadSaveTo: "folder",

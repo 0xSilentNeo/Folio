@@ -7,9 +7,12 @@ struct HistoryEntry: Codable, Identifiable, Hashable {
     var position: Double
     var duration: Double
     var updated: Date
+    /// Marked as watched by hand (1.17.0), also for files never played (no
+    /// duration known). Optional so older history files still load.
+    var watched: Bool?
 
-    var progress: Double { duration > 0 ? min(1, max(0, position / duration)) : 0 }
-    var isFinished: Bool { duration > 0 && (position / duration > 0.92 || duration - position < 90) }
+    var progress: Double { watched == true ? 1 : duration > 0 ? min(1, max(0, position / duration)) : 0 }
+    var isFinished: Bool { watched == true || duration > 0 && (position / duration > 0.92 || duration - position < 90) }
     var canResume: Bool { position > 15 && !isFinished }
 }
 
@@ -108,6 +111,29 @@ final class HistoryStore: ObservableObject {
     func markWatched(_ entry: HistoryEntry) {
         guard let i = entries.firstIndex(where: { $0.id == entry.id }) else { return }
         entries[i].position = entries[i].duration
+        entries[i].watched = true
+        scheduleSave()
+    }
+
+    /// Library files, played or not.
+    func isWatched(_ file: URL) -> Bool { entry(forURL: file.path)?.isFinished == true }
+
+    func setWatched(_ files: [URL], _ watched: Bool) {
+        for f in files {
+            if let e = entry(forURL: f.path), let i = entries.firstIndex(where: { $0.id == e.id }) {
+                if watched {
+                    entries[i].watched = true
+                    entries[i].position = entries[i].duration
+                    entries[i].updated = Date()
+                } else {
+                    entries.remove(at: i)            // unwatched: no progress, no resume point
+                }
+            } else if watched {
+                var m = MediaItem(url: f.path, title: TitleParser.clean(f.lastPathComponent), source: .local)
+                m.historyKey = f.path
+                entries.append(HistoryEntry(item: m, position: 0, duration: 0, updated: Date(), watched: true))
+            }
+        }
         scheduleSave()
     }
 

@@ -18,12 +18,13 @@ struct SettingsView: View {
                     row("Downloads", "arrow.down.circle", .mint) { DownloadSettingsView() }
                 }
                 Section {
-                    row("Scripts", "chevron.left.forwardslash.chevron.right", .blue) { ScriptsView() }
-                    row("Shaders", "wand.and.stars", .indigo) { ShadersView() }
-                    row("mpv Config", "slider.horizontal.3", .teal) { MPVConfigSettings() }
+                    row("mpv", "slider.horizontal.3", .teal) { MPVSettings() }
+                } footer: {
+                    Text("The video engine, scripts, shaders and config files.")
                 }
                 Section {
-                    row("Advanced", "gearshape.2", .gray) { AdvancedSettings() }
+                    row("Presets", "square.and.arrow.down.on.square", .blue) { PresetsView() }
+                    row("Help & Diagnostics", "stethoscope", .gray) { AdvancedSettings() }
                 }
                 Section {
                     HStack {
@@ -253,22 +254,22 @@ struct SkipSettings: View {
     }
 }
 
-struct MPVConfigSettings: View {
+/// A setting with a plain-language line under it (1.17.0).
+struct Explained<Content: View>: View {
+    let text: String
+    @ViewBuilder var content: Content
+    init(_ text: String, @ViewBuilder content: () -> Content) { self.text = text; self.content = content() }
     var body: some View {
-        List {
-            NavigationLink { ConfigEditorView(url: MPVFiles.mpvConf, title: "mpv.conf") } label: { Label("mpv.conf", systemImage: "doc.text") }
-            NavigationLink { ConfigEditorView(url: MPVFiles.inputConf, title: "input.conf") } label: { Label("input.conf", systemImage: "keyboard") }
-            NavigationLink { ScriptOptsView() } label: { Label("script-opts", systemImage: "slider.horizontal.below.square.filled.and.square") }
-            NavigationLink { CommandsEditorView() } label: { Label("Player commands", systemImage: "command") }
-            NavigationLink { LogView() } label: { Label("Last playback log", systemImage: "text.alignleft") }
+        VStack(alignment: .leading, spacing: 4) {
+            content
+            Text(text).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
-        .brandListBackground()
-        .navigationTitle("mpv Config")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
-struct AdvancedSettings: View {
+/// Everything mpv in one place (1.17.0): the video engine, scripts, shaders,
+/// config files and logs.
+struct MPVSettings: View {
     @AppStorage(SettingsKey.renderer) private var renderer = "metal"
     @AppStorage(SettingsKey.hdrOutput) private var hdr = true
     @AppStorage(SettingsKey.hwdec) private var hwdec = "auto"
@@ -276,45 +277,105 @@ struct AdvancedSettings: View {
     @AppStorage(SettingsKey.logLevel) private var logLevel = "info"
     @AppStorage(SettingsKey.flipVideo) private var flipVideo = false
     @State private var picture = PictureMode.current
+
+    private var rendererText: String {
+        renderer == "gl"
+            ? "OpenGL ES: the fallback for a device where video doesn't show correctly with Metal. No HDR, no compute shaders."
+            : "Metal (recommended): the fastest, with HDR, Dolby Vision and every shader."
+    }
+    private var pictureText: String {
+        switch picture {
+        case .efficient: "Efficient: simple scaling with no extra passes. Coolest phone, longest battery; the right choice for most videos."
+        case .balanced: "Balanced: a sharper scaler when the video is enlarged. A little more power."
+        case .enhanced: "Enhanced: the best scaling plus banding removal, several extra passes on every frame. Noticeably more power and heat."
+        }
+    }
+    private var hwdecText: String {
+        switch hwdec {
+        case "copy": "Copy-back: the video chip decodes, then each frame is copied back to memory so filters that work on the processor can use it. More heat and battery; only if something looks wrong with Auto."
+        case "no": "Off: the processor decodes everything. Most heat and battery; only for a file the video chip can't play correctly."
+        default: "Auto (recommended): the iPhone's video chip decodes. Coolest and best for battery; falls back to the processor for formats the chip can't decode."
+        }
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                Explained(rendererText) {
+                    Picker("Renderer", selection: $renderer) {
+                        Text("Metal").tag("metal")
+                        Text("OpenGL ES").tag("gl")
+                    }
+                }
+                Explained(pictureText) {
+                    Picker("Picture", selection: $picture) {
+                        ForEach(PictureMode.allCases) { Text($0.title).tag($0) }
+                    }
+                    .onChange(of: picture) { _, m in PictureMode.current = m }
+                }
+                Explained("HDR and Dolby Vision videos play with real HDR brightness on screens that support it. Off: they are converted to normal brightness (SDR).") {
+                    Toggle("HDR output", isOn: $hdr).disabled(renderer != "metal")
+                }
+                Explained(hwdecText) {
+                    Picker("Hardware decoding", selection: $hwdec) {
+                        Text("Auto").tag("auto")
+                        Text("Copy-back").tag("copy")
+                        Text("Off").tag("no")
+                    }
+                }
+                if renderer == "gl" {
+                    Explained("Turns the picture upside down, for devices where OpenGL shows it flipped.") {
+                        Toggle("Flip video", isOn: $flipVideo)
+                    }
+                }
+            } header: { Text("Video") } footer: { Text("Changes apply to the next video you open.") }
+            Section("Streaming") {
+                Explained("How much of a stream is kept in memory, ahead of where you are (and a third of that behind). More means fewer pauses on a slow connection and quicker jumps back, but uses more memory.") {
+                    Stepper("Cache  \(cacheMB) MB", value: $cacheMB, in: 32...1024, step: 32)
+                }
+            }
+            Section {
+                NavigationLink { ScriptsView() } label: { Label("Scripts", systemImage: "chevron.left.forwardslash.chevron.right") }
+                NavigationLink { ShadersView() } label: { Label("Shaders", systemImage: "wand.and.stars") }
+                NavigationLink { ConfigEditorView(url: MPVFiles.mpvConf, title: "mpv.conf") } label: { Label("mpv.conf", systemImage: "doc.text") }
+                NavigationLink { ConfigEditorView(url: MPVFiles.inputConf, title: "input.conf") } label: { Label("input.conf", systemImage: "keyboard") }
+                NavigationLink { ScriptOptsView() } label: { Label("script-opts", systemImage: "slider.horizontal.below.square.filled.and.square") }
+                NavigationLink { CommandsEditorView() } label: { Label("Player commands", systemImage: "command") }
+            } header: { Text("Customise") } footer: {
+                Text("Scripts and shaders load with every video. mpv.conf holds mpv options, input.conf keyboard shortcuts, script-opts each script's options; player commands appear in the player's Commands menu. Your mpv folder is in Files → On My iPhone → Folio → mpv.")
+            }
+            Section("Logs") {
+                Explained("How much detail the playback log keeps. \"v\" and \"debug\" are for tracking down a problem and make the log much larger.") {
+                    Picker("Log level", selection: $logLevel) {
+                        ForEach(["warn", "info", "v", "debug"], id: \.self) { Text($0).tag($0) }
+                    }
+                }
+                NavigationLink { LogView() } label: { Label("Last playback log", systemImage: "text.alignleft") }
+            }
+        }
+        .brandListBackground()
+        .navigationTitle("mpv")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct AdvancedSettings: View {
     @State private var confirmClear = false
 
     var body: some View {
         Form {
             Section {
-                Picker("Renderer", selection: $renderer) {
-                    Text("Metal").tag("metal")
-                    Text("OpenGL ES (compatibility)").tag("gl")
-                }
-                Picker("Picture", selection: $picture) {
-                    ForEach(PictureMode.allCases) { Text($0.title).tag($0) }
-                }
-                .onChange(of: picture) { _, m in PictureMode.current = m }
-                Toggle("HDR output", isOn: $hdr).disabled(renderer != "metal")
-                Picker("Hardware decoding", selection: $hwdec) {
-                    Text("Auto").tag("auto")
-                    Text("Copy-back").tag("copy")
-                    Text("Off").tag("no")
-                }
-            } header: { Text("Video") } footer: {
-                Text("Picture: Efficient keeps the phone cool (simple scaling, no extra passes). Enhanced runs several extra full-screen passes per frame and uses noticeably more power. Metal uses libplacebo: Dolby Vision, HDR tone mapping and compute shaders. OpenGL ES is the fallback if a device has trouble.")
-            }
-            Section("Network") {
-                Stepper("Cache  \(cacheMB) MB", value: $cacheMB, in: 32...1024, step: 32)
-            }
-            Section("Troubleshooting") {
                 NavigationLink { DiagnosticsView() } label: { Label("Diagnostics & report", systemImage: "stethoscope") }
-                Picker("mpv log level", selection: $logLevel) {
-                    ForEach(["warn", "info", "v", "debug"], id: \.self) { Text($0).tag($0) }
-                }
-                if renderer == "gl" { Toggle("Flip video (OpenGL)", isOn: $flipVideo) }
+            } footer: { Text("A report bundles the logs and your settings (passwords removed) to send when something goes wrong.") }
+            Section {
                 Button("Clear watch history", role: .destructive) { confirmClear = true }
                     .confirmationDialog("Clear all history and resume positions?", isPresented: $confirmClear, titleVisibility: .visible) {
                         Button("Clear", role: .destructive) { HistoryStore.shared.clear() }
                     }
-            }
+            } footer: { Text("Forgets where you stopped every video, what you've watched, and empties Continue Watching.") }
         }
         .brandListBackground()
-        .navigationTitle("Advanced")
+        .navigationTitle("Help & Diagnostics")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -870,6 +931,7 @@ struct LibrarySettings: View {
     @ObservedObject private var store = LocalMediaStore.shared
     @AppStorage(SettingsKey.metadataFetching) private var fetching = true
     @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
+    @AppStorage(SettingsKey.titlePageStyle) private var titlePageStyle = "full"
     @State private var cacheBytes: Int64 = 0
     @State private var working = false
 
@@ -909,6 +971,14 @@ struct LibrarySettings: View {
                 }
                 .disabled(!fetching || working)
             } footer: { Text("Refresh metadata looks every title up again (posters, synopsis, ratings, episode names).") }
+            Section {
+                Picker("Title pages", selection: $titlePageStyle) {
+                    Text("Full").tag("full")
+                    Text("Files only").tag("files")
+                }
+            } footer: {
+                Text("Full: backdrop, poster, description, Play, episodes and cast. Files only: just the title and its files; tap a file to play it.")
+            }
             Section {
                 Toggle("Metadata fetching", isOn: $fetching)
                 Picker("Tile artwork", selection: $tileArtwork) {

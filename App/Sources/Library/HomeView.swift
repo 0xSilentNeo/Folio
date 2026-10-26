@@ -217,7 +217,8 @@ struct HomeView: View {
                                       key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
                                       progress: history.entry(forURL: g.nextUp.path)?.progress,
                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                      poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil)
+                                      poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil,
+                                      watched: allWatched(g))
                         }
                         }
                     }
@@ -232,7 +233,8 @@ struct HomeView: View {
                         groupLink(g) {
                             LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
                                        fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                       poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil)
+                                       poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil,
+                                       watched: allWatched(g))
                         }
                         }
                     }
@@ -255,6 +257,8 @@ struct HomeView: View {
 
     private func opensPage(_ g: LibraryGroup) -> Bool { openTitlePage || g.isSeries }
 
+    private func allWatched(_ g: LibraryGroup) -> Bool { !g.files.isEmpty && g.files.allSatisfy { history.isWatched($0) } }
+
     @ViewBuilder
     private func groupLink<L: View>(_ g: LibraryGroup, @ViewBuilder label: () -> L) -> some View {
         Group {
@@ -267,6 +271,11 @@ struct HomeView: View {
         .buttonStyle(PressStyle(scale: 0.97))
         .contextMenu {
             Button { playLocal(g.nextUp) } label: { Label(g.isSeries ? "Play next episode" : "Play", systemImage: "play") }
+            if allWatched(g) {
+                Button { history.setWatched(g.files, false) } label: { Label(g.isSeries ? "Mark all as unwatched" : "Mark as unwatched", systemImage: "eye.slash") }
+            } else {
+                Button { history.setWatched(g.files, true) } label: { Label(g.isSeries ? "Mark all as watched" : "Mark as watched", systemImage: "eye") }
+            }
             if !g.isSeries { Button(role: .destructive) { local.delete(g.files[0]) } label: { Label("Delete", systemImage: "trash") } }
         }
     }
@@ -366,6 +375,19 @@ struct ArtProgressBar: View {
     }
 }
 
+/// Watched mark (1.17.0): a small eye on a picture's corner.
+struct WatchedBadge: View {
+    var body: some View {
+        Image(systemName: "eye.fill")
+            .font(.system(size: 10, weight: .bold))
+            .foregroundStyle(.white)
+            .padding(5)
+            .background(.black.opacity(0.55), in: Circle())
+            .padding(6)
+            .accessibilityLabel("Watched")
+    }
+}
+
 struct HeroCard: View {
     let entry: HistoryEntry
     var height: CGFloat = 230
@@ -436,6 +458,8 @@ struct MediaTile: View {
     var zoom: ZoomSource? = nil
     /// Right-aligned on the subtitle line (episode tiles: the file size).
     var trailingNote: String? = nil
+    /// Every file behind the tile is watched: an eye on the picture.
+    var watched = false
     @StateObject private var thumb = ThumbLoader()
 
     var body: some View {
@@ -447,8 +471,9 @@ struct MediaTile: View {
                         else { GeneratedArt(seed: title) }
                     }
                     .clipped()
-                if let progress, progress > 0.01 { ArtProgressBar(progress: progress) }
+                if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress) }
             }
+            .overlay(alignment: .topTrailing) { if watched { WatchedBadge() } }
             .clipShape(RoundedRectangle(cornerRadius: poster ? 12 : 16, style: .continuous))
             .zoomSource(zoom, cornerRadius: poster ? 12 : 16)
             Text(fixedTitle ?? thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)

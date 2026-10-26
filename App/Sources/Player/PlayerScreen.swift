@@ -443,7 +443,7 @@ struct PlayerScreen: View {
                 Button("Retry") { model.load(model.item) }.buttonStyle(.borderedProminent).tint(Theme.accent)
                 Button("Close") { onClose() }.buttonStyle(.bordered)
             }
-            Text("Details: Settings → Advanced → Diagnostics").font(.caption).foregroundStyle(.white.opacity(0.5))
+            Text("Details: Settings → Help & Diagnostics").font(.caption).foregroundStyle(.white.opacity(0.5))
         }
         .padding(22)
         .frame(maxWidth: 400)

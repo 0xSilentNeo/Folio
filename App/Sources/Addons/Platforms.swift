@@ -187,7 +187,7 @@ struct DiscoverView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(browse.failed ? "IMDb didn't answer." : "Nothing here.").foregroundStyle(.secondary)
                                 if browse.failed {
-                                    Text("Check the connection, then pull to retry. The diagnostics log (Settings → Advanced) records the HTTP status.")
+                                    Text("Check the connection, then pull to retry. The diagnostics log (Settings → Help & Diagnostics) records the HTTP status.")
                                         .font(.caption).foregroundStyle(.secondary)
                                     Button("Retry") { browse.reload() }.buttonStyle(.bordered).tint(Theme.accent)
                                 }
