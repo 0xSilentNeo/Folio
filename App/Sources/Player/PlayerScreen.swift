@@ -164,6 +164,11 @@ struct PlayerScreen: View {
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
+        // An episode with no stream of the release being watched (1.17.0).
+        .sheet(item: $model.pickRequest) { r in
+            StreamPickerSheet(context: r.context) { s, addon in model.playPicked(s, from: addon, for: r) }
+                .environment(\.colorScheme, .dark)
+        }
         .fileImporter(isPresented: $showSubtitlePicker, allowedContentTypes: [.item]) { result in
             if case .success(let url) = result { model.addSubtitle(url: url) }
         }

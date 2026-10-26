@@ -96,7 +96,7 @@ struct PlaybackSettings: View {
                 Explained("A card with the next episode appears when the credits start (from the file's chapters or online skip data), otherwise 30 seconds before the end. It counts down only when nothing is known to follow the credits.") {
                     Toggle("Up Next card at the credits", isOn: $upNext)
                 }
-                Explained("For addon streams: near the end of an episode, the next one's stream is found and starts loading, so Play on the Up Next card starts it right away. This opens the next episode's link early, so your debrid service adds that episode even if you don't watch it.") {
+                Explained("For streamed episodes (addons, WebDAV): near the end of an episode the next one is found and starts loading, so Play on the Up Next card starts it right away. For a season from an addon, the app also checks which episodes have the same release, and asks you to pick for the ones that don't. Note: this opens the next episode's link early, so your debrid service adds that episode even if you don't watch it.") {
                     Toggle("Get the next episode ready", isOn: $prepareNext)
                 }
             }

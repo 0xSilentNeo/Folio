@@ -512,3 +512,59 @@ struct AddonsManagerView: View {
         .toolbar { EditButton() }
     }
 }
+
+/// In the player (1.17.0): the next episode has no stream of the release
+/// being watched, so you choose one; the episodes after it follow that one.
+struct StreamPickerSheet: View {
+    let context: PlayContext
+    let onPick: (AddonStream, InstalledAddon) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var groups: [StreamsView.StreamGroup] = []
+    @State private var loading = true
+
+    private var label: String { context.videoLabel ?? context.name }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("The release you're watching isn't available for \(label). Pick a stream; the next episodes will follow it.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                if loading && groups.allSatisfy({ $0.streams.isEmpty }) {
+                    HStack { ProgressView(); Text("Asking addons…").foregroundStyle(.secondary) }
+                }
+                ForEach(groups) { g in
+                    Section(g.addon.manifest.name) {
+                        if let e = g.error { Text(e).font(.caption).foregroundStyle(.orange) }
+                        ForEach(g.streams) { s in
+                            Button { onPick(s, g.addon) } label: { StreamRow(stream: s) }
+                                .disabled(!s.isPlayable)
+                        }
+                    }
+                }
+            }
+            .navigationTitle(label)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+        }
+        .task { await load() }
+    }
+
+    private func load() async {
+        let addons = AddonStore.shared.streamAddons(type: context.type, id: context.videoId)
+        groups = addons.map { StreamsView.StreamGroup(id: $0.id, addon: $0, streams: []) }
+        await withTaskGroup(of: (String, [AddonStream]?, String?).self) { tg in
+            for a in addons {
+                tg.addTask {
+                    do { return (a.id, try await AddonAPI.streams(a, type: context.type, id: context.videoId), nil) }
+                    catch { return (a.id, nil, error.localizedDescription) }
+                }
+            }
+            for await (id, streams, err) in tg {
+                if let i = groups.firstIndex(where: { $0.id == id }) { groups[i].streams = streams ?? []; groups[i].error = err }
+            }
+        }
+        loading = false
+    }
+}

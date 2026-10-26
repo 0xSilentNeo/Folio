@@ -289,6 +289,7 @@ final class PlayerModel: ObservableObject {
     func close() {
         guard !closed else { return }
         closed = true
+        screener?.cancel()
         dlog("player", "close at \(Self.format(position))")
         saveHistory(force: true)
         HistoryStore.shared.flush()
@@ -478,6 +479,22 @@ final class PlayerModel: ObservableObject {
             resolveAndLoad(pick, index: queueIndex)
             return
         }
+        // An episode found by the season check: its subtitles come now.
+        if queue.indices.contains(queueIndex), queue[queueIndex].url.isEmpty, !subsFetched.contains(queueIndex),
+           let ctx = item.streamPick?.context {
+            subsFetched.insert(queueIndex)
+            let index = queueIndex
+            isLoading = true
+            Task { [weak self] in
+                guard let self else { return }
+                var it = item
+                it.subtitles += await AddonPlayback.subtitles(type: ctx.type, videoId: ctx.videoId)
+                self.resolvedItems[index] = it
+                guard self.queueIndex == index else { return }
+                self.load(it)
+            }
+            return
+        }
         saveHistory(force: true)
         ended = false
         errorMessage = nil
@@ -515,15 +532,28 @@ final class PlayerModel: ObservableObject {
             }
         }
 
-        var opts: [String] = []
-        if defaults.bool(forKey: SettingsKey.resumePlayback),
-           let entry = HistoryStore.shared.entry(for: item.id), entry.canResume {
-            opts.append("start=\(Int(entry.position))")
-            showToast("Resuming from \(Self.format(entry.position))")
+        let opts = startOptions(for: item, toast: true)
+        c.set("demuxer-readahead-secs", "60")
+        if let a = appended, a.index == queueIndex, a.path == item.mpvPath {
+            // Prepared near the end of the last episode: next in mpv's playlist,
+            // opened (and buffered, once the last file was fully read) already.
+            appended = nil
+            c.set("pause", false)
+            let r = c.command(["playlist-next"])
+            dlog("player", "playlist-next → the prepared episode \(item.displayTitle) -> \(r)")
+        } else {
+            appended = nil
+            let r = c.command(["loadfile", item.mpvPath, "replace", "-1", opts.joined(separator: ",")])
+            dlog("player", "loadfile \(item.mpvPath) source=\(item.source) opts=\(opts) -> \(r)")
         }
-        let r = c.command(["loadfile", item.mpvPath, "replace", "-1", opts.joined(separator: ",")])
-        dlog("player", "loadfile \(item.mpvPath) source=\(item.source) opts=\(opts) -> \(r)")
         updateNowPlaying()
+    }
+
+    private func startOptions(for item: MediaItem, toast: Bool) -> [String] {
+        guard defaults.bool(forKey: SettingsKey.resumePlayback),
+              let entry = HistoryStore.shared.entry(for: item.id), entry.canResume else { return [] }
+        if toast { showToast("Resuming from \(Self.format(entry.position))") }
+        return ["start=\(Int(entry.position))"]
     }
 
     /// Finds the next episode's stream (same addon, matching release), then plays it.
@@ -536,21 +566,175 @@ final class PlayerModel: ObservableObject {
         mediaTitle = [pick.context.name, pick.context.videoLabel].compactMap { $0 }.joined(separator: " · ")
         showToast("Finding \(pick.context.videoLabel ?? "next episode")…")
         Task { [weak self] in
-            let found = await AddonPlayback.resolve(pick)
-            guard let self, self.queueIndex == index else { return }
-            if let found {
+            guard let self else { return }
+            let p = self.pick(for: index) ?? pick
+            let match = await AddonPlayback.screen(p)
+            guard self.queueIndex == index else { return }
+            switch match {
+            case .same(var found):
+                self.episodeStates[index] = .ready
+                found.subtitles += await AddonPlayback.subtitles(type: p.context.type, videoId: p.context.videoId)
+                self.subsFetched.insert(index)
+                guard self.queueIndex == index else { return }
                 self.resolvedItems[index] = found
                 self.load(found)
-            } else {
+            case .other:
+                self.episodeStates[index] = .pick
+                self.isLoading = false
+                self.askToPick(index)
+            case .none:
+                self.episodeStates[index] = .unavailable
                 self.isLoading = false
                 self.errorMessage = "No stream found for \(pick.context.videoLabel ?? "this episode") from the same addon. Pick one from the title page."
             }
         }
     }
 
+    // MARK: Next episode (1.17.0)
+
+    /// What the season check found for each later episode of an addon season.
+    enum EpisodeState: Equatable { case checking, ready, pick, unavailable }
+    @Published var episodeStates: [Int: EpisodeState] = [:]
+    /// An episode with no stream of the release being watched: the picker.
+    struct PickRequest: Identifiable, Equatable { let id: Int; let context: PlayContext }
+    @Published var pickRequest: PickRequest?
+
+    private var screener: Task<Void, Never>?
+    private var preparing: Int?
+    /// The next item, appended to mpv's playlist behind the current file.
+    private var appended: (index: Int, path: String)?
+    private var subsFetched: Set<Int> = []
+    /// A stream picked by hand: later episodes follow that release.
+    private var pickOverride: StreamPick?
+
+    private func pick(for index: Int) -> StreamPick? {
+        guard index < queue.count, var p = queue[index].streamPick else { return nil }
+        if let o = pickOverride {
+            let ctx = p.context
+            p = o
+            p.context = ctx
+        }
+        return p
+    }
+
+    /// Season check: asks the addon for each later episode, one at a time,
+    /// whether it has the same release, so the playlist knows what's ready
+    /// and what needs a pick. Starts a few seconds into playback.
+    private func startScreener() {
+        guard screener == nil, defaults.bool(forKey: SettingsKey.prepareNext),
+              queue.indices.contains(where: { $0 > queueIndex && queue[$0].url.isEmpty && queue[$0].streamPick != nil }) else { return }
+        screener = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            var ready = 0, picks = 0, missing = 0
+            var i = (self?.queueIndex ?? 0) + 1
+            while let self, !self.closed, i < self.queue.count, !Task.isCancelled {
+                defer { i += 1 }
+                guard self.queue[i].url.isEmpty, self.resolvedItems[i] == nil, self.episodeStates[i] == nil, let p = self.pick(for: i) else { continue }
+                self.episodeStates[i] = .checking
+                switch await AddonPlayback.screen(p) {
+                case .same(let item): self.resolvedItems[i] = item; self.episodeStates[i] = .ready; ready += 1
+                case .other: self.episodeStates[i] = .pick; picks += 1
+                case .none: self.episodeStates[i] = .unavailable; missing += 1
+                }
+                try? await Task.sleep(nanoseconds: 1_500_000_000)   // one request at a time, gently
+            }
+            dlog("player", "season check: \(ready) ready, \(picks) need a pick, \(missing) unavailable")
+            self?.screener = nil
+        }
+    }
+
+    /// Near the end of an episode: get the next one ready (Settings →
+    /// Playback → Get the next episode ready). Network items only; library
+    /// files open at once anyway.
+    private func maybePrepareNext() {
+        guard defaults.bool(forKey: SettingsKey.prepareNext), hasNext, playbackMode == "playlist", preparing == nil, fileLoaded,
+              duration > 120, duration - position < 180 else { return }
+        let i = queueIndex + 1
+        guard appended?.index != i, episodeStates[i] != .pick, episodeStates[i] != .unavailable else { return }
+        let next = resolvedItems[i] ?? queue[i]
+        guard next.url.isEmpty || next.resolvedURL?.isFileURL == false else { return }
+        preparing = i
+        Task { [weak self] in
+            await self?.prepare(i)
+            self?.preparing = nil
+        }
+    }
+
+    private func prepare(_ i: Int) async {
+        var item: MediaItem
+        if let r = resolvedItems[i] {
+            item = r
+        } else if queue[i].url.isEmpty, let p = pick(for: i) {
+            episodeStates[i] = .checking
+            switch await AddonPlayback.screen(p) {
+            case .same(let it): item = it; resolvedItems[i] = it; episodeStates[i] = .ready
+            case .other: episodeStates[i] = .pick; return
+            case .none: episodeStates[i] = .unavailable; return
+            }
+        } else {
+            item = queue[i]
+        }
+        guard queueIndex + 1 == i, !closed else { return }
+        if let ctx = item.streamPick?.context, !subsFetched.contains(i) {
+            item.subtitles += await AddonPlayback.subtitles(type: ctx.type, videoId: ctx.videoId)
+            subsFetched.insert(i)
+            resolvedItems[i] = item
+        }
+        if let u = item.resolvedURL, !u.isFileURL, let final = await LinkWarmer.resolve(u, headers: item.headers), final != u {
+            item.url = final.absoluteString
+            resolvedItems[i] = item
+        }
+        guard queueIndex + 1 == i, !closed, fileLoaded, let c = client else { return }
+        // Next in mpv's playlist: mpv opens it and starts filling its buffer as
+        // soon as this file has been read to the end (prefetch-playlist; mpv
+        // 0.41 loadfile.c, prefetch_next → demux_start_prefetch). Reading ahead
+        // to the end of this file is allowed now so that happens early.
+        c.set("keep-open", "always")                 // never move on by itself: Up Next / autoplay decide
+        c.set("prefetch-playlist", "yes")
+        c.set("demuxer-readahead-secs", String(Int(max(60, duration - position + 30))))
+        c.command(["playlist-clear"])
+        let opts = startOptions(for: item, toast: false)
+        c.command(["loadfile", item.mpvPath, "append", "-1", opts.joined(separator: ",")])
+        appended = (i, item.mpvPath)
+        dlog("player", "next episode ready: \(item.displayTitle) — buffers once this file is read to the end")
+    }
+
+    /// Picker for an episode without the same release.
+    private func askToPick(_ index: Int) {
+        guard let ctx = queue[index].streamPick?.context else { return }
+        setPaused(true)
+        pickRequest = PickRequest(id: index, context: ctx)
+        dlog("player", "next episode: no stream of the same release for \(ctx.videoLabel ?? ctx.videoId); asking")
+    }
+
+    /// The stream you picked for an episode; the episodes after it follow that release.
+    func playPicked(_ s: AddonStream, from addon: InstalledAddon, for request: PickRequest) {
+        pickRequest = nil
+        Task { [weak self] in
+            guard let self else { return }
+            let ctx = request.context
+            let subs = await AddonPlayback.subtitles(type: ctx.type, videoId: ctx.videoId)
+            guard let item = AddonPlayback.makeItem(ctx, stream: s, addon: addon, extraSubtitles: subs) else { return }
+            self.pickOverride = AddonPlayback.pick(from: s, addon: addon, context: ctx)
+            // Later episodes are checked again against the new release.
+            for j in self.queue.indices where j > request.id && self.queue[j].url.isEmpty { self.episodeStates[j] = nil; self.resolvedItems[j] = nil }
+            self.resolvedItems[request.id] = item
+            self.subsFetched.insert(request.id)
+            self.episodeStates[request.id] = .ready
+            self.queueIndex = request.id
+            self.load(item)
+            self.screener?.cancel(); self.screener = nil
+        }
+    }
+
     func playNext() {
         guard hasNext else { return }
-        queueIndex += 1
+        let i = queueIndex + 1
+        if episodeStates[i] == .pick {
+            askToPick(i)
+            return
+        }
+        queueIndex = i
         load(item)
     }
 
@@ -572,6 +756,7 @@ final class PlayerModel: ObservableObject {
         }
         maybeRequestSegments()
         updateNowPlaying()
+        startScreener()
     }
 
     // MARK: Tracks / chapters
@@ -1418,6 +1603,7 @@ extension PlayerModel: MPVClientDelegate {
             if abs(p - clock.position) >= 0.25 || p < clock.position { clock.position = p }
             updateActiveSegment()
             updateUpNext()
+            maybePrepareNext()
             if Date().timeIntervalSince(lastPiPSync) > 1 {
                 lastPiPSync = Date()
                 pip.updatePlayback(position: p, rate: paused ? 0 : speed)
