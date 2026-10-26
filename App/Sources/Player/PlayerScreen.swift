@@ -336,7 +336,7 @@ struct PlayerScreen: View {
             // Native menu morph: bar items in a toolbar; the popover morphs
             // out of the item's Liquid Glass (as in 1.14.0).
             PanelToolbarView(ui: ui)
-                .frame(width: 176, height: 50)
+                .frame(width: PanelToolbarView.width, height: 50)
         } else {
             PanelPillView(ui: ui, height: tune.pillHeight)
                 .frame(width: tune.pillHeight * 3 + 8, height: tune.pillHeight)

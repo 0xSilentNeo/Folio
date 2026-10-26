@@ -182,6 +182,8 @@ final class PanelPresenter {
     }
     /// Panels leaving the screen on the iOS 27 path (their close is still animating).
     private var closing = 0
+    /// A switch is waiting for the previous panel's close animation to end (logged once).
+    private var waitingForLeave = false
 
     private struct Request {
         let kind: String
@@ -381,12 +383,29 @@ final class PanelPresenter {
             return
         }
 
-        // Another panel (or one still leaving) is up: out at once — animated only while it is
-        // still opening — and the new one goes up in this same call.
+        // Another panel is up: out at once — animated only while it is still opening — and the
+        // new one goes up in this same call. UIKit presents nothing while a panel is still
+        // leaving with its close animation (iOS 27.0 simulator: up to ~1.2 s when the old one
+        // was still opening), so then the new one goes up the moment that ends.
         if let presented = host.presentedViewController {
-            dlog("ui", "panel: \(shownKind ?? "leaving panel") out \(presented.isBeingPresented ? "(animated, still opening)" : "(instant)") → \(req.kind)")
+            if presented.isBeingDismissed {
+                if !waitingForLeave {
+                    waitingForLeave = true
+                    dlog("ui", "panel: \(req.kind) waits for the leaving panel")
+                }
+                shown = nil; shownKind = nil; shownRequest = nil
+                NextFrame.run { [weak self] in self?.reconcile() }
+                return
+            }
+            dlog("ui", "panel: \(shownKind ?? "panel") out \(presented.isBeingPresented ? "(animated, still opening)" : "(instant)") → \(req.kind)")
             presented.dismiss(animated: animated && presented.isBeingPresented)
+            shown = nil; shownKind = nil; shownRequest = nil
+            if host.presentedViewController != nil {
+                NextFrame.run { [weak self] in self?.reconcile() }
+                return
+            }
         }
+        waitingForLeave = false
         shown = nil; shownKind = nil; shownRequest = nil
 
         let buildStart = CACurrentMediaTime()
@@ -422,12 +441,11 @@ final class PanelPresenter {
                 }
             }
         }
-        // UIKit refuses to present while another presentation is still running; then try
-        // again next frame (it goes up as soon as UIKit lets it).
+        // Should UIKit still refuse the presentation, try again next frame.
         NextFrame.run { [weak self, weak vc] in
             guard let self, let vc, self.shown === vc,
                   vc.presentingViewController == nil, !vc.isBeingPresented else { return }
-            dlog("ui", "panel: \(req.kind) not presented yet (UIKit busy); retrying")
+            dlog("ui", "panel: \(req.kind) was not presented; retrying")
             self.shown = nil; self.shownKind = nil; self.shownRequest = nil
             self.reconcile()
         }

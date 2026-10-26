@@ -118,6 +118,14 @@ struct PanelToolbarView: UIViewRepresentable {
         return 44
     }
 
+    /// Width the toolbar needs for its three buttons. Built with the iOS 27 SDK, a toolbar
+    /// moves items that do not fit into a "⋯" overflow menu (CI recording, iOS 27.0
+    /// simulator: at 176 pt only Tracks and "⋯" were on screen).
+    static var width: CGFloat {
+        if #available(iOS 27, *) { return 236 }
+        return 176
+    }
+
     func makeUIView(context: Context) -> UIToolbar {
         let bar = UIToolbar()
         bar.tintColor = .white
