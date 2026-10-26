@@ -571,9 +571,11 @@ final class PanelPresenter {
 final class PanelRelay {
     static let shared = PanelRelay()
 
-    /// Settings → Playback (iOS 27): "Open the next menu without waiting".
+    /// Off by default (1.16.1): in the CI simulator UIKit refused every
+    /// presentation from this layer (a popover whose bar item lives in another
+    /// window), and the panel fell back to waiting. Kept for the lab only.
     static var enabled: Bool {
-        !shared.refused && (UserDefaults.standard.object(forKey: SettingsKey.menuRelay) as? Bool ?? true)
+        !shared.refused && (UserDefaults.standard.object(forKey: SettingsKey.menuRelay) as? Bool ?? false)
     }
     /// UIKit refused a presentation from the relay: don't use it again this session.
     var refused = false

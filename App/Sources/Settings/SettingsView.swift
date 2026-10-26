@@ -79,7 +79,6 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
-    @AppStorage(SettingsKey.menuRelay) private var menuRelay = true
     @AppStorage(SettingsKey.prepareNext) private var prepareNext = true
     @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
     @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
@@ -150,13 +149,6 @@ struct PlaybackSettings: View {
                 if #available(iOS 26.0, *) {
                     Explained("The player's menus grow out of their button with Apple's own glass animation. Off: the app's own glass menus, which can be interrupted at any moment.") {
                         Toggle("Native menu morph", isOn: $nativePanelMorph)
-                    }
-                }
-                if #available(iOS 27.0, *) {
-                    if nativePanelMorph {
-                        Explained("iOS keeps a closed menu busy for about a second after it has gone. With this on, the next menu opens straight away instead of waiting. A test setting: turn it off to compare.") {
-                            Toggle("Next menu without waiting", isOn: $menuRelay)
-                        }
                     }
                 }
                 Explained("How much of the screen's width the controls use in landscape.") {
