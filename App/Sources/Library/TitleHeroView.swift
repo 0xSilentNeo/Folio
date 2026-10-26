@@ -267,10 +267,17 @@ struct TitleHeroView: View {
     @Environment(\.pageLeaving) private var pageLeaving
 
     /// A tap on the page's Play / Resume or an episode: ignored while the page
-    /// is going back (the tap was part of a back swipe).
+    /// is going back (the tap was part of a back swipe), and when the finger
+    /// moved on the screen (a swipe that started on the control — the zoom
+    /// transition's swipe back to Home isn't seen by BackGesture; TouchTracker).
     private func tapped(_ f: URL, _ control: String) {
         if pageLeaving || BackGesture.justStarted {
             dlog("nav", "title page: \(control) ignored (page going back)")
+            return
+        }
+        let moved = TouchTracker.recentTravel
+        if moved > TouchTracker.tapSlop {
+            dlog("nav", "title page: \(control) ignored (the finger moved \(Int(moved)) pt: a swipe, not a tap)")
             return
         }
         dlog("nav", "title page: \(control) → play \(f.lastPathComponent)")
@@ -547,6 +554,7 @@ struct BackSwipeProbe: UIViewRepresentable {
         private var watched: [UIGestureRecognizer] = []
         override func didMoveToWindow() {
             super.didMoveToWindow()
+            if let w = window { TouchTracker.install(on: w) }
             guard window != nil, watched.isEmpty else { return }
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }

@@ -680,6 +680,52 @@ final class PanelUITests: XCTestCase {
         sleep(1)
     }
 
+    /// 26 Oct device recording: a swipe that started on an episode row played
+    /// the episode while the page zoomed back to Home. Swipes right, down and
+    /// diagonally from an episode row: the player must never open. The app
+    /// log says when a swipe would have counted as a tap ("ignored (the
+    /// finger moved …").
+    func test36SwipeFromEpisodeRow() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-heroView", "details"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+        var played = 0, wentBack = 0
+        let moves: [(CGFloat, CGFloat, XCUIGestureVelocity)] = [(120, 0, .fast), (220, 0, .fast), (0, 180, .fast), (0, 320, .fast),
+                                                               (160, 160, .fast), (60, 0, .default), (220, 40, .default)]
+        for (i, (dx, dy, speed)) in moves.enumerated() {
+            if !app.buttons["Back"].exists {
+                let f = app.staticTexts["Lab Show"].firstMatch.frame
+                app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
+                XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open (\(i))")
+                sleep(2)
+            }
+            let ep = app.buttons["ep:Lab Show S01E02.mp4"]
+            guard ep.waitForExistence(timeout: 5) else { XCTFail("episode row not found (\(i))"); return }
+            let f = ep.frame
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            let from = origin.withOffset(CGVector(dx: f.minX + 40, dy: f.midY))
+            let to = origin.withOffset(CGVector(dx: f.minX + 40 + dx, dy: f.midY + dy))
+            from.press(forDuration: 0.01, thenDragTo: to, withVelocity: speed, thenHoldForDuration: 0)
+            sleep(3)
+            let close = app.buttons["Close player"]
+            let back = !app.buttons["Back"].exists
+            if close.exists {
+                played += 1
+                print("SWIPEROW \(i) (\(Int(dx)),\(Int(dy))) → the player opened")
+                close.tap(); sleep(3)
+            } else {
+                print("SWIPEROW \(i) (\(Int(dx)),\(Int(dy))) → no playback, page \(back ? "went back" : "stayed")")
+            }
+            if back { wentBack += 1 }
+        }
+        print("SWIPEROW played \(played)/\(moves.count), went back \(wentBack)")
+        XCTAssertEqual(played, 0, "a swipe starting on an episode row started playback")
+    }
+
     /// Measurement only (app log, "relay lab"): menus opened right after a
     /// close and switched while open, driven from inside the app; with the
     /// relay anchored to the button's rectangle, to the bar item, and off.
