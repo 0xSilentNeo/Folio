@@ -143,7 +143,7 @@ struct TitleHeroView: View {
                     }
                     titleBlock.padding(.bottom, 6)
                 }
-                .padding(.leading, wide ? 28 : 20)
+                .padding(.leading, size.width > 700 ? 28 : 20)
                 .padding(.trailing, 20)
         }
     }

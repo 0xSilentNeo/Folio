@@ -104,7 +104,7 @@ struct MetaDetailView: View {
                     }
                     titleBlock.padding(.bottom, 6)
                 }
-                .padding(.leading, wide ? 28 : 16)
+                .padding(.leading, size.width > 700 ? 28 : 16)
                 .padding(.trailing, 16)
         }
     }
