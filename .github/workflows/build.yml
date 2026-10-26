@@ -12,13 +12,19 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-15
+    # iOS 27 SDK (Outplayer 2026.10 is built with Xcode 27; UIKit gives an app the
+    # behaviour of the SDK it was linked against).
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
         run: |
-          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          # Newest released Xcode 27 (by version, not folder name; no betas or RCs), else 26.
+          pick() { for x in "$@"; do [ -d "$x" ] || continue; case "$x" in *beta*|*Beta*|*Release_Candidate*) continue;; esac
+            echo "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$x/Contents/version.plist") $x"; done | sort -V | tail -1 | cut -d' ' -f2-; }
+          XC=$(pick /Applications/Xcode_27*.app)
+          [ -z "$XC" ] && XC=$(pick /Applications/Xcode_26*.app)
           [ -z "$XC" ] && XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
           echo "Using $XC"
           sudo xcode-select -s "$XC/Contents/Developer"

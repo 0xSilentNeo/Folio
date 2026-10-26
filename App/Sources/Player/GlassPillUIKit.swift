@@ -105,8 +105,18 @@ final class PanelPillUIView: UIView {
 /// iOS 26: the three panel buttons as bar button items in a UIToolbar. The
 /// system draws them as one Liquid Glass capsule, and a popover presented
 /// from one of them morphs out of that glass (verified in the pop lab, V7).
+///
+/// 1.16.0: built like Outplayer 2026.10's player toolbar (read from its binary):
+/// each item wraps a plain UIButton (UIBarButtonItem(customView:)), 44 pt square,
+/// 38 pt on iOS 27. Outplayer's other buttons stay on screen while one of them
+/// has its menu open.
 struct PanelToolbarView: UIViewRepresentable {
     @ObservedObject var ui: PlayerUIState
+
+    static var buttonSize: CGFloat {
+        if #available(iOS 27, *) { return 38 }
+        return 44
+    }
 
     func makeUIView(context: Context) -> UIToolbar {
         let bar = UIToolbar()
@@ -120,12 +130,23 @@ struct PanelToolbarView: UIViewRepresentable {
         let items: [(PlayerUIState.Panel, String, String)] = [
             (.tracks, "switch.2", "Tracks"), (.settings, "slider.horizontal.3", "Settings"), (.nowPlaying, "list.bullet", "Now Playing"),
         ]
+        let size = Self.buttonSize
         var barItems: [UIBarButtonItem] = [.flexibleSpace()]
         for (kind, symbol, title) in items {
-            let item = UIBarButtonItem(primaryAction: UIAction(title: title, image: UIImage(systemName: symbol)) { [weak ui] _ in
+            let button = UIButton(type: .system)
+            button.setImage(UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold)), for: .normal)
+            button.tintColor = .label
+            button.accessibilityLabel = title
+            button.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                button.widthAnchor.constraint(equalToConstant: size),
+                button.heightAnchor.constraint(equalToConstant: size),
+            ])
+            button.addAction(UIAction { [weak ui] _ in
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 ui?.toggle(kind)
-            })
+            }, for: .touchUpInside)
+            let item = UIBarButtonItem(customView: button)
             item.accessibilityLabel = title
             ui.barItems[kind] = item
             barItems.append(item)

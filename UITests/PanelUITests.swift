@@ -535,6 +535,66 @@ final class PanelUITests: XCTestCase {
     /// The freeze-log tap sequence with the native morph: it must end on the
     /// last tap's panel and leave the player responsive.
     func test20NativeRapidSwitchReplay() throws { try replay([], native: true) }
+
+    /// 1.16.0, iOS 27 (Outplayer's rules): with a panel fully open, one tap on
+    /// another button opens that panel. Before iOS 27 the tap only closes the
+    /// open panel (as in 1.15 and in Outplayer on iOS 26).
+    func test21NativeSwitchWhileOpen() throws {
+        let app = launchPlayer(native: true)
+        tapsDontWaitForAnimations()
+        let pairs: [(String, String, String, String)] = [
+            ("Tracks", "Audio", "Settings", "Playback"), ("Settings", "Playback", "Now Playing", "NOW PLAYING"),
+            ("Now Playing", "NOW PLAYING", "Tracks", "Audio"),
+        ]
+        var ok = 0
+        for (a, am, b, bm) in pairs {
+            tapPill(app, a)
+            XCTAssertTrue(shows(app, am, within: 4), "\(a) did not open (native)")
+            sleep(2)
+            let t0 = Date()
+            tapPill(app, b)
+            if #available(iOS 27, *) {
+                if shows(app, bm, within: 3) {
+                    ok += 1
+                    print(String(format: "NATIVE OPENSWITCH %@ → %@: showing %.0f ms after the tap", a, b, Date().timeIntervalSince(t0) * 1000))
+                } else { print("NATIVE OPENSWITCH miss \(a) → \(b)") }
+            } else {
+                sleep(2)
+                if !shows(app, am) && !shows(app, bm) { ok += 1 } else { print("NATIVE OPENSWITCH (iOS 26) \(a): not just closed") }
+            }
+            sleep(2)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
+        }
+        print("NATIVE OPENSWITCH \(ok)/\(pairs.count)")
+        XCTAssertEqual(ok, pairs.count)
+    }
+
+    /// 1.16.0, iOS 27: a tap on another button while a panel is still opening
+    /// ends with the second panel on screen (the first goes out, animated).
+    func test22NativeSwitchWhileOpening() throws {
+        let app = launchPlayer(native: true)
+        tapsDontWaitForAnimations()
+        guard #available(iOS 27, *) else { print("NATIVE OPENINGSWITCH skipped before iOS 27"); return }
+        let pairs: [(String, String, String, String)] = [
+            ("Tracks", "Audio", "Settings", "Playback"), ("Settings", "Playback", "Now Playing", "NOW PLAYING"),
+            ("Now Playing", "NOW PLAYING", "Tracks", "Audio"),
+        ]
+        var ok = 0
+        for (a, _, b, bm) in pairs {
+            tapPill(app, a)
+            usleep(250_000)
+            let t0 = Date()
+            tapPill(app, b)
+            if shows(app, bm, within: 3) {
+                ok += 1
+                print(String(format: "NATIVE OPENINGSWITCH %@ → %@: showing %.0f ms after the tap", a, b, Date().timeIntervalSince(t0) * 1000))
+            } else { print("NATIVE OPENINGSWITCH miss \(a) → \(b)") }
+            sleep(2)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
+        }
+        print("NATIVE OPENINGSWITCH \(ok)/\(pairs.count)")
+        XCTAssertEqual(ok, pairs.count)
+    }
 }
 
 /// Discover → title page, the path that crashed 1.12.0 on device. The IMDb

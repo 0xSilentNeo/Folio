@@ -9,13 +9,16 @@ on:
       only:
         description: 'xcodebuild -only-testing filter for uitest modes'
         default: 'GlassPlayerUITests'
+      runner:
+        description: 'Runner: xcode-27 (iOS 27 SDK + simulator) or macos-15 (Xcode 26, iOS 26)'
+        default: 'xcode-27'
 
 permissions:
   contents: write
 
 jobs:
   record:
-    runs-on: macos-15
+    runs-on: ${{ github.event.inputs.runner || 'xcode-27' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -24,10 +27,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode 26
+      - name: Select Xcode
         run: |
-          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          # Newest released Xcode 27 (by version, not folder name; no betas or RCs), else 26.
+          pick() { for x in "$@"; do [ -d "$x" ] || continue; case "$x" in *beta*|*Beta*|*Release_Candidate*) continue;; esac
+            echo "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$x/Contents/version.plist") $x"; done | sort -V | tail -1 | cut -d' ' -f2-; }
+          XC=$(pick /Applications/Xcode_27*.app)
+          [ -z "$XC" ] && XC=$(pick /Applications/Xcode_26*.app)
           [ -z "$XC" ] && XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          echo "Using $XC"
           sudo xcode-select -s "$XC"
           xcodebuild -version
           xcrun simctl list runtimes | grep -i ios || true
