@@ -113,7 +113,7 @@ enum SettingsKey {
             stayLandscape: false,
             controlsWidth: 0.8,
             nativePanelMorph: true,
-            menuRelay: true,
+            menuRelay: false,
             tileArtwork: "poster",
             castPosition: "bottom",
             episodeTitleLanguage: "english",

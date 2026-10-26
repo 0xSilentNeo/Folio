@@ -78,7 +78,6 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
-    @AppStorage(SettingsKey.menuRelay) private var menuRelay = true
     @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
     @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
     @AppStorage(SettingsKey.gestureControl) private var gestures = true
@@ -121,15 +120,13 @@ struct PlaybackSettings: View {
                 if #available(iOS 26.0, *) {
                     Toggle("Native menu morph", isOn: $nativePanelMorph)
                 }
-                if #available(iOS 27.0, *) {
-                    if nativePanelMorph { Toggle("Next menu without waiting", isOn: $menuRelay) }
-                }
+
                 LabeledContent("Controls width") {
                     Slider(value: $controlsWidth, in: 0.6...1.0, step: 0.05).frame(maxWidth: 170)
                     Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
                 }
             } header: { Text("Player") } footer: {
-                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation). Off: the app's own glass, which can be interrupted at any moment. Next menu without waiting: iOS keeps a closed menu busy for about a second after it disappears; with this on, the next menu opens straight away instead (test setting). Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
+                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation). Off: the app's own glass, which can be interrupted at any moment. Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
             }
             Section("Progress bar") {
                 Picker("Chapter markers", selection: $bar.markerStyle) {
