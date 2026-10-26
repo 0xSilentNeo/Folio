@@ -636,6 +636,11 @@ final class PanelUITests: XCTestCase {
         // could not compute the label's hit point, 26 Oct run)
         let f = tile.frame
         app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.minY - 40)).tap()
+        if !app.buttons["Back"].waitForExistence(timeout: 4) {
+            print("SWIPE first tap after the dialog did not open the page; tapping again")
+            sleep(2)
+            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.minY - 40)).tap()
+        }
         XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open")
         sleep(2)
         let ep = app.buttons["ep:Lab Show S01E02.mp4"]

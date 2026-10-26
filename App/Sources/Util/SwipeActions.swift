@@ -159,6 +159,7 @@ struct SwipeTile<Content: View>: View {
     }
 
     private func ended(_ t: CGFloat, _ velocity: CGFloat) {
+        dlog("ui", "swipe tile \(id): ended at \(Int(t)) pt, \(Int(velocity)) pt/s (\(isOpen ? "open" : "closed"))")
         withAnimation(.snappy(duration: 0.25)) {
             drag = 0
             if isOpen {

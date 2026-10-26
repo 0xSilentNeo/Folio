@@ -342,7 +342,7 @@ struct HomeView: View {
     private func groupLink<L: View>(_ g: LibraryGroup, @ViewBuilder label: () -> L) -> some View {
         Group {
             if opensPage(g) {
-                Button { path.append(LibraryRoute.group(g.id)) } label: { label() }
+                Button { dlog("nav", "home: open \(g.title)"); path.append(LibraryRoute.group(g.id)) } label: { label() }
             } else {
                 Button { playLocal(g.nextUp) } label: { label() }
             }
