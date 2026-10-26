@@ -69,10 +69,11 @@ jobs:
           xcrun simctl list devicetypes -j > devicetypes.json
           if command -v jq >/dev/null; then
             RT=$(jq -r '[.runtimes[] | select(.platform=="iOS" and .isAvailable)] | sort_by(.version | split(".") | map(tonumber)) | last | .identifier' runtimes.json)
-            DT=$(jq -r '[.devicetypes[] | select((.name|startswith("iPhone 1")) and (.name|contains("Pro")) and ((.name|contains("Max"))|not))] | last | .identifier' devicetypes.json)
+            # A device type this runtime supports: the newest "iPhone NN Pro" (not Max).
+            DT=$(jq -r --arg rt "$RT" '.runtimes[] | select(.identifier==$rt) | .supportedDeviceTypes | map(select(.name|test("^iPhone [0-9]+ Pro$"))) | sort_by(.name | capture("(?<n>[0-9]+)").n | tonumber) | last | .identifier' runtimes.json)
           else
             RT=$(python3 -c 'import json,sys; r=[x for x in json.load(open("runtimes.json"))["runtimes"] if x["platform"]=="iOS" and x["isAvailable"]]; r.sort(key=lambda x:[int(p) for p in x["version"].split(".")]); print(r[-1]["identifier"])')
-            DT=$(python3 -c 'import json; d=[x for x in json.load(open("devicetypes.json"))["devicetypes"] if x["name"].startswith("iPhone 1") and "Pro" in x["name"] and "Max" not in x["name"]]; print(d[-1]["identifier"])')
+            DT=$(python3 -c 'import json,re,sys; rt=[x for x in json.load(open("runtimes.json"))["runtimes"] if x["identifier"]==sys.argv[1]][0]; d=[x for x in rt["supportedDeviceTypes"] if re.match(r"^iPhone \d+ Pro$", x["name"])]; d.sort(key=lambda x:int(re.search(r"\d+",x["name"]).group())); print(d[-1]["identifier"])' "$RT")
           fi
           note "runtime=$RT devicetype=$DT"
           UDID=$(xcrun simctl create lab "$DT" "$RT") || { note "create failed ($?)"; exit 1; }
