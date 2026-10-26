@@ -646,6 +646,28 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(ok, pairs.count)
     }
 
+    /// The relay layer (PanelRelay) switched on: does UIKit present from it? (lab)
+    func test23NativeSwitchRelay() throws {
+        let app = launchPlayer(["-menuRelay", "YES"], native: true)
+        tapsDontWaitForAnimations()
+        let pairs: [(String, String, String, String)] = [
+            ("Tracks", "Audio", "Settings", "Playback"), ("Settings", "Playback", "Now Playing", "NOW PLAYING"),
+        ]
+        for (a, am, b, bm) in pairs {
+            tapPill(app, a)
+            XCTAssertTrue(shows(app, am, within: 4), "\(a) did not open")
+            sleep(2)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()   // close
+            usleep(500_000)                                                         // visibly gone, still "presented"
+            let t0 = Date()
+            tapPill(app, b)
+            let ok = shows(app, bm, within: 4)
+            print(String(format: "RELAY %@ after closing %@: %@ %.0f ms after the tap", b, a, ok ? "showing" : "missing", Date().timeIntervalSince(t0) * 1000))
+            sleep(2)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
+        }
+    }
+
     /// 1.16.0, iOS 27: a tap on another button while a panel is still opening
     /// ends with the second panel on screen (the first goes out, animated).
     func test22NativeSwitchWhileOpening() throws {

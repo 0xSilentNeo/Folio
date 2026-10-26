@@ -234,6 +234,17 @@ struct StreamsView: View {
                     ForEach(g.streams) { s in
                         Button { play(s, from: g.addon) } label: { StreamRow(stream: s) }
                             .disabled(!s.isPlayable || starting)
+                            .swipeActions(edge: .trailing) {
+                                if s.isPlayable {
+                                    Button { download(s) } label: { Label("Download", systemImage: "arrow.down.circle") }.tint(Theme.accent)
+                                }
+                            }
+                            .contextMenu {
+                                if s.isPlayable {
+                                    Button { play(s, from: g.addon) } label: { Label("Play", systemImage: "play") }
+                                    Button { download(s) } label: { Label("Download", systemImage: "arrow.down.circle") }
+                                }
+                            }
                     }
                     if g.streams.isEmpty && g.error == nil && !loading {
                         Text("No streams").font(.caption).foregroundStyle(.secondary)
@@ -246,6 +257,14 @@ struct StreamsView: View {
             }
         }
         .overlay { if starting { ProgressView().controlSize(.large).padding(20).glass() } }
+        .overlay(alignment: .bottom) {
+            if let note = downloadNote {
+                Text(note).font(.footnote.weight(.semibold)).multilineTextAlignment(.center)
+                    .padding(.horizontal, 16).padding(.vertical, 10).glass(cornerRadius: 18)
+                    .padding(.bottom, 24).padding(.horizontal, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         .brandListBackground()
         .navigationTitle(video?.label ?? meta.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -272,6 +291,41 @@ struct StreamsView: View {
             }
         }
         loading = false
+    }
+
+    @State private var downloadNote: String?
+
+    /// Download instead of watch (1.17.0): the stream's file goes into the
+    /// library under the title's name, through the Downloads queue.
+    private func download(_ s: AddonStream) {
+        guard let raw = s.url, let u = URL(string: raw), u.scheme?.lowercased().hasPrefix("http") == true else {
+            show("Only direct links can be downloaded.")
+            return
+        }
+        let name = Self.fileName(for: s, meta: meta, video: video, url: u)
+        let added = DownloadManager.shared.enqueue(stream: u, fileName: name, package: meta.name,
+                                                   expected: Int64(s.behaviorHints?.videoSize ?? 0),
+                                                   headers: s.behaviorHints?.proxyHeaders?.request ?? [:])
+        show(added ? "Downloading \(name)" : "Already in Downloads")
+    }
+
+    private func show(_ note: String) {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { downloadNote = note }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            withAnimation(.easeOut(duration: 0.25)) { if downloadNote == note { downloadNote = nil } }
+        }
+    }
+
+    /// The addon's own file name when it gives one (release names keep the
+    /// library's episode matching), else "Title S01E02.<ext>".
+    static func fileName(for s: AddonStream, meta: MetaItem, video: MetaVideo?, url: URL) -> String {
+        if let f = s.behaviorHints?.filename?.trimmingCharacters(in: .whitespacesAndNewlines), !f.isEmpty, TitleParser.isMedia(f) {
+            return f.replacingOccurrences(of: "/", with: "-")
+        }
+        let ext = TitleParser.isMedia(url.lastPathComponent) ? url.pathExtension : "mkv"
+        var base = meta.name
+        if let v = video, let se = v.season, let ep = v.episode { base += String(format: " S%02dE%02d", se, ep) }
+        return base.replacingOccurrences(of: "/", with: "-") + "." + ext
     }
 
     private func context(for v: MetaVideo?) -> PlayContext {

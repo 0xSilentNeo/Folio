@@ -450,7 +450,8 @@ final class PanelPresenter {
                   vc.presentingViewController == nil, !vc.isBeingPresented else { return }
             dlog("ui", "panel: \(req.kind) was not presented; retrying")
             if target !== host {
-                dlog("ui/error", "panel: the relay layer was refused; panels wait for the last one again")
+                let w = target.view.window
+                dlog("ui/error", "panel: the relay layer was refused (relay window=\(w.map { "\(type(of: $0)) hidden=\($0.isHidden) level=\($0.windowLevel.rawValue)" } ?? "none") presented=\(target.presentedViewController.map { "\(type(of: $0))" } ?? "nil") source window=\(vc.popoverPresentationController?.sourceItem.map { "\(type(of: $0))" } ?? "-")); panels wait for the last one again")
                 PanelRelay.shared.refused = true
                 PanelRelay.shared.hideIfIdle()
             }
@@ -575,7 +576,7 @@ final class PanelRelay {
     /// presentation from this layer (a popover whose bar item lives in another
     /// window), and the panel fell back to waiting. Kept for the lab only.
     static var enabled: Bool {
-        !shared.refused && (UserDefaults.standard.object(forKey: SettingsKey.menuRelay) as? Bool ?? false)
+        !shared.refused && UserDefaults.standard.bool(forKey: SettingsKey.menuRelay)
     }
     /// UIKit refused a presentation from the relay: don't use it again this session.
     var refused = false

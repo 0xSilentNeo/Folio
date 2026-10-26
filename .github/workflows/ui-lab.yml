@@ -119,7 +119,7 @@ jobs:
             sleep 42
             [ "${{ matrix.variant }}" = "names" ] && sleep 150   # IMDb lookups through the web view are slow in CI
           fi
-          xcrun simctl spawn "$UDID" log show --last 3m --predicate 'process == "GlassPlayer" AND (messageType == error OR messageType == fault OR eventMessage CONTAINS "[lab]" OR eventMessage CONTAINS "[av]" OR eventMessage CONTAINS "[ui]" OR eventMessage CONTAINS "[player")' --style compact > lab/console.log 2>/dev/null || true
+          xcrun simctl spawn "$UDID" log show --last 6m --predicate 'process == "GlassPlayer" AND (messageType == error OR messageType == fault OR eventMessage CONTAINS "[lab]" OR eventMessage CONTAINS "[av]" OR eventMessage CONTAINS "[ui]" OR eventMessage CONTAINS "[player" OR eventMessage CONTAINS[c] "present" OR eventMessage CONTAINS[c] "popover")' --style compact > lab/console.log 2>/dev/null || true
           CONT=$(xcrun simctl get_app_container "$UDID" dev.silentneo.glassplayer data || true)
           [ -n "$CONT" ] && find "$CONT" -path "*diagnostics*" -name "*.log" -exec cp {} lab/ \; || true
           mkdir -p lab/crashes && cp ~/Library/Logs/DiagnosticReports/*GlassPlayer* lab/crashes/ 2>/dev/null || true
