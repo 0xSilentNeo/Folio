@@ -678,6 +678,22 @@ final class PanelUITests: XCTestCase {
         sleep(1)
     }
 
+    /// Measurement only (app log, "relay lab"): menus opened right after a
+    /// close and switched while open, driven from inside the app; with the
+    /// relay anchored to the button's rectangle, to the bar item, and off.
+    func test33RelayLabRect() throws {
+        _ = launchPlayer(["-relayLab", "-menuRelay", "YES", "-relaySource", "rect"], native: true, captureNow: false)
+        sleep(30)
+    }
+    func test34RelayLabItem() throws {
+        _ = launchPlayer(["-relayLab", "-menuRelay", "YES", "-relaySource", "item"], native: true, captureNow: false)
+        sleep(30)
+    }
+    func test35RelayLabOff() throws {
+        _ = launchPlayer(["-relayLab", "-menuRelay", "NO"], native: true, captureNow: false)
+        sleep(30)
+    }
+
     /// Measurement only (results in the app log): the toolbar width iOS needs
     /// for the three panel buttons, and where its glass sits.
     func test30ToolbarProbe() throws {
