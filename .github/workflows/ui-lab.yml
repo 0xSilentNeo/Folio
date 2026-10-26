@@ -63,14 +63,25 @@ jobs:
       - name: Boot simulator
         id: sim
         run: |
-          RT=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x["platform"]=="iOS" and x["isAvailable"]]; r.sort(key=lambda x:[int(p) for p in x["version"].split(".")]); print(r[-1]["identifier"])')
-          DT=$(xcrun simctl list devicetypes -j | python3 -c 'import json,sys; d=[x for x in json.load(sys.stdin)["devicetypes"] if x["name"].startswith("iPhone 1") and "Pro" in x["name"] and "Max" not in x["name"]]; print(d[-1]["identifier"])')
-          echo "runtime=$RT devicetype=$DT"
-          UDID=$(xcrun simctl create lab "$DT" "$RT")
-          xcrun simctl boot "$UDID"
-          xcrun simctl bootstatus "$UDID" -b
-          open -a Simulator --args -CurrentDeviceUDID "$UDID"
+          note() { echo "::notice title=sim::$*"; }
+          note "python3: $(command -v python3 || echo none) jq: $(command -v jq || echo none)"
+          xcrun simctl list runtimes -j > runtimes.json
+          xcrun simctl list devicetypes -j > devicetypes.json
+          if command -v jq >/dev/null; then
+            RT=$(jq -r '[.runtimes[] | select(.platform=="iOS" and .isAvailable)] | sort_by(.version | split(".") | map(tonumber)) | last | .identifier' runtimes.json)
+            DT=$(jq -r '[.devicetypes[] | select((.name|startswith("iPhone 1")) and (.name|contains("Pro")) and ((.name|contains("Max"))|not))] | last | .identifier' devicetypes.json)
+          else
+            RT=$(python3 -c 'import json,sys; r=[x for x in json.load(open("runtimes.json"))["runtimes"] if x["platform"]=="iOS" and x["isAvailable"]]; r.sort(key=lambda x:[int(p) for p in x["version"].split(".")]); print(r[-1]["identifier"])')
+            DT=$(python3 -c 'import json; d=[x for x in json.load(open("devicetypes.json"))["devicetypes"] if x["name"].startswith("iPhone 1") and "Pro" in x["name"] and "Max" not in x["name"]]; print(d[-1]["identifier"])')
+          fi
+          note "runtime=$RT devicetype=$DT"
+          UDID=$(xcrun simctl create lab "$DT" "$RT") || { note "create failed ($?)"; exit 1; }
+          note "created $UDID"
+          xcrun simctl boot "$UDID" || { note "boot failed ($?)"; exit 1; }
+          xcrun simctl bootstatus "$UDID" -b || note "bootstatus returned $?"
+          open -a Simulator --args -CurrentDeviceUDID "$UDID" || note "open Simulator returned $?"
           sleep 15
+          note "booted $UDID"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
       - name: Install, record, drive
