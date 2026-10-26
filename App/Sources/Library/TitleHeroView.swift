@@ -33,6 +33,8 @@ struct TitleHeroView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var confirmDelete = false
+    /// An episode whose Delete was swiped: asks first.
+    @State private var pendingDelete: URL?
     @State private var season: Int?
 
     /// A series page (all episodes merged) or a single file.
@@ -138,6 +140,15 @@ struct TitleHeroView: View {
         .confirmationDialog("Delete this file from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { local.delete(file); dismiss() }
         }
+        .confirmationDialog(pendingDelete.map { "Delete \(TitleParser.tag(TitleParser.parse($0.lastPathComponent)) ?? $0.lastPathComponent)?" } ?? "",
+                            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
+                            titleVisibility: .visible, presenting: pendingDelete) { f in
+            Button("Delete", role: .destructive) {
+                let last = siblings.count <= 1
+                local.delete(f)
+                if last { dismiss() }
+            }
+        }
     }
 
     // MARK: Pieces
@@ -220,7 +231,13 @@ struct TitleHeroView: View {
                 }
                 .onAppear { if season == nil { season = parsed.season ?? seasons[0] } }
             }
-            LibraryList(files: shownEpisodes, mode: LibraryViewMode(rawValue: viewMode) ?? .details, current: file, group: group) { tapped($0, "episode row") }
+            LibraryList(files: shownEpisodes, mode: LibraryViewMode(rawValue: viewMode) ?? .details, current: file, group: group,
+                        swipe: { f in
+                            [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = f },
+                             history.isWatched(f)
+                                ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched([f], false) }
+                                : SwipeAction(title: "Watched", icon: "eye", tint: Theme.accent) { history.setWatched([f], true) }]
+                        }) { tapped($0, "episode row") }
         }
         .padding(.top, 10)
     }
@@ -329,9 +346,12 @@ struct LibraryList: View {
     let mode: LibraryViewMode
     var current: URL? = nil
     var group: LibraryGroup? = nil
+    /// Actions revealed by swiping a row to the left (List and Details views).
+    var swipe: ((URL) -> [SwipeAction])? = nil
     let play: (URL) -> Void
     @ObservedObject private var history = HistoryStore.shared
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
+    @State private var openRow: String?
 
     var body: some View {
         if mode == .grid {
@@ -342,7 +362,13 @@ struct LibraryList: View {
             }
         } else {
             LazyVStack(spacing: mode == .details ? 12 : 4) {
-                ForEach(files, id: \.self) { f in item(f) { row(f) } }
+                ForEach(files, id: \.self) { f in
+                    if let swipe {
+                        SwipeRow(id: f.path, openID: $openRow, actions: swipe(f)) { item(f) { row(f) } }
+                    } else {
+                        item(f) { row(f) }
+                    }
+                }
             }
         }
     }

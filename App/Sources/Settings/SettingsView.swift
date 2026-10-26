@@ -80,6 +80,7 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
     @AppStorage(SettingsKey.menuRelay) private var menuRelay = true
+    @AppStorage(SettingsKey.prepareNext) private var prepareNext = true
     @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
     @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
     @AppStorage(SettingsKey.gestureControl) private var gestures = true
@@ -87,66 +88,111 @@ struct PlaybackSettings: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Resume where I left off", isOn: $resume)
-                Toggle("Play next file automatically", isOn: $autoplayNext)
-                Toggle("Up Next card at the credits", isOn: $upNext)
-                Toggle("Open in landscape", isOn: $landscapeOnOpen)
-                Toggle("Stay in landscape", isOn: $stayLandscape)
-                Toggle("Keep audio playing in background", isOn: $backgroundAudio)
-            } footer: {
-                Text("Stay in landscape: playback starts in landscape and stays there when you turn the phone upright (it still flips between the two landscape sides).")
+                Explained("Every video starts where you stopped it last time.") {
+                    Toggle("Resume where I left off", isOn: $resume)
+                }
+                Explained("When an episode ends, or the Up Next countdown runs out, the next one in the list starts.") {
+                    Toggle("Play next file automatically", isOn: $autoplayNext)
+                }
+                Explained("A card with the next episode appears when the credits start (from the file's chapters or online skip data), otherwise 30 seconds before the end. It counts down only when nothing is known to follow the credits.") {
+                    Toggle("Up Next card at the credits", isOn: $upNext)
+                }
+                Explained("For addon streams: near the end of an episode, the next one's stream is found and starts loading, so Play on the Up Next card starts it right away. This opens the next episode's link early, so your debrid service adds that episode even if you don't watch it.") {
+                    Toggle("Get the next episode ready", isOn: $prepareNext)
+                }
+            }
+            Section {
+                Explained("The screen turns to landscape when a landscape video starts.") {
+                    Toggle("Open in landscape", isOn: $landscapeOnOpen)
+                }
+                Explained("Playback stays in landscape even when you hold the phone upright (it still flips between the two landscape sides).") {
+                    Toggle("Stay in landscape", isOn: $stayLandscape)
+                }
+                Explained("The sound keeps playing when you leave the app or lock the phone; the picture comes back when you return.") {
+                    Toggle("Keep audio playing in background", isOn: $backgroundAudio)
+                }
             }
             Section("Gestures") {
-                Picker("Forward skip", selection: $seekStep) {
-                    ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
+                Explained("How far a double-tap on the right side of the video and the forward button jump.") {
+                    Picker("Forward skip", selection: $seekStep) {
+                        ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
+                    }
                 }
-                Picker("Backward skip", selection: $seekBackStep) {
-                    ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
+                Explained("How far a double-tap on the left side and the back button jump.") {
+                    Picker("Backward skip", selection: $seekBackStep) {
+                        ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
+                    }
                 }
-                Toggle("Swipe for seek, volume & brightness", isOn: $gestures)
-                Toggle("Hold to speed up", isOn: $holdToSpeed)
+                Explained("Swipe sideways to scrub; swipe up or down along the left edge for brightness and along the right edge for volume.") {
+                    Toggle("Swipe for seek, volume & brightness", isOn: $gestures)
+                }
+                Explained("Press and hold the video to play faster until you let go.") {
+                    Toggle("Hold to speed up", isOn: $holdToSpeed)
+                }
                 if holdToSpeed {
                     Picker("Hold speed", selection: $holdSpeedValue) {
                         ForEach([1.5, 2.0, 2.5, 3.0, 4.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
                     }
                 }
-                Picker("Default speed", selection: $defaultSpeed) {
-                    ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
+                Explained("The speed every video starts at.") {
+                    Picker("Default speed", selection: $defaultSpeed) {
+                        ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
+                    }
                 }
             }
-            Section {
-                Picker("Playlist names", selection: $playlistNames) {
-                    Text("Episode number & title").tag("episode")
-                    Text("File name").tag("filename")
+            Section("Player") {
+                Explained("How episodes are listed in the player's Now Playing menu.") {
+                    Picker("Playlist names", selection: $playlistNames) {
+                        Text("Episode number & title").tag("episode")
+                        Text("File name").tag("filename")
+                    }
                 }
                 if #available(iOS 26.0, *) {
-                    Toggle("Native menu morph", isOn: $nativePanelMorph)
+                    Explained("The player's menus grow out of their button with Apple's own glass animation. Off: the app's own glass menus, which can be interrupted at any moment.") {
+                        Toggle("Native menu morph", isOn: $nativePanelMorph)
+                    }
                 }
                 if #available(iOS 27.0, *) {
-                    if nativePanelMorph { Toggle("Next menu without waiting", isOn: $menuRelay) }
+                    if nativePanelMorph {
+                        Explained("iOS keeps a closed menu busy for about a second after it has gone. With this on, the next menu opens straight away instead of waiting. A test setting: turn it off to compare.") {
+                            Toggle("Next menu without waiting", isOn: $menuRelay)
+                        }
+                    }
                 }
-                LabeledContent("Controls width") {
-                    Slider(value: $controlsWidth, in: 0.6...1.0, step: 0.05).frame(maxWidth: 170)
-                    Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
+                Explained("How much of the screen's width the controls use in landscape.") {
+                    LabeledContent("Controls width") {
+                        Slider(value: $controlsWidth, in: 0.6...1.0, step: 0.05).frame(maxWidth: 170)
+                        Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
+                    }
                 }
-            } header: { Text("Player") } footer: {
-                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation). Off: the app's own glass, which can be interrupted at any moment. Next menu without waiting: iOS keeps a closed menu busy for about a second after it disappears; with this on, the next menu opens straight away instead (test setting). Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
             }
             Section("Progress bar") {
-                Picker("Chapter markers", selection: $bar.markerStyle) {
-                    Text("Ticks").tag("ticks"); Text("Dots").tag("dots"); Text("Segments").tag("segments"); Text("Hidden").tag("none")
+                Explained("How chapters show on the progress bar.") {
+                    Picker("Chapter markers", selection: $bar.markerStyle) {
+                        Text("Ticks").tag("ticks"); Text("Dots").tag("dots"); Text("Segments").tag("segments"); Text("Hidden").tag("none")
+                    }
                 }
                 Picker("Marker colour", selection: $bar.markerColor) {
                     Text("White").tag("white"); Text("Pink").tag("accent"); Text("Yellow").tag("yellow"); Text("Cyan").tag("cyan")
                 }
-                Toggle("Chapter name while scrubbing", isOn: $bar.showChapterTitle)
-                Toggle("Show skip segments", isOn: $bar.showSkipSegments)
+                Explained("While you drag along the progress bar, the name of the chapter under your finger shows.") {
+                    Toggle("Chapter name while scrubbing", isOn: $bar.showChapterTitle)
+                }
+                Explained("Intros, credits, recaps and previews are marked on the progress bar.") {
+                    Toggle("Show skip segments", isOn: $bar.showSkipSegments)
+                }
             }
-            Section {
-                Toggle("Picture in Picture", isOn: $pipEnabled)
-                Toggle("Start automatically when leaving", isOn: $pipAuto).disabled(!pipEnabled)
-                Toggle("Back to the player when you open the app", isOn: $pipReturnOnOpen).disabled(!pipEnabled)
-            } header: { Text("Picture in Picture") }
+            Section("Picture in Picture") {
+                Explained("The video can keep playing in a small floating window over other apps.") {
+                    Toggle("Picture in Picture", isOn: $pipEnabled)
+                }
+                Explained("Going to the Home Screen while a video plays opens Picture in Picture by itself.") {
+                    Toggle("Start automatically when leaving", isOn: $pipAuto).disabled(!pipEnabled)
+                }
+                Explained("Opening the app while Picture in Picture is up closes the small window and carries on in the player.") {
+                    Toggle("Back to the player when you open the app", isOn: $pipReturnOnOpen).disabled(!pipEnabled)
+                }
+            }
         }
         .brandListBackground()
         .navigationTitle("Playback")
@@ -176,17 +222,25 @@ struct SubtitleAudioSettings: View {
                 } label: {
                     LabeledContent("Preferred audio language", value: PlaybackLanguage.summary(audioLangs))
                 }
-                Toggle("Surround & Spatial Audio", isOn: $surround)
-                Picker("Downmix volume", selection: $downmixNormalize) {
-                    Text("Original").tag(false); Text("Normalized").tag(true)
+                Explained("Plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't used. Off: always stereo.") {
+                    Toggle("Surround & Spatial Audio", isOn: $surround)
                 }
-                Toggle("LFE in stereo downmix", isOn: $lfe)
-            } header: { Text("Audio") } footer: {
-                Text("Surround: plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't rendered.")
-            }
+                Explained(downmixNormalize
+                          ? "Normalized: surround sound mixed down to stereo never distorts, but plays quieter."
+                          : "Original: surround sound mixed down to stereo keeps its full loudness; very loud scenes can distort.") {
+                    Picker("Downmix volume", selection: $downmixNormalize) {
+                        Text("Original").tag(false); Text("Normalized").tag(true)
+                    }
+                }
+                Explained("Mixes the subwoofer channel into stereo, for more bass when surround sound plays on headphones or two speakers.") {
+                    Toggle("LFE in stereo downmix", isOn: $lfe)
+                }
+            } header: { Text("Audio") }
             Section {
-                Picker("Show subtitles", selection: $subtitlesDefault) {
-                    Text("On").tag("on"); Text("Off").tag("off")
+                Explained("Whether a subtitle track is turned on when a video starts. You can always switch in the player's Tracks menu.") {
+                    Picker("Show subtitles", selection: $subtitlesDefault) {
+                        Text("On").tag("on"); Text("Off").tag("off")
+                    }
                 }
                 NavigationLink {
                     LanguageListEditor(title: "Subtitle Languages",
@@ -196,17 +250,19 @@ struct SubtitleAudioSettings: View {
                     LabeledContent("Preferred subtitle language", value: PlaybackLanguage.summary(subLangs))
                 }
                 .disabled(subtitlesDefault == "off")
-            } header: { Text("Subtitles") } footer: {
-                Text("Show subtitles: whether a subtitle track is turned on when a video starts.")
-            }
+            } header: { Text("Subtitles") }
             Section("Subtitle style") {
                 LabeledContent("Size") {
                     Slider(value: $subScale, in: 0.5...2.5, step: 0.05).frame(maxWidth: 180)
                     Text("\(Int(subScale * 100))%").monospacedDigit().frame(width: 48, alignment: .trailing)
                 }
-                Stepper("Position  \(subPos)", value: $subPos, in: 50...150)
+                Explained("100 is the normal place near the bottom; lower numbers move subtitles up, higher numbers further down.") {
+                    Stepper("Position  \(subPos)", value: $subPos, in: 50...150)
+                }
                 Toggle("Bold", isOn: $subBold)
-                Toggle("Background box", isOn: $subBox)
+                Explained("A dark box behind the text keeps subtitles readable on bright scenes.") {
+                    Toggle("Background box", isOn: $subBox)
+                }
             }
         }
         .brandListBackground()
@@ -228,23 +284,29 @@ struct SkipSettings: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Show Skip button", isOn: $skipEnabled)
-            } footer: {
-                Text("Uses chapters in the file; otherwise IntroDB and TheIntroDB for TV and films (community databases looked up by IMDb id), and AniSkip / Open Anime Timestamps for anime only.")
+                Explained("A Skip button appears during intros, credits, recaps and previews. They come from the file's chapters; otherwise from IntroDB and TheIntroDB for TV and films (community databases looked up by IMDb id), and AniSkip / Open Anime Timestamps for anime.") {
+                    Toggle("Show Skip button", isOn: $skipEnabled)
+                }
             }
             if skipEnabled {
-                Section("Skip automatically") {
+                Section {
                     Toggle("Intro", isOn: $autoIntro)
                     Toggle("Outro / credits", isOn: $autoOutro)
                     Toggle("Recap", isOn: $autoRecap)
                     Toggle("Preview", isOn: $autoPreview)
+                } header: { Text("Skip automatically") } footer: {
+                    Text("Skipped without a tap, once per episode. Seeking back into a part doesn't skip it again.")
                 }
-                Section {
-                    Toggle("Use file chapters", isOn: $useChapters)
-                    Toggle("Add found markers as chapters", isOn: $injectChapters)
-                    Stepper("OAT segment length  \(Int(oatLength)) s", value: $oatLength, in: 60...150, step: 5)
-                } header: { Text("Sources") } footer: {
-                    Text("Added chapters are visible to Lua scripts. Open Anime Timestamps only has start times, so the length is assumed.")
+                Section("Sources") {
+                    Explained("Files that name their chapters (Opening, Ending, Credits…) are skipped by those chapters first.") {
+                        Toggle("Use file chapters", isOn: $useChapters)
+                    }
+                    Explained("Intros and credits found online show as chapters too: on the progress bar, in Now Playing, and to Lua scripts.") {
+                        Toggle("Add found markers as chapters", isOn: $injectChapters)
+                    }
+                    Explained("Open Anime Timestamps only knows where a part starts, so its length is assumed.") {
+                        Stepper("OAT segment length  \(Int(oatLength)) s", value: $oatLength, in: 60...150, step: 5)
+                    }
                 }
             }
         }
