@@ -214,7 +214,9 @@ final class PanelUITests: XCTestCase {
         let e = app.staticTexts[marker]
         let end = Date().addingTimeInterval(t)
         repeat {
-            if e.exists && e.isHittable { return true }
+            // isHittable on an element without a usable frame (mid-transition) is an XCTest
+            // failure in itself ("Activation point invalid"), so check the frame first.
+            if e.exists, !e.frame.isEmpty, app.windows.firstMatch.frame.intersects(e.frame), e.isHittable { return true }
             if t > 0 { usleep(100_000) }
         } while Date() < end
         return false
@@ -475,12 +477,15 @@ final class PanelUITests: XCTestCase {
                 usleep(delay)
                 let t0 = Date()
                 tapPill(app, b)                                        // mid-close
-                if shows(app, bm, within: 3) {
+                // UIKit holds the tap until the close morph is nearly over (iOS 26 and 27
+                // simulators), then the open morph runs: allow both.
+                if shows(app, bm, within: 5) {
                     ok += 1
                     print(String(format: "NATIVE SWITCH %@ → %@ (%d ms into the close): showing %.0f ms after the tap", a, b, delay / 1000, Date().timeIntervalSince(t0) * 1000))
                 } else { print("NATIVE SWITCH miss \(a) → \(b) at \(delay / 1000) ms") }
                 sleep(2)
-                outside.tap(); sleep(2)
+                if shows(app, bm) { outside.tap() }                    // close it (only if open)
+                sleep(2)
             }
         }
         print("NATIVE SWITCH while closing \(ok)/\(total)")
@@ -561,6 +566,8 @@ final class PanelUITests: XCTestCase {
             } else {
                 sleep(2)
                 if !shows(app, am) && !shows(app, bm) { ok += 1 } else { print("NATIVE OPENSWITCH (iOS 26) \(a): not just closed") }
+                sleep(1)
+                continue        // nothing is open: an outside tap would hide the controls
             }
             sleep(2)
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
