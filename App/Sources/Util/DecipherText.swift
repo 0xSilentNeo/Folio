@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Title text that "deciphers" into place: each character starts as a random
 /// glyph and settles to the real one, left to right, over ~0.6 s. Runs once
@@ -140,6 +141,26 @@ struct FlowLayout: Layout {
 /// (1.13.0 placed the row with `.offset`, which per SwiftUI's docs doesn't
 /// change a view's layout, and reserved a fixed 44 pt: extra rows overlapped
 /// the description.)
+/// Title page backdrop size.
+enum HeroMetrics {
+    /// 16:9 of the width on a phone held upright, 360 pt on iPad, and at most
+    /// 60% of the screen's height in landscape. (Until 1.16.0 a phone in
+    /// landscape got 360 pt of a 440 pt-tall screen: a thin, hugely zoomed
+    /// slice of the picture.)
+    static func height(_ size: CGSize) -> CGFloat {
+        let base = size.width > 700 ? 360 : size.width * 9 / 16 + 40
+        return size.width > size.height ? min(base, size.height * 0.6) : base
+    }
+
+    /// Pixel width to fetch a backdrop at: the screen's long side (so it stays
+    /// sharp in landscape), capped. 1.16.0 used IMDb episode stills 480 px
+    /// wide, decoded at most 900 px, stretched over 2868 px in landscape.
+    @MainActor static var pixels: Int {
+        let b = UIScreen.main.nativeBounds
+        return Int(min(2400, max(b.width, b.height)))
+    }
+}
+
 struct HeroHeader<Art: View, Content: View>: View {
     let height: CGFloat
     /// How far the content rises into the backdrop.

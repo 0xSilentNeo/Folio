@@ -28,6 +28,7 @@ struct TitleHeroView: View {
         return m.synopsis
     }
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var confirmDelete = false
     @State private var season: Int?
 
@@ -64,7 +65,7 @@ struct TitleHeroView: View {
             let wide = geo.size.width > 700
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    backdrop(width: geo.size.width, wide: wide)
+                    backdrop(geo.size)
                     VStack(alignment: .leading, spacing: 18) {
                         // Genres above the description (from the title-page mockup).
                         if let g = meta?.genres, !g.isEmpty {
@@ -76,9 +77,9 @@ struct TitleHeroView: View {
                         // Play sits under the description, left-aligned (from the mockup).
                         HStack(spacing: 14) {
                             TiltPlayButton(title: entry?.canResume == true ? "Resume" : "Play",
-                                           subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { play(file) }
+                                           subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { tapped(file, "Play") }
                             if entry?.canResume == true {
-                                Button { restart() } label: {
+                                Button { if !pageLeaving && !BackGesture.justStarted { restart() } } label: {
                                     Label("Start over", systemImage: "arrow.counterclockwise").font(.subheadline.weight(.semibold))
                                         .padding(.horizontal, 16).frame(height: 44).glass(cornerRadius: 22, interactive: true)
                                 }
@@ -110,13 +111,15 @@ struct TitleHeroView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { moreButton } }
+        // Landscape phone: the floating tab bar sat on the title and its details.
+        .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .onAppear {
             dlog("nav", "title page appear \(file.lastPathComponent)")
-            thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true)
+            thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true, hero: HeroMetrics.pixels)
         }
         .onChange(of: file) { _, f in
             // Came back from the player on a later episode: show that one.
-            thumb.load(key: f.path, fileURL: f, artwork: nil, lookupName: f.lastPathComponent, preferMeta: true)
+            thumb.load(key: f.path, fileURL: f, artwork: nil, lookupName: f.lastPathComponent, preferMeta: true, hero: HeroMetrics.pixels)
         }
         .onDisappear { dlog("nav", "title page disappear \(file.lastPathComponent)") }
         .confirmationDialog("Delete this file from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -126,8 +129,8 @@ struct TitleHeroView: View {
 
     // MARK: Pieces
 
-    private func backdrop(width: CGFloat, wide: Bool) -> some View {
-        HeroHeader(height: wide ? 360 : width * 9 / 16 + 40) {
+    private func backdrop(_ size: CGSize) -> some View {
+        HeroHeader(height: HeroMetrics.height(size)) {
             if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
             else { GeneratedArt(seed: title) }
         } content: {
@@ -204,7 +207,7 @@ struct TitleHeroView: View {
                 }
                 .onAppear { if season == nil { season = parsed.season ?? seasons[0] } }
             }
-            LibraryList(files: shownEpisodes, mode: LibraryViewMode(rawValue: viewMode) ?? .details, current: file, group: group) { play($0) }
+            LibraryList(files: shownEpisodes, mode: LibraryViewMode(rawValue: viewMode) ?? .details, current: file, group: group) { tapped($0, "episode row") }
         }
         .padding(.top, 10)
     }
@@ -221,6 +224,19 @@ struct TitleHeroView: View {
     }
 
     // MARK: Actions
+
+    @Environment(\.pageLeaving) private var pageLeaving
+
+    /// A tap on the page's Play / Resume or an episode: ignored while the page
+    /// is going back (the tap was part of a back swipe).
+    private func tapped(_ f: URL, _ control: String) {
+        if pageLeaving || BackGesture.justStarted {
+            dlog("nav", "title page: \(control) ignored (page going back)")
+            return
+        }
+        dlog("nav", "title page: \(control) → play \(f.lastPathComponent)")
+        play(f)
+    }
 
     private func play(_ f: URL) {
         let list = siblings.count > 1 ? siblings : LibraryOrganizer.sorted(local.files)
@@ -433,30 +449,51 @@ struct LibraryRow: View {
 
 /// Logs the navigation controller's back swipe (enabled? did it start?) so a
 /// report shows whether a swipe reached it.
+/// Is a back swipe under way, or did one just start? (1.16.1: a Play tap
+/// that coincides with a back swipe is ignored.)
+@MainActor
+enum BackGesture {
+    static var active = false
+    static var lastBegan = Date.distantPast
+    static var justStarted: Bool { active || Date().timeIntervalSince(lastBegan) < 0.6 }
+}
+
 struct BackSwipeProbe: UIViewRepresentable {
     final class Probe: UIView {
-        private weak var watched: UIGestureRecognizer?
+        private var watched: [UIGestureRecognizer] = []
         override func didMoveToWindow() {
             super.didMoveToWindow()
-            guard window != nil, watched == nil else { return }
+            guard window != nil, watched.isEmpty else { return }
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 var r: UIResponder? = self
                 while let n = r, !(n is UINavigationController) { r = n.next }
                 guard let nav = r as? UINavigationController else { dlog("nav", "back swipe probe: no navigation controller"); return }
                 let g = nav.interactivePopGestureRecognizer
-                var content = "n/a"
+                var content: UIGestureRecognizer?
                 #if compiler(>=6.2)
-                if #available(iOS 26.0, *) { content = nav.interactiveContentPopGestureRecognizer.map { "\($0.isEnabled)" } ?? "nil" }
+                if #available(iOS 26.0, *) { content = nav.interactiveContentPopGestureRecognizer }
                 #endif
-                dlog("nav", "back swipe: edge enabled=\(g?.isEnabled ?? false) content=\(content) pages=\(nav.viewControllers.count) barHidden=\(nav.isNavigationBarHidden)")
-                g?.addTarget(self, action: #selector(self.changed(_:)))
-                self.watched = g
+                dlog("nav", "back swipe: edge enabled=\(g?.isEnabled ?? false) content=\(content.map { "\($0.isEnabled)" } ?? "n/a") pages=\(nav.viewControllers.count) barHidden=\(nav.isNavigationBarHidden)")
+                for r in [g, content].compactMap({ $0 }) where !self.watched.contains(r) {
+                    r.addTarget(self, action: #selector(self.changed(_:)))
+                    self.watched.append(r)
+                }
             }
         }
         @objc func changed(_ g: UIGestureRecognizer) {
-            if g.state == .began || g.state == .ended || g.state == .cancelled || g.state == .failed {
-                dlog("nav", "back swipe state \(g.state.rawValue)")
+            let kind = g === watched.first ? "edge" : "content"
+            switch g.state {
+            case .began:
+                BackGesture.active = true
+                BackGesture.lastBegan = Date()
+                dlog("nav", "back swipe (\(kind)) began")
+            case .changed:
+                BackGesture.active = true
+            case .ended, .cancelled, .failed:
+                BackGesture.active = false
+                dlog("nav", "back swipe (\(kind)) \(g.state == .ended ? "ended" : g.state == .cancelled ? "cancelled" : "failed")")
+            default: break
             }
         }
     }

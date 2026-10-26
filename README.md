@@ -21,7 +21,7 @@
 - **Commands**: run any mpv command from the in-player console, or save buttons for script bindings (`script-binding …`) so touch users can trigger scripts
 - Hardware keyboards are forwarded to mpv, so `input.conf` and script key bindings work on iPad
 
-**Player UI (Outplayer-style, Liquid Glass)**
+**Player UI (Liquid Glass)**
 - Double-tap to seek, swipe to scrub, swipe left/right edge for brightness/volume, pinch to fill, hold for 2× speed
 - Three glass pills (transport · progress · panels); Tracks, Settings and Now Playing panels grow out of their buttons
 - Built-in Anime4K modes (A/B/C, A+A, B+B, C+A; Fast/Balanced/High), Enhanced Quality toggle, audio boost

@@ -238,11 +238,21 @@ extension View {
     func ignoresTapsWhileLeaving() -> some View { modifier(LeaveGuard()) }
 }
 
+private struct PageLeavingKey: EnvironmentKey { static let defaultValue = false }
+extension EnvironmentValues {
+    /// True from the moment a pushed page starts going away (LeaveGuard).
+    var pageLeaving: Bool {
+        get { self[PageLeavingKey.self] }
+        set { self[PageLeavingKey.self] = newValue }
+    }
+}
+
 private struct LeaveGuard: ViewModifier {
     @State private var leaving = false
     func body(content: Content) -> some View {
         content
             .allowsHitTesting(!leaving)
+            .environment(\.pageLeaving, leaving)
             .background(LeavingProbe { leaving = $0 }.frame(width: 0, height: 0).accessibilityHidden(true))
     }
 }

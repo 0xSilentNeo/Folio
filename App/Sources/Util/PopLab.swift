@@ -4,7 +4,7 @@ import UIKit
 /// Controlled experiment for the CI simulator (launch argument `-popLab`):
 /// shows the same small menu presented six different ways, each labelled on
 /// screen, so the screen recording shows which presentation morphs out of its
-/// button the way Outplayer's menus do.
+/// button.
 @MainActor
 enum PopLab {
     static var enabled: Bool { CommandLine.arguments.contains("-popLab") }
@@ -127,7 +127,7 @@ final class PopLabViewController: UIViewController {
         view.addSubview(host.view)
         host.didMove(toParent: self)
 
-        // Toolbar with three bar button items (Outplayer's construction on Liquid Glass).
+        // Toolbar with three bar button items.
         func item(_ symbol: String, _ label: String) -> UIBarButtonItem {
             let i = UIBarButtonItem(primaryAction: UIAction(title: label, image: UIImage(systemName: symbol)) { [weak self] action in
                 guard let self, let it = self.barItems.first(where: { $0.title == label || $0.accessibilityLabel == label }) else { return }

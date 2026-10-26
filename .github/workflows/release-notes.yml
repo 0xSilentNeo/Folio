@@ -1,0 +1,34 @@
+name: Sync release notes
+
+# Rewrites the text of published releases from docs/release-notes/<tag>.md
+# (for corrections to notes that are already out). Assets are not touched.
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Space-separated release tags, e.g. "v1.15.0 v1.16.0" (empty: every tag with a notes file)'
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update release text
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAGS: ${{ github.event.inputs.tags }}
+        run: |
+          [ -n "$TAGS" ] || TAGS=$(ls docs/release-notes | sed -n 's/\.md$//p')
+          for t in $TAGS; do
+            f="docs/release-notes/$t.md"
+            [ -f "$f" ] || { echo "::warning::$t: no notes file"; continue; }
+            if gh release view "$t" >/dev/null 2>&1; then
+              gh release edit "$t" --notes-file "$f" && echo "::notice::$t updated"
+            else
+              echo "::notice::$t: no release"
+            fi
+          done

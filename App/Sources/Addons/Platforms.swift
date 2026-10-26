@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Streaming-service catalogs (what's on Netflix, Prime Video, Max, Disney+…)
-/// from the public "Streaming Catalogs" Stremio addon. Items carry IMDb ids,
+/// from the public "Streaming Catalogs" addon. Items carry IMDb ids,
 /// so details come from IMDb and streams from your stream addons.
 struct StreamingPlatform: Identifiable, Hashable {
     let id: String

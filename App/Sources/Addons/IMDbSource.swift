@@ -431,7 +431,7 @@ enum IMDbSource {
         return found
     }
 
-    /// Episodes of one season as Stremio-style videos (`ttSERIES:season:episode`).
+    /// Episodes of one season as addon-style videos (`ttSERIES:season:episode`).
     /// A season's episodes; titles in English where IMDb only has the
     /// original-language one (Settings → General → Episode titles).
     static func episodes(id: String, season: Int) async -> [MetaVideo] {

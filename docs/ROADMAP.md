@@ -52,7 +52,7 @@ Keep everything a player *needs* free — playback of every format, Liquid Glass
 
 | Pro feature | Why people pay for it |
 |---|---|
-| Unlimited WebDAV / cloud sources (SMB, FTP, Google Drive, OneDrive, Jellyfin/Plex/Emby) | Infuse's model; sources are the sticky part |
+| Unlimited WebDAV / cloud sources (SMB, FTP, Google Drive, OneDrive, Jellyfin/Plex/Emby) | Sources are the sticky part |
 | Trakt sync + watched-state across devices | Ongoing value, hard to replicate |
 | Seek-bar thumbnails & live scrub strip | Visible polish, costs CPU work to build |
 | Anime4K / shader presets per genre, Enhanced Quality profiles | Enthusiast feature |

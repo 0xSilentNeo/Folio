@@ -407,7 +407,7 @@ struct AddonsManagerView: View {
         List {
             Section {
                 HStack {
-                    TextField("https://…/manifest.json or stremio://", text: $url)
+                    TextField("https://…/manifest.json", text: $url)
                         .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
                     Button {
                         Task {
@@ -421,7 +421,7 @@ struct AddonsManagerView: View {
                 if let error { Text(error).font(.caption).foregroundStyle(.orange) }
                 Button("Paste from clipboard") { url = UIPasteboard.general.string ?? "" }
             } header: { Text("Add addon") } footer: {
-                Text("Works with Stremio-protocol addons (Torrentio/Comet/MediaFusion with your debrid key, OpenSubtitles, Kitsu/anime catalogs…). Configure an addon on its website, then paste the manifest link here. Only direct HTTP(S) streams can play; raw torrents need a debrid-configured addon. Titles, posters and ratings come from IMDb; addons only need to provide streams.")
+                Text("Works with addons that have a manifest link (Torrentio/Comet/MediaFusion with your debrid key, OpenSubtitles, Kitsu/anime catalogs…). Configure an addon on its website, then paste the manifest link here. Only direct HTTP(S) streams can play; raw torrents need a debrid-configured addon. Titles, posters and ratings come from IMDb; addons only need to provide streams.")
             }
             Section("Installed") {
                 ForEach(store.addons) { a in

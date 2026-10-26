@@ -12,8 +12,7 @@ permissions:
 
 jobs:
   build:
-    # iOS 27 SDK (Outplayer 2026.10 is built with Xcode 27; UIKit gives an app the
-    # behaviour of the SDK it was linked against).
+    # iOS 27 SDK (UIKit gives an app the behaviour of the SDK it was linked against).
     runs-on: xcode-27
     steps:
       - uses: actions/checkout@v4

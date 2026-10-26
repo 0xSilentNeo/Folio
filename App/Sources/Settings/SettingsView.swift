@@ -78,6 +78,7 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
+    @AppStorage(SettingsKey.menuRelay) private var menuRelay = true
     @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
     @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
     @AppStorage(SettingsKey.gestureControl) private var gestures = true
@@ -120,12 +121,15 @@ struct PlaybackSettings: View {
                 if #available(iOS 26.0, *) {
                     Toggle("Native menu morph", isOn: $nativePanelMorph)
                 }
+                if #available(iOS 27.0, *) {
+                    if nativePanelMorph { Toggle("Next menu without waiting", isOn: $menuRelay) }
+                }
                 LabeledContent("Controls width") {
                     Slider(value: $controlsWidth, in: 0.6...1.0, step: 0.05).frame(maxWidth: 170)
                     Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
                 }
             } header: { Text("Player") } footer: {
-                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation, as in Outplayer); taps wait until it finishes. Off: the app's own glass, which can be interrupted at any moment. Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
+                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation). Off: the app's own glass, which can be interrupted at any moment. Next menu without waiting: iOS keeps a closed menu busy for about a second after it disappears; with this on, the next menu opens straight away instead (test setting). Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
             }
             Section("Progress bar") {
                 Picker("Chapter markers", selection: $bar.markerStyle) {
@@ -225,7 +229,7 @@ struct SkipSettings: View {
             Section {
                 Toggle("Show Skip button", isOn: $skipEnabled)
             } footer: {
-                Text("Uses chapters in the file; otherwise IntroDB and TheIntroDB for TV and films (community databases looked up by IMDb id, the ones Infuse uses), and AniSkip / Open Anime Timestamps for anime only.")
+                Text("Uses chapters in the file; otherwise IntroDB and TheIntroDB for TV and films (community databases looked up by IMDb id), and AniSkip / Open Anime Timestamps for anime only.")
             }
             if skipEnabled {
                 Section("Skip automatically") {
@@ -796,7 +800,7 @@ struct DiscoverSettings: View {
                     Label("Discover uses TMDB instead of IMDb", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.footnote)
                 }
             } header: { Text("TMDB (optional)") } footer: {
-                Text("Optional alternative source (the database Infuse uses). Free for personal use with your own key; leave empty to use IMDb.")
+                Text("Optional alternative source. Free for personal use with your own key; leave empty to use IMDb.")
             }
             Section {
                 Button("Streaming services…") { showPlatforms = true }

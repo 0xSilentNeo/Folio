@@ -123,8 +123,7 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
     override var prefersHomeIndicatorAutoHidden: Bool { true }
     // No edge deferral: deferring makes iOS hold back touches near the screen
     // edges, which delayed or swallowed taps on the bottom-right buttons.
-    // (Outplayer only hides the home indicator, as here.) `-deferEdges` is
-    // for the CI comparison.
+    // The home indicator is only hidden. `-deferEdges` is for the CI comparison.
     override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge {
         CommandLine.arguments.contains("-deferEdges") ? .all : []
     }

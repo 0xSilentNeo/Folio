@@ -206,8 +206,13 @@ final class ThumbLoader: ObservableObject {
     /// - `art: .poster`: the show/film's portrait poster (library tiles). Falls
     ///   back to the backdrop, never to an episode still or a saved frame.
     /// - `art: .wide`: 16:9 art — episode still, then backdrop, then poster.
-    func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool? = nil, art: Art = .wide) {
-        let cacheKey = art == .poster ? key + "|poster" : key
+    /// Pixel width for a title page backdrop (`hero`): the art is fetched and
+    /// decoded at that size instead of tile size.
+    private var hero: Int?
+
+    func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool? = nil, art: Art = .wide, hero: Int? = nil) {
+        self.hero = hero
+        let cacheKey = (art == .poster ? key + "|poster" : key) + (hero.map { "|hero\($0)" } ?? "")
         guard loadedKey != cacheKey else { return }
         loadedKey = cacheKey
         // Poster / episode still first (Settings → Library → Tile artwork);
@@ -242,6 +247,28 @@ final class ThumbLoader: ObservableObject {
         }
     }
 
+    /// Addon items ("type|metaId|videoId"): a 16:9 picture from IMDb by id —
+    /// the episode still, else the title's backdrop — else the given poster.
+    func loadAddonArt(key: String, ref: String, fallback: String?) {
+        let cacheKey = key + "|wide"
+        guard loadedKey != cacheKey else { return }
+        loadedKey = cacheKey
+        if let c = Self.cache.object(forKey: cacheKey as NSString) { image = c; return }
+        Task {
+            let parts = ref.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+            var wide: String?
+            if parts.count >= 3, parts[1].hasPrefix("tt") {
+                let v = parts[2].split(separator: ":")
+                if v.count >= 3, let season = Int(v[1]), let episode = Int(v[2]) {
+                    wide = await IMDbSource.episodes(id: parts[1], season: season).first { $0.episode == episode }?.thumbnail
+                }
+                if wide == nil { wide = await IMDbSource.details(id: parts[1], type: parts[0])?.background }
+            }
+            let pick = wide.flatMap { IMDbSource.sized($0, width: 1280) } ?? fallback
+            if let pick, let u = URL(string: pick) { await fetch(u, cacheKey) }
+        }
+    }
+
     private static func decodeFile(_ url: URL) async -> UIImage? {
         await Task.detached(priority: .userInitiated) {
             guard let d = try? Data(contentsOf: url) else { return nil }
@@ -250,6 +277,11 @@ final class ThumbLoader: ObservableObject {
     }
 
     private func fetch(_ u: URL, _ key: String) async {
+        if let hero {
+            // IMDb serves any width of its images (`._V1_UX…_`); other hosts are left as they are.
+            let big = IMDbSource.sized(u.absoluteString, width: hero).flatMap(URL.init(string:)) ?? u
+            if let img = await ImageCache.shared.image(big, maxPixel: CGFloat(hero)) { set(img, key); return }
+        }
         if let img = await ImageCache.shared.image(u, maxPixel: 900) { set(img, key) }
     }
 

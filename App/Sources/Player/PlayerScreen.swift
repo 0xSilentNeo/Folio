@@ -115,7 +115,7 @@ struct PlayerScreen: View {
                         .onTapGesture(coordinateSpace: .global) { point in
                             let spot = ui.pillFrames.first(where: { $0.value.insetBy(dx: -6, dy: -8).contains(point) })?.key
                             if ui.panel != nil, PanelPresenter.interruptible, let kind = spot {
-                                // iOS 27 (as in Outplayer): another button opens its panel at
+                                // iOS 27: another button opens its panel at
                                 // once; the open one's own button closes it.
                                 dlog("ui", "panel: \(kind.rawValue) tapped while a panel is open")
                                 UIImpactFeedbackGenerator(style: .light).impactOccurred()

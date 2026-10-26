@@ -46,7 +46,7 @@ struct SkipLookup {
 /// Finds intro/credits/recap/preview ranges:
 ///   1. chapters already in the file (named Opening/OP/Ending/ED/Credits...)
 ///   2. TV & films: IntroDB.app, then TheIntroDB.org — community databases
-///      keyed by IMDb id + season/episode (the sources Infuse uses)
+///      keyed by IMDb id + season/episode
 ///   3. Anime: AniSkip (start AND end; MyAnimeList id), then Open Anime
 ///      Timestamps (start times only; AniDB id). IDs come from the item's
 ///      hint or an AniList search, never for titles that aren't animation.

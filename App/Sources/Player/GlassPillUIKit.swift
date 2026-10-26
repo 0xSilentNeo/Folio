@@ -5,7 +5,6 @@ import UIKit
 /// a Liquid Glass UIVisualEffectView capsule with three UIButtons. The
 /// popovers are presented from these buttons — iOS 26 morphs a popover out
 /// of a glass source element, which it does not do for an invisible anchor.
-/// (Outplayer's VideoMenuButton is the same construction.)
 struct PanelPillView: UIViewRepresentable {
     @ObservedObject var ui: PlayerUIState
     var height: CGFloat
@@ -106,10 +105,9 @@ final class PanelPillUIView: UIView {
 /// system draws them as one Liquid Glass capsule, and a popover presented
 /// from one of them morphs out of that glass (verified in the pop lab, V7).
 ///
-/// 1.16.0: built like Outplayer 2026.10's player toolbar (read from its binary):
-/// each item wraps a plain UIButton (UIBarButtonItem(customView:)), 44 pt square,
-/// 38 pt on iOS 27. Outplayer's other buttons stay on screen while one of them
-/// has its menu open.
+/// 1.16.0: each item wraps a plain UIButton (UIBarButtonItem(customView:)),
+/// 44 pt square, 38 pt on iOS 27. The other buttons stay on screen while one
+/// of them has its menu open.
 struct PanelToolbarView: UIViewRepresentable {
     @ObservedObject var ui: PlayerUIState
 

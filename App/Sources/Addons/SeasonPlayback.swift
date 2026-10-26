@@ -80,7 +80,7 @@ enum AddonPlayback {
         return nil
     }
 
-    /// The next episode's stream: same binge group (Stremio's marker for "same
+    /// The next episode's stream: same binge group (the protocol's marker for "same
     /// release across episodes") if the addon sets one, else the same stream
     /// name and resolution, else the first playable stream.
     static func choose(_ streams: [AddonStream], like pick: StreamPick) -> AddonStream? {

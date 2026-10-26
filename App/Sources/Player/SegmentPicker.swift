@@ -1,8 +1,7 @@
 import SwiftUI
 import UIKit
 
-/// The system segmented control (what Outplayer uses, with
-/// `selectedSegmentTintColor`). On iOS 26 its thumb is Liquid Glass: it
+/// The system segmented control (with `selectedSegmentTintColor`). On iOS 26 its thumb is Liquid Glass: it
 /// lifts into a glass lens while touched or dragged and settles into the
 /// tint colour — the same behaviour as the tab bar.
 struct SegmentPicker<T: Hashable>: UIViewRepresentable {

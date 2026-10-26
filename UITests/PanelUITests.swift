@@ -243,7 +243,7 @@ final class PanelUITests: XCTestCase {
     }
 
     /// Long press on the player's Settings button (the recording shows whether
-    /// the glass lights up and grows while held, like Outplayer's).
+    /// the glass lights up and grows while held).
     func test1PressPlayerToolbar() throws {
         let app = launchPlayer()
         app.buttons["Settings"].press(forDuration: 1.2)
@@ -611,9 +611,9 @@ final class PanelUITests: XCTestCase {
         sleep(30)
     }
 
-    /// 1.16.0, iOS 27 (Outplayer's rules): with a panel fully open, one tap on
+    /// 1.16.0, iOS 27: with a panel fully open, one tap on
     /// another button opens that panel. Before iOS 27 the tap only closes the
-    /// open panel (as in 1.15 and in Outplayer on iOS 26).
+    /// open panel (as in 1.15).
     func test21NativeSwitchWhileOpen() throws {
         let app = launchPlayer(native: true)
         tapsDontWaitForAnimations()

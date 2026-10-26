@@ -1,6 +1,6 @@
 import Foundation
 
-// Stremio addon protocol models (https://github.com/Stremio/stremio-addon-sdk/tree/master/docs/api).
+// Addon protocol models (spec: https://github.com/Stremio/stremio-addon-sdk/tree/master/docs/api).
 // Decoding is deliberately lenient: community addons vary a lot.
 
 private extension KeyedDecodingContainer {

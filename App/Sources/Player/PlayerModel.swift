@@ -190,6 +190,9 @@ final class PlayerModel: ObservableObject {
     private var mode: Mode = .none
     private var vidSaved: String?
     private var videoOffForBackground = false
+    /// Left the app while paused: the video track stays on (its buffer with
+    /// it); only the Metal view is parked.
+    private var parkedPaused = false
     private var pendingMain = false
     private var pipRestoring = false
     private var energyNoteFor: String?
@@ -1157,20 +1160,50 @@ final class PlayerModel: ObservableObject {
         })
     }
 
+    /// Leaving the app.
+    ///
+    /// 1.16.1: when paused, the video track is no longer switched off. mpv
+    /// drops the packets of a switched-off track, and switching it back on
+    /// discards the whole buffer and reads it again from the network
+    /// (demux.c, initiate_refresh_seek: "We need to re-read all packets
+    /// anyway, so discard the buffered data") — the lost buffer in the
+    /// 26 Oct report, and the picture rebuilt at the old size on return.
+    /// Only while audio actually plays on in the background is video off
+    /// (iOS doesn't run GPU work for a background app).
     private func didEnterBackground() {
         saveHistory(force: true)
+        wentToBackground = true
         guard mode == .main, !isPiPActive, let c = client else { return }
         if renderer == .gl { glView?.setRenderingAllowed(false) }
         if defaults.bool(forKey: SettingsKey.backgroundAudio) {
-            if let vid = c.string("vid"), vid != "no" {
-                vidSaved = vid
-                videoOffForBackground = true
+            if paused {
+                parkedPaused = true
                 if renderer == .metal { detachMetalView() }
-                c.set("vid", "no")
+                dlog("player", "background while paused: video and buffer kept")
+            } else {
+                videoOffForPlayback(c)
             }
         } else {
             setPaused(true)
         }
+    }
+
+    private func videoOffForPlayback(_ c: MPVClient) {
+        guard let vid = c.string("vid"), vid != "no" else { return }
+        vidSaved = vid
+        videoOffForBackground = true
+        if renderer == .metal { detachMetalView() }
+        c.set("vid", "no")
+        dlog("player", "background playback: video off")
+    }
+
+    /// Playback resumed while the app is in the background (Lock Screen,
+    /// headphones) after it was left paused: video off now, as if it had
+    /// been playing when the app was left.
+    private func resumedInBackground() {
+        guard parkedPaused, UIApplication.shared.applicationState == .background, mode == .main, let c = client else { return }
+        parkedPaused = false
+        videoOffForPlayback(c)
     }
 
     /// Safety net for the parked state: if the app is on screen with the video
@@ -1195,17 +1228,59 @@ final class PlayerModel: ObservableObject {
         guard isPiPActive, defaults.bool(forKey: SettingsKey.pipReturnOnOpen) else { return }
         dlog("player", "app opened while in PiP: back to the player")
         pipRestoring = true
+        returnFromPiP = true
         stopPiP()
     }
 
+    /// "Back to the player when you open the app": the stop asked for as the
+    /// app comes forward did not always take (1.14.1 log: PiP stopped 9 s
+    /// later, by hand). Once the app is active, ask again if PiP is still up,
+    /// and once more half a second later; each step goes in the log.
+    private var returnFromPiP = false
+    private var wentToBackground = false
+    private func finishReturnFromPiP(attempt: Int = 1) {
+        guard returnFromPiP else { return }
+        guard pip.isActive else { returnFromPiP = false; return }
+        guard attempt <= 3 else {
+            dlog("player/error", "PiP still up after \(attempt - 1) stop requests")
+            returnFromPiP = false
+            return
+        }
+        dlog("player", "app active, PiP still up: stop request \(attempt + 1)")
+        pipRestoring = true
+        stopPiP()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.finishReturnFromPiP(attempt: attempt + 1) }
+    }
+
     private func didBecomeActive() {
+        let fromBackground = wentToBackground
+        wentToBackground = false
+        if !returnFromPiP, fromBackground, isPiPActive, defaults.bool(forKey: SettingsKey.pipReturnOnOpen) {
+            // The "will enter foreground" event didn't get here first.
+            dlog("player", "app active again with PiP up: back to the player")
+            returnFromPiP = true
+            finishReturnFromPiP(attempt: 0)
+        } else if returnFromPiP {
+            finishReturnFromPiP()
+        }
         if pendingMain { switchToMain(); setPiPLayerOnTop(false); return }
         guard mode == .main else { return }
         if renderer == .gl { glView?.setRenderingAllowed(true) }
         if videoOffForBackground, let c = client {
             videoOffForBackground = false
-            if renderer == .metal { reattachMetalView() }
+            parkedPaused = false
+            if renderer == .metal {
+                reattachMetalView()
+                // The drawable must have the screen's current size before mpv
+                // builds its video output (26 Oct mpv log: built at the old
+                // landscape size 2868×1320 on a portrait screen).
+                videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded()
+            }
             c.set("vid", vidSaved ?? "auto")
+        } else if parkedPaused {
+            parkedPaused = false
+            if renderer == .metal { reattachMetalView(); videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded() }
+            dlog("player", "back while paused: video view back, \(metalView.map { "\(Int($0.bounds.width))×\(Int($0.bounds.height))" } ?? "-")")
         }
         videoView.setNeedsLayout()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.nudgeRedraw() }
@@ -1361,7 +1436,7 @@ extension PlayerModel: MPVClientDelegate {
             pip.invalidate()
             updateNowPlaying()
             UIApplication.shared.isIdleTimerDisabled = !paused
-            if paused { saveHistory(force: true); scheduleSnapshot(after: 0.3) }
+            if paused { saveHistory(force: true); scheduleSnapshot(after: 0.3) } else { resumedInBackground() }
         case "paused-for-cache":
             buffering = value.bool ?? false
         case "seeking":
@@ -1468,6 +1543,7 @@ extension PlayerModel: PiPManagerDelegate {
         onMain { [weak self] in
             guard let self else { return }
             self.isPiPActive = false
+            self.returnFromPiP = false
             let state = UIApplication.shared.applicationState
             dlog("player", "pip stopped (app \(state == .active ? "active" : state == .inactive ? "inactive" : "background"), restoring=\(self.pipRestoring))")
             // Only a truly backgrounded app parks the video. `.inactive` is the

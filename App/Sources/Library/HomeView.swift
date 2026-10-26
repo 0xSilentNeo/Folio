@@ -161,6 +161,8 @@ struct HomeView: View {
             }
             .scrollTargetBehavior(.viewAligned)
             .scrollClipDisabled()
+            // Back from the player, the row starts at the card just watched.
+            .id(items.first?.id)
         }
     }
 
@@ -371,12 +373,15 @@ struct HeroCard: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            Group {
-                if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
-                else { GeneratedArt(seed: entry.item.displayTitle) }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipped()
+            // The picture fills the card and is cut to it; it never sets the
+            // card's size. (1.16.0: a picture wider than the card widened the
+            // card's contents, pushing the title and Resume off its left edge.)
+            Color.clear
+                .overlay {
+                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+                    else { GeneratedArt(seed: entry.item.displayTitle) }
+                }
+                .clipped()
             LinearGradient(colors: [.clear, .black.opacity(0.35), .black.opacity(0.9)], startPoint: .top, endPoint: .bottom)
             VStack(alignment: .leading, spacing: 8) {
                 Text(thumb.meta?.name ?? entry.item.displayTitle).font(.headline.weight(.bold)).lineLimit(1)
@@ -403,8 +408,14 @@ struct HeroCard: View {
         // Text and glass sit on a dark scrim over the picture: dark in both appearances.
         .environment(\.colorScheme, .dark)
         .onAppear {
-            thumb.load(key: entry.item.id, fileURL: entry.item.resolvedURL?.isFileURL == true ? entry.item.resolvedURL : nil,
-                       artwork: entry.item.artwork, lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title)
+            if let ref = entry.item.addonRef {
+                // Addon streams: the link's file name means nothing, and the
+                // item's artwork is the portrait poster. Wide art by IMDb id.
+                thumb.loadAddonArt(key: entry.item.id, ref: ref, fallback: entry.item.artwork)
+            } else {
+                thumb.load(key: entry.item.id, fileURL: entry.item.resolvedURL?.isFileURL == true ? entry.item.resolvedURL : nil,
+                           artwork: entry.item.artwork, lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title)
+            }
         }
     }
 }
@@ -624,7 +635,7 @@ struct OpenURLSheet: View {
 
 /// A folder of different titles (1.15.0, #10/#11): four of its own pictures in
 /// a 2 × 2 grid on a see-through card, the folder's total size at the bottom
-/// right, its name and item count under it (Outplayer's folder tile).
+/// right, its name and item count under it.
 struct FolderTile: View {
     let group: LibraryGroup
     /// The library shows posters (portrait cells) or frames (16:9 cells).

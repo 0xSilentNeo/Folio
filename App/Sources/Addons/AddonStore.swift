@@ -89,7 +89,7 @@ final class AddonStore: ObservableObject {
            let list = try? JSONDecoder().decode([InstalledAddon].self, from: data) {
             addons = list
         }
-        // 1.6: metadata is built in (IMDb); the Cinemeta catalog addon that
+        // 1.6: metadata is built in (IMDb); the metadata catalog addon that
         // earlier versions installed automatically is removed once.
         if !UserDefaults.standard.bool(forKey: "cinemetaRemoved") {
             UserDefaults.standard.set(true, forKey: "cinemetaRemoved")

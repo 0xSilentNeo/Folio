@@ -1,6 +1,6 @@
 import Foundation
 
-/// Optional TMDB source for Discover (what Infuse uses). Enabled when the
+/// Optional TMDB source for Discover. Enabled when the
 /// user adds their own API key in Settings → Discover. Items keep their
 /// TMDB id and are resolved to an IMDb id when opened, so IMDb details
 /// and stream addons keep working.

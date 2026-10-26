@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 
 /// Title metadata (poster, backdrop, synopsis, episode art) resolved from a
-/// file name, the way Infuse does it: parse the release name, look the
+/// file name: parse the release name, look the
 /// title up on IMDb (built-in source, no key), cache forever.
 struct MediaMeta: Codable, Hashable {
     var id: String

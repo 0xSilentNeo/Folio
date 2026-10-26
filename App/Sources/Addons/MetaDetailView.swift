@@ -42,7 +42,7 @@ struct MetaDetailView: View {
             let wide = geo.size.width > 700
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    backdrop(width: geo.size.width, wide: wide)
+                    backdrop(geo.size)
                     VStack(alignment: .leading, spacing: 18) {
                         // Genres above the description (from the title-page mockup).
                         if let g = m.genres, !g.isEmpty {
@@ -89,10 +89,10 @@ struct MetaDetailView: View {
 
     // MARK: Header
 
-    private func backdrop(width: CGFloat, wide: Bool) -> some View {
-        HeroHeader(height: wide ? 360 : width * 9 / 16 + 40) {
-            if let art = m.background ?? m.poster, let u = URL(string: art) {
-                CachedImage(url: u, maxPixel: 1280) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
+    private func backdrop(_ size: CGSize) -> some View {
+        HeroHeader(height: HeroMetrics.height(size)) {
+            if let art = m.background.flatMap({ IMDbSource.sized($0, width: HeroMetrics.pixels) }) ?? m.poster, let u = URL(string: art) {
+                CachedImage(url: u, maxPixel: CGFloat(HeroMetrics.pixels)) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
             } else { Theme.card }
         } content: {
                 HStack(alignment: .bottom, spacing: 14) {
