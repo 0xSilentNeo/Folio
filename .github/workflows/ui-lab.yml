@@ -67,16 +67,27 @@ jobs:
           note "python3: $(command -v python3 || echo none) jq: $(command -v jq || echo none)"
           xcrun simctl list runtimes -j > runtimes.json
           xcrun simctl list devicetypes -j > devicetypes.json
-          RT=$(jq -r '[.runtimes[] | select(.platform=="iOS" and .isAvailable)] | sort_by(.version | split(".") | map(tonumber)) | last | .identifier' runtimes.json)
-          # iPhone Pro device types, newest first; the first one this runtime accepts is used.
-          jq -r '.devicetypes[] | select(.name|test("^iPhone [0-9]+ Pro$")) | "\(.name | capture("(?<n>[0-9]+)").n) \(.identifier)"' devicetypes.json | sort -rn > candidates.txt
-          note "runtime=$RT candidates: $(cut -d' ' -f2 candidates.txt | sed 's/com.apple.CoreSimulator.SimDeviceType.//' | tr '\n' ' ')"
-          UDID=""
-          while read -r _ DT; do
-            UDID=$(xcrun simctl create lab "$DT" "$RT" 2>/dev/null) && { note "devicetype=$DT"; break; }
+          xcrun simctl list devices available -j > devices.json
+          # Prefer a simulator the image already has: an iPhone Pro on the newest iOS runtime.
+          PICK=$(jq -r '.devices | to_entries[] | select(.key|test("SimRuntime.iOS-")) | .key as $rt | .value[]
+                 | select(.isAvailable and (.name|test("^iPhone [0-9]+ Pro$")))
+                 | "\($rt | capture("iOS-(?<v>[0-9-]+)").v | gsub("-";".")) \(.name | capture("(?<n>[0-9]+)").n) \(.udid) \($rt)"' devices.json \
+                 | sort -t' ' -k1,1V -k2,2n | tail -1)
+          note "existing devices: $(jq -r '[.devices | to_entries[] | select(.key|test("iOS-2[67]")) | "\(.key|capture("iOS-(?<v>[0-9-]+)").v): \(.value | map(.name) | join(", "))"] | join(" | ")' devices.json)"
+          if [ -n "$PICK" ]; then
+            UDID=$(echo "$PICK" | cut -d' ' -f3)
+            note "using existing $PICK"
+          else
+            RT=$(jq -r '[.runtimes[] | select(.platform=="iOS" and .isAvailable)] | sort_by(.version | split(".") | map(tonumber)) | last | .identifier' runtimes.json)
+            jq -r '.devicetypes[] | select(.name|test("^iPhone [0-9]+ Pro$")) | "\(.name | capture("(?<n>[0-9]+)").n) \(.identifier)"' devicetypes.json | sort -rn > candidates.txt
             UDID=""
-          done < candidates.txt
-          [ -n "$UDID" ] || { note "no device type could be created for $RT"; jq -r '.devicetypes[].name' devicetypes.json | tail -25 | sed 's/^/::warning::/'; exit 1; }
+            while read -r _ DT; do
+              if UDID=$(xcrun simctl create lab "$DT" "$RT" 2>create.err); then note "created $DT"; break; fi
+              note "create $DT on $RT: $(head -c 300 create.err | tr '\n' ' ')"
+              UDID=""
+            done < candidates.txt
+            [ -n "$UDID" ] || { note "no simulator for $RT"; exit 1; }
+          fi
           note "created $UDID"
           xcrun simctl boot "$UDID" || { note "boot failed ($?)"; exit 1; }
           xcrun simctl bootstatus "$UDID" -b || note "bootstatus returned $?"
