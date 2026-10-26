@@ -562,6 +562,13 @@ final class PanelUITests: XCTestCase {
     /// last tap's panel and leave the player responsive.
     func test20NativeRapidSwitchReplay() throws { try replay([], native: true) }
 
+    /// Measurement only (results in the app log): the toolbar width iOS needs
+    /// for the three panel buttons, and where its glass sits.
+    func test30ToolbarProbe() throws {
+        _ = launchPlayer(["-toolbarProbe"], native: true, captureNow: false)
+        sleep(30)
+    }
+
     /// 1.16.0, iOS 27 (Outplayer's rules): with a panel fully open, one tap on
     /// another button opens that panel. Before iOS 27 the tap only closes the
     /// open panel (as in 1.15 and in Outplayer on iOS 26).

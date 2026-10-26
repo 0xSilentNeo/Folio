@@ -44,6 +44,7 @@ enum UILab {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { PlayerPresenter.current?.ui.showControls(autoHide: false) }
             if CommandLine.arguments.contains("-panelStress") { waitForSteadyLandscape(count: 0) }
+            if CommandLine.arguments.contains("-toolbarProbe") { toolbarProbe() }
             return
         }
         dlog("lab", "UI lab run")
@@ -83,6 +84,47 @@ enum UILab {
     }
 
     private static var ui: PlayerUIState? { PlayerPresenter.current?.ui }
+
+    /// `-toolbarProbe` (with `-uiTest`): in the player's own landscape layout,
+    /// how wide the panel toolbar must be before iOS moves a button into its
+    /// "⋯" overflow, and where the glass capsule sits inside the toolbar.
+    static func toolbarProbe() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 9) {
+            guard let bar = ui?.panelBar as? UIToolbar, let host = bar.superview, let window = bar.window else {
+                dlog("lab", "toolbar probe: no toolbar on screen"); return
+            }
+            dlog("lab", "toolbar probe: iOS \(UIDevice.current.systemVersion) bar=\(bar.frame) inWindow=\(bar.convert(bar.bounds, to: window)) window=\(window.bounds.size) safe=\(window.safeAreaInsets) barSafe=\(bar.safeAreaInsets) margins=\(bar.directionalLayoutMargins)")
+            dumpTree(bar, in: bar, depth: 0)
+            let widths: [CGFloat] = [120, 130, 140, 146, 150, 154, 158, 162, 166, 170, 174, 178, 182, 186, 190, 196, 202, 210, 220, 236]
+            var i = 0
+            func step() {
+                guard i < widths.count else { dlog("lab", "toolbar probe: done"); return }
+                let w = widths[i]; i += 1
+                let (probe, items) = PanelToolbarView.makeBar { _ in }
+                probe.frame = CGRect(x: bar.frame.maxX - w, y: bar.frame.minY - 70, width: w, height: 50)
+                host.addSubview(probe)
+                probe.setNeedsLayout(); probe.layoutIfNeeded()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    let buttons = items.values.compactMap(\.customView)
+                    let shown = buttons.filter { $0.window != nil && !$0.isHidden && $0.alpha > 0.01 }
+                    let frames = shown.map { $0.convert($0.bounds, to: probe) }
+                    let union = frames.dropFirst().reduce(frames.first ?? .zero) { $0.union($1) }
+                    dlog("lab", "toolbar probe: width \(Int(w)) → \(shown.count)/3 buttons on screen, buttons span \(union.integral)")
+                    if w == 176 || w == 236 { dumpTree(probe, in: probe, depth: 0) }
+                    probe.removeFromSuperview()
+                    step()
+                }
+            }
+            step()
+        }
+    }
+
+    private static func dumpTree(_ v: UIView, in root: UIView, depth: Int) {
+        guard depth < 9 else { return }
+        let f = v.convert(v.bounds, to: root).integral
+        dlog("lab", "toolbar tree \(String(repeating: "  ", count: depth))\(type(of: v)) \(f) hidden=\(v.isHidden) alpha=\(String(format: "%.2f", v.alpha))")
+        for sub in v.subviews { dumpTree(sub, in: root, depth: depth + 1) }
+    }
 
     /// A/V sync lab (real engine): play a clip with 5.1 audio, hold 2× for 4 s,
     /// release, then switch the renderer the way PiP does and back. Logs

@@ -127,6 +127,14 @@ struct PanelToolbarView: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> UIToolbar {
+        let (bar, items) = Self.makeBar { [weak ui] kind in ui?.toggle(kind) }
+        for (kind, item) in items { ui.barItems[kind] = item }
+        ui.panelBar = bar
+        return bar
+    }
+
+    /// The toolbar and its three items (also built by the toolbar probe, UILab).
+    static func makeBar(onTap: @escaping (PlayerUIState.Panel) -> Void) -> (UIToolbar, [PlayerUIState.Panel: UIBarButtonItem]) {
         let bar = UIToolbar()
         bar.tintColor = .white
         bar.overrideUserInterfaceStyle = .dark
@@ -138,8 +146,9 @@ struct PanelToolbarView: UIViewRepresentable {
         let items: [(PlayerUIState.Panel, String, String)] = [
             (.tracks, "switch.2", "Tracks"), (.settings, "slider.horizontal.3", "Settings"), (.nowPlaying, "list.bullet", "Now Playing"),
         ]
-        let size = Self.buttonSize
+        let size = buttonSize
         var barItems: [UIBarButtonItem] = [.flexibleSpace()]
+        var byKind: [PlayerUIState.Panel: UIBarButtonItem] = [:]
         for (kind, symbol, title) in items {
             let button = UIButton(type: .system)
             button.setImage(UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold)), for: .normal)
@@ -150,18 +159,17 @@ struct PanelToolbarView: UIViewRepresentable {
                 button.widthAnchor.constraint(equalToConstant: size),
                 button.heightAnchor.constraint(equalToConstant: size),
             ])
-            button.addAction(UIAction { [weak ui] _ in
+            button.addAction(UIAction { _ in
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                ui?.toggle(kind)
+                onTap(kind)
             }, for: .touchUpInside)
             let item = UIBarButtonItem(customView: button)
             item.accessibilityLabel = title
-            ui.barItems[kind] = item
+            byKind[kind] = item
             barItems.append(item)
         }
         bar.items = barItems
-        ui.panelBar = bar
-        return bar
+        return (bar, byKind)
     }
 
     func updateUIView(_ bar: UIToolbar, context: Context) {}
