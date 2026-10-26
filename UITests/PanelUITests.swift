@@ -604,6 +604,149 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(played, 0, "a back swipe starting on Play started playback")
     }
 
+    /// 1.17.0 swipe actions. Thumbnails (the default view) on Home and on a
+    /// title page: a swipe to the left lays Delete and Watched over the tile
+    /// and doesn't open anything; Delete asks first and Cancel keeps the
+    /// title. List view on Home: the system row swipe, both directions.
+    func test32SwipeActions() throws {
+        var app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-libraryView", "grid", "-heroView", "grid"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        var tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+
+        // Home, Thumbnails
+        tile.swipeLeft(); sleep(1)
+        print("SWIPE home grid: Back=\(app.buttons["Back"].exists) Delete=\(app.buttons["Delete"].exists) Watched=\(app.buttons["Watched"].exists)")
+        XCTAssertFalse(app.buttons["Back"].exists, "the swipe opened the title page")
+        XCTAssertTrue(app.buttons["Watched"].waitForExistence(timeout: 2), "no Watched after swiping a Home tile left")
+        app.buttons["Watched"].tap(); sleep(1)
+        let eye = app.images["Watched"].firstMatch
+        print("SWIPE home grid: eye after Watched = \(eye.exists)")
+        XCTAssertTrue(eye.exists, "no eye on the tile after Watched")
+        tile.swipeLeft(); sleep(1)
+        XCTAssertTrue(app.buttons["Unwatched"].waitForExistence(timeout: 2), "Watched did not turn into Unwatched")
+        app.buttons["Delete"].tap(); sleep(1)
+        cancelDelete(app, "home grid")
+        XCTAssertTrue(tile.exists, "Cancel deleted the title")
+
+        // Title page, Thumbnails (tapped by position: after the dialog XCUITest
+        // could not compute the label's hit point, 26 Oct run)
+        let f = tile.frame
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.minY - 40)).tap()
+        if !app.buttons["Back"].waitForExistence(timeout: 4) {
+            print("SWIPE first tap after the dialog did not open the page; tapping again")
+            sleep(2)
+            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.minY - 40)).tap()
+        }
+        XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open")
+        sleep(2)
+        let ep = app.buttons["ep:Lab Show S01E02.mp4"]
+        if !ep.waitForExistence(timeout: 4) { app.swipeUp(); sleep(1) }
+        XCTAssertTrue(ep.exists, "episode tile not found")
+        ep.swipeLeft(); sleep(1)
+        print("SWIPE title grid: player=\(app.buttons["Close player"].exists) Delete=\(app.buttons["Delete"].exists) Watched=\(app.buttons["Watched"].exists)")
+        XCTAssertFalse(app.buttons["Close player"].exists, "the swipe played the episode")
+        XCTAssertTrue(app.buttons["Delete"].exists, "no Delete after swiping an episode left")
+        app.buttons["Delete"].tap(); sleep(1)
+        cancelDelete(app, "title grid")
+        XCTAssertTrue(app.buttons["ep:Lab Show S01E02.mp4"].exists, "Cancel deleted the episode")
+        app.terminate()
+
+        // Home, List view: system swipe actions
+        app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-libraryView", "list"]
+        app.launch()
+        tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library row not found")
+        sleep(2)
+        tile.swipeLeft(); sleep(1)
+        let asked = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Delete all'")).firstMatch
+        if !asked.exists, app.buttons["Delete"].exists { app.buttons["Delete"].tap(); sleep(1) }
+        print("SWIPE home list left: asked=\(asked.exists)")
+        cancelDelete(app, "home list")
+        XCTAssertTrue(app.staticTexts["Lab Show"].firstMatch.exists, "Cancel deleted the row (list)")
+        tile.swipeRight(); sleep(1)
+        let right = app.buttons["Unwatched"].exists ? "Unwatched" : app.buttons["Watched"].exists ? "Watched" : "none"
+        print("SWIPE home list right: \(right)")
+        XCTAssertNotEqual(right, "none", "no Watched / Unwatched after swiping a row right")
+    }
+
+    /// The delete question must show; then cancel it (Cancel button, or a tap
+    /// outside when the dialog is a popover).
+    private func cancelDelete(_ app: XCUIApplication, _ tag: String) {
+        let q = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Delete'")).firstMatch
+        print("SWIPE \(tag): question=\(q.exists) \(q.exists ? q.label : "")")
+        XCTAssertTrue(q.waitForExistence(timeout: 3), "Delete did not ask first (\(tag))")
+        if app.buttons["Cancel"].exists { app.buttons["Cancel"].tap() }
+        else { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap() }
+        sleep(1)
+    }
+
+    /// 26 Oct device recording: a swipe that started on an episode row played
+    /// the episode while the page zoomed back to Home. Swipes right, down and
+    /// diagonally from an episode row: the player must never open. The app
+    /// log says when a swipe would have counted as a tap ("ignored (the
+    /// finger moved …").
+    func test36SwipeFromEpisodeRow() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-heroView", "details"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+        var played = 0, wentBack = 0
+        let moves: [(CGFloat, CGFloat, XCUIGestureVelocity)] = [(120, 0, .fast), (220, 0, .fast), (0, 180, .fast), (0, 320, .fast),
+                                                               (160, 160, .fast), (60, 0, .default), (220, 40, .default)]
+        for (i, (dx, dy, speed)) in moves.enumerated() {
+            if !app.buttons["Back"].exists {
+                let f = app.staticTexts["Lab Show"].firstMatch.frame
+                app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
+                XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open (\(i))")
+                sleep(2)
+            }
+            let ep = app.buttons["ep:Lab Show S01E02.mp4"]
+            guard ep.waitForExistence(timeout: 5) else { XCTFail("episode row not found (\(i))"); return }
+            let f = ep.frame
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            let from = origin.withOffset(CGVector(dx: f.minX + 40, dy: f.midY))
+            let to = origin.withOffset(CGVector(dx: f.minX + 40 + dx, dy: f.midY + dy))
+            from.press(forDuration: 0.01, thenDragTo: to, withVelocity: speed, thenHoldForDuration: 0)
+            sleep(3)
+            let close = app.buttons["Close player"]
+            let back = !app.buttons["Back"].exists
+            if close.exists {
+                played += 1
+                print("SWIPEROW \(i) (\(Int(dx)),\(Int(dy))) → the player opened")
+                close.tap(); sleep(3)
+            } else {
+                print("SWIPEROW \(i) (\(Int(dx)),\(Int(dy))) → no playback, page \(back ? "went back" : "stayed")")
+            }
+            if back { wentBack += 1 }
+        }
+        print("SWIPEROW played \(played)/\(moves.count), went back \(wentBack)")
+        XCTAssertEqual(played, 0, "a swipe starting on an episode row started playback")
+    }
+
+    /// Measurement only (app log, "relay lab"): menus opened right after a
+    /// close and switched while open, driven from inside the app; with the
+    /// relay anchored to the button's rectangle, to the bar item, and off.
+    func test33RelayLabRect() throws {
+        _ = launchPlayer(["-relayLab", "-menuRelay", "YES", "-relaySource", "rect"], native: true, captureNow: false)
+        sleep(30)
+    }
+    func test34RelayLabItem() throws {
+        _ = launchPlayer(["-relayLab", "-menuRelay", "YES", "-relaySource", "item"], native: true, captureNow: false)
+        sleep(30)
+    }
+    func test35RelayLabOff() throws {
+        _ = launchPlayer(["-relayLab", "-menuRelay", "NO"], native: true, captureNow: false)
+        sleep(30)
+    }
+
     /// Measurement only (results in the app log): the toolbar width iOS needs
     /// for the three panel buttons, and where its glass sits.
     func test30ToolbarProbe() throws {
@@ -644,6 +787,28 @@ final class PanelUITests: XCTestCase {
         }
         print("NATIVE OPENSWITCH \(ok)/\(pairs.count)")
         XCTAssertEqual(ok, pairs.count)
+    }
+
+    /// The relay layer (PanelRelay) switched on: does UIKit present from it? (lab)
+    func test23NativeSwitchRelay() throws {
+        let app = launchPlayer(["-menuRelay", "YES"], native: true)
+        tapsDontWaitForAnimations()
+        let pairs: [(String, String, String, String)] = [
+            ("Tracks", "Audio", "Settings", "Playback"), ("Settings", "Playback", "Now Playing", "NOW PLAYING"),
+        ]
+        for (a, am, b, bm) in pairs {
+            tapPill(app, a)
+            XCTAssertTrue(shows(app, am, within: 4), "\(a) did not open")
+            sleep(2)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap()   // close
+            usleep(500_000)                                                         // visibly gone, still "presented"
+            let t0 = Date()
+            tapPill(app, b)
+            let ok = shows(app, bm, within: 4)
+            print(String(format: "RELAY %@ after closing %@: %@ %.0f ms after the tap", b, a, ok ? "showing" : "missing", Date().timeIntervalSince(t0) * 1000))
+            sleep(2)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
+        }
     }
 
     /// 1.16.0, iOS 27: a tap on another button while a panel is still opening

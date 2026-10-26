@@ -18,12 +18,13 @@ struct SettingsView: View {
                     row("Downloads", "arrow.down.circle", .mint) { DownloadSettingsView() }
                 }
                 Section {
-                    row("Scripts", "chevron.left.forwardslash.chevron.right", .blue) { ScriptsView() }
-                    row("Shaders", "wand.and.stars", .indigo) { ShadersView() }
-                    row("mpv Config", "slider.horizontal.3", .teal) { MPVConfigSettings() }
+                    row("mpv", "slider.horizontal.3", .teal) { MPVSettings() }
+                } footer: {
+                    Text("The video engine, scripts, shaders and config files.")
                 }
                 Section {
-                    row("Advanced", "gearshape.2", .gray) { AdvancedSettings() }
+                    row("Presets", "square.and.arrow.down.on.square", .blue) { PresetsView() }
+                    row("Help & Diagnostics", "stethoscope", .gray) { AdvancedSettings() }
                 }
                 Section {
                     HStack {
@@ -78,6 +79,7 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
+    @AppStorage(SettingsKey.prepareNext) private var prepareNext = true
     @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
     @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
     @AppStorage(SettingsKey.gestureControl) private var gestures = true
@@ -85,64 +87,104 @@ struct PlaybackSettings: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Resume where I left off", isOn: $resume)
-                Toggle("Play next file automatically", isOn: $autoplayNext)
-                Toggle("Up Next card at the credits", isOn: $upNext)
-                Toggle("Open in landscape", isOn: $landscapeOnOpen)
-                Toggle("Stay in landscape", isOn: $stayLandscape)
-                Toggle("Keep audio playing in background", isOn: $backgroundAudio)
-            } footer: {
-                Text("Stay in landscape: playback starts in landscape and stays there when you turn the phone upright (it still flips between the two landscape sides).")
+                Explained("Every video starts where you stopped it last time.") {
+                    Toggle("Resume where I left off", isOn: $resume)
+                }
+                Explained("When an episode ends, or the Up Next countdown runs out, the next one in the list starts.") {
+                    Toggle("Play next file automatically", isOn: $autoplayNext)
+                }
+                Explained("A card with the next episode appears when the credits start (from the file's chapters or online skip data), otherwise 30 seconds before the end. It counts down only when nothing is known to follow the credits.") {
+                    Toggle("Up Next card at the credits", isOn: $upNext)
+                }
+                Explained("For streamed episodes (addons, WebDAV): near the end of an episode the next one is found and starts loading, so Play on the Up Next card starts it right away. For a season from an addon, the app also checks which episodes have the same release, and asks you to pick for the ones that don't. Note: this opens the next episode's link early, so your debrid service adds that episode even if you don't watch it.") {
+                    Toggle("Get the next episode ready", isOn: $prepareNext)
+                }
+            }
+            Section {
+                Explained("The screen turns to landscape when a landscape video starts.") {
+                    Toggle("Open in landscape", isOn: $landscapeOnOpen)
+                }
+                Explained("Playback stays in landscape even when you hold the phone upright (it still flips between the two landscape sides).") {
+                    Toggle("Stay in landscape", isOn: $stayLandscape)
+                }
+                Explained("The sound keeps playing when you leave the app or lock the phone; the picture comes back when you return.") {
+                    Toggle("Keep audio playing in background", isOn: $backgroundAudio)
+                }
             }
             Section("Gestures") {
-                Picker("Forward skip", selection: $seekStep) {
-                    ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
+                Explained("How far a double-tap on the right side of the video and the forward button jump.") {
+                    Picker("Forward skip", selection: $seekStep) {
+                        ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
+                    }
                 }
-                Picker("Backward skip", selection: $seekBackStep) {
-                    ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
+                Explained("How far a double-tap on the left side and the back button jump.") {
+                    Picker("Backward skip", selection: $seekBackStep) {
+                        ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
+                    }
                 }
-                Toggle("Swipe for seek, volume & brightness", isOn: $gestures)
-                Toggle("Hold to speed up", isOn: $holdToSpeed)
+                Explained("Swipe sideways to scrub; swipe up or down along the left edge for brightness and along the right edge for volume.") {
+                    Toggle("Swipe for seek, volume & brightness", isOn: $gestures)
+                }
+                Explained("Press and hold the video to play faster until you let go.") {
+                    Toggle("Hold to speed up", isOn: $holdToSpeed)
+                }
                 if holdToSpeed {
                     Picker("Hold speed", selection: $holdSpeedValue) {
                         ForEach([1.5, 2.0, 2.5, 3.0, 4.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
                     }
                 }
-                Picker("Default speed", selection: $defaultSpeed) {
-                    ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
+                Explained("The speed every video starts at.") {
+                    Picker("Default speed", selection: $defaultSpeed) {
+                        ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
+                    }
                 }
             }
-            Section {
-                Picker("Playlist names", selection: $playlistNames) {
-                    Text("Episode number & title").tag("episode")
-                    Text("File name").tag("filename")
+            Section("Player") {
+                Explained("How episodes are listed in the player's Now Playing menu.") {
+                    Picker("Playlist names", selection: $playlistNames) {
+                        Text("Episode number & title").tag("episode")
+                        Text("File name").tag("filename")
+                    }
                 }
                 if #available(iOS 26.0, *) {
-                    Toggle("Native menu morph", isOn: $nativePanelMorph)
+                    Explained("The player's menus grow out of their button with Apple's own glass animation. Off: the app's own glass menus, which can be interrupted at any moment.") {
+                        Toggle("Native menu morph", isOn: $nativePanelMorph)
+                    }
                 }
-
-                LabeledContent("Controls width") {
-                    Slider(value: $controlsWidth, in: 0.6...1.0, step: 0.05).frame(maxWidth: 170)
-                    Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
+                Explained("How much of the screen's width the controls use in landscape.") {
+                    LabeledContent("Controls width") {
+                        Slider(value: $controlsWidth, in: 0.6...1.0, step: 0.05).frame(maxWidth: 170)
+                        Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
+                    }
                 }
-            } header: { Text("Player") } footer: {
-                Text("Native menu morph: the player's menus are the system popover, which morphs out of its button (Apple's own animation). Off: the app's own glass, which can be interrupted at any moment. Controls width: how much of the screen the player controls span in landscape. Up Next appears when the credits start (from the file's chapters, IntroDB / TheIntroDB, or AniSkip for anime), otherwise 30 seconds before the end; it counts down only when nothing is known to follow the credits.")
             }
             Section("Progress bar") {
-                Picker("Chapter markers", selection: $bar.markerStyle) {
-                    Text("Ticks").tag("ticks"); Text("Dots").tag("dots"); Text("Segments").tag("segments"); Text("Hidden").tag("none")
+                Explained("How chapters show on the progress bar.") {
+                    Picker("Chapter markers", selection: $bar.markerStyle) {
+                        Text("Ticks").tag("ticks"); Text("Dots").tag("dots"); Text("Segments").tag("segments"); Text("Hidden").tag("none")
+                    }
                 }
                 Picker("Marker colour", selection: $bar.markerColor) {
                     Text("White").tag("white"); Text("Pink").tag("accent"); Text("Yellow").tag("yellow"); Text("Cyan").tag("cyan")
                 }
-                Toggle("Chapter name while scrubbing", isOn: $bar.showChapterTitle)
-                Toggle("Show skip segments", isOn: $bar.showSkipSegments)
+                Explained("While you drag along the progress bar, the name of the chapter under your finger shows.") {
+                    Toggle("Chapter name while scrubbing", isOn: $bar.showChapterTitle)
+                }
+                Explained("Intros, credits, recaps and previews are marked on the progress bar.") {
+                    Toggle("Show skip segments", isOn: $bar.showSkipSegments)
+                }
             }
-            Section {
-                Toggle("Picture in Picture", isOn: $pipEnabled)
-                Toggle("Start automatically when leaving", isOn: $pipAuto).disabled(!pipEnabled)
-                Toggle("Back to the player when you open the app", isOn: $pipReturnOnOpen).disabled(!pipEnabled)
-            } header: { Text("Picture in Picture") }
+            Section("Picture in Picture") {
+                Explained("The video can keep playing in a small floating window over other apps.") {
+                    Toggle("Picture in Picture", isOn: $pipEnabled)
+                }
+                Explained("Going to the Home Screen while a video plays opens Picture in Picture by itself.") {
+                    Toggle("Start automatically when leaving", isOn: $pipAuto).disabled(!pipEnabled)
+                }
+                Explained("Opening the app while Picture in Picture is up closes the small window and carries on in the player.") {
+                    Toggle("Back to the player when you open the app", isOn: $pipReturnOnOpen).disabled(!pipEnabled)
+                }
+            }
         }
         .brandListBackground()
         .navigationTitle("Playback")
@@ -172,17 +214,25 @@ struct SubtitleAudioSettings: View {
                 } label: {
                     LabeledContent("Preferred audio language", value: PlaybackLanguage.summary(audioLangs))
                 }
-                Toggle("Surround & Spatial Audio", isOn: $surround)
-                Picker("Downmix volume", selection: $downmixNormalize) {
-                    Text("Original").tag(false); Text("Normalized").tag(true)
+                Explained("Plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't used. Off: always stereo.") {
+                    Toggle("Surround & Spatial Audio", isOn: $surround)
                 }
-                Toggle("LFE in stereo downmix", isOn: $lfe)
-            } header: { Text("Audio") } footer: {
-                Text("Surround: plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't rendered.")
-            }
+                Explained(downmixNormalize
+                          ? "Normalized: surround sound mixed down to stereo never distorts, but plays quieter."
+                          : "Original: surround sound mixed down to stereo keeps its full loudness; very loud scenes can distort.") {
+                    Picker("Downmix volume", selection: $downmixNormalize) {
+                        Text("Original").tag(false); Text("Normalized").tag(true)
+                    }
+                }
+                Explained("Mixes the subwoofer channel into stereo, for more bass when surround sound plays on headphones or two speakers.") {
+                    Toggle("LFE in stereo downmix", isOn: $lfe)
+                }
+            } header: { Text("Audio") }
             Section {
-                Picker("Show subtitles", selection: $subtitlesDefault) {
-                    Text("On").tag("on"); Text("Off").tag("off")
+                Explained("Whether a subtitle track is turned on when a video starts. You can always switch in the player's Tracks menu.") {
+                    Picker("Show subtitles", selection: $subtitlesDefault) {
+                        Text("On").tag("on"); Text("Off").tag("off")
+                    }
                 }
                 NavigationLink {
                     LanguageListEditor(title: "Subtitle Languages",
@@ -192,17 +242,19 @@ struct SubtitleAudioSettings: View {
                     LabeledContent("Preferred subtitle language", value: PlaybackLanguage.summary(subLangs))
                 }
                 .disabled(subtitlesDefault == "off")
-            } header: { Text("Subtitles") } footer: {
-                Text("Show subtitles: whether a subtitle track is turned on when a video starts.")
-            }
+            } header: { Text("Subtitles") }
             Section("Subtitle style") {
                 LabeledContent("Size") {
                     Slider(value: $subScale, in: 0.5...2.5, step: 0.05).frame(maxWidth: 180)
                     Text("\(Int(subScale * 100))%").monospacedDigit().frame(width: 48, alignment: .trailing)
                 }
-                Stepper("Position  \(subPos)", value: $subPos, in: 50...150)
+                Explained("100 is the normal place near the bottom; lower numbers move subtitles up, higher numbers further down.") {
+                    Stepper("Position  \(subPos)", value: $subPos, in: 50...150)
+                }
                 Toggle("Bold", isOn: $subBold)
-                Toggle("Background box", isOn: $subBox)
+                Explained("A dark box behind the text keeps subtitles readable on bright scenes.") {
+                    Toggle("Background box", isOn: $subBox)
+                }
             }
         }
         .brandListBackground()
@@ -224,23 +276,29 @@ struct SkipSettings: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Show Skip button", isOn: $skipEnabled)
-            } footer: {
-                Text("Uses chapters in the file; otherwise IntroDB and TheIntroDB for TV and films (community databases looked up by IMDb id), and AniSkip / Open Anime Timestamps for anime only.")
+                Explained("A Skip button appears during intros, credits, recaps and previews. They come from the file's chapters; otherwise from IntroDB and TheIntroDB for TV and films (community databases looked up by IMDb id), and AniSkip / Open Anime Timestamps for anime.") {
+                    Toggle("Show Skip button", isOn: $skipEnabled)
+                }
             }
             if skipEnabled {
-                Section("Skip automatically") {
+                Section {
                     Toggle("Intro", isOn: $autoIntro)
                     Toggle("Outro / credits", isOn: $autoOutro)
                     Toggle("Recap", isOn: $autoRecap)
                     Toggle("Preview", isOn: $autoPreview)
+                } header: { Text("Skip automatically") } footer: {
+                    Text("Skipped without a tap, once per episode. Seeking back into a part doesn't skip it again.")
                 }
-                Section {
-                    Toggle("Use file chapters", isOn: $useChapters)
-                    Toggle("Add found markers as chapters", isOn: $injectChapters)
-                    Stepper("OAT segment length  \(Int(oatLength)) s", value: $oatLength, in: 60...150, step: 5)
-                } header: { Text("Sources") } footer: {
-                    Text("Added chapters are visible to Lua scripts. Open Anime Timestamps only has start times, so the length is assumed.")
+                Section("Sources") {
+                    Explained("Files that name their chapters (Opening, Ending, Credits…) are skipped by those chapters first.") {
+                        Toggle("Use file chapters", isOn: $useChapters)
+                    }
+                    Explained("Intros and credits found online show as chapters too: on the progress bar, in Now Playing, and to Lua scripts.") {
+                        Toggle("Add found markers as chapters", isOn: $injectChapters)
+                    }
+                    Explained("Open Anime Timestamps only knows where a part starts, so its length is assumed.") {
+                        Stepper("OAT segment length  \(Int(oatLength)) s", value: $oatLength, in: 60...150, step: 5)
+                    }
                 }
             }
         }
@@ -250,22 +308,22 @@ struct SkipSettings: View {
     }
 }
 
-struct MPVConfigSettings: View {
+/// A setting with a plain-language line under it (1.17.0).
+struct Explained<Content: View>: View {
+    let text: String
+    @ViewBuilder var content: Content
+    init(_ text: String, @ViewBuilder content: () -> Content) { self.text = text; self.content = content() }
     var body: some View {
-        List {
-            NavigationLink { ConfigEditorView(url: MPVFiles.mpvConf, title: "mpv.conf") } label: { Label("mpv.conf", systemImage: "doc.text") }
-            NavigationLink { ConfigEditorView(url: MPVFiles.inputConf, title: "input.conf") } label: { Label("input.conf", systemImage: "keyboard") }
-            NavigationLink { ScriptOptsView() } label: { Label("script-opts", systemImage: "slider.horizontal.below.square.filled.and.square") }
-            NavigationLink { CommandsEditorView() } label: { Label("Player commands", systemImage: "command") }
-            NavigationLink { LogView() } label: { Label("Last playback log", systemImage: "text.alignleft") }
+        VStack(alignment: .leading, spacing: 4) {
+            content
+            Text(text).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
-        .brandListBackground()
-        .navigationTitle("mpv Config")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
-struct AdvancedSettings: View {
+/// Everything mpv in one place (1.17.0): the video engine, scripts, shaders,
+/// config files and logs.
+struct MPVSettings: View {
     @AppStorage(SettingsKey.renderer) private var renderer = "metal"
     @AppStorage(SettingsKey.hdrOutput) private var hdr = true
     @AppStorage(SettingsKey.hwdec) private var hwdec = "auto"
@@ -273,45 +331,105 @@ struct AdvancedSettings: View {
     @AppStorage(SettingsKey.logLevel) private var logLevel = "info"
     @AppStorage(SettingsKey.flipVideo) private var flipVideo = false
     @State private var picture = PictureMode.current
+
+    private var rendererText: String {
+        renderer == "gl"
+            ? "OpenGL ES: the fallback for a device where video doesn't show correctly with Metal. No HDR, no compute shaders."
+            : "Metal (recommended): the fastest, with HDR, Dolby Vision and every shader."
+    }
+    private var pictureText: String {
+        switch picture {
+        case .efficient: "Efficient: simple scaling with no extra passes. Coolest phone, longest battery; the right choice for most videos."
+        case .balanced: "Balanced: a sharper scaler when the video is enlarged. A little more power."
+        case .enhanced: "Enhanced: the best scaling plus banding removal, several extra passes on every frame. Noticeably more power and heat."
+        }
+    }
+    private var hwdecText: String {
+        switch hwdec {
+        case "copy": "Copy-back: the video chip decodes, then each frame is copied back to memory so filters that work on the processor can use it. More heat and battery; only if something looks wrong with Auto."
+        case "no": "Off: the processor decodes everything. Most heat and battery; only for a file the video chip can't play correctly."
+        default: "Auto (recommended): the iPhone's video chip decodes. Coolest and best for battery; falls back to the processor for formats the chip can't decode."
+        }
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                Explained(rendererText) {
+                    Picker("Renderer", selection: $renderer) {
+                        Text("Metal").tag("metal")
+                        Text("OpenGL ES").tag("gl")
+                    }
+                }
+                Explained(pictureText) {
+                    Picker("Picture", selection: $picture) {
+                        ForEach(PictureMode.allCases) { Text($0.title).tag($0) }
+                    }
+                    .onChange(of: picture) { _, m in PictureMode.current = m }
+                }
+                Explained("HDR and Dolby Vision videos play with real HDR brightness on screens that support it. Off: they are converted to normal brightness (SDR).") {
+                    Toggle("HDR output", isOn: $hdr).disabled(renderer != "metal")
+                }
+                Explained(hwdecText) {
+                    Picker("Hardware decoding", selection: $hwdec) {
+                        Text("Auto").tag("auto")
+                        Text("Copy-back").tag("copy")
+                        Text("Off").tag("no")
+                    }
+                }
+                if renderer == "gl" {
+                    Explained("Turns the picture upside down, for devices where OpenGL shows it flipped.") {
+                        Toggle("Flip video", isOn: $flipVideo)
+                    }
+                }
+            } header: { Text("Video") } footer: { Text("Changes apply to the next video you open.") }
+            Section("Streaming") {
+                Explained("How much of a stream is kept in memory, ahead of where you are (and a third of that behind). More means fewer pauses on a slow connection and quicker jumps back, but uses more memory.") {
+                    Stepper("Cache  \(cacheMB) MB", value: $cacheMB, in: 32...1024, step: 32)
+                }
+            }
+            Section {
+                NavigationLink { ScriptsView() } label: { Label("Scripts", systemImage: "chevron.left.forwardslash.chevron.right") }
+                NavigationLink { ShadersView() } label: { Label("Shaders", systemImage: "wand.and.stars") }
+                NavigationLink { ConfigEditorView(url: MPVFiles.mpvConf, title: "mpv.conf") } label: { Label("mpv.conf", systemImage: "doc.text") }
+                NavigationLink { ConfigEditorView(url: MPVFiles.inputConf, title: "input.conf") } label: { Label("input.conf", systemImage: "keyboard") }
+                NavigationLink { ScriptOptsView() } label: { Label("script-opts", systemImage: "slider.horizontal.below.square.filled.and.square") }
+                NavigationLink { CommandsEditorView() } label: { Label("Player commands", systemImage: "command") }
+            } header: { Text("Customise") } footer: {
+                Text("Scripts and shaders load with every video. mpv.conf holds mpv options, input.conf keyboard shortcuts, script-opts each script's options; player commands appear in the player's Commands menu. Your mpv folder is in Files → On My iPhone → Folio → mpv.")
+            }
+            Section("Logs") {
+                Explained("How much detail the playback log keeps. \"v\" and \"debug\" are for tracking down a problem and make the log much larger.") {
+                    Picker("Log level", selection: $logLevel) {
+                        ForEach(["warn", "info", "v", "debug"], id: \.self) { Text($0).tag($0) }
+                    }
+                }
+                NavigationLink { LogView() } label: { Label("Last playback log", systemImage: "text.alignleft") }
+            }
+        }
+        .brandListBackground()
+        .navigationTitle("mpv")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct AdvancedSettings: View {
     @State private var confirmClear = false
 
     var body: some View {
         Form {
             Section {
-                Picker("Renderer", selection: $renderer) {
-                    Text("Metal").tag("metal")
-                    Text("OpenGL ES (compatibility)").tag("gl")
-                }
-                Picker("Picture", selection: $picture) {
-                    ForEach(PictureMode.allCases) { Text($0.title).tag($0) }
-                }
-                .onChange(of: picture) { _, m in PictureMode.current = m }
-                Toggle("HDR output", isOn: $hdr).disabled(renderer != "metal")
-                Picker("Hardware decoding", selection: $hwdec) {
-                    Text("Auto").tag("auto")
-                    Text("Copy-back").tag("copy")
-                    Text("Off").tag("no")
-                }
-            } header: { Text("Video") } footer: {
-                Text("Picture: Efficient keeps the phone cool (simple scaling, no extra passes). Enhanced runs several extra full-screen passes per frame and uses noticeably more power. Metal uses libplacebo: Dolby Vision, HDR tone mapping and compute shaders. OpenGL ES is the fallback if a device has trouble.")
-            }
-            Section("Network") {
-                Stepper("Cache  \(cacheMB) MB", value: $cacheMB, in: 32...1024, step: 32)
-            }
-            Section("Troubleshooting") {
                 NavigationLink { DiagnosticsView() } label: { Label("Diagnostics & report", systemImage: "stethoscope") }
-                Picker("mpv log level", selection: $logLevel) {
-                    ForEach(["warn", "info", "v", "debug"], id: \.self) { Text($0).tag($0) }
-                }
-                if renderer == "gl" { Toggle("Flip video (OpenGL)", isOn: $flipVideo) }
+            } footer: { Text("A report bundles the logs and your settings (passwords removed) to send when something goes wrong.") }
+            Section {
                 Button("Clear watch history", role: .destructive) { confirmClear = true }
                     .confirmationDialog("Clear all history and resume positions?", isPresented: $confirmClear, titleVisibility: .visible) {
                         Button("Clear", role: .destructive) { HistoryStore.shared.clear() }
                     }
-            }
+            } footer: { Text("Forgets where you stopped every video, what you've watched, and empties Continue Watching.") }
         }
         .brandListBackground()
-        .navigationTitle("Advanced")
+        .navigationTitle("Help & Diagnostics")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -835,26 +953,34 @@ struct GeneralSettings: View {
                 Text("Automatic follows your iPhone's Light or Dark setting. The player is always dark.")
             }
             Section {
-                Picker("Startup page", selection: $startupTab) {
-                    Label("Home", systemImage: "play.rectangle.fill").tag(0)
-                    Label("Discover", systemImage: "sparkles.tv").tag(1)
-                    Label("Network", systemImage: "externaldrive.connected.to.line.below").tag(2)
+                Explained("The tab the app opens on.") {
+                    Picker("Startup page", selection: $startupTab) {
+                        Label("Home", systemImage: "play.rectangle.fill").tag(0)
+                        Label("Discover", systemImage: "sparkles.tv").tag(1)
+                        Label("Network", systemImage: "externaldrive.connected.to.line.below").tag(2)
+                    }
                 }
-                Toggle("Open title page on tap", isOn: $openTitlePage)
+                Explained("Tapping a film opens its page first. Off: a tap plays it straight away (shows always open their page).") {
+                    Toggle("Open title page on tap", isOn: $openTitlePage)
+                }
             }
             Section {
-                Toggle("Hide spoilers", isOn: $hideSpoilers)
-                Toggle("Show IMDb ratings", isOn: $showRatings)
+                Explained("Blurs the pictures and hides the description of episodes you haven't finished.") {
+                    Toggle("Hide spoilers", isOn: $hideSpoilers)
+                }
+                Explained("Shows the IMDb rating on title pages.") {
+                    Toggle("Show IMDb ratings", isOn: $showRatings)
+                }
                 Picker("Cast on title pages", selection: $castPosition) {
                     Text("Above the episodes").tag("top")
                     Text("At the bottom").tag("bottom")
                 }
-                Picker("Episode titles", selection: $episodeTitles) {
-                    Text("English").tag("english")
-                    Text("Original language").tag("original")
+                Explained("English titles come from TVmaze (tvmaze.com, CC BY-SA) when IMDb only has the original-language one. Original: the title in the show's own language.") {
+                    Picker("Episode titles", selection: $episodeTitles) {
+                        Text("English").tag("english")
+                        Text("Original language").tag("original")
+                    }
                 }
-            } footer: {
-                Text("Hide spoilers blurs the pictures and hides the synopsis of episodes you haven't finished. English episode titles come from TVmaze (tvmaze.com, CC BY-SA) when IMDb only has the original-language title.")
             }
         }
         .brandListBackground()
@@ -867,6 +993,7 @@ struct LibrarySettings: View {
     @ObservedObject private var store = LocalMediaStore.shared
     @AppStorage(SettingsKey.metadataFetching) private var fetching = true
     @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
+    @AppStorage(SettingsKey.titlePageStyle) private var titlePageStyle = "full"
     @State private var cacheBytes: Int64 = 0
     @State private var working = false
 
@@ -906,6 +1033,14 @@ struct LibrarySettings: View {
                 }
                 .disabled(!fetching || working)
             } footer: { Text("Refresh metadata looks every title up again (posters, synopsis, ratings, episode names).") }
+            Section {
+                Picker("Title pages", selection: $titlePageStyle) {
+                    Text("Full").tag("full")
+                    Text("Files only").tag("files")
+                }
+            } footer: {
+                Text("Full: backdrop, poster, description, Play, episodes and cast. Files only: just the title and its files; tap a file to play it.")
+            }
             Section {
                 Toggle("Metadata fetching", isOn: $fetching)
                 Picker("Tile artwork", selection: $tileArtwork) {

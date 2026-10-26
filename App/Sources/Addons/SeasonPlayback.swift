@@ -95,6 +95,37 @@ enum AddonPlayback {
         return playable.max { score($0) < score($1) } ?? playable.first
     }
 
+    /// What the addon has for an episode, compared with the release you picked.
+    enum Match {
+        /// The same release (ready to play; subtitles are added later).
+        case same(MediaItem)
+        /// Streams exist, but not of the same release: you pick one.
+        case other
+        /// Nothing playable (or the addon didn't answer).
+        case none
+    }
+
+    /// The same release only (1.17.0): the same binge group when the addon sets
+    /// one, otherwise the same stream name and resolution. Anything else is
+    /// for you to pick — no silent "closest match" any more.
+    static func sameRelease(_ streams: [AddonStream], as pick: StreamPick) -> AddonStream? {
+        let playable = streams.filter(\.isPlayable)
+        if let g = pick.bingeGroup { return playable.first { $0.behaviorHints?.bingeGroup == g } }
+        guard let name = pick.streamName else { return nil }
+        return playable.first { $0.name == name && resolution(of: $0) == pick.resolution }
+    }
+
+    /// Asks the pick's addon for the episode in `pick.context` and compares.
+    @MainActor
+    static func screen(_ pick: StreamPick) async -> Match {
+        let c = pick.context
+        guard let addon = AddonStore.shared.addons.first(where: { $0.id == pick.addonID }),
+              let streams = try? await AddonAPI.streams(addon, type: c.type, id: c.videoId) else { return .none }
+        guard streams.contains(where: \.isPlayable) else { return .none }
+        if let s = sameRelease(streams, as: pick), let item = makeItem(c, stream: s, addon: addon, extraSubtitles: []) { return .same(item) }
+        return .other
+    }
+
     /// Resolves a placeholder; nil when the addon has nothing playable.
     @MainActor
     static func resolve(_ pick: StreamPick) async -> MediaItem? {
@@ -125,5 +156,26 @@ enum AddonPlayback {
             }
         }
         return out
+    }
+}
+
+/// Opens a stream link once before it's needed (1.17.0, "Get the next episode
+/// ready"): asking for its first byte makes a debrid service prepare the file
+/// (the 26 Oct log: 12–13.5 s from loadfile to "file loaded" for the next
+/// episode). Returns where the link finally points after its redirects.
+enum LinkWarmer {
+    static func resolve(_ url: URL, headers: [String: String]) async -> URL? {
+        var r = URLRequest(url: url, timeoutInterval: 40)
+        r.setValue("bytes=0-0", forHTTPHeaderField: "Range")
+        r.setValue("libmpv", forHTTPHeaderField: "User-Agent")       // what the player sends
+        for (k, v) in headers { r.setValue(v, forHTTPHeaderField: k) }
+        let t0 = Date()
+        guard let (_, resp) = try? await URLSession.shared.data(for: r), let http = resp as? HTTPURLResponse else {
+            dlog("player", "next episode: link didn't answer")
+            return nil
+        }
+        dlog("player", String(format: "next episode: link answered HTTP %d in %.1f s%@", http.statusCode, Date().timeIntervalSince(t0),
+                              http.url?.host != url.host ? " (redirected to \(http.url?.host ?? "?"))" : ""))
+        return (200..<300).contains(http.statusCode) ? http.url : nil
     }
 }

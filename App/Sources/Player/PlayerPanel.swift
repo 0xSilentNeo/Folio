@@ -456,7 +456,7 @@ struct NowPlayingPanelContent: View {
             switch tab {
             case 0:
                 ForEach(Array(model.queue.enumerated()), id: \.offset) { i, item in
-                    PlaylistRow(item: item, active: i == model.queueIndex) {
+                    PlaylistRow(item: item, active: i == model.queueIndex, state: model.episodeStates[i]) {
                         model.queueIndex = i
                         model.load(item)
                     }
@@ -516,6 +516,8 @@ struct ListRow: View {
 struct PlaylistRow: View {
     let item: MediaItem
     let active: Bool
+    /// Addon seasons: what the season check found (1.17.0).
+    var state: PlayerModel.EpisodeState? = nil
     let action: () -> Void
     @StateObject private var thumb = ThumbLoader()
     @AppStorage(SettingsKey.playlistNames) private var names = "episode"
@@ -553,6 +555,11 @@ struct PlaylistRow: View {
                         .lineLimit(names == "filename" ? 2 : 1)
                     if let sub = subtitleLine, !sub.isEmpty {
                         Text(sub).font(.caption2).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+                    }
+                    if state == .pick {
+                        Text("Other release only · pick a stream").font(.caption2.weight(.semibold)).foregroundStyle(.orange).lineLimit(1)
+                    } else if state == .unavailable {
+                        Text("Not available from this addon").font(.caption2.weight(.semibold)).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
                     }
                 }
                 Spacer(minLength: 0)

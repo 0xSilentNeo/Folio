@@ -66,8 +66,10 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
         pc.delegate = self
         switch source {
         case .item(let item):
+            pc.sourceView = nil                     // a relay presentation may have left a rectangle here
             pc.sourceItem = item
         case .view(let v):
+            pc.sourceItem = nil
             pc.sourceView = v
             pc.sourceRect = v.bounds
             pc.permittedArrowDirections = [.down]
@@ -365,7 +367,7 @@ final class PanelPresenter {
                 DispatchQueue.main.async {
                     guard let self else { return }
                     self.closing = max(0, self.closing - 1)
-                    PanelRelay.shared.hideIfIdle()
+                    if self.shown == nil, self.closing == 0 { PanelRelay.shared.hideIfIdle() }
                     dlog("ui", "panel: closed \(kind)")
                     self.frames.end()
                     if self.closing == 0 { self.onClosing?(false) }
@@ -417,6 +419,7 @@ final class PanelPresenter {
             NextFrame.run { [weak self] in self?.reconcile() }
             return
         }
+        if target !== host { PanelRelay.shared.retarget(vc, in: target, playerWindow: host.view.window) }
         vc.loadViewIfNeeded()
         let buildMs = (CACurrentMediaTime() - buildStart) * 1000
         shown = vc
@@ -425,6 +428,10 @@ final class PanelPresenter {
         dlog("ui", "panel: open \(req.kind)")
         frames.begin("panel open \(req.kind)")
         frames.note(String(format: "built in %.0f ms, %.0f ms after the tap", buildMs, (CACurrentMediaTime() - tapTime) * 1000))
+        // Have the relay window up (and its controller appeared) before a switch
+        // needs it: UIKit may defer a presentation from a controller that is
+        // still appearing.
+        if target === host, PanelRelay.enabled { _ = PanelRelay.shared.root(over: host.view.window) }
         target.present(vc, animated: animated) { [weak self, weak vc] in
             guard let vc else { return }
             // UIKit makes the bar passthrough for bar-item popovers; set ours back.
@@ -444,18 +451,30 @@ final class PanelPresenter {
                 }
             }
         }
-        // Should UIKit still refuse the presentation, try again next frame.
-        NextFrame.run { [weak self, weak vc] in
+        // Should UIKit refuse the presentation, try again. UIKit may also defer a
+        // presentation by a frame or two, so look for a few frames first.
+        Self.checkPresented(vc, frames: 0) { [weak self, weak vc] in
             guard let self, let vc, self.shown === vc,
                   vc.presentingViewController == nil, !vc.isBeingPresented else { return }
             dlog("ui", "panel: \(req.kind) was not presented; retrying")
             if target !== host {
-                dlog("ui/error", "panel: the relay layer was refused; panels wait for the last one again")
+                let w = target.view.window
+                dlog("ui/error", "panel: the relay layer was refused (relay window=\(w.map { "\(type(of: $0)) hidden=\($0.isHidden) level=\($0.windowLevel.rawValue)" } ?? "none") presented=\(target.presentedViewController.map { "\(type(of: $0))" } ?? "nil") source window=\(vc.popoverPresentationController?.sourceItem.map { "\(type(of: $0))" } ?? "-")); panels wait for the last one again")
                 PanelRelay.shared.refused = true
                 PanelRelay.shared.hideIfIdle()
             }
             self.shown = nil; self.shownKind = nil; self.shownRequest = nil
             self.reconcile()
+        }
+    }
+
+    /// Calls `refused` if `vc` still isn't presented (nor being presented)
+    /// after a few frames.
+    private static func checkPresented(_ vc: UIViewController, frames: Int, refused: @escaping () -> Void) {
+        NextFrame.run { [weak vc] in
+            guard let vc else { return }
+            if vc.presentingViewController != nil || vc.isBeingPresented { return }
+            if frames < 6 { checkPresented(vc, frames: frames + 1, refused: refused) } else { refused() }
         }
     }
 
@@ -571,11 +590,14 @@ final class PanelPresenter {
 final class PanelRelay {
     static let shared = PanelRelay()
 
-    /// Off by default (1.16.1): in the CI simulator UIKit refused every
-    /// presentation from this layer (a popover whose bar item lives in another
-    /// window), and the panel fell back to waiting. Kept for the lab only.
+    /// On (1.17.0). 1.16.1 had it off: UIKit refused every presentation from
+    /// this layer. The 26 Oct relay lab (menus driven from inside the app)
+    /// showed why — the popover was anchored to a bar item in the other
+    /// window: anchored to the bar item, refused; anchored to the button's
+    /// rectangle in this window (retarget), the next menu started 10 ms after
+    /// the request instead of ~1 s. Setting key `menuRelay` (off: wait).
     static var enabled: Bool {
-        !shared.refused && (UserDefaults.standard.object(forKey: SettingsKey.menuRelay) as? Bool ?? false)
+        !shared.refused && UserDefaults.standard.bool(forKey: SettingsKey.menuRelay)
     }
     /// UIKit refused a presentation from the relay: don't use it again this session.
     var refused = false
@@ -606,10 +628,35 @@ final class PanelRelay {
         return w.rootViewController
     }
 
-    /// After a close: the window goes away once no panel is up in it.
+    /// After the last close: the window goes away once no panel is up in it.
     func hideIfIdle() {
         guard let w = window, !w.isHidden, w.rootViewController?.presentedViewController == nil else { return }
         w.isHidden = true
+    }
+
+    /// How a panel opened from the relay is anchored. The bar item lives in the
+    /// player's window; `rect` (default) anchors the popover to the item's
+    /// rectangle in the relay's own view instead (UIPopoverPresentationController:
+    /// sourceView + sourceRect; the item's frame from
+    /// UIPopoverPresentationControllerSourceItem.frame(in:)). Lab: `-relaySource item`.
+    static var anchorsToItem: Bool { UserDefaults.standard.string(forKey: "relaySource") == "item" }
+
+    /// Re-anchors `vc` for a presentation from the relay root.
+    func retarget(_ vc: PanelPopoverController, in root: UIViewController, playerWindow: UIWindow?) {
+        guard !Self.anchorsToItem, let pc = vc.popoverPresentationController, let w = playerWindow else { return }
+        var rect: CGRect?
+        if let item = pc.sourceItem { rect = item.frame(in: w) }
+        if rect == nil, let v = pc.sourceView { rect = v.convert(pc.sourceRect, to: w) }
+        guard let r = rect, !r.isEmpty else {
+            dlog("ui/error", "panel: relay has no rectangle for the button; keeping the bar item")
+            return
+        }
+        // The two windows have the same frame, so window coordinates carry over.
+        pc.sourceItem = nil
+        pc.sourceView = root.view
+        pc.sourceRect = r
+        pc.permittedArrowDirections = [.down]
+        dlog("ui", "panel: relay anchors to \(r.integral)")
     }
 
     func tearDown() {

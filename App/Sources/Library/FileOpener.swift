@@ -184,9 +184,24 @@ final class LocalMediaStore: ObservableObject {
         source = src
     }
 
-    func delete(_ url: URL) {
-        try? FileManager.default.removeItem(at: url)
-        try? FileManager.default.removeItem(at: ThumbnailStore.url(for: url.path))
+    func delete(_ url: URL) { delete([url]) }
+
+    /// Deletes files (or folders) from the library; folders under Media left
+    /// empty by it go too.
+    func delete(_ urls: [URL]) {
+        let fm = FileManager.default
+        let media = MPVFiles.mediaDir.standardizedFileURL.path
+        var parents = Set<URL>()
+        for url in urls {
+            try? fm.removeItem(at: url)
+            try? fm.removeItem(at: ThumbnailStore.url(for: url.path))
+            parents.insert(url.deletingLastPathComponent().standardizedFileURL)
+        }
+        for dir in parents where dir.path.hasPrefix(media + "/") {
+            let left = (try? fm.contentsOfDirectory(atPath: dir.path))?.filter { !$0.hasPrefix(".") } ?? []
+            if left.isEmpty { try? fm.removeItem(at: dir) }
+        }
+        dlog("library", "deleted \(urls.count) item(s)")
         refresh()
     }
 }

@@ -26,6 +26,8 @@ struct DownloadItem: Codable, Identifiable, Hashable {
     var held = false
     /// Where the file goes (decided when it was added).
     var destination: URL
+    /// Request headers an addon asked for (1.17.0: downloads from addon streams).
+    var headers: [String: String]?
 
     var progress: Double { expected > 0 ? min(1, Double(received) / Double(expected)) : 0 }
     var isMedia: Bool { TitleParser.isMedia(fileName) }
@@ -111,6 +113,26 @@ final class DownloadManager: ObservableObject {
         if UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify) { Self.askForNotifications() }
         save()
         pump()
+    }
+
+    /// An addon stream (1.17.0): one file from its link, debrid links included
+    /// (redirects are followed). Goes to Media/<title>/ like WebDAV downloads.
+    /// Returns false when that link is already in the list.
+    @discardableResult
+    func enqueue(stream url: URL, fileName: String, package: String, expected: Int64, headers: [String: String]) -> Bool {
+        if items.contains(where: { $0.url == url && $0.state != .failed }) { return false }
+        items.removeAll { $0.url == url && $0.state == .failed }
+        var item = DownloadItem(url: url, serverID: nil, fileName: fileName, package: package, expected: expected,
+                                destination: Self.destination(fileName: fileName, package: package))
+        item.headers = headers.isEmpty ? nil : headers
+        if !UserDefaults.standard.bool(forKey: SettingsKey.downloadAutoStart) { item.state = .paused }
+        items.append(item)
+        dlog("dl", "queued addon stream \(fileName) → \(package)")
+        notifiedRun = false
+        if UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify) { Self.askForNotifications() }
+        save()
+        pump()
+        return true
     }
 
     func item(for url: URL) -> DownloadItem? { items.last { $0.url == url } }
@@ -201,7 +223,7 @@ final class DownloadManager: ObservableObject {
         // (Queued files only; paused ones wait for Resume.)
         var item = items[i]
         let server = ServerStore.shared.servers.first { $0.id == item.serverID }
-        var headers: [String: String] = [:]
+        var headers: [String: String] = item.headers ?? [:]
         if let auth = server?.authHeader { headers["Authorization"] = auth }
         let resume = item.resumeFile.flatMap { try? Data(contentsOf: DownloadEngine.resumeDir.appendingPathComponent($0)) }
         if resume == nil { item.received = 0 }

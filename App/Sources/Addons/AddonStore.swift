@@ -123,6 +123,22 @@ final class AddonStore: ObservableObject {
         }
     }
 
+    /// Settings preset import: adds the addons that aren't installed yet (by
+    /// address), one by one, so an addon this version can't read is skipped
+    /// instead of failing the rest. Returns how many were added.
+    func merge(_ json: Data) -> Int {
+        guard let list = try? JSONSerialization.jsonObject(with: json) as? [Any] else { return 0 }
+        var n = 0
+        for item in list {
+            guard let data = try? JSONSerialization.data(withJSONObject: item),
+                  let a = try? JSONDecoder().decode(InstalledAddon.self, from: data),
+                  !addons.contains(where: { $0.transportURL == a.transportURL }) else { continue }
+            addons.append(a)
+            n += 1
+        }
+        return n
+    }
+
     func remove(_ a: InstalledAddon) { addons.removeAll { $0.id == a.id } }
     func move(from: IndexSet, to: Int) { addons.move(fromOffsets: from, toOffset: to) }
 

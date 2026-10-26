@@ -15,17 +15,24 @@ struct HomeView: View {
             GeometryReader { geo in
                 let wide = geo.size.width > 700
                 let margin: CGFloat = wide ? 28 : 20
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 30) {
-                        header(margin)
-                        if !history.continueWatching.isEmpty { continueWatching(width: geo.size.width, wide: wide, margin: margin) }
-                        if !local.files.isEmpty { library(width: geo.size.width, margin: margin) }
-                        else { howToAdd(margin).padding(.top, history.continueWatching.isEmpty ? 40 : 10) }
+                // A List (1.17.0) so library rows have the system's swipe actions
+                // ("Adds custom swipe actions to a row in a list" — swipeActions docs);
+                // the rest are plain full-width rows.
+                List {
+                    Group {
+                        header(margin).padding(.top, 6)
+                        if !history.continueWatching.isEmpty { continueWatching(width: geo.size.width, wide: wide, margin: margin).padding(.top, 30) }
+                        if !local.files.isEmpty { libraryHeader(margin).padding(.top, 30) }
+                        else { howToAdd(margin).padding(.top, history.continueWatching.isEmpty ? 70 : 40) }
                     }
-                    .padding(.top, 6)
-                    .padding(.bottom, 28)
+                    .homeRow()
+                    if !local.files.isEmpty { libraryRows(width: geo.size.width, margin: margin) }
+                    Color.clear.frame(height: 28).homeRow()
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
                 .scrollIndicators(.hidden)
+                .environment(\.defaultMinListRowHeight, 0)
             }
             .background(HomeBackdrop().ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
@@ -116,18 +123,21 @@ struct HomeView: View {
 
     @ViewBuilder
     private var settingsLink: some View {
+        // A button that pushes, not a NavigationLink: Home is a List, where a
+        // NavigationLink turns its whole row into a link.
         if #available(iOS 18.0, *) {
-            NavigationLink(value: LibraryRoute.settings) {
+            Button { path.append(LibraryRoute.settings) } label: {
                 Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
             .buttonStyle(PressStyle())
             .accessibilityLabel("Settings")
             .matchedTransitionSource(id: "settings", in: zoomNS)
         } else {
-            NavigationLink(value: LibraryRoute.settings) {
+            Button { path.append(LibraryRoute.settings) } label: {
                 Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
             .buttonStyle(PressStyle())
+            .accessibilityLabel("Settings")
         }
     }
 
@@ -192,60 +202,131 @@ struct HomeView: View {
 
     @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
 
+    @State private var pendingDelete: LibraryGroup?
+    /// Thumbnails: the tile whose swipe actions are showing.
+    @State private var openTile: String?
+
+    /// The delete question, attached to the title's own tile or row so it
+    /// points at it (iOS shows confirmation dialogs as a popover from the view
+    /// they're attached to).
+    private func askToDelete<V: View>(_ g: LibraryGroup, _ v: V) -> some View {
+        v.confirmationDialog(deleteQuestion(g),
+                             isPresented: Binding(get: { pendingDelete?.id == g.id }, set: { if !$0, pendingDelete?.id == g.id { pendingDelete = nil } }),
+                             titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { local.delete(g.folder.map { [$0] } ?? g.files) }
+        }
+    }
+
+    /// Swipe actions of a Thumbnails tile: Delete (asks first) and, for a
+    /// title, Watched / Unwatched.
+    private func swipeActions(_ g: LibraryGroup) -> [SwipeAction] {
+        var a = [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = g }]
+        if g.folder == nil {
+            a.append(allWatched(g)
+                     ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched(g.files, false) }
+                     : SwipeAction(title: "Watched", icon: "eye", tint: Theme.accent) { history.setWatched(g.files, true) })
+        }
+        return a
+    }
+
+    private func deleteQuestion(_ g: LibraryGroup) -> String {
+        if g.folder != nil { return "Delete the folder \(g.title) and its \(g.count) item\(g.count == 1 ? "" : "s") (\(g.size.byteString))?" }
+        if g.count > 1 { return "Delete all \(g.count) episodes of \(g.title) (\(g.size.byteString))?" }
+        return "Delete \(g.title) (\(g.size.byteString))?"
+    }
+
+    private func libraryHeader(_ margin: CGFloat) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("Library").font(.title3.weight(.bold))
+            Text("\(groups.count)").font(.subheadline).foregroundStyle(.secondary)
+            Spacer()
+            SortMenu(sort: $librarySort, ascending: $librarySortAsc)
+            ViewModeMenu(mode: $libraryView)
+        }
+        .padding(.horizontal, margin)
+        .padding(.bottom, 12)
+    }
+
+    /// Thumbnails: one row holding the grid (each tile swipes left for its
+    /// actions, laid over the tile — SwipeTile).
+    /// List and Details: one list row per title, with swipe actions — left to
+    /// delete (asks first), right to mark watched / unwatched.
+    @ViewBuilder
+    private func libraryRows(width: CGFloat, margin: CGFloat) -> some View {
+        let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
+        if mode == .grid {
+            library(width: width, margin: margin).homeRow()
+        } else {
+            let posters = tileArtwork == "poster"
+            ForEach(groups) { g in
+                askToDelete(g, Group {
+                    if let folder = g.folder {
+                        folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: ZoomSource(g.id, zoomNS)) }
+                    } else {
+                        groupLink(g) {
+                            LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
+                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
+                                       poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil,
+                                       watched: allWatched(g))
+                        }
+                    }
+                })
+                .padding(.horizontal, margin)
+                .padding(.vertical, mode == .details ? 6 : 2)
+                .homeRow()
+                .swipeActions(edge: .trailing) {
+                    // Red by tint, not the destructive role: nothing is deleted
+                    // until the question is answered, so the row must stay put.
+                    Button { pendingDelete = g } label: { Label("Delete", systemImage: "trash") }.tint(.red)
+                }
+                .swipeActions(edge: .leading) {
+                    if g.folder == nil {
+                        if allWatched(g) {
+                            Button { history.setWatched(g.files, false) } label: { Label("Unwatched", systemImage: "eye.slash") }.tint(.gray)
+                        } else {
+                            Button { history.setWatched(g.files, true) } label: { Label("Watched", systemImage: "eye") }.tint(Theme.accent)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Thumbnails view: the grid of tiles.
     private func library(width: CGFloat, margin: CGFloat) -> some View {
         let posters = tileArtwork == "poster"
         let cols = posters ? max(3, Int((width - margin * 2 + 14) / 124)) : max(2, Int((width - margin * 2 + 14) / 184))
-        let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
         let groups = self.groups
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("Library").font(.title3.weight(.bold))
-                Text("\(groups.count)").font(.subheadline).foregroundStyle(.secondary)
-                Spacer()
-                SortMenu(sort: $librarySort, ascending: $librarySortAsc)
-                ViewModeMenu(mode: $libraryView)
-            }
-            .padding(.horizontal, margin)
-            if mode == .grid {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
-                    ForEach(groups) { g in
-                        if let folder = g.folder {
-                            folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(g.id, zoomNS)) }
-                        } else {
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
+            ForEach(groups) { g in
+                askToDelete(g, SwipeTile(id: g.id, openID: $openTile, actions: swipeActions(g), cornerRadius: posters ? 12 : 16) {
+                    if let folder = g.folder {
+                        folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(g.id, zoomNS)) }
+                    } else {
                         groupLink(g) {
                             MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
                                       key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
                                       progress: history.entry(forURL: g.nextUp.path)?.progress,
                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                      poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil)
-                        }
-                        }
-                    }
-                }
-                .padding(.horizontal, margin)
-            } else {
-                LazyVStack(spacing: mode == .details ? 12 : 4) {
-                    ForEach(groups) { g in
-                        if let folder = g.folder {
-                            folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: ZoomSource(g.id, zoomNS)) }
-                        } else {
-                        groupLink(g) {
-                            LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
-                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                       poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil)
-                        }
+                                      poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil,
+                                      watched: allWatched(g))
                         }
                     }
-                }
-                .padding(.horizontal, margin)
+                })
             }
         }
+        .padding(.horizontal, margin)
     }
 
+    // Pushed through the path, not NavigationLink: inside a List a
+    // NavigationLink row gets a disclosure chevron and the list's highlight.
     private func folderLink<L: View>(_ g: LibraryGroup, _ folder: URL, @ViewBuilder label: () -> L) -> some View {
-        NavigationLink(value: LibraryRoute.folder(folder.path)) { label() }
+        Button { path.append(LibraryRoute.folder(folder.path)) } label: { label() }
             .buttonStyle(PressStyle(scale: 0.97))
             .accessibilityLabel("\(g.title), folder, \(g.count) items, \(g.size.byteString)")
+            .contextMenu {
+                Button(role: .destructive) { pendingDelete = g } label: { Label("Delete folder", systemImage: "trash") }
+            }
     }
 
     private func seriesSubtitle(_ g: LibraryGroup) -> String {
@@ -255,11 +336,13 @@ struct HomeView: View {
 
     private func opensPage(_ g: LibraryGroup) -> Bool { openTitlePage || g.isSeries }
 
+    private func allWatched(_ g: LibraryGroup) -> Bool { !g.files.isEmpty && g.files.allSatisfy { history.isWatched($0) } }
+
     @ViewBuilder
     private func groupLink<L: View>(_ g: LibraryGroup, @ViewBuilder label: () -> L) -> some View {
         Group {
             if opensPage(g) {
-                NavigationLink(value: LibraryRoute.group(g.id)) { label() }
+                Button { dlog("nav", "home: open \(g.title)"); path.append(LibraryRoute.group(g.id)) } label: { label() }
             } else {
                 Button { playLocal(g.nextUp) } label: { label() }
             }
@@ -267,7 +350,12 @@ struct HomeView: View {
         .buttonStyle(PressStyle(scale: 0.97))
         .contextMenu {
             Button { playLocal(g.nextUp) } label: { Label(g.isSeries ? "Play next episode" : "Play", systemImage: "play") }
-            if !g.isSeries { Button(role: .destructive) { local.delete(g.files[0]) } label: { Label("Delete", systemImage: "trash") } }
+            if allWatched(g) {
+                Button { history.setWatched(g.files, false) } label: { Label(g.isSeries ? "Mark all as unwatched" : "Mark as unwatched", systemImage: "eye.slash") }
+            } else {
+                Button { history.setWatched(g.files, true) } label: { Label(g.isSeries ? "Mark all as watched" : "Mark as watched", systemImage: "eye") }
+            }
+            Button(role: .destructive) { pendingDelete = g } label: { Label(g.isSeries ? "Delete all episodes" : "Delete", systemImage: "trash") }
         }
     }
 
@@ -330,6 +418,16 @@ struct HomeView: View {
 
 // MARK: - Components
 
+extension View {
+    /// A full-width List row with no background, separator or insets: the
+    /// page draws its own spacing (Home is a List for its swipe actions).
+    func homeRow() -> some View {
+        listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+    }
+}
+
 /// Page background: the palette's cream (or ink) with a soft taupe glow in
 /// the top corners, like light on paper.
 struct HomeBackdrop: View {
@@ -363,6 +461,19 @@ struct ArtProgressBar: View {
             .position(x: g.size.width / 2, y: g.size.height - inset - height / 2)
         }
         .allowsHitTesting(false)
+    }
+}
+
+/// Watched mark (1.17.0): a small eye on a picture's corner.
+struct WatchedBadge: View {
+    var body: some View {
+        Image(systemName: "eye.fill")
+            .font(.system(size: 10, weight: .bold))
+            .foregroundStyle(.white)
+            .padding(5)
+            .background(.black.opacity(0.55), in: Circle())
+            .padding(6)
+            .accessibilityLabel("Watched")
     }
 }
 
@@ -436,6 +547,8 @@ struct MediaTile: View {
     var zoom: ZoomSource? = nil
     /// Right-aligned on the subtitle line (episode tiles: the file size).
     var trailingNote: String? = nil
+    /// Every file behind the tile is watched: an eye on the picture.
+    var watched = false
     @StateObject private var thumb = ThumbLoader()
 
     var body: some View {
@@ -447,8 +560,9 @@ struct MediaTile: View {
                         else { GeneratedArt(seed: title) }
                     }
                     .clipped()
-                if let progress, progress > 0.01 { ArtProgressBar(progress: progress) }
+                if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress) }
             }
+            .overlay(alignment: .topTrailing) { if watched { WatchedBadge() } }
             .clipShape(RoundedRectangle(cornerRadius: poster ? 12 : 16, style: .continuous))
             .zoomSource(zoom, cornerRadius: poster ? 12 : 16)
             Text(fixedTitle ?? thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)

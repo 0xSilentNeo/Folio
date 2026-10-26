@@ -32,6 +32,8 @@ enum SettingsKey {
     static let castPosition = "castPosition"            // top | bottom (title pages)
     static let episodeTitleLanguage = "episodeTitleLanguage"   // english | original
     static let playlistNames = "playlistNames"          // "episode" | "filename"
+    static let titlePageStyle = "titlePageStyle"        // full | files (title, then its files only)
+    static let prepareNext = "prepareNext"              // addon seasons: find and load the next episode before it's needed
 
     // Downloads (WebDAV)
     static let downloadConcurrent = "downloadConcurrent"
@@ -113,11 +115,13 @@ enum SettingsKey {
             stayLandscape: false,
             controlsWidth: 0.8,
             nativePanelMorph: true,
-            menuRelay: false,
+            menuRelay: true,
             tileArtwork: "poster",
             castPosition: "bottom",
             episodeTitleLanguage: "english",
             playlistNames: "episode",
+            titlePageStyle: "full",
+            prepareNext: true,
             downloadConcurrent: 2,
             downloadAutoStart: true,
             downloadSaveTo: "folder",

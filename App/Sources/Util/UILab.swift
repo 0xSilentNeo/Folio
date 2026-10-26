@@ -45,6 +45,7 @@ enum UILab {
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { PlayerPresenter.current?.ui.showControls(autoHide: false) }
             if CommandLine.arguments.contains("-panelStress") { waitForSteadyLandscape(count: 0) }
             if CommandLine.arguments.contains("-toolbarProbe") { toolbarProbe() }
+            if CommandLine.arguments.contains("-relayLab") { relayLab() }
             return
         }
         dlog("lab", "UI lab run")
@@ -283,9 +284,10 @@ enum UILab {
                 if t0 == nil { t0 = Date() }
                 if Date().timeIntervalSince(t0!) > 38 { timer.invalidate(); dlog("av", "done"); return }
                 c.query({ c in (c.double("time-pos"), c.double("audio-pts"), c.double("avsync"), c.double("speed"),
-                                c.int("frame-drop-count"), c.int("decoder-frame-drop-count"), c.string("current-ao")) }) { r in
+                                c.int("frame-drop-count"), c.int("decoder-frame-drop-count"), c.string("current-ao"),
+                                c.double("demuxer-cache-duration"), c.string("current-vo")) }) { r in
                     func f(_ v: Double?) -> String { v.map { String(format: "%.3f", $0) } ?? "-" }
-                    dlog("av", "t=\(f(r.0)) a=\(f(r.1)) avsync=\(f(r.2)) speed=\(f(r.3)) drops=\(r.4 ?? -1)/\(r.5 ?? -1) ao=\(r.6 ?? "-")")
+                    dlog("av", "t=\(f(r.0)) a=\(f(r.1)) avsync=\(f(r.2)) speed=\(f(r.3)) drops=\(r.4 ?? -1)/\(r.5 ?? -1) ao=\(r.6 ?? "-") cache=\(f(r.7)) vo=\(r.8 ?? "-")")
                 }
             }
         }
@@ -304,6 +306,39 @@ enum UILab {
             let landscape = b.width > b.height && PlayerPresenter.current != nil
             if landscape && count >= 6 { dlog("lab", "landscape steady; replay starts"); scheduleStress(after: 0.5) }
             else { waitForSteadyLandscape(count: landscape ? count + 1 : 0) }
+        }
+    }
+
+    /// `-relayLab` (with `-uiTest`): menus driven from inside the app, so the
+    /// simulator test doesn't hold the taps back (XCUITest waits for the app to
+    /// be idle before it taps, i.e. until a closing menu has finished). Opens a
+    /// menu 0.3 s after a close started, and switches menus while one is open;
+    /// the panel log shows when each one asked for opened.
+    static func relayLab(count: Int = 0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let b = PlayerPresenter.current?.view.window?.bounds ?? .zero
+            let landscape = b.width > b.height && PlayerPresenter.current != nil
+            guard landscape && count >= 6 else { relayLab(count: landscape ? count + 1 : 0); return }
+            dlog("lab", "relay lab starts (relay \(PanelRelay.enabled ? "on" : "off"), anchor \(PanelRelay.anchorsToItem ? "item" : "rect"))")
+            let steps: [(Double, String, () -> Void)] = [
+                (0.0, "open tracks", { ui?.toggle(.tracks) }),
+                (2.5, "close", { ui?.closePanel() }),
+                (2.8, "settings 0.3 s after the close", { ui?.toggle(.settings) }),
+                (5.5, "switch to now playing", { ui?.toggle(.nowPlaying) }),
+                (8.0, "close", { ui?.closePanel() }),
+                (8.4, "tracks 0.4 s after the close", { ui?.toggle(.tracks) }),
+                (11.0, "switch to settings", { ui?.toggle(.settings) }),
+                (13.5, "close", { ui?.closePanel() }),
+                (13.6, "now playing 0.1 s after the close", { ui?.toggle(.nowPlaying) }),
+                (16.0, "close", { ui?.closePanel() }),
+                (18.0, "done", {}),
+            ]
+            for (t, name, action) in steps {
+                DispatchQueue.main.asyncAfter(deadline: .now() + t) {
+                    dlog("lab", "relay lab t=\(t) \(name)")
+                    action()
+                }
+            }
         }
     }
 

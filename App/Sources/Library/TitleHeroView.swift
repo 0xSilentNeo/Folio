@@ -19,6 +19,9 @@ struct TitleHeroView: View {
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
     @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
+    @AppStorage(SettingsKey.titlePageStyle) private var titlePageStyle = "full"
+    /// Settings → Library → Title pages → Files only (1.17.0): the title and its files.
+    private var filesOnly: Bool { titlePageStyle == "files" }
 
     /// Episode synopsis, unless spoilers are hidden and it hasn't been watched
     /// (then the show's own description).
@@ -30,6 +33,8 @@ struct TitleHeroView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var confirmDelete = false
+    /// An episode whose Delete was swiped: asks first.
+    @State private var pendingDelete: URL?
     @State private var season: Int?
 
     /// A series page (all episodes merged) or a single file.
@@ -65,8 +70,17 @@ struct TitleHeroView: View {
             let wide = geo.size.width > 700
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    backdrop(geo.size)
+                    if filesOnly {
+                        Text(title).font(.largeTitle.weight(.bold)).lineLimit(2)
+                            .padding(.top, geo.safeAreaInsets.top + 52)
+                            .padding(.horizontal, wide ? 28 : 20)
+                    } else {
+                        backdrop(geo.size)
+                    }
                     VStack(alignment: .leading, spacing: 18) {
+                      if filesOnly {
+                        episodes
+                      } else {
                         // Genres above the description (from the title-page mockup).
                         if let g = meta?.genres, !g.isEmpty {
                             Text(g.prefix(5).joined(separator: " · ")).font(.footnote).foregroundStyle(.secondary)
@@ -94,6 +108,7 @@ struct TitleHeroView: View {
                         if let m = meta, m.id.hasPrefix("tt") {
                             TitleLinks(name: m.name, year: m.year.map { String($0.prefix(4)) }, type: m.type, imdbID: m.id)
                         }
+                      }
                     }
                     .padding(.horizontal, wide ? 28 : 20)
                     .padding(.top, 14)
@@ -185,7 +200,7 @@ struct TitleHeroView: View {
     private var episodes: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Episodes").font(.title3.weight(.bold))
+                Text(group.isSeries || parsed.episode != nil ? "Episodes" : "Files").font(.title3.weight(.bold))
                 Text("\(siblings.count)").font(.subheadline).foregroundStyle(.secondary)
                 Spacer()
                 ViewModeMenu(mode: $viewMode)
@@ -207,7 +222,19 @@ struct TitleHeroView: View {
                 }
                 .onAppear { if season == nil { season = parsed.season ?? seasons[0] } }
             }
-            LibraryList(files: shownEpisodes, mode: LibraryViewMode(rawValue: viewMode) ?? .details, current: file, group: group) { tapped($0, "episode row") }
+            LibraryList(files: shownEpisodes, mode: LibraryViewMode(rawValue: viewMode) ?? .details, current: file, group: group,
+                        swipe: { f in
+                            [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = f },
+                             history.isWatched(f)
+                                ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched([f], false) }
+                                : SwipeAction(title: "Watched", icon: "eye", tint: Theme.accent) { history.setWatched([f], true) }]
+                        },
+                        pendingDelete: $pendingDelete,
+                        delete: { f in
+                            let last = siblings.count <= 1
+                            local.delete(f)
+                            if last { dismiss() }
+                        }) { tapped($0, "episode row") }
         }
         .padding(.top, 10)
     }
@@ -215,7 +242,19 @@ struct TitleHeroView: View {
     private var moreButton: some View {
         Menu {
             Button { play(file) } label: { Label("Play", systemImage: "play") }
-            if let e = entry { Button { history.markWatched(e) } label: { Label("Mark as watched", systemImage: "checkmark.circle") } }
+            if siblings.count > 1 {
+                if history.isWatched(file) {
+                    Button { history.setWatched([file], false) } label: { Label("Mark this episode as unwatched", systemImage: "eye.slash") }
+                } else {
+                    Button { history.setWatched([file], true) } label: { Label("Mark this episode as watched", systemImage: "eye") }
+                }
+                Button { history.setWatched(siblings, true) } label: { Label("Mark all as watched", systemImage: "eye") }
+                Button { history.setWatched(siblings, false) } label: { Label("Mark all as unwatched", systemImage: "eye.slash") }
+            } else if history.isWatched(file) {
+                Button { history.setWatched([file], false) } label: { Label("Mark as unwatched", systemImage: "eye.slash") }
+            } else {
+                Button { history.setWatched([file], true) } label: { Label("Mark as watched", systemImage: "eye") }
+            }
             Button(role: .destructive) { confirmDelete = true } label: { Label("Delete file", systemImage: "trash") }
         } label: {
             ToolbarGlyph("ellipsis")
@@ -228,10 +267,17 @@ struct TitleHeroView: View {
     @Environment(\.pageLeaving) private var pageLeaving
 
     /// A tap on the page's Play / Resume or an episode: ignored while the page
-    /// is going back (the tap was part of a back swipe).
+    /// is going back (the tap was part of a back swipe), and when the finger
+    /// moved on the screen (a swipe that started on the control — the zoom
+    /// transition's swipe back to Home isn't seen by BackGesture; TouchTracker).
     private func tapped(_ f: URL, _ control: String) {
         if pageLeaving || BackGesture.justStarted {
             dlog("nav", "title page: \(control) ignored (page going back)")
+            return
+        }
+        let moved = TouchTracker.recentTravel
+        if moved > TouchTracker.tapSlop {
+            dlog("nav", "title page: \(control) ignored (the finger moved \(Int(moved)) pt: a swipe, not a tap)")
             return
         }
         dlog("nav", "title page: \(control) → play \(f.lastPathComponent)")
@@ -304,20 +350,46 @@ struct LibraryList: View {
     let mode: LibraryViewMode
     var current: URL? = nil
     var group: LibraryGroup? = nil
+    /// Actions revealed by swiping a row to the left (over the tile in Thumbnails).
+    var swipe: ((URL) -> [SwipeAction])? = nil
+    /// The file whose delete question is up, and what Delete does. The question
+    /// is attached to the file's own row, so it points at that row (iOS shows
+    /// confirmation dialogs as a popover from the view they're attached to).
+    var pendingDelete: Binding<URL?>? = nil
+    var delete: ((URL) -> Void)? = nil
     let play: (URL) -> Void
     @ObservedObject private var history = HistoryStore.shared
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
+    @State private var openRow: String?
 
     var body: some View {
         if mode == .grid {
             // Thumbnails: a grid of episode stills (until 1.13.1 this mode drew
             // the same rows as List).
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 16) {
-                ForEach(files, id: \.self) { f in item(f) { tile(f) } }
+                ForEach(files, id: \.self) { f in
+                    Group {
+                        if let swipe {
+                            SwipeTile(id: f.path, openID: $openRow, actions: swipe(f), cornerRadius: 16) { item(f) { tile(f) } }
+                        } else {
+                            item(f) { tile(f) }
+                        }
+                    }
+                    .modifier(DeleteQuestion(file: f, pending: pendingDelete, delete: delete))
+                }
             }
         } else {
             LazyVStack(spacing: mode == .details ? 12 : 4) {
-                ForEach(files, id: \.self) { f in item(f) { row(f) } }
+                ForEach(files, id: \.self) { f in
+                    Group {
+                        if let swipe {
+                            SwipeRow(id: f.path, openID: $openRow, actions: swipe(f)) { item(f) { row(f) } }
+                        } else {
+                            item(f) { row(f) }
+                        }
+                    }
+                    .modifier(DeleteQuestion(file: f, pending: pendingDelete, delete: delete))
+                }
             }
         }
     }
@@ -332,9 +404,17 @@ struct LibraryList: View {
             }
         }
         .buttonStyle(PressStyle(scale: 0.98))
+        .accessibilityIdentifier("ep:" + f.lastPathComponent)
         .contextMenu {
             Button { play(f) } label: { Label("Play", systemImage: "play") }
-            Button(role: .destructive) { LocalMediaStore.shared.delete(f) } label: { Label("Delete", systemImage: "trash") }
+            if history.isWatched(f) {
+                Button { history.setWatched([f], false) } label: { Label("Mark as unwatched", systemImage: "eye.slash") }
+            } else {
+                Button { history.setWatched([f], true) } label: { Label("Mark as watched", systemImage: "eye") }
+            }
+            Button(role: .destructive) {
+                if let pendingDelete { pendingDelete.wrappedValue = f } else { LocalMediaStore.shared.delete(f) }
+            } label: { Label("Delete", systemImage: "trash") }
         }
     }
 
@@ -343,7 +423,7 @@ struct LibraryList: View {
         let tag = TitleParser.tag(p) ?? TitleParser.clean(f.lastPathComponent)
         return MediaTile(title: tag, subtitle: f.pathExtension.uppercased(), key: f.path, fileURL: f, lookupName: f.lastPathComponent,
                          progress: history.entry(forURL: f.path)?.progress, fixedTitle: tag,
-                         trailingNote: LibraryOrganizer.info(f).size.byteString)
+                         trailingNote: LibraryOrganizer.info(f).size.byteString, watched: history.isWatched(f))
             .overlay(alignment: .topTrailing) {
                 if f == current {
                     Image(systemName: "play.fill").font(.caption2.weight(.bold)).foregroundStyle(Theme.onAccent)
@@ -353,7 +433,8 @@ struct LibraryList: View {
     }
 
     private func row(_ f: URL) -> some View {
-        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, showSize: true)
+        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, showSize: true,
+                   watched: history.isWatched(f))
     }
 }
 
@@ -370,6 +451,8 @@ struct LibraryRow: View {
     var zoom: ZoomSource? = nil
     /// The file's size at the bottom right, level with the picture's bottom edge.
     var showSize = false
+    /// Watched (for a show's row on Home: every episode): an eye at the end.
+    var watched = false
     @StateObject private var thumb = ThumbLoader()
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
 
@@ -411,20 +494,28 @@ struct LibraryRow: View {
             Spacer(minLength: 0)
             if showSize {
                 VStack(alignment: .trailing, spacing: 0) {
-                    if highlighted { Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent).padding(.top, 4) }
+                    marks.padding(.top, 4)
                     Spacer(minLength: 4)
                     Text(LibraryOrganizer.info(file).size.byteString)
                         .font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.secondary)
                         .lineLimit(1).fixedSize()
                 }
                 .frame(height: thumbH)
-            } else if highlighted {
-                Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent).padding(.top, 4)
+            } else if highlighted || watched {
+                marks.padding(.top, 4)
             }
         }
         .padding(detail ? 8 : 6)
         .background(rowBackground)
         .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide) }
+    }
+
+    /// Top right: the eye when watched, the play mark on the highlighted row.
+    private var marks: some View {
+        HStack(spacing: 6) {
+            if watched { Image(systemName: "eye.fill").font(.caption).foregroundStyle(.secondary).accessibilityLabel("Watched") }
+            if highlighted { Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent) }
+        }
     }
 
     private var rowBackground: some View {
@@ -440,7 +531,7 @@ struct LibraryRow: View {
                     else { GeneratedArt(seed: file.lastPathComponent) }
                 }
                 .clipped()
-            if let progress, progress > 0.01 { ArtProgressBar(progress: progress).frame(width: thumbW, height: thumbH) }
+            if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress).frame(width: thumbW, height: thumbH) }
         }
         .clipShape(RoundedRectangle(cornerRadius: detail ? 12 : 8, style: .continuous))
         .zoomSource(zoom, cornerRadius: detail ? 12 : 8)
@@ -463,6 +554,7 @@ struct BackSwipeProbe: UIViewRepresentable {
         private var watched: [UIGestureRecognizer] = []
         override func didMoveToWindow() {
             super.didMoveToWindow()
+            if let w = window { TouchTracker.install(on: w) }
             guard window != nil, watched.isEmpty else { return }
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -499,4 +591,24 @@ struct BackSwipeProbe: UIViewRepresentable {
     }
     func makeUIView(context: Context) -> Probe { let p = Probe(); p.isUserInteractionEnabled = false; return p }
     func updateUIView(_ uiView: Probe, context: Context) {}
+}
+
+/// The delete question for one library file, attached to its row or tile.
+struct DeleteQuestion: ViewModifier {
+    let file: URL
+    let pending: Binding<URL?>?
+    let delete: ((URL) -> Void)?
+
+    func body(content: Content) -> some View {
+        if let pending, let delete {
+            content.confirmationDialog(
+                "Delete \(TitleParser.tag(TitleParser.parse(file.lastPathComponent)) ?? file.lastPathComponent) (\(LibraryOrganizer.info(file).size.byteString))?",
+                isPresented: Binding(get: { pending.wrappedValue == file }, set: { if !$0, pending.wrappedValue == file { pending.wrappedValue = nil } }),
+                titleVisibility: .visible) {
+                Button("Delete", role: .destructive) { delete(file) }
+            }
+        } else {
+            content
+        }
+    }
 }

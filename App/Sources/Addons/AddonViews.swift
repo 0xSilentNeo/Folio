@@ -234,6 +234,17 @@ struct StreamsView: View {
                     ForEach(g.streams) { s in
                         Button { play(s, from: g.addon) } label: { StreamRow(stream: s) }
                             .disabled(!s.isPlayable || starting)
+                            .swipeActions(edge: .trailing) {
+                                if s.isPlayable {
+                                    Button { download(s) } label: { Label("Download", systemImage: "arrow.down.circle") }.tint(Theme.accent)
+                                }
+                            }
+                            .contextMenu {
+                                if s.isPlayable {
+                                    Button { play(s, from: g.addon) } label: { Label("Play", systemImage: "play") }
+                                    Button { download(s) } label: { Label("Download", systemImage: "arrow.down.circle") }
+                                }
+                            }
                     }
                     if g.streams.isEmpty && g.error == nil && !loading {
                         Text("No streams").font(.caption).foregroundStyle(.secondary)
@@ -246,6 +257,14 @@ struct StreamsView: View {
             }
         }
         .overlay { if starting { ProgressView().controlSize(.large).padding(20).glass() } }
+        .overlay(alignment: .bottom) {
+            if let note = downloadNote {
+                Text(note).font(.footnote.weight(.semibold)).multilineTextAlignment(.center)
+                    .padding(.horizontal, 16).padding(.vertical, 10).glass(cornerRadius: 18)
+                    .padding(.bottom, 24).padding(.horizontal, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         .brandListBackground()
         .navigationTitle(video?.label ?? meta.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -272,6 +291,41 @@ struct StreamsView: View {
             }
         }
         loading = false
+    }
+
+    @State private var downloadNote: String?
+
+    /// Download instead of watch (1.17.0): the stream's file goes into the
+    /// library under the title's name, through the Downloads queue.
+    private func download(_ s: AddonStream) {
+        guard let raw = s.url, let u = URL(string: raw), u.scheme?.lowercased().hasPrefix("http") == true else {
+            show("Only direct links can be downloaded.")
+            return
+        }
+        let name = Self.fileName(for: s, meta: meta, video: video, url: u)
+        let added = DownloadManager.shared.enqueue(stream: u, fileName: name, package: meta.name,
+                                                   expected: Int64(s.behaviorHints?.videoSize ?? 0),
+                                                   headers: s.behaviorHints?.proxyHeaders?.request ?? [:])
+        show(added ? "Downloading \(name)" : "Already in Downloads")
+    }
+
+    private func show(_ note: String) {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { downloadNote = note }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            withAnimation(.easeOut(duration: 0.25)) { if downloadNote == note { downloadNote = nil } }
+        }
+    }
+
+    /// The addon's own file name when it gives one (release names keep the
+    /// library's episode matching), else "Title S01E02.<ext>".
+    static func fileName(for s: AddonStream, meta: MetaItem, video: MetaVideo?, url: URL) -> String {
+        if let f = s.behaviorHints?.filename?.trimmingCharacters(in: .whitespacesAndNewlines), !f.isEmpty, TitleParser.isMedia(f) {
+            return f.replacingOccurrences(of: "/", with: "-")
+        }
+        let ext = TitleParser.isMedia(url.lastPathComponent) ? url.pathExtension : "mkv"
+        var base = meta.name
+        if let v = video, let se = v.season, let ep = v.episode { base += String(format: " S%02dE%02d", se, ep) }
+        return base.replacingOccurrences(of: "/", with: "-") + "." + ext
     }
 
     private func context(for v: MetaVideo?) -> PlayContext {
@@ -456,5 +510,61 @@ struct AddonsManagerView: View {
         .brandListBackground()
         .navigationTitle("Addons")
         .toolbar { EditButton() }
+    }
+}
+
+/// In the player (1.17.0): the next episode has no stream of the release
+/// being watched, so you choose one; the episodes after it follow that one.
+struct StreamPickerSheet: View {
+    let context: PlayContext
+    let onPick: (AddonStream, InstalledAddon) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var groups: [StreamsView.StreamGroup] = []
+    @State private var loading = true
+
+    private var label: String { context.videoLabel ?? context.name }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("The release you're watching isn't available for \(label). Pick a stream; the next episodes will follow it.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                if loading && groups.allSatisfy({ $0.streams.isEmpty }) {
+                    HStack { ProgressView(); Text("Asking addons…").foregroundStyle(.secondary) }
+                }
+                ForEach(groups) { g in
+                    Section(g.addon.manifest.name) {
+                        if let e = g.error { Text(e).font(.caption).foregroundStyle(.orange) }
+                        ForEach(g.streams) { s in
+                            Button { onPick(s, g.addon) } label: { StreamRow(stream: s) }
+                                .disabled(!s.isPlayable)
+                        }
+                    }
+                }
+            }
+            .navigationTitle(label)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+        }
+        .task { await load() }
+    }
+
+    private func load() async {
+        let addons = AddonStore.shared.streamAddons(type: context.type, id: context.videoId)
+        groups = addons.map { StreamsView.StreamGroup(id: $0.id, addon: $0, streams: []) }
+        await withTaskGroup(of: (String, [AddonStream]?, String?).self) { tg in
+            for a in addons {
+                tg.addTask {
+                    do { return (a.id, try await AddonAPI.streams(a, type: context.type, id: context.videoId), nil) }
+                    catch { return (a.id, nil, error.localizedDescription) }
+                }
+            }
+            for await (id, streams, err) in tg {
+                if let i = groups.firstIndex(where: { $0.id == id }) { groups[i].streams = streams ?? []; groups[i].error = err }
+            }
+        }
+        loading = false
     }
 }
