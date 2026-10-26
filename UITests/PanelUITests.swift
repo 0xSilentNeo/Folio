@@ -179,7 +179,7 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(played, 0, "a tap on a page that was going away started playback")
     }
 
-    private func launchPlayer(_ extra: [String] = [], native: Bool = false) -> XCUIApplication {
+    private func launchPlayer(_ extra: [String] = [], native: Bool = false, captureNow: Bool = true) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTest", "-labNoEngine", "-nativePanelMorph", native ? "YES" : "NO"] + extra
         app.launch()
@@ -195,14 +195,17 @@ final class PanelUITests: XCTestCase {
         }
         sleep(2)
         spots = [:]
+        if captureNow { captureSpots(app) }
+        return app
+    }
+
+    /// A replay run (-panelStress) opens panels on its own, which hides their
+    /// buttons; it captures the spots after the replay instead.
+    private func captureSpots(_ app: XCUIApplication) {
         for n in ["Tracks", "Settings", "Now Playing"] {
-            // A replay run (-panelStress) may already have a panel up, which hides its button.
-            let e = app.buttons[n]
-            guard e.exists else { continue }
-            let f = e.frame
+            let f = app.buttons[n].frame
             spots[n] = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY))
         }
-        return app
     }
 
     /// Where each pill button is, captured once: tapped like a finger (the
@@ -290,12 +293,13 @@ final class PanelUITests: XCTestCase {
     func comparisonReplayNoSettle() throws { try replay(["-panelNoSettle"]) }
 
     private func replay(_ extra: [String], native: Bool = false) throws {
-        let app = launchPlayer(["-panelStress"] + extra, native: native)
+        let app = launchPlayer(["-panelStress"] + extra, native: native, captureNow: false)
         sleep(22)                                                 // replay: 3.5 s after landscape settles, lasts 11.6 s
         XCTAssertTrue(shows(app, "Playback", within: 4), "Settings (last tap) is not showing")
         XCTAssertFalse(shows(app, "NOW PLAYING"), "an orphaned Now Playing panel is on screen")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
         XCTAssertFalse(shows(app, "Playback"), "panel did not close after the replay (stuck)")
+        captureSpots(app)
         tapPill(app, "Tracks")
         XCTAssertTrue(shows(app, "Audio", within: 4), "player unresponsive after the replay")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
