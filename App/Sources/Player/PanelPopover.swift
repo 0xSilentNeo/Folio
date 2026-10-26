@@ -590,9 +590,12 @@ final class PanelPresenter {
 final class PanelRelay {
     static let shared = PanelRelay()
 
-    /// Off by default (1.16.1): in the CI simulator UIKit refused every
-    /// presentation from this layer (a popover whose bar item lives in another
-    /// window), and the panel fell back to waiting. Kept for the lab only.
+    /// On (1.17.0). 1.16.1 had it off: UIKit refused every presentation from
+    /// this layer. The 26 Oct relay lab (menus driven from inside the app)
+    /// showed why — the popover was anchored to a bar item in the other
+    /// window: anchored to the bar item, refused; anchored to the button's
+    /// rectangle in this window (retarget), the next menu started 10 ms after
+    /// the request instead of ~1 s. Setting key `menuRelay` (off: wait).
     static var enabled: Bool {
         !shared.refused && UserDefaults.standard.bool(forKey: SettingsKey.menuRelay)
     }

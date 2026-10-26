@@ -1236,6 +1236,19 @@ final class PlayerModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.setPaused(false) }
     }
 
+    /// PiP starts: mpv draws on the CPU (vo=libmpv, software render API).
+    ///
+    /// Metal (1.17.0): only the video output is swapped. mpv then rebuilds the
+    /// video chain on the new output and seeks in place (command.c: a `vo`
+    /// change → uninit_video_out, reinit_video_chain, queue_seek(relative 0,
+    /// exact)); the track stays selected, so the seek is served from the
+    /// demuxer cache. Until 1.16.1 the video track was also switched off and
+    /// on, and a re-selected track makes the demuxer drop its buffer and read
+    /// it again (demux.c, initiate_refresh_seek) — the buffer lost on entering
+    /// and leaving PiP (26 Oct report).
+    /// OpenGL: freeing the GL render context takes the track down anyway
+    /// (vo_libmpv.c: mpv_render_context_free → kill_video_async), and only one
+    /// render context can exist, so that path still re-selects the track.
     private func switchToSoftware() {
         guard mode == .main, let c = client else { return }
         defer { traceAV("renderer → PiP") }
@@ -1247,7 +1260,6 @@ final class PlayerModel: ObservableObject {
             glView?.detach()
         case .metal:
             detachMetalView()           // before mpv's Metal thread ends (see detachMetalView)
-            c.set("vid", "no")          // tear down the Metal VO first
         }
         do {
             sw.setVideoSize(width: Int(videoSize.width), height: Int(videoSize.height))
@@ -1257,14 +1269,35 @@ final class PlayerModel: ObservableObject {
             mode = .none
             showToast("PiP renderer failed")
         }
-        if renderer == .metal { c.set("vo", "libmpv") }
-        c.set("vid", "no")
-        c.set("vid", vidSaved ?? "auto")
+        if renderer == .metal {
+            c.set("vo", "libmpv")
+            if c.string("vid") == "no" { c.set("vid", vidSaved ?? "auto") }
+            dlog("player", "PiP: video output → CPU (track and buffer kept)")
+        } else {
+            c.set("vid", "no")
+            c.set("vid", vidSaved ?? "auto")
+        }
     }
 
+    /// PiP ended: back to the main renderer. Metal: the same output swap the
+    /// other way (see switchToSoftware); the CPU renderer is freed once mpv
+    /// has let go of it — freeing it while its output is still up makes mpv
+    /// take the video track down (vo_libmpv.c: kill_video_async → error_on_track).
     private func switchToMain() {
         guard let c = client else { return }
         defer { traceAV("renderer → main (PiP ended)") }
+        if renderer == .metal, mode == .sw, sw.isAttached, let vid = c.string("vid"), vid != "no" {
+            reattachMetalView()
+            videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded()
+            c.set("vo", "gpu-next")
+            mode = .main
+            pendingMain = false
+            videoOffForBackground = false
+            dlog("player", "PiP ended: video output → Metal (track and buffer kept)")
+            releaseSoftwareRenderer()
+            startPiPFeed()
+            return
+        }
         c.set("vid", "no")
         if mode == .sw { sw.detach() }
         switch renderer {
@@ -1284,6 +1317,20 @@ final class PlayerModel: ObservableObject {
         videoOffForBackground = false
         c.set("vid", vidSaved ?? "auto")
         startPiPFeed()
+    }
+
+    /// Frees the CPU renderer once mpv's output is no longer the libmpv one
+    /// (checked every 50 ms, for up to 3 s).
+    private func releaseSoftwareRenderer(attempt: Int = 0) {
+        let vo = client?.string("current-vo")
+        if vo == "libmpv", attempt < 60 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in self?.releaseSoftwareRenderer(attempt: attempt + 1) }
+            return
+        }
+        guard mode != .sw else { return }       // PiP started again meanwhile: keep it
+        if vo == "libmpv" { dlog("player/error", "CPU renderer still in use after 3 s; freeing it anyway") }
+        sw.detach()
+        dlog("player", "CPU renderer freed (\(attempt * 50) ms after the switch, output \(vo ?? "none"))")
     }
 
     /// mpv's Metal video thread changes the layer's properties (MoltenVK); Core

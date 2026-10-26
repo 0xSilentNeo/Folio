@@ -284,9 +284,10 @@ enum UILab {
                 if t0 == nil { t0 = Date() }
                 if Date().timeIntervalSince(t0!) > 38 { timer.invalidate(); dlog("av", "done"); return }
                 c.query({ c in (c.double("time-pos"), c.double("audio-pts"), c.double("avsync"), c.double("speed"),
-                                c.int("frame-drop-count"), c.int("decoder-frame-drop-count"), c.string("current-ao")) }) { r in
+                                c.int("frame-drop-count"), c.int("decoder-frame-drop-count"), c.string("current-ao"),
+                                c.double("demuxer-cache-duration"), c.string("current-vo")) }) { r in
                     func f(_ v: Double?) -> String { v.map { String(format: "%.3f", $0) } ?? "-" }
-                    dlog("av", "t=\(f(r.0)) a=\(f(r.1)) avsync=\(f(r.2)) speed=\(f(r.3)) drops=\(r.4 ?? -1)/\(r.5 ?? -1) ao=\(r.6 ?? "-")")
+                    dlog("av", "t=\(f(r.0)) a=\(f(r.1)) avsync=\(f(r.2)) speed=\(f(r.3)) drops=\(r.4 ?? -1)/\(r.5 ?? -1) ao=\(r.6 ?? "-") cache=\(f(r.7)) vo=\(r.8 ?? "-")")
                 }
             }
         }
