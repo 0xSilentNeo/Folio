@@ -67,16 +67,16 @@ jobs:
           note "python3: $(command -v python3 || echo none) jq: $(command -v jq || echo none)"
           xcrun simctl list runtimes -j > runtimes.json
           xcrun simctl list devicetypes -j > devicetypes.json
-          if command -v jq >/dev/null; then
-            RT=$(jq -r '[.runtimes[] | select(.platform=="iOS" and .isAvailable)] | sort_by(.version | split(".") | map(tonumber)) | last | .identifier' runtimes.json)
-            # A device type this runtime supports: the newest "iPhone NN Pro" (not Max).
-            DT=$(jq -r --arg rt "$RT" '.runtimes[] | select(.identifier==$rt) | .supportedDeviceTypes | map(select(.name|test("^iPhone [0-9]+ Pro$"))) | sort_by(.name | capture("(?<n>[0-9]+)").n | tonumber) | last | .identifier' runtimes.json)
-          else
-            RT=$(python3 -c 'import json,sys; r=[x for x in json.load(open("runtimes.json"))["runtimes"] if x["platform"]=="iOS" and x["isAvailable"]]; r.sort(key=lambda x:[int(p) for p in x["version"].split(".")]); print(r[-1]["identifier"])')
-            DT=$(python3 -c 'import json,re,sys; rt=[x for x in json.load(open("runtimes.json"))["runtimes"] if x["identifier"]==sys.argv[1]][0]; d=[x for x in rt["supportedDeviceTypes"] if re.match(r"^iPhone \d+ Pro$", x["name"])]; d.sort(key=lambda x:int(re.search(r"\d+",x["name"]).group())); print(d[-1]["identifier"])' "$RT")
-          fi
-          note "runtime=$RT devicetype=$DT"
-          UDID=$(xcrun simctl create lab "$DT" "$RT") || { note "create failed ($?)"; exit 1; }
+          RT=$(jq -r '[.runtimes[] | select(.platform=="iOS" and .isAvailable)] | sort_by(.version | split(".") | map(tonumber)) | last | .identifier' runtimes.json)
+          # iPhone Pro device types, newest first; the first one this runtime accepts is used.
+          jq -r '.devicetypes[] | select(.name|test("^iPhone [0-9]+ Pro$")) | "\(.name | capture("(?<n>[0-9]+)").n) \(.identifier)"' devicetypes.json | sort -rn > candidates.txt
+          note "runtime=$RT candidates: $(cut -d' ' -f2 candidates.txt | sed 's/com.apple.CoreSimulator.SimDeviceType.//' | tr '\n' ' ')"
+          UDID=""
+          while read -r _ DT; do
+            UDID=$(xcrun simctl create lab "$DT" "$RT" 2>/dev/null) && { note "devicetype=$DT"; break; }
+            UDID=""
+          done < candidates.txt
+          [ -n "$UDID" ] || { note "no device type could be created for $RT"; jq -r '.devicetypes[].name' devicetypes.json | tail -25 | sed 's/^/::warning::/'; exit 1; }
           note "created $UDID"
           xcrun simctl boot "$UDID" || { note "boot failed ($?)"; exit 1; }
           xcrun simctl bootstatus "$UDID" -b || note "bootstatus returned $?"
