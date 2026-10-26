@@ -33,10 +33,6 @@ struct HomeView: View {
                 .scrollContentBackground(.hidden)
                 .scrollIndicators(.hidden)
                 .environment(\.defaultMinListRowHeight, 0)
-                .confirmationDialog(pendingDelete.map(deleteQuestion) ?? "", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
-                                    titleVisibility: .visible, presenting: pendingDelete) { g in
-                    Button("Delete", role: .destructive) { local.delete(g.folder.map { [$0] } ?? g.files) }
-                }
             }
             .background(HomeBackdrop().ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
@@ -210,6 +206,17 @@ struct HomeView: View {
     /// Thumbnails: the tile whose swipe actions are showing.
     @State private var openTile: String?
 
+    /// The delete question, attached to the title's own tile or row so it
+    /// points at it (iOS shows confirmation dialogs as a popover from the view
+    /// they're attached to).
+    private func askToDelete<V: View>(_ g: LibraryGroup, _ v: V) -> some View {
+        v.confirmationDialog(deleteQuestion(g),
+                             isPresented: Binding(get: { pendingDelete?.id == g.id }, set: { if !$0, pendingDelete?.id == g.id { pendingDelete = nil } }),
+                             titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { local.delete(g.folder.map { [$0] } ?? g.files) }
+        }
+    }
+
     /// Swipe actions of a Thumbnails tile: Delete (asks first) and, for a
     /// title, Watched / Unwatched.
     private func swipeActions(_ g: LibraryGroup) -> [SwipeAction] {
@@ -252,7 +259,7 @@ struct HomeView: View {
         } else {
             let posters = tileArtwork == "poster"
             ForEach(groups) { g in
-                Group {
+                askToDelete(g, Group {
                     if let folder = g.folder {
                         folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: ZoomSource(g.id, zoomNS)) }
                     } else {
@@ -263,7 +270,7 @@ struct HomeView: View {
                                        watched: allWatched(g))
                         }
                     }
-                }
+                })
                 .padding(.horizontal, margin)
                 .padding(.vertical, mode == .details ? 6 : 2)
                 .homeRow()
@@ -292,7 +299,7 @@ struct HomeView: View {
         let groups = self.groups
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
             ForEach(groups) { g in
-                SwipeTile(id: g.id, openID: $openTile, actions: swipeActions(g), cornerRadius: posters ? 12 : 16) {
+                askToDelete(g, SwipeTile(id: g.id, openID: $openTile, actions: swipeActions(g), cornerRadius: posters ? 12 : 16) {
                     if let folder = g.folder {
                         folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(g.id, zoomNS)) }
                     } else {
@@ -305,7 +312,7 @@ struct HomeView: View {
                                       watched: allWatched(g))
                         }
                     }
-                }
+                })
             }
         }
         .padding(.horizontal, margin)

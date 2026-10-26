@@ -140,15 +140,6 @@ struct TitleHeroView: View {
         .confirmationDialog("Delete this file from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { local.delete(file); dismiss() }
         }
-        .confirmationDialog(pendingDelete.map { "Delete \(TitleParser.tag(TitleParser.parse($0.lastPathComponent)) ?? $0.lastPathComponent)?" } ?? "",
-                            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
-                            titleVisibility: .visible, presenting: pendingDelete) { f in
-            Button("Delete", role: .destructive) {
-                let last = siblings.count <= 1
-                local.delete(f)
-                if last { dismiss() }
-            }
-        }
     }
 
     // MARK: Pieces
@@ -237,6 +228,12 @@ struct TitleHeroView: View {
                              history.isWatched(f)
                                 ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched([f], false) }
                                 : SwipeAction(title: "Watched", icon: "eye", tint: Theme.accent) { history.setWatched([f], true) }]
+                        },
+                        pendingDelete: $pendingDelete,
+                        delete: { f in
+                            let last = siblings.count <= 1
+                            local.delete(f)
+                            if last { dismiss() }
                         }) { tapped($0, "episode row") }
         }
         .padding(.top, 10)
@@ -346,8 +343,13 @@ struct LibraryList: View {
     let mode: LibraryViewMode
     var current: URL? = nil
     var group: LibraryGroup? = nil
-    /// Actions revealed by swiping a row to the left (List and Details views).
+    /// Actions revealed by swiping a row to the left (over the tile in Thumbnails).
     var swipe: ((URL) -> [SwipeAction])? = nil
+    /// The file whose delete question is up, and what Delete does. The question
+    /// is attached to the file's own row, so it points at that row (iOS shows
+    /// confirmation dialogs as a popover from the view they're attached to).
+    var pendingDelete: Binding<URL?>? = nil
+    var delete: ((URL) -> Void)? = nil
     let play: (URL) -> Void
     @ObservedObject private var history = HistoryStore.shared
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
@@ -359,21 +361,27 @@ struct LibraryList: View {
             // the same rows as List).
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 16) {
                 ForEach(files, id: \.self) { f in
-                    if let swipe {
-                        SwipeTile(id: f.path, openID: $openRow, actions: swipe(f), cornerRadius: 16) { item(f) { tile(f) } }
-                    } else {
-                        item(f) { tile(f) }
+                    Group {
+                        if let swipe {
+                            SwipeTile(id: f.path, openID: $openRow, actions: swipe(f), cornerRadius: 16) { item(f) { tile(f) } }
+                        } else {
+                            item(f) { tile(f) }
+                        }
                     }
+                    .modifier(DeleteQuestion(file: f, pending: pendingDelete, delete: delete))
                 }
             }
         } else {
             LazyVStack(spacing: mode == .details ? 12 : 4) {
                 ForEach(files, id: \.self) { f in
-                    if let swipe {
-                        SwipeRow(id: f.path, openID: $openRow, actions: swipe(f)) { item(f) { row(f) } }
-                    } else {
-                        item(f) { row(f) }
+                    Group {
+                        if let swipe {
+                            SwipeRow(id: f.path, openID: $openRow, actions: swipe(f)) { item(f) { row(f) } }
+                        } else {
+                            item(f) { row(f) }
+                        }
                     }
+                    .modifier(DeleteQuestion(file: f, pending: pendingDelete, delete: delete))
                 }
             }
         }
@@ -397,7 +405,9 @@ struct LibraryList: View {
             } else {
                 Button { history.setWatched([f], true) } label: { Label("Mark as watched", systemImage: "eye") }
             }
-            Button(role: .destructive) { LocalMediaStore.shared.delete(f) } label: { Label("Delete", systemImage: "trash") }
+            Button(role: .destructive) {
+                if let pendingDelete { pendingDelete.wrappedValue = f } else { LocalMediaStore.shared.delete(f) }
+            } label: { Label("Delete", systemImage: "trash") }
         }
     }
 
@@ -573,4 +583,24 @@ struct BackSwipeProbe: UIViewRepresentable {
     }
     func makeUIView(context: Context) -> Probe { let p = Probe(); p.isUserInteractionEnabled = false; return p }
     func updateUIView(_ uiView: Probe, context: Context) {}
+}
+
+/// The delete question for one library file, attached to its row or tile.
+struct DeleteQuestion: ViewModifier {
+    let file: URL
+    let pending: Binding<URL?>?
+    let delete: ((URL) -> Void)?
+
+    func body(content: Content) -> some View {
+        if let pending, let delete {
+            content.confirmationDialog(
+                "Delete \(TitleParser.tag(TitleParser.parse(file.lastPathComponent)) ?? file.lastPathComponent) (\(LibraryOrganizer.info(file).size.byteString))?",
+                isPresented: Binding(get: { pending.wrappedValue == file }, set: { if !$0, pending.wrappedValue == file { pending.wrappedValue = nil } }),
+                titleVisibility: .visible) {
+                Button("Delete", role: .destructive) { delete(file) }
+            }
+        } else {
+            content
+        }
+    }
 }

@@ -632,8 +632,10 @@ final class PanelUITests: XCTestCase {
         cancelDelete(app, "home grid")
         XCTAssertTrue(tile.exists, "Cancel deleted the title")
 
-        // Title page, Thumbnails
-        tile.tap()
+        // Title page, Thumbnails (tapped by position: after the dialog XCUITest
+        // could not compute the label's hit point, 26 Oct run)
+        let f = tile.frame
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.minY - 40)).tap()
         XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open")
         sleep(2)
         let ep = app.buttons["ep:Lab Show S01E02.mp4"]
