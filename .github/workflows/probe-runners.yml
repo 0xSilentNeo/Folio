@@ -7,12 +7,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-26, macos-15, macos-latest]
+        os: [macos-26, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
       - run: |
-          sw_vers
-          ls -d /Applications/Xcode*.app
-          for x in /Applications/Xcode_27*.app /Applications/Xcode_26*.app; do [ -d "$x" ] && echo "$x: $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' $x/Contents/version.plist)"; done
-          xcrun simctl list runtimes | grep -i ios || true
-          for x in /Applications/Xcode_27*.app; do [ -d "$x" ] && DEVELOPER_DIR=$x/Contents/Developer xcrun simctl list runtimes | grep -i ios; done || true
+          {
+            echo "macOS $(sw_vers -productVersion)"
+            for x in /Applications/Xcode*.app; do echo "$x $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' $x/Contents/version.plist 2>/dev/null)"; done
+            xcrun simctl list runtimes | grep -i ios
+            for x in /Applications/Xcode_27*.app; do [ -d "$x" ] && echo "with $x:" && DEVELOPER_DIR=$x/Contents/Developer xcrun simctl list runtimes | grep -i ios; done
+            true
+          } > probe.txt 2>&1
+          msg=$(sed -e 's/%/%25/g' probe.txt | awk '{printf "%s%%0A", $0}')
+          echo "::notice title=${{ matrix.os }}::$msg"
