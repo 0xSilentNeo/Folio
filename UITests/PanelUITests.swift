@@ -562,6 +562,48 @@ final class PanelUITests: XCTestCase {
     /// last tap's panel and leave the player responsive.
     func test20NativeRapidSwitchReplay() throws { try replay([], native: true) }
 
+    /// 1.16.1 (device log, 7 cases since 1.14.1): a back swipe that starts on
+    /// the title page's Play button started playback while the page went back.
+    /// Swipes right from the Play button, several speeds and lengths: the page
+    /// may go back, but the player must never open.
+    func test31SwipeBackFromPlay() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+        var played = 0, wentBack = 0
+        let swipes: [(CGFloat, XCUIGestureVelocity)] = [(60, .fast), (120, .fast), (220, .fast), (60, .default), (220, .default), (30, .fast)]
+        for (i, (dist, speed)) in swipes.enumerated() {
+            if !app.buttons["Back"].exists {
+                tile.tap()
+                XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open (\(i))")
+                sleep(2)
+            }
+            let play = app.descendants(matching: .any)["heroPlay"]
+            guard play.waitForExistence(timeout: 5) else { XCTFail("play button not found (\(i))"); return }
+            let f = play.frame
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            let from = origin.withOffset(CGVector(dx: f.minX + 24, dy: f.midY))
+            let to = origin.withOffset(CGVector(dx: f.minX + 24 + dist, dy: f.midY + 4))
+            from.press(forDuration: 0.01, thenDragTo: to, withVelocity: speed, thenHoldForDuration: 0)
+            sleep(3)
+            let close = app.buttons["Close player"]
+            if close.exists {
+                played += 1
+                print("SWIPEPLAY \(i) dist=\(Int(dist)) → the player opened")
+                close.tap(); sleep(3)
+            } else {
+                print("SWIPEPLAY \(i) dist=\(Int(dist)) → no playback, page \(app.buttons["Back"].exists ? "stayed" : "went back")")
+            }
+            if !app.buttons["Back"].exists { wentBack += 1 }
+        }
+        print("SWIPEPLAY played \(played)/\(swipes.count), went back \(wentBack)")
+        XCTAssertEqual(played, 0, "a back swipe starting on Play started playback")
+    }
+
     /// Measurement only (results in the app log): the toolbar width iOS needs
     /// for the three panel buttons, and where its glass sits.
     func test30ToolbarProbe() throws {
