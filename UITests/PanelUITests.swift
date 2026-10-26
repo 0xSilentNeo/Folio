@@ -196,7 +196,10 @@ final class PanelUITests: XCTestCase {
         sleep(2)
         spots = [:]
         for n in ["Tracks", "Settings", "Now Playing"] {
-            let f = app.buttons[n].frame
+            // A replay run (-panelStress) may already have a panel up, which hides its button.
+            let e = app.buttons[n]
+            guard e.exists else { continue }
+            let f = e.frame
             spots[n] = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY))
         }
         return app
