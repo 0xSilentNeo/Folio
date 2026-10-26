@@ -608,7 +608,7 @@ final class PanelUITests: XCTestCase {
     /// for the three panel buttons, and where its glass sits.
     func test30ToolbarProbe() throws {
         _ = launchPlayer(["-toolbarProbe"], native: true, captureNow: false)
-        sleep(30)
+        sleep(50)
     }
 
     /// 1.16.0, iOS 27: with a panel fully open, one tap on

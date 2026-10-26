@@ -88,10 +88,18 @@ enum UILab {
     /// `-toolbarProbe` (with `-uiTest`): in the player's own landscape layout,
     /// how wide the panel toolbar must be before iOS moves a button into its
     /// "⋯" overflow, and where the glass capsule sits inside the toolbar.
-    static func toolbarProbe() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 9) {
-            guard let bar = ui?.panelBar as? UIToolbar, let host = bar.superview, let window = bar.window else {
-                dlog("lab", "toolbar probe: no toolbar on screen"); return
+    /// Waits (polling each second, up to a minute) until the toolbar has been
+    /// on screen in landscape for 3 s, then measures.
+    static func toolbarProbe(attempt: Int = 0, settled: Int = 0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            let ready: Bool = {
+                guard let w = ui?.panelBar?.window else { return false }
+                return w.bounds.width > w.bounds.height
+            }()
+            guard ready, settled >= 3, let bar = ui?.panelBar as? UIToolbar, let host = bar.superview, let window = bar.window else {
+                if attempt < 60 { toolbarProbe(attempt: attempt + 1, settled: ready ? settled + 1 : 0) }
+                else { dlog("lab", "toolbar probe: no toolbar on screen in landscape") }
+                return
             }
             dlog("lab", "toolbar probe: iOS \(UIDevice.current.systemVersion) bar=\(bar.frame) inWindow=\(bar.convert(bar.bounds, to: window)) window=\(window.bounds.size) safe=\(window.safeAreaInsets) barSafe=\(bar.safeAreaInsets) margins=\(bar.directionalLayoutMargins)")
             dumpTree(bar, in: bar, depth: 0)
