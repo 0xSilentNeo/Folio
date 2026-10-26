@@ -117,11 +117,21 @@ struct PanelToolbarView: UIViewRepresentable {
     }
 
     /// Width the toolbar needs for its three buttons. Built with the iOS 27 SDK, a toolbar
-    /// moves items that do not fit into a "⋯" overflow menu (CI recording, iOS 27.0
-    /// simulator: at 176 pt only Tracks and "⋯" were on screen).
+    /// moves items that do not fit into a "⋯" overflow menu. CI toolbar probe (iOS 27.0
+    /// simulator, the player in landscape): 182 pt → one button and "⋯", 186 pt → all
+    /// three. The glass capsule is 154 pt wide and sits 16 pt in from the toolbar's right
+    /// edge; everything to its left is empty toolbar.
     static var width: CGFloat {
-        if #available(iOS 27, *) { return 236 }
+        if #available(iOS 27, *) { return 190 }
         return 176
+    }
+
+    /// The empty toolbar beside the glass, laid out beyond the toolbar's frame so the
+    /// progress bar gets that space (1.16.1: at 236 pt the toolbar took ~80 pt from it,
+    /// for a capsule 154 pt wide).
+    static var outside: (leading: CGFloat, trailing: CGFloat) {
+        if #available(iOS 27, *) { return (190 - 16 - 154, 16) }
+        return (0, 0)
     }
 
     func makeUIView(context: Context) -> UIToolbar {

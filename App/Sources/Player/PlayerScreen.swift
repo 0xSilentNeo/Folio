@@ -337,6 +337,8 @@ struct PlayerScreen: View {
             // out of the item's Liquid Glass (as in 1.14.0).
             PanelToolbarView(ui: ui)
                 .frame(width: PanelToolbarView.width, height: 50)
+                .padding(.leading, -PanelToolbarView.outside.leading)
+                .padding(.trailing, -PanelToolbarView.outside.trailing)
         } else {
             PanelPillView(ui: ui, height: tune.pillHeight)
                 .frame(width: tune.pillHeight * 3 + 8, height: tune.pillHeight)
