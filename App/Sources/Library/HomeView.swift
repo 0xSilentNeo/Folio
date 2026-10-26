@@ -207,6 +207,20 @@ struct HomeView: View {
     @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
 
     @State private var pendingDelete: LibraryGroup?
+    /// Thumbnails: the tile whose swipe actions are showing.
+    @State private var openTile: String?
+
+    /// Swipe actions of a Thumbnails tile: Delete (asks first) and, for a
+    /// title, Watched / Unwatched.
+    private func swipeActions(_ g: LibraryGroup) -> [SwipeAction] {
+        var a = [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = g }]
+        if g.folder == nil {
+            a.append(allWatched(g)
+                     ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched(g.files, false) }
+                     : SwipeAction(title: "Watched", icon: "eye", tint: Theme.accent) { history.setWatched(g.files, true) })
+        }
+        return a
+    }
 
     private func deleteQuestion(_ g: LibraryGroup) -> String {
         if g.folder != nil { return "Delete the folder \(g.title) and its \(g.count) item\(g.count == 1 ? "" : "s") (\(g.size.byteString))?" }
@@ -226,7 +240,8 @@ struct HomeView: View {
         .padding(.bottom, 12)
     }
 
-    /// Thumbnails: one row holding the grid (no swipe; long-press for the menu).
+    /// Thumbnails: one row holding the grid (each tile swipes left for its
+    /// actions, laid over the tile — SwipeTile).
     /// List and Details: one list row per title, with swipe actions — left to
     /// delete (asks first), right to mark watched / unwatched.
     @ViewBuilder
@@ -253,7 +268,9 @@ struct HomeView: View {
                 .padding(.vertical, mode == .details ? 6 : 2)
                 .homeRow()
                 .swipeActions(edge: .trailing) {
-                    Button(role: .destructive) { pendingDelete = g } label: { Label("Delete", systemImage: "trash") }
+                    // Red by tint, not the destructive role: nothing is deleted
+                    // until the question is answered, so the row must stay put.
+                    Button { pendingDelete = g } label: { Label("Delete", systemImage: "trash") }.tint(.red)
                 }
                 .swipeActions(edge: .leading) {
                     if g.folder == nil {
@@ -275,16 +292,18 @@ struct HomeView: View {
         let groups = self.groups
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
             ForEach(groups) { g in
-                if let folder = g.folder {
-                    folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(g.id, zoomNS)) }
-                } else {
-                    groupLink(g) {
-                        MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
-                                  key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
-                                  progress: history.entry(forURL: g.nextUp.path)?.progress,
-                                  fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                  poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil,
-                                  watched: allWatched(g))
+                SwipeTile(id: g.id, openID: $openTile, actions: swipeActions(g), cornerRadius: posters ? 12 : 16) {
+                    if let folder = g.folder {
+                        folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(g.id, zoomNS)) }
+                    } else {
+                        groupLink(g) {
+                            MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
+                                      key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
+                                      progress: history.entry(forURL: g.nextUp.path)?.progress,
+                                      fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
+                                      poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil,
+                                      watched: allWatched(g))
+                        }
                     }
                 }
             }

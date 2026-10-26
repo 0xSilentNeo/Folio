@@ -604,6 +604,80 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(played, 0, "a back swipe starting on Play started playback")
     }
 
+    /// 1.17.0 swipe actions. Thumbnails (the default view) on Home and on a
+    /// title page: a swipe to the left lays Delete and Watched over the tile
+    /// and doesn't open anything; Delete asks first and Cancel keeps the
+    /// title. List view on Home: the system row swipe, both directions.
+    func test32SwipeActions() throws {
+        var app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-libraryView", "grid", "-heroView", "grid"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        var tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+
+        // Home, Thumbnails
+        tile.swipeLeft(); sleep(1)
+        print("SWIPE home grid: Back=\(app.buttons["Back"].exists) Delete=\(app.buttons["Delete"].exists) Watched=\(app.buttons["Watched"].exists)")
+        XCTAssertFalse(app.buttons["Back"].exists, "the swipe opened the title page")
+        XCTAssertTrue(app.buttons["Watched"].waitForExistence(timeout: 2), "no Watched after swiping a Home tile left")
+        app.buttons["Watched"].tap(); sleep(1)
+        let eye = app.images["Watched"].firstMatch
+        print("SWIPE home grid: eye after Watched = \(eye.exists)")
+        XCTAssertTrue(eye.exists, "no eye on the tile after Watched")
+        tile.swipeLeft(); sleep(1)
+        XCTAssertTrue(app.buttons["Unwatched"].waitForExistence(timeout: 2), "Watched did not turn into Unwatched")
+        app.buttons["Delete"].tap(); sleep(1)
+        cancelDelete(app, "home grid")
+        XCTAssertTrue(tile.exists, "Cancel deleted the title")
+
+        // Title page, Thumbnails
+        tile.tap()
+        XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open")
+        sleep(2)
+        let ep = app.buttons["ep:Lab Show S01E02.mp4"]
+        if !ep.waitForExistence(timeout: 4) { app.swipeUp(); sleep(1) }
+        XCTAssertTrue(ep.exists, "episode tile not found")
+        ep.swipeLeft(); sleep(1)
+        print("SWIPE title grid: player=\(app.buttons["Close player"].exists) Delete=\(app.buttons["Delete"].exists) Watched=\(app.buttons["Watched"].exists)")
+        XCTAssertFalse(app.buttons["Close player"].exists, "the swipe played the episode")
+        XCTAssertTrue(app.buttons["Delete"].exists, "no Delete after swiping an episode left")
+        app.buttons["Delete"].tap(); sleep(1)
+        cancelDelete(app, "title grid")
+        XCTAssertTrue(app.buttons["ep:Lab Show S01E02.mp4"].exists, "Cancel deleted the episode")
+        app.terminate()
+
+        // Home, List view: system swipe actions
+        app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-libraryView", "list"]
+        app.launch()
+        tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library row not found")
+        sleep(2)
+        tile.swipeLeft(); sleep(1)
+        let asked = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Delete all'")).firstMatch
+        if !asked.exists, app.buttons["Delete"].exists { app.buttons["Delete"].tap(); sleep(1) }
+        print("SWIPE home list left: asked=\(asked.exists)")
+        cancelDelete(app, "home list")
+        XCTAssertTrue(app.staticTexts["Lab Show"].firstMatch.exists, "Cancel deleted the row (list)")
+        tile.swipeRight(); sleep(1)
+        let right = app.buttons["Unwatched"].exists ? "Unwatched" : app.buttons["Watched"].exists ? "Watched" : "none"
+        print("SWIPE home list right: \(right)")
+        XCTAssertNotEqual(right, "none", "no Watched / Unwatched after swiping a row right")
+    }
+
+    /// The delete question must show; then cancel it (Cancel button, or a tap
+    /// outside when the dialog is a popover).
+    private func cancelDelete(_ app: XCUIApplication, _ tag: String) {
+        let q = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Delete'")).firstMatch
+        print("SWIPE \(tag): question=\(q.exists) \(q.exists ? q.label : "")")
+        XCTAssertTrue(q.waitForExistence(timeout: 3), "Delete did not ask first (\(tag))")
+        if app.buttons["Cancel"].exists { app.buttons["Cancel"].tap() }
+        else { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap() }
+        sleep(1)
+    }
+
     /// Measurement only (results in the app log): the toolbar width iOS needs
     /// for the three panel buttons, and where its glass sits.
     func test30ToolbarProbe() throws {

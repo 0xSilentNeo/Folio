@@ -67,6 +67,7 @@ struct SwipeRow<Content: View>: View {
                     .background(a.tint, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .buttonStyle(PressStyle())
+                .accessibilityLabel(a.title)
             }
         }
         .frame(width: max(0, -offset - 6))
@@ -96,6 +97,80 @@ struct SwipeRow<Content: View>: View {
     private func close() {
         withAnimation(.snappy(duration: 0.25)) { offset = 0 }
         if isOpen { openID = nil }
+    }
+}
+
+/// Thumbnails (grid tiles): there's no room for buttons beside a tile, so a
+/// swipe to the left lays the actions over the tile itself. A tap outside the
+/// buttons, a swipe to the right, or opening another tile closes it.
+struct SwipeTile<Content: View>: View {
+    let id: String
+    @Binding var openID: String?
+    let actions: [SwipeAction]
+    var cornerRadius: CGFloat = 12
+    @ViewBuilder var content: Content
+
+    @State private var drag: CGFloat = 0
+    private var isOpen: Bool { openID == id }
+
+    var body: some View {
+        if #available(iOS 18.0, *), !actions.isEmpty {
+            content
+                .offset(x: drag)
+                .overlay { if isOpen { panel.transition(.opacity) } }
+                .gesture(LeftSwipeRecognizer(isOpen: isOpen, onChanged: changed, onEnded: ended))
+        } else {
+            content
+        }
+    }
+
+    private var panel: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous).fill(.black.opacity(0.35)))
+                .contentShape(Rectangle())
+                .onTapGesture { close() }
+            VStack(spacing: 8) {
+                ForEach(actions) { a in
+                    Button {
+                        close()
+                        a.action()
+                    } label: {
+                        Label(a.title, systemImage: a.icon)
+                            .font(.footnote.weight(.semibold))
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .frame(maxWidth: .infinity, minHeight: 36)
+                            .background(a.tint, in: Capsule())
+                    }
+                    .buttonStyle(PressStyle())
+                    .accessibilityLabel(a.title)
+                }
+            }
+            .padding(10)
+        }
+    }
+
+    private func changed(_ t: CGFloat) {
+        // The tile follows the finger a little, so the swipe is felt.
+        drag = isOpen ? 0 : max(-24, min(0, t * 0.3))
+    }
+
+    private func ended(_ t: CGFloat, _ velocity: CGFloat) {
+        withAnimation(.snappy(duration: 0.25)) {
+            drag = 0
+            if isOpen {
+                if t > 20 || velocity > 300 { openID = nil }
+            } else if t < -40 || velocity < -500 {
+                openID = id
+            }
+        }
+    }
+
+    private func close() {
+        withAnimation(.snappy(duration: 0.2)) { if isOpen { openID = nil } }
     }
 }
 

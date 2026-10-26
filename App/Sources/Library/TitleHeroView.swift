@@ -358,7 +358,13 @@ struct LibraryList: View {
             // Thumbnails: a grid of episode stills (until 1.13.1 this mode drew
             // the same rows as List).
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 16) {
-                ForEach(files, id: \.self) { f in item(f) { tile(f) } }
+                ForEach(files, id: \.self) { f in
+                    if let swipe {
+                        SwipeTile(id: f.path, openID: $openRow, actions: swipe(f), cornerRadius: 16) { item(f) { tile(f) } }
+                    } else {
+                        item(f) { tile(f) }
+                    }
+                }
             }
         } else {
             LazyVStack(spacing: mode == .details ? 12 : 4) {
@@ -383,6 +389,7 @@ struct LibraryList: View {
             }
         }
         .buttonStyle(PressStyle(scale: 0.98))
+        .accessibilityIdentifier("ep:" + f.lastPathComponent)
         .contextMenu {
             Button { play(f) } label: { Label("Play", systemImage: "play") }
             if history.isWatched(f) {
