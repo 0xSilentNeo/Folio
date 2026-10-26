@@ -397,13 +397,16 @@ final class PanelPresenter {
                 NextFrame.run { [weak self] in self?.reconcile() }
                 return
             }
-            dlog("ui", "panel: \(shownKind ?? "panel") out \(presented.isBeingPresented ? "(animated, still opening)" : "(instant)") → \(req.kind)")
-            presented.dismiss(animated: animated && presented.isBeingPresented)
+            let animatedOut = animated && presented.isBeingPresented
+            dlog("ui", "panel: \(shownKind ?? "panel") out \(animatedOut ? "(animated, still opening)" : "(instant)") → \(req.kind)")
+            presented.dismiss(animated: animatedOut)
             shown = nil; shownKind = nil; shownRequest = nil
-            if host.presentedViewController != nil {
+            if animatedOut {
+                // Its close animation runs; the new panel goes up when it ends.
                 NextFrame.run { [weak self] in self?.reconcile() }
                 return
             }
+            // Instant: present in this same call, as Outplayer does (the retry below covers a refusal).
         }
         waitingForLeave = false
         shown = nil; shownKind = nil; shownRequest = nil
