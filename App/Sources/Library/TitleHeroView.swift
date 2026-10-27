@@ -584,8 +584,31 @@ struct BackSwipeProbe: UIViewRepresentable {
                     r.addTarget(self, action: #selector(self.changed(_:)))
                     self.watched.append(r)
                 }
-                if Self.labProbe { self.startNavProbe(nav) }
+                if Self.labProbe { self.startNavProbe(nav) } else { self.startMoveLog(nav) }
             }
+        }
+
+        // MARK: The page's own moves, in the log (each change, 10 times a second)
+
+        private var moveTimer: Timer?
+        private var lastMove = "none"
+
+        /// 1.17.1: whether a navigation transition is running for the page, so
+        /// a device log shows when taps on it are ignored and why. The 26 Oct
+        /// recording has the page's ‹ and ••• still over Home for ~1 s after it
+        /// had zoomed back into its tile — its move not finished yet.
+        private func startMoveLog(_ nav: UINavigationController) {
+            guard moveTimer == nil else { return }
+            let t = Timer(timeInterval: 0.1, repeats: true) { [weak self, weak nav] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    let tc = nav?.transitionCoordinator
+                    let now = tc.map { $0.isInteractive ? "interactive" : "animated" } ?? "none"
+                    if now != self.lastMove { self.lastMove = now; dlog("nav", "title page move: \(now)") }
+                }
+            }
+            RunLoop.main.add(t, forMode: .common)
+            moveTimer = t
         }
 
         // MARK: Lab (`-navProbe`): the page during its own transitions
@@ -605,7 +628,11 @@ struct BackSwipeProbe: UIViewRepresentable {
 
         override func willMove(toWindow newWindow: UIWindow?) {
             super.willMove(toWindow: newWindow)
-            if newWindow == nil { link?.invalidate(); link = nil; if Self.labProbe { dlog("navprobe", "page left the window") } }
+            if newWindow == nil {
+                link?.invalidate(); link = nil
+                moveTimer?.invalidate(); moveTimer = nil
+                if Self.labProbe { dlog("navprobe", "page left the window") }
+            }
         }
 
         /// Each frame: the navigation transition, where the page is drawn, and

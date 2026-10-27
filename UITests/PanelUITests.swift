@@ -893,14 +893,17 @@ final class PanelUITests: XCTestCase {
         reveal()
         // The revealed row's button (1.17.0 also listed every hidden row's).
         func shown(_ name: String) -> XCUIElement? { app.buttons.matching(identifier: name).allElementsBoundByIndex.first { $0.isHittable } }
-        let watched = shown("Watched") ?? app.buttons["Watched"]
-        print("ROWSWIPE revealed: Watched=\(watched.exists) Delete=\(app.buttons["Delete"].exists)")
-        XCTAssertTrue(watched.exists, "no Watched after swiping the episode row")
-        watched.tap(); sleep(1)
+        // Earlier tests in the same simulator may have marked it already:
+        // whichever of Watched / Unwatched shows must turn into the other.
+        let first = shown("Watched") != nil ? "Watched" : shown("Unwatched") != nil ? "Unwatched" : nil
+        let other = first == "Watched" ? "Unwatched" : "Watched"
+        print("ROWSWIPE revealed: \(first ?? "neither") Delete=\(shown("Delete") != nil)")
+        guard let first, let button = shown(first) else { XCTFail("no Watched / Unwatched after swiping the episode row"); return }
+        button.tap(); sleep(1)
         reveal()
-        let marked = shown("Unwatched") != nil
-        print("ROWSWIPE after tapping Watched: Unwatched shown=\(marked)")
-        XCTAssertTrue(marked, "tapping Watched on the swiped row didn't mark the episode")
+        let toggled = shown(other) != nil
+        print("ROWSWIPE after tapping \(first): \(other) shown=\(toggled)")
+        XCTAssertTrue(toggled, "tapping \(first) on the swiped row didn't change the episode")
         if let del = shown("Delete") {
             del.tap(); sleep(1)
             let q = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Delete'")).firstMatch
