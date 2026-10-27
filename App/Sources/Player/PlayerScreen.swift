@@ -131,7 +131,12 @@ struct PlayerScreen: View {
                         }
                         .accessibilityHidden(true)
                 }
+
+                // Above the menus' tap catcher, so it takes taps while a menu is
+                // still closing behind it.
+                if let r = model.pickRequest { pickerCard(r, geo).transition(.opacity.combined(with: .scale(scale: 0.96))) }
             }
+            .animation(.spring(response: 0.36, dampingFraction: 0.86), value: model.pickRequest)
             .animation(.easeOut(duration: 0.18), value: ui.controlsVisible)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD != nil)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD?.kind)
@@ -169,13 +174,31 @@ struct PlayerScreen: View {
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
-        // An episode with no stream of the release being watched (1.17.0).
-        .sheet(item: $model.pickRequest) { r in
-            StreamPickerSheet(context: r.context) { s, addon in model.playPicked(s, from: addon, for: r) }
-                .environment(\.colorScheme, .dark)
-        }
+        // An episode with no stream of the release being watched: the picker
+        // is drawn in the player (see pickerCard), and an open menu closes.
+        .onChange(of: model.pickRequest) { _, r in if r != nil, ui.panel != nil { ui.closePanel() } }
         .fileImporter(isPresented: $showSubtitlePicker, allowedContentTypes: [.item]) { result in
             if case .success(let url) = result { model.addSubtitle(url: url) }
+        }
+    }
+
+    /// The stream picker for an episode without the release being watched.
+    /// Drawn in the player rather than presented as a sheet: 1.17.0's sheet was
+    /// a second presentation from the player while the Now Playing menu (a
+    /// popover) was still presented from it, which UIKit doesn't do — one
+    /// presented controller per presenter (UIViewController.present docs) —
+    /// so it never appeared (27 Oct report).
+    private func pickerCard(_ r: PlayerModel.PickRequest, _ geo: GeometryProxy) -> some View {
+        ZStack {
+            Color.black.opacity(0.45).ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { model.cancelPick() }
+            StreamPickerSheet(context: r.context, onPick: { s, addon in model.playPicked(s, from: addon, for: r) },
+                              onCancel: { model.cancelPick() })
+                .environment(\.colorScheme, .dark)
+                .frame(maxWidth: min(560, geo.size.width - 32), maxHeight: geo.size.height * 0.86)
+                .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                .shadow(color: .black.opacity(0.5), radius: 24, y: 8)
         }
     }
 

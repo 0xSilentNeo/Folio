@@ -699,12 +699,68 @@ final class PlayerModel: ObservableObject {
         dlog("player", "next episode ready: \(item.displayTitle) — buffers once this file is read to the end")
     }
 
-    /// Picker for an episode without the same release.
+    /// Picker for an episode without the same release. What's playing carries
+    /// on until a stream is picked (1.17.0 paused it, and the picker could not
+    /// open over the Now Playing menu — 27 Oct report).
     private func askToPick(_ index: Int) {
         guard let ctx = queue[index].streamPick?.context else { return }
-        setPaused(true)
         pickRequest = PickRequest(id: index, context: ctx)
-        dlog("player", "next episode: no stream of the same release for \(ctx.videoLabel ?? ctx.videoId); asking")
+        dlog("player", "episode \(ctx.videoLabel ?? ctx.videoId): no stream of the same release; asking")
+    }
+
+    /// Lab (`-pickLab`): the picker for a made-up episode, over whatever is open.
+    func labShowPicker() {
+        pickRequest = PickRequest(id: max(0, queueIndex), context: PlayContext(name: "Lab Show", poster: nil, type: "series", metaId: "tt0000000",
+                                                                             isAnime: false, videoId: "tt0000000:1:7", videoLabel: "S1 · E7", episode: 7))
+        dlog("lab", "picker asked for (lab)")
+    }
+
+    func cancelPick() {
+        if let r = pickRequest { dlog("player", "pick for episode \(r.id + 1) cancelled") }
+        pickRequest = nil
+    }
+
+    /// A tap on a playlist row. The episode playing now keeps playing until the
+    /// chosen one is ready to load: an addon episode is looked up first, and
+    /// one without the same release opens the picker instead (1.17.0 stopped
+    /// the current episode and then waited on a picker that never showed).
+    /// The row of the episode playing now does nothing.
+    func playFromPlaylist(_ i: Int) {
+        guard queue.indices.contains(i) else { return }
+        guard i != queueIndex else {
+            dlog("player", "playlist: the episode playing now — nothing to do")
+            if paused { setPaused(false) }
+            return
+        }
+        if let done = resolvedItems[i] { queueIndex = i; load(done); return }
+        guard queue[i].url.isEmpty, let p = pick(for: i) else { queueIndex = i; load(queue[i]); return }
+        switch episodeStates[i] {
+        case .pick?, .unavailable?:
+            askToPick(i)
+        default:
+            let label = p.context.videoLabel ?? "episode \(i + 1)"
+            showToast("Finding \(label)…")
+            episodeStates[i] = .checking
+            Task { [weak self] in
+                guard let self else { return }
+                switch await AddonPlayback.screen(p) {
+                case .same(var found):
+                    self.episodeStates[i] = .ready
+                    found.subtitles += await AddonPlayback.subtitles(type: p.context.type, videoId: p.context.videoId)
+                    self.subsFetched.insert(i)
+                    self.resolvedItems[i] = found
+                    guard !self.closed else { return }
+                    self.queueIndex = i
+                    self.load(found)
+                case .other:
+                    self.episodeStates[i] = .pick
+                    self.askToPick(i)
+                case .none:
+                    self.episodeStates[i] = .unavailable
+                    self.askToPick(i)
+                }
+            }
+        }
     }
 
     /// The stream you picked for an episode; the episodes after it follow that release.

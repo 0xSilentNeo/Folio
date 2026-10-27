@@ -46,6 +46,10 @@ enum UILab {
             if CommandLine.arguments.contains("-panelStress") { waitForSteadyLandscape(count: 0) }
             if CommandLine.arguments.contains("-toolbarProbe") { toolbarProbe() }
             if CommandLine.arguments.contains("-relayLab") { relayLab() }
+            if CommandLine.arguments.contains("-pickLab") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 9) { dlog("lab", "pick lab: open Now Playing"); ui?.toggle(.nowPlaying) }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 12) { PlayerPresenter.current?.model.labShowPicker() }
+            }
             return
         }
         dlog("lab", "UI lab run")

@@ -457,8 +457,7 @@ struct NowPlayingPanelContent: View {
             case 0:
                 ForEach(Array(model.queue.enumerated()), id: \.offset) { i, item in
                     PlaylistRow(item: item, active: i == model.queueIndex, state: model.episodeStates[i]) {
-                        model.queueIndex = i
-                        model.load(item)
+                        model.playFromPlaylist(i)
                     }
                     .id(i)
                 }

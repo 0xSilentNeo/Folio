@@ -518,6 +518,8 @@ struct AddonsManagerView: View {
 struct StreamPickerSheet: View {
     let context: PlayContext
     let onPick: (AddonStream, InstalledAddon) -> Void
+    /// Shown inside the player, not as a sheet (1.17.1): Cancel calls this.
+    var onCancel: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var groups: [StreamsView.StreamGroup] = []
     @State private var loading = true
@@ -546,7 +548,7 @@ struct StreamPickerSheet: View {
             }
             .navigationTitle(label)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { if let onCancel { onCancel() } else { dismiss() } } } }
         }
         .task { await load() }
     }

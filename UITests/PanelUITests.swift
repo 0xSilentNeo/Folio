@@ -862,6 +862,24 @@ final class PanelUITests: XCTestCase {
         }
     }
 
+    /// 27 Oct report (#7): the stream picker for an episode of another release
+    /// never appeared when asked for from the Now Playing menu. The lab asks
+    /// for it while that menu is open; the picker must show, the menu close,
+    /// and Cancel take the picker away.
+    func test41PickerOverNowPlaying() throws {
+        let app = launchPlayer(["-pickLab"], native: true, captureNow: false)
+        sleep(14)
+        let picker = app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'S1 · E7'")).firstMatch
+        let shown = picker.waitForExistence(timeout: 6)
+        print("PICKER shown=\(shown) nowPlayingStillOpen=\(shows(app, "NOW PLAYING"))")
+        XCTAssertTrue(shown, "the picker did not appear over the Now Playing menu")
+        let cancel = app.buttons["Cancel"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 3), "no Cancel on the picker")
+        cancel.tap(); sleep(2)
+        print("PICKER after Cancel shown=\(picker.exists)")
+        XCTAssertFalse(picker.exists, "Cancel left the picker up")
+    }
+
     /// Measurement only (app log, "relay lab"): menus opened right after a
     /// close and switched while open, driven from inside the app; with the
     /// relay anchored to the button's rectangle, to the bar item, and off.
