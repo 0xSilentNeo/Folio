@@ -71,16 +71,23 @@ final class LingerUITests: XCTestCase {
             for _ in 0..<3 where app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
             sleep(1)
         }
-        /// One scenario: one finger path, sent as one record; then what's on screen.
-        func run(_ name: String, expect: String, _ steps: Steps) {
+        /// One scenario: one finger path per segment, each sent as its own
+        /// record (a path can't put a finger down twice, and paths in one
+        /// record lose their start times), with a wait after each. The app's
+        /// [linger] lines have the times the touches actually arrived.
+        func run(_ name: String, expect: String, _ segments: [(Steps, Double)]) {
             print("LINGER \(name): sent \(fmt.string(from: Date()))")
-            let r = synth(steps)
+            var results: [String] = []
+            for (steps, wait) in segments {
+                results.append(synth(steps))
+                if wait > 0 { usleep(UInt32(wait * 1_000_000)) }
+            }
             sleep(3)
             let player = app.buttons["Close player"].exists
             // Lab Other has one episode: its page has no episode list.
             let page = app.buttons["Back"].exists, a = app.buttons["ep:Lab Show S01E01.mp4"].exists
             let now = player ? "PLAYER OPEN" : (!page ? "Home" : (a ? "Lab Show open" : "Lab Other open"))
-            print("LINGER \(name): \(r) → \(now) (expected \(expect))")
+            print("LINGER \(name): \(Set(results).joined(separator: ", ")) → \(now) (expected \(expect))")
             if player { played.append(name) } else if now != expect && expect != "any" { dropped.append(name) }
             reset()
         }
@@ -93,40 +100,40 @@ final class LingerUITests: XCTestCase {
         let edgeFrom = CGPoint(x: 4, y: H * 0.55), edgeTo = CGPoint(x: W * 0.85, y: H * 0.55)
         let midFrom = CGPoint(x: W * 0.3, y: H * 0.55), midTo = CGPoint(x: W * 0.95, y: H * 0.55)
         let downFrom = CGPoint(x: W * 0.5, y: H * 0.3), downTo = CGPoint(x: W * 0.5, y: H * 0.85)
-        let backs: [(String, (Double) -> Steps, Double)] = [
-            ("Back button", { t in self.tap(back, at: t) }, 0.05),
-            ("edge swipe", { t in self.swipe(edgeFrom, edgeTo, at: t) }, 0.17),
-            ("swipe right mid-page", { t in self.swipe(midFrom, midTo, at: t) }, 0.17),
-            ("swipe down", { t in self.swipe(downFrom, downTo, at: t) }, 0.17),
+        let backs: [(String, (Double) -> Steps)] = [
+            ("Back button", { t in self.tap(back, at: t) }),
+            ("edge swipe", { t in self.swipe(edgeFrom, edgeTo, at: t) }),
+            ("swipe right mid-page", { t in self.swipe(midFrom, midTo, at: t) }),
+            ("swipe down", { t in self.swipe(downFrom, downTo, at: t) }),
         ]
 
-        // A. Page fully open → back → tap the other title Δ s after the back ends.
-        for (how, gesture, len) in backs {
-            for d in [0.05, 0.2, 0.4, 0.7, 1.0] {
+        // A. Page fully open → back → tap the other title Δ s after the back gesture is sent.
+        for (how, gesture) in backs {
+            for d in [0.0, 0.1, 0.25, 0.5, 0.8] {
                 guard openA() else { return }
-                run("A \(how), Lab Other tapped +\(d) s", expect: "Lab Other open", gesture(0) + tap(tileB, at: len + d))
+                run("A \(how), Lab Other tapped +\(d) s", expect: "Lab Other open", [(gesture(0), d), (tap(tileB, at: 0), 0)])
             }
         }
         // B. Back → tap Home where the page's episode row was.
-        for (how, gesture, len) in backs.prefix(2) {
+        for (how, gesture) in backs.prefix(2) {
             for d in [0.05, 0.3, 0.6, 0.9] {
                 guard openA() else { return }
-                run("B \(how), Home tapped where the episode row was +\(d) s", expect: "any", gesture(0) + tap(row, at: len + d))
+                run("B \(how), Home tapped where the episode row was +\(d) s", expect: "any", [(gesture(0), d), (tap(row, at: 0), 0)])
             }
         }
         // C. A swipe back that starts on the episode row.
         for i in 0..<3 {
             guard openA() else { return }
-            run("C swipe back from the episode row #\(i)", expect: "any", swipe(CGPoint(x: epF.minX + 30, y: row.y), CGPoint(x: epF.minX + 300, y: row.y), at: 0))
+            run("C swipe back from the episode row #\(i)", expect: "any", [(swipe(CGPoint(x: epF.minX + 30, y: row.y), CGPoint(x: epF.minX + 300, y: row.y), at: 0), 0)])
         }
         // D. Open the title, a second tap where its episode row will be, Δ s later.
         for d in [0.1, 0.25, 0.4, 0.6, 0.9] {
-            run("D Lab Show tapped, then the episode row's spot +\(d) s", expect: "any", tap(tileA, at: 0) + tap(row, at: d))
+            run("D Lab Show tapped, then the episode row's spot +\(d) s", expect: "any", [(tap(tileA, at: 0), d), (tap(row, at: 0), 0)])
         }
         // E. Switching fast: open, back Δ s later, other title 0.12 s after that.
-        for (how, gesture, len) in backs.prefix(2) {
+        for (how, gesture) in backs.prefix(2) {
             for d in [0.25, 0.5, 0.8, 1.2] {
-                run("E open, \(how) +\(d) s, Lab Other +0.12 s", expect: "Lab Other open", tap(tileA, at: 0) + gesture(d) + tap(tileB, at: d + len + 0.12))
+                run("E open, \(how) +\(d) s, Lab Other +0.12 s", expect: "Lab Other open", [(tap(tileA, at: 0), d), (gesture(0), 0.12), (tap(tileB, at: 0), 0)])
             }
         }
         print("LINGER played: \(played.count) \(played)")
