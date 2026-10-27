@@ -275,6 +275,10 @@ struct TitleHeroView: View {
             dlog("nav", "title page: \(control) ignored (page going back)")
             return
         }
+        if BackGesture.pageMoving {
+            dlog("nav", "title page: \(control) ignored (the page is still moving in or out)")
+            return
+        }
         let moved = TouchTracker.recentTravel
         if moved > TouchTracker.tapSlop {
             dlog("nav", "title page: \(control) ignored (the finger moved \(Int(moved)) pt: a swipe, not a tap)")
@@ -544,6 +548,14 @@ struct LibraryRow: View {
 /// that coincides with a back swipe is ignored.)
 @MainActor
 enum BackGesture {
+    /// The navigation controller the title pages live in (set by BackSwipeProbe).
+    static weak var nav: UINavigationController?
+    /// A page is moving in or out: the zoom from its tile (or back into it)
+    /// runs ~0.9 s in the simulator, and its page takes touches meanwhile
+    /// (lab page probe: a touch at the page's middle reached the page for the
+    /// whole zoom-in). 27 Oct log: episode rows played 0.4–1.2 s after the
+    /// page appeared, from taps meant for Home.
+    static var pageMoving: Bool { nav?.transitionCoordinator != nil }
     static var active = false
     static var lastBegan = Date.distantPast
     static var justStarted: Bool { active || Date().timeIntervalSince(lastBegan) < 0.6 }
@@ -561,6 +573,7 @@ struct BackSwipeProbe: UIViewRepresentable {
                 var r: UIResponder? = self
                 while let n = r, !(n is UINavigationController) { r = n.next }
                 guard let nav = r as? UINavigationController else { dlog("nav", "back swipe probe: no navigation controller"); return }
+                BackGesture.nav = nav
                 let g = nav.interactivePopGestureRecognizer
                 var content: UIGestureRecognizer?
                 #if compiler(>=6.2)

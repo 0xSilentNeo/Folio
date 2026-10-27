@@ -647,8 +647,13 @@ final class PlayerModel: ObservableObject {
     /// Playback → Get the next episode ready). Network items only; library
     /// files open at once anyway.
     private func maybePrepareNext() {
+        // Two minutes before the Up Next card (credits start when known), or
+        // three before the end. 1.17.0 waited for the end only, and with long
+        // credits the countdown finished before anything was ready (27 Oct
+        // log: credits 3506–3750, card at 3506, nothing prepared).
+        let cardAt = upNextTrigger?.time ?? duration
         guard defaults.bool(forKey: SettingsKey.prepareNext), hasNext, playbackMode == "playlist", preparing == nil, fileLoaded,
-              duration > 120, duration - position < 180 else { return }
+              duration > 120, position >= cardAt - 120 || duration - position < 180 else { return }
         let i = queueIndex + 1
         guard appended?.index != i, episodeStates[i] != .pick, episodeStates[i] != .unavailable else { return }
         let next = resolvedItems[i] ?? queue[i]
@@ -1147,7 +1152,12 @@ final class PlayerModel: ObservableObject {
         if position >= trigger.time && position < duration - 0.3 {
             if upNext == nil { upNext = UpNext(start: trigger.time, autoplay: trigger.autoplay, next: queue[queueIndex + 1]) }
             if trigger.autoplay, !paused, position >= trigger.time + Self.upNextCountdown {
+                // Once: until the next file loads (load() clears this), the card
+                // stays down. 1.17.0 put it back on the next position update while
+                // an addon episode was still being looked up, finished it again,
+                // and moved on again — six times in the 27 Oct log, from E1 to E6.
                 upNext = nil
+                upNextDismissed = true
                 dlog("player", "up next: countdown finished")
                 playNext()
             }

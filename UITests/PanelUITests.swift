@@ -823,6 +823,51 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(played, 0, "a tap right after a swipe back started playback")
     }
 
+    /// 27 Oct log (#3): episode rows played 0.4–1.2 s after their page
+    /// appeared — taps meant for Home landing on a page still zooming in. A
+    /// second tap where an episode row will be, 0.15–0.8 s after opening the
+    /// page, sent without waiting for animations (Quiescence).
+    func test43TapWhilePageZoomsIn() throws {
+        let report = Quiescence.skipWaiting()
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-heroView", "details", "-libraryView", "list", "-touchLog", "-navProbe"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let label = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(label.waitForExistence(timeout: 25), "library row not found")
+        sleep(2)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let tf = label.frame
+        let rowSpot = origin.withOffset(CGVector(dx: tf.midX, dy: tf.midY))
+        // Where the episode row sits once the page is open.
+        rowSpot.tap()
+        XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open")
+        sleep(2)
+        let ep = app.buttons["ep:Lab Show S01E01.mp4"]
+        XCTAssertTrue(ep.waitForExistence(timeout: 5), "episode row not found")
+        let ef = ep.frame
+        let epSpot = origin.withOffset(CGVector(dx: ef.midX, dy: ef.midY))
+        app.buttons["Back"].tap(); sleep(2)
+        var played = 0
+        let delays: [Double] = [0.15, 0.3, 0.5, 0.8]
+        for (i, d) in delays.enumerated() {
+            rowSpot.tap()
+            usleep(UInt32(d * 1_000_000))
+            epSpot.tap()
+            sleep(3)
+            if app.buttons["Close player"].exists {
+                played += 1
+                print("ZOOMIN \(i) second tap \(d) s after opening → the player opened")
+                app.buttons["Close player"].tap(); sleep(3)
+            } else {
+                print("ZOOMIN \(i) second tap \(d) s after opening → no playback")
+            }
+            if app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
+        }
+        print("ZOOMIN played \(played)/\(delays.count) (\(report.contains("skipped") ? "taps sent without waiting" : "XCTest still waited for idle"))")
+        XCTAssertEqual(played, 0, "a tap while the page zoomed in started playback")
+    }
+
     /// 27 Oct report (#5): Watched on a swiped episode row did nothing (List and
     /// Details views): the tap only closed the row.
     func test40EpisodeRowSwipeWatched() throws {
@@ -846,16 +891,18 @@ final class PanelUITests: XCTestCase {
             sleep(1)
         }
         reveal()
-        let watched = app.buttons["Watched"]
+        // The revealed row's button (1.17.0 also listed every hidden row's).
+        func shown(_ name: String) -> XCUIElement? { app.buttons.matching(identifier: name).allElementsBoundByIndex.first { $0.isHittable } }
+        let watched = shown("Watched") ?? app.buttons["Watched"]
         print("ROWSWIPE revealed: Watched=\(watched.exists) Delete=\(app.buttons["Delete"].exists)")
         XCTAssertTrue(watched.exists, "no Watched after swiping the episode row")
         watched.tap(); sleep(1)
         reveal()
-        let marked = app.buttons["Unwatched"].exists
+        let marked = shown("Unwatched") != nil
         print("ROWSWIPE after tapping Watched: Unwatched shown=\(marked)")
         XCTAssertTrue(marked, "tapping Watched on the swiped row didn't mark the episode")
-        if app.buttons["Delete"].exists {
-            app.buttons["Delete"].tap(); sleep(1)
+        if let del = shown("Delete") {
+            del.tap(); sleep(1)
             let q = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Delete'")).firstMatch
             print("ROWSWIPE Delete asks: \(q.exists)")
             XCTAssertTrue(q.exists, "Delete on the swiped row didn't ask")

@@ -78,6 +78,7 @@ struct SwipeRow<Content: View>: View {
         }
         .frame(width: max(0, -offset - 6))
         .opacity(offset < -8 ? 1 : 0)
+        .accessibilityHidden(offset > -8)             // hidden buttons aren't there for VoiceOver either
     }
 
     private func changed(_ t: CGFloat) {
