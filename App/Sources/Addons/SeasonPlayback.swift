@@ -115,18 +115,18 @@ enum AddonPlayback {
         return playable.first { $0.name == name && resolution(of: $0) == pick.resolution }
     }
 
-    /// Asks the pick's addon for the episode in `pick.context` and compares.
-    @MainActor
     /// The streams each addon last gave for an episode (in-player picker:
     /// shown straight away, and kept when asking again comes back empty).
     @MainActor static var recentStreams: [String: (at: Date, streams: [AddonStream])] = [:]
     static func recentKey(_ addonID: String, _ videoId: String) -> String { addonID + "|" + videoId }
 
+    /// Asks the pick's addon for the episode in `pick.context` and compares.
+    @MainActor
     static func screen(_ pick: StreamPick) async -> Match {
         let c = pick.context
         guard let addon = AddonStore.shared.addons.first(where: { $0.id == pick.addonID }),
               let streams = try? await AddonAPI.streams(addon, type: c.type, id: c.videoId) else { return .none }
-        await MainActor.run { recentStreams[recentKey(addon.id, c.videoId)] = (Date(), streams) }
+        recentStreams[recentKey(addon.id, c.videoId)] = (Date(), streams)
         guard streams.contains(where: \.isPlayable) else { return .none }
         if let s = sameRelease(streams, as: pick), let item = makeItem(c, stream: s, addon: addon, extraSubtitles: []) { return .same(item) }
         return .other

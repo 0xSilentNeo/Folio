@@ -903,7 +903,7 @@ final class PanelUITests: XCTestCase {
         app.launchArguments = ["-uiTestLibrary", "-uiTestTwoTitles", "-heroView", "details"]
         app.launch()
         XCUIDevice.shared.orientation = .portrait
-        let show = app.staticTexts["Lab Show"].firstMatch, movie = app.staticTexts["Lab Movie"].firstMatch
+        let show = app.staticTexts["Lab Show"].firstMatch, movie = app.staticTexts["Lab Other"].firstMatch
         XCTAssertTrue(show.waitForExistence(timeout: 25) && movie.waitForExistence(timeout: 5), "library tiles not found")
         sleep(2)
         let origin = app.coordinate(withNormalizedOffset: .zero)
@@ -922,7 +922,7 @@ final class PanelUITests: XCTestCase {
             sleep(3)
             let player = app.buttons["Close player"].exists
             let page = app.buttons["Back"].exists
-            let title = (i % 2 == 0 ? app.staticTexts["Lab Movie"] : app.staticTexts["Lab Show"]).firstMatch.exists
+            let title = (i % 2 == 0 ? app.staticTexts["Lab Other"] : app.staticTexts["Lab Show"]).firstMatch.exists
             print(String(format: "FASTSWITCH %d (back %.0f ms after opening, other title tapped %.0f ms later): page open %@, player %@", i, Double(w) / 1000, Date().timeIntervalSince(t0) * 1000, page ? "yes" : "no", player ? "OPEN" : "no"))
             if player { played += 1; app.buttons["Close player"].tap(); sleep(3) }
             if page && title { opened += 1 }
