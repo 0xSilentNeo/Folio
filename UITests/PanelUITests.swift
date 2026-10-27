@@ -649,20 +649,12 @@ final class PanelUITests: XCTestCase {
         XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
         sleep(2)
 
-        // Home, Thumbnails
+        // Home, Thumbnails: no swipe actions any more (1.17.2), and a swipe
+        // doesn't open the title either.
         tile.swipeLeft(); sleep(1)
         print("SWIPE home grid: Back=\(app.buttons["Back"].exists) Delete=\(app.buttons["Delete"].exists) Watched=\(app.buttons["Watched"].exists)")
         XCTAssertFalse(app.buttons["Back"].exists, "the swipe opened the title page")
-        XCTAssertTrue(app.buttons["Watched"].waitForExistence(timeout: 2), "no Watched after swiping a Home tile left")
-        app.buttons["Watched"].tap(); sleep(1)
-        let eye = app.images["Watched"].firstMatch
-        print("SWIPE home grid: eye after Watched = \(eye.exists)")
-        XCTAssertTrue(eye.exists, "no eye on the tile after Watched")
-        tile.swipeLeft(); sleep(1)
-        XCTAssertTrue(app.buttons["Unwatched"].waitForExistence(timeout: 2), "Watched did not turn into Unwatched")
-        app.buttons["Delete"].tap(); sleep(1)
-        cancelDelete(app, "home grid")
-        XCTAssertTrue(tile.exists, "Cancel deleted the title")
+        XCTAssertFalse(app.buttons["Watched"].exists || app.buttons["Delete"].exists, "a Home tile still has swipe actions")
 
         // Title page, Thumbnails (tapped by position: after the dialog XCUITest
         // could not compute the label's hit point, 26 Oct run)
@@ -695,15 +687,12 @@ final class PanelUITests: XCTestCase {
         XCTAssertTrue(tile.waitForExistence(timeout: 25), "library row not found")
         sleep(2)
         tile.swipeLeft(); sleep(1)
-        let asked = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Delete all'")).firstMatch
-        if !asked.exists, app.buttons["Delete"].exists { app.buttons["Delete"].tap(); sleep(1) }
-        print("SWIPE home list left: asked=\(asked.exists)")
-        cancelDelete(app, "home list")
-        XCTAssertTrue(app.staticTexts["Lab Show"].firstMatch.exists, "Cancel deleted the row (list)")
+        let left = app.buttons["Delete"].exists
         tile.swipeRight(); sleep(1)
-        let right = app.buttons["Unwatched"].exists ? "Unwatched" : app.buttons["Watched"].exists ? "Watched" : "none"
-        print("SWIPE home list right: \(right)")
-        XCTAssertNotEqual(right, "none", "no Watched / Unwatched after swiping a row right")
+        let right = app.buttons["Unwatched"].exists || app.buttons["Watched"].exists
+        print("SWIPE home list: left shows Delete \(left), right shows Watched \(right)")
+        XCTAssertFalse(left || right, "a Home row still has swipe actions")
+        XCTAssertTrue(app.staticTexts["Lab Show"].firstMatch.exists, "the row is gone")
     }
 
     /// The delete question must show; then cancel it (Cancel button, or a tap
@@ -869,6 +858,84 @@ final class PanelUITests: XCTestCase {
         }
         print("SETTINGSLETGO lost \(lost)")
         XCTAssertEqual(lost, 0, "a swipe back that was let go took Settings' navigation bar away")
+    }
+
+    /// Downloads can be cancelled and deleted (27 Oct report: no way to).
+    /// Swipe a paused download left → Cancel; the package's ⋯ → Cancel
+    /// downloads → it asks → the rest go.
+    func test48DownloadsDelete() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-uiTestDownloads"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        XCTAssertTrue(app.buttons["Network"].firstMatch.waitForExistence(timeout: 25), "Network tab not found")
+        app.buttons["Network"].firstMatch.tap()
+        let dl = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Downloads'")).firstMatch
+        XCTAssertTrue(dl.waitForExistence(timeout: 6), "Downloads row not found")
+        dl.tap()
+        let ep1 = app.staticTexts["Lab Ep 1.mkv"]
+        XCTAssertTrue(ep1.waitForExistence(timeout: 6), "seeded download not shown")
+        sleep(1)
+        ep1.swipeLeft(); sleep(1)
+        let cancel = app.buttons["Cancel"].firstMatch
+        print("DLDELETE swipe: Cancel shown \(cancel.exists)")
+        XCTAssertTrue(cancel.exists, "no Cancel after swiping a download left")
+        cancel.tap(); sleep(1)
+        print("DLDELETE after Cancel: Ep 1 \(app.staticTexts["Lab Ep 1.mkv"].exists), Ep 2 \(app.staticTexts["Lab Ep 2.mkv"].exists)")
+        XCTAssertFalse(app.staticTexts["Lab Ep 1.mkv"].exists, "the cancelled download is still listed")
+        let more = app.buttons["More for Lab Package"]
+        XCTAssertTrue(more.waitForExistence(timeout: 3), "package menu not found")
+        more.tap()
+        let item = app.buttons["Cancel downloads"].firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 3), "no Cancel downloads in the package menu")
+        item.tap()
+        let confirm = app.buttons.matching(NSPredicate(format: "label == 'Cancel downloads'")).firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 3), "it did not ask first")
+        confirm.tap(); sleep(1)
+        print("DLDELETE after package cancel: Ep 2 \(app.staticTexts["Lab Ep 2.mkv"].exists), Ep 3 (finished) \(app.staticTexts["Lab Ep 3.mkv"].exists)")
+        XCTAssertFalse(app.staticTexts["Lab Ep 2.mkv"].exists, "the package's unfinished download is still listed")
+        XCTAssertTrue(app.staticTexts["Lab Ep 3.mkv"].exists, "the finished download went too")
+    }
+
+    /// Switching titles fast (27 Oct report): open a title, go Back, and tap
+    /// the other title at once, while the first page is still zooming back
+    /// over Home. The tap must open the other title (1.17.1 dropped such
+    /// taps), and nothing may ever play.
+    func test49FastTitleSwitching() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-uiTestTwoTitles", "-heroView", "details"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let show = app.staticTexts["Lab Show"].firstMatch, movie = app.staticTexts["Lab Movie"].firstMatch
+        XCTAssertTrue(show.waitForExistence(timeout: 25) && movie.waitForExistence(timeout: 5), "library tiles not found")
+        sleep(2)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let a = show.frame, b = movie.frame
+        tapsDontWaitForAnimations()
+        var opened = 0, played = 0
+        let waits: [UInt32] = [900_000, 600_000, 400_000, 250_000, 900_000, 600_000, 400_000, 250_000]
+        for (i, w) in waits.enumerated() {
+            let (from, to) = i % 2 == 0 ? (a, b) : (b, a)
+            origin.withOffset(CGVector(dx: from.midX, dy: from.midY)).tap()
+            usleep(w)
+            origin.withOffset(CGVector(dx: 38, dy: 84)).tap()            // ‹ (where the page draws it)
+            usleep(120_000)
+            let t0 = Date()
+            origin.withOffset(CGVector(dx: to.midX, dy: to.midY)).tap()  // the other title, at once
+            sleep(3)
+            let player = app.buttons["Close player"].exists
+            let page = app.buttons["Back"].exists
+            let title = (i % 2 == 0 ? app.staticTexts["Lab Movie"] : app.staticTexts["Lab Show"]).firstMatch.exists
+            print(String(format: "FASTSWITCH %d (back %.0f ms after opening, other title tapped %.0f ms later): page open %@, player %@", i, Double(w) / 1000, Date().timeIntervalSince(t0) * 1000, page ? "yes" : "no", player ? "OPEN" : "no"))
+            if player { played += 1; app.buttons["Close player"].tap(); sleep(3) }
+            if page && title { opened += 1 }
+            // Back to Home for the next round.
+            if app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
+            if app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
+        }
+        print("FASTSWITCH other title opened \(opened)/\(waits.count), played \(played)")
+        XCTAssertEqual(played, 0, "a file played while switching titles")
+        XCTAssertGreaterThanOrEqual(opened, waits.count - 1, "taps on the other title did not register")
     }
 
     func test37TapOutsideLatency() throws { try tapOutsideLatency(relay: false) }
@@ -1095,9 +1162,17 @@ final class PanelUITests: XCTestCase {
         sleep(50)
     }
 
-    /// 1.16.0, iOS 27: with a panel fully open, one tap on
-    /// another button opens that panel. Before iOS 27 the tap only closes the
-    /// open panel (as in 1.15).
+    /// The same in portrait (27 Oct report: the buttons collapsed into "⋯").
+    func test47ToolbarProbePortrait() throws {
+        _ = launchPlayer(["-toolbarProbe", "-toolbarProbePortrait"], native: true, captureNow: false)
+        XCUIDevice.shared.orientation = .portrait
+        sleep(50)
+    }
+
+    /// 1.17.2: with a menu fully open, a tap where another button is (hidden
+    /// while the menu is open) closes the menu and opens nothing (27 Oct
+    /// report: switching menus from a button you can't see was confusing).
+    /// 1.16.0–1.17.1 switched to that button's menu.
     func test21NativeSwitchWhileOpen() throws {
         let app = launchPlayer(native: true)
         tapsDontWaitForAnimations()
@@ -1110,24 +1185,16 @@ final class PanelUITests: XCTestCase {
             tapPill(app, a)
             XCTAssertTrue(shows(app, am, within: 4), "\(a) did not open (native)")
             sleep(2)
-            let t0 = Date()
             tapPill(app, b)
-            if #available(iOS 27, *) {
-                if shows(app, bm, within: 3) {
-                    ok += 1
-                    print(String(format: "NATIVE OPENSWITCH %@ → %@: showing %.0f ms after the tap", a, b, Date().timeIntervalSince(t0) * 1000))
-                } else { print("NATIVE OPENSWITCH miss \(a) → \(b)") }
-            } else {
-                sleep(2)
-                if !shows(app, am) && !shows(app, bm) { ok += 1 } else { print("NATIVE OPENSWITCH (iOS 26) \(a): not just closed") }
-                sleep(1)
-                continue        // nothing is open: an outside tap would hide the controls
-            }
-            sleep(2)
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2)
+            sleep(3)
+            let aOpen = shows(app, am), bOpen = shows(app, bm)
+            print("NATIVE OPENTAP \(a) open, tap on \(b)'s spot → \(a) \(aOpen ? "still open" : "closed"), \(b) \(bOpen ? "opened" : "not opened")")
+            if !aOpen && !bOpen { ok += 1 }
+            if aOpen || bOpen { app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45)).tap(); sleep(2) }
+            sleep(1)
         }
-        print("NATIVE OPENSWITCH \(ok)/\(pairs.count)")
-        XCTAssertEqual(ok, pairs.count)
+        print("NATIVE OPENTAP closed \(ok)/\(pairs.count)")
+        XCTAssertEqual(ok, pairs.count, "a tap on a hidden button's spot did not just close the menu")
     }
 
     /// The relay layer (PanelRelay) switched on: does UIKit present from it? (lab)
