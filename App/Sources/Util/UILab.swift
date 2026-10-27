@@ -276,8 +276,12 @@ enum UILab {
         let steps: [(Double, String, () -> Void)] = [
             (12, "hold 2x", { PlayerPresenter.current?.model.beginHoldSpeed() }),
             (16, "release", { PlayerPresenter.current?.model.endHoldSpeed() }),
+            (18, "video view resized", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
+            (19.5, "video view resized back", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
             (22, "renderer → software (PiP path)", { PlayerPresenter.current?.model.labSwitchRenderer(software: true) }),
             (26, "renderer → main", { PlayerPresenter.current?.model.labSwitchRenderer(software: false) }),
+            (27, "video view resized", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
+            (28, "video view resized back", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
             (29, "park video (PiP closed in background) then return", { PlayerPresenter.current?.model.labParkThenReturn() }),
             (33, "new hardware decoder (as after coming back while paused)", { PlayerPresenter.current?.model.labRenewDecoder() }),
         ]

@@ -1307,16 +1307,29 @@ final class PlayerModel: ObservableObject {
 
     /// A/V lab: the same renderer switch PiP does, without PiP.
     func labSwitchRenderer(software: Bool) {
-        // Lab (-avLayoutPending): every view of the player's window waits to
-        // be laid out, as when iOS snapshots the app on the way to the Home
-        // Screen.
-        if software, CommandLine.arguments.contains("-avLayoutPending"), let w = videoContainer?.window {
-            var n = 0
-            func mark(_ v: UIView) { v.setNeedsLayout(); v.setNeedsUpdateConstraints(); n += 1; v.subviews.forEach(mark) }
-            mark(w)
-            dlog("av", "layout waiting on \(n) views of the player's window")
-        }
+        if software { labLayoutPending() }
         software ? switchToSoftware() : switchToMain()
+    }
+
+    /// Lab (-avLayoutPending): every view of the player's window waits to be
+    /// laid out, as when iOS snapshots the app on the way to the Home Screen.
+    func labLayoutPending() {
+        guard CommandLine.arguments.contains("-avLayoutPending"), let w = videoContainer?.window else { return }
+        var n = 0
+        func mark(_ v: UIView) { v.setNeedsLayout(); v.setNeedsUpdateConstraints(); n += 1; v.subviews.forEach(mark) }
+        mark(w)
+        dlog("av", "layout waiting on \(n) views of the player's window")
+    }
+
+    /// Lab: the video view's size changes, so mpv rebuilds its swapchain on
+    /// its Metal thread (MoltenVK sets the layer's properties there) while
+    /// the view is in the window — as after a rotation or PiP restore.
+    func labNudgeVideoSize() {
+        guard CommandLine.arguments.contains("-avLayoutPending"), let mv = metalView, mv.superview != nil, let c = videoContainer else { return }
+        let shrunk = mv.frame.height < c.bounds.height - 1
+        mv.frame = shrunk ? c.bounds : c.bounds.insetBy(dx: 0, dy: 24)
+        mv.layoutIfNeeded()
+        dlog("av", "video view now \(Int(mv.frame.width))×\(Int(mv.frame.height))")
     }
     /// A/V lab: the decoder rebuild done after coming back while paused.
     func labRenewDecoder() { renewHardwareDecoder() }
@@ -1325,6 +1338,8 @@ final class PlayerModel: ObservableObject {
     /// without PiP or a real background transition.
     func labParkThenReturn() {
         if mode == .sw { sw.detach() }
+        labLayoutPending()
+        if mode == .main, renderer == .metal { settleBeforeMetalThreadEnds() }   // vid=no ends mpv's Metal thread
         mode = .none
         pendingMain = true
         client?.set("vid", "no")
@@ -1394,6 +1409,7 @@ final class PlayerModel: ObservableObject {
             startPiPFeed()
             return
         }
+        if renderer == .metal, mode == .main { settleBeforeMetalThreadEnds() }   // vid=no ends mpv's Metal thread
         c.set("vid", "no")
         if mode == .sw { sw.detach() }
         switch renderer {
