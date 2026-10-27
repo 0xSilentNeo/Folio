@@ -279,6 +279,21 @@ final class PageLife {
     weak var page: UIViewController?
     var pageView: UIView? { page?.view }
 
+    /// Why the page can't start anything right now, or nil when it can: it's
+    /// going back, or it isn't the navigation's top page any more.
+    ///
+    /// Linger lab (27 Oct, simulator, iOS 27): UIKit makes the page
+    /// underneath the navigation's top the moment going back starts, 10–20
+    /// ms before viewWillDisappear; the page then stays in the window, full
+    /// size, for the whole zoom out (~0.9 s), hidden behind the zoom's own
+    /// animation. A touch in the first ~100 ms of that still reaches it.
+    var cantAct: String? {
+        if leaving { return "page going back" }
+        guard let page else { return nil }
+        if page.navigationController?.topViewController !== page { return "this page is no longer the one on screen" }
+        return nil
+    }
+
     /// Going back now: no more touches, no more actions. Should the page not
     /// actually go (a request to go back during another move can be dropped),
     /// it takes touches again after 1.2 s.
@@ -323,15 +338,121 @@ private struct LeavingProbe: UIViewControllerRepresentable {
     final class Probe: UIViewController {
         var onChange: ((Bool) -> Void)?
         var life: PageLife?
-        override func loadView() { view = UIView(); view.isUserInteractionEnabled = false }
+        /// Tells the probe when the page's view enters the window: that is
+        /// when a push starts, whatever SwiftUI does with appearance calls.
+        final class WindowView: UIView {
+            var entered: (() -> Void)?
+            override func didMoveToWindow() { super.didMoveToWindow(); if window != nil { entered?() } }
+        }
+        override func loadView() {
+            let v = WindowView()
+            v.isUserInteractionEnabled = false
+            v.entered = { [weak self] in self?.watchOpening() }
+            view = v
+        }
+
         override func viewWillAppear(_ animated: Bool) {
             super.viewWillAppear(animated)
+            life?.leaving = false
+            if let v = life?.page?.view { BackWatch.cancelled(v) }
             setPageTouchable(true)
+            watchOpening()
             onChange?(false)
+        }
+
+        // MARK: Going back before the page is open
+
+        /// The page's own opening move, watched each frame while it runs.
+        ///
+        /// Linger lab (28 Oct, simulator, iOS 27, with its screen recording):
+        /// open a title, swipe back while it still zooms in, and let go. The
+        /// page flies back into its tile and Home shows fully ~0.35 s later,
+        /// but the page stays the navigation's top, full size, invisible and
+        /// taking every touch for another ~0.8 s: UIKit calls its
+        /// viewWillDisappear only when that move ends. A tap on the next
+        /// title went to it (nothing happened); where its episode rows are,
+        /// the same tap plays one.
+        ///
+        /// So: while you move the opening page it takes no taps (your finger
+        /// is on it), and when you let go, if UIKit says the move is undone
+        /// (`isCancelled`: the page goes back instead of opening) it takes
+        /// none until it's gone. Otherwise it takes taps again at once: a page
+        /// you can see works while its zoom settles (1.17.1 ignored those).
+        private var opening: CADisplayLink?
+        private weak var openingNav: UINavigationController?
+        private var moved = false
+        private var openedAt: CFTimeInterval = 0
+
+        func watchOpening() {
+            guard opening == nil, let life else { return }
+            var vc: UIViewController = self
+            while let p = vc.parent, !(p is UINavigationController) { vc = p }
+            guard vc !== self, let nav = vc.parent as? UINavigationController else { return }
+            life.page = vc
+            guard nav.topViewController === vc, nav.transitionCoordinator != nil else { return }
+            openingNav = nav
+            moved = false
+            openedAt = CACurrentMediaTime()
+            let l = CADisplayLink(target: Ticker(self), selector: #selector(Ticker.tick))
+            l.add(to: .main, forMode: .common)
+            opening = l
+        }
+
+        /// CADisplayLink keeps its target: this keeps the probe weakly.
+        private final class Ticker: NSObject {
+            weak var probe: Probe?
+            init(_ p: Probe) { probe = p }
+            @objc func tick() { probe?.openingTick() }
+        }
+
+        fileprivate func openingTick() {
+            guard let life, let vc = life.page, let nav = openingNav, let tc = nav.transitionCoordinator else {
+                opening?.invalidate(); opening = nil
+                // The move ended between two frames while being moved: open
+                // if it's on top, otherwise viewWillDisappear has it.
+                if moved, let life, !life.leaving, let vc = life.page, vc.navigationController?.topViewController === vc {
+                    vc.view.isUserInteractionEnabled = true
+                }
+                moved = false
+                return
+            }
+            let ms = Int((CACurrentMediaTime() - openedAt) * 1000)
+            if tc.isInteractive {
+                if !moved {
+                    moved = true
+                    vc.view.isUserInteractionEnabled = false
+                    dlog("nav", "page opening: moved by your finger \(ms) ms in; no taps on it while you do")
+                }
+            } else if moved {
+                moved = false
+                if tc.isCancelled {
+                    life.leaving = true
+                    vc.view.isUserInteractionEnabled = false
+                    BackWatch.began(vc.view, nav: nav)
+                    dlog("nav", "page going back before it was open (\(ms) ms in): no taps on it until it's gone")
+                    onChange?(true)
+                    opening?.invalidate(); opening = nil
+                } else {
+                    if !life.leaving { vc.view.isUserInteractionEnabled = true }
+                    dlog("nav", "page opening: let go, it opens; takes taps")
+                }
+            }
+        }
+
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            life?.leaving = false
+            setPageTouchable(true)
+        }
+        override func viewDidDisappear(_ animated: Bool) {
+            super.viewDidDisappear(animated)
+            if let v = life?.page?.view { BackWatch.ended(v) }
         }
         override func viewWillDisappear(_ animated: Bool) {
             super.viewWillDisappear(animated)
+            life?.leaving = true
             setPageTouchable(false)
+            if let page = life?.page, let nav = page.navigationController ?? navigationController { BackWatch.began(page.view, nav: nav) }
             PopTouchLab.start(for: self)
             dlog("nav", "page leaving: taps off")
             onChange?(true)
@@ -395,6 +516,53 @@ private final class PopTouchLab: NSObject {
     }
 }
 
+/// What a page does after it starts going back, in the log (on your phone
+/// too): how long it stays in the window, and where touches go meanwhile.
+///
+/// 27 Oct report: "I think the page is still on screen but hidden after
+/// backing for a few moments. That's what's causing the sudden play." Your
+/// device logs agree that it can stay: after some swipes back the
+/// navigation is already at Home, but the page's onDisappear comes 0.9–1.4 s
+/// later.
+@MainActor
+enum BackWatch {
+    private static weak var page: UIView?
+    private static weak var nav: UINavigationController?
+    private static var t0: CFTimeInterval = 0
+    private static var touches = 0
+
+    private static var ms: Int { Int((CACurrentMediaTime() - t0) * 1000) }
+
+    static func began(_ v: UIView, nav n: UINavigationController?) {
+        page = v; nav = n; t0 = CACurrentMediaTime(); touches = 0
+    }
+
+    /// Going back was let go (the page stays).
+    static func cancelled(_ v: UIView) { if page === v { page = nil } }
+
+    /// UIKit's viewDidDisappear: the move is over.
+    static func ended(_ v: UIView) {
+        guard page === v else { return }
+        dlog("nav", "page gone \(ms) ms after it started going back\(v.window != nil ? " (its view still in the window)" : "")")
+        page = nil
+    }
+
+    /// A touch while a page is going back: where it went.
+    static func touchBegan(_ t: UITouch) {
+        guard let p = page else { return }
+        guard p.window != nil else { page = nil; return }
+        touches += 1
+        guard touches <= 8 else { return }
+        var to = t.view.map { String(describing: type(of: $0)) } ?? "nothing"
+        if let v = t.view {
+            if v.isDescendant(of: p) { to = "THE PAGE GOING BACK" }
+            else if let home = nav?.viewControllers.first?.view, v.isDescendant(of: home) { to = "Home" }
+            else if let top = nav?.topViewController?.view, v.isDescendant(of: top) { to = "the page now on top" }
+        }
+        dlog("nav", "touch \(ms) ms after going back began → \(to)")
+    }
+}
+
 extension LeavingProbe.Probe {
     /// The page's own view (the navigation controller's child that holds
     /// this probe) stops or starts taking touches, at once.
@@ -411,7 +579,6 @@ extension LeavingProbe.Probe {
     /// view objects that … have disabled user interactions" — so the tap goes
     /// to the view underneath: Home, which then opens what you tapped.
     func setPageTouchable(_ on: Bool) {
-        life?.leaving = !on
         var vc: UIViewController = self
         while let p = vc.parent, !(p is UINavigationController) { vc = p }
         guard vc !== self, vc.parent is UINavigationController else { return }

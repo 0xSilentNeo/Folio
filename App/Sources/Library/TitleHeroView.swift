@@ -93,7 +93,7 @@ struct TitleHeroView: View {
                             TiltPlayButton(title: entry?.canResume == true ? "Resume" : "Play",
                                            subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { tapped(file, "Play") }
                             if entry?.canResume == true {
-                                Button { if !pageLeaving { restart() } } label: {
+                                Button { if !pageLeaving && pageLife?.cantAct == nil { restart() } } label: {
                                     Label("Start over", systemImage: "arrow.counterclockwise").font(.subheadline.weight(.semibold))
                                         .padding(.horizontal, 16).frame(height: 44).glass(cornerRadius: 22, interactive: true)
                                 }
@@ -279,8 +279,8 @@ struct TitleHeroView: View {
     /// page was still zooming in — taps you meant, on a page you could see
     /// (27 Oct report: "the buttons were not getting registered"); gone.
     private func tapped(_ f: URL, _ control: String) {
-        if pageLeaving || pageLife?.leaving == true {
-            dlog("nav", "title page: \(control) ignored (page going back)")
+        if let why = pageLeaving ? "page going back" : pageLife?.cantAct {
+            dlog("nav", "title page: \(control) ignored (\(why))")
             return
         }
         let moved = TouchTracker.recentTravel

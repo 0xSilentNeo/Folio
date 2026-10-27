@@ -70,6 +70,7 @@ final class TouchTracker: UIGestureRecognizer, UIGestureRecognizerDelegate {
     static let logs = CommandLine.arguments.contains("-touchLog")
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        touches.forEach { BackWatch.touchBegan($0) }
         guard tracked == nil, let t = touches.first else { return }
         tracked = t
         start = t.location(in: nil)
