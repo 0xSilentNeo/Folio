@@ -774,8 +774,16 @@ final class PanelUITests: XCTestCase {
         }
         print("LETGO buttons lost \(lost)/\(starts.count)")
 
+        // Back, tapped off the glyph (left part of the circle).
+        if app.buttons["Back"].exists {
+            app.buttons["Back"].coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap(); sleep(2)
+            let left = !app.buttons["ep:Lab Show S01E02.mp4"].exists
+            print("BACKEDGE tap on the circle's left part → \(left ? "went back" : "stayed")")
+            XCTAssertTrue(left, "Back did not go back when tapped beside its glyph")
+            if !left { app.buttons["Back"].tap(); sleep(2) }
+        }
+
         // Back to Home with a swipe, at different moments after opening.
-        if app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
         var leftOver = 0, noOpen = 0
         let waits: [UInt32] = [0, 150_000, 300_000, 500_000, 800_000, 1_200_000, 0, 300_000]
         for (i, w) in waits.enumerated() {
@@ -797,6 +805,38 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(lost, 0, "a swipe back that was let go took the page's buttons away")
         XCTAssertEqual(leftOver, 0, "the page's buttons stayed on Home")
         XCTAssertEqual(noOpen, 0, "Home did not open a title after a swipe back")
+    }
+
+    /// Settings keeps the system navigation bar and zooms out of its button on
+    /// Home (which hides the bar). A swipe back that is let go must leave the
+    /// bar showing: its Back button and title.
+    func test45SettingsLetGoSwipe() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-noSplash"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let settings = app.buttons["Settings"].firstMatch
+        XCTAssertTrue(settings.waitForExistence(timeout: 25), "Settings button not found")
+        sleep(2)
+        settings.tap()
+        XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "Settings did not open")
+        sleep(2)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let h = app.frame.height
+        var lost = 0
+        for (i, (x, dx)) in [(60.0, 60.0), (8.0, 70.0), (120.0, 50.0), (60.0, 60.0)].enumerated() {
+            origin.withOffset(CGVector(dx: x, dy: h * 0.6)).press(forDuration: 0.01, thenDragTo: origin.withOffset(CGVector(dx: x + dx, dy: h * 0.6)),
+                                                                 withVelocity: .slow, thenHoldForDuration: 0.4)
+            sleep(2)
+            let back = app.buttons["Back"].exists
+            let title = app.navigationBars.staticTexts["Settings"].exists || app.staticTexts["Settings"].exists
+            let onPage = app.staticTexts["Playback"].exists
+            print("SETTINGSLETGO \(i) → page \(onPage ? "stayed" : "left"), Back \(back), title \(title)")
+            if onPage && (!back || !title) { lost += 1 }
+            if !onPage { settings.tap(); _ = app.buttons["Back"].waitForExistence(timeout: 6); sleep(2) }
+        }
+        print("SETTINGSLETGO lost \(lost)")
+        XCTAssertEqual(lost, 0, "a swipe back that was let go took Settings' navigation bar away")
     }
 
     func test37TapOutsideLatency() throws { try tapOutsideLatency(relay: false) }

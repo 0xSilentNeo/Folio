@@ -273,6 +273,20 @@ private struct LeavingProbe: UIViewControllerRepresentable {
             super.viewWillDisappear(animated)
             dlog("nav", "page leaving: taps off")
             onChange?(true)
+            // Pages that keep the system bar (Settings, folders, addon titles):
+            // react-native-screens #5054 (iOS 27.0, traced in UIKit) — when the
+            // screen below hides the bar, UIKit fades it out (alpha 0) alongside
+            // a zoom back; if the swipe is let go, it shows the bar again but
+            // leaves alpha at 0, so the page's title and Back button are gone.
+            guard let nav = navigationController, let tc = transitionCoordinator else { return }
+            tc.animate(alongsideTransition: nil) { [weak nav] ctx in
+                guard ctx.isCancelled else { return }
+                DispatchQueue.main.async {
+                    guard let nav, !nav.isNavigationBarHidden, nav.navigationBar.alpha < 0.99 else { return }
+                    dlog("nav", "swipe back let go: the navigation bar was left at alpha \(String(format: "%.2f", nav.navigationBar.alpha)); shown again")
+                    nav.navigationBar.alpha = 1
+                }
+            }
         }
     }
     func makeUIViewController(context: Context) -> Probe { let p = Probe(); p.onChange = onChange; return p }
@@ -367,6 +381,68 @@ struct PosterImage: View {
 
 extension Int64 {
     var byteString: String { ByteCountFormatter.string(fromByteCount: self, countStyle: .file) }
+}
+
+extension View {
+    /// The ‹ and ⋯ of a page that zooms out of a tile (title pages).
+    ///
+    /// iOS 18+: drawn by the page itself, with the navigation bar hidden as it
+    /// is on Home. Until 1.17.1 they were the system navigation bar's, so each
+    /// zoom to or from a title page also showed or hid the bar, alongside the
+    /// zoom — and iOS gets that wrong when the zoom follows a swipe:
+    /// - Apple Developer Forums thread 774524, "Toolbar Display Bug When Using
+    ///   Zoom NavigationTransition with Swipe-Back Gesture" (an Apple engineer:
+    ///   "That's sounds like a bug"): after a swipe back the page's toolbar can
+    ///   stay on the screen below. Your 26 Oct recording: ‹ and ••• over Home.
+    /// - react-native-screens #5054 (iOS 27.0, traced in UIKit): when the
+    ///   screen below hides the bar, a swipe back that is let go leaves the
+    ///   bar at alpha 0, so ‹ and ••• vanish. 27 Oct simulator run: the same.
+    /// With the bar hidden on both screens nothing changes alongside the zoom,
+    /// and the buttons are part of the page, so they come and go with it.
+    /// The swipe back is the zoom transition's own, so hiding the bar doesn't
+    /// turn it off (it did before the zoom, 1.11.0).
+    @ViewBuilder
+    func pageButtons<Trailing: View>(back: @escaping () -> Void, @ViewBuilder trailing: () -> Trailing) -> some View {
+        if #available(iOS 18.0, *) {
+            let t = trailing()
+            toolbar(.hidden, for: .navigationBar)
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    // Where the system bar put them (measured on iOS 27): 44 pt
+                    // high at the top of the safe area, 16 pt from the sides.
+                    HStack(spacing: 0) {
+                        Button(action: back) { PageButtonLabel(systemName: "chevron.left", width: 44) }
+                            .buttonStyle(PressStyle(scale: 0.94))
+                            .accessibilityLabel("Back")
+                        Spacer(minLength: 0)
+                        t
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(height: 44)
+                }
+        } else {
+            navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbar { ToolbarItem(placement: .topBarTrailing) { trailing() } }
+        }
+    }
+}
+
+/// A page button's face: a glass circle (Back) or capsule (⋯), the whole of
+/// it tappable. Inside the system toolbar (iOS 17) just the glyph.
+struct PageButtonLabel: View {
+    let systemName: String
+    var width: CGFloat = 44
+    var body: some View {
+        if #available(iOS 18.0, *) {
+            Image(systemName: systemName)
+                .font(.system(size: 17, weight: .semibold))
+                .frame(width: width, height: 44)
+                .glass(cornerRadius: 22, interactive: true)
+                .contentShape(Capsule())
+        } else {
+            ToolbarGlyph(systemName)
+        }
+    }
 }
 
 /// Icon for a toolbar item. On iOS 26 an icon-only toolbar button reacts only

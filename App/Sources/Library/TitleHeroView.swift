@@ -121,11 +121,7 @@ struct TitleHeroView: View {
         }
         .background(HomeBackdrop().ignoresSafeArea())
         .background(BackSwipeProbe().frame(width: 1, height: 1))
-        // The system navigation bar (transparent): its own Back button and the
-        // native back swipe that follows your finger.
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbar { ToolbarItem(placement: .topBarTrailing) { moreButton } }
+        .pageButtons(back: goBack) { moreButton }
         // Landscape phone: the floating tab bar sat on the title and its details.
         .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .onAppear {
@@ -257,9 +253,15 @@ struct TitleHeroView: View {
             }
             Button(role: .destructive) { confirmDelete = true } label: { Label("Delete file", systemImage: "trash") }
         } label: {
-            ToolbarGlyph("ellipsis")
+            PageButtonLabel(systemName: "ellipsis", width: 56)
         }
         .accessibilityLabel("More")
+    }
+
+    private func goBack() {
+        if pageLeaving { dlog("nav", "title page: Back ignored (page already going back)"); return }
+        dlog("nav", "title page: Back")
+        dismiss()
     }
 
     // MARK: Actions
