@@ -13,6 +13,7 @@ struct GlassPlayerApp: App {
         EnergyMonitor.shared.start()
         UILab.start()
         PopLab.start()
+        MainActor.assumeIsolated { LingerLab.startIfAsked() }
         MPVFiles.bootstrap()
         // Reconnects to downloads that ran while the app was closed.
         MainActor.assumeIsolated { _ = DownloadManager.shared }
