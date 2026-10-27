@@ -36,13 +36,19 @@ struct SwipeRow<Content: View>: View {
         if #available(iOS 18.0, *), !actions.isEmpty {
             ZStack(alignment: .trailing) {
                 buttons
+                // Overlay and gesture before the offset, so they move with the row.
+                // offset(x:y:) docs: "The original dimensions of the view aren't
+                // changed by offsetting the contents" — a modifier after it stays
+                // at the row's original place. Until 1.17.0 the tap-to-close
+                // layer did, right over the revealed buttons, so tapping Watched
+                // or Delete only closed the row (27 Oct report).
                 content
-                    .offset(x: offset)
                     // While open, a tap on the row closes it (it doesn't play).
                     .overlay {
                         if isOpen { Color.clear.contentShape(Rectangle()).onTapGesture { close() } }
                     }
                     .gesture(LeftSwipeRecognizer(isOpen: isOpen, onChanged: changed, onEnded: ended))
+                    .offset(x: offset)
             }
             .background(GeometryReader { g in Color.clear.onAppear { width = g.size.width }.onChange(of: g.size.width) { _, w in width = w } })
             .onChange(of: openID) { _, v in if v != id, offset != 0 { withAnimation(.snappy(duration: 0.25)) { offset = 0 } } }
@@ -116,9 +122,9 @@ struct SwipeTile<Content: View>: View {
     var body: some View {
         if #available(iOS 18.0, *), !actions.isEmpty {
             content
-                .offset(x: drag)
                 .overlay { if isOpen { panel.transition(.opacity) } }
                 .gesture(LeftSwipeRecognizer(isOpen: isOpen, onChanged: changed, onEnded: ended))
+                .offset(x: drag)
         } else {
             content
         }

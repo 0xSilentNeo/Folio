@@ -227,7 +227,7 @@ struct TitleHeroView: View {
                             [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = f },
                              history.isWatched(f)
                                 ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched([f], false) }
-                                : SwipeAction(title: "Watched", icon: "eye", tint: Theme.accent) { history.setWatched([f], true) }]
+                                : SwipeAction(title: "Watched", icon: "eye", tint: Theme.swipeTint) { history.setWatched([f], true) }]
                         },
                         pendingDelete: $pendingDelete,
                         delete: { f in
@@ -571,7 +571,43 @@ struct BackSwipeProbe: UIViewRepresentable {
                     r.addTarget(self, action: #selector(self.changed(_:)))
                     self.watched.append(r)
                 }
+                if Self.labProbe { self.startNavProbe(nav) }
             }
+        }
+
+        // MARK: Lab (`-navProbe`): the page during its own transitions
+
+        static let labProbe = CommandLine.arguments.contains("-navProbe")
+        private var link: CADisplayLink?
+        private weak var nav: UINavigationController?
+        private var lastLine = ""
+
+        private func startNavProbe(_ nav: UINavigationController) {
+            self.nav = nav
+            guard link == nil else { return }
+            let l = CADisplayLink(target: self, selector: #selector(sample))
+            l.add(to: .main, forMode: .common)
+            link = l
+        }
+
+        override func willMove(toWindow newWindow: UIWindow?) {
+            super.willMove(toWindow: newWindow)
+            if newWindow == nil { link?.invalidate(); link = nil; if Self.labProbe { dlog("navprobe", "page left the window") } }
+        }
+
+        /// Each frame: the navigation transition, where the page is drawn, and
+        /// whether a touch at the middle of where it's drawn would reach it.
+        @objc private func sample() {
+            var r: UIResponder? = self
+            while let n = r, !(n is UIViewController) { r = n.next }
+            guard let page = (r as? UIViewController)?.view, let w = window else { return }
+            let tc = nav?.transitionCoordinator
+            let pl = page.layer.presentation() ?? page.layer
+            let f = (page.superview ?? page).convert(pl.frame, to: nil).integral
+            let mid = CGPoint(x: f.midX, y: f.midY)
+            let hit = w.hitTest(mid, with: nil)
+            let line = "transition=\(tc.map { "\($0.isInteractive ? "interactive" : "animated")\($0.isCancelled ? " cancelled" : "")" } ?? "none") page \(f) alpha \(String(format: "%.2f", pl.opacity)) touch at its middle → \(hit.map { $0.isDescendant(of: page) ? "the page" : String(describing: type(of: $0)) } ?? "nothing")"
+            if line != lastLine { lastLine = line; dlog("navprobe", line) }
         }
         @objc func changed(_ g: UIGestureRecognizer) {
             let kind = g === watched.first ? "edge" : "content"

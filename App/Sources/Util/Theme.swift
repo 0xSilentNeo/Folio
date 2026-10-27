@@ -37,6 +37,10 @@ enum Theme {
     /// Switch track when on. Ink on light; on dark a warm taupe, not the cream
     /// accent: the white knob vanished on a cream track (screenshot run).
     static let switchTint = Color(light: 0x1B1A18, dark: 0xA08D77)
+    /// Swipe-action buttons whose icon and label are white (system swipe
+    /// actions draw them white on the tint): dark enough in both modes. The
+    /// cream accent left a white eye on cream (27 Oct screenshots).
+    static let swipeTint = Color(light: 0x1B1A18, dark: 0x7D6B58)
 }
 
 /// Every switch in the app: the system switch with `Theme.switchTint`.

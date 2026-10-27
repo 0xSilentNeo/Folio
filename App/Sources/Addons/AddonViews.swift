@@ -236,7 +236,7 @@ struct StreamsView: View {
                             .disabled(!s.isPlayable || starting)
                             .swipeActions(edge: .trailing) {
                                 if s.isPlayable {
-                                    Button { download(s) } label: { Label("Download", systemImage: "arrow.down.circle") }.tint(Theme.accent)
+                                    Button { download(s) } label: { Label("Download", systemImage: "arrow.down.circle") }.tint(Theme.swipeTint)
                                 }
                             }
                             .contextMenu {

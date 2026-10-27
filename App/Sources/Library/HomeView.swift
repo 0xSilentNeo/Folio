@@ -224,7 +224,7 @@ struct HomeView: View {
         if g.folder == nil {
             a.append(allWatched(g)
                      ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched(g.files, false) }
-                     : SwipeAction(title: "Watched", icon: "eye", tint: Theme.accent) { history.setWatched(g.files, true) })
+                     : SwipeAction(title: "Watched", icon: "eye", tint: Theme.swipeTint) { history.setWatched(g.files, true) })
         }
         return a
     }
@@ -284,7 +284,7 @@ struct HomeView: View {
                         if allWatched(g) {
                             Button { history.setWatched(g.files, false) } label: { Label("Unwatched", systemImage: "eye.slash") }.tint(.gray)
                         } else {
-                            Button { history.setWatched(g.files, true) } label: { Label("Watched", systemImage: "eye") }.tint(Theme.accent)
+                            Button { history.setWatched(g.files, true) } label: { Label("Watched", systemImage: "eye") }.tint(Theme.swipeTint)
                         }
                     }
                 }
