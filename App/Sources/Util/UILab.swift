@@ -26,7 +26,7 @@ enum UILab {
             if let src = Bundle.main.url(forResource: "lab", withExtension: "mp4", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab", withExtension: "mp4") {
                 let dir = MPVFiles.mediaDir
                 try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-                let names = ["Lab Show S01E01.mp4", "Lab Show S01E02.mp4"] + (CommandLine.arguments.contains("-uiTestTwoTitles") ? ["Lab Movie (2020).mp4"] : [])
+                let names = ["Lab Show S01E01.mp4", "Lab Show S01E02.mp4"] + (CommandLine.arguments.contains("-uiTestTwoTitles") ? ["Lab Other S01E01.mp4"] : [])
                 for n in names {
                     let d = dir.appendingPathComponent(n)
                     if !FileManager.default.fileExists(atPath: d.path) { try? FileManager.default.copyItem(at: src, to: d) }

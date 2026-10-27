@@ -15,15 +15,12 @@ final class PanelUITests: XCTestCase {
         sleep(2)
         tapPill(app, "Settings"); sleep(1)
         XCTAssertFalse(shows(app, "Audio"), "Tracks did not close on a tap where the pill was")
-        if #available(iOS 27, *) {
-            // 1.16.0, native morph on iOS 27: another button's spot switches to its panel.
-            // (-nativePanelMorph NO arrives as the string "NO", so this test runs the native path.)
-            XCTAssertTrue(shows(app, "Playback", within: 3), "a tap on Settings while Tracks was open did not switch (iOS 27)")
-        } else {
-            XCTAssertFalse(shows(app, "Playback"), "a tap where the pill was opened Settings (hidden button)")
-            tapPill(app, "Settings")                                         // now a real tap on Settings
-            XCTAssertTrue(shows(app, "Playback", within: 3), "Settings did not open")
-        }
+        // 1.17.2: the buttons are hidden while a menu is open, so a tap on
+        // one's spot only closes the menu (1.16.0–1.17.1 switched on iOS 27).
+        XCTAssertFalse(shows(app, "Playback"), "a tap where the pill was opened Settings (hidden button)")
+        sleep(1)
+        tapPill(app, "Settings")                                         // now a real tap on Settings
+        XCTAssertTrue(shows(app, "Playback", within: 3), "Settings did not open")
         sleep(1)
         tapPill(app, "Settings"); sleep(1)                                   // its own spot → close
         XCTAssertFalse(shows(app, "Playback"), "Settings did not close on its own spot")
@@ -906,7 +903,7 @@ final class PanelUITests: XCTestCase {
         app.launchArguments = ["-uiTestLibrary", "-uiTestTwoTitles", "-heroView", "details"]
         app.launch()
         XCUIDevice.shared.orientation = .portrait
-        let show = app.staticTexts["Lab Show"].firstMatch, movie = app.staticTexts["Lab Movie"].firstMatch
+        let show = app.staticTexts["Lab Show"].firstMatch, movie = app.staticTexts["Lab Other"].firstMatch
         XCTAssertTrue(show.waitForExistence(timeout: 25) && movie.waitForExistence(timeout: 5), "library tiles not found")
         sleep(2)
         let origin = app.coordinate(withNormalizedOffset: .zero)
@@ -925,7 +922,7 @@ final class PanelUITests: XCTestCase {
             sleep(3)
             let player = app.buttons["Close player"].exists
             let page = app.buttons["Back"].exists
-            let title = (i % 2 == 0 ? app.staticTexts["Lab Movie"] : app.staticTexts["Lab Show"]).firstMatch.exists
+            let title = (i % 2 == 0 ? app.staticTexts["Lab Other"] : app.staticTexts["Lab Show"]).firstMatch.exists
             print(String(format: "FASTSWITCH %d (back %.0f ms after opening, other title tapped %.0f ms later): page open %@, player %@", i, Double(w) / 1000, Date().timeIntervalSince(t0) * 1000, page ? "yes" : "no", player ? "OPEN" : "no"))
             if player { played += 1; app.buttons["Close player"].tap(); sleep(3) }
             if page && title { opened += 1 }
@@ -1164,7 +1161,10 @@ final class PanelUITests: XCTestCase {
 
     /// The same in portrait (27 Oct report: the buttons collapsed into "⋯").
     func test47ToolbarProbePortrait() throws {
-        _ = launchPlayer(["-toolbarProbe", "-toolbarProbePortrait"], native: true, captureNow: false)
+        // -toolbarNarrow: the toolbar starts too narrow and must widen itself
+        // until all three buttons show (the probe logs how many the player's
+        // own bar shows).
+        _ = launchPlayer(["-toolbarProbe", "-toolbarProbePortrait", "-toolbarNarrow"], native: true, captureNow: false)
         XCUIDevice.shared.orientation = .portrait
         sleep(50)
     }
