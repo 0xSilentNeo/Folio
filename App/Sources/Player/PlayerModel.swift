@@ -306,7 +306,14 @@ final class PlayerModel: ObservableObject {
         let scoped = scopedURL
         scopedURL = nil
         client?.delegate = nil
-        if renderer == .metal { detachMetalView() }   // mpv's Metal thread ends during shutdown
+        if renderer == .metal, let c = client {
+            // mpv's Metal thread would end during the quit below, on mpv's own
+            // time, while the player closes here; end it now, with the main
+            // thread waiting (no video track and no forced window: mpv closes
+            // its video output — player/loadfile.c, handle_force_window).
+            settleBeforeMetalThreadEnds()
+            c.set("vid", "no")
+        }
         client?.shutdown {
             scoped?.stopAccessingSecurityScopedResource()
         }
@@ -1299,7 +1306,18 @@ final class PlayerModel: ObservableObject {
     // MARK: Renderer switching (PiP)
 
     /// A/V lab: the same renderer switch PiP does, without PiP.
-    func labSwitchRenderer(software: Bool) { software ? switchToSoftware() : switchToMain() }
+    func labSwitchRenderer(software: Bool) {
+        // Lab (-avLayoutPending): every view of the player's window waits to
+        // be laid out, as when iOS snapshots the app on the way to the Home
+        // Screen.
+        if software, CommandLine.arguments.contains("-avLayoutPending"), let w = videoContainer?.window {
+            var n = 0
+            func mark(_ v: UIView) { v.setNeedsLayout(); v.setNeedsUpdateConstraints(); n += 1; v.subviews.forEach(mark) }
+            mark(w)
+            dlog("av", "layout waiting on \(n) views of the player's window")
+        }
+        software ? switchToSoftware() : switchToMain()
+    }
     /// A/V lab: the decoder rebuild done after coming back while paused.
     func labRenewDecoder() { renewHardwareDecoder() }
 
@@ -1339,7 +1357,7 @@ final class PlayerModel: ObservableObject {
         case .gl:
             glView?.detach()
         case .metal:
-            detachMetalView()           // before mpv's Metal thread ends (see detachMetalView)
+            settleBeforeMetalThreadEnds()   // the output swap below ends mpv's Metal thread
         }
         do {
             sw.setVideoSize(width: Int(videoSize.width), height: Int(videoSize.height))
@@ -1449,6 +1467,31 @@ final class PlayerModel: ObservableObject {
     /// app is killed (SIGTRAP, 24 Oct 20:23:40, PiP starting). So the Metal
     /// view leaves the window before that thread ends, and comes back before
     /// a new one starts; a commit then only reaches this detached view.
+    /// Right before an mpv call that ends mpv's Metal video thread; the main
+    /// thread waits in that call until the thread has ended.
+    ///
+    /// That thread (MoltenVK) changes the video layer, and Core Animation
+    /// commits its changes when the thread ends, on that thread, laying out
+    /// the layer tree they were made in. Whatever UIKit has waiting to be laid
+    /// out in the player's window is then laid out off the main thread and
+    /// Auto Layout throws: SIGTRAP on 24 Oct (PiP starting) and 27 Oct (Home
+    /// Screen while playing; the stack: thread exit → Core Animation commit →
+    /// view layout → Auto Layout exception, the main thread waiting in mpv
+    /// for that thread). Taking the view out of the window (1.12.1) didn't
+    /// prevent it, and itself left a layout waiting in the window. So: the
+    /// view leaves the window, then everything UIKit has waiting is laid out
+    /// and drawn now, on the main thread. The thread's commit finds nothing
+    /// left to do in UIKit (MainThreadLayout is the safety net).
+    private func settleBeforeMetalThreadEnds() {
+        let window = metalView?.window ?? videoContainer?.window
+        detachMetalView()
+        if Self.labOldSwitch { return }
+        window?.layer.layoutIfNeeded()
+        CATransaction.flush()
+    }
+    /// Lab: the 1.17.0 steps (view out of the window only).
+    private static let labOldSwitch = CommandLine.arguments.contains("-labOldPiPSwitch")
+
     private func detachMetalView() {
         guard let mv = metalView, mv.superview != nil else { return }
         mv.removeFromSuperview()
@@ -1554,7 +1597,7 @@ final class PlayerModel: ObservableObject {
         guard let vid = c.string("vid"), vid != "no" else { return }
         vidSaved = vid
         videoOffForBackground = true
-        if renderer == .metal { detachMetalView() }
+        if renderer == .metal { settleBeforeMetalThreadEnds() }   // no video track: mpv ends its video output
         c.set("vid", "no")
         dlog("player", "background playback: video off")
     }
