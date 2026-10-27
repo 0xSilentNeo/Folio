@@ -742,23 +742,27 @@ final class PanelUITests: XCTestCase {
         let origin = app.coordinate(withNormalizedOffset: .zero)
         let w = app.frame.width, h = app.frame.height
         let fmt = DateFormatter(); fmt.dateFormat = "HH:mm:ss.SSS"
-        let spots: [(String, (CGRect) -> CGPoint)] = [
-            ("left of the menu, 40 pt", { CGPoint(x: $0.minX - 40, y: $0.midY) }),
-            ("right of the menu, 20 pt", { CGPoint(x: min(w - 4, $0.maxX + 20), y: $0.midY) }),
-            ("right screen edge", { CGPoint(x: w - 8, y: $0.midY) }),
-            ("above the menu", { CGPoint(x: $0.midX, y: max(6, $0.minY - 30)) }),
-            ("video, left", { CGPoint(x: w * 0.15, y: h * 0.5) }),
-            ("video, centre", { CGPoint(x: w * 0.5, y: h * 0.4) }),
-            ("right of the menu, low", { CGPoint(x: min(w - 4, $0.maxX + 20), y: $0.maxY - 20) }),
-            ("left of the menu, 10 pt", { CGPoint(x: $0.minX - 10, y: $0.midY) }),
-        ]
-        for (i, (name, at)) in spots.enumerated() {
+        let spots = ["left of the menu, 40 pt", "right of the menu, 20 pt", "right screen edge", "above the menu",
+                     "video, left", "video, centre", "right of the menu, low", "left of the menu, 10 pt"]
+        func at(_ name: String, _ f: CGRect) -> CGPoint {
+            switch name {
+            case "left of the menu, 40 pt": return CGPoint(x: f.minX - 40, y: f.midY)
+            case "right of the menu, 20 pt": return CGPoint(x: min(w - 4, f.maxX + 20), y: f.midY)
+            case "right screen edge": return CGPoint(x: w - 8, y: f.midY)
+            case "above the menu": return CGPoint(x: f.midX, y: max(6, f.minY - 30))
+            case "video, left": return CGPoint(x: w * 0.15, y: h * 0.5)
+            case "video, centre": return CGPoint(x: w * 0.5, y: h * 0.4)
+            case "right of the menu, low": return CGPoint(x: min(w - 4, f.maxX + 20), y: f.maxY - 20)
+            default: return CGPoint(x: f.minX - 10, y: f.midY)
+            }
+        }
+        for (i, name) in spots.enumerated() {
             tapPill(app, "Tracks")
             guard shows(app, "Audio", within: 5) else { XCTFail("Tracks did not open (\(i))"); continue }
             sleep(2)
             let pop = app.popovers.firstMatch
             let f = pop.exists ? pop.frame : .zero
-            let p = at(f)
+            let p = at(name, f)
             print("TAPOUT \(relay ? "relay" : "player") \(i) \(name): menu \(f.integral), tap (\(Int(p.x)), \(Int(p.y))) issued \(fmt.string(from: Date()))")
             origin.withOffset(CGVector(dx: p.x, dy: p.y)).tap()
             sleep(3)
