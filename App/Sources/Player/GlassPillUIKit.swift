@@ -110,6 +110,44 @@ final class PanelPillUIView: UIView {
 /// of them has its menu open.
 struct PanelToolbarView: UIViewRepresentable {
     @ObservedObject var ui: PlayerUIState
+    /// Called when the toolbar moved a button into its "⋯" overflow: it needs
+    /// to be wider. 27 Oct recording: upright on the phone, two of the three
+    /// buttons went into a "⋯" whose menu did nothing (custom-view items have
+    /// no menu form), though the simulator fits all three at 186 pt.
+    var onOverflow: () -> Void = {}
+
+    /// A toolbar that says when its buttons don't all fit, and takes touches
+    /// only on its buttons.
+    final class FitToolbar: UIToolbar {
+        var onOverflow: (() -> Void)?
+        private var checkPending = false
+
+        private var buttons: [UIView] { (items ?? []).compactMap(\.customView) }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            guard window != nil, bounds.width > 0, !checkPending, buttons.contains(where: { $0.window == nil }) else { return }
+            // Only an overflow that lasts: while the player rotates, the
+            // toolbar is briefly laid out at an in-between size (lab: an
+            // overflow at launch in landscape that was gone 0.5 s later).
+            checkPending = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                guard let self else { return }
+                self.checkPending = false
+                if self.window != nil, self.buttons.contains(where: { $0.window == nil }) { self.onOverflow?() }
+            }
+        }
+
+        /// The toolbar is wider than its glass capsule (the empty part reaches
+        /// over the time bar); only the buttons and a little around them take
+        /// touches, the rest passes through to what's underneath.
+        override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+            let shown = buttons.filter { $0.window != nil && !$0.isHidden }
+            guard !shown.isEmpty else { return super.point(inside: point, with: event) }
+            let area = shown.map { $0.convert($0.bounds, to: self) }.reduce(CGRect.null) { $0.union($1) }
+            return area.insetBy(dx: -8, dy: -6).contains(point)
+        }
+    }
 
     static var buttonSize: CGFloat {
         if #available(iOS 27, *) { return 38 }
@@ -122,6 +160,7 @@ struct PanelToolbarView: UIViewRepresentable {
     /// three. The glass capsule is 154 pt wide and sits 16 pt in from the toolbar's right
     /// edge; everything to its left is empty toolbar.
     static var width: CGFloat {
+        if CommandLine.arguments.contains("-toolbarNarrow") { return 150 }   // lab: start too narrow, must widen itself
         if #available(iOS 27, *) { return 190 }
         return 176
     }
@@ -138,12 +177,13 @@ struct PanelToolbarView: UIViewRepresentable {
         let (bar, items) = Self.makeBar { [weak ui] kind in ui?.toggle(kind) }
         for (kind, item) in items { ui.barItems[kind] = item }
         ui.panelBar = bar
+        (bar as? FitToolbar)?.onOverflow = onOverflow
         return bar
     }
 
     /// The toolbar and its three items (also built by the toolbar probe, UILab).
     static func makeBar(onTap: @escaping (PlayerUIState.Panel) -> Void) -> (UIToolbar, [PlayerUIState.Panel: UIBarButtonItem]) {
-        let bar = UIToolbar()
+        let bar = FitToolbar()
         bar.tintColor = .white
         bar.overrideUserInterfaceStyle = .dark
         let appearance = UIToolbarAppearance()
@@ -180,7 +220,7 @@ struct PanelToolbarView: UIViewRepresentable {
         return (bar, byKind)
     }
 
-    func updateUIView(_ bar: UIToolbar, context: Context) {}
+    func updateUIView(_ bar: UIToolbar, context: Context) { (bar as? FitToolbar)?.onOverflow = onOverflow }
 
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: UIToolbar, context: Context) -> CGSize? {
         CGSize(width: proposal.width ?? 180, height: 50)

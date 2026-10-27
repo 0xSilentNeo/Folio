@@ -12,6 +12,8 @@ struct MetaDetailView: View {
     @State private var episodes: [MetaVideo] = []
     @State private var loadingEpisodes = false
     @State private var go: StreamsTarget?
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.zoomsFromTile) private var zooms
     /// The streams page zooms out of what was tapped (1.15.0, #2), like Add files.
     @Namespace private var streamsNS
     @ObservedObject private var history = HistoryStore.shared
@@ -72,11 +74,11 @@ struct MetaDetailView: View {
             .topScrollScrim()
         }
         .background(Theme.background.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
+        .pageButtons(zooms: zooms, back: { dismiss() }) { EmptyView() }
         .navigationDestination(item: $go) { t in
+            // Zooms only from a page that draws its own bar (see pageButtons).
             StreamsView(meta: m, video: t.video, seasonVideos: t.queue)
-                .zoomDestination(t.source, in: streamsNS)
+                .zoomDestination(t.source, in: streamsNS, zoom: zooms)
         }
         .task { await load() }
         .task(id: season) {

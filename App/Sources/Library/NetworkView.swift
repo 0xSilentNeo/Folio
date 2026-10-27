@@ -61,6 +61,8 @@ struct LocalFolderView: View {
     private var media: [URL] { LibraryOrganizer.sorted(items.filter { TitleParser.isMedia($0.lastPathComponent) }) }
     @AppStorage("librarySort") private var librarySort = LibrarySort.name.rawValue
     @AppStorage("librarySortAsc") private var librarySortAsc = true
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.zoomsFromTile) private var zooms
 
     var body: some View {
         GeometryReader { geo in
@@ -106,10 +108,8 @@ struct LocalFolderView: View {
         }
         .background(HomeBackdrop().ignoresSafeArea())
         .brandListBackground()
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { HStack(spacing: 6) { SortMenu(sort: $librarySort, ascending: $librarySortAsc); ViewModeMenu(mode: $libraryView) } }
+        .pageChrome(zooms: zooms, title: title, back: { dismiss() }) {
+            HStack(spacing: 6) { SortMenu(sort: $librarySort, ascending: $librarySortAsc); ViewModeMenu(mode: $libraryView) }
         }
         .onAppear(perform: reload)
         .refreshable { reload() }

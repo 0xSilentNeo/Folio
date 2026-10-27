@@ -61,7 +61,7 @@ final class Diagnostics: NSObject {
             self?.log("app", "resign active")
         }
         nc.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.log("app/warn", "memory warning")
+            self?.log("app/warn", "memory warning: \(EnergyMonitor.memory)")
         }
         startWatchdog()
         MXMetricManager.shared.add(self)
@@ -115,6 +115,10 @@ final class Diagnostics: NSObject {
             (#"://([^/\s:@]+):([^@\s/]+)@"#, "://$1:••••@"),
             (#"/dav\.real-debrid\.com/[^\s]*"#, "/dav.real-debrid.com/…"),
             (#"(?i)(config=|configuration/)[A-Za-z0-9+/=]{20,}"#, "$1••••"),
+            // Addon links carry their settings in the path, base64-encoded —
+            // debrid API keys included (27 Oct report: a key in a loadfile
+            // line). Any long base64 path segment is hidden.
+            (#"/[A-Za-z0-9+_\-]{40,}={0,2}(?=[/?#\s"]|$)"#, "/••••"),
         ]
         for (p, r) in rules {
             out = out.replacingOccurrences(of: p, with: r, options: .regularExpression)
@@ -207,7 +211,7 @@ final class Diagnostics: NSObject {
     /// Zips app log, crash/hang logs, mpv log and settings into one file.
     func makeReport() -> URL? {
         queue.sync { try? handle?.synchronize() }
-        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("GlassPlayer-report-\(Int(Date().timeIntervalSince1970))", isDirectory: true)
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("Folio-report-\(Int(Date().timeIntervalSince1970))", isDirectory: true)
         try? FileManager.default.removeItem(at: tmp)
         try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         for f in [appLog, crashLog, hangLog, metricLog, dir.appendingPathComponent("app.previous.log")] where FileManager.default.fileExists(atPath: f.path) {

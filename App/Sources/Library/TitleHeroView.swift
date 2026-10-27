@@ -93,7 +93,7 @@ struct TitleHeroView: View {
                             TiltPlayButton(title: entry?.canResume == true ? "Resume" : "Play",
                                            subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { tapped(file, "Play") }
                             if entry?.canResume == true {
-                                Button { if !pageLeaving && !BackGesture.justStarted { restart() } } label: {
+                                Button { if !pageLeaving { restart() } } label: {
                                     Label("Start over", systemImage: "arrow.counterclockwise").font(.subheadline.weight(.semibold))
                                         .padding(.horizontal, 16).frame(height: 44).glass(cornerRadius: 22, interactive: true)
                                 }
@@ -259,27 +259,28 @@ struct TitleHeroView: View {
     }
 
     private func goBack() {
-        if pageLeaving { dlog("nav", "title page: Back ignored (page already going back)"); return }
+        if pageLeaving || pageLife?.leaving == true { dlog("nav", "title page: Back ignored (page already going back)"); return }
         dlog("nav", "title page: Back")
+        pageLife?.leave()          // no touches or actions from here, before the pop even starts
         dismiss()
     }
 
     // MARK: Actions
 
     @Environment(\.pageLeaving) private var pageLeaving
+    @Environment(\.pageLife) private var pageLife
     @Environment(\.zoomsFromTile) private var zoomsFromTile
 
-    /// A tap on the page's Play / Resume or an episode: ignored while the page
-    /// is going back (the tap was part of a back swipe), and when the finger
-    /// moved on the screen (a swipe that started on the control — the zoom
-    /// transition's swipe back to Home isn't seen by BackGesture; TouchTracker).
+    /// A tap on the page's Play / Resume or an episode: ignored when the
+    /// finger moved on the screen (a swipe that started on the control — the
+    /// zoom transition's swipe back to Home isn't seen by BackGesture;
+    /// TouchTracker). A page going back takes no touches at all (LeavingProbe,
+    /// UIKit's isUserInteractionEnabled). 1.17.1 also ignored taps while the
+    /// page was still zooming in — taps you meant, on a page you could see
+    /// (27 Oct report: "the buttons were not getting registered"); gone.
     private func tapped(_ f: URL, _ control: String) {
-        if pageLeaving || BackGesture.justStarted {
+        if pageLeaving || pageLife?.leaving == true {
             dlog("nav", "title page: \(control) ignored (page going back)")
-            return
-        }
-        if BackGesture.pageMoving {
-            dlog("nav", "title page: \(control) ignored (the page is still moving in or out)")
             return
         }
         let moved = TouchTracker.recentTravel

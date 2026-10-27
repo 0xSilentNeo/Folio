@@ -226,12 +226,15 @@ extension View {
     /// The pushed page grows out of its source and shrinks back into it on
     /// Back (SwiftUI's zoom navigation transition).
     @ViewBuilder
-    func zoomDestination(_ id: some Hashable, in ns: Namespace.ID) -> some View {
+    func zoomDestination(_ id: some Hashable, in ns: Namespace.ID, zoom: Bool = true) -> some View {
         // Same AnyHashable wrapping as ZoomSource, so the ids always match.
-        if #available(iOS 18.0, *) {
+        // zoom: false — pushed the usual way, from a page that shows the system
+        // bar (a zoom between pages that show and hide the bar is what iOS
+        // gets wrong, see pageButtons).
+        if #available(iOS 18.0, *), zoom {
             navigationTransition(.zoom(sourceID: AnyHashable(id), in: ns)).ignoresTapsWhileLeaving().environment(\.zoomsFromTile, true)
         } else {
-            self.ignoresTapsWhileLeaving()
+            self.ignoresTapsWhileLeaving().environment(\.zoomsFromTile, false)
         }
     }
 
@@ -261,26 +264,75 @@ extension EnvironmentValues {
     }
 }
 
+/// Whether a page is going away, readable at the moment a tap's action runs.
+///
+/// A class, not a value: the `pageLeaving` environment value is a copy taken
+/// when the page's view was last updated, so an action closure can read a
+/// stale `false` after the page started going back (27 Oct log, 19:12:55:
+/// "page leaving: taps off", then 114 ms later an episode row played). This
+/// is set synchronously — by the page's Back button before it asks to go
+/// back, and by UIKit's viewWillDisappear — and read when the action runs.
+@MainActor
+final class PageLife {
+    var leaving = false
+    /// The page's own controller (the navigation controller's child).
+    weak var page: UIViewController?
+    var pageView: UIView? { page?.view }
+
+    /// Going back now: no more touches, no more actions. Should the page not
+    /// actually go (a request to go back during another move can be dropped),
+    /// it takes touches again after 1.2 s.
+    func leave() {
+        leaving = true
+        pageView?.isUserInteractionEnabled = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            guard let self, self.leaving, let page = self.page, let nav = page.navigationController,
+                  nav.topViewController === page, nav.transitionCoordinator == nil else { return }
+            dlog("nav", "page: going back didn't happen; it takes touches again")
+            self.leaving = false
+            page.view.isUserInteractionEnabled = true
+        }
+    }
+}
+
+private struct PageLifeKey: EnvironmentKey { static let defaultValue: PageLife? = nil }
+extension EnvironmentValues {
+    var pageLife: PageLife? {
+        get { self[PageLifeKey.self] }
+        set { self[PageLifeKey.self] = newValue }
+    }
+}
+
 private struct LeaveGuard: ViewModifier {
     @State private var leaving = false
+    @State private var life = PageLife()
     func body(content: Content) -> some View {
         content
             .allowsHitTesting(!leaving)
             .environment(\.pageLeaving, leaving)
-            .background(LeavingProbe { leaving = $0 }.frame(width: 0, height: 0).accessibilityHidden(true))
+            .environment(\.pageLife, life)
+            .background(LeavingProbe(life: life) { leaving = $0 }.frame(width: 0, height: 0).accessibilityHidden(true))
     }
 }
 
 /// A child view controller of the page's hosting controller: it receives the
 /// page's appearance callbacks (automatic forwarding).
 private struct LeavingProbe: UIViewControllerRepresentable {
+    let life: PageLife
     let onChange: (Bool) -> Void
     final class Probe: UIViewController {
         var onChange: ((Bool) -> Void)?
+        var life: PageLife?
         override func loadView() { view = UIView(); view.isUserInteractionEnabled = false }
-        override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); onChange?(false) }
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            setPageTouchable(true)
+            onChange?(false)
+        }
         override func viewWillDisappear(_ animated: Bool) {
             super.viewWillDisappear(animated)
+            setPageTouchable(false)
+            PopTouchLab.start(for: self)
             dlog("nav", "page leaving: taps off")
             onChange?(true)
             // Pages that keep the system bar (Settings, folders, addon titles):
@@ -299,8 +351,73 @@ private struct LeavingProbe: UIViewControllerRepresentable {
             }
         }
     }
-    func makeUIViewController(context: Context) -> Probe { let p = Probe(); p.onChange = onChange; return p }
-    func updateUIViewController(_ vc: Probe, context: Context) { vc.onChange = onChange }
+    func makeUIViewController(context: Context) -> Probe { let p = Probe(); p.onChange = onChange; p.life = life; return p }
+    func updateUIViewController(_ vc: Probe, context: Context) { vc.onChange = onChange; vc.life = life }
+}
+
+/// Lab (`-popTouchLab`): from the moment a page starts going back, where a
+/// touch at the middle of the page's screen area would go, each frame for
+/// 1.5 s — the page, or what's underneath (Home).
+@MainActor
+private final class PopTouchLab: NSObject {
+    static var current: PopTouchLab?
+    static let on = CommandLine.arguments.contains("-popTouchLab")
+    private var link: CADisplayLink?
+    private weak var page: UIView?
+    private weak var window: UIWindow?
+    private var point = CGPoint.zero
+    private var t0 = CACurrentMediaTime()
+    private var last = ""
+
+    static func start(for probe: UIViewController) {
+        guard on else { return }
+        var vc: UIViewController = probe
+        while let p = vc.parent, !(p is UINavigationController) { vc = p }
+        guard let page = vc.view, let w = page.window else { return }
+        let lab = PopTouchLab()
+        lab.page = page; lab.window = w
+        lab.point = CGPoint(x: w.bounds.midX, y: w.bounds.height * 0.62)
+        let l = CADisplayLink(target: lab, selector: #selector(tick))
+        l.add(to: .main, forMode: .common)
+        lab.link = l
+        current = lab
+        dlog("navprobe", "page leaving: where a touch at (\(Int(lab.point.x)), \(Int(lab.point.y))) goes")
+    }
+
+    @objc private func tick() {
+        let ms = Int((CACurrentMediaTime() - t0) * 1000)
+        guard ms < 1500, let w = window else { link?.invalidate(); link = nil; Self.current = nil; return }
+        let hit = w.hitTest(point, with: nil)
+        let now: String
+        if let hit, let page, hit.isDescendant(of: page) { now = "the leaving page" }
+        else { now = hit.map { String(describing: type(of: $0)) } ?? "nothing" }
+        if now != last { last = now; dlog("navprobe", "\(ms) ms after leaving began: touch → \(now)") }
+    }
+}
+
+extension LeavingProbe.Probe {
+    /// The page's own view (the navigation controller's child that holds
+    /// this probe) stops or starts taking touches, at once.
+    ///
+    /// A page that zooms back into its tile stays on screen, over Home, for
+    /// the whole zoom, and SwiftUI's zoom transition is interruptible: the
+    /// page keeps taking touches meanwhile. So a tap meant for Home landed on
+    /// the page's episode row and played it (27 Oct log, 19:12:55: "page
+    /// leaving: taps off", then 114 ms later "episode row → play"). The
+    /// SwiftUI side of this guard (`allowsHitTesting`, through @State) only
+    /// applies at SwiftUI's next update; UIKit's flag applies to the very next
+    /// touch. UIView docs: with isUserInteractionEnabled false, touches
+    /// "intended for the view are ignored", and hitTest(_:with:) "ignores
+    /// view objects that … have disabled user interactions" — so the tap goes
+    /// to the view underneath: Home, which then opens what you tapped.
+    func setPageTouchable(_ on: Bool) {
+        life?.leaving = !on
+        var vc: UIViewController = self
+        while let p = vc.parent, !(p is UINavigationController) { vc = p }
+        guard vc !== self, vc.parent is UINavigationController else { return }
+        life?.page = vc
+        if vc.view.isUserInteractionEnabled != on { vc.view.isUserInteractionEnabled = on }
+    }
 }
 
 /// Frosted "glass" background. Uses Liquid Glass on iOS 26 when built with
@@ -415,6 +532,18 @@ extension View {
     /// off (1.11.0).
     @ViewBuilder
     func pageButtons<Trailing: View>(zooms: Bool, back: @escaping () -> Void, @ViewBuilder trailing: () -> Trailing) -> some View {
+        pageChrome(zooms: zooms, title: nil, back: back, trailing: trailing)
+    }
+
+    /// Every page that zooms out of something (1.17.2: Settings, folders,
+    /// addon titles and their streams too) draws its own bar — see
+    /// pageButtons. Its title, when it has one, sits in the middle, over a
+    /// fade from the page colour so a list scrolling under it stays readable.
+    /// 27 Oct screenshot: Settings' title and ‹ stayed on Home after Settings
+    /// had zoomed back into its button — the same iOS bug as on title pages.
+    /// A page pushed without the zoom keeps the system bar (and its title).
+    @ViewBuilder
+    func pageChrome<Trailing: View>(zooms: Bool, title: String?, back: @escaping () -> Void, @ViewBuilder trailing: () -> Trailing) -> some View {
         if #available(iOS 18.0, *), zooms {
             let t = trailing()
             toolbar(.hidden, for: .navigationBar)
@@ -422,17 +551,36 @@ extension View {
                     // Where the system bar put them (measured on iOS 27): 44 pt
                     // high at the top of the safe area, 16 pt from the sides, in
                     // a bar 54 pt high (so the page's layout doesn't move).
-                    HStack(spacing: 0) {
-                        Button(action: back) { PageButtonLabel(systemName: "chevron.left", width: 44) }
-                            .buttonStyle(PressStyle(scale: 0.94))
-                            .accessibilityLabel("Back")
-                        Spacer(minLength: 0)
-                        t
+                    ZStack {
+                        if let title {
+                            Text(title).font(.headline).lineLimit(1)
+                                .padding(.horizontal, 72)
+                                .accessibilityAddTraits(.isHeader)
+                        }
+                        HStack(spacing: 0) {
+                            Button(action: back) { PageButtonLabel(systemName: "chevron.left", width: 44) }
+                                .buttonStyle(PressStyle(scale: 0.94))
+                                .accessibilityLabel("Back")
+                            Spacer(minLength: 0)
+                            t
+                        }
                     }
                     .padding(.horizontal, 16)
                     .frame(height: 44)
                     .padding(.bottom, 10)
+                    .background(alignment: .top) {
+                        if title != nil {
+                            LinearGradient(stops: [.init(color: Theme.background, location: 0), .init(color: Theme.background, location: 0.7),
+                                                   .init(color: Theme.background.opacity(0), location: 1)], startPoint: .top, endPoint: .bottom)
+                                .ignoresSafeArea(edges: .top)
+                                .allowsHitTesting(false)
+                        }
+                    }
                 }
+        } else if let title {
+            navigationTitle(title)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .topBarTrailing) { trailing() } }
         } else {
             navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(.hidden, for: .navigationBar)

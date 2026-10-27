@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import Darwin
+import os
 
 /// Where the power goes: our own process's CPU time, split by thread name,
 /// plus the thermal state, as one log line every 30 s while the app is in
@@ -42,6 +43,21 @@ final class EnergyMonitor {
         timer = t
     }
 
+    /// The app's memory footprint (what iOS counts against its limit) and
+    /// how much more it may use before iOS ends it. 27 Oct: three memory
+    /// warnings, then the app was gone with no crash record — iOS had ended
+    /// it for memory; the log had no numbers to say what was using it.
+    static var memory: String {
+        var info = task_vm_info_data_t()
+        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
+        let kr = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count) }
+        }
+        let used = kr == KERN_SUCCESS ? Int(info.phys_footprint / 1_048_576) : -1
+        let left = Int(os_proc_available_memory() / 1_048_576)
+        return "mem \(used) MB (\(left) MB left)"
+    }
+
     static var thermal: String {
         switch ProcessInfo.processInfo.thermalState {
         case .nominal: "nominal"; case .fair: "fair"; case .serious: "serious"; case .critical: "critical"; @unknown default: "?"
@@ -56,7 +72,7 @@ final class EnergyMonitor {
             .map { String(format: "%@ %.0f%%", $0.0, $0.1) }.joined(separator: ", ")
         var line = String(format: "cpu %.0f%%", total)
         if !top.isEmpty { line += " (\(top))" }
-        line += " thermal=\(Self.thermal) playing=\(playing ? "yes" : "no")"
+        line += " \(Self.memory) thermal=\(Self.thermal) playing=\(playing ? "yes" : "no")"
         if ProcessInfo.processInfo.isLowPowerModeEnabled { line += " lowPower" }
         if !note.isEmpty { line += " " + note }
         if let reason { line += " · \(reason)" }

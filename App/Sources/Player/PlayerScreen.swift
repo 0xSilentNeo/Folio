@@ -12,6 +12,8 @@ struct PlayerScreen: View {
     var onRotationLock: (Bool) -> Void = { _ in }
 
     @State private var showSubtitlePicker = false
+    /// Extra toolbar width found to be needed (PanelToolbarView.onOverflow).
+    @State private var toolbarExtra: CGFloat = 0
     /// A touch that began on the menus' tap catcher is still down.
     @GestureState private var catcherTouched = false
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
@@ -102,9 +104,6 @@ struct PlayerScreen: View {
                 // itself lets touches through to the player, so this does not
                 // depend on how UIKit treats a tap outside a popover.
                 //
-                // iOS 27: a tap on another button's spot while a panel is open switches
-                // to that panel straight away (PanelPresenter.interruptible).
-                //
                 // It stays up while the panel's closing morph runs: iOS has not
                 // given the pill buttons back yet (sourceItem docs: the popover
                 // "replaces the specified item until … dismisses"), so a tap on a
@@ -126,14 +125,13 @@ struct PlayerScreen: View {
                             guard hypot(v.translation.width, v.translation.height) < TouchTracker.tapSlop else { return }
                             let point = v.location
                             let spot = ui.pillFrames.first(where: { $0.value.insetBy(dx: -6, dy: -8).contains(point) })?.key
-                            if ui.panel != nil, PanelPresenter.interruptible, let kind = spot {
-                                // iOS 27: another button opens its panel at
-                                // once; the open one's own button closes it.
-                                dlog("ui", "panel: \(kind.rawValue) tapped while a panel is open")
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                ui.toggle(kind)
-                            } else if ui.panel != nil {
-                                dlog("ui", "panel: tap outside")
+                            if ui.panel != nil {
+                                // While a menu is open the buttons are hidden (the
+                                // menu morphed out of their glass), so a tap where
+                                // one was closes the menu like any tap outside it.
+                                // 1.17.1 switched to that button's menu — a menu
+                                // you couldn't see the button for (27 Oct report).
+                                dlog("ui", "panel: tap outside\(spot.map { " (where the hidden \($0.rawValue) button is)" } ?? "")")
                                 ui.closePanel()
                             } else if let kind = spot {
                                 dlog("ui", "panel: \(kind.rawValue) tapped while the last panel was closing")
@@ -257,8 +255,12 @@ struct PlayerScreen: View {
     private func panelSize(in window: UIWindow) -> (CGFloat, CGFloat, String) {
         let size = window.bounds.size
         let compact = size.width < 640
-        let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
-        let maxHeight = max(180, size.height - (compact ? 150 : 84) - window.safeAreaInsets.top - 66)
+        let width = compact ? min(size.width - 40, 380) : min(tune.panelMax, size.width * tune.panelWidth)
+        var maxHeight = max(180, size.height - (compact ? 150 : 84) - window.safeAreaInsets.top - 66)
+        // Upright, at most half the screen: 1.17.1 let a menu grow to nearly
+        // the whole screen (27 Oct screenshot: Tracks from the close button
+        // down to the time bar). A longer list scrolls.
+        if size.height > size.width { maxHeight = min(maxHeight, max(300, size.height * 0.5)) }
         return (width, maxHeight, "\(Int(width))x\(Int(maxHeight))")
     }
 
@@ -383,9 +385,15 @@ struct PlayerScreen: View {
         } else if #available(iOS 26.0, *) {
             // Native menu morph: bar items in a toolbar; the popover morphs
             // out of the item's Liquid Glass (as in 1.14.0).
-            PanelToolbarView(ui: ui)
-                .frame(width: PanelToolbarView.width, height: 50)
-                .padding(.leading, -PanelToolbarView.outside.leading)
+            // Wider (to the left, where the toolbar is empty) whenever its
+            // buttons don't all fit; the glass capsule stays where it is.
+            PanelToolbarView(ui: ui, onOverflow: {
+                guard toolbarExtra < 96 else { return }
+                toolbarExtra += 12
+                dlog("ui", "player toolbar: its buttons didn't all fit; now \(Int(PanelToolbarView.width + toolbarExtra)) pt wide")
+            })
+                .frame(width: PanelToolbarView.width + toolbarExtra, height: 50)
+                .padding(.leading, -(PanelToolbarView.outside.leading + toolbarExtra))
                 .padding(.trailing, -PanelToolbarView.outside.trailing)
         } else {
             PanelPillView(ui: ui, height: tune.pillHeight)

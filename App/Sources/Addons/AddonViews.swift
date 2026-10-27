@@ -117,7 +117,7 @@ struct CatalogGridView: View {
             }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
                 ForEach(metas) { m in
-                    NavigationLink { MetaDetailView(preview: m, sourceAddon: addon).zoomDestination(m.id, in: zoomNS) } label: {
+                    NavigationLink { MetaDetailView(preview: m, sourceAddon: addon).zoomDestination(m.id, in: zoomNS, zoom: false) } label: {
                         PosterCard(meta: m, width: 108, zoom: ZoomSource(m.id, zoomNS))
                     }
                     .buttonStyle(.plain)
@@ -216,6 +216,8 @@ struct StreamsView: View {
     @State private var starting = false
 
     private var videoId: String { video?.id ?? meta.id }
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.zoomsFromTile) private var zooms
 
     var body: some View {
         List {
@@ -266,8 +268,7 @@ struct StreamsView: View {
             }
         }
         .brandListBackground()
-        .navigationTitle(video?.label ?? meta.name)
-        .navigationBarTitleDisplayMode(.inline)
+        .pageChrome(zooms: zooms, title: video?.label ?? meta.name, back: { dismiss() }) { EmptyView() }
         .task { if groups.isEmpty { await load() } }
         .refreshable { await load() }
     }
@@ -399,7 +400,7 @@ struct AddonSearchView: View {
                             LazyHStack(spacing: 12) {
                                 ForEach(r.metas) { m in
                                     let zid = r.id + "|" + m.id
-                                    NavigationLink { MetaDetailView(preview: m, sourceAddon: r.addon).zoomDestination(zid, in: zoomNS) } label: {
+                                    NavigationLink { MetaDetailView(preview: m, sourceAddon: r.addon).zoomDestination(zid, in: zoomNS, zoom: false) } label: {
                                         PosterCard(meta: m, zoom: ZoomSource(zid, zoomNS))
                                     }
                                         .buttonStyle(.plain)
@@ -549,13 +550,23 @@ struct StreamPickerSheet: View {
             .navigationTitle(label)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { if let onCancel { onCancel() } else { dismiss() } } } }
+            .refreshable { await load() }
         }
         .task { await load() }
     }
 
+    /// 27 Oct report: E7 and E8 showed the addon's name and no streams here,
+    /// though the same addon had just answered with streams when the episode
+    /// was checked (that check is what opened this picker), and the title
+    /// page listed them. What the addon gave in the last 10 minutes is shown
+    /// at once; asking again only replaces it with an answer that has streams.
     private func load() async {
         let addons = AddonStore.shared.streamAddons(type: context.type, id: context.videoId)
-        groups = addons.map { StreamsView.StreamGroup(id: $0.id, addon: $0, streams: []) }
+        groups = addons.map { a in
+            let recent = AddonPlayback.recentStreams[AddonPlayback.recentKey(a.id, context.videoId)]
+            let fresh = recent.map { Date().timeIntervalSince($0.at) < 600 } ?? false
+            return StreamsView.StreamGroup(id: a.id, addon: a, streams: fresh ? recent!.streams : [])
+        }
         await withTaskGroup(of: (String, [AddonStream]?, String?).self) { tg in
             for a in addons {
                 tg.addTask {
@@ -564,7 +575,15 @@ struct StreamPickerSheet: View {
                 }
             }
             for await (id, streams, err) in tg {
-                if let i = groups.firstIndex(where: { $0.id == id }) { groups[i].streams = streams ?? []; groups[i].error = err }
+                guard let i = groups.firstIndex(where: { $0.id == id }) else { continue }
+                let had = groups[i].streams.count
+                dlog("player", "picker: \(groups[i].addon.manifest.name) answered \(streams?.count ?? 0) stream(s) for \(label)\(err.map { " (\($0))" } ?? "")\(had > 0 ? ", \(had) from the episode check" : "")")
+                if let streams, !streams.isEmpty {
+                    groups[i].streams = streams
+                    AddonPlayback.recentStreams[AddonPlayback.recentKey(id, context.videoId)] = (Date(), streams)
+                } else if had == 0 {
+                    groups[i].error = err ?? "No streams came back for \(label). Pull down to ask again."
+                }
             }
         }
         loading = false

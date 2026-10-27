@@ -185,6 +185,9 @@ struct DownloadsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var filter: Filter = .all
     @State private var details = false
+    /// The file row whose swipe actions are open.
+    @State private var openRow: String?
+    @State private var confirmCancelAll = false
 
     enum Filter: String, CaseIterable { case all = "All", active = "Active", queued = "Queued", done = "Done", failed = "Failed" }
 
@@ -229,12 +232,16 @@ struct DownloadsView: View {
                     }
                     .frame(maxWidth: .infinity).padding(.top, 60).padding(.horizontal, 20)
                 }
-                ForEach(packages) { p in PackageCard(name: p.name, all: p.all, shown: p.shown) }
+                ForEach(packages) { p in PackageCard(name: p.name, all: p.all, shown: p.shown, openRow: $openRow) }
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 120)
         }
         .scrollIndicators(.hidden)
+        .confirmationDialog("Cancel all downloads that haven't finished? What they've downloaded so far is deleted.", isPresented: $confirmCancelAll, titleVisibility: .visible) {
+            Button("Cancel all downloads", role: .destructive) { dm.cancelUnfinished() }
+            Button("Keep them", role: .cancel) {}
+        }
         .safeAreaInset(edge: .bottom) { if dm.hasWork || !dm.items.isEmpty { speedCard.padding(.horizontal, 16).padding(.bottom, 8) } }
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Downloads")
@@ -247,6 +254,9 @@ struct DownloadsView: View {
                     Button { dm.resumeAll() } label: { Label("Resume all", systemImage: "play") }
                     Button { dm.pauseAll() } label: { Label("Pause all", systemImage: "pause") }
                     Button { dm.clearFinished() } label: { Label("Clear finished", systemImage: "checkmark.circle") }
+                    if dm.items.contains(where: { $0.state != .done }) {
+                        Button(role: .destructive) { confirmCancelAll = true } label: { Label("Cancel all downloads", systemImage: "xmark.circle") }
+                    }
                 } label: { ToolbarGlyph("ellipsis") }
                 .accessibilityLabel("More")
             }
@@ -338,8 +348,13 @@ private struct PackageCard: View {
     let name: String
     let all: [DownloadItem]
     let shown: [DownloadItem]
+    @Binding var openRow: String?
     @ObservedObject private var dm = DownloadManager.shared
     @StateObject private var thumb = ThumbLoader()
+    @State private var ask: Question?
+
+    /// Questions before anything is deleted.
+    enum Question: Identifiable { case cancel, deleteFiles; var id: Int { self == .cancel ? 0 : 1 } }
 
     var body: some View {
         let total = all.reduce(Int64(0)) { $0 + $1.expected }
@@ -367,18 +382,28 @@ private struct PackageCard: View {
                 } else {
                     Image(systemName: "checkmark.circle.fill").font(.title3).foregroundStyle(Theme.accent)
                 }
+                packageMenu(running: running, resumable: resumable, done: done)
             }
             ThinBar(progress: total > 0 ? Double(got) / Double(total) : 0, height: 4)
             VStack(spacing: 0) {
                 ForEach(shown) { d in
                     Divider().overlay(Theme.hairline)
-                    FileRow(item: d)
+                    FileRow(item: d, openRow: $openRow)
                 }
             }
         }
         .padding(14)
         .background(Theme.card, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
         .shadow(color: Theme.shadow.opacity(0.5), radius: 10, y: 4)
+        .confirmationDialog(ask == .cancel ? "Cancel the downloads of \(name) that haven't finished? What they've downloaded so far is deleted."
+                                               : "Delete the downloaded files of \(name) from your library?",
+                            isPresented: Binding(get: { ask != nil }, set: { if !$0 { ask = nil } }), titleVisibility: .visible) {
+            if ask == .cancel {
+                Button("Cancel downloads", role: .destructive) { dm.cancelUnfinished(package: name) }
+            } else {
+                Button("Delete files", role: .destructive) { dm.removeFinished(package: name, deleteFiles: true) }
+            }
+        }
         .onAppear {
             if let first = all.first(where: \.isMedia) {
                 thumb.load(key: first.url.absoluteString, fileURL: nil, artwork: nil, lookupName: first.fileName, art: .poster)
@@ -387,11 +412,54 @@ private struct PackageCard: View {
     }
 }
 
+private extension PackageCard {
+    /// Everything for the package in one place (27 Oct report: there was no
+    /// visible way to delete downloads, paused or running).
+    func packageMenu(running: Bool, resumable: Bool, done: Int) -> some View {
+        Menu {
+            if running { Button { dm.pausePackage(name) } label: { Label("Pause all", systemImage: "pause") } }
+            if resumable { Button { dm.resumePackage(name) } label: { Label("Resume all", systemImage: "play") } }
+            if done > 0 {
+                Button { dm.removeFinished(package: name, deleteFiles: false) } label: { Label("Remove finished from the list", systemImage: "checkmark.circle") }
+                Button(role: .destructive) { ask = .deleteFiles } label: { Label("Delete downloaded files", systemImage: "trash") }
+            }
+            if all.contains(where: { $0.state != .done }) {
+                Button(role: .destructive) { ask = .cancel } label: { Label("Cancel downloads", systemImage: "xmark.circle") }
+            }
+        } label: {
+            Image(systemName: "ellipsis").font(.system(size: 14, weight: .bold))
+                .frame(width: 36, height: 36).background(Theme.fill, in: Circle())
+                .contentShape(Circle())
+        }
+        .accessibilityLabel("More for \(name)")
+    }
+}
+
 private struct FileRow: View {
     let item: DownloadItem
+    @Binding var openRow: String?
     @ObservedObject private var dm = DownloadManager.shared
+    @State private var confirmDelete = false
+
+    /// Swipe left (27 Oct report: no way to delete a download): Cancel for
+    /// one that hasn't finished (what it downloaded is deleted), Delete
+    /// (asks first) and Remove from the list for a finished one.
+    private var swipe: [SwipeAction] {
+        if item.state == .done {
+            return [SwipeAction(title: "Delete", icon: "trash", tint: .red) { confirmDelete = true },
+                    SwipeAction(title: "Remove", icon: "xmark", tint: .gray) { dm.remove(item.id) }]
+        }
+        return [SwipeAction(title: "Cancel", icon: "xmark", tint: .red) { dm.remove(item.id) }]
+    }
 
     var body: some View {
+        SwipeRow(id: item.id.uuidString, openID: $openRow, actions: swipe) { row }
+            .confirmationDialog("Delete \(item.fileName) from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                Button("Delete file", role: .destructive) { dm.remove(item.id, deleteFile: true) }
+            }
+    }
+
+    private var row: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.fileName).font(.subheadline.weight(.semibold)).lineLimit(1).truncationMode(.middle)
@@ -410,6 +478,7 @@ private struct FileRow: View {
             .accessibilityLabel(actionLabel)
         }
         .frame(minHeight: 61)
+        .background(Theme.card)
         .contextMenu {
             if item.state == .done, item.isMedia {
                 Button { play() } label: { Label("Play", systemImage: "play") }
