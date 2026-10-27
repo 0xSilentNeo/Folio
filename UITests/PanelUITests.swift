@@ -480,7 +480,7 @@ final class PanelUITests: XCTestCase {
     /// (UIKit holds the tap until the morph ends; it must not be lost). Once
     /// 0.15 s and once 0.4 s into the close; also the same button again.
     func test17NativeSwitchWhileClosing() throws {
-        let app = launchPlayer(native: true)
+        let app = launchPlayer(["-touchLog"], native: true)        // where each touch goes, in the app log
         tapsDontWaitForAnimations()
         let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
         let pairs: [(String, String, String, String)] = [

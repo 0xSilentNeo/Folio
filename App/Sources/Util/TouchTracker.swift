@@ -55,7 +55,13 @@ final class TouchTracker: UIGestureRecognizer, UIGestureRecognizerDelegate {
         tracked = t
         start = t.location(in: nil)
         travel = 0
-        if Self.logs { dlog("touch", "down (\(Int(start.x)), \(Int(start.y))) in \(type(of: view.map { $0 } ?? UIView()))") }
+        if Self.logs {
+            // The view the touch went to, and three of its containers.
+            var chain: [String] = []
+            var v = t.view
+            while let x = v, chain.count < 4 { chain.append(String(describing: type(of: x))); v = x.superview }
+            dlog("touch", "down (\(Int(start.x)), \(Int(start.y))) → \(chain.joined(separator: " < "))")
+        }
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
