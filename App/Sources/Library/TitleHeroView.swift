@@ -636,7 +636,13 @@ struct BackSwipeProbe: UIViewRepresentable {
                     guard let self else { return }
                     let tc = BackGesture.moving(self.pageController) ? nav?.transitionCoordinator : nil
                     let now = tc.map { $0.isInteractive ? "interactive" : "animated" } ?? "none"
-                    if now != self.lastMove { self.lastMove = now; dlog("nav", "title page move: \(now)") }
+                    if now != self.lastMove {
+                        self.lastMove = now
+                        // When a move ends: the navigation bar's state (a swipe
+                        // back let go early left it at alpha 0 in the simulator).
+                        let bar = now == "none" ? nav.map { " (navigation bar \($0.isNavigationBarHidden ? "hidden" : "shown"), alpha \(String(format: "%.2f", $0.navigationBar.alpha)), height \(Int($0.navigationBar.frame.height)))" } ?? "" : ""
+                        dlog("nav", "title page move: \(now)\(bar)")
+                    }
                 }
             }
             RunLoop.main.add(t, forMode: .common)

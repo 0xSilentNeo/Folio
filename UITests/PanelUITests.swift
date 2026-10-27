@@ -734,6 +734,71 @@ final class PanelUITests: XCTestCase {
     /// 27 Oct report: a tap to the right of a menu closes it late, a tap to
     /// its left at once. Taps around an open Tracks menu; the app log has each
     /// touch ("[touch] down") and what closed the menu, with times.
+    /// The page's ‹ and ••• during swipes back (27 Oct lab run: after a swipe
+    /// let go early, both were gone while the page stayed; 26 Oct device
+    /// recording: both stayed over Home after the page had zoomed back).
+    /// Part 1: short swipes that are let go — the page must keep both buttons.
+    /// Part 2: open a title and swipe straight back, several times, some
+    /// before the page has finished zooming in — Home must show neither, and
+    /// must open the next title.
+    func test44SwipeBackKeepsPageButtons() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-heroView", "details"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let h = app.frame.height
+        func openPage() -> Bool {
+            let f = app.staticTexts["Lab Show"].firstMatch.frame
+            origin.withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
+            return app.buttons["Back"].waitForExistence(timeout: 6)
+        }
+        XCTAssertTrue(openPage(), "title page did not open")
+        sleep(2)
+
+        var lost = 0
+        let starts: [(CGFloat, CGFloat, CGFloat)] = [(60, 0.62, 60), (60, 0.62, 60), (20, 0.5, 80), (8, 0.45, 70), (120, 0.7, 50), (60, 0.62, 60)]
+        for (i, (x, yf, dx)) in starts.enumerated() {
+            let y = h * yf
+            origin.withOffset(CGVector(dx: x, dy: y)).press(forDuration: 0.01, thenDragTo: origin.withOffset(CGVector(dx: x + dx, dy: y)),
+                                                            withVelocity: .slow, thenHoldForDuration: 0.4)
+            sleep(2)
+            let back = app.buttons["Back"].exists, more = app.buttons["More"].exists
+            let onPage = app.buttons["ep:Lab Show S01E02.mp4"].exists
+            print("LETGO \(i) from x=\(Int(x)) by \(Int(dx)) pt → page \(onPage ? "stayed" : "left"), Back \(back), More \(more)")
+            if onPage && (!back || !more) { lost += 1 }
+            if !onPage { XCTAssertTrue(openPage(), "title page did not reopen (\(i))"); sleep(2) }
+        }
+        print("LETGO buttons lost \(lost)/\(starts.count)")
+
+        // Back to Home with a swipe, at different moments after opening.
+        if app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
+        var leftOver = 0, noOpen = 0
+        let waits: [UInt32] = [0, 150_000, 300_000, 500_000, 800_000, 1_200_000, 0, 300_000]
+        for (i, w) in waits.enumerated() {
+            let f = app.staticTexts["Lab Show"].firstMatch.frame
+            origin.withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
+            usleep(w)
+            origin.withOffset(CGVector(dx: 30, dy: h * 0.62)).press(forDuration: 0.01, thenDragTo: origin.withOffset(CGVector(dx: 330, dy: h * 0.62)),
+                                                                   withVelocity: .fast, thenHoldForDuration: 0)
+            sleep(3)
+            let back = app.buttons["Back"].exists, more = app.buttons["More"].exists
+            let onPage = app.buttons["ep:Lab Show S01E02.mp4"].exists
+            print("QUICKBACK \(i) after \(w / 1000) ms → \(onPage ? "still on the page" : "Home"), Back \(back), More \(more)")
+            if onPage { app.buttons["Back"].firstMatch.tap(); sleep(2); continue }
+            if back || more { leftOver += 1 }
+            // Home must still open a title.
+            if openPage() { sleep(1); app.buttons["Back"].tap(); sleep(2) } else { noOpen += 1; print("QUICKBACK \(i): Home did not open the title") }
+        }
+        print("QUICKBACK left over \(leftOver)/\(waits.count), Home unresponsive \(noOpen)")
+        XCTAssertEqual(lost, 0, "a swipe back that was let go took the page's buttons away")
+        XCTAssertEqual(leftOver, 0, "the page's buttons stayed on Home")
+        XCTAssertEqual(noOpen, 0, "Home did not open a title after a swipe back")
+    }
+
     func test37TapOutsideLatency() throws { try tapOutsideLatency(relay: false) }
     func test38TapOutsideLatencyRelay() throws { try tapOutsideLatency(relay: true) }
 
