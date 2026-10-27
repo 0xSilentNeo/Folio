@@ -12,6 +12,8 @@ struct PlayerScreen: View {
     var onRotationLock: (Bool) -> Void = { _ in }
 
     @State private var showSubtitlePicker = false
+    /// A touch that began on the menus' tap catcher is still down.
+    @GestureState private var catcherTouched = false
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @ObservedObject private var tune = UITune.shared
     @Namespace private var glassNS
@@ -108,11 +110,21 @@ struct PlayerScreen: View {
                 // "replaces the specified item until … dismisses"), so a tap on a
                 // button's spot is taken here and opens that panel as soon as the
                 // close ends, instead of falling through to the video.
-                if legacyPanels && (ui.panel != nil || ui.panelClosing) {
+                //
+                // It also stays until a touch that began on it ends. A touch that
+                // began in the last moments of a close and ended after it was lost:
+                // the close ended, this layer went away under the finger, and its
+                // tap was cancelled (27 Oct lab touch log: down on this layer 21 ms
+                // before "closed", up 44 ms after, no panel opened).
+                if legacyPanels && (ui.panel != nil || ui.panelClosing || catcherTouched) {
                     Color.black.opacity(0.001)
                         .ignoresSafeArea()
                         .contentShape(Rectangle())
-                        .onTapGesture(coordinateSpace: .global) { point in
+                        .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .global)
+                            .updating($catcherTouched) { _, touched, _ in touched = true }
+                            .onEnded { v in
+                            guard hypot(v.translation.width, v.translation.height) < TouchTracker.tapSlop else { return }
+                            let point = v.location
                             let spot = ui.pillFrames.first(where: { $0.value.insetBy(dx: -6, dy: -8).contains(point) })?.key
                             if ui.panel != nil, PanelPresenter.interruptible, let kind = spot {
                                 // iOS 27: another button opens its panel at
@@ -127,8 +139,10 @@ struct PlayerScreen: View {
                                 dlog("ui", "panel: \(kind.rawValue) tapped while the last panel was closing")
                                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                 ui.toggle(kind)
+                            } else {
+                                dlog("ui", "panel: tap at (\(Int(point.x)), \(Int(point.y))) while the last panel was closing, on no button (buttons at \(ui.pillFrames.map { "\($0.key.rawValue) \(Int($0.value.minX))–\(Int($0.value.maxX))" }.sorted().joined(separator: ", ")))")
                             }
-                        }
+                        })
                         .accessibilityHidden(true)
                 }
 
