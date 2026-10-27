@@ -341,37 +341,83 @@ private struct LeavingProbe: UIViewControllerRepresentable {
     final class Probe: UIViewController {
         var onChange: ((Bool) -> Void)?
         var life: PageLife?
-        override func loadView() { view = UIView(); view.isUserInteractionEnabled = false }
         private var openedAt: CFTimeInterval = 0
+
+        /// Tells the probe when the page's view enters the window: that is
+        /// when a push starts, whatever SwiftUI does with appearance calls.
+        final class WindowView: UIView {
+            var entered: (() -> Void)?
+            override func didMoveToWindow() { super.didMoveToWindow(); if window != nil { entered?() } }
+        }
+        override func loadView() {
+            let v = WindowView()
+            v.isUserInteractionEnabled = false
+            v.entered = { [weak self] in self?.checkOpening("view in the window") }
+            view = v
+        }
 
         override func viewWillAppear(_ animated: Bool) {
             super.viewWillAppear(animated)
             life?.leaving = false
             if let v = life?.page?.view { BackWatch.cancelled(v) }
-            if animated, transitionCoordinator != nil {
-                // Zooming in (or a swipe back let go): the page sits full
-                // size in the window from the first frame while the zoom
-                // draws it as a small card growing out of the tile, and it
-                // takes touches all over the screen — a tap where you see
-                // Home lands on its Play or an episode row (linger lab, 27
-                // Oct: 5 of 5 such taps played). Like UIKit's standard push,
-                // which takes no touches while it runs: none until UIKit says
-                // the page is open (viewDidAppear).
-                setPageTouchable(false)
-                life?.opening = true
-                openedAt = CACurrentMediaTime()
-                dlog("nav", "page opening: no taps on it until it's open")
-            } else {
-                setPageTouchable(true)
-            }
+            if !checkOpening("will appear, animated \(animated)") && life?.opening != true { setPageTouchable(true) }
             onChange?(false)
         }
+
+        /// Zooming in: the page sits full size in the window from the first
+        /// frame while the zoom draws it as a small card growing out of the
+        /// tile (UIKit's _UIPortalView), and it takes touches all over the
+        /// screen — a tap where you see Home lands on its Play or an episode
+        /// row (linger lab, 27 Oct: 5 of 5 such taps played). Like UIKit's
+        /// standard push, which takes no touches while it runs: none until
+        /// the navigation's move has finished.
+        ///
+        /// Keyed on the navigation controller's transition coordinator (the
+        /// page is its top, a move is running), not on the `animated` of an
+        /// appearance call: the probe's viewWillAppear didn't see one.
+        @discardableResult
+        func checkOpening(_ when: String) -> Bool {
+            guard let life, life.opening == false else { return false }
+            var vc: UIViewController = self
+            while let p = vc.parent, !(p is UINavigationController) { vc = p }
+            guard vc !== self, let nav = vc.parent as? UINavigationController else { return false }
+            life.page = vc
+            guard nav.topViewController === vc, let tc = nav.transitionCoordinator else { return false }
+            life.opening = true
+            openedAt = CACurrentMediaTime()
+            vc.view.isUserInteractionEnabled = false
+            dlog("nav", "page opening (\(when)\(tc.isInteractive ? ", interactive" : "")): no taps on it until it's open")
+            tc.animate(alongsideTransition: nil) { [weak self, weak vc, weak nav] _ in
+                guard let self, let life = self.life else { return }
+                life.opening = false
+                // Decided by where the page ended up, once UIKit has settled
+                // the stack: on top (opened, or a swipe back let go) or gone
+                // (it went back before it was open).
+                DispatchQueue.main.async {
+                    guard let vc, let nav else { return }
+                    let ms = Int((CACurrentMediaTime() - self.openedAt) * 1000)
+                    if nav.topViewController === vc, !life.leaving, vc.view.window != nil {
+                        dlog("nav", "page open after \(ms) ms: takes taps")
+                        vc.view.isUserInteractionEnabled = true
+                    } else {
+                        dlog("nav", "page opening undone after \(ms) ms (it went back before it was open)")
+                    }
+                }
+            }
+            // Should the move's completion never come, don't leave the page dead.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self, weak vc, weak nav] in
+                guard let self, let life = self.life, life.opening, let vc, let nav,
+                      nav.topViewController === vc, nav.transitionCoordinator == nil else { return }
+                dlog("nav", "page opening: no end of the move after 3 s; takes taps")
+                life.opening = false
+                if !life.leaving { vc.view.isUserInteractionEnabled = true }
+            }
+            return true
+        }
+
         override func viewDidAppear(_ animated: Bool) {
             super.viewDidAppear(animated)
-            if life?.opening == true {
-                dlog("nav", "page open after \(Int((CACurrentMediaTime() - openedAt) * 1000)) ms: takes taps")
-            }
-            life?.opening = false
+            guard life?.opening != true else { return }      // the move's completion turns taps on
             life?.leaving = false
             setPageTouchable(true)
         }
