@@ -275,6 +275,8 @@ extension EnvironmentValues {
 @MainActor
 final class PageLife {
     var leaving = false
+    /// Zooming in: not open yet (viewWillAppear to viewDidAppear).
+    var opening = false
     /// The page's own controller (the navigation controller's child).
     weak var page: UIViewController?
     var pageView: UIView? { page?.view }
@@ -289,6 +291,7 @@ final class PageLife {
     /// animation. A touch in the first ~100 ms of that still reaches it.
     var cantAct: String? {
         if leaving { return "page going back" }
+        if opening { return "page still opening" }
         guard let page else { return nil }
         if page.navigationController?.topViewController !== page { return "this page is no longer the one on screen" }
         return nil
@@ -339,11 +342,38 @@ private struct LeavingProbe: UIViewControllerRepresentable {
         var onChange: ((Bool) -> Void)?
         var life: PageLife?
         override func loadView() { view = UIView(); view.isUserInteractionEnabled = false }
+        private var openedAt: CFTimeInterval = 0
+
         override func viewWillAppear(_ animated: Bool) {
             super.viewWillAppear(animated)
-            setPageTouchable(true)
+            life?.leaving = false
             if let v = life?.page?.view { BackWatch.cancelled(v) }
+            if animated, transitionCoordinator != nil {
+                // Zooming in (or a swipe back let go): the page sits full
+                // size in the window from the first frame while the zoom
+                // draws it as a small card growing out of the tile, and it
+                // takes touches all over the screen — a tap where you see
+                // Home lands on its Play or an episode row (linger lab, 27
+                // Oct: 5 of 5 such taps played). Like UIKit's standard push,
+                // which takes no touches while it runs: none until UIKit says
+                // the page is open (viewDidAppear).
+                setPageTouchable(false)
+                life?.opening = true
+                openedAt = CACurrentMediaTime()
+                dlog("nav", "page opening: no taps on it until it's open")
+            } else {
+                setPageTouchable(true)
+            }
             onChange?(false)
+        }
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            if life?.opening == true {
+                dlog("nav", "page open after \(Int((CACurrentMediaTime() - openedAt) * 1000)) ms: takes taps")
+            }
+            life?.opening = false
+            life?.leaving = false
+            setPageTouchable(true)
         }
         override func viewDidDisappear(_ animated: Bool) {
             super.viewDidDisappear(animated)
@@ -351,6 +381,8 @@ private struct LeavingProbe: UIViewControllerRepresentable {
         }
         override func viewWillDisappear(_ animated: Bool) {
             super.viewWillDisappear(animated)
+            life?.leaving = true
+            life?.opening = false
             setPageTouchable(false)
             if let page = life?.page, let nav = page.navigationController ?? navigationController { BackWatch.began(page.view, nav: nav) }
             PopTouchLab.start(for: self)
@@ -479,7 +511,6 @@ extension LeavingProbe.Probe {
     /// view objects that … have disabled user interactions" — so the tap goes
     /// to the view underneath: Home, which then opens what you tapped.
     func setPageTouchable(_ on: Bool) {
-        life?.leaving = !on
         var vc: UIViewController = self
         while let p = vc.parent, !(p is UINavigationController) { vc = p }
         guard vc !== self, vc.parent is UINavigationController else { return }
