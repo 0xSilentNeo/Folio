@@ -12,6 +12,8 @@ struct PlayerScreen: View {
     var onRotationLock: (Bool) -> Void = { _ in }
 
     @State private var showSubtitlePicker = false
+    /// Extra toolbar width found to be needed (PanelToolbarView.onOverflow).
+    @State private var toolbarExtra: CGFloat = 0
     /// A touch that began on the menus' tap catcher is still down.
     @GestureState private var catcherTouched = false
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
@@ -383,9 +385,15 @@ struct PlayerScreen: View {
         } else if #available(iOS 26.0, *) {
             // Native menu morph: bar items in a toolbar; the popover morphs
             // out of the item's Liquid Glass (as in 1.14.0).
-            PanelToolbarView(ui: ui)
-                .frame(width: PanelToolbarView.width, height: 50)
-                .padding(.leading, -PanelToolbarView.outside.leading)
+            // Wider (to the left, where the toolbar is empty) whenever its
+            // buttons don't all fit; the glass capsule stays where it is.
+            PanelToolbarView(ui: ui, onOverflow: {
+                guard toolbarExtra < 96 else { return }
+                toolbarExtra += 12
+                dlog("ui", "player toolbar: its buttons didn't all fit; now \(Int(PanelToolbarView.width + toolbarExtra)) pt wide")
+            })
+                .frame(width: PanelToolbarView.width + toolbarExtra, height: 50)
+                .padding(.leading, -(PanelToolbarView.outside.leading + toolbarExtra))
                 .padding(.trailing, -PanelToolbarView.outside.trailing)
         } else {
             PanelPillView(ui: ui, height: tune.pillHeight)

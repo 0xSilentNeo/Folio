@@ -35,6 +35,7 @@ struct HomeView: View {
                 .environment(\.defaultMinListRowHeight, 0)
             }
             .background(HomeBackdrop().ignoresSafeArea())
+            .background(TouchTracker.Host().frame(width: 0, height: 0).accessibilityHidden(true))
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { local.refresh() }
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
@@ -307,7 +308,7 @@ struct HomeView: View {
     // Pushed through the path, not NavigationLink: inside a List a
     // NavigationLink row gets a disclosure chevron and the list's highlight.
     private func folderLink<L: View>(_ g: LibraryGroup, _ folder: URL, @ViewBuilder label: () -> L) -> some View {
-        Button { path.append(LibraryRoute.folder(folder.path)) } label: { label() }
+        Button { if !TouchTracker.wasSwipe("home: folder") { path.append(LibraryRoute.folder(folder.path)) } } label: { label() }
             .buttonStyle(PressStyle(scale: 0.97))
             .accessibilityLabel("\(g.title), folder, \(g.count) items, \(g.size.byteString)")
             .contextMenu {
@@ -328,9 +329,11 @@ struct HomeView: View {
     private func groupLink<L: View>(_ g: LibraryGroup, @ViewBuilder label: () -> L) -> some View {
         Group {
             if opensPage(g) {
-                Button { dlog("nav", "home: open \(g.title)"); path.append(LibraryRoute.group(g.id)) } label: { label() }
+                // A swipe across a tile (no swipe actions on Home any more)
+                // is not a tap: it neither opens the title nor plays it.
+                Button { if !TouchTracker.wasSwipe("home: \(g.title)") { dlog("nav", "home: open \(g.title)"); path.append(LibraryRoute.group(g.id)) } } label: { label() }
             } else {
-                Button { playLocal(g.nextUp) } label: { label() }
+                Button { if !TouchTracker.wasSwipe("home: \(g.title)") { playLocal(g.nextUp) } } label: { label() }
             }
         }
         .buttonStyle(PressStyle(scale: 0.97))

@@ -15,15 +15,12 @@ final class PanelUITests: XCTestCase {
         sleep(2)
         tapPill(app, "Settings"); sleep(1)
         XCTAssertFalse(shows(app, "Audio"), "Tracks did not close on a tap where the pill was")
-        if #available(iOS 27, *) {
-            // 1.16.0, native morph on iOS 27: another button's spot switches to its panel.
-            // (-nativePanelMorph NO arrives as the string "NO", so this test runs the native path.)
-            XCTAssertTrue(shows(app, "Playback", within: 3), "a tap on Settings while Tracks was open did not switch (iOS 27)")
-        } else {
-            XCTAssertFalse(shows(app, "Playback"), "a tap where the pill was opened Settings (hidden button)")
-            tapPill(app, "Settings")                                         // now a real tap on Settings
-            XCTAssertTrue(shows(app, "Playback", within: 3), "Settings did not open")
-        }
+        // 1.17.2: the buttons are hidden while a menu is open, so a tap on
+        // one's spot only closes the menu (1.16.0–1.17.1 switched on iOS 27).
+        XCTAssertFalse(shows(app, "Playback"), "a tap where the pill was opened Settings (hidden button)")
+        sleep(1)
+        tapPill(app, "Settings")                                         // now a real tap on Settings
+        XCTAssertTrue(shows(app, "Playback", within: 3), "Settings did not open")
         sleep(1)
         tapPill(app, "Settings"); sleep(1)                                   // its own spot → close
         XCTAssertFalse(shows(app, "Playback"), "Settings did not close on its own spot")
@@ -1164,7 +1161,10 @@ final class PanelUITests: XCTestCase {
 
     /// The same in portrait (27 Oct report: the buttons collapsed into "⋯").
     func test47ToolbarProbePortrait() throws {
-        _ = launchPlayer(["-toolbarProbe", "-toolbarProbePortrait"], native: true, captureNow: false)
+        // -toolbarNarrow: the toolbar starts too narrow and must widen itself
+        // until all three buttons show (the probe logs how many the player's
+        // own bar shows).
+        _ = launchPlayer(["-toolbarProbe", "-toolbarProbePortrait", "-toolbarNarrow"], native: true, captureNow: false)
         XCUIDevice.shared.orientation = .portrait
         sleep(50)
     }

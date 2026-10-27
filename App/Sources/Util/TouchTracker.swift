@@ -1,4 +1,5 @@
 import UIKit
+import SwiftUI
 import UIKit.UIGestureRecognizerSubclass
 
 /// Watches every touch in the window without taking part in it: it never
@@ -32,6 +33,24 @@ final class TouchTracker: UIGestureRecognizer, UIGestureRecognizerDelegate {
         delaysTouchesBegan = false
         delaysTouchesEnded = false
         delegate = self
+    }
+
+    /// Put on Home (1.17.2): its tiles check the travel too.
+    struct Host: UIViewRepresentable {
+        final class V: UIView {
+            override func didMoveToWindow() { super.didMoveToWindow(); if let w = window { TouchTracker.install(on: w) } }
+        }
+        func makeUIView(context: Context) -> V { let v = V(); v.isUserInteractionEnabled = false; return v }
+        func updateUIView(_ uiView: V, context: Context) {}
+    }
+
+    /// A tap on a control that starts something, or a swipe that happened to
+    /// start on it? Logs and says so when it was a swipe.
+    static func wasSwipe(_ what: String) -> Bool {
+        let moved = recentTravel
+        guard moved > tapSlop else { return false }
+        dlog("nav", "\(what) ignored (the finger moved \(Int(moved)) pt: a swipe, not a tap)")
+        return true
     }
 
     static func install(on window: UIWindow) {
