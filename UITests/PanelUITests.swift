@@ -935,6 +935,30 @@ final class PanelUITests: XCTestCase {
         XCTAssertGreaterThanOrEqual(opened, waits.count - 1, "taps on the other title did not register")
     }
 
+    /// Where a touch goes while a title page goes back (app-side probe,
+    /// -popTouchLab: hit-tests every frame; XCUITest can't tap fast enough to
+    /// land inside the zoom). Back button 3×, then swipes back 2×.
+    func test50PopTouchRouting() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-heroView", "details", "-popTouchLab"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let h = app.frame.height
+        for i in 0..<5 {
+            let f = app.staticTexts["Lab Show"].firstMatch.frame
+            origin.withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
+            XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open (\(i))")
+            sleep(2)
+            if i < 3 { app.buttons["Back"].tap() }
+            else { origin.withOffset(CGVector(dx: 30, dy: h * 0.62)).press(forDuration: 0.01, thenDragTo: origin.withOffset(CGVector(dx: 330, dy: h * 0.62)), withVelocity: .fast, thenHoldForDuration: 0) }
+            sleep(3)
+        }
+    }
+
     func test37TapOutsideLatency() throws { try tapOutsideLatency(relay: false) }
     func test38TapOutsideLatencyRelay() throws { try tapOutsideLatency(relay: true) }
 
