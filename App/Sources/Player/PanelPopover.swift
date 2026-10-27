@@ -347,8 +347,12 @@ final class PanelPresenter {
 
     // MARK: iOS 27: nothing waits
 
+    /// A panel UIKit is holding back until the last one has gone (it presents
+    /// it ~0.2 s later on its own). Not "gone": it is about to come up.
+    private weak var held: PanelPopoverController?
+
     private func reconcileInterruptible(animated: Bool) {
-        if let vc = shown, vc.presentingViewController == nil, !vc.isBeingPresented {
+        if let vc = shown, vc !== held, vc.presentingViewController == nil, !vc.isBeingPresented {
             shown = nil; shownKind = nil; shownRequest = nil   // went away on its own
         }
 
@@ -362,15 +366,26 @@ final class PanelPresenter {
             frames.begin("panel close \(kind)")
             closing += 1
             onClosing?(true)
+            var finished = false
             vc.dismiss(animated: animated) { [weak self] in
                 DispatchQueue.main.async {
-                    guard let self else { return }
+                    guard let self, !finished else { return }
+                    finished = true
                     self.closing = max(0, self.closing - 1)
                     dlog("ui", "panel: closed \(kind)")
                     self.frames.end()
                     if self.closing == 0 { self.onClosing?(false) }
                     UIAccessibility.post(notification: .screenChanged, argument: nil)
                 }
+            }
+            // Watchdog: should UIKit never report this close, don't leave the
+            // player's tap catcher up for good.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self, weak vc] in
+                guard let self, !finished, vc?.presentingViewController == nil else { return }
+                finished = true
+                dlog("ui/error", "panel: close of \(kind) never reported; carrying on")
+                self.closing = max(0, self.closing - 1)
+                if self.closing == 0 { self.onClosing?(false) }
             }
             return
         }
@@ -423,7 +438,15 @@ final class PanelPresenter {
             // UIKit makes the bar passthrough for bar-item popovers; set ours back.
             vc.popoverPresentationController?.passthroughViews = vc.passthrough
             DispatchQueue.main.async {
-                guard let self, self.shown === vc else { return }
+                guard let self else { return }
+                if self.held === vc { self.held = nil }
+                // Came up after it stopped being wanted (closed or replaced while
+                // UIKit was holding it): take it away again.
+                guard self.shown === vc else {
+                    dlog("ui", "panel: \(req.kind) came up after it was no longer wanted; closing it")
+                    vc.dismiss(animated: true)
+                    return
+                }
                 dlog("ui", "panel: opened \(req.kind)")
                 self.frames.end()
                 UIAccessibility.post(notification: .screenChanged, argument: vc.view)
@@ -438,31 +461,20 @@ final class PanelPresenter {
             }
         }
         if !vc.isBeingPresented, vc.presentingViewController == nil {
+            held = vc
             dlog("ui", "panel: \(req.kind) held by UIKit until the last panel has gone")
-        }
-        // Should UIKit refuse rather than hold it, ask again.
-        Self.checkPresented(vc, frames: 0) { [weak self, weak vc] in
-            guard let self, let vc, self.shown === vc,
-                  vc.presentingViewController == nil, !vc.isBeingPresented else { return }
-            // Held, not refused: it opens on its own (lab: ~0.2 s after an open
-            // panel went at once). Look again a little later before re-asking.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self, weak vc] in
-                guard let self, let vc, self.shown === vc,
+            // Held, not refused: UIKit presents it on its own (lab: ~0.2 s after
+            // an open panel went at once). It is never presented a second time
+            // (that is an error in UIKit); if it still isn't up after 2.5 s,
+            // the player is told it's closed, so no menu is left half-open.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self, weak vc] in
+                guard let self, let vc, self.held === vc,
                       vc.presentingViewController == nil, !vc.isBeingPresented else { return }
-                dlog("ui/error", "panel: \(req.kind) was not presented; asking again")
-                self.shown = nil; self.shownKind = nil; self.shownRequest = nil
-                self.reconcile()
+                dlog("ui/error", "panel: \(req.kind) never came up; menu closed")
+                self.held = nil
+                if self.shown === vc { self.shown = nil; self.shownKind = nil; self.shownRequest = nil }
+                if self.wanted?.kind == req.kind { self.wanted = nil; req.onClosedByTap() }
             }
-        }
-    }
-
-    /// Calls `refused` if `vc` still isn't presented (nor being presented)
-    /// after a few frames.
-    private static func checkPresented(_ vc: UIViewController, frames: Int, refused: @escaping () -> Void) {
-        NextFrame.run { [weak vc] in
-            guard let vc else { return }
-            if vc.presentingViewController != nil || vc.isBeingPresented { return }
-            if frames < 6 { checkPresented(vc, frames: frames + 1, refused: refused) } else { refused() }
         }
     }
 

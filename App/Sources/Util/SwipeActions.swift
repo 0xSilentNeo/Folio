@@ -36,7 +36,7 @@ struct SwipeRow<Content: View>: View {
         if #available(iOS 18.0, *), !actions.isEmpty {
             ZStack(alignment: .trailing) {
                 buttons
-                // Overlay and gesture before the offset, so they move with the row.
+                // The overlay before the offset, so it moves with the row.
                 // offset(x:y:) docs: "The original dimensions of the view aren't
                 // changed by offsetting the contents" — a modifier after it stays
                 // at the row's original place. Until 1.17.0 the tap-to-close
@@ -47,9 +47,12 @@ struct SwipeRow<Content: View>: View {
                     .overlay {
                         if isOpen { Color.clear.contentShape(Rectangle()).onTapGesture { close() } }
                     }
-                    .gesture(LeftSwipeRecognizer(isOpen: isOpen, onChanged: changed, onEnded: ended))
                     .offset(x: offset)
             }
+            // On the whole row, buttons included, so a swipe to the right that
+            // starts on the buttons closes it too. It begins only for a
+            // sideways move, so taps on the buttons still reach them.
+            .gesture(LeftSwipeRecognizer(isOpen: isOpen, onChanged: changed, onEnded: ended))
             .background(GeometryReader { g in Color.clear.onAppear { width = g.size.width }.onChange(of: g.size.width) { _, w in width = w } })
             .onChange(of: openID) { _, v in if v != id, offset != 0 { withAnimation(.snappy(duration: 0.25)) { offset = 0 } } }
         } else {

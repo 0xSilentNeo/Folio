@@ -134,7 +134,8 @@ struct PlayerScreen: View {
 
                 // Above the menus' tap catcher, so it takes taps while a menu is
                 // still closing behind it.
-                if let r = model.pickRequest { pickerCard(r, geo).transition(.opacity.combined(with: .scale(scale: 0.96))) }
+                // .id: a new request is a new picker (its stream list loads for that episode).
+                if let r = model.pickRequest { pickerCard(r, geo).id(r.id).transition(.opacity.combined(with: .scale(scale: 0.96))) }
             }
             .animation(.spring(response: 0.36, dampingFraction: 0.86), value: model.pickRequest)
             .animation(.easeOut(duration: 0.18), value: ui.controlsVisible)

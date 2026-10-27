@@ -725,11 +725,7 @@ final class PlayerModel: ObservableObject {
         pickRequest = nil
     }
 
-    /// A tap on a playlist row. The episode playing now keeps playing until the
-    /// chosen one is ready to load: an addon episode is looked up first, and
-    /// one without the same release opens the picker instead (1.17.0 stopped
-    /// the current episode and then waited on a picker that never showed).
-    /// The row of the episode playing now does nothing.
+    /// A tap on a playlist row. The row of the episode playing now does nothing.
     func playFromPlaylist(_ i: Int) {
         guard queue.indices.contains(i) else { return }
         guard i != queueIndex else {
@@ -737,31 +733,53 @@ final class PlayerModel: ObservableObject {
             if paused { setPaused(false) }
             return
         }
+        goTo(i)
+    }
+
+    /// The latest "go to episode" request; a lookup that finishes after a newer
+    /// request (another tap, a pick) does nothing.
+    private var lookupToken = 0
+
+    /// Moves to episode `i`. The episode playing now keeps playing, and
+    /// `queueIndex` stays on it, until `i` is ready to load: an addon episode
+    /// is looked up first, and one without the same release opens the picker
+    /// instead. (1.17.0 moved `queueIndex` first and stopped the episode
+    /// playing; with the picker up, history then went under the wrong episode
+    /// and the end of the file skipped on.)
+    private func goTo(_ i: Int) {
+        guard queue.indices.contains(i) else { return }
+        lookupToken += 1
         if let done = resolvedItems[i] { queueIndex = i; load(done); return }
         guard queue[i].url.isEmpty, let p = pick(for: i) else { queueIndex = i; load(queue[i]); return }
         switch episodeStates[i] {
         case .pick?, .unavailable?:
             askToPick(i)
         default:
+            let token = lookupToken
             let label = p.context.videoLabel ?? "episode \(i + 1)"
             showToast("Finding \(label)…")
             episodeStates[i] = .checking
             Task { [weak self] in
                 guard let self else { return }
-                switch await AddonPlayback.screen(p) {
+                let match = await AddonPlayback.screen(p)
+                switch match {
+                case .same: self.episodeStates[i] = .ready
+                case .other: self.episodeStates[i] = .pick
+                case .none: self.episodeStates[i] = .unavailable
+                }
+                guard self.lookupToken == token, !self.closed else {
+                    dlog("player", "lookup for \(label) finished after a newer choice; ignored")
+                    return
+                }
+                switch match {
                 case .same(var found):
-                    self.episodeStates[i] = .ready
                     found.subtitles += await AddonPlayback.subtitles(type: p.context.type, videoId: p.context.videoId)
                     self.subsFetched.insert(i)
                     self.resolvedItems[i] = found
-                    guard !self.closed else { return }
+                    guard self.lookupToken == token, !self.closed else { return }
                     self.queueIndex = i
                     self.load(found)
-                case .other:
-                    self.episodeStates[i] = .pick
-                    self.askToPick(i)
-                case .none:
-                    self.episodeStates[i] = .unavailable
+                case .other, .none:
                     self.askToPick(i)
                 }
             }
@@ -771,6 +789,7 @@ final class PlayerModel: ObservableObject {
     /// The stream you picked for an episode; the episodes after it follow that release.
     func playPicked(_ s: AddonStream, from addon: InstalledAddon, for request: PickRequest) {
         pickRequest = nil
+        lookupToken += 1
         Task { [weak self] in
             guard let self else { return }
             let ctx = request.context
@@ -790,19 +809,12 @@ final class PlayerModel: ObservableObject {
 
     func playNext() {
         guard hasNext else { return }
-        let i = queueIndex + 1
-        if episodeStates[i] == .pick {
-            askToPick(i)
-            return
-        }
-        queueIndex = i
-        load(item)
+        goTo(queueIndex + 1)
     }
 
     func playPrevious() {
         if position > 10 || !hasPrevious { seek(to: 0); return }
-        queueIndex -= 1
-        load(item)
+        goTo(queueIndex - 1)
     }
 
     private func onFileLoaded() {
@@ -1385,33 +1397,35 @@ final class PlayerModel: ObservableObject {
         startPiPFeed()
     }
 
-    /// Swaps mpv's video output, then puts playback back where the sound is.
+    /// Swaps mpv's video output, then puts playback back where you were.
     ///
     /// After a `vo` change mpv seeks to its current playback time (command.c:
     /// queue_seek relative 0, exact), and while video plays that time is the
     /// last frame the output *showed* (playloop.c handle_playback_time:
     /// playback_pts = video_pts). When the old output stalls before it goes —
     /// a Metal layer waits up to a second for a drawable it can't get once its
-    /// view is off screen (CAMetalLayer.nextDrawable docs) — the picture falls
-    /// behind the sound, and that seek played the last second again (27 Oct
-    /// report, both ways). So the sound's position is taken before the swap
-    /// (audio-pts: what is heard, output delay included), moved on by the time
-    /// the swap took, and sought to exactly. The log has both numbers.
+    /// view is off screen (CAMetalLayer.nextDrawable docs) — that frame falls
+    /// behind, and the seek played the last second again (27 Oct report, both
+    /// ways). So the position is taken before the swap and moved on by what
+    /// can have been heard meanwhile: the swap holds mpv's core, so sound goes
+    /// on only until the audio output's buffer runs dry (`audio-buffer`,
+    /// 0.2 s by default). The log has the numbers.
     private func swapOutput(_ c: MPVClient, to vo: String, label: String) {
-        let audio0 = c.double("audio-pts")
         let video0 = c.double("time-pos")
+        let audio0 = c.double("audio-pts")
+        let buffer = c.double("audio-buffer") ?? 0.2
         let rate = paused ? 0 : (c.double("speed") ?? speed)
         let t0 = CACurrentMediaTime()
         c.set("vo", vo)
         let took = CACurrentMediaTime() - t0
-        guard let a = audio0, a > 0 else {
-            dlog("player", "\(label) in \(Int(took * 1000)) ms (no audio position; mpv's own seek stands)")
+        guard let v = video0 ?? audio0, v > 0 else {
+            dlog("player", "\(label) in \(Int(took * 1000)) ms (no position; mpv's own seek stands)")
             return
         }
-        let target = a + took * rate
+        let target = v + min(took, buffer) * rate
         c.command(["seek", String(format: "%.3f", target), "absolute+exact"])
-        dlog("player", String(format: "%@ in %.0f ms; picture was at %.2f, sound at %.2f → continue at %.2f (track and buffer kept)",
-                              label, took * 1000, video0 ?? -1, a, target))
+        dlog("player", String(format: "%@ in %.0f ms; picture at %.2f, sound at %.2f, audio buffer %.2f s → continue at %.2f (track and buffer kept)",
+                              label, took * 1000, video0 ?? -1, audio0 ?? -1, buffer, target))
     }
 
     /// Frees the CPU renderer once mpv's output is no longer the libmpv one
@@ -1853,6 +1867,8 @@ extension PlayerModel: MPVClientDelegate {
 
     private func handleEOF() {
         saveHistory(force: true)
+        // The picker is up for the next episode: wait for the choice.
+        if pickRequest != nil { ended = true; return }
         if playbackMode == "playlist", defaults.bool(forKey: SettingsKey.autoplayNext), hasNext {
             playNext()
         } else {

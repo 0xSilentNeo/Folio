@@ -555,7 +555,23 @@ enum BackGesture {
     /// (lab page probe: a touch at the page's middle reached the page for the
     /// whole zoom-in). 27 Oct log: episode rows played 0.4–1.2 s after the
     /// page appeared, from taps meant for Home.
-    static var pageMoving: Bool { nav?.transitionCoordinator != nil }
+    static var pageMoving: Bool { moving(page) }
+    /// The title page on screen (its controller), set by BackSwipeProbe.
+    static weak var page: UIViewController?
+
+    /// Whether `page`'s own navigation move is running: the navigation
+    /// controller's transition has it as the page coming or going (a sheet or
+    /// alert closing over it doesn't count).
+    static func moving(_ page: UIViewController?) -> Bool {
+        guard let tc = nav?.transitionCoordinator, let page else { return false }
+        let ends = [tc.viewController(forKey: .from), tc.viewController(forKey: .to)].compactMap { $0 }
+        var v: UIViewController? = page
+        while let c = v {
+            if ends.contains(where: { $0 === c }) { return true }
+            v = c.parent
+        }
+        return false
+    }
     static var active = false
     static var lastBegan = Date.distantPast
     static var justStarted: Bool { active || Date().timeIntervalSince(lastBegan) < 0.6 }
@@ -564,9 +580,23 @@ enum BackGesture {
 struct BackSwipeProbe: UIViewRepresentable {
     final class Probe: UIView {
         private var watched: [UIGestureRecognizer] = []
+        private weak var navRef: UINavigationController?
+
+        /// This page's controller (the first one up the responder chain).
+        private var pageController: UIViewController? {
+            var r: UIResponder? = self
+            while let n = r, !(n is UIViewController) { r = n.next }
+            return r as? UIViewController
+        }
+
         override func didMoveToWindow() {
             super.didMoveToWindow()
             if let w = window { TouchTracker.install(on: w) }
+            // Back on screen after another page or a tab switch: the move log again.
+            if window != nil, let nav = navRef, !Self.labProbe {
+                BackGesture.page = pageController
+                startMoveLog(nav)
+            }
             guard window != nil, watched.isEmpty else { return }
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -574,6 +604,8 @@ struct BackSwipeProbe: UIViewRepresentable {
                 while let n = r, !(n is UINavigationController) { r = n.next }
                 guard let nav = r as? UINavigationController else { dlog("nav", "back swipe probe: no navigation controller"); return }
                 BackGesture.nav = nav
+                BackGesture.page = self.pageController
+                self.navRef = nav
                 let g = nav.interactivePopGestureRecognizer
                 var content: UIGestureRecognizer?
                 #if compiler(>=6.2)
@@ -602,7 +634,7 @@ struct BackSwipeProbe: UIViewRepresentable {
             let t = Timer(timeInterval: 0.1, repeats: true) { [weak self, weak nav] _ in
                 MainActor.assumeIsolated {
                     guard let self else { return }
-                    let tc = nav?.transitionCoordinator
+                    let tc = BackGesture.moving(self.pageController) ? nav?.transitionCoordinator : nil
                     let now = tc.map { $0.isInteractive ? "interactive" : "animated" } ?? "none"
                     if now != self.lastMove { self.lastMove = now; dlog("nav", "title page move: \(now)") }
                 }
