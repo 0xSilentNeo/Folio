@@ -177,6 +177,9 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
 final class PanelPresenter {
     static let shared = PanelPresenter()
 
+    /// Lab (`-outplayerMenus YES`): Outplayer's own present/dismiss sequence.
+    static var outplayerWay: Bool { UserDefaults.standard.bool(forKey: "outplayerMenus") }
+
     /// iOS 27: taps act at once (see above). Before iOS 27: one transition at a time.
     static var interruptible: Bool {
         if #available(iOS 27, *) { return true }
@@ -384,6 +387,40 @@ final class PanelPresenter {
         if host is PanelPopoverController, let below = host.presentingViewController { host = below }
         guard host.view.window != nil, !host.isBeingPresented, !host.isBeingDismissed else {
             NextFrame.run { [weak self] in self?.reconcile() }
+            return
+        }
+
+        // Outplayer's sequence (2026.10 build 219, its menu presenter at
+        // 0x1000c3308, disassembled): whatever is presented — a menu still
+        // closing included, there is no isBeingDismissed check — is dismissed
+        // with `animated: isBeingPresented`, and the new menu is presented
+        // from the same controller in the same call.
+        if Self.outplayerWay {
+            if let presented = host.presentedViewController {
+                let state = presented.isBeingDismissed ? "closing" : presented.isBeingPresented ? "opening" : "open"
+                dlog("ui", "panel: \(shownKind ?? "panel") (\(state)) dismissed \(presented.isBeingPresented ? "animated" : "at once") → \(req.kind)")
+                presented.dismiss(animated: presented.isBeingPresented)
+            }
+            shown = nil; shownKind = nil; shownRequest = nil
+            let vc = req.make()
+            vc.loadViewIfNeeded()
+            shown = vc; shownKind = req.kind; shownRequest = req
+            dlog("ui", "panel: open \(req.kind)")
+            frames.begin("panel open \(req.kind)")
+            host.present(vc, animated: animated) { [weak self, weak vc] in
+                guard let vc else { return }
+                vc.popoverPresentationController?.passthroughViews = vc.passthrough
+                DispatchQueue.main.async {
+                    guard let self, self.shown === vc else { return }
+                    dlog("ui", "panel: opened \(req.kind)")
+                    self.frames.end()
+                }
+            }
+            dlog("ui", "panel: \(req.kind) presenting=\(vc.isBeingPresented) presented=\(vc.presentingViewController != nil)")
+            Self.checkPresented(vc, frames: 0) { [weak self, weak vc] in
+                guard let self, let vc, self.shown === vc else { return }
+                dlog("ui/error", "panel: \(req.kind) was not presented the Outplayer way (UIKit waited or refused)")
+            }
             return
         }
 

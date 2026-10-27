@@ -887,6 +887,11 @@ final class PanelUITests: XCTestCase {
         _ = launchPlayer(["-relayLab", "-menuRelay", "YES", "-relaySource", "rect"], native: true, captureNow: false)
         sleep(30)
     }
+    /// The same in-app sequence with Outplayer's present/dismiss calls (no relay).
+    func test42RelayLabOutplayerWay() throws {
+        _ = launchPlayer(["-relayLab", "-menuRelay", "NO", "-outplayerMenus", "YES"], native: true, captureNow: false)
+        sleep(30)
+    }
     func test34RelayLabItem() throws {
         _ = launchPlayer(["-relayLab", "-menuRelay", "YES", "-relaySource", "item"], native: true, captureNow: false)
         sleep(30)
