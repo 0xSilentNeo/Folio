@@ -324,7 +324,7 @@ enum UILab {
             let b = PlayerPresenter.current?.view.window?.bounds ?? .zero
             let landscape = b.width > b.height && PlayerPresenter.current != nil
             guard landscape && count >= 6 else { relayLab(count: landscape ? count + 1 : 0); return }
-            dlog("lab", "relay lab starts (relay \(PanelRelay.enabled ? "on" : "off"), anchor \(PanelRelay.anchorsToItem ? "item" : "rect"))")
+            dlog("lab", "relay lab starts")
             let steps: [(Double, String, () -> Void)] = [
                 (0.0, "open tracks", { ui?.toggle(.tracks) }),
                 (2.5, "close", { ui?.closePanel() }),
