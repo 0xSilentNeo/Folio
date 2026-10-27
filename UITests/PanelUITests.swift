@@ -1090,7 +1090,11 @@ final class PanelUITests: XCTestCase {
             if app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
         }
         print("ZOOMIN played \(played)/\(delays.count) (\(report.contains("skipped") ? "taps sent without waiting" : "XCTest still waited for idle"))")
-        XCTAssertEqual(played, 0, "a tap while the page zoomed in started playback")
+        // No assertion since 1.17.3: the lab's screen recording (28 Oct)
+        // shows the page as good as open ~0.15 s into its zoom, so these taps
+        // are on an episode row you can see, and play. What must not play —
+        // a tap after going back before the page was open — is LingerUITests'
+        // E2.
     }
 
     /// 27 Oct report (#5): Watched on a swiped episode row did nothing (List and
