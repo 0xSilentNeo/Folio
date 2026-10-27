@@ -1,0 +1,597 @@
+05:45:50.572 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.74 GB
+05:45:53.157 [hang] main thread unresponsive for 2.6 s
+05:45:56.276 [app] first screen 7817 ms after process start
+05:45:57.622 [app] active
+05:46:02.298 [nav] home: open Lab Show
+05:46:02.348 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:46:02.697 [nav] title page appear Lab Show S01E01.mp4
+05:46:02.879 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:46:02.981 [nav] title page move: animated
+05:46:03.911 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:46:27.667 [energy] cpu 19% (main 14%, com.apple.SwiftUI. 5%) thermal=nominal playing=no
+05:47:03.263 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.68 GB
+05:47:05.503 [hang] main thread unresponsive for 2.3 s
+05:47:12.721 [app] first screen 12079 ms after process start
+05:47:14.308 [app] active
+05:47:19.370 [hang] main thread unresponsive for 2.6 s
+05:47:23.932 [hang] main thread unresponsive for 2.0 s
+05:47:25.051 [nav] home: open Lab Show
+05:47:25.117 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:47:25.732 [nav] title page appear Lab Show S01E01.mp4
+05:47:25.929 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:47:26.032 [nav] title page move: animated
+05:47:26.837 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:47:44.319 [energy] cpu 6% (main 4%, com.apple.SwiftUI. 1%) thermal=nominal playing=no
+05:48:09.768 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.63 GB
+05:48:12.084 [hang] main thread unresponsive for 2.3 s
+05:48:16.131 [app] first screen 8252 ms after process start
+05:48:16.947 [app] active
+05:48:23.303 [nav] home: open Lab Show
+05:48:23.373 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:48:23.776 [nav] title page appear Lab Show S01E01.mp4
+05:48:23.913 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:48:24.016 [nav] title page move: animated
+05:48:24.847 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:48:29.119 [nav] page leaving: taps off
+05:48:29.222 [nav] title page move: interactive
+05:48:29.299 [nav] home path 1 → 0: []
+05:48:29.319 [nav] title page move: animated
+05:48:30.463 [nav] title page disappear Lab Show S01E01.mp4
+05:48:34.519 [nav] home: open Lab Show
+05:48:34.549 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:48:34.627 [nav] title page appear Lab Show S01E01.mp4
+05:48:34.726 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:48:34.827 [nav] title page move: animated
+05:48:35.693 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:48:41.317 [nav] page leaving: taps off
+05:48:41.446 [nav] title page move: interactive
+05:48:41.605 [nav] home path 1 → 0: []
+05:48:41.628 [nav] title page move: animated
+05:48:42.756 [nav] title page disappear Lab Show S01E01.mp4
+05:48:46.963 [energy] cpu 12% (main 7%, other 5%) thermal=nominal playing=no
+05:48:49.433 [nav] home: open Lab Show
+05:48:49.456 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:48:49.526 [nav] title page appear Lab Show S01E01.mp4
+05:48:49.628 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:48:49.730 [nav] title page move: animated
+05:48:50.622 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:48:55.862 [nav] page leaving: taps off
+05:48:55.930 [nav] title page move: interactive
+05:48:56.090 [nav] home path 1 → 0: []
+05:48:56.129 [nav] title page move: animated
+05:48:57.237 [nav] title page disappear Lab Show S01E01.mp4
+05:49:01.967 [nav] home: open Lab Show
+05:49:01.998 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:49:02.064 [nav] title page appear Lab Show S01E01.mp4
+05:49:02.137 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:49:02.237 [nav] title page move: animated
+05:49:03.072 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:49:11.434 [nav] page leaving: taps off
+05:49:11.526 [nav] title page move: interactive
+05:49:11.871 [nav] home path 1 → 0: []
+05:49:11.911 [nav] title page move: animated
+05:49:13.026 [nav] title page disappear Lab Show S01E01.mp4
+05:49:19.205 [energy] cpu 10% (main 10%) thermal=nominal playing=no
+05:49:19.736 [nav] home: open Lab Show
+05:49:19.768 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:49:19.858 [nav] title page appear Lab Show S01E01.mp4
+05:49:19.947 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:49:20.049 [nav] title page move: animated
+05:49:20.876 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:49:32.418 [nav] page leaving: taps off
+05:49:32.531 [nav] title page move: animated
+05:49:32.583 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:49:39.569 [nav] page leaving: taps off
+05:49:39.667 [nav] title page move: interactive
+05:49:39.997 [nav] home path 1 → 0: []
+05:49:40.087 [nav] title page move: animated
+05:49:41.147 [nav] title page disappear Lab Show S01E01.mp4
+05:49:46.966 [energy] cpu 0% thermal=nominal playing=no
+05:50:01.812 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.39 GB
+05:50:03.684 [hang] main thread unresponsive for 1.9 s
+05:50:07.311 [app] first screen 10585 ms after process start
+05:50:07.962 [app] active
+05:50:11.155 [hang] main thread unresponsive for 2.3 s
+05:50:32.624 [hang] main thread unresponsive for 1.6 s
+05:50:46.877 [energy] cpu 9% (main 6%, other 2%) thermal=nominal playing=no
+05:50:49.601 [nav] home: open Lab Show
+05:50:49.660 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:50:49.982 [nav] title page appear Lab Show S01E01.mp4
+05:50:50.138 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:50:50.178 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:50:51.040 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:50:58.539 [touch] down (60, 460) in UIWindow
+05:50:58.586 [navprobe] transition=interactive page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:50:58.588 [nav] page leaving: taps off
+05:50:58.685 [navprobe] transition=interactive page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UIViewControllerWrapperView
+05:50:58.834 [touch] up (280, 460), moved 220 pt
+05:50:58.846 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:50:58.881 [nav] home path 1 → 0: []
+05:51:00.032 [navprobe] page left the window
+05:51:00.068 [nav] title page disappear Lab Show S01E01.mp4
+05:51:00.489 [touch] down (105, 222) in UIWindow
+05:51:00.550 [touch] up (105, 222), moved 0 pt
+05:51:00.550 [nav] home: open Lab Show
+05:51:00.568 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:51:00.636 [nav] title page appear Lab Show S01E01.mp4
+05:51:00.697 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:51:00.718 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:01.621 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:04.389 [touch] down (38, 84) in UIWindow
+05:51:04.451 [touch] up (38, 84), moved 0 pt
+05:51:04.454 [nav] title page: Back
+05:51:04.458 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:04.468 [nav] page leaving: taps off
+05:51:04.588 [nav] home path 1 → 0: []
+05:51:04.617 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:51:05.452 [navprobe] page left the window
+05:51:05.465 [nav] title page disappear Lab Show S01E01.mp4
+05:51:06.920 [touch] down (105, 222) in UIWindow
+05:51:06.999 [touch] up (105, 222), moved 0 pt
+05:51:07.000 [nav] home: open Lab Show
+05:51:07.022 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:51:07.070 [nav] title page appear Lab Show S01E01.mp4
+05:51:07.133 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:51:07.152 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:07.971 [energy] cpu 60% (main 41%, other 16%, com.apple.UIKit.in 4%) thermal=nominal playing=no
+05:51:08.051 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:12.088 [touch] down (60, 460) in UIWindow
+05:51:12.134 [navprobe] transition=interactive page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:12.135 [nav] page leaving: taps off
+05:51:12.202 [navprobe] transition=interactive page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UIViewControllerWrapperView
+05:51:12.385 [touch] up (280, 460), moved 220 pt
+05:51:12.399 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:51:12.423 [nav] home path 1 → 0: []
+05:51:13.576 [navprobe] page left the window
+05:51:13.587 [nav] title page disappear Lab Show S01E01.mp4
+05:51:13.962 [touch] down (105, 222) in UIWindow
+05:51:14.033 [touch] up (105, 222), moved 0 pt
+05:51:14.034 [nav] home: open Lab Show
+05:51:14.052 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:51:14.115 [nav] title page appear Lab Show S01E01.mp4
+05:51:14.188 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:51:14.202 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:15.101 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:17.736 [touch] down (38, 84) in UIWindow
+05:51:17.800 [touch] up (38, 84), moved 0 pt
+05:51:17.802 [nav] title page: Back
+05:51:17.805 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:17.812 [nav] page leaving: taps off
+05:51:17.881 [nav] home path 1 → 0: []
+05:51:17.917 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:51:18.726 [navprobe] page left the window
+05:51:18.742 [nav] title page disappear Lab Show S01E01.mp4
+05:51:20.384 [touch] down (105, 222) in UIWindow
+05:51:20.450 [touch] up (105, 222), moved 0 pt
+05:51:20.450 [nav] home: open Lab Show
+05:51:20.470 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:51:20.520 [nav] title page appear Lab Show S01E01.mp4
+05:51:20.578 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:51:20.604 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:21.456 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:25.537 [touch] down (60, 460) in UIWindow
+05:51:25.600 [navprobe] transition=interactive page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:25.602 [nav] page leaving: taps off
+05:51:25.666 [navprobe] transition=interactive page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UIViewControllerWrapperView
+05:51:25.833 [touch] up (280, 460), moved 220 pt
+05:51:25.844 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:51:25.865 [nav] home path 1 → 0: []
+05:51:27.014 [navprobe] page left the window
+05:51:27.026 [nav] title page disappear Lab Show S01E01.mp4
+05:51:27.942 [touch] down (105, 222) in UIWindow
+05:51:28.016 [touch] up (105, 222), moved 0 pt
+05:51:28.017 [nav] home: open Lab Show
+05:51:28.039 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:51:28.122 [nav] title page appear Lab Show S01E01.mp4
+05:51:28.218 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:51:28.234 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:29.110 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:31.588 [touch] down (38, 84) in UIWindow
+05:51:31.649 [touch] up (38, 84), moved 0 pt
+05:51:31.650 [nav] title page: Back
+05:51:31.651 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:31.653 [nav] page leaving: taps off
+05:51:31.688 [nav] home path 1 → 0: []
+05:51:31.700 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:51:32.526 [navprobe] page left the window
+05:51:32.535 [nav] title page disappear Lab Show S01E01.mp4
+05:51:34.085 [touch] down (105, 222) in UIWindow
+05:51:34.166 [touch] up (105, 222), moved 0 pt
+05:51:34.167 [nav] home: open Lab Show
+05:51:34.175 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:51:34.209 [nav] title page appear Lab Show S01E01.mp4
+05:51:34.242 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:51:34.250 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:35.150 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:38.500 [energy] cpu 10% (main 9%) thermal=nominal playing=no
+05:51:38.852 [touch] down (60, 460) in UIWindow
+05:51:38.900 [navprobe] transition=interactive page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:38.901 [nav] page leaving: taps off
+05:51:38.932 [navprobe] transition=interactive page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UIViewControllerWrapperView
+05:51:39.150 [touch] up (280, 460), moved 220 pt
+05:51:39.156 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:51:39.170 [nav] home path 1 → 0: []
+05:51:40.327 [navprobe] page left the window
+05:51:40.334 [nav] title page disappear Lab Show S01E01.mp4
+05:51:40.452 [touch] down (105, 222) in UIWindow
+05:51:40.516 [touch] up (105, 222), moved 0 pt
+05:51:40.516 [nav] home: open Lab Show
+05:51:40.524 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:51:40.563 [nav] title page appear Lab Show S01E01.mp4
+05:51:40.606 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:51:40.618 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:41.476 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:44.202 [touch] down (38, 84) in UIWindow
+05:51:44.266 [touch] up (38, 84), moved 0 pt
+05:51:44.267 [nav] title page: Back
+05:51:44.268 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:44.270 [nav] page leaving: taps off
+05:51:44.340 [nav] home path 1 → 0: []
+05:51:44.368 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:51:45.195 [navprobe] page left the window
+05:51:45.207 [nav] title page disappear Lab Show S01E01.mp4
+05:51:46.815 [touch] down (105, 222) in UIWindow
+05:51:46.883 [touch] up (105, 222), moved 0 pt
+05:51:46.885 [nav] home: open Lab Show
+05:51:46.898 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:51:46.951 [nav] title page appear Lab Show S01E01.mp4
+05:51:47.004 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:51:47.018 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:47.912 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:51.768 [touch] down (60, 460) in UIWindow
+05:51:52.083 [touch] up (280, 460), moved 220 pt
+05:51:52.084 [nav] title page: episode row ignored (the finger moved 220 pt: a swipe, not a tap)
+05:51:53.671 [touch] down (105, 222) in UIWindow
+05:51:53.733 [touch] up (105, 222), moved 0 pt
+05:51:57.491 [touch] down (38, 84) in UIWindow
+05:51:57.550 [touch] up (38, 84), moved 0 pt
+05:51:57.553 [nav] title page: Back
+05:51:57.555 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:51:57.560 [nav] page leaving: taps off
+05:51:57.647 [nav] home path 1 → 0: []
+05:51:57.667 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:51:58.496 [navprobe] page left the window
+05:51:58.508 [nav] title page disappear Lab Show S01E01.mp4
+05:52:00.082 [touch] down (105, 222) in UIWindow
+05:52:00.149 [touch] up (105, 222), moved 0 pt
+05:52:00.150 [nav] home: open Lab Show
+05:52:00.158 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:52:00.199 [nav] title page appear Lab Show S01E01.mp4
+05:52:00.250 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:52:00.269 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:52:01.162 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:52:05.241 [touch] down (60, 460) in UIWindow
+05:52:05.284 [navprobe] transition=interactive page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:52:05.285 [nav] page leaving: taps off
+05:52:05.353 [navprobe] transition=interactive page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UIViewControllerWrapperView
+05:52:05.534 [touch] up (280, 460), moved 220 pt
+05:52:05.546 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:52:05.573 [nav] home path 1 → 0: []
+05:52:06.713 [navprobe] page left the window
+05:52:06.729 [nav] title page disappear Lab Show S01E01.mp4
+05:52:07.562 [touch] down (105, 222) in UIWindow
+05:52:07.633 [touch] up (105, 222), moved 0 pt
+05:52:07.633 [nav] home: open Lab Show
+05:52:07.657 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:52:07.720 [nav] title page appear Lab Show S01E01.mp4
+05:52:07.807 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:52:07.820 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:52:07.970 [energy] cpu 63% (main 59%, other 3%, com.apple.UIKit.in 1%) thermal=nominal playing=no
+05:52:08.700 [navprobe] transition=none page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:52:11.995 [touch] down (38, 84) in UIWindow
+05:52:12.050 [touch] up (38, 84), moved 0 pt
+05:52:12.051 [nav] title page: Back
+05:52:12.054 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → the page
+05:52:12.059 [nav] page leaving: taps off
+05:52:12.160 [nav] home path 1 → 0: []
+05:52:12.184 [navprobe] transition=animated page (0.0, 0.0, 402.0, 874.0) alpha 1.00 touch at its middle → UpdateCoalescingCollectionView
+05:52:13.012 [navprobe] page left the window
+05:52:13.029 [nav] title page disappear Lab Show S01E01.mp4
+05:52:18.475 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.27 GB
+05:52:20.654 [hang] main thread unresponsive for 2.2 s
+05:52:25.483 [app] first screen 9432 ms after process start
+05:52:26.069 [app] active
+05:52:29.013 [hang] main thread unresponsive for 2.0 s
+05:52:33.267 [nav] home: open Lab Show
+05:52:33.311 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:52:33.680 [nav] title page appear Lab Show S01E01.mp4
+05:52:33.819 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:52:33.919 [nav] title page move: animated
+05:52:34.856 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:52:57.184 [hang] main thread unresponsive for 1.7 s
+05:53:02.965 [nav] title page move: animated
+05:53:02.965 [energy] cpu 33% (main 32%, other 1%) thermal=nominal playing=no
+05:53:03.021 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:53:08.617 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.25 GB
+05:53:11.040 [hang] main thread unresponsive for 2.4 s
+05:53:13.234 [app] first screen 6612 ms after process start
+05:53:13.912 [app] active
+05:53:18.118 [hang] main thread unresponsive for 1.9 s
+05:53:21.934 [nav] home: open Lab Show
+05:53:21.965 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:53:22.191 [nav] title page appear Lab Show S01E02.mp4
+05:53:22.256 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:53:22.360 [nav] title page move: animated
+05:53:23.161 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:53:25.883 [nav] page leaving: taps off
+05:53:25.959 [nav] title page move: interactive
+05:53:26.557 [nav] title page move: animated
+05:53:27.069 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:53:30.333 [nav] page leaving: taps off
+05:53:30.361 [nav] title page move: interactive
+05:53:30.957 [nav] title page move: animated
+05:53:31.559 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:53:35.318 [nav] page leaving: taps off
+05:53:35.363 [nav] title page move: interactive
+05:53:36.059 [nav] title page move: animated
+05:53:36.577 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:53:41.050 [nav] page leaving: taps off
+05:53:41.128 [nav] title page move: interactive
+05:53:41.781 [nav] title page move: animated
+05:53:42.359 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:53:44.051 [energy] cpu 30% (main 26%, com.apple.SwiftUI. 3%, other 1%) thermal=nominal playing=no
+05:53:44.950 [nav] page leaving: taps off
+05:53:45.008 [nav] title page move: interactive
+05:53:45.559 [nav] title page move: animated
+05:53:46.158 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:53:49.801 [nav] page leaving: taps off
+05:53:49.859 [nav] title page move: interactive
+05:53:50.459 [nav] title page move: animated
+05:53:51.057 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:53:56.652 [nav] title page: Back
+05:53:56.655 [nav] page leaving: taps off
+05:53:56.734 [nav] home path 1 → 0: []
+05:53:56.755 [nav] title page move: animated
+05:53:57.596 [nav] title page disappear Lab Show S01E02.mp4
+05:54:00.450 [nav] home: open Lab Show
+05:54:00.461 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:54:00.524 [nav] title page appear Lab Show S01E02.mp4
+05:54:00.596 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:54:00.792 [nav] title page move: animated
+05:54:01.562 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:54:02.017 [nav] page leaving: taps off
+05:54:02.097 [nav] title page move: interactive
+05:54:02.410 [nav] home path 1 → 0: []
+05:54:02.419 [nav] title page move: animated
+05:54:03.572 [nav] title page disappear Lab Show S01E02.mp4
+05:54:06.817 [nav] home: open Lab Show
+05:54:06.833 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:54:06.904 [nav] title page appear Lab Show S01E02.mp4
+05:54:07.006 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:54:07.107 [nav] title page move: animated
+05:54:07.963 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:54:09.901 [nav] title page: Back
+05:54:09.908 [nav] page leaving: taps off
+05:54:09.988 [nav] home path 1 → 0: []
+05:54:10.007 [nav] title page move: animated
+05:54:10.840 [nav] title page disappear Lab Show S01E02.mp4
+05:54:13.217 [nav] home: open Lab Show
+05:54:13.230 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:54:13.274 [nav] title page appear Lab Show S01E02.mp4
+05:54:13.348 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:54:13.450 [nav] title page move: animated
+05:54:13.976 [energy] cpu 41% (main 32%, com.apple.UIKit.in 4%, other 4%) thermal=nominal playing=no
+05:54:14.295 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:54:15.701 [nav] page leaving: taps off
+05:54:15.756 [nav] title page move: interactive
+05:54:16.092 [nav] home path 1 → 0: []
+05:54:16.148 [nav] title page move: animated
+05:54:17.257 [nav] title page disappear Lab Show S01E02.mp4
+05:54:20.817 [nav] home: open Lab Show
+05:54:20.827 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:54:20.858 [nav] title page appear Lab Show S01E02.mp4
+05:54:20.895 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:54:20.998 [nav] title page move: animated
+05:54:21.871 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:54:24.335 [nav] title page: Back
+05:54:24.338 [nav] page leaving: taps off
+05:54:24.384 [nav] home path 1 → 0: []
+05:54:24.406 [nav] title page move: animated
+05:54:25.241 [nav] title page disappear Lab Show S01E02.mp4
+05:54:27.785 [nav] home: open Lab Show
+05:54:27.808 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:54:27.851 [nav] title page appear Lab Show S01E02.mp4
+05:54:27.900 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:54:28.001 [nav] title page move: animated
+05:54:28.807 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:54:29.467 [nav] page leaving: taps off
+05:54:29.511 [nav] title page move: interactive
+05:54:29.863 [nav] home path 1 → 0: []
+05:54:29.915 [nav] title page move: animated
+05:54:31.019 [nav] title page disappear Lab Show S01E02.mp4
+05:54:34.302 [nav] home: open Lab Show
+05:54:34.329 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:54:34.401 [nav] title page appear Lab Show S01E02.mp4
+05:54:34.465 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:54:34.569 [nav] title page move: animated
+05:54:35.417 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:54:38.417 [nav] title page: Back
+05:54:38.423 [nav] page leaving: taps off
+05:54:38.524 [nav] home path 1 → 0: []
+05:54:38.541 [nav] title page move: animated
+05:54:39.366 [nav] title page disappear Lab Show S01E02.mp4
+05:54:41.250 [nav] home: open Lab Show
+05:54:41.275 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:54:41.349 [nav] title page appear Lab Show S01E02.mp4
+05:54:41.446 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:54:41.548 [nav] title page move: animated
+05:54:42.364 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:54:42.835 [nav] page leaving: taps off
+05:54:42.882 [nav] title page move: interactive
+05:54:43.224 [nav] home path 1 → 0: []
+05:54:43.257 [nav] title page move: animated
+05:54:43.936 [energy] cpu 28% (main 20%, com.apple.UIKit.in 4%, com.apple.SwiftUI. 4%, other 0%) thermal=nominal playing=no
+05:54:44.368 [nav] title page disappear Lab Show S01E02.mp4
+05:54:48.067 [nav] home: open Lab Show
+05:54:48.091 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:54:48.132 [nav] title page appear Lab Show S01E02.mp4
+05:54:48.175 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:54:48.278 [nav] title page move: animated
+05:54:49.160 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:54:50.751 [nav] title page: Back
+05:54:50.758 [nav] page leaving: taps off
+05:54:50.814 [nav] home path 1 → 0: []
+05:54:50.826 [nav] title page move: animated
+05:54:51.655 [nav] title page disappear Lab Show S01E02.mp4
+05:54:54.515 [hang] main thread unresponsive for 1.7 s
+05:54:55.617 [nav] home: open Lab Show
+05:54:55.631 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:54:55.702 [nav] title page appear Lab Show S01E02.mp4
+05:54:55.757 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:54:55.860 [nav] title page move: animated
+05:54:57.008 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:54:59.383 [nav] page leaving: taps off
+05:54:59.458 [nav] title page move: interactive
+05:54:59.754 [nav] home path 1 → 0: []
+05:54:59.760 [nav] title page move: animated
+05:55:00.906 [nav] title page disappear Lab Show S01E02.mp4
+05:55:03.666 [nav] home: open Lab Show
+05:55:03.673 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:55:03.700 [nav] title page appear Lab Show S01E02.mp4
+05:55:03.734 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:55:03.834 [nav] title page move: animated
+05:55:04.649 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:55:06.619 [nav] title page: Back
+05:55:06.624 [nav] page leaving: taps off
+05:55:06.702 [nav] home path 1 → 0: []
+05:55:06.721 [nav] title page move: animated
+05:55:07.560 [nav] title page disappear Lab Show S01E02.mp4
+05:55:09.533 [nav] home: open Lab Show
+05:55:09.541 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:55:09.582 [nav] title page appear Lab Show S01E02.mp4
+05:55:09.627 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:55:09.728 [nav] title page move: animated
+05:55:10.548 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:55:11.517 [nav] page leaving: taps off
+05:55:11.548 [nav] title page move: interactive
+05:55:11.915 [nav] home path 1 → 0: []
+05:55:11.929 [nav] title page move: animated
+05:55:13.064 [nav] title page disappear Lab Show S01E02.mp4
+05:55:14.112 [energy] cpu 0% (main 0%) thermal=nominal playing=no
+05:55:15.766 [nav] home: open Lab Show
+05:55:15.774 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:55:15.803 [nav] title page appear Lab Show S01E02.mp4
+05:55:15.838 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:55:15.940 [nav] title page move: animated
+05:55:16.792 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:55:18.819 [nav] title page: Back
+05:55:18.825 [nav] page leaving: taps off
+05:55:18.897 [nav] home path 1 → 0: []
+05:55:18.918 [nav] title page move: animated
+05:55:19.756 [nav] title page disappear Lab Show S01E02.mp4
+05:55:21.950 [nav] home: open Lab Show
+05:55:21.959 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:55:22.010 [nav] title page appear Lab Show S01E02.mp4
+05:55:22.061 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:55:22.250 [nav] title page move: animated
+05:55:23.080 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:55:23.718 [nav] page leaving: taps off
+05:55:23.773 [nav] title page move: interactive
+05:55:24.114 [nav] home path 1 → 0: []
+05:55:24.123 [nav] title page move: animated
+05:55:25.276 [nav] title page disappear Lab Show S01E02.mp4
+05:55:29.368 [nav] home: open Lab Show
+05:55:29.400 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:55:29.461 [nav] title page appear Lab Show S01E02.mp4
+05:55:29.525 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:55:29.626 [nav] title page move: animated
+05:55:30.446 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:55:33.084 [nav] title page: Back
+05:55:33.088 [nav] page leaving: taps off
+05:55:33.153 [nav] home path 1 → 0: []
+05:55:33.171 [nav] title page move: animated
+05:55:34.005 [nav] title page disappear Lab Show S01E02.mp4
+05:55:36.831 [hang] main thread unresponsive for 1.6 s
+05:55:37.617 [nav] home: open Lab Show
+05:55:37.637 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:55:37.711 [nav] title page appear Lab Show S01E02.mp4
+05:55:37.774 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:55:37.877 [nav] title page move: animated
+05:55:39.111 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:55:41.350 [nav] page leaving: taps off
+05:55:41.407 [nav] title page move: interactive
+05:55:41.747 [nav] home path 1 → 0: []
+05:55:41.776 [nav] title page move: animated
+05:55:42.933 [nav] title page disappear Lab Show S01E02.mp4
+05:55:44.268 [energy] cpu 0% thermal=nominal playing=no
+05:55:46.351 [nav] home: open Lab Show
+05:55:46.384 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:55:46.446 [nav] title page appear Lab Show S01E02.mp4
+05:55:46.533 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:55:46.634 [nav] title page move: animated
+05:55:47.476 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:55:49.470 [nav] title page: Back
+05:55:49.485 [nav] page leaving: taps off
+05:55:49.575 [nav] home path 1 → 0: []
+05:55:49.597 [nav] title page move: animated
+05:55:50.421 [nav] title page disappear Lab Show S01E02.mp4
+05:55:56.351 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.02 GB
+05:55:58.654 [hang] main thread unresponsive for 2.3 s
+05:56:02.908 [app] first screen 8880 ms after process start
+05:56:03.674 [app] active
+05:56:08.968 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.settings]
+05:56:15.154 [nav] page leaving: taps off
+05:56:16.397 [nav] swipe back let go: the navigation bar was left at alpha 0.00; shown again
+05:56:19.565 [nav] page leaving: taps off
+05:56:20.801 [nav] swipe back let go: the navigation bar was left at alpha 0.00; shown again
+05:56:23.620 [nav] page leaving: taps off
+05:56:24.787 [nav] swipe back let go: the navigation bar was left at alpha 0.00; shown again
+05:56:27.704 [nav] page leaving: taps off
+05:56:28.903 [nav] swipe back let go: the navigation bar was left at alpha 0.00; shown again
+05:56:35.472 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32 GB
+05:56:37.637 [hang] main thread unresponsive for 2.2 s
+05:56:42.228 [app] first screen 9194 ms after process start
+05:56:42.829 [app] active
+05:56:47.850 [nav] home: open Lab Show
+05:56:47.871 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:56:48.160 [nav] title page appear Lab Show S01E02.mp4
+05:56:48.273 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:56:48.375 [nav] title page move: animated
+05:56:49.333 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:56:52.551 [nav] title page: Back
+05:56:52.556 [nav] page leaving: taps off
+05:56:52.616 [nav] home path 1 → 0: []
+05:56:52.635 [nav] title page move: animated
+05:56:53.472 [nav] title page disappear Lab Show S01E02.mp4
+05:56:55.533 [nav] home: open Lab Show
+05:56:55.544 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:56:55.588 [nav] title page appear Lab Show S01E02.mp4
+05:56:55.656 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:56:55.759 [nav] title page move: animated
+05:56:56.563 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:56:59.377 [nav] title page: Play → play Lab Show S01E02.mp4
+05:56:59.379 [player] play requested: 2 item(s), index 1, first=/Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Data/Application/FFD4BB97-D9AB-4D33-B9D8-D08C4C1825A7/Documents/Media/Lab Show S01E01.mp4
+05:57:00.639 [player] start renderer=metal
+05:57:00.665 [player] mpv options applied renderer=metal hwdec=auto anime4k=off/fast picture=efficient
+05:57:00.769 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Data/Application/FFD4BB97-D9AB-4D33-B9D8-D08C4C1825A7/Documents/Media/Lab Show S01E02.mp4 source=local opts=[] -> 0
+05:57:01.061 [player] decoder: software
+05:57:03.044 [hang] main thread unresponsive for 1.5 s
+05:57:05.661 [player] file loaded in 4906 ms
+05:57:05.874 [perf] panel tracks prebuilt in 196 ms
+05:57:05.876 [player] decoder: software
+05:57:06.451 [perf] panel settings prebuilt in 511 ms
+05:57:06.453 [skip] anime lookup Lab Show s1e2: 0 segment(s)
+05:57:06.509 [perf] panel nowPlaying prebuilt in 55 ms
+05:57:12.839 [energy] cpu 8% (other 3%, vo 2%, main 1%) thermal=nominal playing=yes renderer=metal picture=efficient decoder=no
+05:57:16.851 [player] close at 0:10
+05:57:16.856 [player] metal view detached
+05:57:16.858 [energy] cpu 24% (main 10%, other 9%, vo 2%, core 1%) thermal=nominal playing=yes renderer=metal picture=efficient decoder=no · player closing
+05:57:17.202 [nav] player closed: back to portrait (phone is upright)
+05:57:18.766 [nav] after player closed: scene orientation=1 device=1 bounds=(402.0, 874.0)
+05:57:18.790 [nav]   window UIWindow level=0.0 hidden=false alpha=1.0 key=•••• touch=true frame=(0.0, 0.0, 402.0, 874.0) root=UIHostingController<ModifiedContent<LazyView<ModifiedContent<RootView, _EnvironmentKeyWritingModifier<Optional<AnyShapeStyle>>>>, RootModifier>> presented=nil
+05:57:22.445 [nav] title page: Back
+05:57:22.454 [nav] page leaving: taps off
+05:57:22.547 [nav] home path 1 → 0: []
+05:57:22.578 [nav] title page move: animated
+05:57:23.405 [nav] title page disappear Lab Show S01E02.mp4
+05:57:26.567 [nav] home: open Lab Show
+05:57:26.582 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+05:57:26.630 [nav] title page appear Lab Show S01E02.mp4
+05:57:26.710 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+05:57:26.811 [nav] title page move: animated
+05:57:27.638 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+05:57:29.841 [nav] page leaving: taps off
+05:57:29.911 [nav] title page move: interactive
+05:57:30.487 [nav] home path 1 → 0: []
+05:57:30.513 [nav] title page move: animated
+05:57:31.636 [nav] title page disappear Lab Show S01E02.mp4

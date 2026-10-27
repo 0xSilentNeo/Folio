@@ -1,0 +1,1428 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=3435E92E-E723-410E-9BCA-775192FDE386 -derivedDataPath build "-only-testing:GlassPlayerUITests/PanelUITests/test44SwipeBackKeepsPageButtons" "-only-testing:GlassPlayerUITests/PanelUITests/test45SettingsLetGoSwipe" "-only-testing:GlassPlayerUITests/PanelUITests/test36SwipeFromEpisodeRow" "-only-testing:GlassPlayerUITests/PanelUITests/test11MoreButtonEdgeTaps" "-only-testing:GlassPlayerUITests/PanelUITests/test8TitlePageBack" "-only-testing:GlassPlayerUITests/PanelUITests/test31SwipeBackFromPlay" "-only-testing:GlassPlayerUITests/PanelUITests/test39TapRightAfterSwipeBack" "-only-testing:GlassPlayerUITests/PanelUITests/test40EpisodeRowSwipeWatched"
+
+2026-10-27 05:45:35.876736+0000 GlassPlayerUITests-Runner[42017:106331] [Default] Running tests...
+objc[42017]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.IB3VsY/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x1062b0398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.IB3VsY/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x106828310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-27 05:45:44.507.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-27 05:45:44.510.
+Test Suite 'PanelUITests' started at 2026-10-27 05:45:44.510.
+Test Case '-[GlassPlayerUITests.PanelUITests test11MoreButtonEdgeTaps]' started.
+    t =     0.01s Start Test at 2026-10-27 05:45:44.516
+    t =     0.09s Set Up
+    t =     0.10s Open dev.silentneo.glassplayer
+    t =     0.10s     Launch dev.silentneo.glassplayer
+2026-10-27 05:45:45.501 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-27 05:45:45.501 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     4.22s         Setting up automation session
+    t =    10.77s         Wait for dev.silentneo.glassplayer to idle
+    t =    14.65s Setting device orientation to Portrait
+    t =    14.70s     Device orientation changed to Portrait
+    t =    14.76s     Wait for dev.silentneo.glassplayer to idle
+    t =    14.76s Waiting 25.0s for "Lab Show" StaticText to exist
+    t =    15.83s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =    15.83s         Checking existence of `"Lab Show" StaticText`
+    t =    17.18s Tap "Lab Show" StaticText
+    t =    17.18s     Wait for dev.silentneo.glassplayer to idle
+    t =    17.18s     Find the "Lab Show" StaticText
+    t =    17.32s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    17.43s     Synthesize event
+    t =    18.00s     Wait for dev.silentneo.glassplayer to idle
+    t =    18.41s Waiting 6.0s for "More" Button to exist
+    t =    19.42s     Checking `Expect predicate `existsNoRetry == 1` for object "More" Button`
+    t =    19.43s         Checking existence of `"More" Button`
+    t =    21.73s Find the "More" Button
+MORE frame (330.0, 62.0, 56.0, 44.0)
+    t =    21.81s Tap "More" Button[0.20, 0.50]
+    t =    21.81s     Wait for dev.silentneo.glassplayer to idle
+    t =    21.82s     Find the "More" Button
+    t =    21.87s     Check for interrupting elements affecting "More" Button
+    t =    21.92s     Synthesize event
+    t =    21.92s         Find the "More" Button
+    t =    21.99s         Find the "More" Button
+    t =    22.04s         Find the "More" Button
+    t =    22.39s     Wait for dev.silentneo.glassplayer to idle
+    t =    23.99s Waiting 2.0s for "Delete file" Button to exist
+    t =    25.04s     Checking `Expect predicate `existsNoRetry == 1` for object "Delete file" Button`
+    t =    25.04s         Checking existence of `"Delete file" Button`
+    t =    26.23s Tap Target Application 'dev.silentneo.glassplayer'[0.50, 0.60]
+    t =    26.23s     Wait for dev.silentneo.glassplayer to idle
+    t =    26.24s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.32s     Check for interrupting elements affecting "Folio" Application
+    t =    26.39s     Synthesize event
+    t =    26.40s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.44s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.51s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.86s     Wait for dev.silentneo.glassplayer to idle
+    t =    29.36s Tap "More" Button[0.80, 0.50]
+    t =    29.36s     Wait for dev.silentneo.glassplayer to idle
+    t =    29.38s     Find the "More" Button
+    t =    29.46s     Check for interrupting elements affecting "More" Button
+    t =    29.60s     Synthesize event
+    t =    29.61s         Find the "More" Button
+    t =    29.82s         Find the "More" Button
+    t =    30.03s         Find the "More" Button
+    t =    30.55s     Wait for dev.silentneo.glassplayer to idle
+    t =    31.81s Waiting 2.0s for "Delete file" Button to exist
+    t =    32.82s     Checking `Expect predicate `existsNoRetry == 1` for object "Delete file" Button`
+    t =    32.82s         Checking existence of `"Delete file" Button`
+    t =    34.09s Tap Target Application 'dev.silentneo.glassplayer'[0.50, 0.60]
+    t =    34.09s     Wait for dev.silentneo.glassplayer to idle
+    t =    34.10s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.28s     Check for interrupting elements affecting "Folio" Application
+    t =    34.45s     Synthesize event
+    t =    34.47s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.57s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.67s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    35.08s     Wait for dev.silentneo.glassplayer to idle
+    t =    37.60s Tap "More" Button[0.50, 0.20]
+    t =    37.60s     Wait for dev.silentneo.glassplayer to idle
+    t =    37.62s     Find the "More" Button
+    t =    38.09s     Check for interrupting elements affecting "More" Button
+    t =    38.28s     Synthesize event
+    t =    38.30s         Find the "More" Button
+    t =    38.76s         Find the "More" Button
+    t =    39.44s         Find the "More" Button
+    t =    39.90s     Wait for dev.silentneo.glassplayer to idle
+    t =    41.17s Waiting 2.0s for "Delete file" Button to exist
+    t =    42.22s     Checking `Expect predicate `existsNoRetry == 1` for object "Delete file" Button`
+    t =    42.22s         Checking existence of `"Delete file" Button`
+    t =    43.37s Tap Target Application 'dev.silentneo.glassplayer'[0.50, 0.60]
+    t =    43.37s     Wait for dev.silentneo.glassplayer to idle
+    t =    43.37s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    43.49s     Check for interrupting elements affecting "Folio" Application
+    t =    43.63s     Synthesize event
+    t =    43.65s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    43.79s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    43.89s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    44.37s     Wait for dev.silentneo.glassplayer to idle
+    t =    46.79s Tap "More" Button[0.50, 0.80]
+    t =    46.80s     Wait for dev.silentneo.glassplayer to idle
+    t =    46.80s     Find the "More" Button
+    t =    46.97s     Check for interrupting elements affecting "More" Button
+    t =    47.22s     Synthesize event
+    t =    47.23s         Find the "More" Button
+    t =    47.79s         Find the "More" Button
+    t =    48.85s         Find the "More" Button
+    t =    49.36s     Wait for dev.silentneo.glassplayer to idle
+    t =    50.64s Waiting 2.0s for "Delete file" Button to exist
+    t =    51.67s     Checking `Expect predicate `existsNoRetry == 1` for object "Delete file" Button`
+    t =    51.67s         Checking existence of `"Delete file" Button`
+    t =    52.78s Tap Target Application 'dev.silentneo.glassplayer'[0.50, 0.60]
+    t =    52.78s     Wait for dev.silentneo.glassplayer to idle
+    t =    52.79s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.87s     Check for interrupting elements affecting "Folio" Application
+    t =    52.98s     Synthesize event
+    t =    52.99s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    53.04s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    53.12s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    53.48s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.21s Tap "More" Button[0.25, 0.25]
+    t =    56.21s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.23s     Find the "More" Button
+    t =    56.31s     Check for interrupting elements affecting "More" Button
+    t =    56.40s     Synthesize event
+    t =    56.41s         Find the "More" Button
+    t =    56.50s         Find the "More" Button
+    t =    56.57s         Find the "More" Button
+    t =    56.92s     Wait for dev.silentneo.glassplayer to idle
+    t =    58.25s Waiting 2.0s for "Delete file" Button to exist
+    t =    59.31s     Checking `Expect predicate `existsNoRetry == 1` for object "Delete file" Button`
+    t =    59.31s         Checking existence of `"Delete file" Button`
+    t =    60.48s Tap Target Application 'dev.silentneo.glassplayer'[0.50, 0.60]
+    t =    60.48s     Wait for dev.silentneo.glassplayer to idle
+    t =    60.49s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.65s     Check for interrupting elements affecting "Folio" Application
+    t =    60.79s     Synthesize event
+    t =    60.80s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.96s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    61.21s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    61.71s     Wait for dev.silentneo.glassplayer to idle
+MORE opened 5/5
+    t =    64.20s Tear Down
+Test Case '-[GlassPlayerUITests.PanelUITests test11MoreButtonEdgeTaps]' passed (65.177 seconds).
+Test Case '-[GlassPlayerUITests.PanelUITests test31SwipeBackFromPlay]' started.
+    t =     0.00s Start Test at 2026-10-27 05:46:49.698
+    t =     0.07s Set Up
+    t =     0.07s Open dev.silentneo.glassplayer
+    t =     0.07s     Launch dev.silentneo.glassplayer
+    t =     0.07s         Terminate dev.silentneo.glassplayer:42446
+2026-10-27 05:46:50.813 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-27 05:46:50.815 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    11.32s         Setting up automation session
+    t =    21.35s         Wait for dev.silentneo.glassplayer to idle
+    t =    26.29s Setting device orientation to Portrait
+    t =    26.33s     Wait for dev.silentneo.glassplayer to idle
+    t =    26.34s Waiting 25.0s for "Lab Show" StaticText to exist
+    t =    27.40s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =    27.40s         Checking existence of `"Lab Show" StaticText`
+    t =    32.55s Checking existence of `"Back" Button`
+    t =    32.70s Tap "Lab Show" StaticText
+    t =    32.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    32.72s     Find the "Lab Show" StaticText
+    t =    34.99s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    35.12s     Synthesize event
+    t =    35.55s     Wait for dev.silentneo.glassplayer to idle
+    t =    36.34s Waiting 6.0s for "Back" Button to exist
+    t =    37.44s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    37.44s         Checking existence of `"Back" Button`
+    t =    39.79s Waiting 5.0s for "heroPlay" Any to exist
+    t =    40.86s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    40.86s         Checking existence of `"heroPlay" Any`
+    t =    40.93s Find the "heroPlay" Any
+    t =    40.99s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (44.0, 304.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.0, 308.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    40.99s     Wait for dev.silentneo.glassplayer to idle
+    t =    40.99s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    41.04s     Check for interrupting elements affecting "Folio" Application
+    t =    41.09s     Synthesize event
+    t =    41.09s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    41.15s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    41.20s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    41.24s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    41.29s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    41.65s     Wait for dev.silentneo.glassplayer to idle
+    t =    44.66s Checking existence of `"Close player" Button`
+    t =    44.72s Checking existence of `"Back" Button`
+SWIPEPLAY 0 dist=60 → no playback, page stayed
+    t =    44.79s Checking existence of `"Back" Button`
+    t =    44.83s Checking existence of `"Back" Button`
+    t =    44.88s Waiting 5.0s for "heroPlay" Any to exist
+    t =    45.95s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    45.95s         Checking existence of `"heroPlay" Any`
+    t =    46.12s Find the "heroPlay" Any
+    t =    46.41s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (44.0, 304.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (164.0, 308.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    46.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    46.42s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    46.51s     Check for interrupting elements affecting "Folio" Application
+    t =    46.58s     Synthesize event
+    t =    46.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    46.68s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    46.78s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    46.85s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    46.98s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    47.47s     Wait for dev.silentneo.glassplayer to idle
+    t =    50.50s Checking existence of `"Close player" Button`
+    t =    50.83s Checking existence of `"Back" Button`
+SWIPEPLAY 1 dist=120 → no playback, page stayed
+    t =    50.96s Checking existence of `"Back" Button`
+    t =    51.05s Checking existence of `"Back" Button`
+    t =    51.16s Waiting 5.0s for "heroPlay" Any to exist
+    t =    52.19s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    52.19s         Checking existence of `"heroPlay" Any`
+    t =    52.33s Find the "heroPlay" Any
+    t =    52.42s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (44.0, 304.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (264.0, 308.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    52.42s     Wait for dev.silentneo.glassplayer to idle
+    t =    52.45s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.53s     Check for interrupting elements affecting "Folio" Application
+    t =    52.67s     Synthesize event
+    t =    52.68s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.77s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.84s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.91s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.98s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    53.62s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.63s Checking existence of `"Close player" Button`
+    t =    56.75s Checking existence of `"Back" Button`
+SWIPEPLAY 2 dist=220 → no playback, page stayed
+    t =    56.81s Checking existence of `"Back" Button`
+    t =    56.95s Checking existence of `"Back" Button`
+    t =    57.00s Waiting 5.0s for "heroPlay" Any to exist
+    t =    58.01s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    58.01s         Checking existence of `"heroPlay" Any`
+    t =    58.10s Find the "heroPlay" Any
+    t =    58.16s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (44.0, 304.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.0, 308.3) with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    58.16s     Wait for dev.silentneo.glassplayer to idle
+    t =    58.17s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.21s     Check for interrupting elements affecting "Folio" Application
+    t =    58.31s     Synthesize event
+    t =    58.32s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.35s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.42s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.46s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.53s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.94s     Wait for dev.silentneo.glassplayer to idle
+    t =    61.98s Checking existence of `"Close player" Button`
+    t =    62.12s Checking existence of `"Back" Button`
+SWIPEPLAY 3 dist=60 → no playback, page stayed
+    t =    62.25s Checking existence of `"Back" Button`
+    t =    62.38s Checking existence of `"Back" Button`
+    t =    62.44s Waiting 5.0s for "heroPlay" Any to exist
+    t =    63.46s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    63.46s         Checking existence of `"heroPlay" Any`
+    t =    63.54s Find the "heroPlay" Any
+    t =    63.65s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (44.0, 304.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (264.0, 308.3) with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    63.65s     Wait for dev.silentneo.glassplayer to idle
+    t =    63.66s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    63.72s     Check for interrupting elements affecting "Folio" Application
+    t =    63.83s     Synthesize event
+    t =    63.84s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    63.88s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    63.94s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    63.98s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    64.04s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    64.81s     Wait for dev.silentneo.glassplayer to idle
+    t =    67.82s Checking existence of `"Close player" Button`
+    t =    67.89s Checking existence of `"Back" Button`
+SWIPEPLAY 4 dist=220 → no playback, page stayed
+    t =    67.94s Checking existence of `"Back" Button`
+    t =    67.99s Checking existence of `"Back" Button`
+    t =    68.03s Waiting 5.0s for "heroPlay" Any to exist
+    t =    69.04s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    69.04s         Checking existence of `"heroPlay" Any`
+    t =    69.12s Find the "heroPlay" Any
+    t =    69.19s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (44.0, 304.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (74.0, 308.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    69.19s     Wait for dev.silentneo.glassplayer to idle
+    t =    69.20s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    69.27s     Check for interrupting elements affecting "Folio" Application
+    t =    69.37s     Synthesize event
+    t =    69.38s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    69.48s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    69.60s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    69.67s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    69.74s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    70.13s     Wait for dev.silentneo.glassplayer to idle
+    t =    73.14s Checking existence of `"Close player" Button`
+    t =    73.21s Checking existence of `"Back" Button`
+SWIPEPLAY 5 dist=30 → no playback, page stayed
+    t =    73.29s Checking existence of `"Back" Button`
+SWIPEPLAY played 0/6, went back 0
+    t =    73.36s Tear Down
+Test Case '-[GlassPlayerUITests.PanelUITests test31SwipeBackFromPlay]' passed (73.763 seconds).
+Test Case '-[GlassPlayerUITests.PanelUITests test36SwipeFromEpisodeRow]' started.
+    t =     0.00s Start Test at 2026-10-27 05:48:03.462
+    t =     0.06s Set Up
+    t =     0.06s Open dev.silentneo.glassplayer
+    t =     0.06s     Launch dev.silentneo.glassplayer
+    t =     0.06s         Terminate dev.silentneo.glassplayer:44998
+2026-10-27 05:48:07.548 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-27 05:48:07.548 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     4.58s         Setting up automation session
+    t =    12.01s         Wait for dev.silentneo.glassplayer to idle
+    t =    15.01s Setting device orientation to Portrait
+    t =    15.04s     Wait for dev.silentneo.glassplayer to idle
+    t =    15.04s Waiting 25.0s for "Lab Show" StaticText to exist
+    t =    16.07s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =    16.07s         Checking existence of `"Lab Show" StaticText`
+    t =    18.99s Checking existence of `"Back" Button`
+    t =    19.20s Find the "Lab Show" StaticText
+    t =    19.41s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    19.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    19.42s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    19.46s     Check for interrupting elements affecting "Folio" Application
+    t =    19.53s     Synthesize event
+    t =    19.54s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    19.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    19.66s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.02s     Wait for dev.silentneo.glassplayer to idle
+    t =    20.47s Waiting 6.0s for "Back" Button to exist
+    t =    21.52s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    21.53s         Checking existence of `"Back" Button`
+    t =    23.78s Waiting 5.0s for "ep:Lab Show S01E02.mp4" Button to exist
+    t =    24.84s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E02.mp4" Button`
+    t =    24.84s         Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+    t =    25.01s Find the "ep:Lab Show S01E02.mp4" Button
+    t =    25.10s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 572.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (180.0, 572.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    25.10s     Wait for dev.silentneo.glassplayer to idle
+    t =    25.11s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.19s     Check for interrupting elements affecting "Folio" Application
+    t =    25.27s     Synthesize event
+    t =    25.27s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.32s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.36s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.41s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.49s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.99s     Wait for dev.silentneo.glassplayer to idle
+    t =    30.05s Checking existence of `"Back" Button`
+    t =    30.21s Checking existence of `"Close player" Button`
+SWIPEROW 0 (120,0) → no playback, page went back
+    t =    30.29s Checking existence of `"Back" Button`
+    t =    30.34s Find the "Lab Show" StaticText
+    t =    30.64s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    30.64s     Wait for dev.silentneo.glassplayer to idle
+    t =    30.65s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.70s     Check for interrupting elements affecting "Folio" Application
+    t =    30.75s     Synthesize event
+    t =    30.75s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.80s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.87s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    31.26s     Wait for dev.silentneo.glassplayer to idle
+    t =    32.21s Waiting 6.0s for "Back" Button to exist
+    t =    33.27s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    33.28s         Checking existence of `"Back" Button`
+    t =    35.66s Waiting 5.0s for "ep:Lab Show S01E02.mp4" Button to exist
+    t =    36.71s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E02.mp4" Button`
+    t =    36.71s         Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+    t =    36.93s Find the "ep:Lab Show S01E02.mp4" Button
+    t =    37.07s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 572.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (280.0, 572.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    37.07s     Wait for dev.silentneo.glassplayer to idle
+    t =    37.08s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    37.19s     Check for interrupting elements affecting "Folio" Application
+    t =    37.35s     Synthesize event
+    t =    37.37s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    37.45s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    37.53s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    37.62s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    37.69s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    38.31s     Wait for dev.silentneo.glassplayer to idle
+    t =    42.33s Checking existence of `"Back" Button`
+    t =    42.79s Checking existence of `"Close player" Button`
+SWIPEROW 1 (220,0) → no playback, page went back
+    t =    43.22s Checking existence of `"Back" Button`
+    t =    43.63s Find the "Lab Show" StaticText
+    t =    45.33s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    45.33s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.34s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    45.50s     Check for interrupting elements affecting "Folio" Application
+    t =    45.66s     Synthesize event
+    t =    45.68s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    45.75s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    45.84s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    46.18s     Wait for dev.silentneo.glassplayer to idle
+    t =    47.15s Waiting 6.0s for "Back" Button to exist
+    t =    48.16s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    48.16s         Checking existence of `"Back" Button`
+    t =    50.46s Waiting 5.0s for "ep:Lab Show S01E02.mp4" Button to exist
+    t =    51.52s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E02.mp4" Button`
+    t =    51.53s         Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+    t =    51.61s Find the "ep:Lab Show S01E02.mp4" Button
+    t =    51.73s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 572.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 752.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    51.73s     Wait for dev.silentneo.glassplayer to idle
+    t =    51.73s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    51.79s     Check for interrupting elements affecting "Folio" Application
+    t =    51.95s     Synthesize event
+    t =    51.96s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.08s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.15s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.21s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.28s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.82s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.83s Checking existence of `"Back" Button`
+    t =    57.66s Checking existence of `"Close player" Button`
+SWIPEROW 2 (0,180) → no playback, page went back
+    t =    57.72s Checking existence of `"Back" Button`
+    t =    57.78s Find the "Lab Show" StaticText
+    t =    58.08s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    58.08s     Wait for dev.silentneo.glassplayer to idle
+    t =    58.09s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.14s     Check for interrupting elements affecting "Folio" Application
+    t =    58.23s     Synthesize event
+    t =    58.23s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.28s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.36s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    59.62s Waiting 6.0s for "Back" Button to exist
+    t =    60.64s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    60.64s         Checking existence of `"Back" Button`
+    t =    62.86s Waiting 5.0s for "ep:Lab Show S01E02.mp4" Button to exist
+    t =    63.92s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E02.mp4" Button`
+    t =    63.92s         Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+    t =    64.28s Find the "ep:Lab Show S01E02.mp4" Button
+    t =    65.00s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 572.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 892.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    65.00s     Wait for dev.silentneo.glassplayer to idle
+    t =    65.01s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    65.36s     Check for interrupting elements affecting "Folio" Application
+    t =    65.76s     Synthesize event
+    t =    65.79s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    66.18s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.48s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.63s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.79s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    68.57s     Wait for dev.silentneo.glassplayer to idle
+    t =    72.61s Checking existence of `"Back" Button`
+    t =    72.78s Checking existence of `"Close player" Button`
+SWIPEROW 3 (0,320) → no playback, page went back
+    t =    72.85s Checking existence of `"Back" Button`
+    t =    72.96s Find the "Lab Show" StaticText
+    t =    75.77s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    75.77s     Wait for dev.silentneo.glassplayer to idle
+    t =    75.78s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    75.83s     Check for interrupting elements affecting "Folio" Application
+    t =    75.90s     Synthesize event
+    t =    75.90s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    76.05s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    76.12s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    76.46s     Wait for dev.silentneo.glassplayer to idle
+    t =    77.42s Waiting 6.0s for "Back" Button to exist
+    t =    78.51s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    78.51s         Checking existence of `"Back" Button`
+    t =    80.62s Waiting 5.0s for "ep:Lab Show S01E02.mp4" Button to exist
+    t =    81.64s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E02.mp4" Button`
+    t =    81.64s         Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+    t =    81.77s Find the "ep:Lab Show S01E02.mp4" Button
+    t =    81.93s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 572.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (220.0, 732.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    81.93s     Wait for dev.silentneo.glassplayer to idle
+    t =    81.94s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.02s     Check for interrupting elements affecting "Folio" Application
+    t =    82.14s     Synthesize event
+    t =    82.15s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.19s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.26s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.31s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.38s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.97s     Wait for dev.silentneo.glassplayer to idle
+    t =    86.39s Checking existence of `"Back" Button`
+    t =    86.57s Checking existence of `"Close player" Button`
+SWIPEROW 4 (160,160) → no playback, page stayed
+    t =    86.68s Checking existence of `"Back" Button`
+    t =    86.77s Waiting 5.0s for "ep:Lab Show S01E02.mp4" Button to exist
+    t =    87.81s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E02.mp4" Button`
+    t =    87.81s         Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+    t =    88.03s Find the "ep:Lab Show S01E02.mp4" Button
+    t =    88.21s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 572.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (120.0, 572.3) with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    88.21s     Wait for dev.silentneo.glassplayer to idle
+    t =    88.22s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.39s     Check for interrupting elements affecting "Folio" Application
+    t =    88.47s     Synthesize event
+    t =    88.48s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.54s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.65s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.71s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.80s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    89.25s     Wait for dev.silentneo.glassplayer to idle
+    t =    92.27s Checking existence of `"Back" Button`
+    t =    93.26s Checking existence of `"Close player" Button`
+SWIPEROW 5 (60,0) → no playback, page stayed
+    t =    93.56s Checking existence of `"Back" Button`
+    t =    93.68s Waiting 5.0s for "ep:Lab Show S01E02.mp4" Button to exist
+    t =    94.74s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E02.mp4" Button`
+    t =    94.75s         Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+    t =    95.02s Find the "ep:Lab Show S01E02.mp4" Button
+    t =    95.18s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 572.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (280.0, 612.3) with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    95.18s     Wait for dev.silentneo.glassplayer to idle
+    t =    95.18s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.23s     Check for interrupting elements affecting "Folio" Application
+    t =    95.34s     Synthesize event
+    t =    95.35s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.41s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.52s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.66s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.92s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    96.70s     Wait for dev.silentneo.glassplayer to idle
+    t =   100.74s Checking existence of `"Back" Button`
+    t =   101.85s Checking existence of `"Close player" Button`
+SWIPEROW 6 (220,40) → no playback, page went back
+SWIPEROW played 0/7, went back 5
+    t =   102.41s Tear Down
+Test Case '-[GlassPlayerUITests.PanelUITests test36SwipeFromEpisodeRow]' passed (106.215 seconds).
+Test Case '-[GlassPlayerUITests.PanelUITests test39TapRightAfterSwipeBack]' started.
+    t =     0.00s Start Test at 2026-10-27 05:49:49.678
+    t =     0.04s Set Up
+QUIESCENCE XCUIApplicationProcess -shouldSkipPreEventQuiescence B16@0:8; XCUIApplicationProcess -shouldSkipPostEventQuiescence B16@0:8; XCUIApplicationProcess -shouldSkipSpindumpInQuiescence B16@0:8; XCUIApplicationProcess -_makeQuiescenceExpectation @16@0:8; XCUIApplicationProcess -waitForQuiescenceIncludingAnimationsIdle:isPreEvent: v24@0:8B16B20 → skipped; XCUIApplicationProcess -waitForQuiescenceIncludingAnimationsIdle:usingActivity:isPreEvent: v28@0:8B16B20B24; XCUIApplicationProcess -_initiateQuiescenceChecksIncludingAnimationsIdle: v20@0:8B16 → skipped; XCUIApplication -_waitForQuiescence v16@0:8; XCUIApplication -_waitForQuiescenceAsPreEvent: v20@0:8B16
+    t =     0.06s Open dev.silentneo.glassplayer
+    t =     0.06s     Launch dev.silentneo.glassplayer
+    t =     0.06s         Terminate dev.silentneo.glassplayer:46594
+2026-10-27 05:49:53.535 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-27 05:49:53.535 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    12.83s         Setting up automation session
+    t =    18.22s Setting device orientation to Portrait
+    t =    18.25s Waiting 25.0s for "Lab Show" StaticText to exist
+    t =    19.31s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =    19.31s         Checking existence of `"Lab Show" StaticText`
+    t =    40.62s Find the "Lab Show" StaticText
+    t =    57.32s Checking existence of `"Back" Button`
+    t =    58.26s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =    58.26s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    58.55s     Check for interrupting elements affecting "Folio" Application
+    t =    59.39s     Synthesize event
+    t =    59.40s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    59.56s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    59.74s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.13s Waiting 6.0s for "Back" Button to exist
+    t =    61.15s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    61.15s         Checking existence of `"Back" Button`
+    t =    65.09s Waiting 5.0s for "ep:Lab Show S01E01.mp4" Button to exist
+    t =    66.12s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E01.mp4" Button`
+    t =    66.13s         Checking existence of `"ep:Lab Show S01E01.mp4" Button`
+    t =    66.51s Find the "ep:Lab Show S01E01.mp4" Button
+AFTERBACK 0 swipe from the episode row at 05:50:56.744
+    t =    67.07s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 460.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (280.0, 460.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    67.07s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.28s     Check for interrupting elements affecting "Folio" Application
+    t =    67.66s     Synthesize event
+    t =    67.70s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.93s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    68.07s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    68.28s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    68.65s         Find the Target Application 'dev.silentneo.glassplayer'
+AFTERBACK 0 tap on the Home row 0.0 s after the swipe, at 05:50:59.036
+    t =    69.36s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =    69.36s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    69.60s     Check for interrupting elements affecting "Folio" Application
+    t =    70.24s     Synthesize event
+    t =    70.33s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    70.57s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    70.67s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    74.09s Checking existence of `"Close player" Button`
+    t =    74.20s Checking existence of `"Back" Button`
+AFTERBACK 0 → no playback, title page open
+    t =    74.29s Checking existence of `"Back" Button`
+    t =    74.36s Tap "Back" Button
+    t =    74.36s     Find the "Back" Button
+    t =    74.45s     Check for interrupting elements affecting "chevron.left" Button
+    t =    74.56s     Synthesize event
+    t =    76.98s Checking existence of `"Back" Button`
+    t =    77.02s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =    77.02s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    77.07s     Check for interrupting elements affecting "Folio" Application
+    t =    77.10s     Synthesize event
+    t =    77.11s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    77.15s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    77.19s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    77.52s Waiting 6.0s for "Back" Button to exist
+    t =    78.59s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    78.59s         Checking existence of `"Back" Button`
+    t =    80.73s Waiting 5.0s for "ep:Lab Show S01E01.mp4" Button to exist
+    t =    81.79s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E01.mp4" Button`
+    t =    81.79s         Checking existence of `"ep:Lab Show S01E01.mp4" Button`
+    t =    81.86s Find the "ep:Lab Show S01E01.mp4" Button
+AFTERBACK 1 swipe from the episode row at 05:51:11.615
+    t =    81.94s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 460.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (280.0, 460.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    81.94s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.02s     Check for interrupting elements affecting "Folio" Application
+    t =    82.10s     Synthesize event
+    t =    82.10s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.16s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.21s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.26s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.32s         Find the Target Application 'dev.silentneo.glassplayer'
+AFTERBACK 1 tap on the Home row 0.2 s after the swipe, at 05:51:12.791
+    t =    83.11s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =    83.11s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    83.42s     Check for interrupting elements affecting "Folio" Application
+    t =    84.04s     Synthesize event
+    t =    84.05s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    84.15s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    84.21s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    87.57s Checking existence of `"Close player" Button`
+    t =    87.68s Checking existence of `"Back" Button`
+AFTERBACK 1 → no playback, title page open
+    t =    87.79s Checking existence of `"Back" Button`
+    t =    87.87s Tap "Back" Button
+    t =    87.87s     Find the "Back" Button
+    t =    87.93s     Check for interrupting elements affecting "chevron.left" Button
+    t =    88.00s     Synthesize event
+    t =    90.34s Checking existence of `"Back" Button`
+    t =    90.41s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =    90.41s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    90.46s     Check for interrupting elements affecting "Folio" Application
+    t =    90.54s     Synthesize event
+    t =    90.55s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    90.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    90.65s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    90.98s Waiting 6.0s for "Back" Button to exist
+    t =    92.01s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    92.01s         Checking existence of `"Back" Button`
+    t =    94.13s Waiting 5.0s for "ep:Lab Show S01E01.mp4" Button to exist
+    t =    95.16s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E01.mp4" Button`
+    t =    95.16s         Checking existence of `"ep:Lab Show S01E01.mp4" Button`
+    t =    95.21s Find the "ep:Lab Show S01E01.mp4" Button
+AFTERBACK 2 swipe from the episode row at 05:51:25.091
+    t =    95.41s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 460.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (280.0, 460.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    95.41s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.49s     Check for interrupting elements affecting "Folio" Application
+    t =    95.55s     Synthesize event
+    t =    95.56s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.64s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.68s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.72s         Find the Target Application 'dev.silentneo.glassplayer'
+AFTERBACK 2 tap on the Home row 0.4 s after the swipe, at 05:51:26.445
+    t =    96.77s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =    96.77s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    97.40s     Check for interrupting elements affecting "Folio" Application
+    t =    97.92s     Synthesize event
+    t =    97.93s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    98.05s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    98.16s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   101.57s Checking existence of `"Close player" Button`
+    t =   101.66s Checking existence of `"Back" Button`
+AFTERBACK 2 → no playback, title page open
+    t =   101.70s Checking existence of `"Back" Button`
+    t =   101.76s Tap "Back" Button
+    t =   101.76s     Find the "Back" Button
+    t =   101.81s     Check for interrupting elements affecting "chevron.left" Button
+    t =   101.87s     Synthesize event
+    t =   104.18s Checking existence of `"Back" Button`
+    t =   104.23s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =   104.24s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   104.27s     Check for interrupting elements affecting "Folio" Application
+    t =   104.30s     Synthesize event
+    t =   104.31s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   104.33s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   104.37s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   104.68s Waiting 6.0s for "Back" Button to exist
+    t =   105.72s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   105.72s         Checking existence of `"Back" Button`
+    t =   107.79s Waiting 5.0s for "ep:Lab Show S01E01.mp4" Button to exist
+    t =   108.82s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E01.mp4" Button`
+    t =   108.82s         Checking existence of `"ep:Lab Show S01E01.mp4" Button`
+    t =   108.87s Find the "ep:Lab Show S01E01.mp4" Button
+AFTERBACK 3 swipe from the episode row at 05:51:38.588
+    t =   108.91s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 460.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (280.0, 460.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =   108.91s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   108.94s     Check for interrupting elements affecting "Folio" Application
+    t =   108.99s     Synthesize event
+    t =   108.99s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   109.02s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   109.05s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   109.08s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   109.12s         Find the Target Application 'dev.silentneo.glassplayer'
+AFTERBACK 3 tap on the Home row 0.7 s after the swipe, at 05:51:40.053
+    t =   110.38s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =   110.38s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   110.50s     Check for interrupting elements affecting "Folio" Application
+    t =   110.58s     Synthesize event
+    t =   110.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   110.67s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   110.72s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   114.06s Checking existence of `"Close player" Button`
+    t =   114.14s Checking existence of `"Back" Button`
+AFTERBACK 3 → no playback, title page open
+    t =   114.19s Checking existence of `"Back" Button`
+    t =   114.26s Tap "Back" Button
+    t =   114.26s     Find the "Back" Button
+    t =   114.37s     Check for interrupting elements affecting "chevron.left" Button
+    t =   114.44s     Synthesize event
+    t =   116.80s Checking existence of `"Back" Button`
+    t =   116.86s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =   116.86s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   116.91s     Check for interrupting elements affecting "Folio" Application
+    t =   116.97s     Synthesize event
+    t =   116.97s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   117.01s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   117.08s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   117.41s Waiting 6.0s for "Back" Button to exist
+    t =   118.44s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   118.44s         Checking existence of `"Back" Button`
+    t =   120.61s Waiting 5.0s for "ep:Lab Show S01E01.mp4" Button to exist
+    t =   121.66s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E01.mp4" Button`
+    t =   121.66s         Checking existence of `"ep:Lab Show S01E01.mp4" Button`
+    t =   121.71s Find the "ep:Lab Show S01E01.mp4" Button
+AFTERBACK 4 swipe from the episode row at 05:51:51.448
+    t =   121.77s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 460.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (280.0, 460.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =   121.77s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   121.82s     Check for interrupting elements affecting "Folio" Application
+    t =   121.86s     Synthesize event
+    t =   121.86s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   121.90s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   121.96s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   121.99s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   122.04s         Find the Target Application 'dev.silentneo.glassplayer'
+AFTERBACK 4 tap on the Home row 1.0 s after the swipe, at 05:51:53.279
+    t =   123.60s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =   123.60s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   123.67s     Check for interrupting elements affecting "Folio" Application
+    t =   123.74s     Synthesize event
+    t =   123.75s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   123.79s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   123.92s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   127.27s Checking existence of `"Close player" Button`
+    t =   127.40s Checking existence of `"Back" Button`
+AFTERBACK 4 → no playback, title page open
+    t =   127.49s Checking existence of `"Back" Button`
+    t =   127.55s Tap "Back" Button
+    t =   127.55s     Find the "Back" Button
+    t =   127.65s     Check for interrupting elements affecting "chevron.left" Button
+    t =   127.74s     Synthesize event
+    t =   130.07s Checking existence of `"Back" Button`
+    t =   130.12s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =   130.12s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   130.17s     Check for interrupting elements affecting "Folio" Application
+    t =   130.21s     Synthesize event
+    t =   130.22s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   130.26s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   130.31s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   130.68s Waiting 6.0s for "Back" Button to exist
+    t =   131.74s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   131.75s         Checking existence of `"Back" Button`
+    t =   133.89s Waiting 5.0s for "ep:Lab Show S01E01.mp4" Button to exist
+    t =   134.92s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E01.mp4" Button`
+    t =   134.92s         Checking existence of `"ep:Lab Show S01E01.mp4" Button`
+    t =   135.03s Find the "ep:Lab Show S01E01.mp4" Button
+AFTERBACK 5 swipe from the episode row at 05:52:04.778
+    t =   135.10s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 460.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (280.0, 460.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =   135.10s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   135.18s     Check for interrupting elements affecting "Folio" Application
+    t =   135.25s     Synthesize event
+    t =   135.25s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   135.31s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   135.37s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   135.42s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   135.48s         Find the Target Application 'dev.silentneo.glassplayer'
+AFTERBACK 5 tap on the Home row 1.4 s after the swipe, at 05:52:07.146
+    t =   137.47s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (104.8, 222.0)
+    t =   137.47s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   137.55s     Check for interrupting elements affecting "Folio" Application
+    t =   137.63s     Synthesize event
+    t =   137.64s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   137.72s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   137.81s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   141.17s Checking existence of `"Close player" Button`
+    t =   141.49s Checking existence of `"Back" Button`
+AFTERBACK 5 → no playback, title page open
+    t =   141.85s Checking existence of `"Back" Button`
+    t =   141.97s Tap "Back" Button
+    t =   141.97s     Find the "Back" Button
+    t =   142.05s     Check for interrupting elements affecting "chevron.left" Button
+    t =   142.19s     Synthesize event
+AFTERBACK played 0/6 (taps sent without waiting)
+    t =   144.58s Tear Down
+Test Case '-[GlassPlayerUITests.PanelUITests test39TapRightAfterSwipeBack]' passed (145.079 seconds).
+Test Case '-[GlassPlayerUITests.PanelUITests test40EpisodeRowSwipeWatched]' started.
+    t =     0.00s Start Test at 2026-10-27 05:52:14.758
+    t =     0.06s Set Up
+    t =     0.06s Open dev.silentneo.glassplayer
+    t =     0.06s     Launch dev.silentneo.glassplayer
+    t =     0.06s         Terminate dev.silentneo.glassplayer:49516
+2026-10-27 05:52:15.846 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-27 05:52:15.846 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.82s         Setting up automation session
+    t =    11.16s Setting device orientation to Portrait
+    t =    11.22s Waiting 25.0s for "Lab Show" StaticText to exist
+    t =    12.29s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =    12.30s         Checking existence of `"Lab Show" StaticText`
+    t =    16.22s Tap "Lab Show" StaticText
+    t =    16.22s     Find the "Lab Show" StaticText
+    t =    17.69s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    18.21s     Synthesize event
+    t =    18.71s Waiting 6.0s for "Back" Button to exist
+    t =    19.78s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    19.78s         Checking existence of `"Back" Button`
+    t =    22.82s Waiting 5.0s for "ep:Lab Show S01E02.mp4" Button to exist
+    t =    23.84s     Checking `Expect predicate `existsNoRetry == 1` for object "ep:Lab Show S01E02.mp4" Button`
+    t =    23.84s         Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+    t =    24.13s Find the "ep:Lab Show S01E02.mp4" Button
+    t =    24.50s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (352.0, 572.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (232.0, 572.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    24.50s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    24.68s     Check for interrupting elements affecting "Folio" Application
+    t =    25.00s     Synthesize event
+    t =    25.05s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.27s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.64s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.98s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.20s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    27.78s Get all elements bound by index for: Elements matching predicate '"Watched" IN identifiers'
+    t =    28.10s Find the "Watched" Button
+    t =    28.47s Find the "Watched" Button
+    t =    28.89s Get all elements bound by index for: Elements matching predicate '"Delete" IN identifiers'
+    t =    29.19s Find the "Delete" Button
+    t =    29.96s Find the "Delete" Button
+ROWSWIPE revealed: Watched Delete=true
+    t =    30.56s Get all elements bound by index for: Elements matching predicate '"Watched" IN identifiers'
+    t =    30.96s Find the "Watched" Button
+    t =    31.61s Find the "Watched" Button
+    t =    31.91s Tap "Watched" Button
+    t =    31.91s     Find the "Watched" Button
+    t =    32.58s     Check for interrupting elements affecting "Watched" Button
+    t =    32.71s     Synthesize event
+    t =    34.10s Find the "ep:Lab Show S01E02.mp4" Button
+    t =    34.41s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (352.0, 572.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (232.0, 572.3) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    34.41s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.57s     Check for interrupting elements affecting "Folio" Application
+    t =    35.00s     Synthesize event
+    t =    35.02s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    35.19s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    35.62s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    35.84s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    36.44s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    38.00s Get all elements bound by index for: Elements matching predicate '"Unwatched" IN identifiers'
+    t =    38.40s Find the "Unwatched" Button
+ROWSWIPE after tapping Watched: Unwatched shown=true
+    t =    38.79s Get all elements bound by index for: Elements matching predicate '"Delete" IN identifiers'
+    t =    39.12s Find the "Delete" Button
+    t =    39.75s Find the "Delete" Button
+    t =    40.49s Tap "Delete" Button
+    t =    40.49s     Find the "Delete" Button
+    t =    40.82s     Check for interrupting elements affecting "Delete" Button
+    t =    40.96s     Synthesize event
+    t =    42.31s Checking existence of `StaticText (First Match)`
+ROWSWIPE Delete asks: true
+    t =    48.34s Checking existence of `StaticText (First Match)`
+    t =    49.47s Tear Down
+Test Case '-[GlassPlayerUITests.PanelUITests test40EpisodeRowSwipeWatched]' passed (50.298 seconds).
+Test Case '-[GlassPlayerUITests.PanelUITests test44SwipeBackKeepsPageButtons]' started.
+    t =     0.00s Start Test at 2026-10-27 05:53:05.057
+    t =     0.05s Set Up
+    t =     0.06s Open dev.silentneo.glassplayer
+    t =     0.06s     Launch dev.silentneo.glassplayer
+    t =     0.06s         Terminate dev.silentneo.glassplayer:52666
+2026-10-27 05:53:06.235 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-27 05:53:06.236 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.66s         Setting up automation session
+    t =     8.76s Setting device orientation to Portrait
+    t =     8.85s Waiting 25.0s for "Lab Show" StaticText to exist
+    t =     9.91s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =     9.91s         Checking existence of `"Lab Show" StaticText`
+    t =    16.21s Find the Target Application 'dev.silentneo.glassplayer'
+    t =    16.26s Find the "Lab Show" StaticText
+    t =    16.58s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    16.58s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    16.61s     Check for interrupting elements affecting "Folio" Application
+    t =    16.67s     Synthesize event
+    t =    16.67s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    16.70s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    16.76s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    17.09s Waiting 6.0s for "Back" Button to exist
+    t =    18.11s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    18.11s         Checking existence of `"Back" Button`
+    t =    20.37s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (120.0, 541.9) with velocity of 250.00 pixels per second, and then hold for 0.4 seconds 
+    t =    20.37s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.47s     Check for interrupting elements affecting "Folio" Application
+    t =    20.53s     Synthesize event
+    t =    20.53s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.57s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.60s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.65s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.68s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    23.64s Checking existence of `"Back" Button`
+    t =    23.72s Checking existence of `"More" Button`
+    t =    23.84s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+LETGO 0 from x=60 by 60 pt → page stayed, Back true, More true
+    t =    24.00s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (120.0, 541.9) with velocity of 250.00 pixels per second, and then hold for 0.4 seconds 
+    t =    24.00s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    24.35s     Check for interrupting elements affecting "Folio" Application
+    t =    24.60s     Synthesize event
+    t =    24.61s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    24.67s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    24.83s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    24.93s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.08s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    28.07s Checking existence of `"Back" Button`
+    t =    28.96s Checking existence of `"More" Button`
+    t =    29.16s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+LETGO 1 from x=60 by 60 pt → page stayed, Back true, More true
+    t =    29.51s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (20.0, 437.0) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (100.0, 437.0) with velocity of 250.00 pixels per second, and then hold for 0.4 seconds 
+    t =    29.51s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    29.64s     Check for interrupting elements affecting "Folio" Application
+    t =    29.79s     Synthesize event
+    t =    29.81s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    29.93s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.01s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.05s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.11s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    33.14s Checking existence of `"Back" Button`
+    t =    34.05s Checking existence of `"More" Button`
+    t =    35.06s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+LETGO 2 from x=20 by 80 pt → page stayed, Back true, More true
+    t =    35.28s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (8.0, 393.3) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (78.0, 393.3) with velocity of 250.00 pixels per second, and then hold for 0.4 seconds 
+    t =    35.28s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    35.33s     Check for interrupting elements affecting "Folio" Application
+    t =    35.43s     Synthesize event
+    t =    35.45s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    35.51s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    35.66s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    35.74s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    35.80s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    38.84s Checking existence of `"Back" Button`
+    t =    39.07s Checking existence of `"More" Button`
+    t =    39.22s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+LETGO 3 from x=8 by 70 pt → page stayed, Back true, More true
+    t =    39.32s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (120.0, 611.8) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (170.0, 611.8) with velocity of 250.00 pixels per second, and then hold for 0.4 seconds 
+    t =    39.32s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    39.38s     Check for interrupting elements affecting "Folio" Application
+    t =    39.48s     Synthesize event
+    t =    39.49s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    39.55s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    39.61s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    39.68s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    39.74s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    42.67s Checking existence of `"Back" Button`
+    t =    43.03s Checking existence of `"More" Button`
+    t =    43.24s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+LETGO 4 from x=120 by 50 pt → page stayed, Back true, More true
+    t =    43.52s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (120.0, 541.9) with velocity of 250.00 pixels per second, and then hold for 0.4 seconds 
+    t =    43.52s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    43.66s     Check for interrupting elements affecting "Folio" Application
+    t =    43.94s     Synthesize event
+    t =    43.98s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    44.18s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    44.30s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    44.49s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    44.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    47.55s Checking existence of `"Back" Button`
+    t =    48.89s Checking existence of `"More" Button`
+    t =    50.26s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+LETGO 5 from x=60 by 60 pt → page stayed, Back true, More true
+LETGO buttons lost 0/6
+    t =    50.39s Checking existence of `"Back" Button`
+    t =    50.47s Tap "Back" Button[0.15, 0.50]
+    t =    50.47s     Find the "Back" Button
+    t =    50.75s     Check for interrupting elements affecting "chevron.left" Button
+    t =    50.91s     Synthesize event
+    t =    50.92s         Find the "chevron.left" Button
+    t =    51.15s         Find the "chevron.left" Button
+    t =    51.35s         Find the "chevron.left" Button
+    t =    53.81s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+BACKEDGE tap on the circle's left part → went back
+    t =    53.95s Find the "Lab Show" StaticText
+    t =    54.10s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    54.10s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    54.15s     Check for interrupting elements affecting "Folio" Application
+    t =    54.20s     Synthesize event
+    t =    54.21s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    54.25s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    55.17s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    55.60s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (30.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (330.0, 541.9) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    55.60s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    56.10s     Check for interrupting elements affecting "Folio" Application
+    t =    56.29s     Synthesize event
+    t =    56.30s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    56.37s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    56.51s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    56.63s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    56.75s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.54s Checking existence of `"Back" Button`
+    t =    60.68s Checking existence of `"More" Button`
+    t =    60.76s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+QUICKBACK 0 after 0 ms → Home, Back false, More false
+    t =    60.84s Find the "Lab Show" StaticText
+    t =    61.32s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    61.32s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    61.39s     Check for interrupting elements affecting "Folio" Application
+    t =    61.51s     Synthesize event
+    t =    61.52s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    61.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    61.63s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    61.97s Waiting 6.0s for "Back" Button to exist
+    t =    63.05s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    63.05s         Checking existence of `"Back" Button`
+    t =    64.23s Tap "Back" Button
+    t =    64.23s     Find the "Back" Button
+    t =    64.46s     Check for interrupting elements affecting "chevron.left" Button
+    t =    64.59s     Synthesize event
+    t =    67.05s Find the "Lab Show" StaticText
+    t =    67.51s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    67.51s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.62s     Check for interrupting elements affecting "Folio" Application
+    t =    67.73s     Synthesize event
+    t =    67.75s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.87s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.96s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    68.53s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (30.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (330.0, 541.9) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    68.53s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    68.93s     Check for interrupting elements affecting "Folio" Application
+    t =    69.49s     Synthesize event
+    t =    69.53s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    69.77s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    70.00s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    70.14s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    70.28s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    74.23s Checking existence of `"Back" Button`
+    t =    74.40s Checking existence of `"More" Button`
+    t =    74.52s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+QUICKBACK 1 after 150 ms → Home, Back false, More false
+    t =    74.71s Find the "Lab Show" StaticText
+    t =    75.36s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    75.36s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    75.42s     Check for interrupting elements affecting "Folio" Application
+    t =    75.48s     Synthesize event
+    t =    75.48s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    75.53s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    75.63s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    75.97s Waiting 6.0s for "Back" Button to exist
+    t =    77.04s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    77.04s         Checking existence of `"Back" Button`
+    t =    78.41s Tap "Back" Button
+    t =    78.41s     Find the "Back" Button
+    t =    78.67s     Check for interrupting elements affecting "chevron.left" Button
+    t =    79.02s     Synthesize event
+    t =    81.49s Find the "Lab Show" StaticText
+    t =    82.16s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    82.16s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.29s     Check for interrupting elements affecting "Folio" Application
+    t =    82.46s     Synthesize event
+    t =    82.47s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.51s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    82.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    83.26s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (30.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (330.0, 541.9) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    83.26s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    83.49s     Check for interrupting elements affecting "Folio" Application
+    t =    83.81s     Synthesize event
+    t =    83.83s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    83.90s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    84.06s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    84.12s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    84.21s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    87.99s Checking existence of `"Back" Button`
+    t =    88.10s Checking existence of `"More" Button`
+    t =    88.19s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+QUICKBACK 2 after 300 ms → Home, Back false, More false
+    t =    88.32s Find the "Lab Show" StaticText
+    t =    88.85s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    88.85s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    88.90s     Check for interrupting elements affecting "Folio" Application
+    t =    88.97s     Synthesize event
+    t =    88.98s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    89.01s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    89.08s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    89.43s Waiting 6.0s for "Back" Button to exist
+    t =    90.46s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    90.46s         Checking existence of `"Back" Button`
+    t =    92.61s Tap "Back" Button
+    t =    92.61s     Find the "Back" Button
+    t =    92.89s     Check for interrupting elements affecting "chevron.left" Button
+    t =    93.23s     Synthesize event
+    t =    95.58s Find the "Lab Show" StaticText
+    t =    95.77s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =    95.77s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.86s     Check for interrupting elements affecting "Folio" Application
+    t =    95.91s     Synthesize event
+    t =    95.92s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    95.99s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    96.05s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    96.91s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (30.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (330.0, 541.9) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =    96.91s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    97.14s     Check for interrupting elements affecting "Folio" Application
+    t =    97.35s     Synthesize event
+    t =    97.36s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    97.42s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    97.49s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    97.55s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    97.64s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   101.36s Checking existence of `"Back" Button`
+    t =   101.43s Checking existence of `"More" Button`
+    t =   101.65s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+QUICKBACK 3 after 500 ms → Home, Back false, More false
+    t =   101.71s Find the "Lab Show" StaticText
+    t =   102.43s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =   102.43s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   102.52s     Check for interrupting elements affecting "Folio" Application
+    t =   102.63s     Synthesize event
+    t =   102.65s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   102.78s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   102.84s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   103.22s Waiting 6.0s for "Back" Button to exist
+    t =   104.28s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   104.28s         Checking existence of `"Back" Button`
+    t =   105.40s Tap "Back" Button
+    t =   105.40s     Find the "Back" Button
+    t =   105.48s     Check for interrupting elements affecting "chevron.left" Button
+    t =   105.56s     Synthesize event
+    t =   107.89s Find the "Lab Show" StaticText
+    t =   109.85s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =   109.85s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   109.94s     Check for interrupting elements affecting "Folio" Application
+    t =   110.09s     Synthesize event
+    t =   110.09s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   110.16s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   110.23s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   111.57s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (30.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (330.0, 541.9) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =   111.57s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   112.24s     Check for interrupting elements affecting "Folio" Application
+    t =   113.54s     Synthesize event
+    t =   113.56s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   113.73s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   113.90s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   114.02s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   114.18s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   117.87s Checking existence of `"Back" Button`
+    t =   117.95s Checking existence of `"More" Button`
+    t =   118.00s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+QUICKBACK 4 after 800 ms → Home, Back false, More false
+    t =   118.06s Find the "Lab Show" StaticText
+    t =   118.35s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =   118.35s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   118.38s     Check for interrupting elements affecting "Folio" Application
+    t =   118.43s     Synthesize event
+    t =   118.43s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   118.46s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   118.49s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   118.80s Waiting 6.0s for "Back" Button to exist
+    t =   119.85s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   119.85s         Checking existence of `"Back" Button`
+    t =   121.08s Tap "Back" Button
+    t =   121.08s     Find the "Back" Button
+    t =   121.21s     Check for interrupting elements affecting "chevron.left" Button
+    t =   121.44s     Synthesize event
+    t =   123.77s Find the "Lab Show" StaticText
+    t =   124.18s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =   124.18s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   124.21s     Check for interrupting elements affecting "Folio" Application
+    t =   124.27s     Synthesize event
+    t =   124.27s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   124.30s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   124.34s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   125.89s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (30.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (330.0, 541.9) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =   125.89s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   125.99s     Check for interrupting elements affecting "Folio" Application
+    t =   126.08s     Synthesize event
+    t =   126.09s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   126.12s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   126.22s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   126.27s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   126.34s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   130.04s Checking existence of `"Back" Button`
+    t =   130.11s Checking existence of `"More" Button`
+    t =   130.16s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+QUICKBACK 5 after 1200 ms → Home, Back false, More false
+    t =   130.23s Find the "Lab Show" StaticText
+    t =   130.42s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =   130.42s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   130.46s     Check for interrupting elements affecting "Folio" Application
+    t =   130.50s     Synthesize event
+    t =   130.51s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   130.55s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   130.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   130.90s Waiting 6.0s for "Back" Button to exist
+    t =   131.96s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   131.96s         Checking existence of `"Back" Button`
+    t =   133.18s Tap "Back" Button
+    t =   133.18s     Find the "Back" Button
+    t =   133.40s     Check for interrupting elements affecting "chevron.left" Button
+    t =   133.56s     Synthesize event
+    t =   135.97s Find the "Lab Show" StaticText
+    t =   136.44s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =   136.44s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   136.48s     Check for interrupting elements affecting "Folio" Application
+    t =   136.60s     Synthesize event
+    t =   136.60s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   136.68s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   136.73s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   137.10s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (30.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (330.0, 541.9) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =   137.10s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   137.30s     Check for interrupting elements affecting "Folio" Application
+    t =   137.57s     Synthesize event
+    t =   137.58s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   137.86s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   138.15s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   138.26s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   138.42s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   142.24s Checking existence of `"Back" Button`
+    t =   142.40s Checking existence of `"More" Button`
+    t =   142.64s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+QUICKBACK 6 after 0 ms → Home, Back false, More false
+    t =   142.98s Find the "Lab Show" StaticText
+    t =   143.88s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =   143.88s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   143.94s     Check for interrupting elements affecting "Folio" Application
+    t =   144.02s     Synthesize event
+    t =   144.03s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   144.09s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   144.15s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   144.52s Waiting 6.0s for "Back" Button to exist
+    t =   145.62s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   145.62s         Checking existence of `"Back" Button`
+    t =   147.19s Tap "Back" Button
+    t =   147.19s     Find the "Back" Button
+    t =   147.68s     Check for interrupting elements affecting "chevron.left" Button
+    t =   147.83s     Synthesize event
+    t =   150.23s Find the "Lab Show" StaticText
+    t =   152.05s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =   152.05s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   152.17s     Check for interrupting elements affecting "Folio" Application
+    t =   152.28s     Synthesize event
+    t =   152.29s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   152.35s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   152.40s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   153.08s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (30.0, 541.9) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (330.0, 541.9) with velocity of 750.00 pixels per second, and then hold for 0.0 seconds 
+    t =   153.08s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   155.00s     Check for interrupting elements affecting "Folio" Application
+    t =   155.74s     Synthesize event
+    t =   155.78s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   155.85s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   155.97s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   156.05s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   156.14s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   159.87s Checking existence of `"Back" Button`
+    t =   159.97s Checking existence of `"More" Button`
+    t =   160.11s Checking existence of `"ep:Lab Show S01E02.mp4" Button`
+QUICKBACK 7 after 300 ms → Home, Back false, More false
+    t =   160.21s Find the "Lab Show" StaticText
+    t =   160.60s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (54.8, 388.7)
+    t =   160.60s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   160.72s     Check for interrupting elements affecting "Folio" Application
+    t =   160.80s     Synthesize event
+    t =   160.85s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   160.92s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   161.11s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   161.50s Waiting 6.0s for "Back" Button to exist
+    t =   162.56s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   162.56s         Checking existence of `"Back" Button`
+    t =   163.78s Tap "Back" Button
+    t =   163.78s     Find the "Back" Button
+    t =   163.94s     Check for interrupting elements affecting "chevron.left" Button
+    t =   164.22s     Synthesize event
+QUICKBACK left over 0/8, Home unresponsive 0
+    t =   166.62s Tear Down
+Test Case '-[GlassPlayerUITests.PanelUITests test44SwipeBackKeepsPageButtons]' passed (167.421 seconds).
+Test Case '-[GlassPlayerUITests.PanelUITests test45SettingsLetGoSwipe]' started.
+    t =     0.00s Start Test at 2026-10-27 05:55:52.479
+    t =     0.06s Set Up
+    t =     0.07s Open dev.silentneo.glassplayer
+    t =     0.07s     Launch dev.silentneo.glassplayer
+    t =     0.07s         Terminate dev.silentneo.glassplayer:53516
+2026-10-27 05:55:53.676 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-27 05:55:53.676 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.29s         Setting up automation session
+    t =    10.82s Setting device orientation to Portrait
+    t =    10.84s Waiting 25.0s for "Settings" Button to exist
+    t =    11.92s     Checking `Expect predicate `existsNoRetry == 1` for object "Settings" Button`
+    t =    11.92s         Checking existence of `"Settings" Button`
+    t =    15.71s Tap "Settings" Button
+    t =    15.71s     Find the "Settings" Button
+    t =    16.01s     Check for interrupting elements affecting "gearshape" Button
+    t =    16.11s     Synthesize event
+    t =    16.55s Waiting 6.0s for "Back" Button to exist
+    t =    17.59s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    17.59s         Checking existence of `"Back" Button`
+    t =    20.42s Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.52s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 524.4) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (120.0, 524.4) with velocity of 250.00 pixels per second, and then hold for 0.4 seconds 
+    t =    20.52s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.61s     Check for interrupting elements affecting "Folio" Application
+    t =    20.78s     Synthesize event
+    t =    21.10s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    21.32s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    21.90s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    22.34s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    22.43s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    25.46s Checking existence of `"Back" Button`
+    t =    25.66s Checking existence of `"Settings" StaticText`
+    t =    26.04s Checking existence of `"Playback" StaticText`
+SETTINGSLETGO 0 → page stayed, Back true, title true
+    t =    26.24s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (8.0, 524.4) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (78.0, 524.4) with velocity of 250.00 pixels per second, and then hold for 0.4 seconds 
+    t =    26.24s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.34s     Check for interrupting elements affecting "Folio" Application
+    t =    26.47s     Synthesize event
+    t =    26.48s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.57s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.67s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.76s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    26.86s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    29.88s Checking existence of `"Back" Button`
+    t =    30.06s Checking existence of `"Settings" StaticText`
+    t =    30.18s Checking existence of `"Playback" StaticText`
+SETTINGSLETGO 1 → page stayed, Back true, title true
+    t =    30.33s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (120.0, 524.4) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (170.0, 524.4) with velocity of 250.00 pixels per second, and then hold for 0.4 seconds 
+    t =    30.34s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.44s     Check for interrupting elements affecting "Folio" Application
+    t =    30.56s     Synthesize event
+    t =    30.57s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.66s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.72s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.83s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    30.92s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    33.89s Checking existence of `"Back" Button`
+    t =    34.06s Checking existence of `"Settings" StaticText`
+    t =    34.17s Checking existence of `"Playback" StaticText`
+SETTINGSLETGO 2 → page stayed, Back true, title true
+    t =    34.31s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (60.0, 524.4) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (120.0, 524.4) with velocity of 250.00 pixels per second, and then hold for 0.4 seconds 
+    t =    34.31s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.41s     Check for interrupting elements affecting "Folio" Application
+    t =    34.51s     Synthesize event
+    t =    34.52s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.63s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.73s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.84s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.96s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    37.99s Checking existence of `"Back" Button`
+    t =    38.18s Checking existence of `"Settings" StaticText`
+    t =    38.30s Checking existence of `"Playback" StaticText`
+SETTINGSLETGO 3 → page stayed, Back true, title true
+SETTINGSLETGO lost 0
+    t =    38.42s Tear Down
+Test Case '-[GlassPlayerUITests.PanelUITests test45SettingsLetGoSwipe]' passed (39.225 seconds).
+Test Case '-[GlassPlayerUITests.PanelUITests test8TitlePageBack]' started.
+    t =     0.00s Start Test at 2026-10-27 05:56:31.704
+    t =     0.04s Set Up
+    t =     0.05s Open dev.silentneo.glassplayer
+    t =     0.05s     Launch dev.silentneo.glassplayer
+    t =     0.05s         Terminate dev.silentneo.glassplayer:57552
+2026-10-27 05:56:32.799 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-27 05:56:32.800 xcodebuild[41152:103796] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.18s         Setting up automation session
+    t =    10.94s Setting device orientation to Portrait
+    t =    10.96s Waiting 25.0s for "Lab Show" StaticText to exist
+    t =    12.05s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =    12.05s         Checking existence of `"Lab Show" StaticText`
+    t =    15.63s Tap "Lab Show" StaticText
+    t =    15.64s     Find the "Lab Show" StaticText
+    t =    15.88s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    15.97s     Synthesize event
+    t =    16.36s Waiting 6.0s for "Back" Button to exist
+    t =    17.41s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    17.42s         Checking existence of `"Back" Button`
+    t =    18.75s Find the "Back" Button
+    t =    19.26s Find the "chevron.left" Button
+BACK frame (16.0, 62.0, 44.0, 44.0) hittable=true
+    t =    20.20s Tap "chevron.left" Button
+    t =    20.20s     Find the "chevron.left" Button
+    t =    20.45s     Check for interrupting elements affecting "chevron.left" Button
+    t =    20.72s     Synthesize event
+    t =    23.04s Checking existence of `"Back" Button`
+    t =    23.11s Checking existence of `"Back" Button`
+    t =    23.17s Checking existence of `"Back" Button`
+    t =    23.22s Tap "Lab Show" StaticText
+    t =    23.22s     Find the "Lab Show" StaticText
+    t =    23.61s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    23.71s     Synthesize event
+    t =    24.02s Waiting 6.0s for "chevron.left" Button to exist
+    t =    25.06s     Checking `Expect predicate `existsNoRetry == 1` for object "chevron.left" Button`
+    t =    25.07s         Checking existence of `"chevron.left" Button`
+    t =    26.22s Waiting 5.0s for "heroPlay" Any to exist
+    t =    27.28s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    27.28s         Checking existence of `"heroPlay" Any`
+    t =    27.37s Tap "heroPlay" Any
+    t =    27.37s     Find the "heroPlay" Any
+    t =    27.48s     Check for interrupting elements affecting "heroPlay" Button
+    t =    27.53s     Synthesize event
+    t =    27.85s Waiting 20.0s for "Close player" Button to exist
+    t =    28.87s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    28.87s         Checking existence of `"Close player" Button`
+    t =    29.81s             Interface orientation changed to Landscape Right
+<unknown>:0: warning: -[GlassPlayerUITests.PanelUITests test8TitlePageBack] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    44.17s Tap "Close player" Button
+    t =    44.18s     Find the "Close player" Button
+    t =    44.83s     Check for interrupting elements affecting "xmark" Button
+    t =    45.00s     Synthesize event
+    t =    49.36s Waiting 6.0s for "chevron.left" Button to exist
+    t =    49.36s     Interface orientation changed to Portrait
+    t =    50.36s     Checking `Expect predicate `existsNoRetry == 1` for object "chevron.left" Button`
+    t =    50.36s         Checking existence of `"chevron.left" Button`
+    t =    50.47s Tap "chevron.left" Button
+    t =    50.47s     Find the "chevron.left" Button
+    t =    50.54s     Check for interrupting elements affecting "chevron.left" Button
+    t =    50.60s     Synthesize event
+    t =    52.93s Checking existence of `"Back" Button`
+    t =    53.04s Checking existence of `"Back" Button`
+    t =    53.13s Waiting 4.0s for "Lab Show" StaticText to exist
+    t =    54.18s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =    54.18s         Checking existence of `"Lab Show" StaticText`
+    t =    54.47s Tap "Lab Show" StaticText
+    t =    54.47s     Find the "Lab Show" StaticText
+    t =    54.65s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    54.74s     Synthesize event
+    t =    55.06s Waiting 6.0s for "Back" Button to exist
+    t =    56.11s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    56.12s         Checking existence of `"Back" Button`
+    t =    57.22s Find the Target Application 'dev.silentneo.glassplayer'
+    t =    57.33s Find the Target Application 'dev.silentneo.glassplayer'
+    t =    57.39s Find the Target Application 'dev.silentneo.glassplayer'
+    t =    57.48s Press Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (2.0, 262.2) for 0.0 seconds, then drag to Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (321.6, 262.2) with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    57.48s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    57.52s     Check for interrupting elements affecting "Folio" Application
+    t =    57.62s     Synthesize event
+    t =    57.63s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    57.68s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    57.74s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    57.78s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    57.89s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    60.95s Checking existence of `"Back" Button`
+    t =    61.01s Checking existence of `"Back" Button`
+    t =    61.06s Tear Down
+Test Case '-[GlassPlayerUITests.PanelUITests test8TitlePageBack]' passed (62.678 seconds).
+Test Suite 'PanelUITests' passed at 2026-10-27 05:57:34.382.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 709.857 (709.872) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-27 05:57:34.383.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 709.857 (709.873) seconds
+Test Suite 'Selected tests' passed at 2026-10-27 05:57:34.383.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 709.857 (709.876) seconds
+2026-10-27 05:58:14.464 xcodebuild[41152:103796] [MT] IDETestOperationsObserverDebug: 766.678 elapsed -- Testing started completed.
+2026-10-27 05:58:14.464 xcodebuild[41152:103796] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-27 05:58:14.464 xcodebuild[41152:103796] [MT] IDETestOperationsObserverDebug: 766.678 sec, +766.678 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.27_05-45-27-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
