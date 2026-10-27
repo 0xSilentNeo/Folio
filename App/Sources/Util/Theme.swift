@@ -264,22 +264,65 @@ extension EnvironmentValues {
     }
 }
 
+/// Whether a page is going away, readable at the moment a tap's action runs.
+///
+/// A class, not a value: the `pageLeaving` environment value is a copy taken
+/// when the page's view was last updated, so an action closure can read a
+/// stale `false` after the page started going back (27 Oct log, 19:12:55:
+/// "page leaving: taps off", then 114 ms later an episode row played). This
+/// is set synchronously — by the page's Back button before it asks to go
+/// back, and by UIKit's viewWillDisappear — and read when the action runs.
+@MainActor
+final class PageLife {
+    var leaving = false
+    /// The page's own controller (the navigation controller's child).
+    weak var page: UIViewController?
+    var pageView: UIView? { page?.view }
+
+    /// Going back now: no more touches, no more actions. Should the page not
+    /// actually go (a request to go back during another move can be dropped),
+    /// it takes touches again after 1.2 s.
+    func leave() {
+        leaving = true
+        pageView?.isUserInteractionEnabled = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            guard let self, self.leaving, let page = self.page, let nav = page.navigationController,
+                  nav.topViewController === page, nav.transitionCoordinator == nil else { return }
+            dlog("nav", "page: going back didn't happen; it takes touches again")
+            self.leaving = false
+            page.view.isUserInteractionEnabled = true
+        }
+    }
+}
+
+private struct PageLifeKey: EnvironmentKey { static let defaultValue: PageLife? = nil }
+extension EnvironmentValues {
+    var pageLife: PageLife? {
+        get { self[PageLifeKey.self] }
+        set { self[PageLifeKey.self] = newValue }
+    }
+}
+
 private struct LeaveGuard: ViewModifier {
     @State private var leaving = false
+    @State private var life = PageLife()
     func body(content: Content) -> some View {
         content
             .allowsHitTesting(!leaving)
             .environment(\.pageLeaving, leaving)
-            .background(LeavingProbe { leaving = $0 }.frame(width: 0, height: 0).accessibilityHidden(true))
+            .environment(\.pageLife, life)
+            .background(LeavingProbe(life: life) { leaving = $0 }.frame(width: 0, height: 0).accessibilityHidden(true))
     }
 }
 
 /// A child view controller of the page's hosting controller: it receives the
 /// page's appearance callbacks (automatic forwarding).
 private struct LeavingProbe: UIViewControllerRepresentable {
+    let life: PageLife
     let onChange: (Bool) -> Void
     final class Probe: UIViewController {
         var onChange: ((Bool) -> Void)?
+        var life: PageLife?
         override func loadView() { view = UIView(); view.isUserInteractionEnabled = false }
         override func viewWillAppear(_ animated: Bool) {
             super.viewWillAppear(animated)
@@ -308,8 +351,8 @@ private struct LeavingProbe: UIViewControllerRepresentable {
             }
         }
     }
-    func makeUIViewController(context: Context) -> Probe { let p = Probe(); p.onChange = onChange; return p }
-    func updateUIViewController(_ vc: Probe, context: Context) { vc.onChange = onChange }
+    func makeUIViewController(context: Context) -> Probe { let p = Probe(); p.onChange = onChange; p.life = life; return p }
+    func updateUIViewController(_ vc: Probe, context: Context) { vc.onChange = onChange; vc.life = life }
 }
 
 /// Lab (`-popTouchLab`): from the moment a page starts going back, where a
@@ -368,9 +411,11 @@ extension LeavingProbe.Probe {
     /// view objects that … have disabled user interactions" — so the tap goes
     /// to the view underneath: Home, which then opens what you tapped.
     func setPageTouchable(_ on: Bool) {
+        life?.leaving = !on
         var vc: UIViewController = self
         while let p = vc.parent, !(p is UINavigationController) { vc = p }
         guard vc !== self, vc.parent is UINavigationController else { return }
+        life?.page = vc
         if vc.view.isUserInteractionEnabled != on { vc.view.isUserInteractionEnabled = on }
     }
 }
