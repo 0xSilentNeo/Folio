@@ -52,12 +52,26 @@ struct VideoSurface: UIViewRepresentable {
             self.ui = ui
         }
 
+        /// While a menu is open: a tap closes it at once. The single tap below
+        /// waits for the double tap to fail first (~0.35 s), and a tap to the
+        /// right of a menu lands here, not on the player's tap catcher — the
+        /// 27 Oct lab measured 350–410 ms there against 0–1 ms to the left
+        /// (taps in the right-hand safe-area strip reach this view).
+        private var panelTap: UITapGestureRecognizer?
+        private var tapGestures: [UIGestureRecognizer] = []
+
         func attach(to v: UIView) {
             view = v
             let double = UITapGestureRecognizer(target: self, action: #selector(doubleTap(_:)))
             double.numberOfTapsRequired = 2
             let single = UITapGestureRecognizer(target: self, action: #selector(singleTap(_:)))
             single.require(toFail: double)
+            let closer = UITapGestureRecognizer(target: self, action: #selector(closePanelTap(_:)))
+            closer.delegate = self
+            double.delegate = self
+            single.delegate = self
+            panelTap = closer
+            tapGestures = [double, single]
             let pan = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
             pan.maximumNumberOfTouches = 1
             pan.delegate = self
@@ -66,8 +80,22 @@ struct VideoSurface: UIViewRepresentable {
             long.allowableMovement = 12
             long.delegate = self
             let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinch(_:)))
-            let all: [UIGestureRecognizer] = [double, single, pan, long, pinch]
+            let all: [UIGestureRecognizer] = [closer, double, single, pan, long, pinch]
             all.forEach { v.addGestureRecognizer($0) }
+        }
+
+        /// The menu closer acts only while a menu is open; the usual taps only
+        /// while none is.
+        func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -> Bool {
+            if g === panelTap { return ui.panel != nil }
+            if tapGestures.contains(where: { $0 === g }) { return ui.panel == nil }
+            return true
+        }
+
+        @objc private func closePanelTap(_ g: UITapGestureRecognizer) {
+            guard ui.panel != nil else { return }
+            dlog("ui", "panel: tap outside (video)")
+            ui.closePanel()
         }
 
         func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
