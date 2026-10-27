@@ -163,6 +163,10 @@ final class LingerUITests: XCTestCase {
                 run("E open, \(how) +\(d) s, Lab Other +0.12 s", expect: "Lab Other open", [(tap(tileA, at: 0), d), (gesture(0), 0.12), (tap(tileB, at: 0), 0)])
             }
         }
+        // E2. Back before the page is open, then a tap where its episode row is.
+        for d in [0.25, 0.4, 0.55] {
+            run("E2 open, edge swipe +\(d) s, the episode row's spot +0.12 s", expect: "Home", [(tap(tileA, at: 0), d), (swipe(edgeFrom, edgeTo, at: 0), 0.12), (tap(row, at: 0), 0)])
+        }
         print("LINGER played: \(played.count) \(played)")
         print("LINGER taps that didn't do what they should: \(dropped.count) \(dropped)")
         XCTAssertEqual(played.count, 0, "something played: \(played)")
