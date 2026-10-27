@@ -16,10 +16,14 @@
 
 @implementation LabSynth
 
-/// touches: [{ "points": [[x, y, t], …], "lift": t }, …] — screen points
-/// (portrait), times in seconds from the start of the record. The first
-/// point is where the finger goes down.
-+ (NSString *)perform:(NSArray *)touches {
+/// paths: one array of steps per finger. Steps: @[@"down", x, y, t],
+/// @[@"move", x, y, t], @[@"up", t] — screen points (portrait), times in
+/// seconds from the start of the record. A finger can go down again after
+/// it lifted (pressDownAtOffset:, as WebDriverAgent does for a second tap).
+/// Several fingers' paths don't keep their start times (the second one
+/// starts when the first ends), so taps meant to follow a gesture at a set
+/// time go in the same path.
++ (NSString *)perform:(NSArray *)paths {
     Class recCls = NSClassFromString(@"XCSynthesizedEventRecord");
     Class pathCls = NSClassFromString(@"XCPointerEventPath");
     if (!recCls || !pathCls) return @"synth: XCTest event classes not found";
@@ -38,20 +42,32 @@
     SEL initPath = NSSelectorFromString(@"initForTouchAtPoint:offset:");
     SEL moveSel = NSSelectorFromString(@"moveToPoint:atOffset:");
     SEL liftSel = NSSelectorFromString(@"liftUpAtOffset:");
+    SEL pressSel = NSSelectorFromString(@"pressDownAtOffset:");
     SEL addSel = NSSelectorFromString(@"addPointerEventPath:");
     if (![pathCls instancesRespondToSelector:initPath]) return @"synth: no initForTouchAtPoint:offset:";
+    BOOL canPress = [pathCls instancesRespondToSelector:pressSel];
 
-    for (NSDictionary *t in touches) {
-        NSArray *pts = t[@"points"];
-        NSArray *p0 = pts.firstObject;
-        CGPoint start = CGPointMake([p0[0] doubleValue], [p0[1] doubleValue]);
-        id path = ((id (*)(id, SEL, CGPoint, double))objc_msgSend)([pathCls alloc], initPath, start, [p0[2] doubleValue]);
-        for (NSUInteger i = 1; i < pts.count; i++) {
-            NSArray *p = pts[i];
-            ((void (*)(id, SEL, CGPoint, double))objc_msgSend)(path, moveSel, CGPointMake([p[0] doubleValue], [p[1] doubleValue]), [p[2] doubleValue]);
+    for (NSArray *steps in paths) {
+        id path = nil;
+        for (NSArray *st in steps) {
+            NSString *kind = st[0];
+            if ([kind isEqualToString:@"down"]) {
+                CGPoint p = CGPointMake([st[1] doubleValue], [st[2] doubleValue]);
+                double t = [st[3] doubleValue];
+                if (!path) {
+                    path = ((id (*)(id, SEL, CGPoint, double))objc_msgSend)([pathCls alloc], initPath, p, t);
+                } else {
+                    if (!canPress) return @"synth: no pressDownAtOffset:";
+                    ((void (*)(id, SEL, CGPoint, double))objc_msgSend)(path, moveSel, p, MAX(0, t - 0.002));
+                    ((void (*)(id, SEL, double))objc_msgSend)(path, pressSel, t);
+                }
+            } else if ([kind isEqualToString:@"move"]) {
+                ((void (*)(id, SEL, CGPoint, double))objc_msgSend)(path, moveSel, CGPointMake([st[1] doubleValue], [st[2] doubleValue]), [st[3] doubleValue]);
+            } else if ([kind isEqualToString:@"up"]) {
+                ((void (*)(id, SEL, double))objc_msgSend)(path, liftSel, [st[1] doubleValue]);
+            }
         }
-        ((void (*)(id, SEL, double))objc_msgSend)(path, liftSel, [t[@"lift"] doubleValue]);
-        ((void (*)(id, SEL, id))objc_msgSend)(rec, addSel, path);
+        if (path) ((void (*)(id, SEL, id))objc_msgSend)(rec, addSel, path);
     }
 
     SEL syncSel = NSSelectorFromString(@"synthesizeWithError:");
