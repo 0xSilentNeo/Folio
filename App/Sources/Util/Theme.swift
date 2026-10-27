@@ -279,6 +279,21 @@ final class PageLife {
     weak var page: UIViewController?
     var pageView: UIView? { page?.view }
 
+    /// Why the page can't start anything right now, or nil when it can: it's
+    /// going back, or it isn't the navigation's top page any more.
+    ///
+    /// Linger lab (27 Oct, simulator, iOS 27): UIKit makes the page
+    /// underneath the navigation's top the moment going back starts, 10–20
+    /// ms before viewWillDisappear; the page then stays in the window, full
+    /// size, for the whole zoom out (~0.9 s), hidden behind the zoom's own
+    /// animation. A touch in the first ~100 ms of that still reaches it.
+    var cantAct: String? {
+        if leaving { return "page going back" }
+        guard let page else { return nil }
+        if page.navigationController?.topViewController !== page { return "this page is no longer the one on screen" }
+        return nil
+    }
+
     /// Going back now: no more touches, no more actions. Should the page not
     /// actually go (a request to go back during another move can be dropped),
     /// it takes touches again after 1.2 s.
