@@ -479,6 +479,38 @@ final class PanelUITests: XCTestCase {
     /// A button tapped while the last panel is still closing opens its panel
     /// (UIKit holds the tap until the morph ends; it must not be lost). Once
     /// 0.15 s and once 0.4 s into the close; also the same button again.
+    /// A finger that goes down on a button while the last menu is still
+    /// closing and lifts after the close has ended must still open its menu
+    /// (27 Oct lab: such a tap was lost — the layer that takes taps during a
+    /// close went away under the finger). Each press lasts 0.8 s, so it spans
+    /// the end of the close whenever it starts during it.
+    func test46PressAcrossCloseEnd() throws {
+        let app = launchPlayer(["-touchLog"], native: true)
+        tapsDontWaitForAnimations()
+        let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
+        let pairs: [(String, String, String, String)] = [
+            ("Tracks", "Audio", "Settings", "Playback"), ("Settings", "Playback", "Now Playing", "NOW PLAYING"),
+            ("Now Playing", "NOW PLAYING", "Tracks", "Audio"),
+        ]
+        var ok = 0, total = 0
+        for _ in 0..<2 {
+            for (a, am, b, bm) in pairs {
+                total += 1
+                tapPill(app, a)
+                XCTAssertTrue(shows(app, am, within: 4), "\(a) did not open")
+                sleep(2)
+                outside.tap()                                          // starts the close
+                spots[b]!.press(forDuration: 0.8)
+                if shows(app, bm, within: 4) { ok += 1; print("PRESSACROSS \(a) → \(b): opened") } else { print("PRESSACROSS \(a) → \(b): lost") }
+                sleep(2)
+                if shows(app, bm) { outside.tap() }
+                sleep(2)
+            }
+        }
+        print("PRESSACROSS opened \(ok)/\(total)")
+        XCTAssertEqual(ok, total, "a press on a button that began during a close was lost")
+    }
+
     func test17NativeSwitchWhileClosing() throws {
         let app = launchPlayer(["-touchLog"], native: true)        // where each touch goes, in the app log
         tapsDontWaitForAnimations()
