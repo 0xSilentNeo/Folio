@@ -18,11 +18,10 @@
 
 /// paths: one array of steps per finger. Steps: @[@"down", x, y, t],
 /// @[@"move", x, y, t], @[@"up", t] — screen points (portrait), times in
-/// seconds from the start of the record. A finger can go down again after
-/// it lifted (pressDownAtOffset:, as WebDriverAgent does for a second tap).
-/// Several fingers' paths don't keep their start times (the second one
-/// starts when the first ends), so taps meant to follow a gesture at a set
-/// time go in the same path.
+/// seconds from the start of the record.
+/// Several fingers' paths all start together, whatever their first offset
+/// (measured), and a finger can't go down twice in one path here: taps meant
+/// to follow a gesture at a set time are sent as records of their own.
 + (NSString *)perform:(NSArray *)paths {
     Class recCls = NSClassFromString(@"XCSynthesizedEventRecord");
     Class pathCls = NSClassFromString(@"XCPointerEventPath");

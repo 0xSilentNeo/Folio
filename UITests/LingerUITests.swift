@@ -24,14 +24,6 @@ final class LingerUITests: XCTestCase {
         return (r?.takeUnretainedValue() as? String) ?? "synth: no result"
     }
 
-    /// Several fingers in one record: each path starts as soon as the one
-    /// before it ends (measured: ~10 ms), whatever offsets they carry.
-    private func synthPaths(_ paths: [Steps]) -> String {
-        guard let cls = NSClassFromString("LabSynth") as? NSObject.Type else { return "synth: LabSynth missing" }
-        let r = cls.perform(NSSelectorFromString("perform:"), with: paths as NSArray)
-        return (r?.takeUnretainedValue() as? String) ?? "synth: no result"
-    }
-
     private func tap(_ p: CGPoint, at t: Double) -> Steps {
         [["down", Double(p.x), Double(p.y), t], ["up", t + 0.05]]
     }
@@ -97,7 +89,7 @@ final class LingerUITests: XCTestCase {
             let page = app.buttons["Back"].exists, a = app.buttons["ep:Lab Show S01E01.mp4"].exists
             let now = player ? "PLAYER OPEN" : (!page ? "Home" : (a ? "Lab Show open" : "Lab Other open"))
             print("LINGER \(name): \(Set(results).joined(separator: ", ")) → \(now) (expected \(expect))")
-            if player { played.append(name) } else if now != expect && expect != "any" { dropped.append(name) }
+            if player && expect != "may play" { played.append(name) } else if !player && now != expect && expect != "any" && expect != "may play" { dropped.append(name) }
             reset()
         }
         func openA() -> Bool {
@@ -120,23 +112,6 @@ final class LingerUITests: XCTestCase {
                 run("A \(how), Lab Other tapped +\(d) s", expect: "Lab Other open", [(gesture(0), d), (tap(tileB, at: 0), 0)])
             }
         }
-        // A0/B0. The next tap right after going back (~10 ms after the finger
-        // lifts: two fingers in one record).
-        for (how, gesture) in backs {
-            for (what, spot, expect) in [("Lab Other", tileB, "Lab Other open"), ("where the episode row was", row, "any")] {
-                guard openA() else { return }
-                print("LINGER A0 \(how), then \(what) at once: sent \(fmt.string(from: Date()))")
-                let r = synthPaths([gesture(0), tap(spot, at: 0)])
-                sleep(3)
-                let player = app.buttons["Close player"].exists
-                let page = app.buttons["Back"].exists, a = app.buttons["ep:Lab Show S01E01.mp4"].exists
-                let now = player ? "PLAYER OPEN" : (!page ? "Home" : (a ? "Lab Show open" : "Lab Other open"))
-                let name = "A0 \(how), then \(what) at once"
-                print("LINGER \(name): \(r) → \(now) (expected \(expect))")
-                if player { played.append(name) } else if now != expect && expect != "any" { dropped.append(name) }
-                reset()
-            }
-        }
         // B. Back → tap Home where the page's episode row was.
         for (how, gesture) in backs.prefix(2) {
             for d in [0.05, 0.3, 0.6, 0.9] {
@@ -149,9 +124,11 @@ final class LingerUITests: XCTestCase {
             guard openA() else { return }
             run("C swipe back from the episode row #\(i)", expect: "any", [(swipe(CGPoint(x: epF.minX + 30, y: row.y), CGPoint(x: epF.minX + 300, y: row.y), at: 0), 0)])
         }
-        // D. Open the title, a second tap where its episode row will be, Δ s later.
+        // D. Open the title, a second tap where its episode row will be, Δ s
+        // later. The recording shows the page as good as open ~0.15 s into
+        // its zoom: these taps are on a row you can see, and play.
         for d in [0.1, 0.25, 0.4, 0.6, 0.9] {
-            run("D Lab Show tapped, then the episode row's spot +\(d) s", expect: "any", [(tap(tileA, at: 0), d), (tap(row, at: 0), 0)])
+            run("D Lab Show tapped, then the episode row's spot +\(d) s", expect: "may play", [(tap(tileA, at: 0), d), (tap(row, at: 0), 0)])
         }
         // F. Open a title, then tap the other title Δ s later, before the page is open.
         for d in [0.1, 0.3, 0.5, 0.8] {
