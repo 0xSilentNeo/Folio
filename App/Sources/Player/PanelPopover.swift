@@ -136,6 +136,7 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
     /// Not sent for popovers in practice (CI: never called); kept in case a
     /// future iOS routes outside taps here instead of through the passthrough.
     func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
+        dlog("ui", "panel: UIKit outside tap (popover dimming view)")
         onOutsideTap?()
     }
 
@@ -399,7 +400,7 @@ final class PanelPresenter {
         }
         shown = nil; shownKind = nil; shownRequest = nil
         var candidate: UIViewController? = host.presentedViewController == nil ? host : nil
-        if candidate == nil, PanelRelay.enabled, let relay = PanelRelay.shared.root(over: host.view.window), relay.presentedViewController == nil {
+        if (candidate == nil || PanelRelay.labAlways), PanelRelay.enabled, let relay = PanelRelay.shared.root(over: host.view.window), relay.presentedViewController == nil {
             candidate = relay
         }
         guard let target = candidate else {
@@ -599,6 +600,8 @@ final class PanelRelay {
     static var enabled: Bool {
         !shared.refused && UserDefaults.standard.bool(forKey: SettingsKey.menuRelay)
     }
+    /// Lab (`-relayAlways`): every panel opens from the relay.
+    static let labAlways = CommandLine.arguments.contains("-relayAlways")
     /// UIKit refused a presentation from the relay: don't use it again this session.
     var refused = false
 

@@ -76,7 +76,7 @@ struct VideoSurface: UIViewRepresentable {
         }
 
         @objc private func singleTap(_ g: UITapGestureRecognizer) {
-            if ui.panel != nil { ui.closePanel(); return }
+            if ui.panel != nil { dlog("ui", "panel: video tap closes it (after the double-tap wait)"); ui.closePanel(); return }
             if ui.showTune { withAnimation(.spring(response: 0.38, dampingFraction: 0.85)) { ui.showTune = false }; return }
             if ui.showInfo || ui.showStats { withAnimation(.spring(response: 0.38, dampingFraction: 0.85)) { ui.showInfo = false; ui.showStats = false }; return }
             if ui.showConsole { ui.showConsole = false; return }

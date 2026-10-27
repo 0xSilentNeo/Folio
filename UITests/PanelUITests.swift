@@ -731,6 +731,43 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(played, 0, "a swipe starting on an episode row started playback")
     }
 
+    /// 27 Oct report: a tap to the right of a menu closes it late, a tap to
+    /// its left at once. Taps around an open Tracks menu; the app log has each
+    /// touch ("[touch] down") and what closed the menu, with times.
+    func test37TapOutsideLatency() throws { try tapOutsideLatency(relay: false) }
+    func test38TapOutsideLatencyRelay() throws { try tapOutsideLatency(relay: true) }
+
+    private func tapOutsideLatency(relay: Bool) throws {
+        let app = launchPlayer(["-touchLog"] + (relay ? ["-relayAlways"] : []), native: true)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let w = app.frame.width, h = app.frame.height
+        let fmt = DateFormatter(); fmt.dateFormat = "HH:mm:ss.SSS"
+        let spots: [(String, (CGRect) -> CGPoint)] = [
+            ("left of the menu, 40 pt", { CGPoint(x: $0.minX - 40, y: $0.midY) }),
+            ("right of the menu, 20 pt", { CGPoint(x: min(w - 4, $0.maxX + 20), y: $0.midY) }),
+            ("right screen edge", { CGPoint(x: w - 8, y: $0.midY) }),
+            ("above the menu", { CGPoint(x: $0.midX, y: max(6, $0.minY - 30)) }),
+            ("video, left", { CGPoint(x: w * 0.15, y: h * 0.5) }),
+            ("video, centre", { CGPoint(x: w * 0.5, y: h * 0.4) }),
+            ("right of the menu, low", { CGPoint(x: min(w - 4, $0.maxX + 20), y: $0.maxY - 20) }),
+            ("left of the menu, 10 pt", { CGPoint(x: $0.minX - 10, y: $0.midY) }),
+        ]
+        for (i, (name, at)) in spots.enumerated() {
+            tapPill(app, "Tracks")
+            guard shows(app, "Audio", within: 5) else { XCTFail("Tracks did not open (\(i))"); continue }
+            sleep(2)
+            let pop = app.popovers.firstMatch
+            let f = pop.exists ? pop.frame : .zero
+            let p = at(f)
+            print("TAPOUT \(relay ? "relay" : "player") \(i) \(name): menu \(f.integral), tap (\(Int(p.x)), \(Int(p.y))) issued \(fmt.string(from: Date()))")
+            origin.withOffset(CGVector(dx: p.x, dy: p.y)).tap()
+            sleep(3)
+            let still = shows(app, "Audio")
+            print("TAPOUT \(relay ? "relay" : "player") \(i) closed: \(!still)")
+            if still { origin.withOffset(CGVector(dx: w * 0.3, dy: h * 0.5)).tap(); sleep(3) }
+        }
+    }
+
     /// Measurement only (app log, "relay lab"): menus opened right after a
     /// close and switched while open, driven from inside the app; with the
     /// relay anchored to the button's rectangle, to the bar item, and off.

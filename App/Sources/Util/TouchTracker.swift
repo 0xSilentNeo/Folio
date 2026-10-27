@@ -47,11 +47,15 @@ final class TouchTracker: UIGestureRecognizer, UIGestureRecognizerDelegate {
         return CACurrentMediaTime() - shared.lastEnd < 0.5 ? shared.lastTravel : 0
     }
 
+    /// Lab (`-touchLog`): every touch's start and end in the log.
+    static let logs = CommandLine.arguments.contains("-touchLog")
+
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
         guard tracked == nil, let t = touches.first else { return }
         tracked = t
         start = t.location(in: nil)
         travel = 0
+        if Self.logs { dlog("touch", "down (\(Int(start.x)), \(Int(start.y))) in \(type(of: view.map { $0 } ?? UIView()))") }
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
@@ -68,6 +72,7 @@ final class TouchTracker: UIGestureRecognizer, UIGestureRecognizerDelegate {
         let p = t.location(in: nil)
         lastTravel = max(travel, hypot(p.x - start.x, p.y - start.y))
         lastEnd = CACurrentMediaTime()
+        if Self.logs { dlog("touch", "up (\(Int(p.x)), \(Int(p.y))), moved \(Int(lastTravel)) pt") }
         tracked = nil
         state = .failed            // never recognizes; UIKit resets it for the next touch
     }

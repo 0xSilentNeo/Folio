@@ -147,6 +147,11 @@ struct PlayerScreen: View {
         .persistentSystemOverlays(.hidden)
         .onAppear {
             ui.scheduleHide()
+            if TouchTracker.logs {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    for w in UIApplication.shared.connectedScenes.compactMap({ ($0 as? UIWindowScene)?.keyWindow }) { TouchTracker.install(on: w) }
+                }
+            }
             guard legacyPanels else { return }          // iOS 26: GlassPanelPill draws the panels
             ui.presentNow = { presentPanel($0, immediate: true) }
             PanelPresenter.shared.onClosing = { [weak ui] closing in if ui?.panelClosing != closing { ui?.panelClosing = closing } }
