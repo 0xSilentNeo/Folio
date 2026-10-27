@@ -1,0 +1,72 @@
+10:12:07.052 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.99 GB
+10:12:09.161 [hang] main thread unresponsive for 2.1 s
+10:12:11.480 [app] first screen 6054 ms after process start
+10:12:12.395 [app] active
+10:12:17.702 [nav] home: open Lab Show
+10:12:17.739 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+10:12:18.029 [nav] title page appear Lab Show S01E01.mp4
+10:12:18.137 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:12:18.238 [nav] title page move: animated
+10:12:19.038 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:12:21.635 [nav] title page: Back
+10:12:21.638 [navprobe] page leaving: where a touch at (201, 541) goes
+10:12:21.638 [nav] page leaving: taps off
+10:12:21.687 [nav] home path 1 → 0: []
+10:12:21.712 [navprobe] 63 ms after leaving began: touch → UpdateCoalescingCollectionView
+10:12:21.716 [nav] title page move: animated
+10:12:22.542 [nav] title page disappear Lab Show S01E01.mp4
+10:12:25.985 [nav] home: open Lab Show
+10:12:25.994 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+10:12:26.029 [nav] title page appear Lab Show S01E01.mp4
+10:12:26.074 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:12:26.177 [nav] title page move: animated
+10:12:27.020 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:12:30.486 [nav] title page: Back
+10:12:30.490 [navprobe] page leaving: where a touch at (201, 541) goes
+10:12:30.490 [nav] page leaving: taps off
+10:12:30.546 [nav] home path 1 → 0: []
+10:12:30.571 [navprobe] 79 ms after leaving began: touch → UpdateCoalescingCollectionView
+10:12:30.577 [nav] title page move: animated
+10:12:31.394 [nav] title page disappear Lab Show S01E01.mp4
+10:12:35.485 [nav] home: open Lab Show
+10:12:35.494 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+10:12:35.532 [nav] title page appear Lab Show S01E01.mp4
+10:12:35.588 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:12:35.690 [nav] title page move: animated
+10:12:36.491 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:12:39.818 [nav] title page: Back
+10:12:39.821 [navprobe] page leaving: where a touch at (201, 541) goes
+10:12:39.821 [nav] page leaving: taps off
+10:12:39.857 [nav] home path 1 → 0: []
+10:12:39.869 [navprobe] 47 ms after leaving began: touch → UpdateCoalescingCollectionView
+10:12:39.891 [nav] title page move: animated
+10:12:40.706 [nav] title page disappear Lab Show S01E01.mp4
+10:12:42.484 [energy] cpu 1% (main 1%) thermal=nominal playing=no
+10:12:44.235 [nav] home: open Lab Show
+10:12:44.245 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+10:12:44.276 [nav] title page appear Lab Show S01E01.mp4
+10:12:44.315 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:12:44.417 [nav] title page move: animated
+10:12:45.274 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:12:48.768 [navprobe] page leaving: where a touch at (201, 541) goes
+10:12:48.768 [nav] page leaving: taps off
+10:12:48.815 [nav] title page move: interactive
+10:12:48.820 [navprobe] 49 ms after leaving began: touch → UIViewControllerWrapperView
+10:12:49.133 [navprobe] 364 ms after leaving began: touch → UpdateCoalescingCollectionView
+10:12:49.152 [nav] home path 1 → 0: []
+10:12:49.217 [nav] title page move: animated
+10:12:50.300 [nav] title page disappear Lab Show S01E01.mp4
+10:12:53.852 [nav] home: open Lab Show
+10:12:53.865 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+10:12:53.919 [nav] title page appear Lab Show S01E01.mp4
+10:12:53.978 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:12:54.081 [nav] title page move: animated
+10:12:54.898 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:12:58.536 [navprobe] page leaving: where a touch at (201, 541) goes
+10:12:58.536 [nav] page leaving: taps off
+10:12:58.579 [nav] title page move: interactive
+10:12:58.585 [navprobe] 49 ms after leaving began: touch → UIViewControllerWrapperView
+10:12:58.910 [navprobe] 373 ms after leaving began: touch → UpdateCoalescingCollectionView
+10:12:58.929 [nav] home path 1 → 0: []
+10:12:58.981 [nav] title page move: animated
+10:13:00.081 [nav] title page disappear Lab Show S01E01.mp4

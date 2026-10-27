@@ -1,0 +1,276 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-27 10:12:12.247 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:12.249 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:12.359 E  GlassPlayer[93633:34c91] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-27 10:12:12.382 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:12.382 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:14.894 F  GlassPlayer[93633:34d10] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-27 10:12:15.091 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:15.103 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:15.104 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.171 E  GlassPlayer[93633:34d19] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.172 E  GlassPlayer[93633:34d19] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.172 E  GlassPlayer[93633:34d19] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.253 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.261 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.261 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.318 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.318 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.319 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.356 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.356 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.356 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.387 E  GlassPlayer[93633:34d19] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.387 E  GlassPlayer[93633:34d19] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.388 E  GlassPlayer[93633:34d19] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.414 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.414 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.415 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.457 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.457 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.459 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:17.889 E  GlassPlayer[93633:35359] [com.apple.locationd.Core:Core] <compose failure [shared UUID]>
+2026-10-27 10:12:18.032 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:18.032 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:18.032 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:18.033 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:18.033 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:18.033 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:18.033 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:18.150 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:18.150 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:18.151 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:18.663 E  GlassPlayer[93633:35368] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-27 10:12:18.663 E  GlassPlayer[93633:35367] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-27 10:12:18.663 E  GlassPlayer[93633:35366] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-27 10:12:18.663 E  GlassPlayer[93633:35367] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-27 10:12:18.663 E  GlassPlayer[93633:35366] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-27 10:12:18.663 E  GlassPlayer[93633:35368] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-27 10:12:19.021 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:19.021 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:19.022 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:19.022 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:19.030 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-27 10:12:19.326 E  GlassPlayer[93633:34d14] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:19.327 E  GlassPlayer[93633:34d14] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:21.395 E  GlassPlayer[93633:34d14] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:21.396 E  GlassPlayer[93633:34d14] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:21.447 E  GlassPlayer[93633:34d19] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:21.459 E  GlassPlayer[93633:34d19] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:21.538 E  GlassPlayer[93633:34c91] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-27 10:12:21.694 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:21.694 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:21.694 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:22.546 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:22.546 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:22.546 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:22.546 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:22.550 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-27 10:12:25.640 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.649 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.650 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.736 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.742 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.743 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.783 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.783 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.783 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.814 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.815 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.822 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.859 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.859 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.860 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.894 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.894 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:25.895 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:26.040 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.040 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.040 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.041 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.041 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.041 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.041 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.072 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.072 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.072 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.948 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.948 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.948 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:26.949 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:27.018 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-27 10:12:28.111 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:28.113 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:30.223 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:30.224 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:30.328 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:30.330 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:30.571 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:30.571 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:30.571 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:31.402 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:31.403 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:31.404 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:31.404 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:31.412 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-27 10:12:35.053 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.094 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.095 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.209 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.210 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.212 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.253 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.254 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.254 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.300 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.300 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.303 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.340 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.341 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.349 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.386 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.387 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.388 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:35.547 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:35.547 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:35.547 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:35.548 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:35.548 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:35.548 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:35.548 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:35.585 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:35.586 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:35.586 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:36.468 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:36.468 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:36.468 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:36.469 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:36.477 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-27 10:12:37.565 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:37.566 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:39.633 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:39.635 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:39.691 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:39.691 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:39.869 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:39.869 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:39.869 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:40.712 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:40.713 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:40.713 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:40.713 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:40.719 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-27 10:12:43.877 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:43.896 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:43.897 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:43.964 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:43.964 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:43.965 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.009 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.010 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.011 E  GlassPlayer[93633:34d0d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.054 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.059 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.061 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.085 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.092 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.093 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.122 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.123 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.124 E  GlassPlayer[93633:34d10] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:44.284 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:44.284 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:44.284 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:44.284 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:44.284 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:44.284 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:44.285 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:44.311 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:44.312 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:44.312 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:45.230 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:45.230 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:45.231 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:45.231 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:45.239 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-27 10:12:46.361 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:46.363 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.445 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.448 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.504 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.506 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.546 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.548 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.574 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.581 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.611 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.614 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.640 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.645 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.677 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.678 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:48.806 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:48.806 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:48.806 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:50.304 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:50.304 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:50.304 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:50.304 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:50.309 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-27 10:12:53.469 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.488 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.493 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.579 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.579 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.580 E  GlassPlayer[93633:34d0f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.625 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.626 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.626 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.663 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.669 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.670 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.697 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.698 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.698 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.744 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.745 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.745 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:53.929 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:53.929 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:53.929 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:53.930 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:53.930 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:53.930 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:53.930 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:53.975 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:53.976 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:53.976 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:54.899 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:54.899 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:54.899 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:54.899 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:54.937 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-27 10:12:56.058 E  GlassPlayer[93633:34d08] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:56.110 E  GlassPlayer[93633:34d08] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.182 E  GlassPlayer[93633:34d08] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.183 E  GlassPlayer[93633:34d08] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.243 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.244 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.306 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.306 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.337 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.337 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.372 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.373 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.403 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.404 E  GlassPlayer[93633:34cf0] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.448 E  GlassPlayer[93633:34d08] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.449 E  GlassPlayer[93633:34d08] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-27 10:12:58.575 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:58.575 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:12:58.575 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:13:00.088 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:13:00.088 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:13:00.089 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:13:00.090 E  GlassPlayer[93633:34c91] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:13:00.095 E  GlassPlayer[93633:34c91] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
