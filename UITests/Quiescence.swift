@@ -40,6 +40,10 @@ enum Quiescence {
                     } else if args == 2, shape == "v@:BB" {
                         let b: @convention(block) (AnyObject, Bool, Bool) -> Void = { _, _, _ in }
                         method_setImplementation(m, imp_implementationWithBlock(b)); replaced = true
+                    } else if args == 3, shape == "v@:BBB" {
+                        // Xcode 27: waitForQuiescenceIncludingAnimationsIdle:usingActivity:isPreEvent:
+                        let b: @convention(block) (AnyObject, Bool, Bool, Bool) -> Void = { _, _, _, _ in }
+                        method_setImplementation(m, imp_implementationWithBlock(b)); replaced = true
                     }
                 }
                 report.append("\(clsName) -\(name) \(enc)\(replaced ? " → skipped" : "")")
