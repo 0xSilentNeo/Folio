@@ -76,6 +76,7 @@ final class LingerLab: NSObject {
         let tc = nav.transitionCoordinator
         let tr = tc.map { $0.isInteractive ? "interactive" : "animated" } ?? "none"
         if tr != lastTransition { lastTransition = tr; dlog("linger", "navigation transition: \(tr)") }
+        if tr != "none" || !lastVisual.isEmpty { logVisual(w) }
 
         for s in seen where s.id > 1 && !s.gone {
             guard let vc = s.vc else { s.gone = true; dlog("linger", "page#\(s.id) released"); continue }
@@ -135,6 +136,29 @@ final class LingerLab: NSObject {
             }
         }
         return n
+    }
+
+    // MARK: What the zoom draws
+
+    private var lastVisual = ""
+
+    /// The views the zoom transition animates (by class name: portals,
+    /// snapshots, the zoom's own containers), where they're drawn and how
+    /// opaque — what you actually see while the real page sits full size.
+    private func logVisual(_ w: UIWindow) {
+        var found: [String] = []
+        var stack: [UIView] = [w]
+        var n = 0
+        while let v = stack.popLast(), n < 5000 {
+            n += 1
+            let name = String(describing: type(of: v))
+            if ["Portal", "Zoom", "Snapshot", "Morph", "Matched"].contains(where: name.contains) {
+                found.append("\(name) \(rough(presentedFrame(v, in: w))) op \(String(format: "%.1f", presentedOpacity(v)))")
+            }
+            stack.append(contentsOf: v.subviews)
+        }
+        let line = found.prefix(6).joined(separator: "; ")
+        if line != lastVisual { lastVisual = line; dlog("linger", "zoom draws: \(line.isEmpty ? "nothing" : line)") }
     }
 
     // MARK: Touches
