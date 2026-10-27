@@ -327,11 +327,17 @@ private struct LeavingProbe: UIViewControllerRepresentable {
         override func viewWillAppear(_ animated: Bool) {
             super.viewWillAppear(animated)
             setPageTouchable(true)
+            if let v = life?.page?.view { BackWatch.cancelled(v) }
             onChange?(false)
+        }
+        override func viewDidDisappear(_ animated: Bool) {
+            super.viewDidDisappear(animated)
+            if let v = life?.page?.view { BackWatch.ended(v) }
         }
         override func viewWillDisappear(_ animated: Bool) {
             super.viewWillDisappear(animated)
             setPageTouchable(false)
+            if let page = life?.page, let nav = page.navigationController ?? navigationController { BackWatch.began(page.view, nav: nav) }
             PopTouchLab.start(for: self)
             dlog("nav", "page leaving: taps off")
             onChange?(true)
@@ -392,6 +398,53 @@ private final class PopTouchLab: NSObject {
         if let hit, let page, hit.isDescendant(of: page) { now = "the leaving page" }
         else { now = hit.map { String(describing: type(of: $0)) } ?? "nothing" }
         if now != last { last = now; dlog("navprobe", "\(ms) ms after leaving began: touch → \(now)") }
+    }
+}
+
+/// What a page does after it starts going back, in the log (on your phone
+/// too): how long it stays in the window, and where touches go meanwhile.
+///
+/// 27 Oct report: "I think the page is still on screen but hidden after
+/// backing for a few moments. That's what's causing the sudden play." Your
+/// device logs agree that it can stay: after some swipes back the
+/// navigation is already at Home, but the page's onDisappear comes 0.9–1.4 s
+/// later.
+@MainActor
+enum BackWatch {
+    private static weak var page: UIView?
+    private static weak var nav: UINavigationController?
+    private static var t0: CFTimeInterval = 0
+    private static var touches = 0
+
+    private static var ms: Int { Int((CACurrentMediaTime() - t0) * 1000) }
+
+    static func began(_ v: UIView, nav n: UINavigationController?) {
+        page = v; nav = n; t0 = CACurrentMediaTime(); touches = 0
+    }
+
+    /// Going back was let go (the page stays).
+    static func cancelled(_ v: UIView) { if page === v { page = nil } }
+
+    /// UIKit's viewDidDisappear: the move is over.
+    static func ended(_ v: UIView) {
+        guard page === v else { return }
+        dlog("nav", "page gone \(ms) ms after it started going back\(v.window != nil ? " (its view still in the window)" : "")")
+        page = nil
+    }
+
+    /// A touch while a page is going back: where it went.
+    static func touchBegan(_ t: UITouch) {
+        guard let p = page else { return }
+        guard p.window != nil else { page = nil; return }
+        touches += 1
+        guard touches <= 8 else { return }
+        var to = t.view.map { String(describing: type(of: $0)) } ?? "nothing"
+        if let v = t.view {
+            if v.isDescendant(of: p) { to = "THE PAGE GOING BACK" }
+            else if let home = nav?.viewControllers.first?.view, v.isDescendant(of: home) { to = "Home" }
+            else if let top = nav?.topViewController?.view, v.isDescendant(of: top) { to = "the page now on top" }
+        }
+        dlog("nav", "touch \(ms) ms after going back began → \(to)")
     }
 }
 
