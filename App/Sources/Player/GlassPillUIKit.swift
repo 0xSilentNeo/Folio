@@ -116,16 +116,36 @@ struct PanelToolbarView: UIViewRepresentable {
     /// no menu form), though the simulator fits all three at 186 pt.
     var onOverflow: () -> Void = {}
 
-    /// A toolbar that says when its buttons don't all fit.
+    /// A toolbar that says when its buttons don't all fit, and takes touches
+    /// only on its buttons.
     final class FitToolbar: UIToolbar {
         var onOverflow: (() -> Void)?
+        private var checkPending = false
+
+        private var buttons: [UIView] { (items ?? []).compactMap(\.customView) }
+
         override func layoutSubviews() {
             super.layoutSubviews()
-            guard window != nil, bounds.width > 0 else { return }
-            let views = (items ?? []).compactMap(\.customView)
-            if views.contains(where: { $0.window == nil }) {
-                DispatchQueue.main.async { [weak self] in self?.onOverflow?() }
+            guard window != nil, bounds.width > 0, !checkPending, buttons.contains(where: { $0.window == nil }) else { return }
+            // Only an overflow that lasts: while the player rotates, the
+            // toolbar is briefly laid out at an in-between size (lab: an
+            // overflow at launch in landscape that was gone 0.5 s later).
+            checkPending = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                guard let self else { return }
+                self.checkPending = false
+                if self.window != nil, self.buttons.contains(where: { $0.window == nil }) { self.onOverflow?() }
             }
+        }
+
+        /// The toolbar is wider than its glass capsule (the empty part reaches
+        /// over the time bar); only the buttons and a little around them take
+        /// touches, the rest passes through to what's underneath.
+        override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+            let shown = buttons.filter { $0.window != nil && !$0.isHidden }
+            guard !shown.isEmpty else { return super.point(inside: point, with: event) }
+            let area = shown.map { $0.convert($0.bounds, to: self) }.reduce(CGRect.null) { $0.union($1) }
+            return area.insetBy(dx: -8, dy: -6).contains(point)
         }
     }
 

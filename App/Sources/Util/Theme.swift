@@ -289,6 +289,7 @@ private struct LeavingProbe: UIViewControllerRepresentable {
         override func viewWillDisappear(_ animated: Bool) {
             super.viewWillDisappear(animated)
             setPageTouchable(false)
+            PopTouchLab.start(for: self)
             dlog("nav", "page leaving: taps off")
             onChange?(true)
             // Pages that keep the system bar (Settings, folders, addon titles):
@@ -309,6 +310,46 @@ private struct LeavingProbe: UIViewControllerRepresentable {
     }
     func makeUIViewController(context: Context) -> Probe { let p = Probe(); p.onChange = onChange; return p }
     func updateUIViewController(_ vc: Probe, context: Context) { vc.onChange = onChange }
+}
+
+/// Lab (`-popTouchLab`): from the moment a page starts going back, where a
+/// touch at the middle of the page's screen area would go, each frame for
+/// 1.5 s — the page, or what's underneath (Home).
+@MainActor
+private final class PopTouchLab: NSObject {
+    static var current: PopTouchLab?
+    static let on = CommandLine.arguments.contains("-popTouchLab")
+    private var link: CADisplayLink?
+    private weak var page: UIView?
+    private weak var window: UIWindow?
+    private var point = CGPoint.zero
+    private var t0 = CACurrentMediaTime()
+    private var last = ""
+
+    static func start(for probe: UIViewController) {
+        guard on else { return }
+        var vc: UIViewController = probe
+        while let p = vc.parent, !(p is UINavigationController) { vc = p }
+        guard let page = vc.view, let w = page.window else { return }
+        let lab = PopTouchLab()
+        lab.page = page; lab.window = w
+        lab.point = CGPoint(x: w.bounds.midX, y: w.bounds.height * 0.62)
+        let l = CADisplayLink(target: lab, selector: #selector(tick))
+        l.add(to: .main, forMode: .common)
+        lab.link = l
+        current = lab
+        dlog("navprobe", "page leaving: where a touch at (\(Int(lab.point.x)), \(Int(lab.point.y))) goes")
+    }
+
+    @objc private func tick() {
+        let ms = Int((CACurrentMediaTime() - t0) * 1000)
+        guard ms < 1500, let w = window else { link?.invalidate(); link = nil; Self.current = nil; return }
+        let hit = w.hitTest(point, with: nil)
+        let now: String
+        if let hit, let page, hit.isDescendant(of: page) { now = "the leaving page" }
+        else { now = hit.map { String(describing: type(of: $0)) } ?? "nothing" }
+        if now != last { last = now; dlog("navprobe", "\(ms) ms after leaving began: touch → \(now)") }
+    }
 }
 
 extension LeavingProbe.Probe {
