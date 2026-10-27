@@ -284,6 +284,12 @@ enum UILab {
             (28, "video view resized back", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
             (29, "park video (PiP closed in background) then return", { PlayerPresenter.current?.model.labParkThenReturn() }),
             (33, "new hardware decoder (as after coming back while paused)", { PlayerPresenter.current?.model.labRenewDecoder() }),
+            (39, "close the player (mpv's Metal thread ends on the main thread first)", {
+                let t0 = CACurrentMediaTime()
+                PlayerPresenter.current?.model.close()
+                dlog("av", String(format: "player closed in %.0f ms", (CACurrentMediaTime() - t0) * 1000))
+            }),
+            (43, "after closing", { dlog("av", "app still running 4 s after closing the player") }),
         ]
         for (t, name, f) in steps { DispatchQueue.main.asyncAfter(deadline: .now() + t) { dlog("av", "== \(name)"); f() } }
         var t0: Date?
