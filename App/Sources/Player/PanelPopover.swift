@@ -136,6 +136,7 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
     /// Not sent for popovers in practice (CI: never called); kept in case a
     /// future iOS routes outside taps here instead of through the passthrough.
     func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
+        dlog("ui", "panel: UIKit outside tap (popover dimming view)")
         onOutsideTap?()
     }
 
@@ -164,10 +165,11 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
 /// the morph's length unchanged — iOS 26 doesn't drive it from that clock.
 /// A tap that arrives meanwhile is kept and acted on the moment it ends.
 ///
-/// iOS 27 (1.16.0): these rules replace the one-transition-at-a-time queue;
-/// nothing waits for a morph:
-/// - another panel: what is on screen is dismissed — instantly, or animated if it
-///   is still opening — and the new panel is presented in the same call
+/// iOS 27 (1.16.0; 1.17.1 as Outplayer does it): these rules replace the
+/// one-transition-at-a-time queue; nothing waits for a morph:
+/// - another panel: whatever is presented — even a panel still closing — is
+///   dismissed, instantly, or animated if it is still opening, and the new
+///   panel is presented in the same call
 ///   (`presented.dismiss(animated: presented.isBeingPresented)`, then `present`);
 /// - close: the panel morphs back into its button even while it is opening;
 /// - a tap on another button while a panel is open opens that panel (PlayerScreen).
@@ -183,8 +185,6 @@ final class PanelPresenter {
     }
     /// Panels leaving the screen on the iOS 27 path (their close is still animating).
     private var closing = 0
-    /// A switch is waiting for the previous panel's close animation to end (logged once).
-    private var waitingForLeave = false
 
     private struct Request {
         let kind: String
@@ -226,7 +226,6 @@ final class PanelPresenter {
         endTransition()
         cache = [:]
         cacheOwner = nil
-        PanelRelay.shared.tearDown()
     }
 
     private enum Phase: String { case idle, opening, closing }
@@ -348,8 +347,12 @@ final class PanelPresenter {
 
     // MARK: iOS 27: nothing waits
 
+    /// A panel UIKit is holding back until the last one has gone (it presents
+    /// it ~0.2 s later on its own). Not "gone": it is about to come up.
+    private weak var held: PanelPopoverController?
+
     private func reconcileInterruptible(animated: Bool) {
-        if let vc = shown, vc.presentingViewController == nil, !vc.isBeingPresented {
+        if let vc = shown, vc !== held, vc.presentingViewController == nil, !vc.isBeingPresented {
             shown = nil; shownKind = nil; shownRequest = nil   // went away on its own
         }
 
@@ -363,16 +366,26 @@ final class PanelPresenter {
             frames.begin("panel close \(kind)")
             closing += 1
             onClosing?(true)
+            var finished = false
             vc.dismiss(animated: animated) { [weak self] in
                 DispatchQueue.main.async {
-                    guard let self else { return }
+                    guard let self, !finished else { return }
+                    finished = true
                     self.closing = max(0, self.closing - 1)
-                    if self.shown == nil, self.closing == 0 { PanelRelay.shared.hideIfIdle() }
                     dlog("ui", "panel: closed \(kind)")
                     self.frames.end()
                     if self.closing == 0 { self.onClosing?(false) }
                     UIAccessibility.post(notification: .screenChanged, argument: nil)
                 }
+            }
+            // Watchdog: should UIKit never report this close, don't leave the
+            // player's tap catcher up for good.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self, weak vc] in
+                guard let self, !finished, vc?.presentingViewController == nil else { return }
+                finished = true
+                dlog("ui/error", "panel: close of \(kind) never reported; carrying on")
+                self.closing = max(0, self.closing - 1)
+                if self.closing == 0 { self.onClosing?(false) }
             }
             return
         }
@@ -386,32 +399,25 @@ final class PanelPresenter {
             return
         }
 
-        // Another panel is up: out at once — animated only while it is still opening.
-        // UIKit presents nothing from a controller whose panel is still leaving: after an
-        // instant dismiss for ~0.3 s, after a closing morph for ~0.9 s past the moment the
-        // panel is visibly gone (26 Oct device recording: every next menu started 1.22 s
-        // after the previous close began). 1.16.1: the next panel then goes up from the
-        // relay layer (PanelRelay) instead of waiting.
-        for h in [host, PanelRelay.shared.rootIfShown].compactMap({ $0 }) {
-            guard let presented = h.presentedViewController, !presented.isBeingDismissed else { continue }
-            dlog("ui", "panel: \(shownKind ?? "panel") out \(presented.isBeingPresented ? "(animated, still opening)" : "(instant)") → \(req.kind)")
+        // Outplayer's sequence (2026.10 build 219; its menu presenter at
+        // 0x1000c3308, disassembled): whatever is presented — a menu still
+        // closing included, there is no isBeingDismissed check — is dismissed
+        // with `animated: isBeingPresented`, and the new menu is presented from
+        // the same controller in the same call.
+        //
+        // 1.17.1. Until 1.17.0 a closing menu was left to finish, and UIKit
+        // presents nothing from a controller whose menu is still leaving, so
+        // the next one waited ~1 s (1.16.x), or opened from a second layer with
+        // a different animation (1.17.0, your 27 Oct recording). The lab,
+        // menus driven from inside the app: a menu asked for 0.1–0.4 s into
+        // another's close starts its own morph 10 ms later; switching while one
+        // is open, UIKit holds the new one ~0.2 s.
+        if let presented = host.presentedViewController {
+            let state = presented.isBeingDismissed ? "closing" : presented.isBeingPresented ? "opening" : "open"
+            dlog("ui", "panel: \(shownKind ?? "last panel") (\(state)) out \(presented.isBeingPresented ? "animated" : "at once") → \(req.kind)")
             presented.dismiss(animated: animated && presented.isBeingPresented)
         }
         shown = nil; shownKind = nil; shownRequest = nil
-        var candidate: UIViewController? = host.presentedViewController == nil ? host : nil
-        if candidate == nil, PanelRelay.enabled, let relay = PanelRelay.shared.root(over: host.view.window), relay.presentedViewController == nil {
-            candidate = relay
-        }
-        guard let target = candidate else {
-            if !waitingForLeave {
-                waitingForLeave = true
-                dlog("ui", "panel: \(req.kind) waits for the leaving panel")
-            }
-            NextFrame.run { [weak self] in self?.reconcile() }
-            return
-        }
-        waitingForLeave = false
-        if target !== host { dlog("ui", "panel: \(req.kind) opens from the relay layer (the last panel is still leaving)") }
 
         let buildStart = CACurrentMediaTime()
         let vc = req.make()
@@ -419,7 +425,6 @@ final class PanelPresenter {
             NextFrame.run { [weak self] in self?.reconcile() }
             return
         }
-        if target !== host { PanelRelay.shared.retarget(vc, in: target, playerWindow: host.view.window) }
         vc.loadViewIfNeeded()
         let buildMs = (CACurrentMediaTime() - buildStart) * 1000
         shown = vc
@@ -428,16 +433,20 @@ final class PanelPresenter {
         dlog("ui", "panel: open \(req.kind)")
         frames.begin("panel open \(req.kind)")
         frames.note(String(format: "built in %.0f ms, %.0f ms after the tap", buildMs, (CACurrentMediaTime() - tapTime) * 1000))
-        // Have the relay window up (and its controller appeared) before a switch
-        // needs it: UIKit may defer a presentation from a controller that is
-        // still appearing.
-        if target === host, PanelRelay.enabled { _ = PanelRelay.shared.root(over: host.view.window) }
-        target.present(vc, animated: animated) { [weak self, weak vc] in
+        host.present(vc, animated: animated) { [weak self, weak vc] in
             guard let vc else { return }
             // UIKit makes the bar passthrough for bar-item popovers; set ours back.
             vc.popoverPresentationController?.passthroughViews = vc.passthrough
             DispatchQueue.main.async {
-                guard let self, self.shown === vc else { return }
+                guard let self else { return }
+                if self.held === vc { self.held = nil }
+                // Came up after it stopped being wanted (closed or replaced while
+                // UIKit was holding it): take it away again.
+                guard self.shown === vc else {
+                    dlog("ui", "panel: \(req.kind) came up after it was no longer wanted; closing it")
+                    vc.dismiss(animated: true)
+                    return
+                }
                 dlog("ui", "panel: opened \(req.kind)")
                 self.frames.end()
                 UIAccessibility.post(notification: .screenChanged, argument: vc.view)
@@ -451,30 +460,21 @@ final class PanelPresenter {
                 }
             }
         }
-        // Should UIKit refuse the presentation, try again. UIKit may also defer a
-        // presentation by a frame or two, so look for a few frames first.
-        Self.checkPresented(vc, frames: 0) { [weak self, weak vc] in
-            guard let self, let vc, self.shown === vc,
-                  vc.presentingViewController == nil, !vc.isBeingPresented else { return }
-            dlog("ui", "panel: \(req.kind) was not presented; retrying")
-            if target !== host {
-                let w = target.view.window
-                dlog("ui/error", "panel: the relay layer was refused (relay window=\(w.map { "\(type(of: $0)) hidden=\($0.isHidden) level=\($0.windowLevel.rawValue)" } ?? "none") presented=\(target.presentedViewController.map { "\(type(of: $0))" } ?? "nil") source window=\(vc.popoverPresentationController?.sourceItem.map { "\(type(of: $0))" } ?? "-")); panels wait for the last one again")
-                PanelRelay.shared.refused = true
-                PanelRelay.shared.hideIfIdle()
+        if !vc.isBeingPresented, vc.presentingViewController == nil {
+            held = vc
+            dlog("ui", "panel: \(req.kind) held by UIKit until the last panel has gone")
+            // Held, not refused: UIKit presents it on its own (lab: ~0.2 s after
+            // an open panel went at once). It is never presented a second time
+            // (that is an error in UIKit); if it still isn't up after 2.5 s,
+            // the player is told it's closed, so no menu is left half-open.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self, weak vc] in
+                guard let self, let vc, self.held === vc,
+                      vc.presentingViewController == nil, !vc.isBeingPresented else { return }
+                dlog("ui/error", "panel: \(req.kind) never came up; menu closed")
+                self.held = nil
+                if self.shown === vc { self.shown = nil; self.shownKind = nil; self.shownRequest = nil }
+                if self.wanted?.kind == req.kind { self.wanted = nil; req.onClosedByTap() }
             }
-            self.shown = nil; self.shownKind = nil; self.shownRequest = nil
-            self.reconcile()
-        }
-    }
-
-    /// Calls `refused` if `vc` still isn't presented (nor being presented)
-    /// after a few frames.
-    private static func checkPresented(_ vc: UIViewController, frames: Int, refused: @escaping () -> Void) {
-        NextFrame.run { [weak vc] in
-            guard let vc else { return }
-            if vc.presentingViewController != nil || vc.isBeingPresented { return }
-            if frames < 6 { checkPresented(vc, frames: frames + 1, refused: refused) } else { refused() }
         }
     }
 
@@ -571,122 +571,6 @@ final class PanelPresenter {
         phase = .idle
         inFlight = nil
         onClosing?(false)                              // whatever finished, no close is running now
-    }
-}
-
-/// A second place to present panels from (1.16.1, iOS 27): a see-through
-/// window just above the player's, visible only while a panel is up in it.
-///
-/// A view controller presents one controller at a time (a request it can't
-/// take goes up its own hierarchy — UIViewController.present docs), and UIKit
-/// keeps a closing panel "presented" for ~0.9 s after it has visibly gone.
-/// A window is a separate hierarchy, so the next panel can go up from here
-/// at once while the old one finishes in the player's window.
-///
-/// Only the panel itself takes touches in this window; everything else falls
-/// through to the player below (its tap-catcher closes or switches panels),
-/// the same as the player-window panels' passthrough.
-@MainActor
-final class PanelRelay {
-    static let shared = PanelRelay()
-
-    /// On (1.17.0). 1.16.1 had it off: UIKit refused every presentation from
-    /// this layer. The 26 Oct relay lab (menus driven from inside the app)
-    /// showed why — the popover was anchored to a bar item in the other
-    /// window: anchored to the bar item, refused; anchored to the button's
-    /// rectangle in this window (retarget), the next menu started 10 ms after
-    /// the request instead of ~1 s. Setting key `menuRelay` (off: wait).
-    static var enabled: Bool {
-        !shared.refused && UserDefaults.standard.bool(forKey: SettingsKey.menuRelay)
-    }
-    /// UIKit refused a presentation from the relay: don't use it again this session.
-    var refused = false
-
-    private var window: RelayWindow?
-
-    /// The relay's root, if its window is on screen.
-    var rootIfShown: UIViewController? { window.flatMap { $0.isHidden ? nil : $0.rootViewController } }
-
-    /// The relay's root over `playerWindow`, showing the window if needed.
-    func root(over playerWindow: UIWindow?) -> UIViewController? {
-        guard let playerWindow, let scene = playerWindow.windowScene else { return nil }
-        let w = window ?? {
-            let w = RelayWindow(windowScene: scene)
-            w.rootViewController = RelayRoot()
-            w.backgroundColor = .clear
-            w.overrideUserInterfaceStyle = .dark
-            window = w
-            return w
-        }()
-        w.windowLevel = playerWindow.windowLevel + 1
-        w.frame = playerWindow.frame
-        if w.isHidden {
-            w.isHidden = false                    // visible, never key: the player keeps the keyboard and orientation
-            w.rootViewController?.view.frame = w.bounds
-            w.layoutIfNeeded()
-        }
-        return w.rootViewController
-    }
-
-    /// After the last close: the window goes away once no panel is up in it.
-    func hideIfIdle() {
-        guard let w = window, !w.isHidden, w.rootViewController?.presentedViewController == nil else { return }
-        w.isHidden = true
-    }
-
-    /// How a panel opened from the relay is anchored. The bar item lives in the
-    /// player's window; `rect` (default) anchors the popover to the item's
-    /// rectangle in the relay's own view instead (UIPopoverPresentationController:
-    /// sourceView + sourceRect; the item's frame from
-    /// UIPopoverPresentationControllerSourceItem.frame(in:)). Lab: `-relaySource item`.
-    static var anchorsToItem: Bool { UserDefaults.standard.string(forKey: "relaySource") == "item" }
-
-    /// Re-anchors `vc` for a presentation from the relay root.
-    func retarget(_ vc: PanelPopoverController, in root: UIViewController, playerWindow: UIWindow?) {
-        guard !Self.anchorsToItem, let pc = vc.popoverPresentationController, let w = playerWindow else { return }
-        var rect: CGRect?
-        if let item = pc.sourceItem { rect = item.frame(in: w) }
-        if rect == nil, let v = pc.sourceView { rect = v.convert(pc.sourceRect, to: w) }
-        guard let r = rect, !r.isEmpty else {
-            dlog("ui/error", "panel: relay has no rectangle for the button; keeping the bar item")
-            return
-        }
-        // The two windows have the same frame, so window coordinates carry over.
-        pc.sourceItem = nil
-        pc.sourceView = root.view
-        pc.sourceRect = r
-        pc.permittedArrowDirections = [.down]
-        dlog("ui", "panel: relay anchors to \(r.integral)")
-    }
-
-    func tearDown() {
-        window?.rootViewController?.presentedViewController?.dismiss(animated: false)
-        window?.isHidden = true
-        window = nil
-    }
-
-    final class RelayWindow: UIWindow {
-        /// Touches on the panel stay here; all others go to the player's window.
-        override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-            guard let hit = super.hitTest(point, with: event),
-                  let panel = (rootViewController?.presentedViewController as? PanelPopoverController)?.popoverView,
-                  hit.isDescendant(of: panel) else { return nil }
-            return hit
-        }
-    }
-
-    final class RelayRoot: UIViewController {
-        override func loadView() {
-            let v = UIView()
-            v.backgroundColor = .clear
-            view = v
-        }
-        // The player's rules, so showing this window never turns or changes the screen.
-        override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-            PlayerPresenter.current?.supportedInterfaceOrientations ?? .all
-        }
-        override var prefersStatusBarHidden: Bool { true }
-        override var prefersHomeIndicatorAutoHidden: Bool { true }
     }
 }
 

@@ -12,6 +12,9 @@ on:
       runner:
         description: 'Runner: xcode-27 (iOS 27 SDK + simulator) or macos-15 (Xcode 26, iOS 26)'
         default: 'xcode-27'
+      extra:
+        description: 'Extra launch arguments for the app (lab modes)'
+        default: ''
 
 permissions:
   contents: write
@@ -105,8 +108,9 @@ jobs:
           xcrun simctl io "$UDID" recordVideo --codec h264 --force lab/lab.mp4 &
           REC=$!
           sleep 10
-          EXTRA=""; case "${{ matrix.variant }}" in av-*) EXTRA="-avLab -labAO=${{ matrix.variant }}";; esac; EXTRA="${EXTRA/-labAO=av-/-labAO=}"; [ "${{ matrix.variant }}" = "gl" ] && EXTRA="-labGL"; [ "${{ matrix.variant }}" = "noengine" ] && EXTRA="-labNoEngine"; [ "${{ matrix.variant }}" = "poplab" ] && EXTRA="-popLab"
+          V="${{ matrix.variant }}"; EXTRA=""; case "$V" in av-*) AO="${V#av-}"; EXTRA="-avLab -labAO=${AO%%.*}";; esac; [ "${{ matrix.variant }}" = "gl" ] && EXTRA="-labGL"; [ "${{ matrix.variant }}" = "noengine" ] && EXTRA="-labNoEngine"; [ "${{ matrix.variant }}" = "poplab" ] && EXTRA="-popLab"
           ARGS="-uiLab $EXTRA"; [ "${{ matrix.variant }}" = "poplab" ] && ARGS="-popLab"; case "${{ matrix.variant }}" in av-*) ARGS="$EXTRA";; imdb) ARGS="-noSplash -imdbProbe=tt0944947";; glasslab) ARGS="-noSplash -glassLab";; skip) ARGS="-noSplash -skipProbe";; parse) ARGS="-noSplash -parseProbe";; names) ARGS="-noSplash -nameProbe";; esac
+          ARGS="$ARGS ${{ github.event.inputs.extra }}"
           if case "${{ matrix.variant }}" in uitest*) true;; *) false;; esac; then
             ONLY="${{ github.event.inputs.only || 'GlassPlayerUITests' }}"; OT=""
             for t in ${ONLY//,/ }; do OT="$OT -only-testing:$t"; done

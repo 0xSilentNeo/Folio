@@ -36,7 +36,7 @@ enum SettingsPreset {
     /// Settings without a registered default (stored by their own screens).
     private static let extras: [String: Kind] = [
         SettingsKey.activeShaders: .strings, SettingsKey.scriptCommands: .data, SettingsKey.pictureMode: .string,
-        SettingsKey.folderSorts: .dictionary, SettingsKey.menuRelay: .bool,
+        SettingsKey.folderSorts: .dictionary,
         "libraryView": .string, "librarySort": .string, "librarySortAsc": .bool, "heroView": .string,
         "screenshotSubs": .bool, "discoverRegion": .string, "discoverPlatforms": .strings,
         "seekMarkerStyle": .string, "seekMarkerColor": .string, "seekShowChapterTitle": .bool, "seekShowSkip": .bool,

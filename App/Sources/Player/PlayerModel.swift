@@ -306,7 +306,14 @@ final class PlayerModel: ObservableObject {
         let scoped = scopedURL
         scopedURL = nil
         client?.delegate = nil
-        if renderer == .metal { detachMetalView() }   // mpv's Metal thread ends during shutdown
+        if renderer == .metal, let c = client {
+            // mpv's Metal thread would end during the quit below, on mpv's own
+            // time, while the player closes here; end it now, with the main
+            // thread waiting (no video track and no forced window: mpv closes
+            // its video output — player/loadfile.c, handle_force_window).
+            settleBeforeMetalThreadEnds()
+            c.set("vid", "no")
+        }
         client?.shutdown {
             scoped?.stopAccessingSecurityScopedResource()
         }
@@ -647,8 +654,13 @@ final class PlayerModel: ObservableObject {
     /// Playback → Get the next episode ready). Network items only; library
     /// files open at once anyway.
     private func maybePrepareNext() {
+        // Two minutes before the Up Next card (credits start when known), or
+        // three before the end. 1.17.0 waited for the end only, and with long
+        // credits the countdown finished before anything was ready (27 Oct
+        // log: credits 3506–3750, card at 3506, nothing prepared).
+        let cardAt = upNextTrigger?.time ?? duration
         guard defaults.bool(forKey: SettingsKey.prepareNext), hasNext, playbackMode == "playlist", preparing == nil, fileLoaded,
-              duration > 120, duration - position < 180 else { return }
+              duration > 120, position >= cardAt - 120 || duration - position < 180 else { return }
         let i = queueIndex + 1
         guard appended?.index != i, episodeStates[i] != .pick, episodeStates[i] != .unavailable else { return }
         let next = resolvedItems[i] ?? queue[i]
@@ -699,17 +711,92 @@ final class PlayerModel: ObservableObject {
         dlog("player", "next episode ready: \(item.displayTitle) — buffers once this file is read to the end")
     }
 
-    /// Picker for an episode without the same release.
+    /// Picker for an episode without the same release. What's playing carries
+    /// on until a stream is picked (1.17.0 paused it, and the picker could not
+    /// open over the Now Playing menu — 27 Oct report).
     private func askToPick(_ index: Int) {
         guard let ctx = queue[index].streamPick?.context else { return }
-        setPaused(true)
         pickRequest = PickRequest(id: index, context: ctx)
-        dlog("player", "next episode: no stream of the same release for \(ctx.videoLabel ?? ctx.videoId); asking")
+        dlog("player", "episode \(ctx.videoLabel ?? ctx.videoId): no stream of the same release; asking")
+    }
+
+    /// Lab (`-pickLab`): the picker for a made-up episode, over whatever is open.
+    func labShowPicker() {
+        pickRequest = PickRequest(id: max(0, queueIndex), context: PlayContext(name: "Lab Show", poster: nil, type: "series", metaId: "tt0000000",
+                                                                             isAnime: false, videoId: "tt0000000:1:7", videoLabel: "S1 · E7", episode: 7))
+        dlog("lab", "picker asked for (lab)")
+    }
+
+    func cancelPick() {
+        if let r = pickRequest { dlog("player", "pick for episode \(r.id + 1) cancelled") }
+        pickRequest = nil
+    }
+
+    /// A tap on a playlist row. The row of the episode playing now does nothing.
+    func playFromPlaylist(_ i: Int) {
+        guard queue.indices.contains(i) else { return }
+        guard i != queueIndex else {
+            dlog("player", "playlist: the episode playing now — nothing to do")
+            if paused { setPaused(false) }
+            return
+        }
+        goTo(i)
+    }
+
+    /// The latest "go to episode" request; a lookup that finishes after a newer
+    /// request (another tap, a pick) does nothing.
+    private var lookupToken = 0
+
+    /// Moves to episode `i`. The episode playing now keeps playing, and
+    /// `queueIndex` stays on it, until `i` is ready to load: an addon episode
+    /// is looked up first, and one without the same release opens the picker
+    /// instead. (1.17.0 moved `queueIndex` first and stopped the episode
+    /// playing; with the picker up, history then went under the wrong episode
+    /// and the end of the file skipped on.)
+    private func goTo(_ i: Int) {
+        guard queue.indices.contains(i) else { return }
+        lookupToken += 1
+        if let done = resolvedItems[i] { queueIndex = i; load(done); return }
+        guard queue[i].url.isEmpty, let p = pick(for: i) else { queueIndex = i; load(queue[i]); return }
+        switch episodeStates[i] {
+        case .pick?, .unavailable?:
+            askToPick(i)
+        default:
+            let token = lookupToken
+            let label = p.context.videoLabel ?? "episode \(i + 1)"
+            showToast("Finding \(label)…")
+            episodeStates[i] = .checking
+            Task { [weak self] in
+                guard let self else { return }
+                let match = await AddonPlayback.screen(p)
+                switch match {
+                case .same: self.episodeStates[i] = .ready
+                case .other: self.episodeStates[i] = .pick
+                case .none: self.episodeStates[i] = .unavailable
+                }
+                guard self.lookupToken == token, !self.closed else {
+                    dlog("player", "lookup for \(label) finished after a newer choice; ignored")
+                    return
+                }
+                switch match {
+                case .same(var found):
+                    found.subtitles += await AddonPlayback.subtitles(type: p.context.type, videoId: p.context.videoId)
+                    self.subsFetched.insert(i)
+                    self.resolvedItems[i] = found
+                    guard self.lookupToken == token, !self.closed else { return }
+                    self.queueIndex = i
+                    self.load(found)
+                case .other, .none:
+                    self.askToPick(i)
+                }
+            }
+        }
     }
 
     /// The stream you picked for an episode; the episodes after it follow that release.
     func playPicked(_ s: AddonStream, from addon: InstalledAddon, for request: PickRequest) {
         pickRequest = nil
+        lookupToken += 1
         Task { [weak self] in
             guard let self else { return }
             let ctx = request.context
@@ -729,19 +816,12 @@ final class PlayerModel: ObservableObject {
 
     func playNext() {
         guard hasNext else { return }
-        let i = queueIndex + 1
-        if episodeStates[i] == .pick {
-            askToPick(i)
-            return
-        }
-        queueIndex = i
-        load(item)
+        goTo(queueIndex + 1)
     }
 
     func playPrevious() {
         if position > 10 || !hasPrevious { seek(to: 0); return }
-        queueIndex -= 1
-        load(item)
+        goTo(queueIndex - 1)
     }
 
     private func onFileLoaded() {
@@ -1091,7 +1171,12 @@ final class PlayerModel: ObservableObject {
         if position >= trigger.time && position < duration - 0.3 {
             if upNext == nil { upNext = UpNext(start: trigger.time, autoplay: trigger.autoplay, next: queue[queueIndex + 1]) }
             if trigger.autoplay, !paused, position >= trigger.time + Self.upNextCountdown {
+                // Once: until the next file loads (load() clears this), the card
+                // stays down. 1.17.0 put it back on the next position update while
+                // an addon episode was still being looked up, finished it again,
+                // and moved on again — six times in the 27 Oct log, from E1 to E6.
                 upNext = nil
+                upNextDismissed = true
                 dlog("player", "up next: countdown finished")
                 playNext()
             }
@@ -1221,12 +1306,40 @@ final class PlayerModel: ObservableObject {
     // MARK: Renderer switching (PiP)
 
     /// A/V lab: the same renderer switch PiP does, without PiP.
-    func labSwitchRenderer(software: Bool) { software ? switchToSoftware() : switchToMain() }
+    func labSwitchRenderer(software: Bool) {
+        if software { labLayoutPending() }
+        software ? switchToSoftware() : switchToMain()
+    }
+
+    /// Lab (-avLayoutPending): every view of the player's window waits to be
+    /// laid out, as when iOS snapshots the app on the way to the Home Screen.
+    func labLayoutPending() {
+        guard CommandLine.arguments.contains("-avLayoutPending"), let w = videoContainer?.window else { return }
+        var n = 0
+        func mark(_ v: UIView) { v.setNeedsLayout(); v.setNeedsUpdateConstraints(); n += 1; v.subviews.forEach(mark) }
+        mark(w)
+        dlog("av", "layout waiting on \(n) views of the player's window")
+    }
+
+    /// Lab: the video view's size changes, so mpv rebuilds its swapchain on
+    /// its Metal thread (MoltenVK sets the layer's properties there) while
+    /// the view is in the window — as after a rotation or PiP restore.
+    func labNudgeVideoSize() {
+        guard CommandLine.arguments.contains("-avLayoutPending"), let mv = metalView, mv.superview != nil, let c = videoContainer else { return }
+        let shrunk = mv.frame.height < c.bounds.height - 1
+        mv.frame = shrunk ? c.bounds : c.bounds.insetBy(dx: 0, dy: 24)
+        mv.layoutIfNeeded()
+        dlog("av", "video view now \(Int(mv.frame.width))×\(Int(mv.frame.height))")
+    }
+    /// A/V lab: the decoder rebuild done after coming back while paused.
+    func labRenewDecoder() { renewHardwareDecoder() }
 
     /// A/V lab: the "closed PiP from the background, then came back" path,
     /// without PiP or a real background transition.
     func labParkThenReturn() {
         if mode == .sw { sw.detach() }
+        labLayoutPending()
+        if mode == .main, renderer == .metal { settleBeforeMetalThreadEnds() }   // vid=no ends mpv's Metal thread
         mode = .none
         pendingMain = true
         client?.set("vid", "no")
@@ -1259,7 +1372,7 @@ final class PlayerModel: ObservableObject {
         case .gl:
             glView?.detach()
         case .metal:
-            detachMetalView()           // before mpv's Metal thread ends (see detachMetalView)
+            settleBeforeMetalThreadEnds()   // the output swap below ends mpv's Metal thread
         }
         do {
             sw.setVideoSize(width: Int(videoSize.width), height: Int(videoSize.height))
@@ -1270,9 +1383,8 @@ final class PlayerModel: ObservableObject {
             showToast("PiP renderer failed")
         }
         if renderer == .metal {
-            c.set("vo", "libmpv")
+            swapOutput(c, to: "libmpv", label: "PiP: video output → CPU")
             if c.string("vid") == "no" { c.set("vid", vidSaved ?? "auto") }
-            dlog("player", "PiP: video output → CPU (track and buffer kept)")
         } else {
             c.set("vid", "no")
             c.set("vid", vidSaved ?? "auto")
@@ -1289,15 +1401,15 @@ final class PlayerModel: ObservableObject {
         if renderer == .metal, mode == .sw, sw.isAttached, let vid = c.string("vid"), vid != "no" {
             reattachMetalView()
             videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded()
-            c.set("vo", "gpu-next")
+            swapOutput(c, to: "gpu-next", label: "PiP ended: video output → Metal")
             mode = .main
             pendingMain = false
             videoOffForBackground = false
-            dlog("player", "PiP ended: video output → Metal (track and buffer kept)")
             releaseSoftwareRenderer()
             startPiPFeed()
             return
         }
+        if renderer == .metal, mode == .main { settleBeforeMetalThreadEnds() }   // vid=no ends mpv's Metal thread
         c.set("vid", "no")
         if mode == .sw { sw.detach() }
         switch renderer {
@@ -1317,6 +1429,37 @@ final class PlayerModel: ObservableObject {
         videoOffForBackground = false
         c.set("vid", vidSaved ?? "auto")
         startPiPFeed()
+    }
+
+    /// Swaps mpv's video output, then puts playback back where you were.
+    ///
+    /// After a `vo` change mpv seeks to its current playback time (command.c:
+    /// queue_seek relative 0, exact), and while video plays that time is the
+    /// last frame the output *showed* (playloop.c handle_playback_time:
+    /// playback_pts = video_pts). When the old output stalls before it goes —
+    /// a Metal layer waits up to a second for a drawable it can't get once its
+    /// view is off screen (CAMetalLayer.nextDrawable docs) — that frame falls
+    /// behind, and the seek played the last second again (27 Oct report, both
+    /// ways). So the position is taken before the swap and moved on by what
+    /// can have been heard meanwhile: the swap holds mpv's core, so sound goes
+    /// on only until the audio output's buffer runs dry (`audio-buffer`,
+    /// 0.2 s by default). The log has the numbers.
+    private func swapOutput(_ c: MPVClient, to vo: String, label: String) {
+        let video0 = c.double("time-pos")
+        let audio0 = c.double("audio-pts")
+        let buffer = c.double("audio-buffer") ?? 0.2
+        let rate = paused ? 0 : (c.double("speed") ?? speed)
+        let t0 = CACurrentMediaTime()
+        c.set("vo", vo)
+        let took = CACurrentMediaTime() - t0
+        guard let v = video0 ?? audio0, v > 0 else {
+            dlog("player", "\(label) in \(Int(took * 1000)) ms (no position; mpv's own seek stands)")
+            return
+        }
+        let target = v + min(took, buffer) * rate
+        c.command(["seek", String(format: "%.3f", target), "absolute+exact"])
+        dlog("player", String(format: "%@ in %.0f ms; picture at %.2f, sound at %.2f, audio buffer %.2f s → continue at %.2f (track and buffer kept)",
+                              label, took * 1000, video0 ?? -1, audio0 ?? -1, buffer, target))
     }
 
     /// Frees the CPU renderer once mpv's output is no longer the libmpv one
@@ -1340,6 +1483,31 @@ final class PlayerModel: ObservableObject {
     /// app is killed (SIGTRAP, 24 Oct 20:23:40, PiP starting). So the Metal
     /// view leaves the window before that thread ends, and comes back before
     /// a new one starts; a commit then only reaches this detached view.
+    /// Right before an mpv call that ends mpv's Metal video thread; the main
+    /// thread waits in that call until the thread has ended.
+    ///
+    /// That thread (MoltenVK) changes the video layer, and Core Animation
+    /// commits its changes when the thread ends, on that thread, laying out
+    /// the layer tree they were made in. Whatever UIKit has waiting to be laid
+    /// out in the player's window is then laid out off the main thread and
+    /// Auto Layout throws: SIGTRAP on 24 Oct (PiP starting) and 27 Oct (Home
+    /// Screen while playing; the stack: thread exit → Core Animation commit →
+    /// view layout → Auto Layout exception, the main thread waiting in mpv
+    /// for that thread). Taking the view out of the window (1.12.1) didn't
+    /// prevent it, and itself left a layout waiting in the window. So: the
+    /// view leaves the window, then everything UIKit has waiting is laid out
+    /// and drawn now, on the main thread. The thread's commit finds nothing
+    /// left to do in UIKit (MainThreadLayout is the safety net).
+    private func settleBeforeMetalThreadEnds() {
+        let window = metalView?.window ?? videoContainer?.window
+        detachMetalView()
+        if Self.labOldSwitch { return }
+        window?.layer.layoutIfNeeded()
+        CATransaction.flush()
+    }
+    /// Lab: the 1.17.0 steps (view out of the window only).
+    private static let labOldSwitch = CommandLine.arguments.contains("-labOldPiPSwitch")
+
     private func detachMetalView() {
         guard let mv = metalView, mv.superview != nil else { return }
         mv.removeFromSuperview()
@@ -1420,11 +1588,32 @@ final class PlayerModel: ObservableObject {
         }
     }
 
+    /// A new hardware decoder after the app was away while paused (video kept,
+    /// 1.16.1). iOS ended the old VideoToolbox session in the meantime: the
+    /// 27 Oct mpv log, on Play after coming back, has "Failed to decode frame
+    /// (invalid session, -12903)", a restarted session missing its reference
+    /// frames ("Could not find ref with POC"), and mpv falling back to
+    /// copy-back — sound with a still picture until the next keyframe, 5–6 s.
+    /// Changing `hwdec` makes mpv rebuild the decoder and seek exactly to the
+    /// frame on screen (command.c, UPDATE_HWDEC: VDCTRL_REINIT, then
+    /// queue_seek to video_pts, exact) — from the cache, nothing is
+    /// downloaded again. Setting the same value changes nothing
+    /// (m_config_set_option_raw only notifies a changed value), so it goes to
+    /// another hardware value and straight back (both rebuild a VideoToolbox
+    /// session; software decoding is never involved).
+    private func renewHardwareDecoder() {
+        guard let c = client, fileLoaded, let hw = c.string("hwdec"), hw != "no",
+              let vid = c.string("vid"), vid != "no" else { return }
+        c.set("hwdec", hw == "videotoolbox-copy" ? "videotoolbox" : "videotoolbox-copy")
+        c.set("hwdec", hw)
+        dlog("player", "back while paused: new hardware decoder (\(hw))")
+    }
+
     private func videoOffForPlayback(_ c: MPVClient) {
         guard let vid = c.string("vid"), vid != "no" else { return }
         vidSaved = vid
         videoOffForBackground = true
-        if renderer == .metal { detachMetalView() }
+        if renderer == .metal { settleBeforeMetalThreadEnds() }   // no video track: mpv ends its video output
         c.set("vid", "no")
         dlog("player", "background playback: video off")
     }
@@ -1513,6 +1702,7 @@ final class PlayerModel: ObservableObject {
             parkedPaused = false
             if renderer == .metal { reattachMetalView(); videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded() }
             dlog("player", "back while paused: video view back, \(metalView.map { "\(Int($0.bounds.width))×\(Int($0.bounds.height))" } ?? "-")")
+            renewHardwareDecoder()
         }
         videoView.setNeedsLayout()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.nudgeRedraw() }
@@ -1736,6 +1926,8 @@ extension PlayerModel: MPVClientDelegate {
 
     private func handleEOF() {
         saveHistory(force: true)
+        // The picker is up for the next episode: wait for the choice.
+        if pickRequest != nil { ended = true; return }
         if playbackMode == "playlist", defaults.bool(forKey: SettingsKey.autoplayNext), hasNext {
             playNext()
         } else {

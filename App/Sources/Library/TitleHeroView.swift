@@ -121,11 +121,7 @@ struct TitleHeroView: View {
         }
         .background(HomeBackdrop().ignoresSafeArea())
         .background(BackSwipeProbe().frame(width: 1, height: 1))
-        // The system navigation bar (transparent): its own Back button and the
-        // native back swipe that follows your finger.
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbar { ToolbarItem(placement: .topBarTrailing) { moreButton } }
+        .pageButtons(zooms: zoomsFromTile, back: goBack) { moreButton }
         // Landscape phone: the floating tab bar sat on the title and its details.
         .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .onAppear {
@@ -227,7 +223,7 @@ struct TitleHeroView: View {
                             [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = f },
                              history.isWatched(f)
                                 ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched([f], false) }
-                                : SwipeAction(title: "Watched", icon: "eye", tint: Theme.accent) { history.setWatched([f], true) }]
+                                : SwipeAction(title: "Watched", icon: "eye", tint: Theme.swipeTint) { history.setWatched([f], true) }]
                         },
                         pendingDelete: $pendingDelete,
                         delete: { f in
@@ -257,14 +253,21 @@ struct TitleHeroView: View {
             }
             Button(role: .destructive) { confirmDelete = true } label: { Label("Delete file", systemImage: "trash") }
         } label: {
-            ToolbarGlyph("ellipsis")
+            PageButtonLabel(systemName: "ellipsis", width: 56)
         }
         .accessibilityLabel("More")
+    }
+
+    private func goBack() {
+        if pageLeaving { dlog("nav", "title page: Back ignored (page already going back)"); return }
+        dlog("nav", "title page: Back")
+        dismiss()
     }
 
     // MARK: Actions
 
     @Environment(\.pageLeaving) private var pageLeaving
+    @Environment(\.zoomsFromTile) private var zoomsFromTile
 
     /// A tap on the page's Play / Resume or an episode: ignored while the page
     /// is going back (the tap was part of a back swipe), and when the finger
@@ -273,6 +276,10 @@ struct TitleHeroView: View {
     private func tapped(_ f: URL, _ control: String) {
         if pageLeaving || BackGesture.justStarted {
             dlog("nav", "title page: \(control) ignored (page going back)")
+            return
+        }
+        if BackGesture.pageMoving {
+            dlog("nav", "title page: \(control) ignored (the page is still moving in or out)")
             return
         }
         let moved = TouchTracker.recentTravel
@@ -544,6 +551,30 @@ struct LibraryRow: View {
 /// that coincides with a back swipe is ignored.)
 @MainActor
 enum BackGesture {
+    /// The navigation controller the title pages live in (set by BackSwipeProbe).
+    static weak var nav: UINavigationController?
+    /// A page is moving in or out: the zoom from its tile (or back into it)
+    /// runs ~0.9 s in the simulator, and its page takes touches meanwhile
+    /// (lab page probe: a touch at the page's middle reached the page for the
+    /// whole zoom-in). 27 Oct log: episode rows played 0.4–1.2 s after the
+    /// page appeared, from taps meant for Home.
+    static var pageMoving: Bool { moving(page) }
+    /// The title page on screen (its controller), set by BackSwipeProbe.
+    static weak var page: UIViewController?
+
+    /// Whether `page`'s own navigation move is running: the navigation
+    /// controller's transition has it as the page coming or going (a sheet or
+    /// alert closing over it doesn't count).
+    static func moving(_ page: UIViewController?) -> Bool {
+        guard let tc = nav?.transitionCoordinator, let page else { return false }
+        let ends = [tc.viewController(forKey: .from), tc.viewController(forKey: .to)].compactMap { $0 }
+        var v: UIViewController? = page
+        while let c = v {
+            if ends.contains(where: { $0 === c }) { return true }
+            v = c.parent
+        }
+        return false
+    }
     static var active = false
     static var lastBegan = Date.distantPast
     static var justStarted: Bool { active || Date().timeIntervalSince(lastBegan) < 0.6 }
@@ -552,15 +583,32 @@ enum BackGesture {
 struct BackSwipeProbe: UIViewRepresentable {
     final class Probe: UIView {
         private var watched: [UIGestureRecognizer] = []
+        private weak var navRef: UINavigationController?
+
+        /// This page's controller (the first one up the responder chain).
+        private var pageController: UIViewController? {
+            var r: UIResponder? = self
+            while let n = r, !(n is UIViewController) { r = n.next }
+            return r as? UIViewController
+        }
+
         override func didMoveToWindow() {
             super.didMoveToWindow()
             if let w = window { TouchTracker.install(on: w) }
+            // Back on screen after another page or a tab switch: the move log again.
+            if window != nil, let nav = navRef, !Self.labProbe {
+                BackGesture.page = pageController
+                startMoveLog(nav)
+            }
             guard window != nil, watched.isEmpty else { return }
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 var r: UIResponder? = self
                 while let n = r, !(n is UINavigationController) { r = n.next }
                 guard let nav = r as? UINavigationController else { dlog("nav", "back swipe probe: no navigation controller"); return }
+                BackGesture.nav = nav
+                BackGesture.page = self.pageController
+                self.navRef = nav
                 let g = nav.interactivePopGestureRecognizer
                 var content: UIGestureRecognizer?
                 #if compiler(>=6.2)
@@ -571,7 +619,76 @@ struct BackSwipeProbe: UIViewRepresentable {
                     r.addTarget(self, action: #selector(self.changed(_:)))
                     self.watched.append(r)
                 }
+                if Self.labProbe { self.startNavProbe(nav) } else { self.startMoveLog(nav) }
             }
+        }
+
+        // MARK: The page's own moves, in the log (each change, 10 times a second)
+
+        private var moveTimer: Timer?
+        private var lastMove = "none"
+
+        /// 1.17.1: whether a navigation transition is running for the page, so
+        /// a device log shows when taps on it are ignored and why. The 26 Oct
+        /// recording has the page's ‹ and ••• still over Home for ~1 s after it
+        /// had zoomed back into its tile — its move not finished yet.
+        private func startMoveLog(_ nav: UINavigationController) {
+            guard moveTimer == nil else { return }
+            let t = Timer(timeInterval: 0.1, repeats: true) { [weak self, weak nav] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    let tc = BackGesture.moving(self.pageController) ? nav?.transitionCoordinator : nil
+                    let now = tc.map { $0.isInteractive ? "interactive" : "animated" } ?? "none"
+                    if now != self.lastMove {
+                        self.lastMove = now
+                        // When a move ends: the navigation bar's state (a swipe
+                        // back let go early left it at alpha 0 in the simulator).
+                        let bar = now == "none" ? nav.map { " (navigation bar \($0.isNavigationBarHidden ? "hidden" : "shown"), alpha \(String(format: "%.2f", $0.navigationBar.alpha)), height \(Int($0.navigationBar.frame.height)))" } ?? "" : ""
+                        dlog("nav", "title page move: \(now)\(bar)")
+                    }
+                }
+            }
+            RunLoop.main.add(t, forMode: .common)
+            moveTimer = t
+        }
+
+        // MARK: Lab (`-navProbe`): the page during its own transitions
+
+        static let labProbe = CommandLine.arguments.contains("-navProbe")
+        private var link: CADisplayLink?
+        private weak var nav: UINavigationController?
+        private var lastLine = ""
+
+        private func startNavProbe(_ nav: UINavigationController) {
+            self.nav = nav
+            guard link == nil else { return }
+            let l = CADisplayLink(target: self, selector: #selector(sample))
+            l.add(to: .main, forMode: .common)
+            link = l
+        }
+
+        override func willMove(toWindow newWindow: UIWindow?) {
+            super.willMove(toWindow: newWindow)
+            if newWindow == nil {
+                link?.invalidate(); link = nil
+                moveTimer?.invalidate(); moveTimer = nil
+                if Self.labProbe { dlog("navprobe", "page left the window") }
+            }
+        }
+
+        /// Each frame: the navigation transition, where the page is drawn, and
+        /// whether a touch at the middle of where it's drawn would reach it.
+        @objc private func sample() {
+            var r: UIResponder? = self
+            while let n = r, !(n is UIViewController) { r = n.next }
+            guard let page = (r as? UIViewController)?.view, let w = window else { return }
+            let tc = nav?.transitionCoordinator
+            let pl = page.layer.presentation() ?? page.layer
+            let f = (page.superview ?? page).convert(pl.frame, to: nil).integral
+            let mid = CGPoint(x: f.midX, y: f.midY)
+            let hit = w.hitTest(mid, with: nil)
+            let line = "transition=\(tc.map { "\($0.isInteractive ? "interactive" : "animated")\($0.isCancelled ? " cancelled" : "")" } ?? "none") page \(f) alpha \(String(format: "%.2f", pl.opacity)) touch at its middle → \(hit.map { $0.isDescendant(of: page) ? "the page" : String(describing: type(of: $0)) } ?? "nothing")"
+            if line != lastLine { lastLine = line; dlog("navprobe", line) }
         }
         @objc func changed(_ g: UIGestureRecognizer) {
             let kind = g === watched.first ? "edge" : "content"

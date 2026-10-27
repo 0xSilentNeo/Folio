@@ -12,6 +12,8 @@ struct PlayerScreen: View {
     var onRotationLock: (Bool) -> Void = { _ in }
 
     @State private var showSubtitlePicker = false
+    /// A touch that began on the menus' tap catcher is still down.
+    @GestureState private var catcherTouched = false
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @ObservedObject private var tune = UITune.shared
     @Namespace private var glassNS
@@ -108,11 +110,21 @@ struct PlayerScreen: View {
                 // "replaces the specified item until … dismisses"), so a tap on a
                 // button's spot is taken here and opens that panel as soon as the
                 // close ends, instead of falling through to the video.
-                if legacyPanels && (ui.panel != nil || ui.panelClosing) {
+                //
+                // It also stays until a touch that began on it ends. A touch that
+                // began in the last moments of a close and ended after it was lost:
+                // the close ended, this layer went away under the finger, and its
+                // tap was cancelled (27 Oct lab touch log: down on this layer 21 ms
+                // before "closed", up 44 ms after, no panel opened).
+                if legacyPanels && (ui.panel != nil || ui.panelClosing || catcherTouched) {
                     Color.black.opacity(0.001)
                         .ignoresSafeArea()
                         .contentShape(Rectangle())
-                        .onTapGesture(coordinateSpace: .global) { point in
+                        .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .global)
+                            .updating($catcherTouched) { _, touched, _ in touched = true }
+                            .onEnded { v in
+                            guard hypot(v.translation.width, v.translation.height) < TouchTracker.tapSlop else { return }
+                            let point = v.location
                             let spot = ui.pillFrames.first(where: { $0.value.insetBy(dx: -6, dy: -8).contains(point) })?.key
                             if ui.panel != nil, PanelPresenter.interruptible, let kind = spot {
                                 // iOS 27: another button opens its panel at
@@ -127,11 +139,19 @@ struct PlayerScreen: View {
                                 dlog("ui", "panel: \(kind.rawValue) tapped while the last panel was closing")
                                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                 ui.toggle(kind)
+                            } else {
+                                dlog("ui", "panel: tap at (\(Int(point.x)), \(Int(point.y))) while the last panel was closing, on no button (buttons at \(ui.pillFrames.map { "\($0.key.rawValue) \(Int($0.value.minX))–\(Int($0.value.maxX))" }.sorted().joined(separator: ", ")))")
                             }
-                        }
+                        })
                         .accessibilityHidden(true)
                 }
+
+                // Above the menus' tap catcher, so it takes taps while a menu is
+                // still closing behind it.
+                // .id: a new request is a new picker (its stream list loads for that episode).
+                if let r = model.pickRequest { pickerCard(r, geo).id(r.id).transition(.opacity.combined(with: .scale(scale: 0.96))) }
             }
+            .animation(.spring(response: 0.36, dampingFraction: 0.86), value: model.pickRequest)
             .animation(.easeOut(duration: 0.18), value: ui.controlsVisible)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD != nil)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD?.kind)
@@ -147,6 +167,11 @@ struct PlayerScreen: View {
         .persistentSystemOverlays(.hidden)
         .onAppear {
             ui.scheduleHide()
+            if TouchTracker.logs {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    for w in UIApplication.shared.connectedScenes.compactMap({ ($0 as? UIWindowScene)?.keyWindow }) { TouchTracker.install(on: w) }
+                }
+            }
             guard legacyPanels else { return }          // iOS 26: GlassPanelPill draws the panels
             ui.presentNow = { presentPanel($0, immediate: true) }
             PanelPresenter.shared.onClosing = { [weak ui] closing in if ui?.panelClosing != closing { ui?.panelClosing = closing } }
@@ -164,13 +189,31 @@ struct PlayerScreen: View {
         .onChange(of: model.paused) { _, paused in
             if paused { ui.showControls(autoHide: false) } else if ui.panel == nil { ui.scheduleHide() }
         }
-        // An episode with no stream of the release being watched (1.17.0).
-        .sheet(item: $model.pickRequest) { r in
-            StreamPickerSheet(context: r.context) { s, addon in model.playPicked(s, from: addon, for: r) }
-                .environment(\.colorScheme, .dark)
-        }
+        // An episode with no stream of the release being watched: the picker
+        // is drawn in the player (see pickerCard), and an open menu closes.
+        .onChange(of: model.pickRequest) { _, r in if r != nil, ui.panel != nil { ui.closePanel() } }
         .fileImporter(isPresented: $showSubtitlePicker, allowedContentTypes: [.item]) { result in
             if case .success(let url) = result { model.addSubtitle(url: url) }
+        }
+    }
+
+    /// The stream picker for an episode without the release being watched.
+    /// Drawn in the player rather than presented as a sheet: 1.17.0's sheet was
+    /// a second presentation from the player while the Now Playing menu (a
+    /// popover) was still presented from it, which UIKit doesn't do — one
+    /// presented controller per presenter (UIViewController.present docs) —
+    /// so it never appeared (27 Oct report).
+    private func pickerCard(_ r: PlayerModel.PickRequest, _ geo: GeometryProxy) -> some View {
+        ZStack {
+            Color.black.opacity(0.45).ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { model.cancelPick() }
+            StreamPickerSheet(context: r.context, onPick: { s, addon in model.playPicked(s, from: addon, for: r) },
+                              onCancel: { model.cancelPick() })
+                .environment(\.colorScheme, .dark)
+                .frame(maxWidth: min(560, geo.size.width - 32), maxHeight: geo.size.height * 0.86)
+                .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                .shadow(color: .black.opacity(0.5), radius: 24, y: 8)
         }
     }
 

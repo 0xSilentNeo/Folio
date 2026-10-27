@@ -8,6 +8,8 @@ struct GlassPlayerApp: App {
     init() {
         SettingsKey.registerDefaults()
         Diagnostics.shared.start()
+        MainThreadLayout.install()
+        MainThreadLayout.lab()
         EnergyMonitor.shared.start()
         UILab.start()
         PopLab.start()

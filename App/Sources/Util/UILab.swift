@@ -46,6 +46,10 @@ enum UILab {
             if CommandLine.arguments.contains("-panelStress") { waitForSteadyLandscape(count: 0) }
             if CommandLine.arguments.contains("-toolbarProbe") { toolbarProbe() }
             if CommandLine.arguments.contains("-relayLab") { relayLab() }
+            if CommandLine.arguments.contains("-pickLab") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 9) { dlog("lab", "pick lab: open Now Playing"); ui?.toggle(.nowPlaying) }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 12) { PlayerPresenter.current?.model.labShowPicker() }
+            }
             return
         }
         dlog("lab", "UI lab run")
@@ -272,9 +276,20 @@ enum UILab {
         let steps: [(Double, String, () -> Void)] = [
             (12, "hold 2x", { PlayerPresenter.current?.model.beginHoldSpeed() }),
             (16, "release", { PlayerPresenter.current?.model.endHoldSpeed() }),
+            (18, "video view resized", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
+            (19.5, "video view resized back", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
             (22, "renderer → software (PiP path)", { PlayerPresenter.current?.model.labSwitchRenderer(software: true) }),
             (26, "renderer → main", { PlayerPresenter.current?.model.labSwitchRenderer(software: false) }),
+            (27, "video view resized", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
+            (28, "video view resized back", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
             (29, "park video (PiP closed in background) then return", { PlayerPresenter.current?.model.labParkThenReturn() }),
+            (33, "new hardware decoder (as after coming back while paused)", { PlayerPresenter.current?.model.labRenewDecoder() }),
+            (39, "close the player (mpv's Metal thread ends on the main thread first)", {
+                let t0 = CACurrentMediaTime()
+                PlayerPresenter.current?.model.close()
+                dlog("av", String(format: "player closed in %.0f ms", (CACurrentMediaTime() - t0) * 1000))
+            }),
+            (43, "after closing", { dlog("av", "app still running 4 s after closing the player") }),
         ]
         for (t, name, f) in steps { DispatchQueue.main.asyncAfter(deadline: .now() + t) { dlog("av", "== \(name)"); f() } }
         var t0: Date?
@@ -319,7 +334,7 @@ enum UILab {
             let b = PlayerPresenter.current?.view.window?.bounds ?? .zero
             let landscape = b.width > b.height && PlayerPresenter.current != nil
             guard landscape && count >= 6 else { relayLab(count: landscape ? count + 1 : 0); return }
-            dlog("lab", "relay lab starts (relay \(PanelRelay.enabled ? "on" : "off"), anchor \(PanelRelay.anchorsToItem ? "item" : "rect"))")
+            dlog("lab", "relay lab starts")
             let steps: [(Double, String, () -> Void)] = [
                 (0.0, "open tracks", { ui?.toggle(.tracks) }),
                 (2.5, "close", { ui?.closePanel() }),

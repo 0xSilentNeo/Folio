@@ -479,8 +479,40 @@ final class PanelUITests: XCTestCase {
     /// A button tapped while the last panel is still closing opens its panel
     /// (UIKit holds the tap until the morph ends; it must not be lost). Once
     /// 0.15 s and once 0.4 s into the close; also the same button again.
+    /// A finger that goes down on a button while the last menu is still
+    /// closing and lifts after the close has ended must still open its menu
+    /// (27 Oct lab: such a tap was lost — the layer that takes taps during a
+    /// close went away under the finger). Each press lasts 0.8 s, so it spans
+    /// the end of the close whenever it starts during it.
+    func test46PressAcrossCloseEnd() throws {
+        let app = launchPlayer(["-touchLog"], native: true)
+        tapsDontWaitForAnimations()
+        let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
+        let pairs: [(String, String, String, String)] = [
+            ("Tracks", "Audio", "Settings", "Playback"), ("Settings", "Playback", "Now Playing", "NOW PLAYING"),
+            ("Now Playing", "NOW PLAYING", "Tracks", "Audio"),
+        ]
+        var ok = 0, total = 0
+        for _ in 0..<2 {
+            for (a, am, b, bm) in pairs {
+                total += 1
+                tapPill(app, a)
+                XCTAssertTrue(shows(app, am, within: 4), "\(a) did not open")
+                sleep(2)
+                outside.tap()                                          // starts the close
+                spots[b]!.press(forDuration: 0.8)
+                if shows(app, bm, within: 4) { ok += 1; print("PRESSACROSS \(a) → \(b): opened") } else { print("PRESSACROSS \(a) → \(b): lost") }
+                sleep(2)
+                if shows(app, bm) { outside.tap() }
+                sleep(2)
+            }
+        }
+        print("PRESSACROSS opened \(ok)/\(total)")
+        XCTAssertEqual(ok, total, "a press on a button that began during a close was lost")
+    }
+
     func test17NativeSwitchWhileClosing() throws {
-        let app = launchPlayer(native: true)
+        let app = launchPlayer(["-touchLog"], native: true)        // where each touch goes, in the app log
         tapsDontWaitForAnimations()
         let outside = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.45))
         let pairs: [(String, String, String, String)] = [
@@ -731,11 +763,320 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(played, 0, "a swipe starting on an episode row started playback")
     }
 
+    /// 27 Oct report: a tap to the right of a menu closes it late, a tap to
+    /// its left at once. Taps around an open Tracks menu; the app log has each
+    /// touch ("[touch] down") and what closed the menu, with times.
+    /// The page's ‹ and ••• during swipes back (27 Oct lab run: after a swipe
+    /// let go early, both were gone while the page stayed; 26 Oct device
+    /// recording: both stayed over Home after the page had zoomed back).
+    /// Part 1: short swipes that are let go — the page must keep both buttons.
+    /// Part 2: open a title and swipe straight back, several times, some
+    /// before the page has finished zooming in — Home must show neither, and
+    /// must open the next title.
+    func test44SwipeBackKeepsPageButtons() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-heroView", "details"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let tile = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let h = app.frame.height
+        func openPage() -> Bool {
+            let f = app.staticTexts["Lab Show"].firstMatch.frame
+            origin.withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
+            return app.buttons["Back"].waitForExistence(timeout: 6)
+        }
+        XCTAssertTrue(openPage(), "title page did not open")
+        sleep(2)
+
+        var lost = 0
+        let starts: [(CGFloat, CGFloat, CGFloat)] = [(60, 0.62, 60), (60, 0.62, 60), (20, 0.5, 80), (8, 0.45, 70), (120, 0.7, 50), (60, 0.62, 60)]
+        for (i, (x, yf, dx)) in starts.enumerated() {
+            let y = h * yf
+            origin.withOffset(CGVector(dx: x, dy: y)).press(forDuration: 0.01, thenDragTo: origin.withOffset(CGVector(dx: x + dx, dy: y)),
+                                                            withVelocity: .slow, thenHoldForDuration: 0.4)
+            sleep(2)
+            let back = app.buttons["Back"].exists, more = app.buttons["More"].exists
+            let onPage = app.buttons["ep:Lab Show S01E02.mp4"].exists
+            print("LETGO \(i) from x=\(Int(x)) by \(Int(dx)) pt → page \(onPage ? "stayed" : "left"), Back \(back), More \(more)")
+            if onPage && (!back || !more) { lost += 1 }
+            if !onPage { XCTAssertTrue(openPage(), "title page did not reopen (\(i))"); sleep(2) }
+        }
+        print("LETGO buttons lost \(lost)/\(starts.count)")
+
+        // Back, tapped off the glyph (left part of the circle).
+        if app.buttons["Back"].exists {
+            app.buttons["Back"].coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap(); sleep(2)
+            let left = !app.buttons["ep:Lab Show S01E02.mp4"].exists
+            print("BACKEDGE tap on the circle's left part → \(left ? "went back" : "stayed")")
+            XCTAssertTrue(left, "Back did not go back when tapped beside its glyph")
+            if !left { app.buttons["Back"].tap(); sleep(2) }
+        }
+
+        // Back to Home with a swipe, at different moments after opening.
+        var leftOver = 0, noOpen = 0
+        let waits: [UInt32] = [0, 150_000, 300_000, 500_000, 800_000, 1_200_000, 0, 300_000]
+        for (i, w) in waits.enumerated() {
+            let f = app.staticTexts["Lab Show"].firstMatch.frame
+            origin.withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
+            usleep(w)
+            origin.withOffset(CGVector(dx: 30, dy: h * 0.62)).press(forDuration: 0.01, thenDragTo: origin.withOffset(CGVector(dx: 330, dy: h * 0.62)),
+                                                                   withVelocity: .fast, thenHoldForDuration: 0)
+            sleep(3)
+            let back = app.buttons["Back"].exists, more = app.buttons["More"].exists
+            let onPage = app.buttons["ep:Lab Show S01E02.mp4"].exists
+            print("QUICKBACK \(i) after \(w / 1000) ms → \(onPage ? "still on the page" : "Home"), Back \(back), More \(more)")
+            if onPage { app.buttons["Back"].firstMatch.tap(); sleep(2); continue }
+            if back || more { leftOver += 1 }
+            // Home must still open a title.
+            if openPage() { sleep(1); app.buttons["Back"].tap(); sleep(2) } else { noOpen += 1; print("QUICKBACK \(i): Home did not open the title") }
+        }
+        print("QUICKBACK left over \(leftOver)/\(waits.count), Home unresponsive \(noOpen)")
+        XCTAssertEqual(lost, 0, "a swipe back that was let go took the page's buttons away")
+        XCTAssertEqual(leftOver, 0, "the page's buttons stayed on Home")
+        XCTAssertEqual(noOpen, 0, "Home did not open a title after a swipe back")
+    }
+
+    /// Settings keeps the system navigation bar and zooms out of its button on
+    /// Home (which hides the bar). A swipe back that is let go must leave the
+    /// bar showing: its Back button and title.
+    func test45SettingsLetGoSwipe() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-noSplash"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let settings = app.buttons["Settings"].firstMatch
+        XCTAssertTrue(settings.waitForExistence(timeout: 25), "Settings button not found")
+        sleep(2)
+        settings.tap()
+        XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "Settings did not open")
+        sleep(2)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let h = app.frame.height
+        var lost = 0
+        for (i, (x, dx)) in [(60.0, 60.0), (8.0, 70.0), (120.0, 50.0), (60.0, 60.0)].enumerated() {
+            origin.withOffset(CGVector(dx: x, dy: h * 0.6)).press(forDuration: 0.01, thenDragTo: origin.withOffset(CGVector(dx: x + dx, dy: h * 0.6)),
+                                                                 withVelocity: .slow, thenHoldForDuration: 0.4)
+            sleep(2)
+            let back = app.buttons["Back"].exists
+            let title = app.navigationBars.staticTexts["Settings"].exists || app.staticTexts["Settings"].exists
+            let onPage = app.staticTexts["Playback"].exists
+            print("SETTINGSLETGO \(i) → page \(onPage ? "stayed" : "left"), Back \(back), title \(title)")
+            if onPage && (!back || !title) { lost += 1 }
+            if !onPage { settings.tap(); _ = app.buttons["Back"].waitForExistence(timeout: 6); sleep(2) }
+        }
+        print("SETTINGSLETGO lost \(lost)")
+        XCTAssertEqual(lost, 0, "a swipe back that was let go took Settings' navigation bar away")
+    }
+
+    func test37TapOutsideLatency() throws { try tapOutsideLatency(relay: false) }
+    func test38TapOutsideLatencyRelay() throws { try tapOutsideLatency(relay: true) }
+
+    private func tapOutsideLatency(relay: Bool) throws {
+        let app = launchPlayer(["-touchLog"] + (relay ? ["-relayAlways"] : []), native: true)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let w = app.frame.width, h = app.frame.height
+        let fmt = DateFormatter(); fmt.dateFormat = "HH:mm:ss.SSS"
+        let spots = ["left of the menu, 40 pt", "right of the menu, 20 pt", "right screen edge", "above the menu",
+                     "video, left", "video, centre", "right of the menu, low", "left of the menu, 10 pt"]
+        func at(_ name: String, _ f: CGRect) -> CGPoint {
+            switch name {
+            case "left of the menu, 40 pt": return CGPoint(x: f.minX - 40, y: f.midY)
+            case "right of the menu, 20 pt": return CGPoint(x: min(w - 4, f.maxX + 20), y: f.midY)
+            case "right screen edge": return CGPoint(x: w - 8, y: f.midY)
+            case "above the menu": return CGPoint(x: f.midX, y: max(6, f.minY - 30))
+            case "video, left": return CGPoint(x: w * 0.15, y: h * 0.5)
+            case "video, centre": return CGPoint(x: w * 0.5, y: h * 0.4)
+            case "right of the menu, low": return CGPoint(x: min(w - 4, f.maxX + 20), y: f.maxY - 20)
+            default: return CGPoint(x: f.minX - 10, y: f.midY)
+            }
+        }
+        for (i, name) in spots.enumerated() {
+            tapPill(app, "Tracks")
+            guard shows(app, "Audio", within: 5) else { XCTFail("Tracks did not open (\(i))"); continue }
+            sleep(2)
+            let pop = app.popovers.firstMatch
+            let f = pop.exists ? pop.frame : .zero
+            let p = at(name, f)
+            print("TAPOUT \(relay ? "relay" : "player") \(i) \(name): menu \(f.integral), tap (\(Int(p.x)), \(Int(p.y))) issued \(fmt.string(from: Date()))")
+            origin.withOffset(CGVector(dx: p.x, dy: p.y)).tap()
+            sleep(3)
+            let still = shows(app, "Audio")
+            print("TAPOUT \(relay ? "relay" : "player") \(i) closed: \(!still)")
+            if still { origin.withOffset(CGVector(dx: w * 0.3, dy: h * 0.5)).tap(); sleep(3) }
+        }
+    }
+
+    /// 27 Oct report (#3): "why are the buttons even there when the page has
+    /// been dismissed?" After a swipe back from a title page, a tap on Home
+    /// played an episode of the page that had just gone. The tap is sent 0 to
+    /// 1.4 s after the swipe without waiting for animations to finish
+    /// (Quiescence); the app log traces the page each frame ("[navprobe]")
+    /// and every touch ("[touch]").
+    func test39TapRightAfterSwipeBack() throws {
+        let report = Quiescence.skipWaiting()
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-heroView", "details", "-libraryView", "list", "-touchLog", "-navProbe"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let label = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(label.waitForExistence(timeout: 25), "library row not found")
+        sleep(2)
+        let tf = label.frame
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let tileSpot = origin.withOffset(CGVector(dx: tf.midX, dy: tf.midY))
+        let fmt = DateFormatter(); fmt.dateFormat = "HH:mm:ss.SSS"
+        var played = 0
+        let delays: [Double] = [0.0, 0.2, 0.4, 0.7, 1.0, 1.4]
+        for (i, d) in delays.enumerated() {
+            if !app.buttons["Back"].exists {
+                tileSpot.tap()
+                guard app.buttons["Back"].waitForExistence(timeout: 6) else { XCTFail("title page did not open (\(i))"); return }
+                sleep(2)
+            }
+            let ep = app.buttons["ep:Lab Show S01E01.mp4"]
+            guard ep.waitForExistence(timeout: 5) else { XCTFail("episode row not found (\(i))"); return }
+            let f = ep.frame
+            let from = origin.withOffset(CGVector(dx: f.minX + 40, dy: f.midY))
+            let to = origin.withOffset(CGVector(dx: f.minX + 260, dy: f.midY))
+            print("AFTERBACK \(i) swipe from the episode row at \(fmt.string(from: Date()))")
+            from.press(forDuration: 0.01, thenDragTo: to, withVelocity: .fast, thenHoldForDuration: 0)
+            if d > 0 { usleep(UInt32(d * 1_000_000)) }
+            print("AFTERBACK \(i) tap on the Home row \(d) s after the swipe, at \(fmt.string(from: Date()))")
+            tileSpot.tap()
+            sleep(3)
+            if app.buttons["Close player"].exists {
+                played += 1
+                print("AFTERBACK \(i) → the player opened")
+                app.buttons["Close player"].tap(); sleep(3)
+            } else {
+                print("AFTERBACK \(i) → no playback, title page \(app.buttons["Back"].exists ? "open" : "closed")")
+            }
+            if app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
+        }
+        print("AFTERBACK played \(played)/\(delays.count) (\(report.contains("skipped") ? "taps sent without waiting" : "XCTest still waited for idle"))")
+        XCTAssertEqual(played, 0, "a tap right after a swipe back started playback")
+    }
+
+    /// 27 Oct log (#3): episode rows played 0.4–1.2 s after their page
+    /// appeared — taps meant for Home landing on a page still zooming in. A
+    /// second tap where an episode row will be, 0.15–0.8 s after opening the
+    /// page, sent without waiting for animations (Quiescence).
+    func test43TapWhilePageZoomsIn() throws {
+        let report = Quiescence.skipWaiting()
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-heroView", "details", "-libraryView", "list", "-touchLog", "-navProbe"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let label = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(label.waitForExistence(timeout: 25), "library row not found")
+        sleep(2)
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let tf = label.frame
+        let rowSpot = origin.withOffset(CGVector(dx: tf.midX, dy: tf.midY))
+        // Where the episode row sits once the page is open.
+        rowSpot.tap()
+        XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open")
+        sleep(2)
+        let ep = app.buttons["ep:Lab Show S01E01.mp4"]
+        XCTAssertTrue(ep.waitForExistence(timeout: 5), "episode row not found")
+        let ef = ep.frame
+        let epSpot = origin.withOffset(CGVector(dx: ef.midX, dy: ef.midY))
+        app.buttons["Back"].tap(); sleep(2)
+        var played = 0
+        let delays: [Double] = [0.15, 0.3, 0.5, 0.8]
+        for (i, d) in delays.enumerated() {
+            rowSpot.tap()
+            usleep(UInt32(d * 1_000_000))
+            epSpot.tap()
+            sleep(3)
+            if app.buttons["Close player"].exists {
+                played += 1
+                print("ZOOMIN \(i) second tap \(d) s after opening → the player opened")
+                app.buttons["Close player"].tap(); sleep(3)
+            } else {
+                print("ZOOMIN \(i) second tap \(d) s after opening → no playback")
+            }
+            if app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
+        }
+        print("ZOOMIN played \(played)/\(delays.count) (\(report.contains("skipped") ? "taps sent without waiting" : "XCTest still waited for idle"))")
+        XCTAssertEqual(played, 0, "a tap while the page zoomed in started playback")
+    }
+
+    /// 27 Oct report (#5): Watched on a swiped episode row did nothing (List and
+    /// Details views): the tap only closed the row.
+    func test40EpisodeRowSwipeWatched() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-heroView", "details", "-libraryView", "list"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let label = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(label.waitForExistence(timeout: 25), "library row not found")
+        sleep(2)
+        label.tap()
+        XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 6), "title page did not open")
+        sleep(2)
+        let ep = app.buttons["ep:Lab Show S01E02.mp4"]
+        XCTAssertTrue(ep.waitForExistence(timeout: 5), "episode row not found")
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        func reveal() {
+            let f = ep.frame
+            origin.withOffset(CGVector(dx: f.maxX - 30, dy: f.midY))
+                .press(forDuration: 0.01, thenDragTo: origin.withOffset(CGVector(dx: f.maxX - 150, dy: f.midY)), withVelocity: .fast, thenHoldForDuration: 0)
+            sleep(1)
+        }
+        reveal()
+        // The revealed row's button (1.17.0 also listed every hidden row's).
+        func shown(_ name: String) -> XCUIElement? { app.buttons.matching(identifier: name).allElementsBoundByIndex.first { $0.isHittable } }
+        // Earlier tests in the same simulator may have marked it already:
+        // whichever of Watched / Unwatched shows must turn into the other.
+        let first = shown("Watched") != nil ? "Watched" : shown("Unwatched") != nil ? "Unwatched" : nil
+        let other = first == "Watched" ? "Unwatched" : "Watched"
+        print("ROWSWIPE revealed: \(first ?? "neither") Delete=\(shown("Delete") != nil)")
+        guard let first, let button = shown(first) else { XCTFail("no Watched / Unwatched after swiping the episode row"); return }
+        button.tap(); sleep(1)
+        reveal()
+        let toggled = shown(other) != nil
+        print("ROWSWIPE after tapping \(first): \(other) shown=\(toggled)")
+        XCTAssertTrue(toggled, "tapping \(first) on the swiped row didn't change the episode")
+        if let del = shown("Delete") {
+            del.tap(); sleep(1)
+            let q = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Delete'")).firstMatch
+            print("ROWSWIPE Delete asks: \(q.exists)")
+            XCTAssertTrue(q.exists, "Delete on the swiped row didn't ask")
+        }
+    }
+
+    /// 27 Oct report (#7): the stream picker for an episode of another release
+    /// never appeared when asked for from the Now Playing menu. The lab asks
+    /// for it while that menu is open; the picker must show, the menu close,
+    /// and Cancel take the picker away.
+    func test41PickerOverNowPlaying() throws {
+        let app = launchPlayer(["-pickLab"], native: true, captureNow: false)
+        sleep(14)
+        let picker = app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'S1 · E7'")).firstMatch
+        let shown = picker.waitForExistence(timeout: 6)
+        print("PICKER shown=\(shown) nowPlayingStillOpen=\(shows(app, "NOW PLAYING"))")
+        XCTAssertTrue(shown, "the picker did not appear over the Now Playing menu")
+        let cancel = app.buttons["Cancel"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 3), "no Cancel on the picker")
+        cancel.tap(); sleep(2)
+        print("PICKER after Cancel shown=\(picker.exists)")
+        XCTAssertFalse(picker.exists, "Cancel left the picker up")
+    }
+
     /// Measurement only (app log, "relay lab"): menus opened right after a
     /// close and switched while open, driven from inside the app; with the
     /// relay anchored to the button's rectangle, to the bar item, and off.
     func test33RelayLabRect() throws {
         _ = launchPlayer(["-relayLab", "-menuRelay", "YES", "-relaySource", "rect"], native: true, captureNow: false)
+        sleep(30)
+    }
+    /// The same in-app sequence with Outplayer's present/dismiss calls (no relay).
+    func test42RelayLabOutplayerWay() throws {
+        _ = launchPlayer(["-relayLab", "-menuRelay", "NO", "-outplayerMenus", "YES"], native: true, captureNow: false)
         sleep(30)
     }
     func test34RelayLabItem() throws {
