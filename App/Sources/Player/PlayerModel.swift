@@ -1326,9 +1326,8 @@ final class PlayerModel: ObservableObject {
             showToast("PiP renderer failed")
         }
         if renderer == .metal {
-            c.set("vo", "libmpv")
+            swapOutput(c, to: "libmpv", label: "PiP: video output → CPU")
             if c.string("vid") == "no" { c.set("vid", vidSaved ?? "auto") }
-            dlog("player", "PiP: video output → CPU (track and buffer kept)")
         } else {
             c.set("vid", "no")
             c.set("vid", vidSaved ?? "auto")
@@ -1345,11 +1344,10 @@ final class PlayerModel: ObservableObject {
         if renderer == .metal, mode == .sw, sw.isAttached, let vid = c.string("vid"), vid != "no" {
             reattachMetalView()
             videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded()
-            c.set("vo", "gpu-next")
+            swapOutput(c, to: "gpu-next", label: "PiP ended: video output → Metal")
             mode = .main
             pendingMain = false
             videoOffForBackground = false
-            dlog("player", "PiP ended: video output → Metal (track and buffer kept)")
             releaseSoftwareRenderer()
             startPiPFeed()
             return
@@ -1373,6 +1371,35 @@ final class PlayerModel: ObservableObject {
         videoOffForBackground = false
         c.set("vid", vidSaved ?? "auto")
         startPiPFeed()
+    }
+
+    /// Swaps mpv's video output, then puts playback back where the sound is.
+    ///
+    /// After a `vo` change mpv seeks to its current playback time (command.c:
+    /// queue_seek relative 0, exact), and while video plays that time is the
+    /// last frame the output *showed* (playloop.c handle_playback_time:
+    /// playback_pts = video_pts). When the old output stalls before it goes —
+    /// a Metal layer waits up to a second for a drawable it can't get once its
+    /// view is off screen (CAMetalLayer.nextDrawable docs) — the picture falls
+    /// behind the sound, and that seek played the last second again (27 Oct
+    /// report, both ways). So the sound's position is taken before the swap
+    /// (audio-pts: what is heard, output delay included), moved on by the time
+    /// the swap took, and sought to exactly. The log has both numbers.
+    private func swapOutput(_ c: MPVClient, to vo: String, label: String) {
+        let audio0 = c.double("audio-pts")
+        let video0 = c.double("time-pos")
+        let rate = paused ? 0 : (c.double("speed") ?? speed)
+        let t0 = CACurrentMediaTime()
+        c.set("vo", vo)
+        let took = CACurrentMediaTime() - t0
+        guard let a = audio0, a > 0 else {
+            dlog("player", "\(label) in \(Int(took * 1000)) ms (no audio position; mpv's own seek stands)")
+            return
+        }
+        let target = a + took * rate
+        c.command(["seek", String(format: "%.3f", target), "absolute+exact"])
+        dlog("player", String(format: "%@ in %.0f ms; picture was at %.2f, sound at %.2f → continue at %.2f (track and buffer kept)",
+                              label, took * 1000, video0 ?? -1, a, target))
     }
 
     /// Frees the CPU renderer once mpv's output is no longer the libmpv one
