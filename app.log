@@ -1,0 +1,15 @@
+07:38:40.080 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.26 GB
+07:38:40.098 [av] A/V lab, ao -labAO=default
+07:38:40.105 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+07:38:41.554 [hang] main thread unresponsive for 1.5 s
+07:38:41.739 [app] first screen 3290 ms after process start
+07:38:42.828 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Bundle/Application/D19871CC-16C6-4478-A0DA-9504C34CC986/GlassPlayer.app/lab/lab-av.mkv
+07:38:43.758 [app] active
+07:38:45.264 [player] start renderer=metal
+07:38:45.301 [player] mpv options applied renderer=metal hwdec=auto anime4k=off/fast picture=efficient
+07:38:45.446 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Bundle/Application/D19871CC-16C6-4478-A0DA-9504C34CC986/GlassPlayer.app/lab/lab-av.mkv source=local opts=[] -> 0
+07:38:45.533 [player] decoder: software
+07:38:45.731 [perf] panel tracks prebuilt in 138 ms
+07:38:47.344 [hang] main thread unresponsive for 1.8 s
+07:38:47.651 [perf] panel settings prebuilt in 753 ms
+07:38:47.652 [lab] layout guard lab: a thread changes a view's layer and ends (guard off)

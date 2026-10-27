@@ -1,0 +1,13 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-27 07:38:42.771 E  GlassPlayer[25634:11697] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 07:38:42.777 E  GlassPlayer[25634:11697] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 07:38:42.796 E  GlassPlayer[25634:116c1] [com.apple.app_launch_measurement:General] <compose failure [shared UUID]>
+2026-10-27 07:38:42.827 E  GlassPlayer[25634:11697] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-27 07:38:43.720 E  GlassPlayer[25634:11697] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 07:38:43.720 E  GlassPlayer[25634:11697] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 07:38:44.878 E  GlassPlayer[25634:11697] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-10-27 07:38:45.101 F  GlassPlayer[25634:11697] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-10-27 07:38:46.595 E  GlassPlayer[25634:11786] (5827BB56-52E1-3D0B-AC02-7A3201246563) <compose failure [shared UUID]>
+2026-10-27 07:38:47.790 E  GlassPlayer[25634:117dc] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-27 07:38:47.870 E  GlassPlayer[25634:117dc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 07:38:47.870 E  GlassPlayer[25634:117dc] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
