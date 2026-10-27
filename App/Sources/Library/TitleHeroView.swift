@@ -121,7 +121,7 @@ struct TitleHeroView: View {
         }
         .background(HomeBackdrop().ignoresSafeArea())
         .background(BackSwipeProbe().frame(width: 1, height: 1))
-        .pageButtons(back: goBack) { moreButton }
+        .pageButtons(zooms: zoomsFromTile, back: goBack) { moreButton }
         // Landscape phone: the floating tab bar sat on the title and its details.
         .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .onAppear {
@@ -267,6 +267,7 @@ struct TitleHeroView: View {
     // MARK: Actions
 
     @Environment(\.pageLeaving) private var pageLeaving
+    @Environment(\.zoomsFromTile) private var zoomsFromTile
 
     /// A tap on the page's Play / Resume or an episode: ignored while the page
     /// is going back (the tap was part of a back swipe), and when the finger

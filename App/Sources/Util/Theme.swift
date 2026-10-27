@@ -228,7 +228,11 @@ extension View {
     @ViewBuilder
     func zoomDestination(_ id: some Hashable, in ns: Namespace.ID) -> some View {
         // Same AnyHashable wrapping as ZoomSource, so the ids always match.
-        if #available(iOS 18.0, *) { navigationTransition(.zoom(sourceID: AnyHashable(id), in: ns)).ignoresTapsWhileLeaving() } else { self.ignoresTapsWhileLeaving() }
+        if #available(iOS 18.0, *) {
+            navigationTransition(.zoom(sourceID: AnyHashable(id), in: ns)).ignoresTapsWhileLeaving().environment(\.zoomsFromTile, true)
+        } else {
+            self.ignoresTapsWhileLeaving()
+        }
     }
 
     /// A pushed page stops taking taps the moment it starts going away.
@@ -243,7 +247,13 @@ extension View {
 }
 
 private struct PageLeavingKey: EnvironmentKey { static let defaultValue = false }
+private struct ZoomsFromTileKey: EnvironmentKey { static let defaultValue = false }
 extension EnvironmentValues {
+    /// The page zooms out of a tile and back into it (zoomDestination, iOS 18+).
+    var zoomsFromTile: Bool {
+        get { self[ZoomsFromTileKey.self] }
+        set { self[ZoomsFromTileKey.self] = newValue }
+    }
     /// True from the moment a pushed page starts going away (LeaveGuard).
     var pageLeaving: Bool {
         get { self[PageLeavingKey.self] }
@@ -400,10 +410,12 @@ extension View {
     /// With the bar hidden on both screens nothing changes alongside the zoom,
     /// and the buttons are part of the page, so they come and go with it.
     /// The swipe back is the zoom transition's own, so hiding the bar doesn't
-    /// turn it off (it did before the zoom, 1.11.0).
+    /// turn it off. A page pushed without the zoom (a file opened from a
+    /// folder) keeps the system bar: hiding it turns UIKit's own back swipe
+    /// off (1.11.0).
     @ViewBuilder
-    func pageButtons<Trailing: View>(back: @escaping () -> Void, @ViewBuilder trailing: () -> Trailing) -> some View {
-        if #available(iOS 18.0, *) {
+    func pageButtons<Trailing: View>(zooms: Bool, back: @escaping () -> Void, @ViewBuilder trailing: () -> Trailing) -> some View {
+        if #available(iOS 18.0, *), zooms {
             let t = trailing()
             toolbar(.hidden, for: .navigationBar)
                 .safeAreaInset(edge: .top, spacing: 0) {
@@ -428,12 +440,13 @@ extension View {
 }
 
 /// A page button's face: a glass circle (Back) or capsule (⋯), the whole of
-/// it tappable. Inside the system toolbar (iOS 17) just the glyph.
+/// it tappable. Inside the system toolbar just the glyph.
 struct PageButtonLabel: View {
     let systemName: String
     var width: CGFloat = 44
+    @Environment(\.zoomsFromTile) private var inPage
     var body: some View {
-        if #available(iOS 18.0, *) {
+        if #available(iOS 18.0, *), inPage {
             Image(systemName: systemName)
                 .font(.system(size: 17, weight: .semibold))
                 .frame(width: width, height: 44)
