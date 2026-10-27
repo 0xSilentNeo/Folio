@@ -1,0 +1,83 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-27 10:31:04.246 E  GlassPlayer[27563:1252b] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:31:04.246 E  GlassPlayer[27563:1252b] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:31:04.289 E  GlassPlayer[27563:1252b] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-27 10:31:04.947 E  GlassPlayer[27563:1252b] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:31:04.948 E  GlassPlayer[27563:1252b] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:31:05.319 E  GlassPlayer[27563:1252b] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-10-27 10:31:05.392 F  GlassPlayer[27563:1252b] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-10-27 10:31:06.356 E  GlassPlayer[27563:125d3] (5827BB56-52E1-3D0B-AC02-7A3201246563) <compose failure [shared UUID]>
+2026-10-27 10:31:09.259 E  GlassPlayer[27563:125d3] [com.apple.Metal:Metal Compiler Warning] <compose failure [shared UUID]>
+2026-10-27 10:31:09.468 E  GlassPlayer[27563:1263c] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-27 10:31:09.477 E  GlassPlayer[27563:12649] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-27 10:31:10.550 E  GlassPlayer[27563:125b7] [com.apple.coreaudio:EnhanceDialogueProcessor] <compose failure [shared UUID]>
+2026-10-27 10:31:10.550 E  GlassPlayer[27563:125b7] [com.apple.coreaudio:EnhanceDialogueProcessor] <compose failure [shared UUID]>
+2026-10-27 10:31:10.550 E  GlassPlayer[27563:125b7] [com.apple.coreaudio:EnhanceDialogueProcessor] <compose failure [shared UUID]>
+2026-10-27 10:31:10.550 E  GlassPlayer[27563:125b7] [com.apple.coreaudio:EnhanceDialogueProcessor] <compose failure [shared UUID]>
+2026-10-27 10:31:11.211 E  GlassPlayer[27563:125d3] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-27 10:31:11.215 E  GlassPlayer[27563:125d3] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-27 10:31:11.218 E  GlassPlayer[27563:125d3] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-27 10:31:11.221 E  GlassPlayer[27563:125d3] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-27 10:31:11.225 E  GlassPlayer[27563:125d3] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-27 10:31:11.764 E  GlassPlayer[27563:125c4] [com.apple.coreaudio:AMCP] <compose failure [shared UUID]>
+2026-10-27 10:31:11.767 E  GlassPlayer[27563:125c4] [com.apple.coreaudio:AMCP] <compose failure [shared UUID]>
+2026-10-27 10:31:13.058 F  GlassPlayer[27563:1252b] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-27 10:31:14.281 F  GlassPlayer[27563:1252b] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-27 10:31:14.412 E  GlassPlayer[27563:125c4] (5827BB56-52E1-3D0B-AC02-7A3201246563) <compose failure [shared UUID]>
+2026-10-27 10:31:14.480 E  GlassPlayer[27563:1252b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:14.481 E  GlassPlayer[27563:1252b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:14.482 E  GlassPlayer[27563:1252b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:14.482 E  GlassPlayer[27563:1252b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:14.482 E  GlassPlayer[27563:1252b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:14.494 E  GlassPlayer[27563:1252b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:14.494 E  GlassPlayer[27563:1252b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:14.495 E  GlassPlayer[27563:1252b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:14.495 E  GlassPlayer[27563:1252b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:14.495 E  GlassPlayer[27563:1252b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:15.194 E  GlassPlayer[27563:125c4] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:15.198 E  GlassPlayer[27563:125c4] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:15.582 E  GlassPlayer[27563:126c4] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-10-27 10:31:15.786 E  GlassPlayer[27563:126c4] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-27 10:31:15.790 E  GlassPlayer[27563:126c4] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:15.799 E  GlassPlayer[27563:126c4] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:15.945 F  GlassPlayer[27563:1253a] [com.apple.defaults:User Defaults] <compose failure [shared UUID]>
+2026-10-27 10:31:16.123 E  GlassPlayer[27563:125c4] [com.apple.authkit:nto] <compose failure [shared UUID]>
+2026-10-27 10:31:16.166 E  GlassPlayer[27563:1252b] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:16.166 E  GlassPlayer[27563:1252b] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:16.166 E  GlassPlayer[27563:1252b] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:16.166 E  GlassPlayer[27563:1252b] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:16.166 E  GlassPlayer[27563:1252b] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:18.226 E  GlassPlayer[27563:1252b] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-27 10:31:18.226 E  GlassPlayer[27563:1252b] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-27 10:31:18.226 E  GlassPlayer[27563:1252b] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-10-27 10:31:18.237 E  GlassPlayer[27563:1253a] [com.apple.runningboard:assertion] <compose failure [shared UUID]>
+2026-10-27 10:31:18.243 E  GlassPlayer[27563:1253a] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-10-27 10:31:18.244 E  GlassPlayer[27563:1253a] [com.apple.runningboard:assertion] <compose failure [shared UUID]>
+2026-10-27 10:31:18.245 E  GlassPlayer[27563:1253a] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-10-27 10:31:24.743 E  GlassPlayer[27563:125d3] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:31:24.751 E  GlassPlayer[27563:129e2] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-27 10:31:24.807 E  GlassPlayer[27563:12542] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:24.807 E  GlassPlayer[27563:12542] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:26.799 E  GlassPlayer[27563:126c4] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:26.885 E  GlassPlayer[27563:1252b] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:27.612 E  GlassPlayer[27563:1252b] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:28.734 E  GlassPlayer[27563:12abf] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-27 10:31:28.745 E  GlassPlayer[27563:12ac3] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-27 10:31:28.917 E  GlassPlayer[27563:1253a] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:28.917 E  GlassPlayer[27563:1253a] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:31.702 E  GlassPlayer[27563:12abe] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:31:32.223 E  GlassPlayer[27563:1253a] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:32.223 E  GlassPlayer[27563:1253a] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:32.735 E  GlassPlayer[27563:12b83] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-27 10:31:32.739 E  GlassPlayer[27563:12b87] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-27 10:31:35.736 E  GlassPlayer[27563:12b81] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:31:35.739 E  GlassPlayer[27563:12bec] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-27 10:31:35.838 E  GlassPlayer[27563:1253a] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:35.838 E  GlassPlayer[27563:1253a] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:38.847 E  GlassPlayer[27563:12e33] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-27 10:31:38.850 E  GlassPlayer[27563:12e37] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-27 10:31:38.924 E  GlassPlayer[27563:12667] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:38.925 E  GlassPlayer[27563:12667] [com.apple.coreaudio:aqme] <compose failure [shared UUID]>
+2026-10-27 10:31:41.106 E  GlassPlayer[27563:126c4] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-27 10:31:41.756 E  GlassPlayer[27563:12e2e] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-27 10:31:41.760 F  GlassPlayer[27563:1252b] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
