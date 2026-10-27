@@ -403,7 +403,7 @@ extension View {
     /// - Apple Developer Forums thread 774524, "Toolbar Display Bug When Using
     ///   Zoom NavigationTransition with Swipe-Back Gesture" (an Apple engineer:
     ///   "That's sounds like a bug"): after a swipe back the page's toolbar can
-    ///   stay on the screen below. Your 26 Oct recording: ‹ and ••• over Home.
+    ///   stay on the screen below. 26 Oct device recording: ‹ and ••• over Home.
     /// - react-native-screens #5054 (iOS 27.0, traced in UIKit): when the
     ///   screen below hides the bar, a swipe back that is let go leaves the
     ///   bar at alpha 0, so ‹ and ••• vanish. 27 Oct simulator run: the same.
@@ -420,7 +420,8 @@ extension View {
             toolbar(.hidden, for: .navigationBar)
                 .safeAreaInset(edge: .top, spacing: 0) {
                     // Where the system bar put them (measured on iOS 27): 44 pt
-                    // high at the top of the safe area, 16 pt from the sides.
+                    // high at the top of the safe area, 16 pt from the sides, in
+                    // a bar 54 pt high (so the page's layout doesn't move).
                     HStack(spacing: 0) {
                         Button(action: back) { PageButtonLabel(systemName: "chevron.left", width: 44) }
                             .buttonStyle(PressStyle(scale: 0.94))
@@ -430,6 +431,7 @@ extension View {
                     }
                     .padding(.horizontal, 16)
                     .frame(height: 44)
+                    .padding(.bottom, 10)
                 }
         } else {
             navigationBarTitleDisplayMode(.inline)
@@ -447,8 +449,10 @@ struct PageButtonLabel: View {
     @Environment(\.zoomsFromTile) private var inPage
     var body: some View {
         if #available(iOS 18.0, *), inPage {
+            // The system bar's glyph size (large symbol scale; measured on iOS 27).
             Image(systemName: systemName)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 17, weight: .medium))
+                .imageScale(.large)
                 .frame(width: width, height: 44)
                 .glass(cornerRadius: 22, interactive: true)
                 .contentShape(Capsule())
