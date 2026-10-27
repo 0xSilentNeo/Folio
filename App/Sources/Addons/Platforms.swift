@@ -353,7 +353,7 @@ struct PlatformDetailView: View {
                 if loading { ProgressView().frame(maxWidth: .infinity).padding() }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
                     ForEach(metas) { m in
-                        NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS) } label: {
+                        NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS, zoom: false) } label: {
                             PosterCard(meta: m, width: 108, zoom: ZoomSource(m.id, zoomNS))
                         }
                             .buttonStyle(.plain)

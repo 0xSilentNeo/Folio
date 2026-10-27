@@ -102,9 +102,6 @@ struct PlayerScreen: View {
                 // itself lets touches through to the player, so this does not
                 // depend on how UIKit treats a tap outside a popover.
                 //
-                // iOS 27: a tap on another button's spot while a panel is open switches
-                // to that panel straight away (PanelPresenter.interruptible).
-                //
                 // It stays up while the panel's closing morph runs: iOS has not
                 // given the pill buttons back yet (sourceItem docs: the popover
                 // "replaces the specified item until … dismisses"), so a tap on a
@@ -126,14 +123,13 @@ struct PlayerScreen: View {
                             guard hypot(v.translation.width, v.translation.height) < TouchTracker.tapSlop else { return }
                             let point = v.location
                             let spot = ui.pillFrames.first(where: { $0.value.insetBy(dx: -6, dy: -8).contains(point) })?.key
-                            if ui.panel != nil, PanelPresenter.interruptible, let kind = spot {
-                                // iOS 27: another button opens its panel at
-                                // once; the open one's own button closes it.
-                                dlog("ui", "panel: \(kind.rawValue) tapped while a panel is open")
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                ui.toggle(kind)
-                            } else if ui.panel != nil {
-                                dlog("ui", "panel: tap outside")
+                            if ui.panel != nil {
+                                // While a menu is open the buttons are hidden (the
+                                // menu morphed out of their glass), so a tap where
+                                // one was closes the menu like any tap outside it.
+                                // 1.17.1 switched to that button's menu — a menu
+                                // you couldn't see the button for (27 Oct report).
+                                dlog("ui", "panel: tap outside\(spot.map { " (where the hidden \($0.rawValue) button is)" } ?? "")")
                                 ui.closePanel()
                             } else if let kind = spot {
                                 dlog("ui", "panel: \(kind.rawValue) tapped while the last panel was closing")

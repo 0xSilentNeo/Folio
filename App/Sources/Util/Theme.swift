@@ -226,12 +226,15 @@ extension View {
     /// The pushed page grows out of its source and shrinks back into it on
     /// Back (SwiftUI's zoom navigation transition).
     @ViewBuilder
-    func zoomDestination(_ id: some Hashable, in ns: Namespace.ID) -> some View {
+    func zoomDestination(_ id: some Hashable, in ns: Namespace.ID, zoom: Bool = true) -> some View {
         // Same AnyHashable wrapping as ZoomSource, so the ids always match.
-        if #available(iOS 18.0, *) {
+        // zoom: false — pushed the usual way, from a page that shows the system
+        // bar (a zoom between pages that show and hide the bar is what iOS
+        // gets wrong, see pageButtons).
+        if #available(iOS 18.0, *), zoom {
             navigationTransition(.zoom(sourceID: AnyHashable(id), in: ns)).ignoresTapsWhileLeaving().environment(\.zoomsFromTile, true)
         } else {
-            self.ignoresTapsWhileLeaving()
+            self.ignoresTapsWhileLeaving().environment(\.zoomsFromTile, false)
         }
     }
 
@@ -278,9 +281,14 @@ private struct LeavingProbe: UIViewControllerRepresentable {
     final class Probe: UIViewController {
         var onChange: ((Bool) -> Void)?
         override func loadView() { view = UIView(); view.isUserInteractionEnabled = false }
-        override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); onChange?(false) }
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            setPageTouchable(true)
+            onChange?(false)
+        }
         override func viewWillDisappear(_ animated: Bool) {
             super.viewWillDisappear(animated)
+            setPageTouchable(false)
             dlog("nav", "page leaving: taps off")
             onChange?(true)
             // Pages that keep the system bar (Settings, folders, addon titles):
@@ -301,6 +309,29 @@ private struct LeavingProbe: UIViewControllerRepresentable {
     }
     func makeUIViewController(context: Context) -> Probe { let p = Probe(); p.onChange = onChange; return p }
     func updateUIViewController(_ vc: Probe, context: Context) { vc.onChange = onChange }
+}
+
+extension LeavingProbe.Probe {
+    /// The page's own view (the navigation controller's child that holds
+    /// this probe) stops or starts taking touches, at once.
+    ///
+    /// A page that zooms back into its tile stays on screen, over Home, for
+    /// the whole zoom, and SwiftUI's zoom transition is interruptible: the
+    /// page keeps taking touches meanwhile. So a tap meant for Home landed on
+    /// the page's episode row and played it (27 Oct log, 19:12:55: "page
+    /// leaving: taps off", then 114 ms later "episode row → play"). The
+    /// SwiftUI side of this guard (`allowsHitTesting`, through @State) only
+    /// applies at SwiftUI's next update; UIKit's flag applies to the very next
+    /// touch. UIView docs: with isUserInteractionEnabled false, touches
+    /// "intended for the view are ignored", and hitTest(_:with:) "ignores
+    /// view objects that … have disabled user interactions" — so the tap goes
+    /// to the view underneath: Home, which then opens what you tapped.
+    func setPageTouchable(_ on: Bool) {
+        var vc: UIViewController = self
+        while let p = vc.parent, !(p is UINavigationController) { vc = p }
+        guard vc !== self, vc.parent is UINavigationController else { return }
+        if vc.view.isUserInteractionEnabled != on { vc.view.isUserInteractionEnabled = on }
+    }
 }
 
 /// Frosted "glass" background. Uses Liquid Glass on iOS 26 when built with
@@ -415,6 +446,18 @@ extension View {
     /// off (1.11.0).
     @ViewBuilder
     func pageButtons<Trailing: View>(zooms: Bool, back: @escaping () -> Void, @ViewBuilder trailing: () -> Trailing) -> some View {
+        pageChrome(zooms: zooms, title: nil, back: back, trailing: trailing)
+    }
+
+    /// Every page that zooms out of something (1.17.2: Settings, folders,
+    /// addon titles and their streams too) draws its own bar — see
+    /// pageButtons. Its title, when it has one, sits in the middle, over a
+    /// fade from the page colour so a list scrolling under it stays readable.
+    /// 27 Oct screenshot: Settings' title and ‹ stayed on Home after Settings
+    /// had zoomed back into its button — the same iOS bug as on title pages.
+    /// A page pushed without the zoom keeps the system bar (and its title).
+    @ViewBuilder
+    func pageChrome<Trailing: View>(zooms: Bool, title: String?, back: @escaping () -> Void, @ViewBuilder trailing: () -> Trailing) -> some View {
         if #available(iOS 18.0, *), zooms {
             let t = trailing()
             toolbar(.hidden, for: .navigationBar)
@@ -422,17 +465,36 @@ extension View {
                     // Where the system bar put them (measured on iOS 27): 44 pt
                     // high at the top of the safe area, 16 pt from the sides, in
                     // a bar 54 pt high (so the page's layout doesn't move).
-                    HStack(spacing: 0) {
-                        Button(action: back) { PageButtonLabel(systemName: "chevron.left", width: 44) }
-                            .buttonStyle(PressStyle(scale: 0.94))
-                            .accessibilityLabel("Back")
-                        Spacer(minLength: 0)
-                        t
+                    ZStack {
+                        if let title {
+                            Text(title).font(.headline).lineLimit(1)
+                                .padding(.horizontal, 72)
+                                .accessibilityAddTraits(.isHeader)
+                        }
+                        HStack(spacing: 0) {
+                            Button(action: back) { PageButtonLabel(systemName: "chevron.left", width: 44) }
+                                .buttonStyle(PressStyle(scale: 0.94))
+                                .accessibilityLabel("Back")
+                            Spacer(minLength: 0)
+                            t
+                        }
                     }
                     .padding(.horizontal, 16)
                     .frame(height: 44)
                     .padding(.bottom, 10)
+                    .background(alignment: .top) {
+                        if title != nil {
+                            LinearGradient(stops: [.init(color: Theme.background, location: 0), .init(color: Theme.background, location: 0.7),
+                                                   .init(color: Theme.background.opacity(0), location: 1)], startPoint: .top, endPoint: .bottom)
+                                .ignoresSafeArea(edges: .top)
+                                .allowsHitTesting(false)
+                        }
+                    }
                 }
+        } else if let title {
+            navigationTitle(title)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .topBarTrailing) { trailing() } }
         } else {
             navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(.hidden, for: .navigationBar)

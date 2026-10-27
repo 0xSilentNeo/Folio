@@ -117,7 +117,7 @@ struct CatalogGridView: View {
             }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
                 ForEach(metas) { m in
-                    NavigationLink { MetaDetailView(preview: m, sourceAddon: addon).zoomDestination(m.id, in: zoomNS) } label: {
+                    NavigationLink { MetaDetailView(preview: m, sourceAddon: addon).zoomDestination(m.id, in: zoomNS, zoom: false) } label: {
                         PosterCard(meta: m, width: 108, zoom: ZoomSource(m.id, zoomNS))
                     }
                     .buttonStyle(.plain)
@@ -216,6 +216,8 @@ struct StreamsView: View {
     @State private var starting = false
 
     private var videoId: String { video?.id ?? meta.id }
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.zoomsFromTile) private var zooms
 
     var body: some View {
         List {
@@ -266,8 +268,7 @@ struct StreamsView: View {
             }
         }
         .brandListBackground()
-        .navigationTitle(video?.label ?? meta.name)
-        .navigationBarTitleDisplayMode(.inline)
+        .pageChrome(zooms: zooms, title: video?.label ?? meta.name, back: { dismiss() }) { EmptyView() }
         .task { if groups.isEmpty { await load() } }
         .refreshable { await load() }
     }
@@ -399,7 +400,7 @@ struct AddonSearchView: View {
                             LazyHStack(spacing: 12) {
                                 ForEach(r.metas) { m in
                                     let zid = r.id + "|" + m.id
-                                    NavigationLink { MetaDetailView(preview: m, sourceAddon: r.addon).zoomDestination(zid, in: zoomNS) } label: {
+                                    NavigationLink { MetaDetailView(preview: m, sourceAddon: r.addon).zoomDestination(zid, in: zoomNS, zoom: false) } label: {
                                         PosterCard(meta: m, zoom: ZoomSource(zid, zoomNS))
                                     }
                                         .buttonStyle(.plain)

@@ -3,6 +3,8 @@ import UniformTypeIdentifiers
 import UIKit
 
 struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.zoomsFromTile) private var zooms
     var body: some View {
         Group {
             List {
@@ -42,7 +44,7 @@ struct SettingsView: View {
             }
             .brandListBackground()
             .background(TopEdgeNoBounce().frame(width: 0, height: 0).accessibilityHidden(true))
-            .navigationTitle("Settings")
+            .pageChrome(zooms: zooms, title: "Settings", back: { dismiss() }) { EmptyView() }
         }
     }
 

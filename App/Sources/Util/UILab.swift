@@ -97,16 +97,21 @@ enum UILab {
     /// on screen in landscape for 3 s, then measures.
     static func toolbarProbe(attempt: Int = 0, settled: Int = 0) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            // -toolbarProbePortrait: the player held upright (27 Oct report:
+            // in portrait the buttons went into a "⋯" that did nothing).
+            let portrait = CommandLine.arguments.contains("-toolbarProbePortrait")
             let ready: Bool = {
                 guard let w = ui?.panelBar?.window else { return false }
-                return w.bounds.width > w.bounds.height
+                return portrait ? w.bounds.height > w.bounds.width : w.bounds.width > w.bounds.height
             }()
             guard ready, settled >= 3, let bar = ui?.panelBar as? UIToolbar, let host = bar.superview, let window = bar.window else {
                 if attempt < 60 { toolbarProbe(attempt: attempt + 1, settled: ready ? settled + 1 : 0) }
                 else { dlog("lab", "toolbar probe: no toolbar on screen in landscape") }
                 return
             }
-            dlog("lab", "toolbar probe: iOS \(UIDevice.current.systemVersion) bar=\(bar.frame) inWindow=\(bar.convert(bar.bounds, to: window)) window=\(window.bounds.size) safe=\(window.safeAreaInsets) barSafe=\(bar.safeAreaInsets) margins=\(bar.directionalLayoutMargins)")
+            dlog("lab", "toolbar probe: iOS \(UIDevice.current.systemVersion) \(portrait ? "portrait" : "landscape") bar=\(bar.frame) inWindow=\(bar.convert(bar.bounds, to: window)) window=\(window.bounds.size) safe=\(window.safeAreaInsets) barSafe=\(bar.safeAreaInsets) margins=\(bar.directionalLayoutMargins)")
+            let real = (ui?.barItems.values.compactMap(\.customView) ?? []).filter { $0.window != nil && !$0.isHidden && $0.alpha > 0.01 }
+            dlog("lab", "toolbar probe: the player's own bar shows \(real.count)/3 buttons")
             dumpTree(bar, in: bar, depth: 0)
             let widths: [CGFloat] = [120, 130, 140, 146, 150, 154, 158, 162, 166, 170, 174, 178, 182, 186, 190, 196, 202, 210, 220, 236]
             var i = 0

@@ -50,7 +50,7 @@ struct HomeView: View {
     private func destination(_ route: LibraryRoute) -> some View {
         switch route {
         case .settings:
-            if #available(iOS 18.0, *) { SettingsView().navigationTransition(.zoom(sourceID: "settings", in: zoomNS)).ignoresTapsWhileLeaving() } else { SettingsView() }
+            SettingsView().zoomDestination("settings", in: zoomNS)
         case .group(let id):
             LibraryRoute.destination(route).zoomDestination(id, in: zoomNS)
         case .folder(let path):
@@ -247,10 +247,10 @@ struct HomeView: View {
         .padding(.bottom, 12)
     }
 
-    /// Thumbnails: one row holding the grid (each tile swipes left for its
-    /// actions, laid over the tile — SwipeTile).
-    /// List and Details: one list row per title, with swipe actions — left to
-    /// delete (asks first), right to mark watched / unwatched.
+    /// Thumbnails: one row holding the grid. List and Details: one list row
+    /// per title. 1.17.2: no swipe actions on Home (27 Oct report: swiping a
+    /// title's card to delete it "doesn't look right"); a long press has
+    /// the same actions (Delete asks first).
     @ViewBuilder
     private func libraryRows(width: CGFloat, margin: CGFloat) -> some View {
         let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
@@ -274,20 +274,6 @@ struct HomeView: View {
                 .padding(.horizontal, margin)
                 .padding(.vertical, mode == .details ? 6 : 2)
                 .homeRow()
-                .swipeActions(edge: .trailing) {
-                    // Red by tint, not the destructive role: nothing is deleted
-                    // until the question is answered, so the row must stay put.
-                    Button { pendingDelete = g } label: { Label("Delete", systemImage: "trash") }.tint(.red)
-                }
-                .swipeActions(edge: .leading) {
-                    if g.folder == nil {
-                        if allWatched(g) {
-                            Button { history.setWatched(g.files, false) } label: { Label("Unwatched", systemImage: "eye.slash") }.tint(.gray)
-                        } else {
-                            Button { history.setWatched(g.files, true) } label: { Label("Watched", systemImage: "eye") }.tint(Theme.swipeTint)
-                        }
-                    }
-                }
             }
         }
     }
@@ -299,7 +285,7 @@ struct HomeView: View {
         let groups = self.groups
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
             ForEach(groups) { g in
-                askToDelete(g, SwipeTile(id: g.id, openID: $openTile, actions: swipeActions(g), cornerRadius: posters ? 12 : 16) {
+                askToDelete(g, Group {
                     if let folder = g.folder {
                         folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(g.id, zoomNS)) }
                     } else {
