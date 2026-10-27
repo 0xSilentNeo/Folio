@@ -1,0 +1,252 @@
+06:33:52.201 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.78 GB
+06:33:54.376 [hang] main thread unresponsive for 2.2 s
+06:33:57.303 [app] first screen 6807 ms after process start
+06:33:58.035 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Bundle/Application/1A8AA8D7-86B8-42F2-AEED-B401687D5009/GlassPlayer.app/lab/lab.mp4
+06:33:58.685 [app] active
+06:33:59.171 [player] start renderer=metal
+06:33:59.171 [lab] engine not started (lab)
+06:34:00.690 [perf] panel tracks prebuilt in 95 ms
+06:34:01.361 [perf] panel settings prebuilt in 462 ms
+06:34:01.421 [perf] panel nowPlaying prebuilt in 50 ms
+06:34:01.585 [perf] panel tracks prebuilt in 0 ms
+06:34:02.345 [perf] panel settings prebuilt in 0 ms
+06:34:02.382 [perf] panel nowPlaying prebuilt in 0 ms
+06:34:04.410 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+06:34:04.410 [imdb] webkit load /title/tt35511966
+06:34:06.652 [touch] down (655, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:34:06.689 [touch] up (655, 344), moved 0 pt
+06:34:06.693 [ui] panel tracks
+06:34:06.695 [ui] present panel tracks from bar item 340×≤252
+06:34:06.695 [ui] panel: want tracks (shown=none idle)
+06:34:06.705 [ui] panel: open tracks
+06:34:06.752 [ui] present panel tracks from bar item 340×≤252
+06:34:08.094 [ui] panel: opened tracks
+06:34:08.095 [perf] panel open tracks: 33 frames in 1389 ms, worst 291 ms, 2 late (frame 16.7 ms) · built in 10 ms, 10 ms after the tap
+06:34:10.809 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:10.841 [touch] up (218, 181), moved 0 pt
+06:34:10.841 [ui] panel: tap outside
+06:34:10.869 [ui] panel: close tracks
+06:34:12.174 [ui] panel: closed tracks
+06:34:12.176 [perf] panel close tracks: 40 frames in 1304 ms, worst 149 ms, 11 late (frame 16.7 ms)
+06:34:12.278 [touch] down (709, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:34:12.358 [touch] up (709, 344), moved 0 pt
+06:34:12.358 [ui] panel settings
+06:34:12.359 [ui] present panel settings from bar item 340×≤252
+06:34:12.359 [ui] panel: want settings (shown=none idle)
+06:34:12.359 [ui] panel: open settings
+06:34:12.382 [ui] present panel settings from bar item 340×≤252
+06:34:13.520 [ui] panel: opened settings
+06:34:13.520 [perf] panel open settings: 27 frames in 1161 ms, worst 354 ms, 3 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+06:34:17.769 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:17.839 [touch] up (218, 181), moved 0 pt
+06:34:17.840 [ui] panel: tap outside
+06:34:17.879 [ui] panel: close settings
+06:34:18.823 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+06:34:19.209 [ui] panel: closed settings
+06:34:19.209 [perf] panel close settings: 64 frames in 1329 ms, worst 66 ms, 1 late (frame 16.7 ms)
+06:34:20.459 [touch] down (709, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:34:20.541 [touch] up (709, 344), moved 0 pt
+06:34:20.542 [ui] panel settings
+06:34:20.543 [ui] present panel settings from bar item 340×≤252
+06:34:20.543 [ui] panel: want settings (shown=none idle)
+06:34:20.544 [ui] panel: open settings
+06:34:20.554 [ui] present panel settings from bar item 340×≤252
+06:34:21.645 [ui] panel: opened settings
+06:34:21.646 [perf] panel open settings: 31 frames in 1102 ms, worst 157 ms, 9 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+06:34:23.860 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:23.924 [touch] up (218, 181), moved 0 pt
+06:34:23.925 [ui] panel: tap outside
+06:34:23.935 [ui] panel: close settings
+06:34:25.219 [ui] panel: closed settings
+06:34:25.219 [perf] panel close settings: 45 frames in 1284 ms, worst 169 ms, 3 late (frame 16.7 ms)
+06:34:25.344 [touch] down (763, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:34:25.425 [touch] up (763, 344), moved 0 pt
+06:34:25.425 [ui] panel nowPlaying
+06:34:25.427 [ui] present panel nowPlaying from bar item 340×≤252
+06:34:25.427 [ui] panel: want nowPlaying (shown=none idle)
+06:34:25.427 [ui] panel: open nowPlaying
+06:34:25.435 [ui] present panel nowPlaying from bar item 340×≤252
+06:34:26.457 [ui] panel: opened nowPlaying
+06:34:26.457 [perf] panel open nowPlaying: 47 frames in 1030 ms, worst 60 ms, 5 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+06:34:28.583 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:28.658 [touch] up (218, 181), moved 0 pt
+06:34:28.659 [ui] panel: tap outside
+06:34:28.663 [ui] panel: close nowPlaying
+06:34:28.713 [energy] cpu 47% (main 26%, other 21%) thermal=nominal playing=no
+06:34:29.425 [imdb/error] webkit timeout for /title/tt35511966
+06:34:29.428 [perf] imdb /title/tt35511966/ via web view 25194 ms
+06:34:29.910 [ui] panel: closed nowPlaying
+06:34:29.911 [perf] panel close nowPlaying: 69 frames in 1248 ms, worst 29 ms, 1 late (frame 16.7 ms)
+06:34:31.316 [touch] down (763, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:34:31.375 [touch] up (763, 344), moved 0 pt
+06:34:31.375 [ui] panel nowPlaying
+06:34:31.375 [ui] present panel nowPlaying from bar item 340×≤252
+06:34:31.375 [ui] panel: want nowPlaying (shown=none idle)
+06:34:31.376 [ui] panel: open nowPlaying
+06:34:31.387 [ui] present panel nowPlaying from bar item 340×≤252
+06:34:32.499 [ui] panel: opened nowPlaying
+06:34:32.501 [perf] panel open nowPlaying: 43 frames in 1123 ms, worst 118 ms, 7 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+06:34:35.056 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:35.108 [touch] up (218, 181), moved 0 pt
+06:34:35.109 [ui] panel: tap outside
+06:34:35.113 [ui] panel: close nowPlaying
+06:34:35.916 [touch] down (655, 344) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:35.991 [touch] up (655, 344), moved 0 pt
+06:34:35.994 [ui] panel: tracks tapped while the last panel was closing
+06:34:35.994 [ui] panel tracks
+06:34:35.994 [ui] present panel tracks from bar item 340×≤252
+06:34:35.995 [ui] panel: want tracks (shown=none idle)
+06:34:35.995 [ui] panel: last panel (closing) out at once → tracks
+06:34:35.995 [ui] panel: open tracks
+06:34:35.995 [perf] panel close nowPlaying: 40 frames in 882 ms, worst 48 ms, 6 late (frame 16.7 ms)
+06:34:36.033 [ui] present panel tracks from bar item 340×≤252
+06:34:36.132 [ui] panel: closed nowPlaying
+06:34:36.132 [perf] panel open tracks: 0 frames in 137 ms, worst 0 ms, 0 late (frame 16.7 ms) · built in 0 ms, 1 ms after the tap
+06:34:37.073 [ui] panel: opened tracks
+06:34:39.128 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:39.191 [touch] up (218, 181), moved 0 pt
+06:34:39.192 [ui] panel: tap outside
+06:34:39.204 [ui] panel: close tracks
+06:34:40.453 [ui] panel: closed tracks
+06:34:40.453 [perf] panel close tracks: 70 frames in 1249 ms, worst 20 ms, 0 late (frame 16.7 ms)
+06:34:41.709 [touch] down (709, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:34:41.774 [touch] up (709, 344), moved 0 pt
+06:34:41.775 [ui] panel settings
+06:34:41.775 [ui] present panel settings from bar item 340×≤252
+06:34:41.775 [ui] panel: want settings (shown=none idle)
+06:34:41.776 [ui] panel: open settings
+06:34:41.781 [ui] present panel settings from bar item 340×≤252
+06:34:42.891 [ui] panel: opened settings
+06:34:42.891 [perf] panel open settings: 24 frames in 1115 ms, worst 200 ms, 6 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+06:34:45.220 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:45.291 [touch] up (218, 181), moved 0 pt
+06:34:45.291 [ui] panel: tap outside
+06:34:45.300 [ui] panel: close settings
+06:34:46.599 [ui] panel: closed settings
+06:34:46.599 [perf] panel close settings: 48 frames in 1298 ms, worst 152 ms, 5 late (frame 16.7 ms)
+06:34:46.710 [touch] down (709, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:34:46.791 [touch] up (709, 344), moved 0 pt
+06:34:46.792 [ui] panel settings
+06:34:46.792 [ui] present panel settings from bar item 340×≤252
+06:34:46.792 [ui] panel: want settings (shown=none idle)
+06:34:46.793 [ui] panel: open settings
+06:34:46.798 [ui] present panel settings from bar item 340×≤252
+06:34:47.951 [ui] panel: opened settings
+06:34:47.951 [perf] panel open settings: 24 frames in 1158 ms, worst 304 ms, 5 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+06:34:51.135 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:51.196 [touch] up (218, 181), moved 0 pt
+06:34:51.197 [ui] panel: tap outside
+06:34:51.211 [ui] panel: close settings
+06:34:52.492 [ui] panel: closed settings
+06:34:52.492 [perf] panel close settings: 70 frames in 1281 ms, worst 24 ms, 0 late (frame 16.7 ms)
+06:34:53.884 [touch] down (655, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:34:53.958 [touch] up (655, 344), moved 0 pt
+06:34:53.959 [ui] panel tracks
+06:34:53.959 [ui] present panel tracks from bar item 340×≤252
+06:34:53.959 [ui] panel: want tracks (shown=none idle)
+06:34:53.960 [ui] panel: open tracks
+06:34:53.967 [ui] present panel tracks from bar item 340×≤252
+06:34:54.973 [ui] panel: opened tracks
+06:34:54.974 [perf] panel open tracks: 35 frames in 1014 ms, worst 110 ms, 10 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+06:34:57.015 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:57.091 [touch] up (218, 181), moved 0 pt
+06:34:57.091 [ui] panel: tap outside
+06:34:57.094 [ui] panel: close tracks
+06:34:58.315 [touch] down (709, 344) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:34:58.333 [ui] panel: closed tracks
+06:34:58.333 [perf] panel close tracks: 50 frames in 1239 ms, worst 109 ms, 8 late (frame 16.7 ms)
+06:34:58.375 [touch] up (709, 344), moved 0 pt
+06:34:58.724 [energy] cpu 25% (main 19%, other 4%, com.apple.UIKit.in 2%) thermal=nominal playing=no
+06:35:08.471 [touch] down (709, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:35:08.542 [touch] up (709, 344), moved 0 pt
+06:35:08.546 [ui] panel settings
+06:35:08.546 [ui] present panel settings from bar item 340×≤252
+06:35:08.546 [ui] panel: want settings (shown=none idle)
+06:35:08.547 [ui] panel: open settings
+06:35:08.573 [ui] present panel settings from bar item 340×≤252
+06:35:09.704 [ui] panel: opened settings
+06:35:09.705 [perf] panel open settings: 25 frames in 1157 ms, worst 201 ms, 6 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+06:35:12.992 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:35:13.074 [touch] up (218, 181), moved 0 pt
+06:35:13.075 [ui] panel: tap outside
+06:35:13.083 [ui] panel: close settings
+06:35:14.359 [ui] panel: closed settings
+06:35:14.359 [perf] panel close settings: 54 frames in 1276 ms, worst 143 ms, 2 late (frame 16.7 ms)
+06:35:14.592 [touch] down (763, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:35:14.658 [touch] up (763, 344), moved 0 pt
+06:35:14.658 [ui] panel nowPlaying
+06:35:14.659 [ui] present panel nowPlaying from bar item 340×≤252
+06:35:14.659 [ui] panel: want nowPlaying (shown=none idle)
+06:35:14.659 [ui] panel: open nowPlaying
+06:35:14.667 [ui] present panel nowPlaying from bar item 340×≤252
+06:35:15.725 [ui] panel: opened nowPlaying
+06:35:15.726 [perf] panel open nowPlaying: 34 frames in 1066 ms, worst 90 ms, 5 late (frame 16.7 ms) · built in 0 ms, 1 ms after the tap
+06:35:20.522 [hang] main thread unresponsive for 1.8 s
+06:35:28.805 [energy] cpu 0% thermal=nominal playing=no
+06:35:32.010 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:35:32.074 [touch] up (218, 181), moved 0 pt
+06:35:32.075 [ui] panel: tap outside
+06:35:32.083 [ui] panel: close nowPlaying
+06:35:33.331 [ui] panel: closed nowPlaying
+06:35:33.331 [perf] panel close nowPlaying: 69 frames in 1248 ms, worst 26 ms, 1 late (frame 16.7 ms)
+06:35:35.495 [touch] down (763, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:35:35.575 [touch] up (763, 344), moved 0 pt
+06:35:35.577 [ui] panel nowPlaying
+06:35:35.577 [ui] present panel nowPlaying from bar item 340×≤252
+06:35:35.577 [ui] panel: want nowPlaying (shown=none idle)
+06:35:35.577 [ui] panel: open nowPlaying
+06:35:35.587 [ui] present panel nowPlaying from bar item 340×≤252
+06:35:37.096 [ui] panel: opened nowPlaying
+06:35:37.096 [perf] panel open nowPlaying: 46 frames in 1519 ms, worst 202 ms, 3 late (frame 16.7 ms) · built in 0 ms, 1 ms after the tap
+06:35:42.704 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:35:42.774 [touch] up (218, 181), moved 0 pt
+06:35:42.775 [ui] panel: tap outside
+06:35:42.777 [ui] panel: close nowPlaying
+06:35:44.016 [ui] panel: closed nowPlaying
+06:35:44.016 [perf] panel close nowPlaying: 55 frames in 1239 ms, worst 260 ms, 1 late (frame 16.7 ms)
+06:35:44.382 [touch] down (655, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:35:44.458 [touch] up (655, 344), moved 0 pt
+06:35:44.458 [ui] panel tracks
+06:35:44.458 [ui] present panel tracks from bar item 340×≤252
+06:35:44.458 [ui] panel: want tracks (shown=none idle)
+06:35:44.458 [ui] panel: open tracks
+06:35:44.463 [ui] present panel tracks from bar item 340×≤252
+06:35:45.616 [ui] panel: opened tracks
+06:35:45.616 [perf] panel open tracks: 46 frames in 1157 ms, worst 85 ms, 5 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+06:35:48.303 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:35:48.374 [touch] up (218, 181), moved 0 pt
+06:35:48.375 [ui] panel: tap outside
+06:35:48.377 [ui] panel: close tracks
+06:35:49.624 [ui] panel: closed tracks
+06:35:49.625 [perf] panel close tracks: 70 frames in 1248 ms, worst 21 ms, 0 late (frame 16.7 ms)
+06:35:50.975 [touch] down (709, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:35:51.058 [touch] up (709, 344), moved 0 pt
+06:35:51.058 [ui] panel settings
+06:35:51.058 [ui] present panel settings from bar item 340×≤252
+06:35:51.058 [ui] panel: want settings (shown=none idle)
+06:35:51.060 [ui] panel: open settings
+06:35:51.067 [ui] present panel settings from bar item 340×≤252
+06:35:52.139 [ui] panel: opened settings
+06:35:52.139 [perf] panel open settings: 24 frames in 1079 ms, worst 236 ms, 7 late (frame 16.7 ms) · built in 1 ms, 2 ms after the tap
+06:35:54.572 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:35:54.641 [touch] up (218, 181), moved 0 pt
+06:35:54.641 [ui] panel: tap outside
+06:35:54.648 [ui] panel: close settings
+06:35:55.930 [ui] panel: closed settings
+06:35:55.930 [perf] panel close settings: 52 frames in 1282 ms, worst 242 ms, 1 late (frame 16.7 ms)
+06:35:56.209 [touch] down (709, 344) → UIButton < UICorePlatformViewHost<PlatformViewRepresentableAdaptor<ToolbarCustomViewRepresentable>> < _UIInheritedView < UIPlatformGlassInteractionView
+06:35:56.274 [touch] up (709, 344), moved 0 pt
+06:35:56.275 [ui] panel settings
+06:35:56.275 [ui] present panel settings from bar item 340×≤252
+06:35:56.275 [ui] panel: want settings (shown=none idle)
+06:35:56.275 [ui] panel: open settings
+06:35:56.280 [ui] present panel settings from bar item 340×≤252
+06:35:57.354 [ui] panel: opened settings
+06:35:57.354 [perf] panel open settings: 33 frames in 1078 ms, worst 185 ms, 4 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+06:35:58.709 [energy] cpu 1% (main 1%) thermal=nominal playing=no
+06:36:00.587 [touch] down (218, 181) → _UIHostingView<PlayerScreen> < UIDropShadowView < UITransitionView < PlayerWindowMarker
+06:36:00.658 [touch] up (218, 181), moved 0 pt
+06:36:00.658 [ui] panel: tap outside
+06:36:00.665 [ui] panel: close settings
+06:36:01.940 [ui] panel: closed settings
+06:36:01.940 [perf] panel close settings: 71 frames in 1275 ms, worst 17 ms, 0 late (frame 16.7 ms)
