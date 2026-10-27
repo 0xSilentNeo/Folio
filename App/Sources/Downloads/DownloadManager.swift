@@ -180,6 +180,29 @@ final class DownloadManager: ObservableObject {
     func resumeAll() { for it in items where it.state == .paused { resume(it.id) } }
     func clearFinished() { items.removeAll { $0.state == .done }; save() }
 
+    /// Cancels every download not finished yet (paused, queued, running,
+    /// failed), deleting what was downloaded of them.
+    func cancelUnfinished(package: String? = nil) {
+        for it in items where it.state != .done && (package == nil || it.package == package) { remove(it.id) }
+    }
+    /// Finished downloads: off the list (deleteFiles: their files too).
+    func removeFinished(package: String, deleteFiles: Bool) {
+        for it in items where it.state == .done && it.package == package { remove(it.id, deleteFile: deleteFiles) }
+    }
+
+    /// Lab (-uiTestDownloads): two paused downloads and a finished one.
+    func labSeed() {
+        guard !items.contains(where: { $0.package == "Lab Package" }) else { return }
+        let dir = MPVFiles.mediaDir
+        for (n, state) in [("Lab Ep 1.mkv", DownloadItem.State.paused), ("Lab Ep 2.mkv", .paused), ("Lab Ep 3.mkv", .done)] {
+            var d = DownloadItem(url: URL(string: "https://example.invalid/lab/\(n.replacingOccurrences(of: " ", with: "%20"))")!, fileName: n,
+                                 package: "Lab Package", expected: 50_000_000, destination: dir.appendingPathComponent(n))
+            d.state = state
+            d.received = state == .done ? 50_000_000 : 12_000_000
+            items.append(d)
+        }
+    }
+
     func pausePackage(_ name: String) { for it in items where it.package == name && (it.state == .running || it.state == .queued) { pause(it.id) } }
     func resumePackage(_ name: String) { for it in items where it.package == name && (it.state == .paused || it.state == .failed) { resume(it.id) } }
 

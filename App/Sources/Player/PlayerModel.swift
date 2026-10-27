@@ -1333,6 +1333,22 @@ final class PlayerModel: ObservableObject {
     }
     /// A/V lab: the decoder rebuild done after coming back while paused.
     func labRenewDecoder() { renewHardwareDecoder() }
+    /// Lab: the app away for 3 s while playing (Notification Centre pulled
+    /// down), then back — the buffer must still be there.
+    func labAwayThenBack() {
+        guard let c = client else { return }
+        let before = c.double("demuxer-cache-duration") ?? -1
+        outputOffForBackground(c)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            guard let self, let c = self.client else { return }
+            let away = c.double("demuxer-cache-duration") ?? -1
+            self.outputBackAfterAway(c)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                let after = c.double("demuxer-cache-duration") ?? -1
+                dlog("av", String(format: "away and back: buffer %.1f s before, %.1f s while away, %.1f s 1 s after (output %@)", before, away, after, c.string("current-vo") ?? "-"))
+            }
+        }
+    }
 
     /// A/V lab: the "closed PiP from the background, then came back" path,
     /// without PiP or a real background transition.
@@ -1364,6 +1380,8 @@ final class PlayerModel: ObservableObject {
     /// render context can exist, so that path still re-selects the track.
     private func switchToSoftware() {
         guard mode == .main, let c = client else { return }
+        outputOffForAway = false            // PiP takes over the output from here
+        awayToken += 1
         defer { traceAV("renderer → PiP") }
         if let vid = c.string("vid"), vid != "no" { vidSaved = vid }
         stopPiPFeed()
@@ -1534,10 +1552,28 @@ final class PlayerModel: ObservableObject {
 
     // MARK: App lifecycle
 
+    /// iOS is short of memory (27 Oct: three warnings, then the app was
+    /// ended while the next episode loaded). mpv's buffer is the one large
+    /// thing here that can give some back: its limit drops to 64 MB ahead
+    /// (16 MB behind) for the rest of this player session.
+    private var bufferTrimmed = false
+    private func memoryWarning() {
+        guard !bufferTrimmed, let c = client, !c.isShutDown else { return }
+        bufferTrimmed = true
+        c.set("demuxer-max-bytes", "64MiB")
+        c.set("demuxer-max-back-bytes", "16MiB")
+        c.set("prefetch-playlist", "no")          // no second file buffering alongside
+        URLCache.shared.removeAllCachedResponses()
+        dlog("player/warn", "memory warning: buffer limit now 64 MB ahead, 16 MB behind (\(EnergyMonitor.memory))")
+    }
+
     private func registerLifecycle() {
         let nc = NotificationCenter.default
         observers.append(nc.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.didEnterBackground() }
+        })
+        observers.append(nc.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.memoryWarning() }
         })
         observers.append(nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.didBecomeActive() }
@@ -1570,22 +1606,72 @@ final class PlayerModel: ObservableObject {
     /// 26 Oct report, and the picture rebuilt at the old size on return.
     /// Only while audio actually plays on in the background is video off
     /// (iOS doesn't run GPU work for a background app).
+    ///
+    /// 1.17.2 (Metal): the video *output* goes instead (vo=null), whether
+    /// paused or playing — the same swap as PiP, which keeps the track and
+    /// its buffer (27 Oct report: pulling down Notification Centre, which
+    /// sends the app to the background for a moment, lost the buffer, because
+    /// video playing on was switched off at once). Coming back builds the
+    /// output again, with a new decoder (iOS ends the VideoToolbox session of
+    /// a background app; 1.17.1's decoder rebuild on return, done at the very
+    /// moment the app became active, fell back to software decoding for the
+    /// rest of the file — same log). Still away after 15 s with sound
+    /// playing on, the video track goes off as before, so background
+    /// listening doesn't decode video.
     private func didEnterBackground() {
         saveHistory(force: true)
         wentToBackground = true
         guard mode == .main, !isPiPActive, let c = client else { return }
-        if renderer == .gl { glView?.setRenderingAllowed(false) }
-        if defaults.bool(forKey: SettingsKey.backgroundAudio) {
+        let keepPlaying = defaults.bool(forKey: SettingsKey.backgroundAudio)
+        if !keepPlaying { setPaused(true) }
+        if renderer == .metal {
+            outputOffForBackground(c)
+            return
+        }
+        glView?.setRenderingAllowed(false)
+        if keepPlaying {
             if paused {
                 parkedPaused = true
-                if renderer == .metal { detachMetalView() }
                 dlog("player", "background while paused: video and buffer kept")
             } else {
                 videoOffForPlayback(c)
             }
-        } else {
-            setPaused(true)
         }
+    }
+
+    /// Metal: no video output while the app is away (see didEnterBackground).
+    private var outputOffForAway = false
+    private var awayToken = 0
+
+    private func outputOffForBackground(_ c: MPVClient) {
+        guard !outputOffForAway, let vid = c.string("vid"), vid != "no" else { return }
+        settleBeforeMetalThreadEnds()          // the swap ends mpv's Metal thread
+        swapOutput(c, to: "null", label: "background: video output off")
+        outputOffForAway = true
+        if !paused { trackOffLater() }
+    }
+
+    /// Sound playing on in the background: the video track goes off after
+    /// 15 s still away (no video decoding for background listening).
+    private func trackOffLater() {
+        awayToken += 1
+        let token = awayToken
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+            guard let self, self.awayToken == token, self.outputOffForAway, !self.paused,
+                  UIApplication.shared.applicationState == .background, let c = self.client else { return }
+            self.outputOffForAway = false
+            self.videoOffForPlayback(c)
+        }
+    }
+
+    /// Back on screen: the video output again, with a new decoder, from the
+    /// buffer (swapOutput seeks exactly to where the sound is).
+    private func outputBackAfterAway(_ c: MPVClient) {
+        outputOffForAway = false
+        awayToken += 1
+        reattachMetalView()
+        videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded()
+        swapOutput(c, to: "gpu-next", label: "back: video output on")
     }
 
     /// A new hardware decoder after the app was away while paused (video kept,
@@ -1615,14 +1701,16 @@ final class PlayerModel: ObservableObject {
         videoOffForBackground = true
         if renderer == .metal { settleBeforeMetalThreadEnds() }   // no video track: mpv ends its video output
         c.set("vid", "no")
-        dlog("player", "background playback: video off")
+        dlog("player", "background playback: video off (15 s away)")
     }
 
     /// Playback resumed while the app is in the background (Lock Screen,
     /// headphones) after it was left paused: video off now, as if it had
     /// been playing when the app was left.
     private func resumedInBackground() {
-        guard parkedPaused, UIApplication.shared.applicationState == .background, mode == .main, let c = client else { return }
+        guard UIApplication.shared.applicationState == .background, mode == .main, let c = client else { return }
+        if outputOffForAway { trackOffLater(); return }
+        guard parkedPaused else { return }
         parkedPaused = false
         videoOffForPlayback(c)
     }
@@ -1687,7 +1775,9 @@ final class PlayerModel: ObservableObject {
         if pendingMain { switchToMain(); setPiPLayerOnTop(false); return }
         guard mode == .main else { return }
         if renderer == .gl { glView?.setRenderingAllowed(true) }
-        if videoOffForBackground, let c = client {
+        if outputOffForAway, let c = client {
+            outputBackAfterAway(c)
+        } else if videoOffForBackground, let c = client {
             videoOffForBackground = false
             parkedPaused = false
             if renderer == .metal {
@@ -1696,13 +1786,13 @@ final class PlayerModel: ObservableObject {
                 // builds its video output (26 Oct mpv log: built at the old
                 // landscape size 2868×1320 on a portrait screen).
                 videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded()
+                if c.string("vo") == "null" { c.set("vo", "gpu-next") }   // output went off first (didEnterBackground)
             }
             c.set("vid", vidSaved ?? "auto")
         } else if parkedPaused {
             parkedPaused = false
             if renderer == .metal { reattachMetalView(); videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded() }
             dlog("player", "back while paused: video view back, \(metalView.map { "\(Int($0.bounds.width))×\(Int($0.bounds.height))" } ?? "-")")
-            renewHardwareDecoder()
         }
         videoView.setNeedsLayout()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.nudgeRedraw() }

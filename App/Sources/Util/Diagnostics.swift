@@ -61,7 +61,7 @@ final class Diagnostics: NSObject {
             self?.log("app", "resign active")
         }
         nc.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.log("app/warn", "memory warning")
+            self?.log("app/warn", "memory warning: \(EnergyMonitor.memory)")
         }
         startWatchdog()
         MXMetricManager.shared.add(self)

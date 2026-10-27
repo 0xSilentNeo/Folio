@@ -22,11 +22,13 @@ enum UILab {
         if CommandLine.arguments.contains("-nameProbe") { nameProbe(); return }
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-imdbProbe=") }) { imdbProbe(ids: arg.dropFirst("-imdbProbe=".count).split(separator: ",").map(String.init)); return }
         if uiTestLibrary {
+            if CommandLine.arguments.contains("-uiTestDownloads") { MainActor.assumeIsolated { DownloadManager.shared.labSeed() } }
             UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
             if let src = Bundle.main.url(forResource: "lab", withExtension: "mp4", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab", withExtension: "mp4") {
                 let dir = MPVFiles.mediaDir
                 try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-                for n in ["Lab Show S01E01.mp4", "Lab Show S01E02.mp4"] {
+                let names = ["Lab Show S01E01.mp4", "Lab Show S01E02.mp4"] + (CommandLine.arguments.contains("-uiTestTwoTitles") ? ["Lab Movie (2020).mp4"] : [])
+                for n in names {
                     let d = dir.appendingPathComponent(n)
                     if !FileManager.default.fileExists(atPath: d.path) { try? FileManager.default.copyItem(at: src, to: d) }
                 }
@@ -288,7 +290,7 @@ enum UILab {
             (27, "video view resized", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
             (28, "video view resized back", { PlayerPresenter.current?.model.labNudgeVideoSize() }),
             (29, "park video (PiP closed in background) then return", { PlayerPresenter.current?.model.labParkThenReturn() }),
-            (33, "new hardware decoder (as after coming back while paused)", { PlayerPresenter.current?.model.labRenewDecoder() }),
+            (33, "away 3 s while playing (Notification Centre), then back", { PlayerPresenter.current?.model.labAwayThenBack() }),
             (39, "close the player (mpv's Metal thread ends on the main thread first)", {
                 let t0 = CACurrentMediaTime()
                 PlayerPresenter.current?.model.close()

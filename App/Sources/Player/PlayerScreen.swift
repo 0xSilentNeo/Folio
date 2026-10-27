@@ -253,8 +253,12 @@ struct PlayerScreen: View {
     private func panelSize(in window: UIWindow) -> (CGFloat, CGFloat, String) {
         let size = window.bounds.size
         let compact = size.width < 640
-        let width = compact ? size.width - 40 : min(tune.panelMax, size.width * tune.panelWidth)
-        let maxHeight = max(180, size.height - (compact ? 150 : 84) - window.safeAreaInsets.top - 66)
+        let width = compact ? min(size.width - 40, 380) : min(tune.panelMax, size.width * tune.panelWidth)
+        var maxHeight = max(180, size.height - (compact ? 150 : 84) - window.safeAreaInsets.top - 66)
+        // Upright, at most half the screen: 1.17.1 let a menu grow to nearly
+        // the whole screen (27 Oct screenshot: Tracks from the close button
+        // down to the time bar). A longer list scrolls.
+        if size.height > size.width { maxHeight = min(maxHeight, max(300, size.height * 0.5)) }
         return (width, maxHeight, "\(Int(width))x\(Int(maxHeight))")
     }
 
