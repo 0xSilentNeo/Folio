@@ -68,7 +68,8 @@ final class LingerUITests: XCTestCase {
 
                 func reset() {
             if app.buttons["Close player"].exists { app.buttons["Close player"].tap(); sleep(3) }
-            for _ in 0..<3 where app.buttons["Back"].exists { app.buttons["Back"].tap(); sleep(2) }
+            // By where ‹ is drawn: the button can vanish between exists and tap.
+            for _ in 0..<3 where app.buttons["Back"].exists { xcTap(back); sleep(2) }
             sleep(1)
         }
         /// One scenario: one finger path per segment, each sent as its own
@@ -98,13 +99,10 @@ final class LingerUITests: XCTestCase {
         }
 
         let edgeFrom = CGPoint(x: 4, y: H * 0.55), edgeTo = CGPoint(x: W * 0.85, y: H * 0.55)
-        let midFrom = CGPoint(x: W * 0.3, y: H * 0.55), midTo = CGPoint(x: W * 0.95, y: H * 0.55)
-        let downFrom = CGPoint(x: W * 0.5, y: H * 0.3), downTo = CGPoint(x: W * 0.5, y: H * 0.85)
+        // (A swipe right from mid-page or a swipe down doesn't go back here.)
         let backs: [(String, (Double) -> Steps)] = [
             ("Back button", { t in self.tap(back, at: t) }),
             ("edge swipe", { t in self.swipe(edgeFrom, edgeTo, at: t) }),
-            ("swipe right mid-page", { t in self.swipe(midFrom, midTo, at: t) }),
-            ("swipe down", { t in self.swipe(downFrom, downTo, at: t) }),
         ]
 
         // A. Page fully open → back → tap the other title Δ s after the back gesture is sent.
@@ -129,6 +127,10 @@ final class LingerUITests: XCTestCase {
         // D. Open the title, a second tap where its episode row will be, Δ s later.
         for d in [0.1, 0.25, 0.4, 0.6, 0.9] {
             run("D Lab Show tapped, then the episode row's spot +\(d) s", expect: "any", [(tap(tileA, at: 0), d), (tap(row, at: 0), 0)])
+        }
+        // F. Open a title, then tap the other title Δ s later, before the page is open.
+        for d in [0.1, 0.3, 0.5, 0.8] {
+            run("F Lab Show tapped, then Lab Other +\(d) s", expect: "any", [(tap(tileA, at: 0), d), (tap(tileB, at: 0), 0)])
         }
         // E. Switching fast: open, back Δ s later, other title 0.12 s after that.
         for (how, gesture) in backs.prefix(2) {
