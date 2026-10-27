@@ -1288,6 +1288,8 @@ final class PlayerModel: ObservableObject {
 
     /// A/V lab: the same renderer switch PiP does, without PiP.
     func labSwitchRenderer(software: Bool) { software ? switchToSoftware() : switchToMain() }
+    /// A/V lab: the decoder rebuild done after coming back while paused.
+    func labRenewDecoder() { renewHardwareDecoder() }
 
     /// A/V lab: the "closed PiP from the background, then came back" path,
     /// without PiP or a real background transition.
@@ -1513,6 +1515,27 @@ final class PlayerModel: ObservableObject {
         }
     }
 
+    /// A new hardware decoder after the app was away while paused (video kept,
+    /// 1.16.1). iOS ended the old VideoToolbox session in the meantime: the
+    /// 27 Oct mpv log, on Play after coming back, has "Failed to decode frame
+    /// (invalid session, -12903)", a restarted session missing its reference
+    /// frames ("Could not find ref with POC"), and mpv falling back to
+    /// copy-back — sound with a still picture until the next keyframe, 5–6 s.
+    /// Changing `hwdec` makes mpv rebuild the decoder and seek exactly to the
+    /// frame on screen (command.c, UPDATE_HWDEC: VDCTRL_REINIT, then
+    /// queue_seek to video_pts, exact) — from the cache, nothing is
+    /// downloaded again. Setting the same value changes nothing
+    /// (m_config_set_option_raw only notifies a changed value), so it goes to
+    /// another hardware value and straight back (both rebuild a VideoToolbox
+    /// session; software decoding is never involved).
+    private func renewHardwareDecoder() {
+        guard let c = client, fileLoaded, let hw = c.string("hwdec"), hw != "no",
+              let vid = c.string("vid"), vid != "no" else { return }
+        c.set("hwdec", hw == "videotoolbox-copy" ? "videotoolbox" : "videotoolbox-copy")
+        c.set("hwdec", hw)
+        dlog("player", "back while paused: new hardware decoder (\(hw))")
+    }
+
     private func videoOffForPlayback(_ c: MPVClient) {
         guard let vid = c.string("vid"), vid != "no" else { return }
         vidSaved = vid
@@ -1606,6 +1629,7 @@ final class PlayerModel: ObservableObject {
             parkedPaused = false
             if renderer == .metal { reattachMetalView(); videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded() }
             dlog("player", "back while paused: video view back, \(metalView.map { "\(Int($0.bounds.width))×\(Int($0.bounds.height))" } ?? "-")")
+            renewHardwareDecoder()
         }
         videoView.setNeedsLayout()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.nudgeRedraw() }

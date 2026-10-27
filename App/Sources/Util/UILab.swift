@@ -279,6 +279,7 @@ enum UILab {
             (22, "renderer → software (PiP path)", { PlayerPresenter.current?.model.labSwitchRenderer(software: true) }),
             (26, "renderer → main", { PlayerPresenter.current?.model.labSwitchRenderer(software: false) }),
             (29, "park video (PiP closed in background) then return", { PlayerPresenter.current?.model.labParkThenReturn() }),
+            (33, "new hardware decoder (as after coming back while paused)", { PlayerPresenter.current?.model.labRenewDecoder() }),
         ]
         for (t, name, f) in steps { DispatchQueue.main.asyncAfter(deadline: .now() + t) { dlog("av", "== \(name)"); f() } }
         var t0: Date?
