@@ -219,6 +219,27 @@ final class Diagnostics: NSObject {
                 try? Self.redact(s).write(to: tmp.appendingPathComponent(f.lastPathComponent), atomically: true, encoding: .utf8)
             }
         }
+        // PiP trace (PiPTrace): the window images, and the snapshots iOS
+        // keeps for the app switcher (Library/SplashBoard, newest first).
+        if UserDefaults.standard.bool(forKey: SettingsKey.pipTrace) {
+            let fm = FileManager.default
+            for f in (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? [] where f.lastPathComponent.hasPrefix("pip-ui-") {
+                try? fm.copyItem(at: f, to: tmp.appendingPathComponent(f.lastPathComponent))
+            }
+            let splash = fm.urls(for: .libraryDirectory, in: .userDomainMask)[0].appendingPathComponent("SplashBoard", isDirectory: true)
+            var found: [(URL, Date)] = []
+            if let e = fm.enumerator(at: splash, includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey]) {
+                for case let u as URL in e {
+                    guard let v = try? u.resourceValues(forKeys: [.contentModificationDateKey, .isRegularFileKey]), v.isRegularFile == true else { continue }
+                    found.append((u, v.contentModificationDate ?? .distantPast))
+                }
+            }
+            let out = tmp.appendingPathComponent("splashboard", isDirectory: true)
+            try? fm.createDirectory(at: out, withIntermediateDirectories: true)
+            for (i, (u, _)) in found.sorted(by: { $0.1 > $1.1 }).prefix(6).enumerated() {
+                try? fm.copyItem(at: u, to: out.appendingPathComponent("\(i)-" + u.lastPathComponent))
+            }
+        }
         if let mpv = try? String(contentsOf: MPVFiles.logFile, encoding: .utf8) {
             try? Self.redact(String(mpv.suffix(600_000))).write(to: tmp.appendingPathComponent("mpv.log"), atomically: true, encoding: .utf8)
         }

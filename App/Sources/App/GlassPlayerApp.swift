@@ -14,6 +14,7 @@ struct GlassPlayerApp: App {
         UILab.start()
         PopLab.start()
         MainActor.assumeIsolated { LingerLab.startIfAsked() }
+        MainActor.assumeIsolated { PiPTrace.watchScenes() }
         MPVFiles.bootstrap()
         // Reconnects to downloads that ran while the app was closed.
         MainActor.assumeIsolated { _ = DownloadManager.shared }
@@ -64,8 +65,15 @@ struct RootView: View {
         }
         .background(AppearanceProbe(mode: appearance).frame(width: 1, height: 1))
         .toggleStyle(BrandSwitchStyle())
-        .onAppear { LaunchTiming.firstFrame() }
+        .onAppear {
+            LaunchTiming.firstFrame()
+            RootView.appearances += 1
+            // More than once in one run: the root view was built again (a new
+            // scene), and the launch splash with it.
+            dlog("app", "root view appeared (\(RootView.appearances) in this run, splash \(splash ? "on" : "off"))")
+        }
     }
+    @MainActor static var appearances = 0
 
     /// `-glassLab`: the Liquid Glass morph test screen over everything (CI only).
     @ViewBuilder

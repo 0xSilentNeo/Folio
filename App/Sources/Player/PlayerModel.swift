@@ -197,6 +197,22 @@ final class PlayerModel: ObservableObject {
     private var pipRestoring = false
     private var energyNoteFor: String?
     private var awaitingFirstFrameAfterPiP = false
+    /// PiP trace (PiPTrace, off unless switched on in Diagnostics).
+    private var traceSampler: PiPTrace.Sampler?
+    private let traceHitches = PiPTrace.HitchWatch()
+    private func traceTransition(_ what: String, seconds: Double = 4) {
+        guard PiPTrace.on else { return }
+        PiPTrace.mark(what)
+        if let c = client {
+            let s = PiPTrace.Sampler(client: c, label: what, base: CACurrentMediaTime())
+            traceSampler = s
+            s.start(seconds: seconds) { [weak self] text in
+                PiPTrace.event(text)
+                if self?.traceSampler === s { self?.traceSampler = nil }
+            }
+        }
+        traceHitches.start(seconds: seconds)
+    }
 
     private var snapshotTimer: Timer?
     private let snapshotQueue = DispatchQueue(label: "glassplayer.snapshot", qos: .utility)
@@ -1524,8 +1540,12 @@ final class PlayerModel: ObservableObject {
         let buffer = c.double("audio-buffer") ?? 0.2
         let rate = paused ? 0 : (c.double("speed") ?? speed)
         let t0 = CACurrentMediaTime()
+        let span = PiPTrace.begin("output swap")
+        PiPTrace.event("output swap to \(vo) starts")
         c.set("vo", vo)
         let took = CACurrentMediaTime() - t0
+        PiPTrace.end("output swap", span)
+        PiPTrace.event("output swap to \(vo) done in \(Int(took * 1000)) ms (mpv held meanwhile)")
         guard let v = video0 ?? audio0, v > 0 else {
             dlog("player", "\(label) in \(Int(took * 1000)) ms (no position; mpv's own seek stands)")
             return
@@ -1596,6 +1616,7 @@ final class PlayerModel: ObservableObject {
         container.sendSubviewToBack(pip.view)
         mv.setNeedsLayout()
         dlog("player", "metal view attached")
+        PiPTrace.event("Metal view attached (\(Int(container.bounds.width))×\(Int(container.bounds.height)))")
     }
 
     /// While PiP hands back to the main renderer, keep the (correctly
@@ -1604,6 +1625,7 @@ final class PlayerModel: ObservableObject {
     private func setPiPLayerOnTop(_ onTop: Bool) {
         guard let container = videoContainer else { return }
         if onTop { container.bringSubviewToFront(pip.view) } else { container.sendSubviewToBack(pip.view) }
+        PiPTrace.event("PiP layer \(onTop ? "to the front" : "to the back") (its last frame came \(pip.lastFrameAge.map { "\(Int($0 * 1000)) ms ago" } ?? "never"), \(pip.framesEnqueued) frame(s) so far; Metal view \(metalView?.superview != nil ? "in" : "out of") the window)")
     }
 
     // MARK: App lifecycle
@@ -1675,6 +1697,7 @@ final class PlayerModel: ObservableObject {
     /// playing on, the video track goes off as before, so background
     /// listening doesn't decode video.
     private func didEnterBackground() {
+        PiPTrace.event("app in background (PiP \(isPiPActive ? "up" : "not up"))")
         saveHistory(force: true)
         wentToBackground = true
         guard mode == .main, !isPiPActive, let c = client else { return }
@@ -1790,7 +1813,9 @@ final class PlayerModel: ObservableObject {
     /// back into the player and the picture stays up until the player's own
     /// first frame is drawn, so there is no black flash or jump.
     private func willEnterForeground() {
+        if isPiPActive { traceTransition("coming back to the app while PiP plays (return to player: \(defaults.bool(forKey: SettingsKey.pipReturnOnOpen)))") }
         guard isPiPActive, defaults.bool(forKey: SettingsKey.pipReturnOnOpen) else { return }
+        PiPTrace.event("stop request 1 (app state \(UIApplication.shared.applicationState == .active ? "active" : UIApplication.shared.applicationState == .inactive ? "inactive" : "background"))")
         dlog("player", "app opened while in PiP: back to the player")
         pipRestoring = true
         returnFromPiP = true
@@ -1812,12 +1837,14 @@ final class PlayerModel: ObservableObject {
             return
         }
         dlog("player", "app active, PiP still up: stop request \(attempt + 1)")
+        PiPTrace.event("stop request \(attempt + 1) (PiP still up)")
         pipRestoring = true
         stopPiP()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.finishReturnFromPiP(attempt: attempt + 1) }
     }
 
     private func didBecomeActive() {
+        PiPTrace.event("app active (PiP \(isPiPActive ? "up" : "not up"), renderer mode \(mode))")
         let fromBackground = wentToBackground
         wentToBackground = false
         if !returnFromPiP, fromBackground, isPiPActive, defaults.bool(forKey: SettingsKey.pipReturnOnOpen) {
@@ -1963,13 +1990,14 @@ extension PlayerModel: MPVClientDelegate {
             }
         case .playbackRestart:
             buffering = false
+            PiPTrace.event("mpv: playback restart (first frame after the seek)\(awaitingFirstFrameAfterPiP ? "; PiP layer goes back in 150 ms" : "")")
             if awaitingFirstFrameAfterPiP {
                 awaitingFirstFrameAfterPiP = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in self?.setPiPLayerOnTop(false) }
             }
             if renderer == .metal { scheduleSnapshot(after: 0.8) }
         case .videoReconfig:
-            break
+            PiPTrace.event("mpv: video reconfig")
         case .clientMessage(let args):
             if args.first == "glassplayer-toast", args.count > 1 { showToast(args[1]) }
         case .log, .seek, .shutdown:
@@ -2094,21 +2122,26 @@ extension PlayerModel: PiPManagerDelegate {
     nonisolated func pipWillStart() {
         onMain { [weak self] in
             guard let self else { return }
+            self.traceTransition("PiP will start (app \(UIApplication.shared.applicationState == .active ? "active" : "not active"))", seconds: 3)
             self.isPiPActive = true
             self.pipRestoring = false
             self.switchToSoftware()
         }
     }
 
-    nonisolated func pipDidStart() {}
+    nonisolated func pipDidStart() { onMain { PiPTrace.event("PiP did start") } }
 
     nonisolated func pipWillStop() {
-        onMain { [weak self] in self?.setPiPLayerOnTop(true) }
+        onMain { [weak self] in
+            PiPTrace.event("PiP will stop")
+            self?.setPiPLayerOnTop(true)
+        }
     }
 
     nonisolated func pipDidStop() {
         onMain { [weak self] in
             guard let self else { return }
+            PiPTrace.event("PiP did stop")
             self.isPiPActive = false
             self.returnFromPiP = false
             let state = UIApplication.shared.applicationState
@@ -2149,7 +2182,10 @@ extension PlayerModel: PiPManagerDelegate {
     }
 
     nonisolated func pipRestoreUI(_ completion: @escaping (Bool) -> Void) {
-        onMain { [weak self] in self?.pipRestoring = true }
+        onMain { [weak self] in
+            PiPTrace.event("PiP asks to restore the player UI; answered at once")
+            self?.pipRestoring = true
+        }
         completion(true)
     }
 
