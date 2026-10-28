@@ -1,0 +1,133 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0 -derivedDataPath build "-only-testing:GlassPlayerUITests/DiscoverUITests"
+
+2026-10-28 13:18:00.187752+0000 GlassPlayerUITests-Runner[14070:43936] [Default] Running tests...
+objc[14070]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.JthZpl/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x1084e8398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.JthZpl/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x1085f4310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-28 13:18:06.394.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-28 13:18:06.395.
+Test Suite 'DiscoverUITests' started at 2026-10-28 13:18:06.396.
+Test Case '-[GlassPlayerUITests.DiscoverUITests testOpenTitlesFromDiscover]' started.
+    t =     0.01s Start Test at 2026-10-28 13:18:06.409
+    t =     0.16s Set Up
+    t =     0.17s Open dev.silentneo.glassplayer
+    t =     0.17s     Launch dev.silentneo.glassplayer
+2026-10-28 13:18:07.611 xcodebuild[13321:41727] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 13:18:07.612 xcodebuild[13321:41727] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     4.74s         Setting up automation session
+    t =     7.25s         Wait for dev.silentneo.glassplayer to idle
+    t =     9.81s Setting device orientation to Portrait
+    t =     9.83s     Device orientation changed to Portrait
+    t =     9.87s     Wait for dev.silentneo.glassplayer to idle
+    t =     9.87s Checking existence of `"Discover" Button`
+    t =    10.18s Waiting 20.0s for "Discover" Button to exist
+    t =    11.23s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    11.23s         Checking existence of `"Discover" Button`
+    t =    11.28s Tap "Discover" Button
+    t =    11.28s     Wait for dev.silentneo.glassplayer to idle
+    t =    11.28s     Find the "Discover" Button
+    t =    11.35s     Check for interrupting elements affecting "sparkles.tv" Button
+    t =    11.40s     Synthesize event
+    t =    11.94s     Wait for dev.silentneo.glassplayer to idle
+    t =    14.06s Waiting 15.0s for "Lab Movie" StaticText to exist
+    t =    15.10s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Movie" StaticText`
+    t =    15.10s         Checking existence of `"Lab Movie" StaticText`
+    t =    16.25s Tap "Lab Movie" StaticText
+    t =    16.26s     Wait for dev.silentneo.glassplayer to idle
+    t =    16.26s     Find the "Lab Movie" StaticText
+    t =    16.36s     Check for interrupting elements affecting "Lab Movie" StaticText
+    t =    16.41s     Synthesize event
+    t =    16.72s     Wait for dev.silentneo.glassplayer to idle
+TITLEPAGE Lab Movie alive=true
+    t =    22.87s Waiting 5.0s for "heroPlay" Any to exist
+    t =    23.92s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    23.92s         Checking existence of `"heroPlay" Any`
+    t =    24.01s Swipe up Target Application 'dev.silentneo.glassplayer'
+    t =    24.01s     Wait for dev.silentneo.glassplayer to idle
+    t =    24.01s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    24.06s     Check for interrupting elements affecting "Folio" Application
+    t =    24.12s     Synthesize event
+    t =    24.56s     Wait for dev.silentneo.glassplayer to idle
+    t =    27.06s Checking existence of `Button (First Match)`
+    t =    27.20s Swipe right Target Application 'dev.silentneo.glassplayer'
+    t =    27.20s     Wait for dev.silentneo.glassplayer to idle
+    t =    27.20s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    27.26s     Check for interrupting elements affecting "Folio" Application
+    t =    27.30s     Synthesize event
+    t =    27.73s     Wait for dev.silentneo.glassplayer to idle
+    t =    29.74s Waiting 15.0s for "Lab Series" StaticText to exist
+    t =    30.79s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    30.79s         Checking existence of `"Lab Series" StaticText`
+    t =    30.95s         Capturing element debug description
+    t =    31.77s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    31.77s         Checking existence of `"Lab Series" StaticText`
+    t =    31.94s         Capturing element debug description
+    t =    32.76s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    32.76s         Checking existence of `"Lab Series" StaticText`
+    t =    32.92s         Capturing element debug description
+    t =    33.76s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    33.76s         Checking existence of `"Lab Series" StaticText`
+    t =    33.90s         Capturing element debug description
+    t =    34.75s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    34.75s         Checking existence of `"Lab Series" StaticText`
+    t =    34.92s         Capturing element debug description
+    t =    35.75s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    35.75s         Checking existence of `"Lab Series" StaticText`
+    t =    35.89s         Capturing element debug description
+    t =    36.84s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    36.84s         Checking existence of `"Lab Series" StaticText`
+    t =    37.00s         Capturing element debug description
+    t =    37.81s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    37.81s         Checking existence of `"Lab Series" StaticText`
+    t =    37.96s         Capturing element debug description
+    t =    38.79s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    38.79s         Checking existence of `"Lab Series" StaticText`
+    t =    38.93s         Capturing element debug description
+    t =    39.77s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    39.77s         Checking existence of `"Lab Series" StaticText`
+    t =    39.93s         Capturing element debug description
+    t =    40.76s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    40.76s         Checking existence of `"Lab Series" StaticText`
+    t =    40.93s         Capturing element debug description
+    t =    41.76s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    41.76s         Checking existence of `"Lab Series" StaticText`
+    t =    41.91s         Capturing element debug description
+    t =    42.76s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    42.76s         Checking existence of `"Lab Series" StaticText`
+    t =    42.92s         Capturing element debug description
+    t =    43.76s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Series" StaticText`
+    t =    43.76s         Checking existence of `"Lab Series" StaticText`
+    t =    43.90s         Capturing element debug description
+    t =    44.75s     Checking existence of `"Lab Series" StaticText`
+    t =    44.89s Collecting debug information to assist test failure triage
+    t =    44.90s     Requesting snapshot of accessibility hierarchy for app with pid 14343
+/Users/runner/work/GlassPlayer/GlassPlayer/UITests/PanelUITests.swift:1291: error: -[GlassPlayerUITests.DiscoverUITests testOpenTitlesFromDiscover] : XCTAssertTrue failed - Lab Series tile not in the grid
+    t =    46.43s Tap "Lab Series" StaticText
+    t =    46.43s     Wait for dev.silentneo.glassplayer to idle
+    t =    46.44s     Find the "Lab Series" StaticText
+    t =    47.75s         Find the "Lab Series" StaticText (retry 1)
+    t =    48.91s         Find the "Lab Series" StaticText (retry 2)
+    t =    49.06s Requesting snapshot of accessibility hierarchy for app with pid 14343
+/Users/runner/work/GlassPlayer/GlassPlayer/UITests/PanelUITests.swift:1293: error: -[GlassPlayerUITests.DiscoverUITests testOpenTitlesFromDiscover] : Failed to tap "Lab Series" StaticText: No matches found for first query match sequence: `Descendants matching type StaticText` -> `Elements matching predicate '"Lab Series" IN identifiers'`, given input App element pid: 14343
+    t =    49.13s Tear Down
+Test Case '-[GlassPlayerUITests.DiscoverUITests testOpenTitlesFromDiscover]' failed (49.461 seconds).
+Test Suite 'DiscoverUITests' failed at 2026-10-28 13:18:55.870.
+	 Executed 1 test, with 2 failures (0 unexpected) in 49.461 (49.474) seconds
+Test Suite 'GlassPlayerUITests.xctest' failed at 2026-10-28 13:18:55.870.
+	 Executed 1 test, with 2 failures (0 unexpected) in 49.461 (49.475) seconds
+Test Suite 'Selected tests' failed at 2026-10-28 13:18:55.871.
+	 Executed 1 test, with 2 failures (0 unexpected) in 49.461 (49.477) seconds
+2026-10-28 13:19:37.421 xcodebuild[13321:41727] [MT] IDETestOperationsObserverDebug: 102.109 elapsed -- Testing started completed.
+2026-10-28 13:19:37.421 xcodebuild[13321:41727] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-28 13:19:37.421 xcodebuild[13321:41727] [MT] IDETestOperationsObserverDebug: 102.109 sec, +102.109 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.28_13-17-54-+0000.xcresult
+
+Failing tests:
+	DiscoverUITests.testOpenTitlesFromDiscover()
+	DiscoverUITests.testOpenTitlesFromDiscover()
+
+** TEST EXECUTE FAILED **
+
+Testing started

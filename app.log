@@ -1,0 +1,9 @@
+13:18:10.862 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.35 GB
+13:18:10.895 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+13:18:13.384 [hang] main thread unresponsive for 2.5 s
+13:18:14.334 [app] first screen 4959 ms after process start
+13:18:15.134 [app] active
+13:18:23.187 [nav] page opening: its move started
+13:18:23.244 [perf] title page tt9000001 ready in 93 ms
+13:18:24.142 [nav] page opening: its move ended after 954 ms
+13:18:45.324 [energy] cpu 23% (main 22%, com.apple.SwiftUI. 1%) mem 55 MB (0 MB left) thermal=nominal playing=no
