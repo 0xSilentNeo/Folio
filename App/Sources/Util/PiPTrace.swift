@@ -175,15 +175,19 @@ enum PiPTrace {
                 let root = w.rootViewController.map { String(describing: type(of: $0)) } ?? "none"
                 event("  window \(i) \(type(of: w)) level \(w.windowLevel.rawValue) hidden \(w.isHidden) alpha \(String(format: "%.2f", w.alpha)) key \(w.isKeyWindow) \(Int(w.bounds.width))×\(Int(w.bounds.height)) root \(root)")
             }
-            guard let top = s.windows.filter({ !$0.isHidden && $0.alpha > 0.01 }).max(by: { $0.windowLevel.rawValue < $1.windowLevel.rawValue }) else {
+            // Every visible window, lowest level first: what the snapshot is made of.
+            let shown = s.windows.filter { !$0.isHidden && $0.alpha > 0.01 }.sorted { $0.windowLevel.rawValue < $1.windowLevel.rawValue }
+            guard let first = shown.first else {
                 event("  no visible window to draw")
                 continue
             }
-            let image = UIGraphicsImageRenderer(bounds: top.bounds).image { _ in _ = top.drawHierarchy(in: top.bounds, afterScreenUpdates: false) }
+            let image = UIGraphicsImageRenderer(bounds: first.bounds).image { _ in
+                for w in shown { _ = w.drawHierarchy(in: w.bounds, afterScreenUpdates: false) }
+            }
             let file = Diagnostics.shared.dir.appendingPathComponent("pip-ui-\(Int(Date().timeIntervalSince1970))-\(reason.replacingOccurrences(of: " ", with: "-")).jpg")
             if let data = image.jpegData(compressionQuality: 0.5) {
                 try? data.write(to: file)
-                event("  drew the top window (\(type(of: top))) into \(file.lastPathComponent)")
+                event("  drew \(shown.map { String(describing: type(of: $0)) }.joined(separator: " + ")) into \(file.lastPathComponent)")
             }
         }
         pruneImages()
@@ -202,9 +206,30 @@ enum PiPTrace {
         var lines: [String] = []
         for case let u as URL in e {
             guard let v = try? u.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey, .isRegularFileKey]), v.isRegularFile == true else { continue }
-            lines.append("\(u.path.replacingOccurrences(of: lib.path + "/", with: "")) \(v.fileSize ?? 0) B \(v.contentModificationDate.map(f.string) ?? "?")")
+            let size = pixelSize(u).map { " \($0.0)×\($0.1) \($0.0 > $0.1 ? "landscape" : "portrait")" } ?? ""
+            lines.append("\(u.path.replacingOccurrences(of: lib.path + "/", with: ""))\(size) \(v.fileSize ?? 0) B \(v.contentModificationDate.map(f.string) ?? "?")")
         }
         event("\(reason): SplashBoard has \(lines.count) file(s)\(lines.isEmpty ? "" : ": " + lines.sorted().joined(separator: " | "))")
+    }
+
+    /// Width and height of a SplashBoard image (.ktx: "AAPL" header, then
+    /// chunks of length, tag, body; the HEAD chunk holds the KTX header
+    /// fields, pixel width and height at 6 and 7).
+    private static func pixelSize(_ url: URL) -> (Int, Int)? {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? h.close() }
+        guard let d = try? h.read(upToCount: 256), d.count > 48, d.prefix(4) == Data("AAPL".utf8) else { return nil }
+        func u32(_ o: Int) -> Int { Int(d[o]) | Int(d[o + 1]) << 8 | Int(d[o + 2]) << 16 | Int(d[o + 3]) << 24 }
+        var o = 8
+        while o + 8 <= d.count {
+            let n = u32(o)
+            if d[(o + 4)..<(o + 8)] == Data("HEAD".utf8) {
+                guard o + 8 + 32 <= d.count else { return nil }
+                return (u32(o + 8 + 24), u32(o + 8 + 28))
+            }
+            o += 8 + n
+        }
+        return nil
     }
 
     /// Keeps the newest 8 window images.
@@ -248,8 +273,11 @@ enum PiPTrace {
             sceneObservers.append(nc.addObserver(forName: name, object: nil, queue: .main) { note in
                 let id = (note.object as? UIScene)?.session.persistentIdentifier.prefix(8) ?? "?"
                 MainActor.assumeIsolated {
-                    dlog("scene", "\(id) \(what)")
-                    PiPTrace.event("scene \(what)")
+                    // Which way the app is turned at each step, to compare
+                    // with the way round iOS's snapshots were taken.
+                    let turned = (note.object as? UIWindowScene).map { $0.interfaceOrientation.isLandscape ? " (landscape)" : " (portrait)" } ?? ""
+                    dlog("scene", "\(id) \(what)\(turned)")
+                    PiPTrace.event("scene \(what)\(turned)")
                     if name == UIScene.didEnterBackgroundNotification {
                         PiPTrace.captureUI("entered background")
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { PiPTrace.listSnapshots("2 s in the background") }
