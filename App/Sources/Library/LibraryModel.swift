@@ -71,9 +71,16 @@ enum LibraryOrganizer {
 
     /// Re-reads file info for a fresh scan (off the main thread).
     static func warmInfo(_ urls: [URL]) {
-        infoLock.lock(); infoCache = [:]; infoLock.unlock()
+        infoLock.lock(); infoCache = [:]; infoGeneration += 1; infoLock.unlock()
         for u in urls { _ = info(u) }
     }
+
+    /// The last groups worked out, for the same files, order and file info.
+    /// Home works them out on every redraw (each page opening or closing
+    /// redraws it), and so does every title page that opens: 28 Oct profile,
+    /// ~15 ms a time in the simulator.
+    private nonisolated(unsafe) static var groupsMemo: (files: [URL], sort: LibrarySort, ascending: Bool, generation: Int, groups: [LibraryGroup])?
+    private nonisolated(unsafe) static var infoGeneration = 0
 
     static func episodeOrder(_ a: URL, _ b: URL) -> Bool {
         let pa = TitleParser.parse(a.lastPathComponent), pb = TitleParser.parse(b.lastPathComponent)
@@ -88,6 +95,19 @@ enum LibraryOrganizer {
     }
 
     static func groups(_ files: [URL], sort: LibrarySort = .current, ascending: Bool = LibrarySort.ascending) -> [LibraryGroup] {
+        infoLock.lock()
+        if let m = groupsMemo, m.sort == sort, m.ascending == ascending, m.generation == infoGeneration, m.files == files {
+            infoLock.unlock()
+            return m.groups
+        }
+        let generation = infoGeneration
+        infoLock.unlock()
+        let g = workOutGroups(files, sort: sort, ascending: ascending)
+        infoLock.lock(); groupsMemo = (files, sort, ascending, generation, g); infoLock.unlock()
+        return g
+    }
+
+    private static func workOutGroups(_ files: [URL], sort: LibrarySort, ascending: Bool) -> [LibraryGroup] {
         // Folders whose files are more than one title become folder tiles.
         let media = MPVFiles.mediaDir.standardizedFileURL.path
         var byFolder: [String: [URL]] = [:]

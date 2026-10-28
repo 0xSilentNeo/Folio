@@ -41,10 +41,7 @@ struct HomeView: View {
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
-            .onChange(of: path) { old, new in
-                dlog("nav", "home path \(old.count) → \(new.count): \(new)")
-                if new.isEmpty, pending.route != nil { DispatchQueue.main.async { openPending() } }
-            }
+            .background(PathWatch(path: $path, pending: pending) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
         }
     }
@@ -95,6 +92,25 @@ struct HomeView: View {
         pending.waiting = false
         if let why { dlog("nav", "home: opening \(r) (\(why))") }
         path.append(r)
+    }
+
+    /// Logs each change of the path and opens a title that waited for a page
+    /// going back (open(_:)). A view of its own: reading the path in Home's
+    /// body made every page opening and closing redraw all of Home (28 Oct
+    /// profile: Home's library worked out again at each).
+    private struct PathWatch: View {
+        @Binding var path: [LibraryRoute]
+        let pending: PendingOpen
+        let openPending: () -> Void
+        var body: some View {
+            Color.clear
+                .frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+                .onChange(of: path) { old, new in
+                    dlog("nav", "home path \(old.count) → \(new.count): \(new)")
+                    if new.isEmpty, pending.route != nil { DispatchQueue.main.async { openPending() } }
+                }
+        }
     }
 
     /// A title tapped while a page was still going back (open(_:)).

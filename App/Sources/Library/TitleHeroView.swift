@@ -54,9 +54,18 @@ struct TitleHeroView: View {
     private var entry: HistoryEntry? { history.entry(forURL: file.path) }
 
     /// Episodes of this title currently in the library (live, so deletions update).
+    ///
+    /// The show's name is worked out once. Until 1.17.4 it was worked out
+    /// again for every file in the library, and with it `file` — the episode
+    /// the page highlights, which looks through your watch history — so one
+    /// build of MobLand's page went through the history thousands of times
+    /// (simulator profile, 28 Oct: 1.8 of every 2.1 s spent in history
+    /// lookups came from this line).
     private var siblings: [URL] {
         let live = local.files.filter { group.files.contains($0) }
-        let extra = local.files.filter { f in !group.files.contains(f) && group.isSeries && TitleParser.parse(f.lastPathComponent).title.lowercased() == TitleParser.parse(file.lastPathComponent).title.lowercased() }
+        guard group.isSeries else { return live.sorted(by: LibraryOrganizer.episodeOrder) }
+        let show = TitleParser.parse(file.lastPathComponent).title.lowercased()
+        let extra = local.files.filter { f in !group.files.contains(f) && TitleParser.parse(f.lastPathComponent).title.lowercased() == show }
         return (live + extra).sorted(by: LibraryOrganizer.episodeOrder)
     }
     private var seasons: [Int] { Array(Set(siblings.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted() }

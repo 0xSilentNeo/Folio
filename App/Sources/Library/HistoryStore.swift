@@ -52,7 +52,7 @@ final class HistoryStore: ObservableObject {
             if l.byKey[e.item.url] == nil { l.byKey[e.item.url] = i }
             if l.byKey[e.id] == nil { l.byKey[e.id] = i }
             if l.byID[e.id] == nil { l.byID[e.id] = i }
-            if e.item.url.contains("/Documents/Media/") {
+            if Self.isLibraryFile(e.item.url) {
                 let name = (e.item.url as NSString).lastPathComponent
                 if l.byMediaName[name] == nil { l.byMediaName[name] = i }
             }
@@ -120,8 +120,16 @@ final class HistoryStore: ObservableObject {
     func entry(forURL url: String) -> HistoryEntry? {
         let l = index
         if let i = l.byKey[url] { return entries[i] }
-        guard url.contains("/Documents/Media/") else { return nil }
+        guard Self.isLibraryFile(url) else { return nil }
         return l.byMediaName[(url as NSString).lastPathComponent].map { entries[$0] }
+    }
+
+    /// A file in the library's folder. NSString's own search: a URL's path
+    /// is an NSString underneath, and String.contains went through
+    /// Foundation's generic Swift search on it, character by character (the
+    /// same profile: two thirds of the time left in these lookups).
+    private static func isLibraryFile(_ path: String) -> Bool {
+        (path as NSString).range(of: "/Documents/Media/").location != NSNotFound
     }
 
     func record(_ item: MediaItem, position: Double, duration: Double) {
