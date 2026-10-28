@@ -42,7 +42,7 @@ final class OpenCostUITests: XCTestCase {
         let style = ProcessInfo.processInfo.environment["LAB_TITLE_STYLE"] ?? "full"
         app.launchArguments = ["-uiTestLibrary", "-libraryView", "details", "-heroView", "details", "-tileArtwork", "poster",
                                "-librarySort", "size", "-librarySortAsc", "NO", "-metadataFetching", "YES",
-                               "-titlePageStyle", style, "-appearance", "dark"]
+                               "-titlePageStyle", style, "-appearance", "dark", "-renderer", "gl"]
         app.launch()
         XCUIDevice.shared.orientation = .portrait
         let mob = app.staticTexts["MobLand"].firstMatch
@@ -65,6 +65,11 @@ final class OpenCostUITests: XCTestCase {
         // title would match "MobLand" too).
         let gear = app.buttons["Settings"].firstMatch
         func backToHome() {
+            // 1.16.1's hidden page can start playback (its 27 Oct bug).
+            if app.buttons["Close player"].exists {
+                mark("the player opened: closing it")
+                app.buttons["Close player"].tap(); sleep(3)
+            }
             for _ in 0..<3 where !gear.isHittable {
                 mark("not on Home yet: swipe back again")
                 synth(swipe(edgeA, edgeB)); sleep(2)
