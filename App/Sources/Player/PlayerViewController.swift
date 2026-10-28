@@ -56,6 +56,8 @@ final class PlayerUIState: ObservableObject {
 
     private var hideWork: DispatchWorkItem?
 
+    deinit { dlog("player", "player screen state freed") }
+
     func showControls(autoHide: Bool = true) {
         controlsVisible = true
         if autoHide { scheduleHide() } else { hideWork?.cancel() }

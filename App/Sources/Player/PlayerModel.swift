@@ -302,6 +302,10 @@ final class PlayerModel: ObservableObject {
         EnergyMonitor.shared.note = "renderer=\(renderer) picture=\(PictureMode.current.rawValue)"
     }
 
+    /// One line per player session: a session that closes without it is
+    /// still held somewhere (with its video layers and PiP layer).
+    deinit { dlog("player", "player model freed") }
+
     func close() {
         guard !closed else { return }
         closed = true
