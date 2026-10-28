@@ -9,6 +9,7 @@ on:
   # A push that changes the request file runs it too (a new workflow can only
   # be dispatched once it's on the default branch).
   push:
+    branches-ignore: [main]
     paths: ['.github/perf-lab-request.json']
   workflow_dispatch:
     inputs:
