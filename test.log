@@ -1,0 +1,136 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=3435E92E-E723-410E-9BCA-775192FDE386 -derivedDataPath build "-only-testing:GlassPlayerUITests/SwitcherUITests"
+
+2026-10-28 13:39:01.491199+0000 GlassPlayerUITests-Runner[10091:34592] [Default] Running tests...
+objc[10091]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.EFzIxt/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x107e48398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.EFzIxt/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x108790310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-28 13:39:09.296.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-28 13:39:09.296.
+Test Suite 'SwitcherUITests' started at 2026-10-28 13:39:09.297.
+Test Case '-[GlassPlayerUITests.SwitcherUITests test1LeftInLandscapeBackInPortrait]' started.
+    t =     0.04s Start Test at 2026-10-28 13:39:09.337
+    t =     0.09s Set Up
+    t =     0.09s Setting device orientation to Portrait
+    t =     0.11s     Device orientation changed to Portrait
+    t =     0.19s     Wait for com.apple.springboard to idle
+    t =     0.29s Open dev.silentneo.glassplayer
+    t =     0.29s     Launch dev.silentneo.glassplayer
+2026-10-28 13:39:10.660 xcodebuild[9343:32237] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 13:39:10.661 xcodebuild[9343:32237] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     5.76s         Setting up automation session
+    t =     9.52s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.SwitcherUITests test1LeftInLandscapeBackInPortrait] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    12.78s             Interface orientation changed to Landscape Right
+    t =    13.80s Waiting 30.0s for "Close player" Button to exist
+    t =    14.81s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    14.81s         Checking existence of `"Close player" Button`
+SWITCHER home 1793194772.604127
+    t =    23.31s Pressing Home button
+    t =    23.92s     Interface orientation changed to Portrait
+SWITCHER switcher 1793194776.387191
+    t =    27.09s Press Application 'com.apple.springboard'[0.50, 0.99] for 0.1 seconds, then drag to Application 'com.apple.springboard'[0.50, 0.55] with velocity of 250.00 pixels per second, and then hold for 1.2 seconds 
+    t =    27.09s     Wait for com.apple.springboard to idle
+    t =    27.10s     Find the Application 'com.apple.springboard'
+    t =    27.20s     Check for interrupting elements affecting " " Application
+    t =    27.25s     Synthesize event
+    t =    27.26s         Find the Application 'com.apple.springboard'
+    t =    27.29s         Find the Application 'com.apple.springboard'
+    t =    27.33s         Find the Application 'com.apple.springboard'
+    t =    27.36s         Find the Application 'com.apple.springboard'
+    t =    27.41s         Find the Application 'com.apple.springboard'
+    t =    30.55s     Wait for com.apple.springboard to idle
+SWITCHER card tap 1793194784.112468
+    t =    34.82s Tap Application 'com.apple.springboard'[0.50, 0.45]
+    t =    34.82s     Wait for com.apple.springboard to idle
+    t =    34.82s     Find the Application 'com.apple.springboard'
+    t =    34.86s     Check for interrupting elements affecting " " Application
+    t =    34.89s     Synthesize event
+    t =    34.89s         Find the Application 'com.apple.springboard'
+    t =    34.92s         Find the Application 'com.apple.springboard'
+    t =    34.95s         Find the Application 'com.apple.springboard'
+    t =    35.27s     Wait for com.apple.springboard to idle
+    t =    35.79s         Interface orientation changed to Landscape Right
+SWITCHER back 4 1793194789.255907
+    t =    39.97s Tear Down
+Test Case '-[GlassPlayerUITests.SwitcherUITests test1LeftInLandscapeBackInPortrait]' passed (46.914 seconds).
+Test Case '-[GlassPlayerUITests.SwitcherUITests test2LeftInLandscapeBackInLandscape]' started.
+    t =     0.00s Start Test at 2026-10-28 13:39:56.253
+    t =     0.04s Set Up
+    t =     0.04s Setting device orientation to Portrait
+    t =     0.06s     Wait for dev.silentneo.glassplayer to idle
+    t =     0.08s Open dev.silentneo.glassplayer
+    t =     0.08s     Launch dev.silentneo.glassplayer
+    t =     0.08s         Terminate dev.silentneo.glassplayer:10318
+    t =     0.49s             Interface orientation changed to Portrait
+2026-10-28 13:39:57.398 xcodebuild[9343:32237] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 13:39:57.398 xcodebuild[9343:32237] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.54s         Setting up automation session
+    t =     5.72s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.SwitcherUITests test2LeftInLandscapeBackInLandscape] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =     7.66s             Interface orientation changed to Landscape Right
+    t =     9.52s Waiting 30.0s for "Close player" Button to exist
+    t =    10.57s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    10.57s         Checking existence of `"Close player" Button`
+SWITCHER home 1793194811.987042
+    t =    15.74s Pressing Home button
+    t =    16.07s     Interface orientation changed to Portrait
+    t =    19.28s Setting device orientation to Landscape Left
+    t =    19.28s     Device orientation changed to Landscape Left
+    t =    19.30s     Wait for com.apple.springboard to idle
+SWITCHER activate in landscape 1793194817.562561
+    t =    21.31s Open dev.silentneo.glassplayer
+    t =    21.31s     Activate dev.silentneo.glassplayer
+    t =    21.66s         Interface orientation changed to Landscape Right
+    t =    22.13s         Wait for dev.silentneo.glassplayer to idle
+SWITCHER back 4 1793194822.414124
+    t =    26.16s Setting device orientation to Portrait
+    t =    26.17s     Device orientation changed to Portrait
+    t =    26.20s     Wait for dev.silentneo.glassplayer to idle
+    t =    26.29s Tear Down
+    t =    26.36s     Interface orientation changed to Portrait
+Test Case '-[GlassPlayerUITests.SwitcherUITests test2LeftInLandscapeBackInLandscape]' passed (30.548 seconds).
+Test Case '-[GlassPlayerUITests.SwitcherUITests test3UprightPlayer]' started.
+    t =     0.00s Start Test at 2026-10-28 13:40:26.801
+    t =     0.06s Set Up
+    t =     0.06s Setting device orientation to Portrait
+    t =     0.07s     Wait for dev.silentneo.glassplayer to idle
+    t =     0.08s Open dev.silentneo.glassplayer
+    t =     0.08s     Launch dev.silentneo.glassplayer
+    t =     0.08s         Terminate dev.silentneo.glassplayer:11669
+2026-10-28 13:40:28.022 xcodebuild[9343:32237] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 13:40:28.022 xcodebuild[9343:32237] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.18s         Setting up automation session
+    t =     6.48s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.SwitcherUITests test3UprightPlayer] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =     9.23s Waiting 30.0s for "Close player" Button to exist
+    t =    10.28s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    10.28s         Checking existence of `"Close player" Button`
+SWITCHER home 1793194842.365536
+    t =    15.57s Pressing Home button
+SWITCHER activate 1793194845.868496
+    t =    19.07s Open dev.silentneo.glassplayer
+    t =    19.07s     Activate dev.silentneo.glassplayer
+    t =    19.12s         Wait for dev.silentneo.glassplayer to idle
+SWITCHER back 3 1793194849.930393
+/Users/runner/work/GlassPlayer/GlassPlayer/UITests/SwitcherUITests.swift:77: error: -[GlassPlayerUITests.SwitcherUITests test3UprightPlayer] : XCTAssertEqual failed: ("XCUIApplicationState(rawValue: 3)") is not equal to ("XCUIApplicationState(rawValue: 4)")
+    t =    23.87s Tear Down
+Test Case '-[GlassPlayerUITests.SwitcherUITests test3UprightPlayer]' failed (24.464 seconds).
+Test Suite 'SwitcherUITests' failed at 2026-10-28 13:40:51.266.
+	 Executed 3 tests, with 1 failure (0 unexpected) in 101.926 (101.969) seconds
+Test Suite 'GlassPlayerUITests.xctest' failed at 2026-10-28 13:40:51.272.
+	 Executed 3 tests, with 1 failure (0 unexpected) in 101.926 (101.976) seconds
+Test Suite 'Selected tests' failed at 2026-10-28 13:40:51.274.
+	 Executed 3 tests, with 1 failure (0 unexpected) in 101.926 (101.978) seconds
+2026-10-28 13:41:39.441 xcodebuild[9343:32237] [MT] IDETestOperationsObserverDebug: 163.444 elapsed -- Testing started completed.
+2026-10-28 13:41:39.441 xcodebuild[9343:32237] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-28 13:41:39.441 xcodebuild[9343:32237] [MT] IDETestOperationsObserverDebug: 163.444 sec, +163.444 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.28_13-38-55-+0000.xcresult
+
+Failing tests:
+	SwitcherUITests.test3UprightPlayer()
+
+** TEST EXECUTE FAILED **
+
+Testing started
