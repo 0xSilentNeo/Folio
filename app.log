@@ -1,0 +1,24 @@
+09:16:50.282 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.61 GB
+09:16:51.066 [app] first screen 1486 ms after process start
+09:16:51.591 [app] active
+09:16:52.406 [lab] up next lab: play ["Lab Show · S01E01", "Lab Show · S01E02"]
+09:16:52.406 [player] play requested: 2 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Data/Application/F0E18E06-12FC-4741-ABFA-9B169BD6413C/Documents/Media/Lab Show S01E01.mp4
+09:16:53.036 [player] start renderer=metal
+09:16:53.049 [player] mpv options applied renderer=metal hwdec=auto anime4k=off/fast picture=efficient
+09:16:53.082 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Data/Application/F0E18E06-12FC-4741-ABFA-9B169BD6413C/Documents/Media/Lab Show S01E01.mp4 source=local opts=[] -> 0
+09:16:53.099 [player] decoder: software
+09:16:55.654 [hang] main thread unresponsive for 2.5 s
+09:16:56.235 [player] file loaded in 3156 ms
+09:16:56.352 [perf] panel tracks prebuilt in 104 ms
+09:16:56.415 [player] decoder: software
+09:16:56.863 [perf] panel settings prebuilt in 323 ms
+09:16:56.919 [perf] panel nowPlaying prebuilt in 39 ms
+09:16:58.321 [lab] up next lab: Lab Show · S01E02 next in mpv's playlist; this file is 0:40 long
+09:16:59.827 [lab] up next lab: on to the next episode
+09:16:59.837 [player] playlist-next → the prepared episode Lab Show · S01E02 -> 0
+09:16:59.887 [player] decoder: software
+09:16:59.918 [player] file loaded in 90 ms
+09:16:59.965 [player] decoder: software
+09:16:59.965 [player] length read when the file loaded: 0:40 (mpv sent none: the same as the last file's)
+09:17:02.920 [lab] up next lab: now Lab Show · S01E02: the time bar's length 0:40, mpv's 0:40 → OK
+09:17:21.604 [energy] cpu 9% (other 6%, vo 2%, main 1%) mem 84 MB (0 MB left) thermal=nominal playing=yes renderer=metal picture=efficient decoder=no

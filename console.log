@@ -1,0 +1,28 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-28 09:16:51.554 E  GlassPlayer[27150:12181] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 09:16:51.554 E  GlassPlayer[27150:12181] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 09:16:51.569 E  GlassPlayer[27150:12181] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-28 09:16:51.578 E  GlassPlayer[27150:12181] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 09:16:51.584 E  GlassPlayer[27150:12181] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 09:16:52.916 E  GlassPlayer[27150:12181] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-10-28 09:16:52.991 F  GlassPlayer[27150:12181] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-10-28 09:16:53.411 E  GlassPlayer[27150:121f8] (5827BB56-52E1-3D0B-AC02-7A3201246563) <compose failure [shared UUID]>
+2026-10-28 09:16:56.117 E  GlassPlayer[27150:121f8] [com.apple.Metal:Metal Compiler Warning] <compose failure [shared UUID]>
+2026-10-28 09:16:56.355 E  GlassPlayer[27150:12231] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 09:16:56.362 E  GlassPlayer[27150:12232] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 09:16:56.376 E  GlassPlayer[27150:12236] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 09:16:56.383 E  GlassPlayer[27150:12237] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 09:16:56.472 E  GlassPlayer[27150:121f8] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 09:16:56.479 E  GlassPlayer[27150:121f8] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 09:16:56.483 E  GlassPlayer[27150:121f8] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 09:16:56.491 E  GlassPlayer[27150:121f8] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 09:16:56.496 E  GlassPlayer[27150:121f8] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 09:16:57.555 E  GlassPlayer[27150:12192] (5827BB56-52E1-3D0B-AC02-7A3201246563) <compose failure [shared UUID]>
+2026-10-28 09:16:58.359 E  GlassPlayer[27150:1225e] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-28 09:16:58.359 E  GlassPlayer[27150:1225e] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-28 09:16:58.592 E  GlassPlayer[27150:12267] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-28 09:16:58.592 E  GlassPlayer[27150:12267] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-28 09:16:59.892 E  GlassPlayer[27150:12279] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 09:16:59.894 E  GlassPlayer[27150:1227a] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 09:16:59.897 E  GlassPlayer[27150:1227d] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 09:16:59.905 E  GlassPlayer[27150:1227e] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
