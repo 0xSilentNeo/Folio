@@ -1,0 +1,106 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=3435E92E-E723-410E-9BCA-775192FDE386 -derivedDataPath build "-only-testing:GlassPlayerUITests/PiPUITests"
+
+2026-10-28 13:14:02.567704+0000 GlassPlayerUITests-Runner[13755:44492] [Default] Running tests...
+objc[13755]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.t2tpuS/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x1067e0398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.t2tpuS/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x109cc0310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-28 13:14:08.691.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-28 13:14:08.693.
+Test Suite 'PiPUITests' started at 2026-10-28 13:14:08.693.
+Test Case '-[GlassPlayerUITests.PiPUITests test1ButtonHomeAndBack]' started.
+    t =     0.00s Start Test at 2026-10-28 13:14:08.697
+2026-10-28 13:14:09.853 xcodebuild[13179:42780] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 13:14:09.854 xcodebuild[13179:42780] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     0.05s Set Up
+    t =     0.05s Open dev.silentneo.glassplayer
+    t =     0.05s     Launch dev.silentneo.glassplayer
+    t =     5.37s         Setting up automation session
+    t =     7.93s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.PiPUITests test1ButtonHomeAndBack] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    11.14s             Interface orientation changed to Landscape Right
+    t =    15.38s Waiting 30.0s for "Close player" Button to exist
+    t =    16.48s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    16.48s         Checking existence of `"Close player" Button`
+    t =    21.85s Waiting 10.0s for "Picture in Picture" Button to exist
+    t =    22.90s     Checking `Expect predicate `existsNoRetry == 1` for object "Picture in Picture" Button`
+    t =    22.90s         Checking existence of `"Picture in Picture" Button`
+    t =    26.09s         Capturing element debug description
+    t =    26.93s     Checking `Expect predicate `existsNoRetry == 1` for object "Picture in Picture" Button`
+    t =    26.93s         Checking existence of `"Picture in Picture" Button`
+    t =    27.50s         Capturing element debug description
+    t =    27.90s     Checking `Expect predicate `existsNoRetry == 1` for object "Picture in Picture" Button`
+    t =    27.90s         Checking existence of `"Picture in Picture" Button`
+    t =    28.13s         Capturing element debug description
+    t =    28.88s     Checking `Expect predicate `existsNoRetry == 1` for object "Picture in Picture" Button`
+    t =    28.88s         Checking existence of `"Picture in Picture" Button`
+    t =    29.17s         Capturing element debug description
+    t =    29.90s     Checking `Expect predicate `existsNoRetry == 1` for object "Picture in Picture" Button`
+    t =    29.90s         Checking existence of `"Picture in Picture" Button`
+    t =    30.13s         Capturing element debug description
+    t =    30.86s     Checking `Expect predicate `existsNoRetry == 1` for object "Picture in Picture" Button`
+    t =    30.86s         Checking existence of `"Picture in Picture" Button`
+    t =    31.37s         Capturing element debug description
+    t =    31.85s     Checking `Expect predicate `existsNoRetry == 1` for object "Picture in Picture" Button`
+    t =    31.85s         Checking existence of `"Picture in Picture" Button`
+    t =    32.17s         Capturing element debug description
+    t =    32.17s     Checking existence of `"Picture in Picture" Button`
+    t =    32.54s Collecting debug information to assist test failure triage
+    t =    32.55s     Requesting snapshot of accessibility hierarchy for app with pid 14387
+/Users/runner/work/GlassPlayer/GlassPlayer/UITests/PiPUITests.swift:23: error: -[GlassPlayerUITests.PiPUITests test1ButtonHomeAndBack] : XCTAssertTrue failed - no PiP button
+PIPTEST tap PiP 2026-10-28 13:14:41 +0000
+    t =    33.06s Tap "Picture in Picture" Button
+    t =    33.06s     Wait for dev.silentneo.glassplayer to idle
+    t =    33.06s     Find the "Picture in Picture" Button
+    t =    34.39s         Find the "Picture in Picture" Button (retry 1)
+    t =    35.63s         Find the "Picture in Picture" Button (retry 2)
+    t =    35.74s Requesting snapshot of accessibility hierarchy for app with pid 14387
+/Users/runner/work/GlassPlayer/GlassPlayer/UITests/PiPUITests.swift:25: error: -[GlassPlayerUITests.PiPUITests test1ButtonHomeAndBack] : Failed to tap "Picture in Picture" Button: No matches found for first query match sequence: `Descendants matching type Button` -> `Elements matching predicate '"Picture in Picture" IN identifiers'`, given input App element pid: 14387
+    t =    35.78s Tear Down
+Test Case '-[GlassPlayerUITests.PiPUITests test1ButtonHomeAndBack]' failed (38.235 seconds).
+Test Case '-[GlassPlayerUITests.PiPUITests test2AutoPiPHomeAndBack]' started.
+    t =     0.00s Start Test at 2026-10-28 13:14:46.934
+    t =     0.04s Set Up
+    t =     0.04s Open dev.silentneo.glassplayer
+    t =     0.04s     Launch dev.silentneo.glassplayer
+    t =     0.04s         Terminate dev.silentneo.glassplayer:14387
+    t =     0.51s             Interface orientation changed to Portrait
+2026-10-28 13:14:48.049 xcodebuild[13179:42780] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 13:14:48.049 xcodebuild[13179:42780] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.92s         Setting up automation session
+    t =     5.67s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.PiPUITests test2AutoPiPHomeAndBack] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =     7.43s             Interface orientation changed to Landscape Right
+    t =     8.44s Waiting 30.0s for "Close player" Button to exist
+    t =     9.53s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =     9.53s         Checking existence of `"Close player" Button`
+PIPTEST home while playing 2026-10-28 13:15:02 +0000
+    t =    15.16s Pressing Home button
+    t =    15.74s     Interface orientation changed to Portrait
+PIPTEST back to the app 2026-10-28 13:15:07 +0000
+    t =    20.83s Open dev.silentneo.glassplayer
+    t =    20.83s     Activate dev.silentneo.glassplayer
+    t =    20.87s         Wait for dev.silentneo.glassplayer to idle
+    t =    26.88s Checking existence of `"Close player" Button`
+PIPTEST app state 3, player true
+    t =    27.20s Tear Down
+Test Case '-[GlassPlayerUITests.PiPUITests test2AutoPiPHomeAndBack]' passed (32.998 seconds).
+Test Suite 'PiPUITests' failed at 2026-10-28 13:15:19.932.
+	 Executed 2 tests, with 2 failures (0 unexpected) in 71.234 (71.239) seconds
+Test Suite 'GlassPlayerUITests.xctest' failed at 2026-10-28 13:15:19.937.
+	 Executed 2 tests, with 2 failures (0 unexpected) in 71.234 (71.244) seconds
+Test Suite 'Selected tests' failed at 2026-10-28 13:15:19.937.
+	 Executed 2 tests, with 2 failures (0 unexpected) in 71.234 (71.247) seconds
+2026-10-28 13:17:02.703 xcodebuild[13179:42780] [MT] IDETestOperationsObserverDebug: 185.667 elapsed -- Testing started completed.
+2026-10-28 13:17:02.704 xcodebuild[13179:42780] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-28 13:17:02.704 xcodebuild[13179:42780] [MT] IDETestOperationsObserverDebug: 185.670 sec, +185.670 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.28_13-13-56-+0000.xcresult
+
+Failing tests:
+	PiPUITests.test1ButtonHomeAndBack()
+	PiPUITests.test1ButtonHomeAndBack()
+
+** TEST EXECUTE FAILED **
+
+Testing started
