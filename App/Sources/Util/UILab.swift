@@ -33,6 +33,7 @@ enum UILab {
                     if !FileManager.default.fileExists(atPath: d.path) { try? FileManager.default.copyItem(at: src, to: d) }
                 }
                 LocalMediaStore.shared.refresh()
+                if CommandLine.arguments.contains("-upNextLab") { upNextLab(dir: dir, names: names) }
             }
             return
         }
@@ -407,5 +408,25 @@ enum UILab {
         testPopover = vc
         root.present(vc, animated: true)
         dlog("lab", "test popover presented from main window")
+    }
+}
+
+extension UILab {
+    /// `-uiTestLibrary -upNextLab`: Lab Show's two episodes (the same clip, so
+    /// the same length) as a queue, then Up Next's way from the first to the
+    /// second (PlayerModel.labUpNext). Logs whether the time bar has the
+    /// second file's length. `-noDurationRead` turns 1.17.5's fix off.
+    static func upNextLab(dir: URL, names: [String]) {
+        UserDefaults.standard.set("playlist", forKey: SettingsKey.playbackMode)
+        let items = names.prefix(2).map { n -> MediaItem in
+            var m = MediaItem(url: dir.appendingPathComponent(n).path, title: TitleParser.clean(n), source: .local)
+            m.historyKey = dir.appendingPathComponent(n).path
+            return m
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            dlog("lab", "up next lab: play \(items.map(\.title))")
+            PlayerPresenter.play(queue: Array(items), index: 0)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) { PlayerPresenter.current?.model.labUpNext() }
     }
 }

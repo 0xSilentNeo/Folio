@@ -54,12 +54,39 @@ struct TitleHeroView: View {
     private var entry: HistoryEntry? { history.entry(forURL: file.path) }
 
     /// Episodes of this title currently in the library (live, so deletions update).
+    ///
+    /// The show's name is worked out once. Until 1.17.4 it was worked out
+    /// again for every file in the library, and with it `file` — the episode
+    /// the page highlights, which looks through your watch history — so one
+    /// build of MobLand's page went through the history thousands of times
+    /// (simulator profile, 28 Oct: 1.8 of every 2.1 s spent in history
+    /// lookups came from this line).
+    ///
+    /// Worked out once for the same library and episode, not at each of the
+    /// ~8 places one build of the page asks (each sorted the episodes again).
     private var siblings: [URL] {
-        let live = local.files.filter { group.files.contains($0) }
-        let extra = local.files.filter { f in !group.files.contains(f) && group.isSeries && TitleParser.parse(f.lastPathComponent).title.lowercased() == TitleParser.parse(file.lastPathComponent).title.lowercased() }
-        return (live + extra).sorted(by: LibraryOrganizer.episodeOrder)
+        let files = local.files, current = file
+        if let m = memo.siblings, m.group == group.id, m.files == files, m.file == current { return m.list }
+        let live = files.filter { group.files.contains($0) }
+        let list: [URL]
+        if group.isSeries {
+            let show = TitleParser.parse(current.lastPathComponent).title.lowercased()
+            let extra = files.filter { f in !group.files.contains(f) && TitleParser.parse(f.lastPathComponent).title.lowercased() == show }
+            list = (live + extra).sorted(by: LibraryOrganizer.episodeOrder)
+        } else {
+            list = live.sorted(by: LibraryOrganizer.episodeOrder)
+        }
+        memo.siblings = (group.id, files, current, list)
+        memo.seasons = Array(Set(list.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted()
+        return list
     }
-    private var seasons: [Int] { Array(Set(siblings.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted() }
+    private var seasons: [Int] { _ = siblings; return memo.seasons }
+    /// Not state: what's remembered here never redraws anything.
+    private final class Memo {
+        var siblings: (group: String, files: [URL], file: URL, list: [URL])?
+        var seasons: [Int] = []
+    }
+    @State private var memo = Memo()
     private var shownEpisodes: [URL] {
         guard seasons.count > 1, let season else { return siblings }
         return siblings.filter { TitleParser.parse($0.lastPathComponent).season == season }
@@ -93,7 +120,7 @@ struct TitleHeroView: View {
                             TiltPlayButton(title: entry?.canResume == true ? "Resume" : "Play",
                                            subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { tapped(file, "Play") }
                             if entry?.canResume == true {
-                                Button { if !pageLeaving && pageLife?.cantAct == nil { restart() } } label: {
+                                Button { if pageLife?.cantAct == nil { restart() } } label: {
                                     Label("Start over", systemImage: "arrow.counterclockwise").font(.subheadline.weight(.semibold))
                                         .padding(.horizontal, 16).frame(height: 44).glass(cornerRadius: 22, interactive: true)
                                 }
@@ -259,7 +286,7 @@ struct TitleHeroView: View {
     }
 
     private func goBack() {
-        if pageLeaving || pageLife?.leaving == true { dlog("nav", "title page: Back ignored (page already going back)"); return }
+        if pageLife?.leaving == true { dlog("nav", "title page: Back ignored (page already going back)"); return }
         dlog("nav", "title page: Back")
         pageLife?.leave()          // no touches or actions from here, before the pop even starts
         dismiss()
@@ -267,7 +294,6 @@ struct TitleHeroView: View {
 
     // MARK: Actions
 
-    @Environment(\.pageLeaving) private var pageLeaving
     @Environment(\.pageLife) private var pageLife
     @Environment(\.zoomsFromTile) private var zoomsFromTile
 
@@ -279,7 +305,7 @@ struct TitleHeroView: View {
     /// page was still zooming in — taps you meant, on a page you could see
     /// (27 Oct report: "the buttons were not getting registered"); gone.
     private func tapped(_ f: URL, _ control: String) {
-        if let why = pageLeaving ? "page going back" : pageLife?.cantAct {
+        if let why = pageLife?.cantAct {
             dlog("nav", "title page: \(control) ignored (\(why))")
             return
         }

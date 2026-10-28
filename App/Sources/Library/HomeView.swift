@@ -41,7 +41,7 @@ struct HomeView: View {
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
-            .onChange(of: path) { old, new in dlog("nav", "home path \(old.count) → \(new.count): \(new)") }
+            .background(PathWatch(path: $path, pending: pending) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
         }
     }
@@ -54,23 +54,71 @@ struct HomeView: View {
         (LibraryViewMode(rawValue: libraryView) ?? .grid) != .grid && ListTransition.current == .push
     }
 
-    /// Opens a page from Home. Home's own buttons are only there to tap when
-    /// Home is what you see, so the page goes straight on top of Home: any
-    /// entry already in the path is one that isn't on the screen.
+    /// Opens a page from Home: on top of Home, as a page of its own.
     ///
-    /// 28 Oct log: a page you go back from before it has finished opening
-    /// stays in SwiftUI's path when you open the next title before its
-    /// going-back has ended ("home path 1 → 2: [mobland, classroom]", later
-    /// "[mobland, mobland]"). SwiftUI then kept building that MobLand page
-    /// out of sight at every open ("title page disappear MobLand" each time).
+    /// Home's buttons are only there to tap when Home is what you see, so a
+    /// path that isn't empty belongs to a page that went back and isn't on
+    /// screen any more. SwiftUI drops it from the path once that page's move
+    /// is over (28 Oct log: 62 ms after the page was gone). A title tapped
+    /// before that opens then, as a page of its own:
+    /// - 1.17.3 added it behind the old one ("home path 1 → 2: [mobland,
+    ///   classroom]"), and SwiftUI kept the old page alive out of sight.
+    /// - 1.17.4 replaced the old one (`path = [route]`), and SwiftUI reused
+    ///   the old page for the new title: your 19:23 recording opens Classroom
+    ///   with MobLand's title on it, and its page never ran onAppear.
     private func open(_ route: LibraryRoute) {
-        if path.isEmpty {
-            path.append(route)
-        } else {
-            dlog("nav", "home: the path still had \(path.count) page(s) that aren't on screen; replaced")
-            path = [route]
+        if path.isEmpty { path.append(route); return }
+        pending.route = route                     // the latest tap wins
+        guard !pending.waiting else { return }
+        pending.waiting = true
+        dlog("nav", "home: \(route) opens when the page going back is gone (path \(path.count))")
+        BackWatch.whenGone { gone in
+            guard gone else {
+                // The swipe back was let go: that page stays, and it's what you see.
+                dlog("nav", "home: the page stayed; \(pending.route.map { "\($0)" } ?? "nothing") not opened")
+                pending.route = nil
+                pending.waiting = false
+                return
+            }
+            // Normally SwiftUI empties the path first (onChange below).
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { openPending(after: "SwiftUI kept the page in its path") }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { openPending(after: "still waiting after 3 s") }
+    }
+
+    private func openPending(after why: String? = nil) {
+        guard let r = pending.route else { return }
+        pending.route = nil
+        pending.waiting = false
+        if let why { dlog("nav", "home: opening \(r) (\(why))") }
+        path.append(r)
+    }
+
+    /// Logs each change of the path and opens a title that waited for a page
+    /// going back (open(_:)). A view of its own: reading the path in Home's
+    /// body made every page opening and closing redraw all of Home (28 Oct
+    /// profile: Home's library worked out again at each).
+    private struct PathWatch: View {
+        @Binding var path: [LibraryRoute]
+        let pending: PendingOpen
+        let openPending: () -> Void
+        var body: some View {
+            Color.clear
+                .frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+                .onChange(of: path) { old, new in
+                    dlog("nav", "home path \(old.count) → \(new.count): \(new)")
+                    if new.isEmpty, pending.route != nil { DispatchQueue.main.async { openPending() } }
+                }
         }
     }
+
+    /// A title tapped while a page was still going back (open(_:)).
+    final class PendingOpen {
+        var route: LibraryRoute?
+        var waiting = false
+    }
+    @State private var pending = PendingOpen()
 
     /// Settings zooms out of its button, a title page out of its poster (iOS 18+).
     @ViewBuilder
