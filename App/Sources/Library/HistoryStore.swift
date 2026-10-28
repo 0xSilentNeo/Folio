@@ -24,6 +24,41 @@ final class HistoryStore: ObservableObject {
     /// saves (every few seconds) don't re-render the library while it plays.
     private(set) var entries: [HistoryEntry] = [] {
         willSet { if deferPublishing { changedWhileDeferred = true } else { objectWillChange.send() } }
+        didSet { lookup = nil }
+    }
+
+    /// Where each entry is, by URL, id and (library files) file name, and the
+    /// Continue Watching list: built once after a change, not per question.
+    ///
+    /// 28 Oct: every lookup went through the whole history, twice for a
+    /// library file with no entry — and a title page asks hundreds of times
+    /// while it's built (its highlighted episode, each row's progress and
+    /// watched mark, Home's rows). Your phone's log, MobLand's page from tap
+    /// to built: 6 ms on 1.14, 96 ms on 1.16.1 (the highlight follows the
+    /// episode watched last since 1.15.0), ~300 ms since 1.17.0 (watched
+    /// marks); the simulator's profile had this lookup on top.
+    private struct Lookup {
+        var byKey: [String: Int] = [:]          // item.url or id → first entry with it
+        var byID: [String: Int] = [:]           // id → first entry with it
+        var byMediaName: [String: Int] = [:]    // a library file's name → first library entry with it
+        var continueWatching: [HistoryEntry]?
+    }
+    private var lookup: Lookup?
+
+    private var index: Lookup {
+        if let l = lookup { return l }
+        var l = Lookup()
+        for (i, e) in entries.enumerated() {
+            if l.byKey[e.item.url] == nil { l.byKey[e.item.url] = i }
+            if l.byKey[e.id] == nil { l.byKey[e.id] = i }
+            if l.byID[e.id] == nil { l.byID[e.id] = i }
+            if e.item.url.contains("/Documents/Media/") {
+                let name = (e.item.url as NSString).lastPathComponent
+                if l.byMediaName[name] == nil { l.byMediaName[name] = i }
+            }
+        }
+        lookup = l
+        return l
     }
     /// True while the player is open; the library catches up when it closes.
     var deferPublishing = false {
@@ -49,10 +84,13 @@ final class HistoryStore: ObservableObject {
     /// Library files are also matched by file name, so a reinstall (new
     /// container path) never makes a second card for the same file.
     var continueWatching: [HistoryEntry] {
+        if let c = index.continueWatching { return c }
         var seen = Set<String>()
-        return entries.filter { $0.canResume }
+        let c = entries.filter { $0.canResume }
             .sorted { $0.updated > $1.updated }
             .filter { seen.insert(Self.showKey($0)).inserted }
+        lookup?.continueWatching = c
+        return c
     }
 
     /// Groups history entries that belong to the same show (or the same file).
@@ -73,15 +111,17 @@ final class HistoryStore: ObservableObject {
     var recent: [HistoryEntry] { entries.sorted { $0.updated > $1.updated } }
 
     func entry(for key: String) -> HistoryEntry? {
-        entries.first { $0.id == key }
+        index.byID[key].map { entries[$0] }
     }
 
+    /// The first entry whose URL or id is `url`; for a library file, else the
+    /// first library entry with its file name (library files keep their
+    /// progress across a reinstall, which changes the container path).
     func entry(forURL url: String) -> HistoryEntry? {
-        if let e = entries.first(where: { $0.item.url == url || $0.id == url }) { return e }
-        // Library files keep their progress across a reinstall (new container path).
+        let l = index
+        if let i = l.byKey[url] { return entries[i] }
         guard url.contains("/Documents/Media/") else { return nil }
-        let name = (url as NSString).lastPathComponent
-        return entries.first { $0.item.url.contains("/Documents/Media/") && ($0.item.url as NSString).lastPathComponent == name }
+        return l.byMediaName[(url as NSString).lastPathComponent].map { entries[$0] }
     }
 
     func record(_ item: MediaItem, position: Double, duration: Double) {
