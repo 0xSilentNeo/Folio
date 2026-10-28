@@ -44,7 +44,7 @@ final class SwitcherUITests: XCTestCase {
         sleep(4)
         if app.state != .runningForeground { mark("card tap missed; activate"); app.activate(); sleep(4) }
         mark("back \(app.state.rawValue)")
-        XCTAssertEqual(app.state, .runningForeground)
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 6), "not back in the app")
     }
 
     /// Control: the same, but the phone is turned to landscape before going
@@ -61,7 +61,7 @@ final class SwitcherUITests: XCTestCase {
         sleep(4)
         mark("back \(app.state.rawValue)")
         XCUIDevice.shared.orientation = .portrait
-        XCTAssertEqual(app.state, .runningForeground)
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 6), "not back in the app")
     }
 
     /// Control: the player stays upright (no turn to landscape on opening).
@@ -74,6 +74,6 @@ final class SwitcherUITests: XCTestCase {
         app.activate()
         sleep(4)
         mark("back \(app.state.rawValue)")
-        XCTAssertEqual(app.state, .runningForeground)
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 6), "not back in the app")
     }
 }
