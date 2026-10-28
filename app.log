@@ -1,0 +1,202 @@
+10:29:43.897 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=30.13 GB
+10:29:45.906 [app] first screen 3004 ms after process start
+10:29:46.144 [hang] main thread unresponsive for 2.3 s
+10:29:46.929 [app] active
+10:30:42.802 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=29.83 GB
+10:30:45.102 [hang] main thread unresponsive for 2.3 s
+10:30:47.966 [app] first screen 7852 ms after process start
+10:30:48.908 [app] active
+10:30:58.069 [nav] home: open MobLand
+10:30:58.175 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:30:59.807 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:31:00.211 [hang] main thread unresponsive for 2.0 s
+10:31:00.516 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:31:00.617 [nav] title page move: animated
+10:31:01.576 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:31:03.318 [nav] page leaving: taps off
+10:31:03.730 [nav] home path 1 → 0: []
+10:31:03.746 [nav] title page move: animated
+10:31:04.868 [nav] page gone 1550 ms after it started going back
+10:31:04.903 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:31:11.235 [nav] home: open Classroom of the Elite
+10:31:11.284 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|classroom of the elite")]
+10:31:12.003 [nav] title page appear Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC.2.0.AVC.REMUX-FraMeSToR.mkv
+10:31:12.801 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:31:12.902 [nav] title page move: animated
+10:31:13.832 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:31:16.518 [nav] page leaving: taps off
+10:31:17.049 [nav] home path 1 → 0: []
+10:31:17.075 [nav] title page move: animated
+10:31:18.184 [nav] page gone 1666 ms after it started going back
+10:31:18.216 [nav] title page disappear Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC.2.0.AVC.REMUX-FraMeSToR.mkv
+10:31:19.010 [energy] cpu 4% (main 3%) mem 57 MB (0 MB left) thermal=nominal playing=no
+10:31:22.352 [nav] home: open Dragon Ball Super Beerus
+10:31:22.422 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|dragon ball super beerus")]
+10:31:22.538 [nav] title page appear Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.AAC2.0.H.264.MSubs-ToonsHub.mkv
+10:31:22.648 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:31:22.749 [nav] title page move: animated
+10:31:23.687 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:31:27.633 [nav] page leaving: taps off
+10:31:27.744 [nav] title page move: interactive
+10:31:27.951 [nav] home path 1 → 0: []
+10:31:27.968 [nav] title page move: animated
+10:31:29.095 [nav] page gone 1462 ms after it started going back
+10:31:29.106 [nav] title page disappear Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.AAC2.0.H.264.MSubs-ToonsHub.mkv
+10:31:33.901 [nav] home: open MobLand
+10:31:33.989 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:31:34.726 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:31:35.366 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:31:35.468 [nav] title page move: animated
+10:31:36.365 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:31:39.217 [nav] page leaving: taps off
+10:31:39.800 [nav] home path 1 → 0: []
+10:31:39.824 [nav] title page move: animated
+10:31:40.935 [nav] page gone 1718 ms after it started going back
+10:31:40.977 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:31:49.000 [energy] cpu 0% mem 56 MB (0 MB left) thermal=nominal playing=no
+10:31:50.001 [nav] home: open MobLand
+10:31:50.058 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:31:50.853 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:31:51.477 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:31:51.580 [nav] title page move: animated
+10:31:52.532 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:31:52.796 [nav] page leaving: taps off
+10:31:53.088 [nav] title page move: interactive
+10:31:53.175 [nav] home path 1 → 0: []
+10:31:53.196 [nav] title page move: animated
+10:31:54.296 [nav] page gone 1500 ms after it started going back
+10:31:54.316 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:31:57.833 [nav] home: open MobLand
+10:31:57.887 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:31:58.447 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:31:59.110 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:31:59.211 [nav] title page move: animated
+10:32:00.149 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:32:00.625 [nav] page leaving: taps off
+10:32:00.930 [nav] title page move: interactive
+10:32:01.014 [nav] home path 1 → 0: []
+10:32:01.029 [nav] title page move: animated
+10:32:02.144 [nav] page gone 1519 ms after it started going back
+10:32:02.159 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:06.617 [nav] home: open MobLand
+10:32:06.661 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:32:07.122 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:07.628 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:32:07.731 [nav] title page move: animated
+10:32:08.679 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:32:09.472 [nav] page leaving: taps off
+10:32:09.955 [nav] title page move: interactive
+10:32:10.055 [nav] home path 1 → 0: []
+10:32:10.072 [nav] title page move: animated
+10:32:11.180 [nav] page gone 1708 ms after it started going back
+10:32:11.213 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:14.400 [nav] home: open MobLand
+10:32:14.473 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:32:15.039 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:15.698 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:32:15.833 [nav] title page move: animated
+10:32:16.776 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:32:17.202 [nav] page leaving: taps off
+10:32:17.705 [nav] title page move: interactive
+10:32:17.792 [nav] home path 1 → 0: []
+10:32:17.824 [nav] title page move: animated
+10:32:18.928 [nav] page gone 1726 ms after it started going back
+10:32:18.952 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:18.962 [energy] cpu 26% (main 20%, com.apple.UIKit.in 4%, com.apple.SwiftUI. 1%) mem 58 MB (0 MB left) thermal=nominal playing=no
+10:32:22.419 [nav] home: open MobLand
+10:32:22.484 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:32:23.191 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:23.900 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:32:24.005 [nav] title page move: animated
+10:32:25.030 [nav] page leaving: taps off
+10:32:25.599 [nav] home path 1 → 0: []
+10:32:25.623 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:28.100 [nav] home: open MobLand
+10:32:28.146 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:32:28.834 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:29.545 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:32:29.652 [nav] title page move: animated
+10:32:30.661 [nav] page leaving: taps off
+10:32:31.167 [nav] home path 1 → 0: []
+10:32:31.187 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:34.568 [nav] home: open MobLand
+10:32:34.614 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:32:35.246 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:35.876 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:32:35.981 [nav] title page move: animated
+10:32:36.947 [nav] page leaving: taps off
+10:32:37.424 [nav] home path 1 → 0: []
+10:32:37.446 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:40.449 [nav] home: open MobLand
+10:32:40.487 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:32:40.947 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:41.411 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:32:41.433 [nav] page opening: moved by your finger 267 ms in; no taps on it while you do
+10:32:41.513 [nav] title page move: interactive
+10:32:41.545 [nav] page going back before it was open (379 ms in): no taps on it until it's gone
+10:32:41.914 [nav] title page move: animated
+10:32:43.013 [nav] page leaving: taps off
+10:32:43.014 [nav] page gone 1469 ms after it started going back
+10:32:43.426 [nav] home path 1 → 0: []
+10:32:43.446 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:46.050 [nav] home: open MobLand
+10:32:46.096 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:32:46.658 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:47.494 [hang] main thread unresponsive for 1.5 s
+10:32:47.497 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:32:47.609 [nav] title page move: animated
+10:32:48.100 [nav] title page: episode row → play MobLand.S01E01.Stick.or.Twist.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:48.189 [player] play requested: 10 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/F5C13540-3085-4CF9-A2AD-76FBB3A9C49F/data/Containers/Data/Application/2BF726AB-FA66-453B-8E14-20925EA1A8A3/Documents/Media/Mobland s01/MobLand.S01E01.Stick.or.Twist.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:49.803 [hang] main thread unresponsive for 2.0 s
+10:32:50.939 [player] start renderer=gl
+10:32:50.950 [player] mpv options applied renderer=gl hwdec=auto anime4k=off/fast picture=efficient
+10:32:51.145 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/F5C13540-3085-4CF9-A2AD-76FBB3A9C49F/data/Containers/Data/Application/2BF726AB-FA66-453B-8E14-20925EA1A8A3/Documents/Media/Mobland s01/MobLand.S01E01.Stick.or.Twist.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv source=local opts=[] -> 0
+10:32:51.188 [energy] cpu 33% (main 18%, other 13%, log 2%) mem 83 MB (0 MB left) thermal=nominal playing=yes renderer=gl picture=efficient
+10:32:51.223 [nav] page leaving: taps off
+10:32:51.274 [ui] player toolbar: its buttons didn't all fit; now 202 pt wide
+10:32:51.282 [player] decoder: software
+10:32:51.746 [nav] home path 1 → 0: []
+10:32:52.251 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:52.490 [perf] panel tracks prebuilt in 129 ms
+10:32:52.494 [player] file loaded in 1359 ms
+10:32:54.279 [perf] panel settings prebuilt in 761 ms
+10:32:54.369 [perf] panel nowPlaying prebuilt in 85 ms
+10:32:54.385 [player] decoder: software
+10:32:55.390 [app] resign active
+10:32:55.391 [energy] cpu 54% (other 44%, main 10%) mem 202 MB (0 MB left) thermal=nominal playing=yes renderer=gl picture=efficient decoder=no · going to background
+10:32:56.224 [player] background playback: video off (15 s away)
+10:32:56.734 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/F5C13540-3085-4CF9-A2AD-76FBB3A9C49F/data/Containers/Data/Application/2BF726AB-FA66-453B-8E14-20925EA1A8A3/Documents/Media/Mobland s01/MobLand.S01E02.Jigsaw.Puzzle.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv source=local opts=[] -> 0
+10:32:56.734 [player] decoder: software
+10:32:56.768 [skip] anime lookup MobLand s1e1: 0 segment(s)
+10:32:56.818 [player/error] local file exists=true readable=true size=27550 protection=? mediaDirFiles=5 path=/Users/runner/Library/Developer/CoreSimulator/Devices/F5C13540-3085-4CF9-A2AD-76FBB3A9C49F/data/Containers/Data/Application/2BF726AB-FA66-453B-8E14-20925EA1A8A3/Documents/Media/Mobland s01/MobLand.S01E02.Jigsaw.Puzzle.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:32:56.818 [player/error] Playback failed: no audio or video data played
+10:33:00.884 [app] active
+10:33:06.917 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/F5C13540-3085-4CF9-A2AD-76FBB3A9C49F/data/Containers/Data/Application/2BF726AB-FA66-453B-8E14-20925EA1A8A3/Documents/Media/Mobland s01/MobLand.S01E02.Jigsaw.Puzzle.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv source=local opts=[] -> 0
+10:33:06.936 [player] file loaded in 19 ms
+10:33:06.998 [skip] anime lookup MobLand s1e2: 0 segment(s)
+10:33:07.165 [player] decoder: software
+10:33:08.652 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/F5C13540-3085-4CF9-A2AD-76FBB3A9C49F/data/Containers/Data/Application/2BF726AB-FA66-453B-8E14-20925EA1A8A3/Documents/Media/Mobland s01/MobLand.S01E03.Plan.B.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv source=local opts=[] -> 0
+10:33:09.822 [player] decoder: software
+10:33:09.822 [player] file loaded in 1171 ms
+10:33:09.856 [player] decoder: software
+10:33:09.908 [skip] anime lookup MobLand s1e3: 0 segment(s)
+10:33:18.770 [player] close at 0:39
+10:33:18.788 [energy] cpu 14% (main 12%, other 1%) mem 120 MB (0 MB left) thermal=nominal playing=yes renderer=gl picture=efficient decoder=no · player closing
+10:33:21.027 [nav] after player closed: scene orientation=1 device=1 bounds=(440.0, 956.0)
+10:33:21.038 [nav]   window UIWindow level=0.0 hidden=false alpha=1.0 key=•••• touch=true frame=(0.0, 0.0, 440.0, 956.0) root=UIHostingController<ModifiedContent<LazyView<ModifiedContent<RootView, _EnvironmentKeyWritingModifier<Optional<AnyShapeStyle>>>>, RootModifier>> presented=nil
+10:33:21.038 [nav]   window UITextEffectsWindow level=10.0 hidden=false alpha=1.0 key=•••• touch=true frame=(0.0, 0.0, 440.0, 956.0) root=UITrackingElementWindowController presented=nil
+10:33:23.857 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.settings]
+10:33:26.083 [nav] page leaving: taps off
+10:33:26.388 [nav] home path 1 → 0: []
+10:33:27.529 [nav] page gone 1445 ms after it started going back
+10:33:30.938 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.settings]
+10:33:31.109 [energy] cpu 66% (main 65%, other 1%, com.apple.UIKit.in 0%) mem 112 MB (0 MB left) thermal=nominal playing=no
+10:33:33.133 [nav] page leaving: taps off
+10:33:33.434 [nav] home path 1 → 0: []
+10:33:34.579 [nav] page gone 1446 ms after it started going back
+10:33:40.182 [hang] main thread unresponsive for 2.8 s
+10:33:46.126 [hang] main thread unresponsive for 3.2 s
+10:33:46.766 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.settings]
+10:33:48.916 [nav] page leaving: taps off
+10:33:49.215 [nav] home path 1 → 0: []
+10:33:50.360 [nav] page gone 1444 ms after it started going back
