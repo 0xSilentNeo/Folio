@@ -1,1 +1,1 @@
-{"refs": ["v1.16.1", "v1.17.4", "874edebc6ff2cd0b122bb3b81b071414404fc0ba", "1d01e38e154f797b0f6027c0e75764b043ed0ee7"], "only": "GlassPlayerUITests/OpenCostUITests/test60OpenClose", "title_style": "full", "note": "run 3: history like a used phone, no metadata lookups; 1.16.1, 1.17.4, history index, + no state flip + pending open"}
+{"refs": ["v1.17.4", "1d90481e036b9eb7b7bfa6fbde89a3dca9d943e9"], "only": "GlassPlayerUITests/OpenCostUITests/test60OpenClose", "title_style": "full", "note": "run 4: 1.17.4 again (its profiler didn't attach) and every fix so far"}

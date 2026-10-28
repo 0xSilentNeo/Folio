@@ -170,6 +170,12 @@ jobs:
           if [ -n "$PID" ]; then
             xcrun xctrace record --template 'Time Profiler' --device "$UDID" --attach "$PID" --output lab/tp.trace --time-limit 900s > lab/xctrace.log 2>&1 &
             XT=$!
+            sleep 4
+            if ! kill -0 $XT 2>/dev/null; then
+              echo "attach by pid failed ($(tail -1 lab/xctrace.log)); by name"
+              xcrun xctrace record --template 'Time Profiler' --device "$UDID" --attach GlassPlayer --output lab/tp.trace --time-limit 900s > lab/xctrace.log 2>&1 &
+              XT=$!
+            fi
           fi
           wait $TEST || echo "::warning::UI test failed (see test.log)"
           grep -E "OPENCOST|error:|failed|passed" lab/test.log | head -80 || true
