@@ -38,10 +38,17 @@ final class LingerUITests: XCTestCase {
         return s
     }
 
-    func test51LingerLab() throws {
+    func test51LingerLab() throws { try lingerLab(list: false) }
+
+    /// The same on Home's list, where a page zooms out of its whole row
+    /// (1.17.4), like the library you use.
+    func test53LingerLabList() throws { try lingerLab(list: true) }
+
+    private func lingerLab(list: Bool) throws {
         Quiescence.skipWaiting()
         let app = XCUIApplication()
         app.launchArguments = ["-uiTestLibrary", "-uiTestTwoTitles", "-heroView", "details", "-lingerLab"]
+            + (list ? ["-libraryView", "details", "-tileArtwork", "poster", "-titlePageStyle", "files"] : [])
         app.launch()
         XCUIDevice.shared.orientation = .portrait
         let showLabel = app.staticTexts["Lab Show"].firstMatch, otherLabel = app.staticTexts["Lab Other"].firstMatch
@@ -147,5 +154,44 @@ final class LingerUITests: XCTestCase {
         print("LINGER played: \(played.count) \(played)")
         print("LINGER taps that didn't do what they should: \(dropped.count) \(dropped)")
         XCTAssertEqual(played.count, 0, "something played: \(played)")
+    }
+
+    /// 28 Oct report: "the opening and closing of the folder is not smooth".
+    /// The same moves with each way a page can open from a Home list row
+    /// (ListTransition): thumb (until 1.17.3), row, push. For the screen
+    /// recording: open, ‹ back; open, edge swipe back; open and swipe back
+    /// 0.6 s in, before it's open (what your recording does).
+    func test52ListTransitions() throws {
+        Quiescence.skipWaiting()
+        for style in ["thumb", "row", "push"] {
+            let app = XCUIApplication()
+            app.launchArguments = ["-uiTestLibrary", "-uiTestTwoTitles", "-libraryView", "details", "-tileArtwork", "poster",
+                                   "-titlePageStyle", "files", "-appearance", "dark", "-listTransition", style]
+            app.launch()
+            XCUIDevice.shared.orientation = .portrait
+            let label = app.staticTexts["Lab Show"].firstMatch
+            XCTAssertTrue(label.waitForExistence(timeout: 25), "library row not found (\(style))")
+            sleep(2)
+            let H = app.frame.height, W = app.frame.width
+            let row = CGPoint(x: label.frame.midX, y: label.frame.midY)
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            func mark(_ what: String) { print("LISTLAB \(style) \(what) \(fmt.string(from: Date()))") }
+            let edge = swipe(CGPoint(x: 4, y: H * 0.55), CGPoint(x: W * 0.85, y: H * 0.55), at: 0, over: 0.25)
+            for round in 0..<2 {
+                mark("open, then ‹ (\(round))")
+                _ = synth(tap(row, at: 0)); sleep(2)
+                if app.buttons["Back"].exists { _ = synth(tap(CGPoint(x: 38, y: 84), at: 0)) }
+                sleep(2)
+                mark("open, then edge swipe (\(round))")
+                _ = synth(tap(row, at: 0)); sleep(2)
+                _ = synth(edge); sleep(3)
+                mark("open, edge swipe 0.6 s in (\(round))")
+                _ = synth(tap(row, at: 0)); usleep(600_000)
+                _ = synth(edge); sleep(3)
+                for _ in 0..<2 where app.buttons["Back"].exists { origin.withOffset(CGVector(dx: 38, dy: 84)).tap(); sleep(2) }
+            }
+            mark("done")
+            app.terminate()
+        }
     }
 }

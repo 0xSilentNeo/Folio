@@ -457,6 +457,8 @@ struct LibraryRow: View {
     var poster = false
     /// The title page zooms out of this row's picture.
     var zoom: ZoomSource? = nil
+    /// …or out of the whole row (ListTransition.row).
+    var zoomWholeRow = false
     /// The file's size at the bottom right, level with the picture's bottom edge.
     var showSize = false
     /// Watched (for a show's row on Home: every episode): an eye at the end.
@@ -515,6 +517,7 @@ struct LibraryRow: View {
         }
         .padding(detail ? 8 : 6)
         .background(rowBackground)
+        .zoomSource(zoomWholeRow ? zoom : nil, cornerRadius: detail ? 16 : 12)
         .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide) }
     }
 
@@ -542,7 +545,7 @@ struct LibraryRow: View {
             if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress).frame(width: thumbW, height: thumbH) }
         }
         .clipShape(RoundedRectangle(cornerRadius: detail ? 12 : 8, style: .continuous))
-        .zoomSource(zoom, cornerRadius: detail ? 12 : 8)
+        .zoomSource(zoomWholeRow ? nil : zoom, cornerRadius: detail ? 12 : 8)
     }
 }
 

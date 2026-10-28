@@ -205,6 +205,22 @@ struct Wordmark: View {
 
 // MARK: - Zoom transitions (iOS 18+)
 
+/// How a page opens from a row of a list on Home (28 Oct: "the opening and
+/// closing of the folder is not smooth"). Your recording: from a list row
+/// the page zooms out of the row's small poster, and going back it shrinks to
+/// a card mid-screen, turns into a big copy of that poster, then into the
+/// row — the zoom morphs the page into its source's picture.
+/// - thumb: the zoom from the row's picture (until 1.17.3)
+/// - row: the zoom from the whole row (1.17.4: your pick from the lab's
+///   recording of all three)
+/// - push: the usual slide-in push, as in Infuse and iOS's own lists
+enum ListTransition: String {
+    case thumb, row, push
+    static var current: ListTransition {
+        ListTransition(rawValue: UserDefaults.standard.string(forKey: SettingsKey.listTransition) ?? "") ?? .row
+    }
+}
+
 /// A poster that a page zooms out of: the id and the namespace both views share.
 struct ZoomSource {
     let id: AnyHashable
@@ -225,8 +241,12 @@ extension View {
 
     /// The pushed page grows out of its source and shrinks back into it on
     /// Back (SwiftUI's zoom navigation transition).
+    ///
+    /// `inPageBar`: pushed the usual way (`zoom: false`) from a page that
+    /// hides the system bar (Home), the page still draws its own bar, so the
+    /// system bar never shows or hides alongside the push.
     @ViewBuilder
-    func zoomDestination(_ id: some Hashable, in ns: Namespace.ID, zoom: Bool = true) -> some View {
+    func zoomDestination(_ id: some Hashable, in ns: Namespace.ID, zoom: Bool = true, inPageBar: Bool = false) -> some View {
         // Same AnyHashable wrapping as ZoomSource, so the ids always match.
         // zoom: false — pushed the usual way, from a page that shows the system
         // bar (a zoom between pages that show and hide the bar is what iOS
@@ -234,7 +254,7 @@ extension View {
         if #available(iOS 18.0, *), zoom {
             navigationTransition(.zoom(sourceID: AnyHashable(id), in: ns)).ignoresTapsWhileLeaving().environment(\.zoomsFromTile, true)
         } else {
-            self.ignoresTapsWhileLeaving().environment(\.zoomsFromTile, false)
+            self.ignoresTapsWhileLeaving().environment(\.zoomsFromTile, inPageBar)
         }
     }
 

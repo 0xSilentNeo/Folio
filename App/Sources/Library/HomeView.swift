@@ -46,6 +46,32 @@ struct HomeView: View {
         }
     }
 
+    /// Pages open from list rows with the usual push (ListTransition.push).
+    /// Those pages show the system bar: with it hidden, UIKit's swipe back
+    /// doesn't start (lab, 28 Oct: an edge swipe on a pushed page with its
+    /// own bar did nothing).
+    private var listPushes: Bool {
+        (LibraryViewMode(rawValue: libraryView) ?? .grid) != .grid && ListTransition.current == .push
+    }
+
+    /// Opens a page from Home. Home's own buttons are only there to tap when
+    /// Home is what you see, so the page goes straight on top of Home: any
+    /// entry already in the path is one that isn't on the screen.
+    ///
+    /// 28 Oct log: a page you go back from before it has finished opening
+    /// stays in SwiftUI's path when you open the next title before its
+    /// going-back has ended ("home path 1 → 2: [mobland, classroom]", later
+    /// "[mobland, mobland]"). SwiftUI then kept building that MobLand page
+    /// out of sight at every open ("title page disappear MobLand" each time).
+    private func open(_ route: LibraryRoute) {
+        if path.isEmpty {
+            path.append(route)
+        } else {
+            dlog("nav", "home: the path still had \(path.count) page(s) that aren't on screen; replaced")
+            path = [route]
+        }
+    }
+
     /// Settings zooms out of its button, a title page out of its poster (iOS 18+).
     @ViewBuilder
     private func destination(_ route: LibraryRoute) -> some View {
@@ -53,9 +79,9 @@ struct HomeView: View {
         case .settings:
             SettingsView().zoomDestination("settings", in: zoomNS)
         case .group(let id):
-            LibraryRoute.destination(route).zoomDestination(id, in: zoomNS)
+            LibraryRoute.destination(route).zoomDestination(id, in: zoomNS, zoom: !listPushes)
         case .folder(let path):
-            LibraryRoute.destination(route).zoomDestination("d|" + path, in: zoomNS)
+            LibraryRoute.destination(route).zoomDestination("d|" + path, in: zoomNS, zoom: !listPushes)
         default:
             LibraryRoute.destination(route)
         }
@@ -127,14 +153,14 @@ struct HomeView: View {
         // A button that pushes, not a NavigationLink: Home is a List, where a
         // NavigationLink turns its whole row into a link.
         if #available(iOS 18.0, *) {
-            Button { path.append(LibraryRoute.settings) } label: {
+            Button { open(.settings) } label: {
                 Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
             .buttonStyle(PressStyle())
             .accessibilityLabel("Settings")
             .matchedTransitionSource(id: "settings", in: zoomNS)
         } else {
-            Button { path.append(LibraryRoute.settings) } label: {
+            Button { open(.settings) } label: {
                 Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
             .buttonStyle(PressStyle())
@@ -259,15 +285,17 @@ struct HomeView: View {
             library(width: width, margin: margin).homeRow()
         } else {
             let posters = tileArtwork == "poster"
+            let style = ListTransition.current
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
-                        folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: ZoomSource(g.id, zoomNS)) }
+                        folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: style == .push ? nil : ZoomSource(g.id, zoomNS), zoomWholeRow: style == .row) }
                     } else {
                         groupLink(g) {
                             LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
                                        fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                       poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil,
+                                       poster: posters, zoom: opensPage(g) && style != .push ? ZoomSource(g.id, zoomNS) : nil,
+                                       zoomWholeRow: style == .row,
                                        watched: allWatched(g))
                         }
                     }
@@ -308,7 +336,7 @@ struct HomeView: View {
     // Pushed through the path, not NavigationLink: inside a List a
     // NavigationLink row gets a disclosure chevron and the list's highlight.
     private func folderLink<L: View>(_ g: LibraryGroup, _ folder: URL, @ViewBuilder label: () -> L) -> some View {
-        Button { if !TouchTracker.wasSwipe("home: folder") { path.append(LibraryRoute.folder(folder.path)) } } label: { label() }
+        Button { if !TouchTracker.wasSwipe("home: folder") { open(.folder(folder.path)) } } label: { label() }
             .buttonStyle(PressStyle(scale: 0.97))
             .accessibilityLabel("\(g.title), folder, \(g.count) items, \(g.size.byteString)")
             .contextMenu {
@@ -323,6 +351,12 @@ struct HomeView: View {
 
     private func opensPage(_ g: LibraryGroup) -> Bool { openTitlePage || g.isSeries }
 
+    /// The episodes a title page shows first: those of the season it opens on.
+    private func firstEpisodes(_ g: LibraryGroup) -> [URL] {
+        let season = TitleParser.parse(g.nextUp.lastPathComponent).season
+        return Array(g.files.filter { season == nil || TitleParser.parse($0.lastPathComponent).season == season }.prefix(8))
+    }
+
     private func allWatched(_ g: LibraryGroup) -> Bool { !g.files.isEmpty && g.files.allSatisfy { history.isWatched($0) } }
 
     @ViewBuilder
@@ -331,12 +365,13 @@ struct HomeView: View {
             if opensPage(g) {
                 // A swipe across a tile (no swipe actions on Home any more)
                 // is not a tap: it neither opens the title nor plays it.
-                Button { if !TouchTracker.wasSwipe("home: \(g.title)") { dlog("nav", "home: open \(g.title)"); path.append(LibraryRoute.group(g.id)) } } label: { label() }
+                Button { if !TouchTracker.wasSwipe("home: \(g.title)") { dlog("nav", "home: open \(g.title)"); open(.group(g.id)) } } label: { label() }
+                    .buttonStyle(PressStyle(scale: 0.97, onPress: { ThumbLoader.prefetch(firstEpisodes(g)) }))
             } else {
                 Button { if !TouchTracker.wasSwipe("home: \(g.title)") { playLocal(g.nextUp) } } label: { label() }
+                    .buttonStyle(PressStyle(scale: 0.97))
             }
         }
-        .buttonStyle(PressStyle(scale: 0.97))
         .contextMenu {
             Button { playLocal(g.nextUp) } label: { Label(g.isSeries ? "Play next episode" : "Play", systemImage: "play") }
             if allWatched(g) {
@@ -765,6 +800,7 @@ struct FolderRow: View {
     let group: LibraryGroup
     let detail: Bool
     var zoom: ZoomSource? = nil
+    var zoomWholeRow = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -772,7 +808,7 @@ struct FolderRow: View {
                 .padding(4)
                 .frame(width: detail ? 150 : 78, height: detail ? 84 : 44)
                 .background(Theme.fill, in: RoundedRectangle(cornerRadius: detail ? 12 : 8, style: .continuous))
-                .zoomSource(zoom, cornerRadius: detail ? 12 : 8)
+                .zoomSource(zoomWholeRow ? nil : zoom, cornerRadius: detail ? 12 : 8)
             VStack(alignment: .leading, spacing: 3) {
                 Text(group.title).font(.subheadline.weight(.semibold)).lineLimit(1)
                 Text("Folder · \(group.count) item\(group.count == 1 ? "" : "s")").font(.caption).foregroundStyle(.secondary)
@@ -782,6 +818,7 @@ struct FolderRow: View {
         }
         .padding(detail ? 8 : 6)
         .background(RoundedRectangle(cornerRadius: detail ? 16 : 12, style: .continuous).fill(Theme.card))
+        .zoomSource(zoomWholeRow ? zoom : nil, cornerRadius: detail ? 16 : 12)
     }
 }
 

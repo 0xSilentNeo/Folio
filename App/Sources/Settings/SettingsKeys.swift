@@ -32,6 +32,7 @@ enum SettingsKey {
     static let episodeTitleLanguage = "episodeTitleLanguage"   // english | original
     static let playlistNames = "playlistNames"          // "episode" | "filename"
     static let titlePageStyle = "titlePageStyle"        // full | files (title, then its files only)
+    static let listTransition = "listTransition"        // thumb | row | push: how a page opens from a Home list row
     static let prepareNext = "prepareNext"              // addon seasons: find and load the next episode before it's needed
 
     // Downloads (WebDAV)
