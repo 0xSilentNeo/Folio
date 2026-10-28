@@ -1,0 +1,997 @@
+trace start 2026-10-28T10:02:26.590000+00:00
+39 marks
+30755 main-thread samples
+
+== each step: main thread busy in the 1.2 s after it was sent
+A0 open MobLand                                  386 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 357, main 357,  119
+A0 swipe back (page open)                        270 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 269, main 269,  91
+A1 open MobLand                                  353 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 336, main 336,  122
+A1 swipe back (page open)                        246 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 246, main 246,  83
+A2 open MobLand                                  352 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 340, main 340,  110
+A2 swipe back (page open)                        271 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 269, main 269,  95
+A3 open MobLand                                  547 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 526, main 526,  198
+A3 swipe back (page open)                        383 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 380, main 380,  160
+B0 open MobLand                                  455 ms busy of   918 ms   top ours: static GlassPlayerApp.$main 421, main 421,  168
+B0 swipe back (0.6 s in)                         315 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 305, main 305,  43
+B1 open MobLand                                  484 ms busy of   904 ms   top ours: static GlassPlayerApp.$main 456, main 456,  172
+B1 swipe back (0.6 s in)                         317 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 314, main 314,  39
+B2 open MobLand                                  461 ms busy of   908 ms   top ours: static GlassPlayerApp.$main 444, main 444,  166
+B2 swipe back (0.6 s in)                         345 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 339, main 339, TitleHeroView.siblings.getter 36
+B3 open MobLand                                  436 ms busy of   886 ms   top ours: static GlassPlayerApp.$main 415, main 415,  151
+B3 swipe back (0.6 s in)                         335 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 331, main 331, TitleHeroView.siblings.getter 30
+C0 open MobLand                                  440 ms busy of  1184 ms   top ours: static GlassPlayerApp.$main 419, main 419,  144
+C0 swipe back MobLand                            211 ms busy of   848 ms   top ours: static GlassPlayerApp.$main 211, main 211,  29
+C0 open Classroom                                645 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 639, main 639,  211
+C0 swipe back Classroom                          271 ms busy of   907 ms   top ours: static GlassPlayerApp.$main 270, main 270, specialized _VariadicView.Tree.init 49
+C0 open Dragon Ball                              309 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 307, main 307,  85
+C0 swipe back Dragon Ball                        257 ms busy of   861 ms   top ours: static GlassPlayerApp.$main 257, main 257,  88
+C0 open MobLand                                  713 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 680, main 680,  245
+C0 swipe back MobLand                            338 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 336, main 336, specialized _VariadicView.Tree.init 39
+C1 open MobLand                                  497 ms busy of  1194 ms   top ours: static GlassPlayerApp.$main 474, main 474,  152
+C1 swipe back MobLand                            307 ms busy of   866 ms   top ours: static GlassPlayerApp.$main 306, main 306,  48
+C1 open Classroom                                761 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 754, main 754,  251
+C1 swipe back Classroom                          334 ms busy of   904 ms   top ours: static GlassPlayerApp.$main 331, main 331,  56
+C1 open Dragon Ball                              351 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 350, main 350,  74
+C1 swipe back Dragon Ball                        338 ms busy of   928 ms   top ours: static GlassPlayerApp.$main 337, main 337,  107
+C1 open MobLand                                  730 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 687, main 687,  268
+C1 swipe back MobLand                            335 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 334, main 334, TitleHeroView.siblings.getter 36
+D0 open Settings                                 703 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 669, main 669,  362
+D0 swipe back from Settings                      223 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 223, main 223,  61
+D1 open Settings                                 343 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 338, main 338,  159
+D1 swipe back from Settings                      212 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 212, main 212,  63
+D2 open Settings                                 384 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 380, main 380,  163
+D2 swipe back from Settings                      257 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 257, main 257,  80
+done                                               1 ms busy of  1200 ms   top ours: static GlassPlayerApp.$main 1, main 1
+
+== A: open MobLand — 4 times, main thread busy 410 ms each on average (1.2 s window)
+   our functions (inclusive, ms per time):
+       389.8  static GlassPlayerApp.$main
+       389.8  main
+       137.2  
+       104.5  thunk for @escaping @callee_guaranteed 
+        90.5  specialized _VariadicView.Tree.init
+        86.0  specialized closure #1 in VStack.init
+        86.0  specialized VStack.init
+        81.8  TitleHeroView.siblings.getter
+        80.5  closure #1 in TitleHeroView.body.getter
+        77.8  static LibraryGroup.nextUp
+        77.8  closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        77.8  closure #1 in closure #1 in TitleHeroView.body.getter
+        77.8  specialized ScrollView.init
+        77.5  closure #1 in closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        77.2  HistoryStore.entry
+        77.0  TitleHeroView.file.getter
+        71.8  specialized _ArrayProtocol.filter
+        71.5  closure #2 in TitleHeroView.siblings.getter
+        59.5  closure #1 in TitleHeroView.episodes.getter
+        59.5  TitleHeroView.episodes.getter
+        58.0  specialized Sequence.compactMap
+        57.8  closure #1 in static LibraryGroup.nextUp
+        34.2  closure #1 in closure #3 in TiltPlayButton.face.getter
+        30.2  specialized closure #1 in HStack.init
+        30.2  specialized HStack.init
+        29.8  TitleHeroView.seasons.getter
+        27.8  TitleHeroView.shownEpisodes.getter
+        26.2  specialized Dictionary.subscript.getter
+        18.8  closure #3 in static LibraryGroup.nextUp
+        18.8  specialized Sequence.first
+        14.5  closure #1 in closure #1 in TitleHeroView.episodes.getter
+        13.2  specialized MutableCollection._insertionSort
+        13.2  specialized UnsafeMutableBufferPointer._stableSortImpl
+        13.2  specialized closure #1 in MutableCollection.sort
+        13.2  specialized closure #1 in ContiguousArray.withContiguousMutableStorageIfAvailable
+        13.2  specialized ContiguousArray.withUnsafeMutableBufferPointer
+        13.2  specialized ContiguousArray.withContiguousMutableStorageIfAvailable
+        13.2  specialized protocol witness for MutableCollection.withContiguousMutableStorageIfAvailable
+        13.2  specialized MutableCollection.sort
+        13.2  specialized Sequence.sorted
+        10.2  specialized Group.init
+         9.5  TitleHeroView.body.getter
+         9.0  closure #1 in TitleHeroView.moreButton.getter
+         9.0  TitleHeroView.moreButton.getter
+         9.0  closure #2 in TitleHeroView.body.getter
+         9.0  specialized View.pageChrome
+         9.0  specialized View.pageButtons
+         8.2  static LibraryOrganizer.groups
+         7.2  static TitleParser.parse
+         7.0  specialized static TitleParser.parse
+         6.2  closure #1 in closure #1 in closure #1 in HomeView.body.getter
+         6.2  closure #1 in closure #1 in HomeView.body.getter
+         5.2  HomeView.groups.getter
+         5.2  closure #1 in TitleHeroView.titleBlock.getter
+         5.2  TitleHeroView.titleBlock.getter
+         5.2  closure #1 in closure #2 in TitleHeroView.backdrop
+         5.2  closure #2 in TitleHeroView.backdrop
+         5.2  closure #1 in HeroHeader.body.getter
+         5.2  HeroHeader.body.getter
+         5.2  protocol witness for View.body.getter in conformance HeroHeader
+   system functions (inclusive, ms per time):
+       390.0  __CFRunLoopRun
+       389.8  _CFRunLoopRunSpecificWithOptions
+       389.8  GSEventRunModal
+       389.8  0x1c5535e2f
+       389.8  0x1c9d8b907
+       389.8  0x1c9d8b783
+       389.8  0x1c9b0974f
+       389.8  start_sim
+       389.5  start
+       323.5  0x25a82e363
+       322.0  0x1c3d97847
+       322.0  0x1c47ef28f
+       320.0  __CFRunLoopDoSource1
+       319.0  __CFMachPortPerform
+       319.0  __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE1_PERFORM_FUNCTION__
+       242.8  0x1c9546133
+       171.2  0x1c705bb03
+       171.0  0x1c50d2beb
+       171.0  0x1c50d26fb
+       162.2  0x1c709872b
+       154.8  0x1c7a3c55b
+       154.2  0x1c71adc73
+       154.2  0x1c71ad9ab
+       154.2  0x1c71ad193
+       153.8  0x1c71ac28b
+       153.5  0x1c9555157
+       153.2  0x1c71ac827
+       151.2  0x1c4ea8bff
+   where the time was spent (leaf, ms per time):
+        14.8  _CFStringGetCStringPtrInternal  [CoreFoundation]
+        12.5  mach_o::UnsafeHeader::forEachLoadCommand  [dyld_sim]
+         9.2  objc_msgSend  [libobjcMsgSend.dylib]
+         7.8  Substring.subscript.getter  [libswiftCore.dylib]
+         7.2  swift::MetadataCacheKey::operator==  [libswiftCore.dylib]
+         7.0  Substring.index  [libswiftCore.dylib]
+         5.0  mach_msg2_trap  [libsystem_kernel.dylib]
+         4.0  specialized BidirectionalCollection._range  [Foundation]
+         3.8  specialized closure #1 in Unicode._InternalNFC.Iterator.next  [libswiftCore.dylib]
+         3.8  swift_conformsToProtocolMaybeInstantiateSuperclasses  [libswiftCore.dylib]
+         3.5  pthread_getspecific  [libsystem_pthread.dylib]
+         3.0  Unicode._NFDNormalizer._resume  [libswiftCore.dylib]
+
+== A: swipe back (page open) — 4 times, main thread busy 292 ms each on average (1.2 s window)
+   our functions (inclusive, ms per time):
+       291.0  static GlassPlayerApp.$main
+       291.0  main
+       107.2  
+       101.8  thunk for @escaping @callee_guaranteed 
+        29.0  specialized _VariadicView.Tree.init
+        22.2  TitleHeroView.siblings.getter
+        21.8  specialized closure #1 in VStack.init
+        21.8  specialized VStack.init
+        21.2  HistoryStore.entry
+        20.8  static LibraryGroup.nextUp
+        19.8  closure #1 in closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        19.8  closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        19.8  closure #1 in closure #1 in TitleHeroView.body.getter
+        19.8  specialized ScrollView.init
+        19.8  closure #1 in TitleHeroView.body.getter
+        19.5  closure #2 in TitleHeroView.siblings.getter
+        19.5  specialized _ArrayProtocol.filter
+        19.2  TitleHeroView.file.getter
+        15.0  specialized Sequence.compactMap
+        15.0  closure #1 in TitleHeroView.episodes.getter
+        15.0  TitleHeroView.episodes.getter
+        14.5  closure #1 in static LibraryGroup.nextUp
+        14.0  specialized closure #1 in HStack.init
+        14.0  specialized HStack.init
+        12.0  specialized Dictionary.subscript.getter
+        11.0  closure #1 in closure #1 in closure #1 in HomeView.body.getter
+        11.0  closure #1 in closure #1 in HomeView.body.getter
+        10.8  specialized Group.init
+        10.2  static LibraryOrganizer.groups
+        10.2  HomeView.groups.getter
+         7.2  TitleHeroView.seasons.getter
+         7.2  TitleHeroView.shownEpisodes.getter
+         6.0  specialized Sequence.first
+         6.0  specialized MutableCollection._insertionSort
+         6.0  specialized UnsafeMutableBufferPointer._stableSortImpl
+         6.0  specialized closure #1 in MutableCollection.sort
+         6.0  specialized closure #1 in ContiguousArray.withContiguousMutableStorageIfAvailable
+         6.0  specialized ContiguousArray.withUnsafeMutableBufferPointer
+         6.0  specialized ContiguousArray.withContiguousMutableStorageIfAvailable
+         6.0  specialized protocol witness for MutableCollection.withContiguousMutableStorageIfAvailable
+         6.0  specialized MutableCollection.sort
+         6.0  specialized Sequence.sorted
+         6.0  closure #1 in closure #1 in closure #1 in closure #1 in HomeView.body.getter
+         5.8  closure #3 in static LibraryGroup.nextUp
+         5.8  closure #1 in HomeView.libraryHeader
+         5.8  HomeView.libraryHeader
+         5.0  HomeView.libraryRows
+         4.8  static TitleParser.parse
+         4.2  TitleHeroView.body.getter
+         4.2  specialized static TitleParser.parse
+         4.0  TitleHeroView.moreButton.getter
+         4.0  closure #2 in TitleHeroView.body.getter
+         4.0  specialized View.pageChrome
+         4.0  specialized View.pageButtons
+         4.0  closure #1 in closure #1 in TitleHeroView.episodes.getter
+         4.0  specialized Collection.map
+         3.8  closure #1 in TitleHeroView.moreButton.getter
+         3.8  closure #1 in HomeView.libraryRows
+         3.5  closure #2 in static LibraryOrganizer.groups
+         3.5  specialized HomeView.groupLink
+   system functions (inclusive, ms per time):
+       291.0  _CFRunLoopRunSpecificWithOptions
+       291.0  GSEventRunModal
+       291.0  0x1c5535e2f
+       291.0  0x1c9d8b907
+       291.0  0x1c9d8b783
+       291.0  0x1c9b0974f
+       291.0  start_sim
+       291.0  start
+       290.8  __CFRunLoopRun
+       233.8  0x25a82e363
+       232.0  0x1c47ef28f
+       231.8  0x1c3d97847
+       226.5  __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE1_PERFORM_FUNCTION__
+       226.5  __CFRunLoopDoSource1
+       226.2  __CFMachPortPerform
+       137.8  0x1c47eee27
+       137.2  CA::Transaction::flush_as_runloop_observer
+       137.0  0x1c48e1883
+       136.8  CA::Transaction::commit
+       136.8  CA::Transaction::flush
+       135.0  CA::Context::commit_transaction
+       112.0  CA::Layer::layout_and_display_if_needed
+       103.5  CA::Layer::update_if_needed_
+       103.0  CA::Layer::perform_update_
+       102.0  -[CALayer layoutSublayers]
+        99.0  0x1c53de767
+        99.0  0x1c4eb2903
+        98.2  0x1c53de433
+   where the time was spent (leaf, ms per time):
+        10.8  objc_msgSend  [libobjcMsgSend.dylib]
+        10.5  mach_o::UnsafeHeader::forEachLoadCommand  [dyld_sim]
+         7.2  mach_msg2_trap  [libsystem_kernel.dylib]
+         6.5  invocation function for block in mach_o::UnsafeHeader::forEachSegment  [dyld_sim]
+         6.0  argb32_shade_axial_RGB  [CoreGraphics]
+         5.0  argb32_image_mark  [CoreGraphics]
+         4.8  pthread_setspecific  [libsystem_pthread.dylib]
+         3.5  _CFStringGetCStringPtrInternal  [CoreFoundation]
+         3.2  pthread_getspecific  [libsystem_pthread.dylib]
+         2.5  swift::MetadataCacheKey::operator==  [libswiftCore.dylib]
+         2.0    [dyld_sim]
+         2.0  _platform_memmove  [libsystem_platform.dylib]
+
+== B: open MobLand — 4 times, main thread busy 459 ms each on average (1.2 s window)
+   our functions (inclusive, ms per time):
+       434.0  static GlassPlayerApp.$main
+       434.0  main
+       164.2  
+       122.5  thunk for @escaping @callee_guaranteed 
+       117.0  specialized _VariadicView.Tree.init
+       110.0  specialized closure #1 in VStack.init
+       110.0  specialized VStack.init
+       101.8  closure #1 in TitleHeroView.body.getter
+       101.0  TitleHeroView.siblings.getter
+        99.0  closure #1 in closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        99.0  closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        99.0  closure #1 in closure #1 in TitleHeroView.body.getter
+        99.0  specialized ScrollView.init
+        95.8  static LibraryGroup.nextUp
+        95.2  HistoryStore.entry
+        95.2  TitleHeroView.file.getter
+        89.8  specialized _ArrayProtocol.filter
+        88.0  closure #2 in TitleHeroView.siblings.getter
+        73.5  TitleHeroView.episodes.getter
+        73.2  closure #1 in TitleHeroView.episodes.getter
+        70.8  specialized Sequence.compactMap
+        70.5  closure #1 in static LibraryGroup.nextUp
+        41.5  closure #1 in closure #3 in TiltPlayButton.face.getter
+        41.0  specialized closure #1 in HStack.init
+        41.0  specialized HStack.init
+        38.2  TitleHeroView.shownEpisodes.getter
+        35.0  TitleHeroView.seasons.getter
+        33.5  specialized Dictionary.subscript.getter
+        24.0  closure #3 in static LibraryGroup.nextUp
+        24.0  specialized Sequence.first
+        18.0  closure #1 in closure #1 in TitleHeroView.episodes.getter
+        15.5  specialized Group.init
+        15.0  specialized MutableCollection._insertionSort
+        15.0  specialized UnsafeMutableBufferPointer._stableSortImpl
+        15.0  specialized closure #1 in MutableCollection.sort
+        15.0  specialized closure #1 in ContiguousArray.withContiguousMutableStorageIfAvailable
+        15.0  specialized ContiguousArray.withUnsafeMutableBufferPointer
+        15.0  specialized ContiguousArray.withContiguousMutableStorageIfAvailable
+        15.0  specialized protocol witness for MutableCollection.withContiguousMutableStorageIfAvailable
+        15.0  specialized MutableCollection.sort
+        15.0  specialized Sequence.sorted
+        13.0  static LibraryOrganizer.groups
+        10.5  closure #1 in closure #1 in closure #1 in HomeView.body.getter
+        10.5  closure #1 in closure #1 in HomeView.body.getter
+        10.5  TitleHeroView.body.getter
+        10.0  static TitleParser.parse
+         9.5  closure #1 in TitleHeroView.moreButton.getter
+         9.5  TitleHeroView.moreButton.getter
+         9.5  closure #2 in TitleHeroView.body.getter
+         9.5  specialized View.pageChrome
+         9.5  specialized View.pageButtons
+         9.2  HomeView.groups.getter
+         9.2  specialized static TitleParser.parse
+         7.5  HeroHeader.body.getter
+         7.5  protocol witness for View.body.getter in conformance HeroHeader
+         7.5  closure #1 in closure #1 in closure #2 in LibraryList.body.getter
+         7.5  closure #1 in closure #2 in LibraryList.body.getter
+         7.2  closure #1 in TitleHeroView.titleBlock.getter
+         7.2  TitleHeroView.titleBlock.getter
+         7.2  closure #1 in closure #2 in TitleHeroView.backdrop
+   system functions (inclusive, ms per time):
+       434.8  __CFRunLoopRun
+       434.8  _CFRunLoopRunSpecificWithOptions
+       434.8  GSEventRunModal
+       434.5  0x1c5535e2f
+       434.2  0x1c9d8b907
+       434.2  0x1c9d8b783
+       434.2  0x1c9b0974f
+       433.8  start_sim
+       433.5  start
+       394.2  0x25a82e363
+       392.5  0x1c3d97847
+       392.5  0x1c47ef28f
+       388.5  __CFRunLoopDoSource1
+       387.5  __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE1_PERFORM_FUNCTION__
+       387.0  __CFMachPortPerform
+       329.0  0x1c9546133
+       253.8  0x1c50d26fb
+       253.5  0x1c705bb03
+       253.5  0x1c50d2beb
+       227.5  0x1c71adc73
+       227.5  0x1c71ad9ab
+       227.5  0x1c71ad193
+       227.5  0x1c71ac28b
+       226.2  0x1c71ac827
+       215.0  0x1c4ea8bff
+       211.8  0x1c709872b
+       210.8  0x1c7a3c55b
+       210.5  0x1c9555157
+   where the time was spent (leaf, ms per time):
+        22.2  objc_msgSend  [libobjcMsgSend.dylib]
+        13.0  _CFStringGetCStringPtrInternal  [CoreFoundation]
+         9.0  Substring.subscript.getter  [libswiftCore.dylib]
+         8.0  swift::MetadataCacheKey::operator==  [libswiftCore.dylib]
+         7.8  Substring.index  [libswiftCore.dylib]
+         7.5  specialized BidirectionalCollection._range  [Foundation]
+         6.2  mach_msg2_trap  [libsystem_kernel.dylib]
+         4.8  specialized static String._uncheckedFromUTF8  [libswiftCore.dylib]
+         4.2  specialized closure #1 in Unicode._InternalNFC.Iterator.next  [libswiftCore.dylib]
+         3.2  _xzm_xzone_malloc_tiny  [libsystem_malloc.dylib]
+         3.2  Unicode._NFDNormalizer._resume  [libswiftCore.dylib]
+         3.2  _StringGuts.validateScalarIndex  [libswiftCore.dylib]
+
+== B: swipe back (0.6 s in) — 4 times, main thread busy 328 ms each on average (1.2 s window)
+   our functions (inclusive, ms per time):
+       322.2  static GlassPlayerApp.$main
+       322.2  main
+        34.0  TitleHeroView.siblings.getter
+        33.8  specialized _VariadicView.Tree.init
+        33.5  
+        32.8  specialized closure #1 in VStack.init
+        32.8  specialized VStack.init
+        32.0  TitleHeroView.file.getter
+        31.8  static LibraryGroup.nextUp
+        30.5  specialized _ArrayProtocol.filter
+        30.2  HistoryStore.entry
+        30.2  closure #2 in TitleHeroView.siblings.getter
+        29.8  closure #1 in closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        29.8  closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        29.8  closure #1 in closure #1 in TitleHeroView.body.getter
+        29.8  specialized ScrollView.init
+        29.8  closure #1 in TitleHeroView.body.getter
+        26.8  specialized Sequence.compactMap
+        26.5  closure #1 in static LibraryGroup.nextUp
+        23.2  closure #1 in TitleHeroView.episodes.getter
+        23.2  TitleHeroView.episodes.getter
+        19.2  thunk for @escaping @callee_guaranteed 
+        11.8  TitleHeroView.seasons.getter
+        11.0  TitleHeroView.shownEpisodes.getter
+        10.5  specialized closure #1 in HStack.init
+        10.5  specialized HStack.init
+         7.2  specialized Dictionary.subscript.getter
+         6.8  closure #1 in TitleHeroView.moreButton.getter
+         6.8  TitleHeroView.moreButton.getter
+         6.8  closure #2 in TitleHeroView.body.getter
+         6.8  specialized View.pageChrome
+         6.8  specialized View.pageButtons
+         6.8  TitleHeroView.body.getter
+         5.5  closure #1 in closure #1 in TitleHeroView.episodes.getter
+         4.5  closure #3 in static LibraryGroup.nextUp
+         4.5  specialized Sequence.first
+         3.0  specialized MutableCollection._insertionSort
+         3.0  specialized UnsafeMutableBufferPointer._stableSortImpl
+         3.0  specialized closure #1 in MutableCollection.sort
+         3.0  specialized closure #1 in ContiguousArray.withContiguousMutableStorageIfAvailable
+         3.0  specialized ContiguousArray.withUnsafeMutableBufferPointer
+         3.0  specialized ContiguousArray.withContiguousMutableStorageIfAvailable
+         3.0  specialized protocol witness for MutableCollection.withContiguousMutableStorageIfAvailable
+         3.0  specialized MutableCollection.sort
+         3.0  specialized Sequence.sorted
+         2.0  closure #1 in LibraryRow.body.getter
+         2.0  LibraryRow.body.getter
+         1.8  specialized static TitleParser.parse
+         1.8  static TitleParser.parse
+         1.8  closure #1 in TitleHeroView.titleBlock.getter
+         1.8  TitleHeroView.titleBlock.getter
+         1.8  closure #1 in closure #2 in TitleHeroView.backdrop
+         1.8  closure #2 in TitleHeroView.backdrop
+         1.8  closure #1 in HeroHeader.body.getter
+         1.8  HeroHeader.body.getter
+         1.8  protocol witness for View.body.getter in conformance HeroHeader
+         1.5  DecipherText.run
+         1.5  closure #1 in closure #1 in closure #2 in LibraryList.body.getter
+         1.5  specialized Group.init
+         1.5  closure #1 in closure #2 in LibraryList.body.getter
+   system functions (inclusive, ms per time):
+       322.2  _CFRunLoopRunSpecificWithOptions
+       322.2  GSEventRunModal
+       322.2  0x1c5535e2f
+       322.2  0x1c9d8b907
+       322.2  0x1c9d8b783
+       322.2  0x1c9b0974f
+       322.2  start_sim
+       322.2  start
+       321.8  __CFRunLoopRun
+       239.8  0x25a82e363
+       237.0  0x1c3d97847
+       237.0  0x1c47ef28f
+       222.8  __CFRunLoopDoSource1
+       222.5  __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE1_PERFORM_FUNCTION__
+       222.2  __CFMachPortPerform
+        90.5  CA::Transaction::flush_as_runloop_observer
+        90.2  0x1c48e1883
+        90.2  0x1c47eee27
+        90.0  CA::Transaction::commit
+        90.0  CA::Transaction::flush
+        89.0  CA::Display::DisplayLink::dispatch_deferred_display_links
+        88.5  CA::Display::DisplayLink::dispatch_items
+        88.2  CA::Display::DisplayLinkItem::dispatch_
+        88.0  CA::Context::commit_transaction
+        83.2  0x1c9546133
+        81.5  0x1c7a3c55b
+        76.5  0x1c75c3a3f
+        76.0  0x1c9555157
+   where the time was spent (leaf, ms per time):
+        12.2  mach_o::UnsafeHeader::forEachLoadCommand  [dyld_sim]
+        11.5  objc_msgSend  [libobjcMsgSend.dylib]
+         8.5  argb32_shade_axial_RGB  [CoreGraphics]
+         6.8  mach_msg2_trap  [libsystem_kernel.dylib]
+         6.5  invocation function for block in mach_o::UnsafeHeader::forEachSegment  [dyld_sim]
+         6.2  argb32_image_mark  [CoreGraphics]
+         4.2  Substring.subscript.getter  [libswiftCore.dylib]
+         4.2  Substring.index  [libswiftCore.dylib]
+         4.0  _CFStringGetCStringPtrInternal  [CoreFoundation]
+         3.2  aa_render  [CoreGraphics]
+         3.2    [dyld_sim]
+         2.8  pthread_getspecific  [libsystem_pthread.dylib]
+
+== C: open <title> — 8 times, main thread busy 556 ms each on average (1.2 s window)
+   our functions (inclusive, ms per time):
+       538.8  static GlassPlayerApp.$main
+       538.8  main
+       178.8  
+       138.4  thunk for @escaping @callee_guaranteed 
+       109.6  specialized _VariadicView.Tree.init
+       101.9  specialized closure #1 in VStack.init
+       101.9  specialized VStack.init
+        96.9  TitleHeroView.siblings.getter
+        92.6  static LibraryGroup.nextUp
+        92.0  closure #1 in TitleHeroView.body.getter
+        91.4  TitleHeroView.file.getter
+        90.1  closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        90.1  closure #1 in closure #1 in TitleHeroView.body.getter
+        90.1  specialized ScrollView.init
+        89.9  closure #1 in closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        87.2  HistoryStore.entry
+        84.4  specialized _ArrayProtocol.filter
+        83.5  closure #2 in TitleHeroView.siblings.getter
+        68.4  closure #1 in TitleHeroView.episodes.getter
+        68.4  TitleHeroView.episodes.getter
+        64.5  specialized Sequence.compactMap
+        63.2  closure #1 in static LibraryGroup.nextUp
+        40.9  specialized closure #1 in HStack.init
+        40.9  specialized HStack.init
+        35.9  specialized Dictionary.subscript.getter
+        34.5  TitleHeroView.seasons.getter
+        32.1  TitleHeroView.shownEpisodes.getter
+        27.5  specialized Sequence.first
+        26.6  closure #3 in static LibraryGroup.nextUp
+        23.9  closure #1 in closure #3 in TiltPlayButton.face.getter
+        20.9  closure #1 in closure #2 in SwipeRow.body.getter
+        17.8  specialized MutableCollection._insertionSort
+        17.8  specialized UnsafeMutableBufferPointer._stableSortImpl
+        17.8  specialized closure #1 in MutableCollection.sort
+        17.8  specialized closure #1 in ContiguousArray.withContiguousMutableStorageIfAvailable
+        17.8  specialized ContiguousArray.withUnsafeMutableBufferPointer
+        17.8  specialized ContiguousArray.withContiguousMutableStorageIfAvailable
+        17.8  specialized protocol witness for MutableCollection.withContiguousMutableStorageIfAvailable
+        17.8  specialized MutableCollection.sort
+        17.8  specialized Sequence.sorted
+        17.8  closure #1 in closure #1 in TitleHeroView.episodes.getter
+        16.2  specialized Group.init
+        15.8  static LibraryOrganizer.groups
+        14.1  TitleHeroView.body.getter
+        13.6  specialized View.pageChrome
+        13.6  specialized View.pageButtons
+        13.5  TitleHeroView.moreButton.getter
+        13.5  closure #2 in TitleHeroView.body.getter
+        13.4  closure #1 in TitleHeroView.moreButton.getter
+        11.5  closure #1 in closure #1 in closure #1 in HomeView.body.getter
+        11.5  closure #1 in closure #1 in HomeView.body.getter
+        11.2  HomeView.groups.getter
+         9.4  static TitleParser.parse
+         9.0  specialized static TitleParser.parse
+         7.6  HeroHeader.body.getter
+         7.6  protocol witness for View.body.getter in conformance HeroHeader
+         7.4  closure #1 in closure #2 in TitleHeroView.backdrop
+         7.4  closure #2 in TitleHeroView.backdrop
+         7.4  closure #1 in HeroHeader.body.getter
+         7.2  closure #1 in TitleHeroView.titleBlock.getter
+   system functions (inclusive, ms per time):
+       539.0  _CFRunLoopRunSpecificWithOptions
+       539.0  GSEventRunModal
+       539.0  0x1c5535e2f
+       539.0  0x1c9d8b907
+       539.0  0x1c9d8b783
+       538.9  __CFRunLoopRun
+       538.9  0x1c9b0974f
+       538.6  start_sim
+       538.4  start
+       461.5  0x25a82e363
+       457.6  0x1c3d97847
+       457.6  0x1c47ef28f
+       454.8  __CFRunLoopDoSource1
+       451.9  __CFMachPortPerform
+       451.9  __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE1_PERFORM_FUNCTION__
+       333.0  0x1c9546133
+       269.8  0x1c705bb03
+       269.6  0x1c50d2beb
+       269.6  0x1c50d26fb
+       239.2  0x1c7a3c55b
+       230.1  0x1c9555157
+       224.8  0x1c4ea8bff
+       221.1  0x1c71adc73
+       221.0  0x1c71ad9ab
+       220.8  0x1c71ad193
+       220.4  0x1c71ac28b
+       219.8  0x1c71ac827
+       211.5  0x1c709872b
+   where the time was spent (leaf, ms per time):
+        26.8  objc_msgSend  [libobjcMsgSend.dylib]
+        10.9  _CFStringGetCStringPtrInternal  [CoreFoundation]
+        10.8  mach_o::UnsafeHeader::forEachLoadCommand  [dyld_sim]
+         8.4  mach_msg2_trap  [libsystem_kernel.dylib]
+         7.9  swift::MetadataCacheKey::operator==  [libswiftCore.dylib]
+         7.8  Substring.subscript.getter  [libswiftCore.dylib]
+         6.0  Substring.index  [libswiftCore.dylib]
+         4.5  _xzm_xzone_malloc_tiny  [libsystem_malloc.dylib]
+         4.4  invocation function for block in mach_o::UnsafeHeader::forEachSegment  [dyld_sim]
+         4.2  specialized Unicode._NFCNormalizer._resume  [libswiftCore.dylib]
+         4.2  specialized BidirectionalCollection._range  [Foundation]
+         4.0  specialized closure #1 in Unicode._InternalNFC.Iterator.next  [libswiftCore.dylib]
+
+== C: swipe back <title> — 8 times, main thread busy 299 ms each on average (1.2 s window)
+   our functions (inclusive, ms per time):
+       297.8  static GlassPlayerApp.$main
+       297.8  main
+        54.0  
+        36.4  thunk for @escaping @callee_guaranteed 
+        33.5  specialized _VariadicView.Tree.init
+        32.0  specialized closure #1 in VStack.init
+        32.0  specialized VStack.init
+        30.1  TitleHeroView.siblings.getter
+        28.4  static LibraryGroup.nextUp
+        28.0  TitleHeroView.file.getter
+        27.8  closure #1 in closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        27.8  closure #1 in closure #1 in closure #1 in TitleHeroView.body.getter
+        27.8  closure #1 in closure #1 in TitleHeroView.body.getter
+        27.8  specialized ScrollView.init
+        27.8  closure #1 in TitleHeroView.body.getter
+        26.2  specialized _ArrayProtocol.filter
+        25.6  HistoryStore.entry
+        25.4  closure #2 in TitleHeroView.siblings.getter
+        20.9  closure #1 in TitleHeroView.episodes.getter
+        20.9  TitleHeroView.episodes.getter
+        20.1  specialized Sequence.compactMap
+        19.5  closure #1 in static LibraryGroup.nextUp
+        12.1  specialized closure #1 in HStack.init
+        12.1  specialized HStack.init
+        11.2  specialized Dictionary.subscript.getter
+        10.6  TitleHeroView.shownEpisodes.getter
+        10.2  TitleHeroView.seasons.getter
+         7.8  closure #3 in static LibraryGroup.nextUp
+         7.8  specialized Sequence.first
+         5.5  TitleHeroView.body.getter
+         5.1  specialized View.pageChrome
+         5.1  specialized View.pageButtons
+         5.0  TitleHeroView.moreButton.getter
+         5.0  closure #2 in TitleHeroView.body.getter
+         4.9  closure #1 in TitleHeroView.moreButton.getter
+         4.9  closure #1 in closure #1 in TitleHeroView.episodes.getter
+         4.1  specialized MutableCollection._insertionSort
+         4.1  specialized UnsafeMutableBufferPointer._stableSortImpl
+         4.1  specialized closure #1 in MutableCollection.sort
+         4.1  specialized closure #1 in ContiguousArray.withContiguousMutableStorageIfAvailable
+         4.1  specialized ContiguousArray.withUnsafeMutableBufferPointer
+         4.1  specialized ContiguousArray.withContiguousMutableStorageIfAvailable
+         4.1  specialized protocol witness for MutableCollection.withContiguousMutableStorageIfAvailable
+         4.1  specialized MutableCollection.sort
+         4.1  specialized Sequence.sorted
+         3.5  specialized Group.init
+         2.4  closure #1 in closure #2 in TitleHeroView.backdrop
+         2.4  closure #2 in TitleHeroView.backdrop
+         2.4  closure #1 in HeroHeader.body.getter
+         2.4  HeroHeader.body.getter
+         2.4  protocol witness for View.body.getter in conformance HeroHeader
+         2.4  specialized static TitleParser.parse
+         2.4  static TitleParser.parse
+         2.2  TitleHeroView.entry.getter
+         2.2  closure #1 in TitleHeroView.titleBlock.getter
+         2.2  TitleHeroView.titleBlock.getter
+         2.1  closure #1 in closure #1 in closure #1 in HomeView.body.getter
+         2.1  closure #1 in closure #1 in HomeView.body.getter
+         2.0  specialized static BackWatch.touchBegan
+         2.0  static BackWatch.touchBegan
+   system functions (inclusive, ms per time):
+       297.9  _CFRunLoopRunSpecificWithOptions
+       297.9  GSEventRunModal
+       297.9  0x1c5535e2f
+       297.9  0x1c9d8b907
+       297.9  0x1c9d8b783
+       297.9  0x1c9b0974f
+       297.8  __CFRunLoopRun
+       297.8  start_sim
+       297.8  start
+       228.2  0x25a82e363
+       225.1  0x1c47ef28f
+       224.6  0x1c3d97847
+       185.8  __CFRunLoopDoSource1
+       185.6  __CFMachPortPerform
+       185.6  __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE1_PERFORM_FUNCTION__
+        92.2  0x1c47eee27
+        91.8  CA::Transaction::flush_as_runloop_observer
+        91.8  0x1c48e1883
+        91.2  CA::Transaction::commit
+        91.2  CA::Transaction::flush
+        89.9  CA::Context::commit_transaction
+        81.9  0x1c7a3c55b
+        81.2  0x1c9546133
+        72.4  0x1c9555157
+        70.9  CA::Display::DisplayLink::dispatch_deferred_display_links
+        70.6  CA::Display::DisplayLink::dispatch_items
+        69.9  CA::Display::DisplayLinkItem::dispatch_
+        68.5  0x1c75c3a3f
+   where the time was spent (leaf, ms per time):
+        13.1  mach_o::UnsafeHeader::forEachLoadCommand  [dyld_sim]
+        11.6  objc_msgSend  [libobjcMsgSend.dylib]
+         6.6  mach_msg2_trap  [libsystem_kernel.dylib]
+         6.6  invocation function for block in mach_o::UnsafeHeader::forEachSegment  [dyld_sim]
+         6.2  argb32_shade_axial_RGB  [CoreGraphics]
+         5.4  argb32_image_mark  [CoreGraphics]
+         2.9  swift::MetadataCacheKey::operator==  [libswiftCore.dylib]
+         2.9    [dyld_sim]
+         2.9  _CFStringGetCStringPtrInternal  [CoreFoundation]
+         2.9  _platform_memmove  [libsystem_platform.dylib]
+         2.8  _xzm_xzone_malloc_tiny  [libsystem_malloc.dylib]
+         2.4  pthread_getspecific  [libsystem_pthread.dylib]
+
+== D: open Settings — 3 times, main thread busy 477 ms each on average (1.2 s window)
+   our functions (inclusive, ms per time):
+       462.3  static GlassPlayerApp.$main
+       462.3  main
+       228.0  
+       222.7  thunk for @escaping @callee_guaranteed 
+        16.7  closure #1 in closure #1 in HomeView.body.getter
+        16.0  closure #1 in closure #1 in closure #1 in HomeView.body.getter
+        15.0  specialized Group.init
+        14.7  static LibraryOrganizer.groups
+        14.7  HomeView.groups.getter
+        10.0  specialized _VariadicView.Tree.init
+         9.3  specialized HStack.init
+         9.3  closure #1 in closure #1 in closure #1 in closure #1 in HomeView.body.getter
+         9.0  specialized closure #1 in HStack.init
+         8.3  closure #1 in HomeView.libraryHeader
+         8.3  HomeView.libraryHeader
+         8.3  closure #1 in HomeView.libraryRows
+         6.7  HomeView.libraryRows
+         5.7  specialized Collection.map
+         5.7  specialized HomeView.groupLink
+         5.7  closure #1 in closure #1 in HomeView.libraryRows
+         5.0  specialized Dictionary.subscript.getter
+         5.0  closure #2 in static LibraryOrganizer.groups
+         4.7  specialized static LibraryOrganizer.episodeOrder
+         4.7  static LibraryOrganizer.episodeOrder
+         4.7  implicit closure #1 in closure #2 in static LibraryOrganizer.groups
+         4.7  partial apply for implicit closure #1 in closure #2 in static LibraryOrganizer.groups
+         4.7  specialized MutableCollection._insertionSort
+         4.7  specialized UnsafeMutableBufferPointer._stableSortImpl
+         4.7  specialized closure #1 in MutableCollection.sort
+         4.7  specialized closure #1 in ContiguousArray.withContiguousMutableStorageIfAvailable
+         4.7  specialized ContiguousArray.withUnsafeMutableBufferPointer
+         4.7  specialized ContiguousArray.withContiguousMutableStorageIfAvailable
+         4.7  specialized protocol witness for MutableCollection.withContiguousMutableStorageIfAvailable
+         4.7  specialized MutableCollection.sort
+         4.7  specialized Sequence.sorted
+         4.7  specialized closure #1 in HomeView.groupLink
+         4.3  closure #2 in closure #1 in closure #1 in HomeView.libraryRows
+         4.0  static TitleParser.parse
+         3.3  specialized static TitleParser.parse
+         3.3  HistoryStore.entry
+         3.0  closure #1 in SettingsView.body.getter
+         2.7  specialized Sequence.compactMap
+         2.7  static LibraryGroup.nextUp
+         2.7  LibraryGroup.nextUp.getter
+         2.7  specialized HomeView.askToDelete
+         2.3  closure #1 in static LibraryGroup.nextUp
+         2.3  LeavingProbe.Probe.Ticker.tick
+         2.3  @objc LeavingProbe.Probe.Ticker.tick
+         1.7  Int64.byteString.getter
+         1.7  HomeView.deleteQuestion
+         1.3  HistoryStore.isWatched
+         1.3  closure #1 in implicit closure #1 in HomeView.allWatched
+         1.3  specialized closure #1 in Sequence.allSatisfy
+         1.3  specialized Sequence.contains
+         1.3  specialized Sequence.allSatisfy
+         1.3  HomeView.allWatched
+         1.3  specialized closure #1 in Section.init
+         1.3  specialized Section.init
+         1.3  closure #1 in closure #1 in SettingsView.body.getter
+         1.3  LeavingProbe.Probe.openingTick
+   system functions (inclusive, ms per time):
+       463.7  _CFRunLoopRunSpecificWithOptions
+       463.7  GSEventRunModal
+       463.7  0x1c5535e2f
+       463.7  0x1c9d8b907
+       463.0  __CFRunLoopRun
+       462.3  0x1c9d8b783
+       462.3  0x1c9b0974f
+       462.3  start_sim
+       462.3  start
+       410.3  0x25a82e363
+       405.0  0x1c3d97847
+       405.0  0x1c47ef28f
+       242.3  0x1c4ea8bff
+       241.3  0x1c50b0677
+       236.3  0x1c9546133
+       224.3  CA::Layer::perform_update_
+       223.7  CA::Layer::update_if_needed_
+       222.3  -[CALayer layoutSublayers]
+       221.7  0x1c53de767
+       221.3  0x1c53de433
+       221.3  0x1c4eb2903
+       220.7  __CFRunLoopDoSources0
+       220.0  __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__
+       220.0  __CFRunLoopDoSource0
+       199.3  0x1c4ea2f1f
+       197.3  0x1c47eee27
+       196.7  CA::Transaction::commit
+       196.7  CA::Transaction::flush
+   where the time was spent (leaf, ms per time):
+        67.0  swift_conformsToProtocolMaybeInstantiateSuperclasses  [libswiftCore.dylib]
+        16.7  objc_msgSend  [libobjcMsgSend.dylib]
+         9.7  mach_o::UnsafeHeader::forEachLoadCommand  [dyld_sim]
+         6.3  mach_msg2_trap  [libsystem_kernel.dylib]
+         6.0  swift::MetadataCacheKey::operator==  [libswiftCore.dylib]
+         5.7  getMethodNoSuper_nolock  [libobjc.A.dylib]
+         4.7    [dyld_sim]
+         4.7  pthread_setspecific  [libsystem_pthread.dylib]
+         3.3  swift::_getWitnessTable  [libswiftCore.dylib]
+         3.3  __kdebug_trace64  [libsystem_kernel.dylib]
+         3.3  invocation function for block in mach_o::UnsafeHeader::forEachSegment  [dyld_sim]
+         2.7  pthread_getspecific  [libsystem_pthread.dylib]
+
+== D: swipe back from Settings — 3 times, main thread busy 231 ms each on average (1.2 s window)
+   our functions (inclusive, ms per time):
+       230.7  static GlassPlayerApp.$main
+       230.7  main
+        68.0  
+        61.0  thunk for @escaping @callee_guaranteed 
+        11.3  closure #1 in closure #1 in closure #1 in HomeView.body.getter
+        11.3  closure #1 in closure #1 in HomeView.body.getter
+        10.7  static LibraryOrganizer.groups
+        10.7  HomeView.groups.getter
+         9.3  specialized Group.init
+         6.3  specialized closure #1 in HStack.init
+         6.3  specialized _VariadicView.Tree.init
+         6.3  specialized HStack.init
+         5.7  closure #1 in HomeView.libraryHeader
+         5.7  HomeView.libraryHeader
+         5.7  closure #1 in closure #1 in closure #1 in closure #1 in HomeView.body.getter
+         5.0  specialized Dictionary.subscript.getter
+         5.0  HomeView.libraryRows
+         4.3  static TitleParser.parse
+         4.3  specialized Collection.map
+         4.3  closure #1 in HomeView.libraryRows
+         4.0  specialized static TitleParser.parse
+         4.0  specialized static LibraryOrganizer.episodeOrder
+         4.0  static LibraryOrganizer.episodeOrder
+         4.0  implicit closure #1 in closure #2 in static LibraryOrganizer.groups
+         4.0  partial apply for implicit closure #1 in closure #2 in static LibraryOrganizer.groups
+         4.0  specialized MutableCollection._insertionSort
+         4.0  specialized UnsafeMutableBufferPointer._stableSortImpl
+         4.0  specialized closure #1 in MutableCollection.sort
+         4.0  specialized closure #1 in ContiguousArray.withContiguousMutableStorageIfAvailable
+         4.0  specialized ContiguousArray.withUnsafeMutableBufferPointer
+         4.0  specialized ContiguousArray.withContiguousMutableStorageIfAvailable
+         4.0  specialized protocol witness for MutableCollection.withContiguousMutableStorageIfAvailable
+         4.0  specialized MutableCollection.sort
+         4.0  specialized Sequence.sorted
+         4.0  closure #2 in static LibraryOrganizer.groups
+         3.7  specialized HomeView.groupLink
+         3.7  closure #1 in closure #1 in HomeView.libraryRows
+         3.0  closure #2 in closure #1 in closure #1 in HomeView.libraryRows
+         3.0  specialized closure #1 in HomeView.groupLink
+         2.7  specialized Sequence.compactMap
+         2.3  closure #1 in static LibraryGroup.nextUp
+         2.3  static LibraryGroup.nextUp
+         2.3  LibraryGroup.nextUp.getter
+         2.3  HistoryStore.entry
+         0.7  Int64.byteString.getter
+         0.7  HomeView.deleteQuestion
+         0.7  specialized HomeView.askToDelete
+         0.7  specialized static Diagnostics.redact
+         0.7  static Diagnostics.redact
+         0.7  Diagnostics.log
+         0.7  dlog
+         0.7  MediaItem.resolvedURL.getter
+         0.7  closure #2 in HeroCard.body.getter
+         0.7  HistoryStore.isWatched
+         0.7  closure #1 in implicit closure #1 in HomeView.allWatched
+         0.7  specialized closure #1 in Sequence.allSatisfy
+         0.7  specialized Sequence.contains
+         0.7  specialized Sequence.allSatisfy
+         0.7  HomeView.allWatched
+         0.7  closure #1 in LibraryRow.body.getter
+   system functions (inclusive, ms per time):
+       230.7  __CFRunLoopRun
+       230.7  _CFRunLoopRunSpecificWithOptions
+       230.7  GSEventRunModal
+       230.7  0x1c5535e2f
+       230.7  0x1c9d8b907
+       230.7  0x1c9d8b783
+       230.7  0x1c9b0974f
+       230.7  start_sim
+       230.7  start
+       167.7  __CFRunLoopDoSource1
+       167.3  __CFMachPortPerform
+       167.3  __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE1_PERFORM_FUNCTION__
+       167.0  0x25a82e363
+       159.3  0x1c47ef28f
+       158.7  0x1c3d97847
+        66.3  0x1c47eee27
+        65.7  CA::Transaction::commit
+        65.7  CA::Transaction::flush
+        65.7  CA::Transaction::flush_as_runloop_observer
+        65.7  0x1c48e1883
+        64.3  CA::Layer::update_if_needed_
+        64.3  CA::Context::commit_transaction
+        63.7  CA::Layer::perform_update_
+        61.0  -[CALayer layoutSublayers]
+        60.0  0x1c53de767
+        60.0  0x1c4eb2903
+        59.7  0x1c53de433
+        59.3  _dispatch_client_callout
+   where the time was spent (leaf, ms per time):
+        14.3  mach_o::UnsafeHeader::forEachLoadCommand  [dyld_sim]
+        10.7  objc_msgSend  [libobjcMsgSend.dylib]
+         8.7  invocation function for block in mach_o::UnsafeHeader::forEachSegment  [dyld_sim]
+         6.0  mach_msg2_trap  [libsystem_kernel.dylib]
+         3.3    [dyld_sim]
+         3.0  swift::MetadataCacheKey::operator==  [libswiftCore.dylib]
+         2.7  pthread_setspecific  [libsystem_pthread.dylib]
+         2.7  __kdebug_trace64  [libsystem_kernel.dylib]
+         2.7  kevent_id  [libsystem_kernel.dylib]
+         2.0  dyld4::JustInTimeLoader::contains  [dyld_sim]
+         2.0  invocation function for block in dyld4::APIs::findImageMappedAt  [dyld_sim]
+         1.7  pthread_getspecific  [libsystem_pthread.dylib]
+
+== busy runs of 40 ms or more (main thread, contiguous samples)
+      44 ms  starting 
+      90 ms  starting 
+      52 ms  starting 
+      43 ms  starting 
+      41 ms  starting 
+      49 ms  starting 
+      47 ms  starting 
+      42 ms  starting 
+     266 ms  starting 
+      54 ms  starting 
+      73 ms  starting 
+      71 ms  starting 
+     271 ms  starting A0 open MobLand +70 ms
+      52 ms  starting A0 open MobLand +1301 ms
+      75 ms  starting A0 swipe back (page open) +55 ms
+     204 ms  starting A1 open MobLand +68 ms
+      49 ms  starting A1 open MobLand +276 ms
+      69 ms  starting A1 swipe back (page open) +48 ms
+      55 ms  starting A1 swipe back (page open) +281 ms
+      50 ms  starting A1 swipe back (page open) +3892 ms
+     237 ms  starting A2 open MobLand +65 ms
+      64 ms  starting A2 open MobLand +1223 ms
+      79 ms  starting A2 swipe back (page open) +54 ms
+      65 ms  starting A2 swipe back (page open) +288 ms
+      60 ms  starting A2 swipe back (page open) +3859 ms
+     379 ms  starting A3 open MobLand +69 ms
+      68 ms  starting A3 open MobLand +1370 ms
+     109 ms  starting A3 swipe back (page open) +93 ms
+     100 ms  starting A3 swipe back (page open) +341 ms
+      43 ms  starting A3 swipe back (page open) +1567 ms
+      77 ms  starting A3 swipe back (page open) +4912 ms
+     108 ms  starting A3 swipe back (page open) +26318 ms
+     435 ms  starting B0 open MobLand +61 ms
+      62 ms  starting B0 swipe back (0.6 s in) +197 ms
+      75 ms  starting B0 swipe back (0.6 s in) +310 ms
+      52 ms  starting B0 swipe back (0.6 s in) +1453 ms
+      64 ms  starting B0 swipe back (0.6 s in) +1531 ms
+      72 ms  starting B0 swipe back (0.6 s in) +3498 ms
+     416 ms  starting B1 open MobLand +50 ms
+      78 ms  starting B1 swipe back (0.6 s in) +329 ms
+      70 ms  starting B1 swipe back (0.6 s in) +1453 ms
+      81 ms  starting B1 swipe back (0.6 s in) +3506 ms
+     384 ms  starting B2 open MobLand +43 ms
+      54 ms  starting B2 swipe back (0.6 s in) +19 ms
+      97 ms  starting B2 swipe back (0.6 s in) +285 ms
+      82 ms  starting B2 swipe back (0.6 s in) +1493 ms
+      58 ms  starting B2 swipe back (0.6 s in) +1603 ms
+      43 ms  starting B2 swipe back (0.6 s in) +3686 ms
+     351 ms  starting B3 open MobLand +36 ms
+      45 ms  starting B3 swipe back (0.6 s in) +0 ms
+      68 ms  starting B3 swipe back (0.6 s in) +333 ms
+     140 ms  starting B3 swipe back (0.6 s in) +1424 ms
+      53 ms  starting B3 swipe back (0.6 s in) +3473 ms
+     302 ms  starting C0 open MobLand +30 ms
+      85 ms  starting C0 swipe back MobLand +229 ms
+      41 ms  starting C0 swipe back MobLand +827 ms
+     131 ms  starting C0 open Classroom +75 ms
+      84 ms  starting C0 open Classroom +221 ms
+     175 ms  starting C0 open Classroom +394 ms
+      96 ms  starting C0 swipe back Classroom +330 ms
+      49 ms  starting C0 open Dragon Ball +78 ms
+      63 ms  starting C0 open Dragon Ball +135 ms
+     144 ms  starting C0 open Dragon Ball +1131 ms
+      56 ms  starting C0 swipe back Dragon Ball +239 ms
+     356 ms  starting C0 open MobLand +28 ms
+     105 ms  starting C0 open MobLand +426 ms
+      79 ms  starting C0 open MobLand +549 ms
+      56 ms  starting C0 open MobLand +636 ms
+      94 ms  starting C0 swipe back MobLand +277 ms
+      45 ms  starting C0 swipe back MobLand +1518 ms
+     120 ms  starting C0 swipe back MobLand +1568 ms
+     103 ms  starting C0 swipe back MobLand +3829 ms
+     342 ms  starting C1 open MobLand +22 ms
+     135 ms  starting C1 swipe back MobLand +245 ms
+     218 ms  starting C1 open Classroom +46 ms
+      43 ms  starting C1 open Classroom +277 ms
+     164 ms  starting C1 open Classroom +327 ms
+      54 ms  starting C1 open Classroom +605 ms
+      50 ms  starting C1 open Classroom +718 ms
+      49 ms  starting C1 swipe back Classroom +3 ms
+     111 ms  starting C1 swipe back Classroom +295 ms
+      49 ms  starting C1 open Dragon Ball +33 ms
+      85 ms  starting C1 open Dragon Ball +85 ms
+      55 ms  starting C1 open Dragon Ball +1124 ms
+      93 ms  starting C1 swipe back Dragon Ball +66 ms
+      76 ms  starting C1 swipe back Dragon Ball +258 ms
+     407 ms  starting C1 open MobLand +31 ms
+     214 ms  starting C1 open MobLand +463 ms
+      89 ms  starting C1 swipe back MobLand +254 ms
+      90 ms  starting C1 swipe back MobLand +1494 ms
+      49 ms  starting C1 swipe back MobLand +1593 ms
+      66 ms  starting C1 swipe back MobLand +3814 ms
+      54 ms  starting D0 open Settings +66 ms
+      69 ms  starting D0 open Settings +282 ms
+      41 ms  starting D0 open Settings +1034 ms
+     106 ms  starting D0 open Settings +2024 ms
+      51 ms  starting D0 open Settings +2399 ms
+      75 ms  starting D0 swipe back from Settings +215 ms
+      64 ms  starting D0 swipe back from Settings +3431 ms
+     246 ms  starting D1 open Settings +13 ms
+      43 ms  starting D1 open Settings +1178 ms
+      40 ms  starting D1 open Settings +1248 ms
+      58 ms  starting D1 open Settings +2280 ms
+      68 ms  starting D1 swipe back from Settings +213 ms
+      63 ms  starting D1 swipe back from Settings +3419 ms
+      47 ms  starting D2 open Settings +16 ms
+     200 ms  starting D2 open Settings +67 ms
+      97 ms  starting D2 open Settings +1155 ms
+      73 ms  starting D2 open Settings +2282 ms
+      64 ms  starting D2 swipe back from Settings +211 ms
+      68 ms  starting D2 swipe back from Settings +3427 ms

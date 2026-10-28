@@ -1,0 +1,268 @@
+10:01:01.347 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=31.38 GB
+10:01:02.080 [app] first screen 1383 ms after process start
+10:01:02.706 [app] active
+10:01:57.894 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=31.05 GB
+10:02:00.202 [hang] main thread unresponsive for 2.3 s
+10:02:02.066 [app] first screen 6097 ms after process start
+10:02:02.989 [app] active
+10:02:09.400 [nav] home: open MobLand
+10:02:09.439 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:02:09.854 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:02:10.031 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:02:10.135 [nav] title page move: animated
+10:02:11.121 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:02:14.686 [nav] page leaving: taps off
+10:02:14.757 [nav] title page move: interactive
+10:02:14.944 [nav] home path 1 → 0: []
+10:02:14.955 [nav] title page move: animated
+10:02:16.068 [nav] page gone 1381 ms after it started going back
+10:02:16.094 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:02:19.589 [nav] home: open Classroom of the Elite
+10:02:19.614 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|classroom of the elite")]
+10:02:19.767 [nav] title page appear Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC.2.0.AVC.REMUX-FraMeSToR.mkv
+10:02:19.916 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:02:20.021 [nav] title page move: animated
+10:02:20.940 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:02:24.858 [nav] page leaving: taps off
+10:02:24.946 [nav] title page move: interactive
+10:02:25.133 [nav] home path 1 → 0: []
+10:02:25.147 [nav] title page move: animated
+10:02:26.253 [nav] page gone 1394 ms after it started going back
+10:02:26.261 [nav] title page disappear Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC.2.0.AVC.REMUX-FraMeSToR.mkv
+10:02:29.427 [nav] home: open Dragon Ball Super Beerus
+10:02:29.449 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|dragon ball super beerus")]
+10:02:29.473 [nav] title page appear Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.AAC2.0.H.264.MSubs-ToonsHub.mkv
+10:02:29.516 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:02:29.619 [nav] title page move: animated
+10:02:30.518 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:02:33.015 [energy] cpu 7% (main 5%, com.apple.SwiftUI. 2%) mem 56 MB (0 MB left) thermal=nominal playing=no
+10:02:34.697 [nav] page leaving: taps off
+10:02:34.742 [nav] title page move: interactive
+10:02:34.991 [nav] home path 1 → 0: []
+10:02:35.003 [nav] title page move: animated
+10:02:36.139 [nav] page gone 1442 ms after it started going back
+10:02:36.145 [nav] title page disappear Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.AAC2.0.H.264.MSubs-ToonsHub.mkv
+10:02:39.582 [nav] home: open MobLand
+10:02:39.602 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:02:39.728 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:02:39.842 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:02:39.943 [nav] title page move: animated
+10:02:40.885 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:02:44.851 [nav] page leaving: taps off
+10:02:44.945 [nav] title page move: interactive
+10:02:45.143 [nav] home path 1 → 0: []
+10:02:45.157 [nav] title page move: animated
+10:02:46.296 [nav] page gone 1443 ms after it started going back
+10:02:46.338 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:02:52.272 [nav] home: open MobLand
+10:02:52.294 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:02:52.425 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:02:52.544 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:02:52.678 [nav] title page move: animated
+10:02:53.588 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:02:55.074 [nav] page leaving: taps off
+10:02:55.149 [nav] title page move: interactive
+10:02:55.362 [nav] home path 1 → 0: []
+10:02:55.390 [nav] title page move: animated
+10:02:56.501 [nav] page gone 1426 ms after it started going back
+10:02:56.510 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:03:01.993 [nav] home: open MobLand
+10:03:02.015 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:03:02.129 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:03:02.247 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:03:02.610 [nav] title page move: animated
+10:03:03.059 [energy] cpu 22% (main 18%, com.apple.UIKit.in 3%) mem 61 MB (0 MB left) thermal=nominal playing=no
+10:03:03.260 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:03:04.844 [nav] page leaving: taps off
+10:03:04.908 [nav] title page move: interactive
+10:03:05.124 [nav] home path 1 → 0: []
+10:03:05.151 [nav] title page move: animated
+10:03:06.270 [nav] page gone 1425 ms after it started going back
+10:03:06.276 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:03:09.130 [nav] home: open MobLand
+10:03:09.151 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:03:09.261 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:03:09.367 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:03:09.471 [nav] title page move: animated
+10:03:10.370 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:03:11.982 [nav] page leaving: taps off
+10:03:12.071 [nav] title page move: interactive
+10:03:12.268 [nav] home path 1 → 0: []
+10:03:12.285 [nav] title page move: animated
+10:03:13.396 [nav] page gone 1413 ms after it started going back
+10:03:13.412 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:03:19.335 [nav] home: open MobLand
+10:03:19.363 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:03:19.509 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:03:19.706 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:03:19.808 [nav] title page move: animated
+10:03:20.773 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+10:03:22.237 [nav] page leaving: taps off
+10:03:22.366 [nav] title page move: interactive
+10:03:22.556 [nav] home path 1 → 0: []
+10:03:22.590 [nav] title page move: animated
+10:03:23.716 [nav] page gone 1478 ms after it started going back
+10:03:23.734 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:03:29.291 [hang] main thread unresponsive for 2.2 s
+10:03:48.588 [energy] cpu 8% (main 6%, other 1%) mem 57 MB (0 MB left) thermal=nominal playing=no
+10:03:54.059 [hang] main thread unresponsive for 2.4 s
+10:03:56.556 [nav] home: open MobLand
+10:03:56.618 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:03:56.834 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:03:56.979 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:03:57.651 [nav] title page move: interactive
+10:03:57.670 [nav] page opening: moved by your finger 789 ms in; no taps on it while you do
+10:03:57.720 [nav] page going back before it was open (839 ms in): no taps on it until it's gone
+10:03:57.798 [nav] title page move: animated
+10:03:58.848 [nav] page leaving: taps off
+10:03:58.849 [nav] page gone 1128 ms after it started going back
+10:03:58.987 [nav] home path 1 → 0: []
+10:03:59.002 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:04.226 [hang] main thread unresponsive for 1.5 s
+10:04:06.467 [energy] cpu 29% (main 29%) mem 59 MB (0 MB left) thermal=nominal playing=no
+10:04:07.059 [nav] home: open MobLand
+10:04:07.115 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:04:07.308 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:07.470 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:04:07.572 [nav] title page move: animated
+10:04:07.979 [nav] page opening: moved by your finger 613 ms in; no taps on it while you do
+10:04:08.072 [nav] title page move: interactive
+10:04:08.242 [nav] page going back before it was open (876 ms in): no taps on it until it's gone
+10:04:08.322 [nav] title page move: animated
+10:04:09.373 [nav] page leaving: taps off
+10:04:09.374 [nav] page gone 1131 ms after it started going back
+10:04:09.560 [nav] home path 1 → 0: []
+10:04:09.574 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:13.232 [hang] main thread unresponsive for 2.1 s
+10:04:16.081 [nav] home: open MobLand
+10:04:16.115 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:04:16.284 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:16.455 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:04:16.557 [nav] title page move: animated
+10:04:17.034 [nav] page opening: moved by your finger 690 ms in; no taps on it while you do
+10:04:17.060 [nav] title page move: interactive
+10:04:17.241 [nav] page going back before it was open (897 ms in): no taps on it until it's gone
+10:04:17.332 [nav] title page move: animated
+10:04:18.445 [nav] page leaving: taps off
+10:04:18.446 [nav] page gone 1204 ms after it started going back
+10:04:18.636 [nav] home path 1 → 0: []
+10:04:18.653 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:22.066 [nav] home: open MobLand
+10:04:22.092 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:04:22.258 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:22.401 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:04:22.503 [nav] title page move: animated
+10:04:22.966 [nav] page opening: moved by your finger 664 ms in; no taps on it while you do
+10:04:23.011 [nav] title page move: interactive
+10:04:23.239 [nav] title page move: animated
+10:04:23.249 [nav] page going back before it was open (947 ms in): no taps on it until it's gone
+10:04:24.345 [nav] page leaving: taps off
+10:04:24.347 [nav] page gone 1096 ms after it started going back
+10:04:24.474 [nav] home path 1 → 0: []
+10:04:24.487 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:27.786 [nav] home: open MobLand
+10:04:27.810 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:04:27.949 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:28.077 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:04:28.178 [nav] title page move: animated
+10:04:28.955 [nav] page opening: moved by your finger 961 ms in; no taps on it while you do
+10:04:28.979 [nav] title page move: interactive
+10:04:29.177 [nav] page going back before it was open (1183 ms in): no taps on it until it's gone
+10:04:29.254 [nav] title page move: animated
+10:04:29.802 [nav] touch 624 ms after going back began → Home
+10:04:29.821 [nav] home: open Classroom of the Elite
+10:04:29.821 [nav] home: the path still had 1 page(s) that aren't on screen; replaced
+10:04:29.856 [nav] home path 1 → 1: [GlassPlayer.LibraryRoute.group("s|classroom of the elite")]
+10:04:30.088 [nav] page leaving: taps off
+10:04:30.090 [nav] page gone 912 ms after it started going back
+10:04:31.054 [nav] page opening: moved by your finger 794 ms in; no taps on it while you do
+10:04:31.065 [nav] title page move: interactive
+10:04:31.337 [nav] page going back before it was open (1076 ms in): no taps on it until it's gone
+10:04:31.433 [nav] title page move: animated
+10:04:31.875 [nav] touch 537 ms after going back began → Home
+10:04:31.955 [nav] home: open Dragon Ball Super Beerus
+10:04:31.955 [nav] home: the path still had 1 page(s) that aren't on screen; replaced
+10:04:32.004 [nav] home path 1 → 1: [GlassPlayer.LibraryRoute.group("s|dragon ball super beerus")]
+10:04:32.029 [nav] page leaving: taps off
+10:04:32.030 [nav] page gone 692 ms after it started going back
+10:04:33.123 [energy] cpu 13% (main 10%, com.apple.UIKit.in 4%) mem 63 MB (0 MB left) thermal=nominal playing=no
+10:04:33.123 [nav] title page move: interactive
+10:04:33.124 [nav] page leaving: taps off
+10:04:33.397 [nav] home path 1 → 0: []
+10:04:33.413 [nav] title page move: animated
+10:04:33.944 [nav] touch 818 ms after going back began → Home
+10:04:34.006 [nav] home: open MobLand
+10:04:34.040 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:04:34.303 [nav] page gone 1178 ms after it started going back
+10:04:34.311 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:34.378 [nav] title page disappear Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.AAC2.0.H.264.MSubs-ToonsHub.mkv
+10:04:34.665 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:04:34.767 [nav] title page move: animated
+10:04:35.185 [nav] title page move: interactive
+10:04:35.190 [nav] page opening: moved by your finger 775 ms in; no taps on it while you do
+10:04:35.431 [nav] page going back before it was open (1016 ms in): no taps on it until it's gone
+10:04:35.565 [nav] title page move: animated
+10:04:36.702 [nav] page leaving: taps off
+10:04:36.704 [nav] page gone 1271 ms after it started going back
+10:04:36.850 [nav] home path 1 → 0: []
+10:04:36.865 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:41.577 [hang] main thread unresponsive for 1.8 s
+10:04:42.910 [nav] home: open MobLand
+10:04:42.958 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:04:43.115 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:43.246 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:04:43.350 [nav] title page move: animated
+10:04:44.145 [nav] page opening: moved by your finger 990 ms in; no taps on it while you do
+10:04:44.150 [nav] title page move: interactive
+10:04:44.363 [nav] page going back before it was open (1207 ms in): no taps on it until it's gone
+10:04:44.466 [nav] title page move: animated
+10:04:44.919 [nav] touch 555 ms after going back began → Home
+10:04:44.996 [nav] home: open Classroom of the Elite
+10:04:44.996 [nav] home: the path still had 1 page(s) that aren't on screen; replaced
+10:04:45.055 [nav] home path 1 → 1: [GlassPlayer.LibraryRoute.group("s|classroom of the elite")]
+10:04:45.323 [nav] page leaving: taps off
+10:04:45.323 [nav] page gone 960 ms after it started going back
+10:04:46.209 [nav] title page move: interactive
+10:04:46.228 [nav] page opening: moved by your finger 765 ms in; no taps on it while you do
+10:04:46.443 [nav] page going back before it was open (980 ms in): no taps on it until it's gone
+10:04:46.570 [nav] title page move: animated
+10:04:47.017 [nav] touch 573 ms after going back began → Home
+10:04:47.096 [nav] home: open Dragon Ball Super Beerus
+10:04:47.096 [nav] home: the path still had 1 page(s) that aren't on screen; replaced
+10:04:47.139 [nav] home path 1 → 1: [GlassPlayer.LibraryRoute.group("s|dragon ball super beerus")]
+10:04:47.168 [nav] page leaving: taps off
+10:04:47.169 [nav] page gone 725 ms after it started going back
+10:04:48.357 [nav] page leaving: taps off
+10:04:48.462 [nav] title page move: interactive
+10:04:48.598 [nav] home path 1 → 0: []
+10:04:48.624 [nav] title page move: animated
+10:04:49.209 [nav] touch 851 ms after going back began → Home
+10:04:49.251 [nav] home: open MobLand
+10:04:49.329 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|mobland")]
+10:04:49.577 [nav] page gone 1219 ms after it started going back
+10:04:49.582 [nav] title page appear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:04:49.649 [nav] title page disappear Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.AAC2.0.H.264.MSubs-ToonsHub.mkv
+10:04:49.906 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+10:04:50.008 [nav] title page move: animated
+10:04:50.480 [nav] page opening: moved by your finger 791 ms in; no taps on it while you do
+10:04:50.508 [nav] title page move: interactive
+10:04:50.687 [nav] page going back before it was open (998 ms in): no taps on it until it's gone
+10:04:50.770 [nav] title page move: animated
+10:04:51.924 [nav] page leaving: taps off
+10:04:51.925 [nav] page gone 1237 ms after it started going back
+10:04:52.086 [nav] home path 1 → 0: []
+10:04:52.104 [nav] title page disappear MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-SiCFoI.mkv
+10:05:00.288 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.settings]
+10:05:02.387 [nav] page leaving: taps off
+10:05:02.678 [nav] home path 1 → 0: []
+10:05:03.105 [energy] cpu 29% (main 19%, other 6%, com.apple.UIKit.in 4%) mem 63 MB (0 MB left) thermal=nominal playing=no
+10:05:03.837 [nav] page gone 1449 ms after it started going back
+10:05:08.114 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.settings]
+10:05:10.308 [nav] page leaving: taps off
+10:05:10.595 [nav] home path 1 → 0: []
+10:05:11.736 [nav] page gone 1427 ms after it started going back
+10:05:15.065 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.settings]
+10:05:17.262 [nav] page leaving: taps off
+10:05:17.565 [nav] home path 1 → 0: []
+10:05:18.723 [nav] page gone 1460 ms after it started going back
+10:05:22.623 [hang] main thread unresponsive for 1.9 s
