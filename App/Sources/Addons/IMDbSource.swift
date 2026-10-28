@@ -155,6 +155,9 @@ enum IMDbSource {
             }
             store("episodes|\(show.id)|\(season)|\(lang)", eps)
         }
+        // Live search as you type "lab" (and its first two letters).
+        for q in ["la", "lab", "lab m", "lab mo", "lab mov", "lab movi", "lab movie"] { store("suggest|\(q)", q.count > 3 ? [film] : [film, show]) }
+        store("suggest|labx", [MetaItem]())
         dlog("lab", "IMDb cache seeded (Lab Movie, Lab Series)")
     }
 
@@ -268,18 +271,33 @@ enum IMDbSource {
     private struct SuggestionResponse: Decodable { var d: [Suggestion]? }
 
     static func search(_ query: String) async -> [MetaItem] {
+        do {
+            return try await suggest(query)
+        } catch {
+            if !isCancellation(error) { dlog("imdb/error", "suggestion failed for \(query): \(error.localizedDescription)") }
+            return []
+        }
+    }
+
+    /// The suggestion API's answer for `query`, the same as `search(_:)` but
+    /// a failure is thrown instead of looking like "no results" (Discover's
+    /// live search shows them differently). Cancelling the calling task
+    /// cancels the request; the error is then CancellationError or
+    /// URLError.cancelled (see isCancellation).
+    static func suggest(_ query: String) async throws -> [MetaItem] {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !q.isEmpty else { return [] }
         let key = "suggest|\(q)"
         if let hit = cached(key, ttl: 86400, as: [MetaItem].self) { return hit }
         let path = q.replacingOccurrences(of: " ", with: "_").addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? q
-        guard let url = URL(string: "https://v3.sg.media-imdb.com/suggestion/x/\(path).json") else { return [] }
+        guard let url = URL(string: "https://v3.sg.media-imdb.com/suggestion/x/\(path).json") else { throw URLError(.badURL) }
         var req = URLRequest(url: url)
         req.setValue("application/json", forHTTPHeaderField: "Accept")
-        guard let r = try? await session.data(for: req), let res = try? JSONDecoder().decode(SuggestionResponse.self, from: r.0) else {
-            dlog("imdb/error", "suggestion failed for \(q)")
-            return []
-        }
+        let (data, response) = try await session.data(for: req)
+        try Task.checkCancellation()
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard status == 200 else { throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "HTTP \(status)"]) }
+        let res = try JSONDecoder().decode(SuggestionResponse.self, from: data)
         let items: [MetaItem] = (res.d ?? []).compactMap { s in
             guard s.id.hasPrefix("tt"), let name = s.l else { return nil }
             let type: String
@@ -295,6 +313,11 @@ enum IMDbSource {
         }
         store(key, items)
         return items
+    }
+
+    /// A request ended because its task was cancelled (a newer query took over).
+    static func isCancellation(_ error: Error) -> Bool {
+        error is CancellationError || (error as? URLError)?.code == .cancelled
     }
 
     // MARK: - Title details
