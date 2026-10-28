@@ -1,0 +1,59 @@
+13:59:38.427 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.99 GB
+13:59:40.641 [hang] main thread unresponsive for 2.3 s
+13:59:46.564 [scene] 30DFC3C3 connects (portrait)
+13:59:46.566 [scene] 30DFC3C3 will enter foreground (portrait)
+13:59:47.562 [app] first screen 13181 ms after process start
+13:59:47.562 [app] root view appeared (1 in this run, splash off)
+13:59:49.172 [scene] 30DFC3C3 active (portrait)
+13:59:49.191 [app] active
+13:59:53.149 [hang] main thread unresponsive for 1.7 s
+13:59:56.444 [hang] main thread unresponsive for 2.2 s
+13:59:57.239 [nav] home: open Lab Show
+13:59:57.265 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+13:59:57.645 [nav] title page appear Lab Show S01E01.mp4
+13:59:57.673 [nav] page opening: its move started
+13:59:57.857 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+13:59:57.959 [nav] title page move: animated
+13:59:58.742 [nav] page opening: its move ended after 1069 ms
+13:59:58.924 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+14:00:01.622 [nav] title page: Play → play Lab Show S01E01.mp4
+14:00:01.623 [player] play requested: 2 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Data/Application/87B7546B-ACA2-4F13-BA53-1C0CD01035E7/Documents/Media/Lab Show S01E01.mp4
+14:00:02.803 [player] start renderer=metal
+14:00:02.808 [player] mpv options applied renderer=metal hwdec=auto anime4k=off/fast picture=efficient
+14:00:02.923 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Data/Application/87B7546B-ACA2-4F13-BA53-1C0CD01035E7/Documents/Media/Lab Show S01E01.mp4 source=local opts=[] -> 0
+14:00:02.994 [player] decoder: software
+14:00:04.378 [perf] panel tracks prebuilt in 132 ms
+14:00:05.138 [perf] panel settings prebuilt in 590 ms
+14:00:05.335 [perf] panel nowPlaying prebuilt in 64 ms
+14:00:08.171 [player] file loaded in 5262 ms
+14:00:08.599 [skip] anime lookup Lab Show s1e1: 0 segment(s)
+14:00:08.854 [player] decoder: software
+14:00:13.995 [player] close at 0:04
+14:00:13.999 [player] metal view detached
+14:00:14.032 [energy] cpu 31% (other 16%, main 14%, core 0%) mem 73 MB (0 MB left) thermal=nominal playing=yes renderer=metal picture=efficient decoder=no · player closing
+14:00:14.362 [nav] player closed: back to portrait (phone is upright)
+14:00:14.426 [player] player model freed
+14:00:14.426 [player] player screen state freed
+14:00:15.950 [nav] after player closed: scene orientation=1 device=1 bounds=(402.0, 874.0)
+14:00:15.966 [nav]   window UIWindow level=0.0 hidden=false alpha=1.0 key=•••• touch=true frame=(0.0, 0.0, 402.0, 874.0) root=UIHostingController<ModifiedContent<LazyView<ModifiedContent<RootView, _EnvironmentKeyWritingModifier<Optional<AnyShapeStyle>>>>, RootModifier>> presented=nil
+14:00:19.253 [energy] cpu 1% (other 1%, main 1%) mem 70 MB (0 MB left) thermal=nominal playing=no
+14:00:22.960 [nav] title page: Play → play Lab Show S01E02.mp4
+14:00:22.961 [player] play requested: 2 item(s), index 1, first=/Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Data/Application/87B7546B-ACA2-4F13-BA53-1C0CD01035E7/Documents/Media/Lab Show S01E01.mp4
+14:00:23.063 [player] start renderer=metal
+14:00:23.066 [player] mpv options applied renderer=metal hwdec=auto anime4k=off/fast picture=efficient
+14:00:23.080 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/3435E92E-E723-410E-9BCA-775192FDE386/data/Containers/Data/Application/87B7546B-ACA2-4F13-BA53-1C0CD01035E7/Documents/Media/Lab Show S01E02.mp4 source=local opts=[] -> 0
+14:00:23.091 [player] decoder: software
+14:00:23.559 [player] file loaded in 479 ms
+14:00:23.565 [skip] anime lookup Lab Show s1e2: 0 segment(s)
+14:00:23.688 [player] decoder: software
+14:00:25.083 [perf] panel tracks prebuilt in 33 ms
+14:00:25.604 [perf] panel settings prebuilt in 243 ms
+14:00:25.674 [perf] panel nowPlaying prebuilt in 23 ms
+14:00:33.462 [player] close at 0:09
+14:00:33.468 [player] metal view detached
+14:00:33.481 [energy] cpu 27% (main 16%, other 10%, core 1%) mem 75 MB (0 MB left) thermal=nominal playing=yes renderer=metal picture=efficient decoder=no · player closing
+14:00:33.780 [nav] player closed: back to portrait (phone is upright)
+14:00:33.872 [player] player model freed
+14:00:33.872 [player] player screen state freed
+14:00:35.284 [nav] after player closed: scene orientation=1 device=1 bounds=(402.0, 874.0)
+14:00:35.284 [nav]   window UIWindow level=0.0 hidden=false alpha=1.0 key=•••• touch=true frame=(0.0, 0.0, 402.0, 874.0) root=UIHostingController<ModifiedContent<LazyView<ModifiedContent<RootView, _EnvironmentKeyWritingModifier<Optional<AnyShapeStyle>>>>, RootModifier>> presented=nil
