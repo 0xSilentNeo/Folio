@@ -137,6 +137,8 @@ jobs:
           git config user.email lab@users.noreply.github.com
           mkdir -p out && cp -R lab/* out/ 2>/dev/null || true
           tail -3000 build.log > out/build-tail.log 2>/dev/null || true
+          # Long UI test runs: the recording alone can be more than a push takes.
+          if [ "$(du -sm out | cut -f1)" -gt 250 ]; then rm -f out/lab.mp4; echo "recording left out (too big to push)"; fi
           # GitHub refuses files over 100 MB: split big ones (cat them back together).
           find out -type f -size +90M | while read f; do split -b 90m "$f" "$f.part-" && rm "$f"; done
           cd out && git init -q && git checkout -q -b "lab-${{ matrix.variant }}" && git add -A && git commit -qm "lab run ${{ github.run_id }}" \
