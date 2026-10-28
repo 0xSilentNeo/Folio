@@ -413,6 +413,9 @@ private struct LeavingProbe: UIViewControllerRepresentable {
             openingNav = nav
             moved = false
             openedAt = CACurrentMediaTime()
+            // Your log can then show tap → the page starts to move (with
+            // "home: open") and how long the move runs.
+            dlog("nav", "page opening: its move started")
             let l = CADisplayLink(target: Ticker(self), selector: #selector(Ticker.tick))
             l.add(to: .main, forMode: .common)
             opening = l
@@ -428,6 +431,7 @@ private struct LeavingProbe: UIViewControllerRepresentable {
         fileprivate func openingTick() {
             guard let life, let vc = life.page, let nav = openingNav, let tc = nav.transitionCoordinator else {
                 opening?.invalidate(); opening = nil
+                if !moved { dlog("nav", "page opening: its move ended after \(Int((CACurrentMediaTime() - openedAt) * 1000)) ms") }
                 // The move ended between two frames while being moved: open
                 // if it's on top, otherwise viewWillDisappear has it.
                 if moved, let life, !life.leaving, let vc = life.page, vc.navigationController?.topViewController === vc {

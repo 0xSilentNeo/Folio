@@ -61,14 +61,32 @@ struct TitleHeroView: View {
     /// build of MobLand's page went through the history thousands of times
     /// (simulator profile, 28 Oct: 1.8 of every 2.1 s spent in history
     /// lookups came from this line).
+    ///
+    /// Worked out once for the same library and episode, not at each of the
+    /// ~8 places one build of the page asks (each sorted the episodes again).
     private var siblings: [URL] {
-        let live = local.files.filter { group.files.contains($0) }
-        guard group.isSeries else { return live.sorted(by: LibraryOrganizer.episodeOrder) }
-        let show = TitleParser.parse(file.lastPathComponent).title.lowercased()
-        let extra = local.files.filter { f in !group.files.contains(f) && TitleParser.parse(f.lastPathComponent).title.lowercased() == show }
-        return (live + extra).sorted(by: LibraryOrganizer.episodeOrder)
+        let files = local.files, current = file
+        if let m = memo.siblings, m.group == group.id, m.files == files, m.file == current { return m.list }
+        let live = files.filter { group.files.contains($0) }
+        let list: [URL]
+        if group.isSeries {
+            let show = TitleParser.parse(current.lastPathComponent).title.lowercased()
+            let extra = files.filter { f in !group.files.contains(f) && TitleParser.parse(f.lastPathComponent).title.lowercased() == show }
+            list = (live + extra).sorted(by: LibraryOrganizer.episodeOrder)
+        } else {
+            list = live.sorted(by: LibraryOrganizer.episodeOrder)
+        }
+        memo.siblings = (group.id, files, current, list)
+        memo.seasons = Array(Set(list.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted()
+        return list
     }
-    private var seasons: [Int] { Array(Set(siblings.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted() }
+    private var seasons: [Int] { _ = siblings; return memo.seasons }
+    /// Not state: what's remembered here never redraws anything.
+    private final class Memo {
+        var siblings: (group: String, files: [URL], file: URL, list: [URL])?
+        var seasons: [Int] = []
+    }
+    @State private var memo = Memo()
     private var shownEpisodes: [URL] {
         guard seasons.count > 1, let season else { return siblings }
         return siblings.filter { TitleParser.parse($0.lastPathComponent).season == season }
