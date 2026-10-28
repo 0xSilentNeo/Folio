@@ -47,6 +47,9 @@ struct HomeView: View {
     }
 
     /// Pages open from list rows with the usual push (ListTransition.push).
+    /// Those pages show the system bar: with it hidden, UIKit's swipe back
+    /// doesn't start (lab, 28 Oct: an edge swipe on a pushed page with its
+    /// own bar did nothing).
     private var listPushes: Bool {
         (LibraryViewMode(rawValue: libraryView) ?? .grid) != .grid && ListTransition.current == .push
     }
@@ -76,9 +79,9 @@ struct HomeView: View {
         case .settings:
             SettingsView().zoomDestination("settings", in: zoomNS)
         case .group(let id):
-            LibraryRoute.destination(route).zoomDestination(id, in: zoomNS, zoom: !listPushes, inPageBar: true)
+            LibraryRoute.destination(route).zoomDestination(id, in: zoomNS, zoom: !listPushes)
         case .folder(let path):
-            LibraryRoute.destination(route).zoomDestination("d|" + path, in: zoomNS, zoom: !listPushes, inPageBar: true)
+            LibraryRoute.destination(route).zoomDestination("d|" + path, in: zoomNS, zoom: !listPushes)
         default:
             LibraryRoute.destination(route)
         }
