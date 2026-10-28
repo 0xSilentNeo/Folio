@@ -683,12 +683,17 @@ struct PressStyle: ButtonStyle {
     var scale: CGFloat = 0.9
     /// Called when the finger goes down (a head start for what the tap opens).
     var onPress: (() -> Void)? = nil
+    @ViewBuilder
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        let pressed = configuration.label
             .scaleEffect(configuration.isPressed ? scale : 1)
             .opacity(configuration.isPressed ? 0.8 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
-            .onChange(of: configuration.isPressed) { _, pressed in if pressed { onPress?() } }
+        if let onPress {
+            pressed.onChange(of: configuration.isPressed) { _, down in if down { onPress() } }
+        } else {
+            pressed      // as before 1.17.4 (menus, player buttons)
+        }
     }
 }
 
