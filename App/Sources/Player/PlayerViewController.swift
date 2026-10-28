@@ -136,6 +136,10 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
         if !awayObservers.isEmpty { UIDevice.current.endGeneratingDeviceOrientationNotifications() }
         awayObservers.forEach { NotificationCenter.default.removeObserver($0) }
         awayObservers = []
+        // The screen's panel opener holds the screen, and with it this state
+        // and the model: let go of it, or the whole session stays in memory
+        // after closing (AuditUITests: no "player model freed" line).
+        ui.presentNow = nil
         model.close()
         PlayerPresenter.dismiss(animated: animated)
     }
