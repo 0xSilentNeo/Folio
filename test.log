@@ -1,0 +1,190 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=F5C13540-3085-4CF9-A2AD-76FBB3A9C49F -derivedDataPath build "-only-testing:GlassPlayerUITests/OpenCostUITests/test60OpenClose"
+
+2026-10-28 10:28:50.819125+0000 GlassPlayerUITests-Runner[17169:52934] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-28 10:29:00.743.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-28 10:29:00.751.
+Test Suite 'OpenCostUITests' started at 2026-10-28 10:29:00.751.
+2026-10-28 10:29:02.021 xcodebuild[16764:51932] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 10:29:02.021 xcodebuild[16764:51932] [MT] IDELaunchParametersSnapshot: no debugger version
+Test Case '-[GlassPlayerUITests.OpenCostUITests test60OpenClose]' started.
+    t =     0.01s Start Test at 2026-10-28 10:29:00.760
+    t =     0.08s Set Up
+QUIESCENCE XCUIApplicationProcess -shouldSkipPreEventQuiescence B16@0:8; XCUIApplicationProcess -shouldSkipPostEventQuiescence B16@0:8; XCUIApplicationProcess -shouldSkipSpindumpInQuiescence B16@0:8; XCUIApplicationProcess -_makeQuiescenceExpectation @16@0:8; XCUIApplicationProcess -waitForQuiescenceIncludingAnimationsIdle:isPreEvent: v24@0:8B16B20 → skipped; XCUIApplicationProcess -waitForQuiescenceIncludingAnimationsIdle:usingActivity:isPreEvent: v28@0:8B16B20B24 → skipped; XCUIApplicationProcess -_initiateQuiescenceChecksIncludingAnimationsIdle: v20@0:8B16 → skipped; XCUIApplication -_waitForQuiescence v16@0:8; XCUIApplication -_waitForQuiescenceAsPreEvent: v20@0:8B16
+    t =     0.09s Open dev.silentneo.glassplayer
+    t =     0.09s     Launch dev.silentneo.glassplayer
+objc[17169]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.pdFBuc/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x10a4c8398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.pdFBuc/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x10a5bc310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =     8.74s         Setting up automation session
+    t =    14.62s Setting device orientation to Portrait
+    t =    14.65s     Device orientation changed to Portrait
+    t =    14.72s Waiting 30.0s for "MobLand" StaticText to exist
+    t =    15.80s     Checking `Expect predicate `existsNoRetry == 1` for object "MobLand" StaticText`
+    t =    15.80s         Checking existence of `"MobLand" StaticText`
+    t =    20.00s Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.08s Find the Target Application 'dev.silentneo.glassplayer'
+    t =    20.14s Find the "MobLand" StaticText
+    t =    20.40s Find the "MobLand" StaticText
+    t =    20.78s Checking existence of `"Classroom of the Elite" StaticText`
+    t =    20.95s Find the "Classroom of the Elite" StaticText
+    t =    21.11s Find the "Classroom of the Elite" StaticText
+    t =    21.32s Checking existence of `"Dragon Ball Super Beerus" StaticText`
+    t =    21.51s Find the "Dragon Ball Super Beerus" StaticText
+    t =    21.69s Find the "Dragon Ball Super Beerus" StaticText
+OPENCOST 10:29:22.636 layout screen 440x956 MobLand (137.33333333333331, 617.3333333333334) Classroom (182.16666666666666, 493.3333333333333) Dragon Ball (195.33333333333331, 865.3333333333334)
+    t =    21.89s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (137.3, 617.3)
+    t =    21.89s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    21.96s     Check for interrupting elements affecting "Folio" Application
+    t =    22.03s     Synthesize event
+    t =    22.03s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    22.10s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    22.20s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    31.29s Checking existence of `"Close player" Button`
+    t =    31.45s Checking existence of `"Back" Button`
+    t =    31.87s Checking existence of `"Back" Button`
+    t =    32.16s Checking existence of `"Back" Button`
+    t =    32.73s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (182.2, 493.3)
+    t =    32.73s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    32.80s     Check for interrupting elements affecting "Folio" Application
+    t =    32.90s     Synthesize event
+    t =    32.91s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    32.99s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    33.09s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    41.94s Checking existence of `"Close player" Button`
+    t =    42.05s Checking existence of `"Back" Button`
+    t =    42.54s Checking existence of `"Back" Button`
+    t =    43.01s Checking existence of `"Back" Button`
+    t =    43.72s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (195.3, 865.3)
+    t =    43.72s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    43.81s     Check for interrupting elements affecting "Folio" Application
+    t =    44.00s     Synthesize event
+    t =    44.01s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    44.07s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    44.15s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    53.05s Checking existence of `"Close player" Button`
+    t =    53.19s Checking existence of `"Back" Button`
+    t =    53.51s Checking existence of `"Back" Button`
+    t =    53.81s Checking existence of `"Back" Button`
+    t =    54.08s Tap Target Application 'dev.silentneo.glassplayer'[0.00, 0.00] -> (137.3, 617.3)
+    t =    54.08s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    54.16s     Check for interrupting elements affecting "Folio" Application
+    t =    54.23s     Synthesize event
+    t =    54.23s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    54.29s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    54.36s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    63.21s Checking existence of `"Close player" Button`
+    t =    63.29s Checking existence of `"Back" Button`
+    t =    63.66s Checking existence of `"Back" Button`
+    t =    64.09s Checking existence of `"Back" Button`
+OPENCOST 10:30:08.093 A0 open MobLand
+OPENCOST 10:30:10.910 A0 swipe back (page open)
+    t =    73.74s Checking existence of `"Close player" Button`
+    t =    74.53s Checking existence of `"Back" Button`
+    t =    76.73s Checking existence of `"Back" Button`
+    t =    77.35s Checking existence of `"Back" Button`
+OPENCOST 10:30:18.563 A1 open MobLand
+OPENCOST 10:30:21.380 A1 swipe back (page open)
+    t =    84.15s Checking existence of `"Close player" Button`
+    t =    84.29s Checking existence of `"Back" Button`
+    t =    84.73s Checking existence of `"Back" Button`
+    t =    85.23s Checking existence of `"Back" Button`
+OPENCOST 10:30:26.480 A2 open MobLand
+OPENCOST 10:30:29.308 A2 swipe back (page open)
+    t =    92.13s Checking existence of `"Close player" Button`
+    t =    92.31s Checking existence of `"Back" Button`
+    t =    93.54s Checking existence of `"Back" Button`
+    t =    94.14s Checking existence of `"Back" Button`
+OPENCOST 10:30:35.474 A3 open MobLand
+OPENCOST 10:30:38.382 A3 swipe back (page open)
+    t =   101.15s Checking existence of `"Close player" Button`
+    t =   101.30s Checking existence of `"Back" Button`
+    t =   102.03s Checking existence of `"Back" Button`
+    t =   102.52s Checking existence of `"Back" Button`
+OPENCOST 10:30:43.933 B0 open MobLand
+OPENCOST 10:30:44.841 B0 swipe back (0.6 s in)
+    t =   107.62s Checking existence of `"Close player" Button`
+    t =   107.74s Checking existence of `"Back" Button`
+    t =   108.56s Checking existence of `"Back" Button`
+    t =   109.10s Checking existence of `"Back" Button`
+OPENCOST 10:30:50.321 B1 open MobLand
+OPENCOST 10:30:51.210 B1 swipe back (0.6 s in)
+    t =   113.99s Checking existence of `"Close player" Button`
+    t =   114.08s Checking existence of `"Back" Button`
+    t =   114.36s Checking existence of `"Back" Button`
+    t =   114.68s Checking existence of `"Back" Button`
+OPENCOST 10:30:55.745 B2 open MobLand
+OPENCOST 10:30:56.656 B2 swipe back (0.6 s in)
+    t =   119.43s Checking existence of `"Close player" Button`
+    t =   119.54s Checking existence of `"Back" Button`
+    t =   119.88s Checking existence of `"Back" Button`
+    t =   120.25s Checking existence of `"Back" Button`
+OPENCOST 10:31:01.300 B3 open MobLand
+OPENCOST 10:31:02.207 B3 swipe back (0.6 s in)
+    t =   124.98s Checking existence of `"Close player" Button`
+    t =   125.24s Checking existence of `"Back" Button`
+    t =   128.38s Checking existence of `"Back" Button`
+    t =   128.79s Checking existence of `"Back" Button`
+OPENCOST 10:31:09.951 C0 open MobLand
+OPENCOST 10:31:11.146 C0 swipe back MobLand
+OPENCOST 10:31:12.002 C0 open Classroom
+OPENCOST 10:31:13.205 C0 swipe back Classroom
+OPENCOST 10:31:14.081 C0 open Dragon Ball
+OPENCOST 10:31:15.291 C0 swipe back Dragon Ball
+OPENCOST 10:31:16.183 C0 open MobLand
+OPENCOST 10:31:17.384 C0 swipe back MobLand
+    t =   140.52s Checking existence of `"Close player" Button`
+    t =   140.73s Checking existence of `"Back" Button`
+    t =   141.74s Checking existence of `"Back" Button`
+    t =   142.15s Checking existence of `"Back" Button`
+OPENCOST 10:31:23.295 C1 open MobLand
+OPENCOST 10:31:24.484 C1 swipe back MobLand
+OPENCOST 10:31:25.354 C1 open Classroom
+OPENCOST 10:31:26.550 C1 swipe back Classroom
+OPENCOST 10:31:27.424 C1 open Dragon Ball
+OPENCOST 10:31:28.621 C1 swipe back Dragon Ball
+OPENCOST 10:31:29.557 C1 open MobLand
+OPENCOST 10:31:30.773 C1 swipe back MobLand
+    t =   153.92s Checking existence of `"Close player" Button`
+    t =   154.03s Checking existence of `"Back" Button`
+    t =   154.42s Checking existence of `"Back" Button`
+    t =   154.81s Checking existence of `"Back" Button`
+    t =   155.08s Checking existence of `"Settings" Button`
+    t =   155.27s Find the "Settings" Button
+    t =   155.48s Find the "gearshape" Button
+OPENCOST 10:31:36.398 D0 open Settings
+OPENCOST 10:31:38.694 D0 swipe back from Settings
+    t =   161.45s Checking existence of `"Close player" Button`
+    t =   161.87s Checking existence of `"Back" Button`
+    t =   166.22s Checking existence of `"Back" Button`
+    t =   167.22s Checking existence of `"Back" Button`
+OPENCOST 10:31:48.522 D1 open Settings
+OPENCOST 10:31:50.833 D1 swipe back from Settings
+    t =   173.64s Checking existence of `"Close player" Button`
+    t =   174.68s Checking existence of `"Back" Button`
+    t =   187.39s Checking existence of `"Back" Button`
+    t =   190.54s Checking existence of `"Back" Button`
+OPENCOST 10:32:13.325 D2 open Settings
+OPENCOST 10:32:15.668 D2 swipe back from Settings
+    t =   198.50s Checking existence of `"Close player" Button`
+    t =   198.99s Checking existence of `"Back" Button`
+    t =   202.83s Checking existence of `"Back" Button`
+    t =   204.37s Checking existence of `"Back" Button`
+OPENCOST 10:32:27.281 done
+    t =   206.55s Tear Down
+Test Case '-[GlassPlayerUITests.OpenCostUITests test60OpenClose]' passed (207.502 seconds).
+Test Suite 'OpenCostUITests' passed at 2026-10-28 10:32:28.265.
+	 Executed 1 test, with 0 failures (0 unexpected) in 207.502 (207.514) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-28 10:32:28.266.
+	 Executed 1 test, with 0 failures (0 unexpected) in 207.502 (207.516) seconds
+Test Suite 'Selected tests' passed at 2026-10-28 10:32:28.267.
+	 Executed 1 test, with 0 failures (0 unexpected) in 207.502 (207.524) seconds
+2026-10-28 10:32:29.775 xcodebuild[16764:51932] [MT] IDETestOperationsObserverDebug: 225.318 elapsed -- Testing started completed.
+2026-10-28 10:32:29.775 xcodebuild[16764:51932] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-28 10:32:29.775 xcodebuild[16764:51932] [MT] IDETestOperationsObserverDebug: 225.318 sec, +225.318 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.28_10-28-44-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
