@@ -109,7 +109,7 @@ jobs:
           REC=$!
           sleep 10
           V="${{ matrix.variant }}"; EXTRA=""; case "$V" in av-*) AO="${V#av-}"; EXTRA="-avLab -labAO=${AO%%.*}";; esac; [ "${{ matrix.variant }}" = "gl" ] && EXTRA="-labGL"; [ "${{ matrix.variant }}" = "noengine" ] && EXTRA="-labNoEngine"; [ "${{ matrix.variant }}" = "poplab" ] && EXTRA="-popLab"
-          ARGS="-uiLab $EXTRA"; [ "${{ matrix.variant }}" = "poplab" ] && ARGS="-popLab"; case "${{ matrix.variant }}" in av-*) ARGS="$EXTRA";; imdb) ARGS="-noSplash -imdbProbe=tt0944947";; glasslab) ARGS="-noSplash -glassLab";; skip) ARGS="-noSplash -skipProbe";; parse) ARGS="-noSplash -parseProbe";; names) ARGS="-noSplash -nameProbe";; esac
+          ARGS="-uiLab $EXTRA"; [ "${{ matrix.variant }}" = "poplab" ] && ARGS="-popLab"; case "${{ matrix.variant }}" in av-*) ARGS="$EXTRA";; imdb) ARGS="-noSplash -imdbProbe=tt0944947";; glasslab) ARGS="-noSplash -glassLab";; skip) ARGS="-noSplash -skipProbe";; parse) ARGS="-noSplash -parseProbe";; upnext) ARGS="-uiTestLibrary -upNextLab";; upnext-off) ARGS="-uiTestLibrary -upNextLab -noDurationRead";; names) ARGS="-noSplash -nameProbe";; esac
           ARGS="$ARGS ${{ github.event.inputs.extra }}"
           if case "${{ matrix.variant }}" in uitest*) true;; *) false;; esac; then
             ONLY="${{ github.event.inputs.only || 'GlassPlayerUITests' }}"; OT=""

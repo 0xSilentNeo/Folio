@@ -831,12 +831,68 @@ final class PlayerModel: ObservableObject {
         isLoading = false
         refreshTracks()
         refreshChapters()
+        readDuration()
         for sub in item.subtitles {
             c.commandAsync(["sub-add", sub.url, "auto", sub.title ?? sub.lang ?? "Addon", sub.lang ?? ""])
         }
         maybeRequestSegments()
         updateNowPlaying()
         startScreener()
+    }
+
+    /// The file's length: the time bar, skip segments (looked up only once
+    /// it's known), history, Now Playing, PiP.
+    private func applyDuration(_ d: Double) {
+        clock.duration = d
+        pipState.duration = d
+        pip.invalidate()
+        maybeRequestSegments()
+        updateNowPlaying()
+    }
+
+    /// Reads the length once the file is loaded, besides observing it.
+    ///
+    /// mpv sends an observed property only when its value changes ("no
+    /// change => no event", player/client.c). Up Next's playlist-next to the
+    /// prepared episode keeps the same mpv state, and load() set the length
+    /// back to 0 for the new file: when the next episode is exactly as long
+    /// as the last, no new length ever arrives. 28 Oct recording: S01E15
+    /// after S01E14 (both 23:25) showed 0:00 left with the knob at the end,
+    /// got no Skip Intro/Ending, and its history had no length.
+    private func readDuration() {
+        guard let c = client, !CommandLine.arguments.contains("-noDurationRead") else { return }
+        let id = item.id
+        c.query({ $0.double("duration") }) { [weak self] d in
+            guard let self, self.item.id == id, let d, d > 0, abs(self.clock.duration - d) > 0.001 else { return }
+            dlog("player", "length read when the file loaded: \(Self.format(d)) (mpv sent none: the same as the last file's)")
+            self.applyDuration(d)
+        }
+    }
+
+    /// Lab (`-upNextLab`): Up Next's way to the next episode with two local
+    /// files of the same length (the lab clip twice) — next in mpv's playlist
+    /// as prepare(_:) does for a stream, then playlist-next.
+    func labUpNext() {
+        guard let c = client, hasNext, fileLoaded else { dlog("lab", "up next lab: not ready"); return }
+        let i = queueIndex + 1
+        let next = queue[i]
+        c.set("keep-open", "always")
+        c.set("prefetch-playlist", "yes")
+        c.command(["playlist-clear"])
+        c.command(["loadfile", next.mpvPath, "append", "-1"])
+        appended = (i, next.mpvPath)
+        dlog("lab", "up next lab: \(next.displayTitle) next in mpv's playlist; this file is \(Self.format(duration)) long")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self else { return }
+            dlog("lab", "up next lab: on to the next episode")
+            self.playNext()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+                guard let self, let c = self.client else { return }
+                c.query({ $0.double("duration") }) { d in
+                    dlog("lab", "up next lab: now \(self.mediaTitle): the time bar's length \(Self.format(self.duration)), mpv's \(d.map { Self.format($0) } ?? "none") → \(self.duration > 0 && abs(self.duration - (d ?? 0)) < 0.01 ? "OK" : "WRONG")")
+                }
+            }
+        }
     }
 
     // MARK: Tracks / chapters
@@ -1937,11 +1993,7 @@ extension PlayerModel: MPVClientDelegate {
             }
             saveHistory()
         case "duration":
-            clock.duration = value.double ?? 0
-            pipState.duration = clock.duration
-            pip.invalidate()
-            maybeRequestSegments()
-            updateNowPlaying()
+            applyDuration(value.double ?? 0)
         case "pause":
             paused = value.bool ?? false
             pipState.paused = paused
