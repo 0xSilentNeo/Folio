@@ -211,12 +211,13 @@ struct Wordmark: View {
 /// a card mid-screen, turns into a big copy of that poster, then into the
 /// row — the zoom morphs the page into its source's picture.
 /// - thumb: the zoom from the row's picture (until 1.17.3)
-/// - row: the zoom from the whole row
+/// - row: the zoom from the whole row (1.17.4: your pick from the lab's
+///   recording of all three)
 /// - push: the usual slide-in push, as in Infuse and iOS's own lists
 enum ListTransition: String {
     case thumb, row, push
     static var current: ListTransition {
-        ListTransition(rawValue: UserDefaults.standard.string(forKey: SettingsKey.listTransition) ?? "") ?? .thumb
+        ListTransition(rawValue: UserDefaults.standard.string(forKey: SettingsKey.listTransition) ?? "") ?? .row
     }
 }
 

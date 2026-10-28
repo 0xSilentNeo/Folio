@@ -38,10 +38,17 @@ final class LingerUITests: XCTestCase {
         return s
     }
 
-    func test51LingerLab() throws {
+    func test51LingerLab() throws { try lingerLab(list: false) }
+
+    /// The same on Home's list, where a page zooms out of its whole row
+    /// (1.17.4), like the library you use.
+    func test53LingerLabList() throws { try lingerLab(list: true) }
+
+    private func lingerLab(list: Bool) throws {
         Quiescence.skipWaiting()
         let app = XCUIApplication()
         app.launchArguments = ["-uiTestLibrary", "-uiTestTwoTitles", "-heroView", "details", "-lingerLab"]
+            + (list ? ["-libraryView", "details", "-tileArtwork", "poster", "-titlePageStyle", "files"] : [])
         app.launch()
         XCUIDevice.shared.orientation = .portrait
         let showLabel = app.staticTexts["Lab Show"].firstMatch, otherLabel = app.staticTexts["Lab Other"].firstMatch
