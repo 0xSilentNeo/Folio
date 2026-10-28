@@ -1,0 +1,50 @@
+13:07:14.701 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.1 GB
+13:07:14.731 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+13:07:16.963 [hang] main thread unresponsive for 2.3 s
+13:07:18.802 [app] first screen 5538 ms after process start
+13:07:19.697 [app] active
+13:07:27.739 [nav] page opening: its move started
+13:07:27.798 [perf] title page tt9000001 ready in 94 ms
+13:07:28.705 [nav] page opening: its move ended after 965 ms
+13:07:50.296 [energy] cpu 10% (main 9%) mem 56 MB (0 MB left) thermal=nominal playing=no
+13:07:53.778 [hang] main thread unresponsive for 1.9 s
+13:08:03.081 [hang] main thread unresponsive for 2.7 s
+13:08:18.813 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.82 GB
+13:08:18.833 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+13:08:21.083 [hang] main thread unresponsive for 2.3 s
+13:08:21.846 [app] first screen 4442 ms after process start
+13:08:22.361 [app] active
+13:08:36.434 [hang] main thread unresponsive for 1.9 s
+13:08:39.094 [search] "lab": 2 title(s) in 0 ms
+13:08:42.082 [nav] page opening: its move started
+13:08:42.182 [perf] title page tt9000001 ready in 164 ms
+13:08:42.657 [nav] page opening: its move ended after 574 ms
+13:08:46.034 [nav] page leaving: taps off
+13:08:46.608 [nav] page gone 573 ms after it started going back
+13:08:52.647 [energy] cpu 26% (main 24%, other 2%) mem 62 MB (0 MB left) thermal=nominal playing=no
+13:08:53.574 [search] "labx": 0 title(s) in 18 ms
+13:09:11.563 [hang] main thread unresponsive for 2.2 s
+13:09:17.020 [search] "lab movie": 1 title(s) in 13 ms
+13:09:22.220 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.35 GB
+13:09:22.243 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+13:09:24.738 [hang] main thread unresponsive for 2.5 s
+13:09:25.365 [app] first screen 4402 ms after process start
+13:09:25.866 [app] active
+13:09:40.646 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.32 GB
+13:09:40.672 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+13:09:43.305 [hang] main thread unresponsive for 2.7 s
+13:09:43.320 [app] first screen 4468 ms after process start
+13:09:44.258 [app] active
+13:09:55.141 [search] "lab": 2 title(s) in 0 ms
+13:09:57.125 [nav] page opening: its move started
+13:09:57.674 [nav] page opening: its move ended after 548 ms
+13:09:57.921 [tvmaze] tt9000002 Lab Series: show not found, 0 English episode titles
+13:09:57.924 [perf] title page tt9000002 ready in 859 ms
+13:10:01.212 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.28 GB
+13:10:01.236 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+13:10:03.822 [hang] main thread unresponsive for 2.6 s
+13:10:04.654 [app] first screen 4685 ms after process start
+13:10:05.122 [app] active
+13:10:13.094 [hang] main thread unresponsive for 2.1 s
+13:10:17.907 [search/error] "dune": The operation couldn’t be completed. (NSURLErrorDomain error -1009.) (offline)
+13:10:19.311 [search/error] "dune": The operation couldn’t be completed. (NSURLErrorDomain error -1009.) (offline)
