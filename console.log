@@ -1,0 +1,1399 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-28 14:16:35.647 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:16:35.747 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:16:47.425 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:16:47.858 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:16:55.412 E  GlassPlayer[17847:d61a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:16:55.474 E  GlassPlayer[17847:d61a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:16:56.663 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:16:56.826 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:16:57.768 E  GlassPlayer[17847:d61d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:16:57.787 E  GlassPlayer[17847:d61d] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:16:59.965 E  GlassPlayer[17847:dd86] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-10-28 14:17:02.165 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:02.333 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:08.154 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:08.317 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:10.048 E  GlassPlayer[17847:d617] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:10.073 E  GlassPlayer[17847:d617] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:10.530 E  GlassPlayer[17847:d61a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:10.530 E  GlassPlayer[17847:d61a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:12.535 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:12.574 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:13.117 E  GlassPlayer[17847:d617] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:13.121 E  GlassPlayer[17847:d617] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:13.725 E  GlassPlayer[17847:e169] [com.apple.locationd.Core:Core] <compose failure [shared UUID]>
+2026-10-28 14:17:14.411 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.412 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.412 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.413 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.413 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.413 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.413 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.413 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.414 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.935 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.936 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.936 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.936 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:14.953 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:17:14.953 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:17:14.953 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:17:14.953 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:17:14.954 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:17:18.078 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:18.078 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:18.078 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:18.654 E  GlassPlayer[17847:d546] [com.apple.RemoteTextInput:RTILog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.795 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.796 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.796 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.796 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.796 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.800 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.800 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.832 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.833 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.833 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.844 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.844 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.844 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.850 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.850 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:18.998 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:18.998 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:18.998 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:18.999 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:19.022 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:17:19.022 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:17:19.023 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:17:19.117 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.123 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.294 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:17:19.421 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:17:19.422 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.424 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:19.436 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.438 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.469 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.518 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.519 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.528 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.530 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.536 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.537 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.541 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.544 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.545 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.548 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.549 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.576 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:19.628 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:19.628 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:19.628 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.673 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.674 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.696 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.696 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.698 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.700 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.700 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.705 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.707 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.711 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.711 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.712 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.715 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.715 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.718 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.718 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:19.730 E  GlassPlayer[17847:d61a] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:19.730 E  GlassPlayer[17847:d61a] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:21.256 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:21.269 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:21.591 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:21.599 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:21.959 E  GlassPlayer[17847:d607] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:21.959 E  GlassPlayer[17847:d607] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:22.382 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:22.382 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:22.382 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:22.382 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:22.384 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:22.398 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:22.398 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:22.415 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:22.415 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:22.416 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:23.766 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:23.791 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:24.212 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:24.223 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:24.546 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:24.554 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:24.694 E  GlassPlayer[17847:d61b] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:24.695 E  GlassPlayer[17847:d61b] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:25.279 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:25.280 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:27.198 E  GlassPlayer[17847:d546] [com.apple.RemoteTextInput:RTILog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.222 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.222 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.222 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.222 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.222 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.226 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.226 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.226 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.227 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.227 E  GlassPlayer[17847:d546] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:17:27.432 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.432 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.516 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.517 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.519 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.520 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.587 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:27.591 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.617 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:27.670 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:27.670 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.671 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:27.671 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.725 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.730 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.731 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.733 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.737 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.738 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.753 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.753 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.755 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.773 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.803 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.826 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.827 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.831 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.835 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.836 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.840 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.841 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.843 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.844 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.845 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.846 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.847 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.847 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.848 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:27.850 E  GlassPlayer[17847:d620] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:17:27.852 E  GlassPlayer[17847:d620] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:17:28.977 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:28.985 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:29.263 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:29.276 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:29.662 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:29.683 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:30.074 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:30.086 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:30.541 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:30.559 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:31.079 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:31.099 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:31.571 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:31.572 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:33.956 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:33.971 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:34.486 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:34.501 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:34.985 E  GlassPlayer[17847:d607] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:34.985 E  GlassPlayer[17847:d607] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:36.687 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:36.689 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:36.768 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:36.770 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:36.930 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:36.940 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:37.252 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:37.253 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:39.174 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4636823936.556 (AX element pid: 17847, elementOrHash.elementID: 4636823936.556) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_UIPopoverDimmingView";
+    "XC_kAXXCAttributeElementType" = "_UIPopoverDimmingView";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.175 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4636827776.557 (AX element pid: 17847, elementOrHash.elementID: 4636827776.557) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 18;
+    "XC_kAXXCAttributeElementBaseType" = "_UIPopoverView";
+    "XC_kAXXCAttributeElementType" = "_UIPopoverView";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.176 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Preferring automation type 18 instead of legacy element type OTHER derived from class/trait: _UIPopoverView:_UIPopoverView 0
+2026-10-28 14:17:39.176 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Computed elementType Popover.
+2026-10-28 14:17:39.187 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Popover (AX element pid: 17847, elementOrHash.elementID: 4636827776.557) faulted in {
+    "XC_kAXXCAttributeChildren" =     (
+        "AX element pid: 17847, elementOrHash.elementID: 4636828416.558"
+    );
+}: (no error) for children using XC_kAXXCAttributeChildren
+2026-10-28 14:17:39.190 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4636828416.558 (AX element pid: 17847, elementOrHash.elementID: 4636828416.558) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_UIPopoverShapeLayerChromeView";
+    "XC_kAXXCAttributeElementType" = "_UIPopoverShapeLayerChromeView";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.213 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4443223040.559 (AX element pid: 17847, elementOrHash.elementID: 4443223040.559) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_UIPopoverGlassBackground";
+    "XC_kAXXCAttributeElementType" = "_UIPopoverGlassBackground";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.239 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4636827136.560 (AX element pid: 17847, elementOrHash.elementID: 4636827136.560) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit17UICoreHostingViewVS_P10$1c576b1c816GlassPopoverView_";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit17UICoreHostingViewVS_P10$1c576b1c816GlassPopoverView_";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.327 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:39.336 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:39.420 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4678178048.566 (AX element pid: 17847, elementOrHash.elementID: 4678178048.566) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_P10$1c576b24036GlassPopoverContentViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_P10$1c576b24036GlassPopoverContentViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.632 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4638812160.574 (AX element pid: 17847, elementOrHash.elementID: 4638812160.574) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 46;
+    "XC_kAXXCAttributeElementBaseType" = "_UIInterfaceActionRepresentationsSequenceView";
+    "XC_kAXXCAttributeElementType" = "_UIInterfaceActionRepresentationsSequenceView";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.645 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Preferring automation type 46 instead of legacy element type OTHER derived from class/trait: _UIInterfaceActionRepresentationsSequenceView:_UIInterfaceActionRepresentationsSequenceView 8589934592
+2026-10-28 14:17:39.746 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4443081728.587 (AX element pid: 17847, elementOrHash.elementID: 4443081728.587) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 9;
+    "XC_kAXXCAttributeElementBaseType" = "_UIInterfaceActionCustomViewRepresentationView";
+    "XC_kAXXCAttributeElementType" = "_UIInterfaceActionCustomViewRepresentationView";
+    "XC_kAXXCAttributeTraits" = 8589934593;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.757 Df GlassPlayer[17847:d61b] [com.apple.dt.xctest:Default] Current tree:
+0x1095abe80 <App element pid: 17847>
+  Window, 0x1095a9540 <AX element pid: 17847, elementOrHash.elementID: 4398629888.3>
+    Other, 0x109604500 <AX element pid: 17847, elementOrHash.elementID: 4657148608.554>
+    Other, 0x109606d00 <AX element pid: 17847, elementOrHash.elementID: 4399687744.4>
+    Other, 0x109605540 <AX element pid: 17847, elementOrHash.elementID: 4442243584.5>
+      Other, 0x110a4fd40 <AX element pid: 17847, elementOrHash.elementID: 4443307008.6>
+        Other, 0x106253480 <AX element pid: 17847, elementOrHash.elementID: 4398628864.7>
+          Other, 0x115a3a440 <AX element pid: 17847, elementOrHash.elementID: 4571980384.8>
+            Other, 0x116ee3200 <AX element pid: 17847, elementOrHash.elementID: 4442243072.9>
+              Other, 0x115820000 <AX element pid: 17847, elementOrHash.elementID: 4442255872.11>
+                Other, 0x115873480 <AX element pid: 17847, elementOrHash.elementID: 4580520640.122>
+                  Other, 0x116c717c0 <AX element pid: 17847, elementOrHash.elementID: 4398553344.123>
+                    Other, 0x116c71680 <AX element pid: 17847, elementOrHash.elementID: 4628707392.124>
+                      Other, 0x116c70780 <AX element pid: 17847, elementOrHash.elementID: 4628708032.125>
+                        Other, 0x116c72e40 <AX element pid: 17847, elementOrHash.elementID: 4443220480.126>
+                          NavigationBar, 0x110836440 <AX element pid: 17847, elementOrHash.elementID: 4453454336.274>
+                            SearchField, 0x110834a00 <AX element pid: 17847, elementOrHash.elementID: 4573257216.203>
+                              Image, 0x1095bb980 <AX element pid: 17847, elementOrHash.elementID: 4630470784.287>
+                            Button, 0x110837c00, label: 'Close' <AX element pid: 17847, elementOrHash.elementID: 4635514112.275>
+                          Other, 0x110836e40 <AX element pid: 17847, elementOrHash.elementID: 4626810176.127>
+                            Other, 0x110835f40 <AX element pid: 17847, elementOrHash.elementID: 4626813760.129>
+                              Other, 0x1095babc0 <AX element pid: 17847, elementOrHash.elementID: 4442338432.288>
+                                Other, 0x1095bb200 <AX element pid: 17847, elementOrHash.elementID: 4659408928.290>
+                                  CollectionView, 0x109625cc0 <AX element pid: 17847, elementOrHash.elementID: 4442381312.292>
+                                    Other, 0x109627d40 <AX element pid: 17847, elementOrHash.elementID: 4442851840.502>
+                                    Other, 0x109744dc0 <AX element pid: 17847, elementOrHash.elementID: 4629195712.294>
+                                      Other, 0x1171d66c0 <AX element pid: 17847, elementOrHash.elementID: 4636038400.297>
+                                      Other, 0x1171d61c0 <AX element pid: 17847, elementOrHash.elementID: 4636038848.298>
+                                    Other, 0x109744500 <AX element pid: 17847, elementOrHash.elementID: 4629194368.295>
+                                    Cell, 0x1097443c0 <AX element pid: 17847, elementOrHash.elementID: 4636668416.302>
+                                      Other, 0x1171d7c00 <AX element pid: 17847, elementOrHash.elementID: 4442945024.307>
+                                      Other, 0x1171d5f40 <AX element pid: 17847, elementOrHash.elementID: 4657144128.308>
+                                        Other, 0x1095fcc80 <AX element pid: 17847, elementOrHash.elementID: 4575177216.313>
+                                          Other, 0x1173fcb40 <AX element pid: 17847, elementOrHash.elementID: 4635092672.436>
+                                    Cell, 0x109744000 <AX element pid: 17847, elementOrHash.elementID: 4679410432.527>
+                                      Other, 0x1171d5400 <AX element pid: 17847, elementOrHash.elementID: 4442853888.528>
+                                        Other, 0x1095fe940 <AX element pid: 17847, elementOrHash.elementID: 4657471808.530>
+                                          Other, 0x1173fcc80 <AX element pid: 17847, elementOrHash.elementID: 4683909760.533>
+                                      Other, 0x1171d7340 <AX element pid: 17847, elementOrHash.elementID: 4657464640.529>
+                                        Other, 0x1095ff480 <AX element pid: 17847, elementOrHash.elementID: 4679173632.531>
+                                          Other, 0x1173fcdc0 <AX element pid: 17847, elementOrHash.elementID: 4683359776.534>
+                                    Other, 0x109745cc0 <AX element pid: 17847, elementOrHash.elementID: 4442884096.306>
+                                    Other, 0x109746580 <AX element pid: 17847, elementOrHash.elementID: 4443224064.296>
+                                      Other, 0x1171d52c0 <AX element pid: 17847, elementOrHash.elementID: 4636037504.299>
+                                    Other, 0x109744a00 <AX element pid: 17847, elementOrHash.elementID: 4443224064.296>
+                                      Other, 0x1171d5a40 <AX element pid: 17847, elementOrHash.elementID: 4636037504.299>
+                              Other, 0x1095baa80 <AX element pid: 17847, elementOrHash.elementID: 4443191296.289>
+                                Other, 0x1095bb840 <AX element pid: 17847, elementOrHash.elementID: 4443225600.291>
+                                  Other, 0x109626580 <AX element pid: 17847, elementOrHash.elementID: 4636039296.293>
+                          Toolbar, 0x110835a40 <AX element pid: 17847, elementOrHash.elementID: 4443220992.128>
+                            Other, 0x110836580 <AX element pid: 17847, elementOrHash.elementID: 4443221504.130>
+              Other, 0x115822940 <AX element pid: 17847, elementOrHash.elementID: 4442325888.12>
+                Other, 0x115872940 <AX element pid: 17847, elementOrHash.elementID: 4399686400.14>
+                  Other, 0x116c70000 <AX element pid: 17847, elementOrHash.elementID: 4399686848.16>
+                    TabBar, 0x116c71e00 <AX element pid: 17847, elementOrHash.elementID: 4443020800.19>
+                      Other, 0x116c72440 <AX element pid: 17847, elementOrHash.elementID: 4442245120.22>
+                        Other, 0x116c72f80 <AX element pid: 17847, elementOrHash.elementID: 4399692224.25>
+                        Other, 0x116c73e80 <AX element pid: 17847, elementOrHash.elementID: 4399680128.26>
+                          Button, 0x110834280, identifier: 'play.rectangle.fill', label: 'Home' <AX element pid: 17847, elementOrHash.elementID: 4398633984.33>
+                            Image, 0x1108370c0 <AX element pid: 17847, elementOrHash.elementID: 4451501312.41>
+                          Button, 0x110835cc0, identifier: 'sparkles.tv', label: 'Discover' <AX element pid: 17847, elementOrHash.elementID: 4398636032.34>
+                            Image, 0x110836940 <AX element pid: 17847, elementOrHash.elementID: 4451502592.42>
+                          Button, 0x110834500, identifier: 'externaldrive.connected.to.line.below', label: 'Network' <AX element pid: 17847, elementOrHash.elementID: 4398638080.35>
+                            Image, 0x110837700 <AX element pid: 17847, elementOrHash.elementID: 4451503872.43>
+                        Other, 0x116c735c0 <AX element pid: 17847, elementOrHash.elementID: 4399680576.27>
+                        Other, 0x116c72800 <AX element pid: 17847, elementOrHash.elementID: 4443289344.28>
+                          Other, 0x110837480 <AX element pid: 17847, elementOrHash.elementID: 4399682368.36>
+                            Other, 0x110834140 <AX element pid: 17847, elementOrHash.elementID: 4399681024.44>
+                            Other, 0x1108366c0 <AX element pid: 17847, elementOrHash.elementID: 4442246656.45>
+                              Other, 0x1095ba440 <AX element pid: 17847, elementOrHash.elementID: 4399683712.48>
+                                Other, 0x109625e00 <AX element pid: 17847, elementOrHash.elementID: 4399684160.51>
+                                  Other, 0x109626d00 <AX element pid: 17847, elementOrHash.elementID: 4399684608.56>
+                                Other, 0x109626440 <AX element pid: 17847, elementOrHash.elementID: 4399682816.52>
+                              Other, 0x1095ba080 <AX element pid: 17847, elementOrHash.elementID: 4399683264.49>
+                  Other, 0x116c73980 <AX element pid: 17847, elementOrHash.elementID: 4442253824.17>
+                    Other, 0x116c72300 <AX element pid: 17847, elementOrHash.elementID: 4398025728.20>
+                      Other, 0x116c70500 <AX element pid: 17847, elementOrHash.elementID: 4399692672.23>
+                        Other, 0x116c71040 <AX element pid: 17847, elementOrHash.elementID: 4399693120.29>
+                          Other, 0x110835900 <AX element pid: 17847, elementOrHash.elementID: 4399045632.37>
+                            Other, 0x116c73200 <AX element pid: 17847, elementOrHash.elementID: 4442079232.46>
+                        Other, 0x116c72580 <AX element pid: 17847, elementOrHash.elementID: 4399046144.30>
+                          Other, 0x110834dc0 <AX element pid: 17847, elementOrHash.elementID: 4442080576.38>
+            Other, 0x116ee2a80 <AX element pid: 17847, elementOrHash.elementID: 4399688640.10>
+    Other, 0x114570c80 <AX element pid: 17847, elementOrHash.elementID: 4443222528.555>
+      Other, 0x110a4f840 <AX element pid: 17847, elementOrHash.elementID: 4636823936.556>
+      Popover, 0x110a4f480 <AX element pid: 17847, elementOrHash.elementID: 4636827776.557>
+        Other, 0x106253700 <AX element pid: 17847, elementOrHash.elementID: 4636828416.558>
+          Other, 0x115a38500 <AX element pid: 17847, elementOrHash.elementID: 4443223040.559>
+            Other, 0x116ee1040 <AX element pid: 17847, elementOrHash.elementID: 4636827136.560>
+              Other, 0x1158203c0 <AX element pid: 17847, elementOrHash.elementID: 4657141440.561>
+                Other, 0x1158735c0 <AX element pid: 17847, elementOrHash.elementID: 4657140992.562>
+                  Other, 0x116c73840 <AX element pid: 17847, elementOrHash.elementID: 4657138304.563>
+                    Other, 0x116c71900 <AX element pid: 17847, elementOrHash.elementID: 4443182592.564>
+                      Other, 0x116c71f40 <AX element pid: 17847, elementOrHash.elementID: 4657138752.565>
+                        Other, 0x116c708c0 <AX element pid: 17847, elementOrHash.elementID: 4678178048.566>
+                          Other, 0x110837200 <AX element pid: 17847, elementOrHash.elementID: 4657142336.567>
+                            Sheet, 0x110834000 <AX element pid: 17847, elementOrHash.elementID: 4679415552.568>
+                              Other, 0x1095bbe80 <AX element pid: 17847, elementOrHash.elementID: 4657253888.569>
+                                Other, 0x109627700 <AX element pid: 17847, elementOrHash.elementID: 4678174208.570>
+                                  Other, 0x109626bc0 <AX element pid: 17847, elementOrHash.elementID: 4655736448.571>
+                                  Other, 0x109626080 <AX element pid: 17847, elementOrHash.elementID: 4657263296.572>
+                                    ScrollView, 0x1171d4280 <AX element pid: 17847, elementOrHash.elementID: 4678156288.573>
+                                      Other, 0x1171d4140 <AX element pid: 17847, elementOrHash.elementID: 4657252096.575>
+                                        StaticText, 0x1095ff340 <AX element pid: 17847, elementOrHash.elementID: 4657250304.581>
+                                      Other, 0x109625040 <AX element pid: 17847, elementOrHash.elementID: 4442936320.576>
+                                        Other, 0x1173fc000 <AX element pid: 17847, elementOrHash.elementID: 4657140096.582>
+                                      Other, 0x1095fdf40 <AX element pid: 17847, elementOrHash.elementID: 4442937856.577>
+                                        Other, 0x1173fc140 <AX element pid: 17847, elementOrHash.elementID: 4657140544.583>
+                                      Other, 0x1095fde00 <AX element pid: 17847, elementOrHash.elementID: 4442937856.577>
+                                        Other, 0x1173fc280 <AX element pid: 17847, elementOrHash.elementID: 4657140544.583>
+                                      Other, 0x1095fee40 <AX element pid: 17847, elementOrHash.elementID: 4442936320.576>
+                                        Other, 0x1173fc3c0 <AX element pid: 17847, elementOrHash.elementID: 4657140096.582>
+                                    ScrollView, 0x1171d6f80 <AX element pid: 17847, elementOrHash.elementID: 4638812160.574>
+                                      Other, 0x1095fd040 <AX element pid: 17847, elementOrHash.elementID: 4442896896.578>
+                                        Other, 0x1173fc500 <AX element pid: 17847, elementOrHash.elementID: 4657261056.584>
+                                          Button, 0x1173fcf00, label: 'Clear' <AX element pid: 17847, elementOrHash.elementID: 4443081728.587>
+                                      Other, 0x1095fc280 <AX element pid: 17847, elementOrHash.elementID: 4442947072.579>
+                                        Other, 0x1173fc640 <AX element pid: 17847, elementOrHash.elementID: 4655736000.585>
+                                      Other, 0x1095fd400 <AX element pid: 17847, elementOrHash.elementID: 4442939392.580>
+                                        Other, 0x1173fc780 <AX element pid: 17847, elementOrHash.elementID: 4655736896.586>
+                                      Other, 0x1095ff980 <AX element pid: 17847, elementOrHash.elementID: 4442947072.579>
+                                        Other, 0x1173fc8c0 <AX element pid: 17847, elementOrHash.elementID: 4655736000.585>
+                                      Other, 0x1095fe6c0 <AX element pid: 17847, elementOrHash.elementID: 4442939392.580>
+                                        Other, 0x1173fca00 <AX element pid: 17847, elementOrHash.elementID: 4655736896.586>
+  Window, 0x1095aa440 <AX element pid: 17847, elementOrHash.elementID: 4573261056.204>
+    Other, 0x110a4fe80 <AX element pid: 17847, elementOrHash.elementID: 4443188224.206>
+      Other, 0x110a4ea80 <AX element pid: 17847, elementOrHash.elementID: 4636046464.208>
+      Other, 0x1095ab0c0 <AX element pid: 17847, elementOrHash.elementID: 4443187712.209>
+        Other, 0x110a4f200 <AX element pid: 17847, elementOrHash.elementID: 4442864128.518>
+  Window, 0x1095a8140 <AX element pid: 17847, elementOrHash.elementID: 4679409152.515>
+    Other, 0x110a4f5c0 <AX element pid: 17847, elementOrHash.elementID: 4442849280.516>
+      Other, 0x106251540 <AX element pid: 17847, elementOrHash.elementID: 4657475840.517>
+        Other, 0x115a39680 <AX element pid: 17847, elementOrHash.elementID: 4635513344.212>
+          Other, 0x115a3b480 <AX element pid: 17847, elementOrHash.elementID: 4636046912.216>
+            Other, 0x116ee3c00 <AX element pid: 17847, elementOrHash.elementID: 4443139584.221>
+              Other, 0x115820140 <AX element pid: 17847, elementOrHash.elementID: 4636047360.226>
+                ScrollView, 0x116c597c0 <AX element pid: 17847, elementOrHash.elementID: 4398161408.229>
+              Other, 0x1158212c0 <AX element pid: 17847, elementOrHash.elementID: 4636048704.227>
+                Other, 0x116c5a080 <AX element pid: 17847, elementOrHash.elementID: 4636640128.230>
+                  Other, 0x116c73c00 <AX element pid: 17847, elementOrHash.elementID: 4636467328.268>
+                    Other, 0x116c71cc0 <AX element pid: 17847, elementOrHash.elementID: 4443079680.269>
+                      Other, 0x116c72bc0 <AX element pid: 17847, elementOrHash.elementID: 4636639680.270>
+                        Button, 0x116c71540 <AX element pid: 17847, elementOrHash.elementID: 4635517952.271>
+                        Button, 0x116c70dc0 <AX element pid: 17847, elementOrHash.elementID: 4635518720.272>
+                        Button, 0x116c703c0 <AX element pid: 17847, elementOrHash.elementID: 4635519488.273>
+        Other, 0x115a3bac0 <AX element pid: 17847, elementOrHash.elementID: 4657476288.519>
+          Other, 0x115a39900 <AX element pid: 17847, elementOrHash.elementID: 4678179584.521>
+            Other, 0x116ee1b80 <AX element pid: 17847, elementOrHash.elementID: 4638350208.524>
+        Other, 0x115a38c80 <AX element pid: 17847, elementOrHash.elementID: 4636648192.214>
+          Keyboard, 0x115a3b980 <AX element pid: 17847, elementOrHash.elementID: 4635516416.218>
+            Other, 0x116ee3840 <AX element pid: 17847, elementOrHash.elementID: 4583881728.223>
+              Other, 0x1158717c0 <AX element pid: 17847, elementOrHash.elementID: 4398732544.228>
+                Key, 0x116c5bc00 <AX element pid: 17847, elementOrHash.elementID: 4657638576.452>
+                Key, 0x116c5a800 <AX element pid: 17847, elementOrHash.elementID: 4657642576.453>
+                Key, 0x116c5a440 <AX element pid: 17847, elementOrHash.elementID: 4657635856.454>
+                Key, 0x116c5b840 <AX element pid: 17847, elementOrHash.elementID: 4657638496.455>
+                Key, 0x116c59040 <AX element pid: 17847, elementOrHash.elementID: 4657640336.456>
+                Key, 0x1095b6e40 <AX element pid: 17847, elementOrHash.elementID: 4657638896.457>
+                Key, 0x1095b5900 <AX element pid: 17847, elementOrHash.elementID: 4657638416.458>
+                Key, 0x1095b7340 <AX element pid: 17847, elementOrHash.elementID: 4657639216.459>
+                Key, 0x1095b7c00 <AX element pid: 17847, elementOrHash.elementID: 4657641536.460>
+                Key, 0x115806bc0 <AX element pid: 17847, elementOrHash.elementID: 4657641296.461>
+                Key, 0x115807200 <AX element pid: 17847, elementOrHash.elementID: 4657638816.462>
+                Key, 0x115806f80 <AX element pid: 17847, elementOrHash.elementID: 4657638096.463>
+                Key, 0x118c10dc0 <AX element pid: 17847, elementOrHash.elementID: 4638369872.464>
+                Key, 0x118c10c80 <AX element pid: 17847, elementOrHash.elementID: 4638364512.465>
+                Key, 0x118c10b40 <AX element pid: 17847, elementOrHash.elementID: 4638364592.466>
+                Key, 0x118c10780 <AX element pid: 17847, elementOrHash.elementID: 4638364672.467>
+                Key, 0x118c10640 <AX element pid: 17847, elementOrHash.elementID: 4638361472.468>
+                Key, 0x118c103c0 <AX element pid: 17847, elementOrHash.elementID: 4638361392.469>
+                Key, 0x118c10500 <AX element pid: 17847, elementOrHash.elementID: 4638361632.470>
+                Key, 0x118c12800 <AX element pid: 17847, elementOrHash.elementID: 4638361552.471>
+                Key, 0x118c12940 <AX element pid: 17847, elementOrHash.elementID: 4638361792.472>
+                Key, 0x118c12d00 <AX element pid: 17847, elementOrHash.elementID: 4638361712.473>
+                Key, 0x118c12bc0 <AX element pid: 17847, elementOrHash.elementID: 4638369552.474>
+                Key, 0x116c7ad00 <AX element pid: 17847, elementOrHash.elementID: 4638369632.475>
+                Key, 0x116c7ae40 <AX element pid: 17847, elementOrHash.elementID: 4638369792.476>
+                Button, 0x116c79f40, identifier: 'shift', label: 'shift' <AX element pid: 17847, elementOrHash.elementID: 4638369712.477>
+                Key, 0x116c79400 <AX element pid: 17847, elementOrHash.elementID: 4638364752.478>
+                Key, 0x116c7a300 <AX element pid: 17847, elementOrHash.elementID: 4638364832.479>
+                Key, 0x116c78500 <AX element pid: 17847, elementOrHash.elementID: 4638364912.480>
+                Key, 0x116c7a080 <AX element pid: 17847, elementOrHash.elementID: 4638365072.481>
+                Key, 0x116c7a940 <AX element pid: 17847, elementOrHash.elementID: 4638359632.482>
+                Key, 0x116ee8b40 <AX element pid: 17847, elementOrHash.elementID: 4638359712.483>
+                Key, 0x116ee9900 <AX element pid: 17847, elementOrHash.elementID: 4638359792.484>
+                Key, 0x116eebd40 <AX element pid: 17847, elementOrHash.elementID: 4638359872.485>
+                Key, 0x116eeae40 <AX element pid: 17847, elementOrHash.elementID: 4638359952.486>
+                Key, 0x109717c00 <AX element pid: 17847, elementOrHash.elementID: 4638360032.487>
+                Button, 0x109716300, identifier: 'Search', label: 'search' <AX element pid: 17847, elementOrHash.elementID: 4638360112.488>
+        Other, 0x115a39540 <AX element pid: 17847, elementOrHash.elementID: 4442975232.520>
+          Button, 0x115a3a300, label: 'Emoji' <AX element pid: 17847, elementOrHash.elementID: 4683910656.522>
+            StaticText, 0x116ee1400 <AX element pid: 17847, elementOrHash.elementID: 4442975744.525>
+          Button, 0x115a38a00, identifier: 'dictation', label: 'Dictate' <AX element pid: 17847, elementOrHash.elementID: 4683911552.523>
+            StaticText, 0x116ee0640 <AX element pid: 17847, elementOrHash.elementID: 4442888704.526>
+          Button, 0x116ee21c0, identifier: 'dictation', label: 'Dictate' <AX element pid: 17847, elementOrHash.elementID: 4683911552.523>
+            StaticText, 0x115820500 <AX element pid: 17847, elementOrHash.elementID: 4442888704.526>
+2026-10-28 14:17:39.785 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4636823936.556 (AX element pid: 17847, elementOrHash.elementID: 4636823936.556) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_UIPopoverDimmingView";
+    "XC_kAXXCAttributeElementType" = "_UIPopoverDimmingView";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.786 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4636827776.557 (AX element pid: 17847, elementOrHash.elementID: 4636827776.557) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 18;
+    "XC_kAXXCAttributeElementBaseType" = "_UIPopoverView";
+    "XC_kAXXCAttributeElementType" = "_UIPopoverView";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.787 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Preferring automation type 18 instead of legacy element type OTHER derived from class/trait: _UIPopoverView:_UIPopoverView 0
+2026-10-28 14:17:39.787 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Computed elementType Popover.
+2026-10-28 14:17:39.818 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Popover (AX element pid: 17847, elementOrHash.elementID: 4636827776.557) faulted in {
+    "XC_kAXXCAttributeChildren" =     (
+        "AX element pid: 17847, elementOrHash.elementID: 4636828416.558"
+    );
+}: (no error) for children using XC_kAXXCAttributeChildren
+2026-10-28 14:17:39.820 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4636828416.558 (AX element pid: 17847, elementOrHash.elementID: 4636828416.558) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_UIPopoverShapeLayerChromeView";
+    "XC_kAXXCAttributeElementType" = "_UIPopoverShapeLayerChromeView";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.834 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4443223040.559 (AX element pid: 17847, elementOrHash.elementID: 4443223040.559) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_UIPopoverGlassBackground";
+    "XC_kAXXCAttributeElementType" = "_UIPopoverGlassBackground";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.866 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4636827136.560 (AX element pid: 17847, elementOrHash.elementID: 4636827136.560) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit17UICoreHostingViewVS_P10$1c576b1c816GlassPopoverView_";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit17UICoreHostingViewVS_P10$1c576b1c816GlassPopoverView_";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:39.936 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:39.952 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:40.051 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4678178048.566 (AX element pid: 17847, elementOrHash.elementID: 4678178048.566) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_P10$1c576b24036GlassPopoverContentViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_P10$1c576b24036GlassPopoverContentViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 0;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:40.232 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4638812160.574 (AX element pid: 17847, elementOrHash.elementID: 4638812160.574) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 46;
+    "XC_kAXXCAttributeElementBaseType" = "_UIInterfaceActionRepresentationsSequenceView";
+    "XC_kAXXCAttributeElementType" = "_UIInterfaceActionRepresentationsSequenceView";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:40.232 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Preferring automation type 46 instead of legacy element type OTHER derived from class/trait: _UIInterfaceActionRepresentationsSequenceView:_UIInterfaceActionRepresentationsSequenceView 8589934592
+2026-10-28 14:17:40.324 Df GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] AX element pid: 17847, elementOrHash.elementID: 4443081728.587 (AX element pid: 17847, elementOrHash.elementID: 4443081728.587) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 9;
+    "XC_kAXXCAttributeElementBaseType" = "_UIInterfaceActionCustomViewRepresentationView";
+    "XC_kAXXCAttributeElementType" = "_UIInterfaceActionCustomViewRepresentationView";
+    "XC_kAXXCAttributeTraits" = 8589934593;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-28 14:17:40.338 Df GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Current tree:
+0x109716300 <App element pid: 17847>
+  Window, 0x109717c00 <AX element pid: 17847, elementOrHash.elementID: 4398629888.3>
+    Other, 0x116ee8b40 <AX element pid: 17847, elementOrHash.elementID: 4657148608.554>
+    Other, 0x116c7a940 <AX element pid: 17847, elementOrHash.elementID: 4399687744.4>
+    Other, 0x116c7a080 <AX element pid: 17847, elementOrHash.elementID: 4442243584.5>
+      Other, 0x116c79f40 <AX element pid: 17847, elementOrHash.elementID: 4443307008.6>
+        Other, 0x118c12940 <AX element pid: 17847, elementOrHash.elementID: 4398628864.7>
+          Other, 0x116ee9900 <AX element pid: 17847, elementOrHash.elementID: 4571980384.8>
+            Other, 0x116c59040 <AX element pid: 17847, elementOrHash.elementID: 4442243072.9>
+              Other, 0x1095a8140 <AX element pid: 17847, elementOrHash.elementID: 4442255872.11>
+                Other, 0x110a4fe80 <AX element pid: 17847, elementOrHash.elementID: 4580520640.122>
+                  Other, 0x116c70dc0 <AX element pid: 17847, elementOrHash.elementID: 4398553344.123>
+                    Other, 0x116c71f40 <AX element pid: 17847, elementOrHash.elementID: 4628707392.124>
+                      Other, 0x116c72580 <AX element pid: 17847, elementOrHash.elementID: 4628708032.125>
+                        Other, 0x116c72440 <AX element pid: 17847, elementOrHash.elementID: 4443220480.126>
+                          NavigationBar, 0x1095fc280 <AX element pid: 17847, elementOrHash.elementID: 4453454336.274>
+                            SearchField, 0x109744a00 <AX element pid: 17847, elementOrHash.elementID: 4573257216.203>
+                              Image, 0x1171d52c0 <AX element pid: 17847, elementOrHash.elementID: 4630470784.287>
+                            Button, 0x109746580, label: 'Close' <AX element pid: 17847, elementOrHash.elementID: 4635514112.275>
+                          Other, 0x1095fd040 <AX element pid: 17847, elementOrHash.elementID: 4626810176.127>
+                            Other, 0x109744000 <AX element pid: 17847, elementOrHash.elementID: 4626813760.129>
+                              Other, 0x1171d7340 <AX element pid: 17847, elementOrHash.elementID: 4442338432.288>
+                                Other, 0x1171d66c0 <AX element pid: 17847, elementOrHash.elementID: 4659408928.290>
+                                  CollectionView, 0x109626440 <AX element pid: 17847, elementOrHash.elementID: 4442381312.292>
+                                    Other, 0x110837200 <AX element pid: 17847, elementOrHash.elementID: 4442851840.502>
+                                    Other, 0x110834000 <AX element pid: 17847, elementOrHash.elementID: 4629195712.294>
+                                      Other, 0x110836940 <AX element pid: 17847, elementOrHash.elementID: 4636038400.297>
+                                      Other, 0x110834280 <AX element pid: 17847, elementOrHash.elementID: 4636038848.298>
+                                    Other, 0x110834dc0 <AX element pid: 17847, elementOrHash.elementID: 4629194368.295>
+                                    Cell, 0x110835900 <AX element pid: 17847, elementOrHash.elementID: 4636668416.302>
+                                      Other, 0x1108370c0 <AX element pid: 17847, elementOrHash.elementID: 4442945024.307>
+                                      Other, 0x110835a40 <AX element pid: 17847, elementOrHash.elementID: 4657144128.308>
+                                        Other, 0x109605540 <AX element pid: 17847, elementOrHash.elementID: 4575177216.313>
+                                          Other, 0x1173fcb40 <AX element pid: 17847, elementOrHash.elementID: 4635092672.436>
+                                    Cell, 0x110837480 <AX element pid: 17847, elementOrHash.elementID: 4679410432.527>
+                                      Other, 0x110836e40 <AX element pid: 17847, elementOrHash.elementID: 4442853888.528>
+                                        Other, 0x109606d00 <AX element pid: 17847, elementOrHash.elementID: 4657471808.530>
+                                          Other, 0x1173fcc80 <AX element pid: 17847, elementOrHash.elementID: 4683909760.533>
+                                      Other, 0x110835f40 <AX element pid: 17847, elementOrHash.elementID: 4657464640.529>
+                                        Other, 0x109604500 <AX element pid: 17847, elementOrHash.elementID: 4679173632.531>
+                                          Other, 0x1173fcdc0 <AX element pid: 17847, elementOrHash.elementID: 4683359776.534>
+                                    Other, 0x1108366c0 <AX element pid: 17847, elementOrHash.elementID: 4442884096.306>
+                                    Other, 0x110834140 <AX element pid: 17847, elementOrHash.elementID: 4443224064.296>
+                                      Other, 0x110836440 <AX element pid: 17847, elementOrHash.elementID: 4636037504.299>
+                                    Other, 0x110834500 <AX element pid: 17847, elementOrHash.elementID: 4443224064.296>
+                                      Other, 0x110836580 <AX element pid: 17847, elementOrHash.elementID: 4636037504.299>
+                              Other, 0x1171d5400 <AX element pid: 17847, elementOrHash.elementID: 4443191296.289>
+                                Other, 0x109627700 <AX element pid: 17847, elementOrHash.elementID: 4443225600.291>
+                                  Other, 0x109625e00 <AX element pid: 17847, elementOrHash.elementID: 4636039296.293>
+                          Toolbar, 0x1095fee40 <AX element pid: 17847, elementOrHash.elementID: 4443220992.128>
+                            Other, 0x109745cc0 <AX element pid: 17847, elementOrHash.elementID: 4443221504.130>
+              Other, 0x1095aa440 <AX element pid: 17847, elementOrHash.elementID: 4442325888.12>
+                Other, 0x110a4f200 <AX element pid: 17847, elementOrHash.elementID: 4399686400.14>
+                  Other, 0x116c703c0 <AX element pid: 17847, elementOrHash.elementID: 4399686848.16>
+                    TabBar, 0x116c708c0 <AX element pid: 17847, elementOrHash.elementID: 4443020800.19>
+                      Other, 0x116c71040 <AX element pid: 17847, elementOrHash.elementID: 4442245120.22>
+                        Other, 0x116c72800 <AX element pid: 17847, elementOrHash.elementID: 4399692224.25>
+                        Other, 0x116c735c0 <AX element pid: 17847, elementOrHash.elementID: 4399680128.26>
+                          Button, 0x1095fde00, identifier: 'play.rectangle.fill', label: 'Home' <AX element pid: 17847, elementOrHash.elementID: 4398633984.33>
+                            Image, 0x1097443c0 <AX element pid: 17847, elementOrHash.elementID: 4451501312.41>
+                          Button, 0x1095fd400, identifier: 'sparkles.tv', label: 'Discover' <AX element pid: 17847, elementOrHash.elementID: 4398636032.34>
+                            Image, 0x109744500 <AX element pid: 17847, elementOrHash.elementID: 4451502592.42>
+                          Button, 0x1095fdf40, identifier: 'externaldrive.connected.to.line.below', label: 'Network' <AX element pid: 17847, elementOrHash.elementID: 4398638080.35>
+                            Image, 0x109744dc0 <AX element pid: 17847, elementOrHash.elementID: 4451503872.43>
+                        Other, 0x116c73e80 <AX element pid: 17847, elementOrHash.elementID: 4399680576.27>
+                        Other, 0x116c72f80 <AX element pid: 17847, elementOrHash.elementID: 4443289344.28>
+                          Other, 0x1095ff340 <AX element pid: 17847, elementOrHash.elementID: 4399682368.36>
+                            Other, 0x1171d6f80 <AX element pid: 17847, elementOrHash.elementID: 4399681024.44>
+                            Other, 0x1171d4280 <AX element pid: 17847, elementOrHash.elementID: 4442246656.45>
+                              Other, 0x1171d5f40 <AX element pid: 17847, elementOrHash.elementID: 4399683712.48>
+                                Other, 0x109626080 <AX element pid: 17847, elementOrHash.elementID: 4399684160.51>
+                                  Other, 0x109626d00 <AX element pid: 17847, elementOrHash.elementID: 4399684608.56>
+                                Other, 0x109625040 <AX element pid: 17847, elementOrHash.elementID: 4399682816.52>
+                              Other, 0x1171d7c00 <AX element pid: 17847, elementOrHash.elementID: 4399683264.49>
+                  Other, 0x116c71540 <AX element pid: 17847, elementOrHash.elementID: 4442253824.17>
+                    Other, 0x116c73980 <AX element pid: 17847, elementOrHash.elementID: 4398025728.20>
+                      Other, 0x116c73200 <AX element pid: 17847, elementOrHash.elementID: 4399692672.23>
+                        Other, 0x116c71680 <AX element pid: 17847, elementOrHash.elementID: 4399693120.29>
+                          Other, 0x1095ff480 <AX element pid: 17847, elementOrHash.elementID: 4399045632.37>
+                            Other, 0x1171d5a40 <AX element pid: 17847, elementOrHash.elementID: 4442079232.46>
+                        Other, 0x116c70780 <AX element pid: 17847, elementOrHash.elementID: 4399046144.30>
+                          Other, 0x1095fe940 <AX element pid: 17847, elementOrHash.elementID: 4442080576.38>
+            Other, 0x116c5b840 <AX element pid: 17847, elementOrHash.elementID: 4399688640.10>
+    Other, 0x116c78500 <AX element pid: 17847, elementOrHash.elementID: 4443222528.555>
+      Other, 0x116c7ae40 <AX element pid: 17847, elementOrHash.elementID: 4636823936.556>
+      Popover, 0x116c7ad00 <AX element pid: 17847, elementOrHash.elementID: 4636827776.557>
+        Other, 0x118c10500 <AX element pid: 17847, elementOrHash.elementID: 4636828416.558>
+          Other, 0x118c10dc0 <AX element pid: 17847, elementOrHash.elementID: 4443223040.559>
+            Other, 0x116c5a800 <AX element pid: 17847, elementOrHash.elementID: 4636827136.560>
+              Other, 0x1095ab0c0 <AX element pid: 17847, elementOrHash.elementID: 4657141440.561>
+                Other, 0x110a4ea80 <AX element pid: 17847, elementOrHash.elementID: 4657140992.562>
+                  Other, 0x116c71900 <AX element pid: 17847, elementOrHash.elementID: 4657138304.563>
+                    Other, 0x116c72300 <AX element pid: 17847, elementOrHash.elementID: 4443182592.564>
+                      Other, 0x116c70000 <AX element pid: 17847, elementOrHash.elementID: 4657138752.565>
+                        Other, 0x116c717c0 <AX element pid: 17847, elementOrHash.elementID: 4678178048.566>
+                          Other, 0x1095fcc80 <AX element pid: 17847, elementOrHash.elementID: 4657142336.567>
+                            Sheet, 0x1171d4140 <AX element pid: 17847, elementOrHash.elementID: 4679415552.568>
+                              Other, 0x1171d61c0 <AX element pid: 17847, elementOrHash.elementID: 4657253888.569>
+                                Other, 0x109626bc0 <AX element pid: 17847, elementOrHash.elementID: 4678174208.570>
+                                  Other, 0x109626580 <AX element pid: 17847, elementOrHash.elementID: 4655736448.571>
+                                  Other, 0x109625cc0 <AX element pid: 17847, elementOrHash.elementID: 4657263296.572>
+                                    ScrollView, 0x110837700 <AX element pid: 17847, elementOrHash.elementID: 4678156288.573>
+                                      Other, 0x110837c00 <AX element pid: 17847, elementOrHash.elementID: 4657252096.575>
+                                        StaticText, 0x1095ba440 <AX element pid: 17847, elementOrHash.elementID: 4657250304.581>
+                                      Other, 0x110834a00 <AX element pid: 17847, elementOrHash.elementID: 4442936320.576>
+                                        Other, 0x1173fc000 <AX element pid: 17847, elementOrHash.elementID: 4657140096.582>
+                                      Other, 0x109627d40 <AX element pid: 17847, elementOrHash.elementID: 4442937856.577>
+                                        Other, 0x1173fc140 <AX element pid: 17847, elementOrHash.elementID: 4657140544.583>
+                                      Other, 0x1095bbe80 <AX element pid: 17847, elementOrHash.elementID: 4442937856.577>
+                                        Other, 0x1173fc280 <AX element pid: 17847, elementOrHash.elementID: 4657140544.583>
+                                      Other, 0x1095ba080 <AX element pid: 17847, elementOrHash.elementID: 4442936320.576>
+                                        Other, 0x1173fc3c0 <AX element pid: 17847, elementOrHash.elementID: 4657140096.582>
+                                    ScrollView, 0x110835cc0 <AX element pid: 17847, elementOrHash.elementID: 4638812160.574>
+                                      Other, 0x1095baa80 <AX element pid: 17847, elementOrHash.elementID: 4442896896.578>
+                                        Other, 0x1173fc500 <AX element pid: 17847, elementOrHash.elementID: 4657261056.584>
+                                          Button, 0x1173fcf00, label: 'Clear' <AX element pid: 17847, elementOrHash.elementID: 4443081728.587>
+                                      Other, 0x1095bb840 <AX element pid: 17847, elementOrHash.elementID: 4442947072.579>
+                                        Other, 0x1173fc640 <AX element pid: 17847, elementOrHash.elementID: 4655736000.585>
+                                      Other, 0x1095babc0 <AX element pid: 17847, elementOrHash.elementID: 4442939392.580>
+                                        Other, 0x1173fc780 <AX element pid: 17847, elementOrHash.elementID: 4655736896.586>
+                                      Other, 0x1095bb200 <AX element pid: 17847, elementOrHash.elementID: 4442947072.579>
+                                        Other, 0x1173fc8c0 <AX element pid: 17847, elementOrHash.elementID: 4655736000.585>
+                                      Other, 0x1095bb980 <AX element pid: 17847, elementOrHash.elementID: 4442939392.580>
+                                        Other, 0x1173fca00 <AX element pid: 17847, elementOrHash.elementID: 4655736896.586>
+  Window, 0x116eeae40 <AX element pid: 17847, elementOrHash.elementID: 4573261056.204>
+    Other, 0x116c79400 <AX element pid: 17847, elementOrHash.elementID: 4443188224.206>
+      Other, 0x118c12bc0 <AX element pid: 17847, elementOrHash.elementID: 4636046464.208>
+      Other, 0x118c12d00 <AX element pid: 17847, elementOrHash.elementID: 4443187712.209>
+        Other, 0x118c103c0 <AX element pid: 17847, elementOrHash.elementID: 4442864128.518>
+  Window, 0x116eebd40 <AX element pid: 17847, elementOrHash.elementID: 4679409152.515>
+    Other, 0x116c7a300 <AX element pid: 17847, elementOrHash.elementID: 4442849280.516>
+      Other, 0x118c12800 <AX element pid: 17847, elementOrHash.elementID: 4657475840.517>
+        Other, 0x118c10640 <AX element pid: 17847, elementOrHash.elementID: 4635513344.212>
+          Other, 0x115806f80 <AX element pid: 17847, elementOrHash.elementID: 4636046912.216>
+            Other, 0x116c5a440 <AX element pid: 17847, elementOrHash.elementID: 4443139584.221>
+              Other, 0x1095a9540 <AX element pid: 17847, elementOrHash.elementID: 4636047360.226>
+                ScrollView, 0x110a4f480 <AX element pid: 17847, elementOrHash.elementID: 4398161408.229>
+              Other, 0x114570c80 <AX element pid: 17847, elementOrHash.elementID: 4636048704.227>
+                Other, 0x110a4f840 <AX element pid: 17847, elementOrHash.elementID: 4636640128.230>
+                  Other, 0x116c73840 <AX element pid: 17847, elementOrHash.elementID: 4636467328.268>
+                    Other, 0x116c70500 <AX element pid: 17847, elementOrHash.elementID: 4443079680.269>
+                      Other, 0x116c71e00 <AX element pid: 17847, elementOrHash.elementID: 4636639680.270>
+                        Button, 0x116c72e40 <AX element pid: 17847, elementOrHash.elementID: 4635517952.271>
+                        Button, 0x1095fe6c0 <AX element pid: 17847, elementOrHash.elementID: 4635518720.272>
+                        Button, 0x1095ff980 <AX element pid: 17847, elementOrHash.elementID: 4635519488.273>
+        Other, 0x118c10780 <AX element pid: 17847, elementOrHash.elementID: 4657476288.519>
+          Other, 0x115807200 <AX element pid: 17847, elementOrHash.elementID: 4678179584.521>
+            Other, 0x116c5bc00 <AX element pid: 17847, elementOrHash.elementID: 4638350208.524>
+        Other, 0x118c10b40 <AX element pid: 17847, elementOrHash.elementID: 4636648192.214>
+          Keyboard, 0x115806bc0 <AX element pid: 17847, elementOrHash.elementID: 4635516416.218>
+            Other, 0x116c5a080 <AX element pid: 17847, elementOrHash.elementID: 4583881728.223>
+              Other, 0x110a4f5c0 <AX element pid: 17847, elementOrHash.elementID: 4398732544.228>
+                Key, 0x110a4fd40 <AX element pid: 17847, elementOrHash.elementID: 4657638576.452>
+                Key, 0x106251540 <AX element pid: 17847, elementOrHash.elementID: 4657642576.453>
+                Key, 0x106253700 <AX element pid: 17847, elementOrHash.elementID: 4657635856.454>
+                Key, 0x106253480 <AX element pid: 17847, elementOrHash.elementID: 4657638496.455>
+                Key, 0x115a39540 <AX element pid: 17847, elementOrHash.elementID: 4657640336.456>
+                Key, 0x115a38a00 <AX element pid: 17847, elementOrHash.elementID: 4657638896.457>
+                Key, 0x115a3a300 <AX element pid: 17847, elementOrHash.elementID: 4657638416.458>
+                Key, 0x115a38c80 <AX element pid: 17847, elementOrHash.elementID: 4657639216.459>
+                Key, 0x115a3b980 <AX element pid: 17847, elementOrHash.elementID: 4657641536.460>
+                Key, 0x115a3bac0 <AX element pid: 17847, elementOrHash.elementID: 4657641296.461>
+                Key, 0x115a39900 <AX element pid: 17847, elementOrHash.elementID: 4657638816.462>
+                Key, 0x115a39680 <AX element pid: 17847, elementOrHash.elementID: 4657638096.463>
+                Key, 0x115a3b480 <AX element pid: 17847, elementOrHash.elementID: 4638369872.464>
+                Key, 0x115a38500 <AX element pid: 17847, elementOrHash.elementID: 4638364512.465>
+                Key, 0x115a3a440 <AX element pid: 17847, elementOrHash.elementID: 4638364592.466>
+                Key, 0x116ee21c0 <AX element pid: 17847, elementOrHash.elementID: 4638364672.467>
+                Key, 0x116ee0640 <AX element pid: 17847, elementOrHash.elementID: 4638361472.468>
+                Key, 0x116ee1400 <AX element pid: 17847, elementOrHash.elementID: 4638361392.469>
+                Key, 0x116ee3840 <AX element pid: 17847, elementOrHash.elementID: 4638361632.470>
+                Key, 0x116ee1b80 <AX element pid: 17847, elementOrHash.elementID: 4638361552.471>
+                Key, 0x116ee3c00 <AX element pid: 17847, elementOrHash.elementID: 4638361792.472>
+                Key, 0x116ee1040 <AX element pid: 17847, elementOrHash.elementID: 4638361712.473>
+                Key, 0x116ee2a80 <AX element pid: 17847, elementOrHash.elementID: 4638369552.474>
+                Key, 0x116ee3200 <AX element pid: 17847, elementOrHash.elementID: 4638369632.475>
+                Key, 0x115820500 <AX element pid: 17847, elementOrHash.elementID: 4638369792.476>
+                Button, 0x1158212c0, identifier: 'shift', label: 'shift' <AX element pid: 17847, elementOrHash.elementID: 4638369712.477>
+                Key, 0x115820140 <AX element pid: 17847, elementOrHash.elementID: 4638364752.478>
+                Key, 0x1158203c0 <AX element pid: 17847, elementOrHash.elementID: 4638364832.479>
+                Key, 0x115822940 <AX element pid: 17847, elementOrHash.elementID: 4638364912.480>
+                Key, 0x115820000 <AX element pid: 17847, elementOrHash.elementID: 4638365072.481>
+                Key, 0x1158717c0 <AX element pid: 17847, elementOrHash.elementID: 4638359632.482>
+                Key, 0x1158735c0 <AX element pid: 17847, elementOrHash.elementID: 4638359712.483>
+                Key, 0x115872940 <AX element pid: 17847, elementOrHash.elementID: 4638359792.484>
+                Key, 0x115873480 <AX element pid: 17847, elementOrHash.elementID: 4638359872.485>
+                Key, 0x116c73c00 <AX element pid: 17847, elementOrHash.elementID: 4638359952.486>
+                Key, 0x116c71cc0 <AX element pid: 17847, elementOrHash.elementID: 4638360032.487>
+                Button, 0x116c72bc0, identifier: 'Search', label: 'search' <AX element pid: 17847, elementOrHash.elementID: 4638360112.488>
+        Other, 0x118c10c80 <AX element pid: 17847, elementOrHash.elementID: 4442975232.520>
+          Button, 0x1095b7c00, label: 'Emoji' <AX element pid: 17847, elementOrHash.elementID: 4683910656.522>
+            StaticText, 0x116c597c0 <AX element pid: 17847, elementOrHash.elementID: 4442975744.525>
+          Button, 0x1095b7340, identifier: 'dictation', label: 'Dictate' <AX element pid: 17847, elementOrHash.elementID: 4683911552.523>
+            StaticText, 0x1095b6e40 <AX element pid: 17847, elementOrHash.elementID: 4442888704.526>
+          Button, 0x1095b5900, identifier: 'dictation', label: 'Dictate' <AX element pid: 17847, elementOrHash.elementID: 4683911552.523>
+            StaticText, 0x1095abe80 <AX element pid: 17847, elementOrHash.elementID: 4442888704.526>
+2026-10-28 14:17:40.453 Df GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Preferring automation type 18 instead of legacy element type OTHER derived from class/trait: _UIPopoverView:_UIPopoverView 0
+2026-10-28 14:17:40.454 Df GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Preferring automation type 46 instead of legacy element type OTHER derived from class/trait: _UIInterfaceActionRepresentationsSequenceView:_UIInterfaceActionRepresentationsSequenceView 8589934592
+2026-10-28 14:17:40.456 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:40.456 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:40.461 Df GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Current tree:
+Application, 0x115a3a440, pid: 17847 <App element pid: 17847>
+  Window (Main), 0x115a38500 <AX element pid: 17847, elementOrHash.elementID: 4398629888.3>
+    Other, 0x115a3b480 <AX element pid: 17847, elementOrHash.elementID: 4657148608.554>
+    Other, 0x115a39680 <AX element pid: 17847, elementOrHash.elementID: 4399687744.4>
+    Other, 0x115a39900 <AX element pid: 17847, elementOrHash.elementID: 4442243584.5>
+      Other, 0x115a3bac0 <AX element pid: 17847, elementOrHash.elementID: 4443307008.6>
+        Other, 0x115a3b980 <AX element pid: 17847, elementOrHash.elementID: 4398628864.7>
+          Other, 0x115a38c80 <AX element pid: 17847, elementOrHash.elementID: 4571980384.8>
+            Other, 0x115a3a300 <AX element pid: 17847, elementOrHash.elementID: 4442243072.9>
+              Other, 0x115a38a00 <AX element pid: 17847, elementOrHash.elementID: 4442255872.11>
+                Other, 0x115a39540 <AX element pid: 17847, elementOrHash.elementID: 4580520640.122>
+                  Other, 0x115820000 <AX element pid: 17847, elementOrHash.elementID: 4398553344.123>
+                    Other, 0x115822940 <AX element pid: 17847, elementOrHash.elementID: 4628707392.124>
+                      Other, 0x1158203c0 <AX element pid: 17847, elementOrHash.elementID: 4628708032.125>
+                        Other, 0x115820140 <AX element pid: 17847, elementOrHash.elementID: 4443220480.126>
+                          NavigationBar, 0x1158212c0, identifier: 'Search' <AX element pid: 17847, elementOrHash.elementID: 4453454336.274>
+                            SearchField, 0x115820500, Keyboard Focused <AX element pid: 17847, elementOrHash.elementID: 4573257216.203>
+                              Image, 0x115873480, identifier: 'magnifyingglass' <AX element pid: 17847, elementOrHash.elementID: 4630470784.287>
+                            Button, 0x115872940 <AX element pid: 17847, elementOrHash.elementID: 4635514112.275>
+                          Other, 0x1158735c0 <AX element pid: 17847, elementOrHash.elementID: 4626810176.127>
+                            Other, 0x1158717c0 <AX element pid: 17847, elementOrHash.elementID: 4626813760.129>
+                              Other, 0x1095b5900 <AX element pid: 17847, elementOrHash.elementID: 4442338432.288>
+                                Other, 0x1095b7340 <AX element pid: 17847, elementOrHash.elementID: 4659408928.290>
+                                  CollectionView, 0x1095b6e40 <AX element pid: 17847, elementOrHash.elementID: 4442381312.292>
+                                    Other, 0x1095b7c00 <AX element pid: 17847, elementOrHash.elementID: 4442851840.502>
+                                    Other, 0x116ee3200 <AX element pid: 17847, elementOrHash.elementID: 4629195712.294>
+                                      Other, 0x116ee2a80 <AX element pid: 17847, elementOrHash.elementID: 4636038400.297>
+                                      Other, 0x116ee1040 <AX element pid: 17847, elementOrHash.elementID: 4636038848.298>
+                                    Other, 0x116ee3c00 <AX element pid: 17847, elementOrHash.elementID: 4629194368.295>
+                                    Cell, 0x116ee1b80 <AX element pid: 17847, elementOrHash.elementID: 4636668416.302>
+                                      Other, 0x116ee3840 <AX element pid: 17847, elementOrHash.elementID: 4442945024.307>
+                                      Other, 0x116ee1400 <AX element pid: 17847, elementOrHash.elementID: 4657144128.308>
+                                        Other, 0x116ee0640 <AX element pid: 17847, elementOrHash.elementID: 4575177216.313>
+                                          Other, 0x116ee21c0 <AX element pid: 17847, elementOrHash.elementID: 4635092672.436>
+                                            StaticText, 0x106253480 <AX element pid: 17847, elementOrHash.elementID: 4683357376.535>
+                                            Button, 0x106253700 <AX element pid: 17847, elementOrHash.elementID: 4683358656.536>
+                                    Cell, 0x106251540 <AX element pid: 17847, elementOrHash.elementID: 4679410432.527>
+                                      Other, 0x115806bc0 <AX element pid: 17847, elementOrHash.elementID: 4442853888.528>
+                                        Other, 0x115807200 <AX element pid: 17847, elementOrHash.elementID: 4657471808.530>
+                                          Other, 0x115806f80 <AX element pid: 17847, elementOrHash.elementID: 4683909760.533>
+                                            Other, 0x114570c80 <AX element pid: 17847, elementOrHash.elementID: 4683353696.539>
+                                      Other, 0x109716300 <AX element pid: 17847, elementOrHash.elementID: 4657464640.529>
+                                        Other, 0x109717c00 <AX element pid: 17847, elementOrHash.elementID: 4679173632.531>
+                                          Other, 0x1095bb980 <AX element pid: 17847, elementOrHash.elementID: 4683359776.534>
+                                            Button, 0x1095bb200 <AX element pid: 17847, elementOrHash.elementID: 4683353376.540>
+                                              Image, 0x1095babc0, identifier: 'clock.arrow.circlepath' <AX element pid: 17847, elementOrHash.elementID: 4683352416.543>
+                                              StaticText, 0x1095bb840 <AX element pid: 17847, elementOrHash.elementID: 4683356736.544>
+                                    Other, 0x1095baa80 <AX element pid: 17847, elementOrHash.elementID: 4442884096.306>
+                                    Other, 0x1095ba080 <AX element pid: 17847, elementOrHash.elementID: 4443224064.296>
+                                      Other, 0x1095bbe80 <AX element pid: 17847, elementOrHash.elementID: 4636037504.299>
+                                    Other, 0x1095ba440 <AX element pid: 17847, elementOrHash.elementID: 4443224064.296>
+                                      Other, 0x118c12800 <AX element pid: 17847, elementOrHash.elementID: 4636037504.299>
+                              Other, 0x118c10c80 <AX element pid: 17847, elementOrHash.elementID: 4443191296.289>
+                                Other, 0x118c10b40 <AX element pid: 17847, elementOrHash.elementID: 4443225600.291>
+                                  Other, 0x118c10780 <AX element pid: 17847, elementOrHash.elementID: 4636039296.293>
+                          Toolbar, 0x118c10640, identifier: 'Toolbar' <AX element pid: 17847, elementOrHash.elementID: 4443220992.128>
+                            Other, 0x118c12d00 <AX element pid: 17847, elementOrHash.elementID: 4443221504.130>
+              Other, 0x118c103c0 <AX element pid: 17847, elementOrHash.elementID: 4442325888.12>
+                Other, 0x118c12bc0 <AX element pid: 17847, elementOrHash.elementID: 4399686400.14>
+                  Other, 0x118c10500 <AX element pid: 17847, elementOrHash.elementID: 4399686848.16>
+                    TabBar, 0x118c10dc0 <AX element pid: 17847, elementOrHash.elementID: 4443020800.19>
+                      Other, 0x118c12940 <AX element pid: 17847, elementOrHash.elementID: 4442245120.22>
+                        Other, 0x116c597c0 <AX element pid: 17847, elementOrHash.elementID: 4399692224.25>
+                        Other, 0x116c5a080 <AX element pid: 17847, elementOrHash.elementID: 4399680128.26>
+                          Button, 0x116c5bc00, identifier: 'play.rectangle.fill' <AX element pid: 17847, elementOrHash.elementID: 4398633984.33>
+                            Image, 0x116c5a440, identifier: 'play.rectangle.fill' <AX element pid: 17847, elementOrHash.elementID: 4451501312.41>
+                          Button, 0x116c5a800, identifier: 'sparkles.tv', Selected <AX element pid: 17847, elementOrHash.elementID: 4398636032.34>
+                            Image, 0x116c5b840, identifier: 'sparkles.tv.fill' <AX element pid: 17847, elementOrHash.elementID: 4451502592.42>
+                          Button, 0x116c59040, identifier: 'externaldrive.connected.to.line.below' <AX element pid: 17847, elementOrHash.elementID: 4398638080.35>
+                            Image, 0x1095abe80, identifier: 'externaldrive.connected.to.line.below.fill' <AX element pid: 17847, elementOrHash.elementID: 4451503872.43>
+                        Other, 0x1095a9540 <AX element pid: 17847, elementOrHash.elementID: 4399680576.27>
+                        Other, 0x1095ab0c0 <AX element pid: 17847, elementOrHash.elementID: 4443289344.28>
+                          Other, 0x1095aa440 <AX element pid: 17847, elementOrHash.elementID: 4399682368.36>
+                            Other, 0x1095a8140 <AX element pid: 17847, elementOrHash.elementID: 4399681024.44>
+                            Other, 0x110a4f5c0 <AX element pid: 17847, elementOrHash.elementID: 4442246656.45>
+                              Other, 0x110a4fd40 <AX element pid: 17847, elementOrHash.elementID: 4399683712.48>
+                                Other, 0x110a4f840 <AX element pid: 17847, elementOrHash.elementID: 4399684160.51>
+                                  Other, 0x110a4f480 <AX element pid: 17847, elementOrHash.elementID: 4399684608.56>
+                                Other, 0x110a4ea80 <AX element pid: 17847, elementOrHash.elementID: 4399682816.52>
+                              Other, 0x110a4f200 <AX element pid: 17847, elementOrHash.elementID: 4399683264.49>
+                  Other, 0x110a4fe80 <AX element pid: 17847, elementOrHash.elementID: 4442253824.17>
+                    Other, 0x116c72bc0 <AX element pid: 17847, elementOrHash.elementID: 4398025728.20>
+                      Other, 0x116c71cc0 <AX element pid: 17847, elementOrHash.elementID: 4399692672.23>
+                        Other, 0x116c73c00 <AX element pid: 17847, elementOrHash.elementID: 4399693120.29>
+                          Other, 0x116c73840 <AX element pid: 17847, elementOrHash.elementID: 4399045632.37>
+                            Other, 0x116c70500 <AX element pid: 17847, elementOrHash.elementID: 4442079232.46>
+                        Other, 0x116c71e00 <AX element pid: 17847, elementOrHash.elementID: 4399046144.30>
+                          Other, 0x116c72e40 <AX element pid: 17847, elementOrHash.elementID: 4442080576.38>
+            Other, 0x116c71900 <AX element pid: 17847, elementOrHash.elementID: 4399688640.10>
+    Other, 0x116c72300 <AX element pid: 17847, elementOrHash.elementID: 4443222528.555>
+      Other, 0x116c70000, identifier: 'PopoverDismissRegion' <AX element pid: 17847, elementOrHash.elementID: 4636823936.556>
+      Popover, 0x116c717c0 <AX element pid: 17847, elementOrHash.elementID: 4636827776.557>
+        Other, 0x116c71540 <AX element pid: 17847, elementOrHash.elementID: 4636828416.558>
+          Other, 0x116c73980 <AX element pid: 17847, elementOrHash.elementID: 4443223040.559>
+            Other, 0x116c73200 <AX element pid: 17847, elementOrHash.elementID: 4636827136.560>
+              Other, 0x116c70780 <AX element pid: 17847, elementOrHash.elementID: 4657141440.561>
+                Other, 0x116c71680 <AX element pid: 17847, elementOrHash.elementID: 4657140992.562>
+                  Other, 0x116c703c0 <AX element pid: 17847, elementOrHash.elementID: 4657138304.563>
+                    Other, 0x116c708c0 <AX element pid: 17847, elementOrHash.elementID: 4443182592.564>
+                      Other, 0x116c71040 <AX element pid: 17847, elementOrHash.elementID: 4657138752.565>
+                        Other, 0x116c72f80 <AX element pid: 17847, elementOrHash.elementID: 4678178048.566>
+                          Other, 0x116c73e80 <AX element pid: 17847, elementOrHash.elementID: 4657142336.567>
+                            Sheet, 0x116c735c0 <AX element pid: 17847, elementOrHash.elementID: 4679415552.568>
+                              Other, 0x116c72800 <AX element pid: 17847, elementOrHash.elementID: 4657253888.569>
+                                Other, 0x116c70dc0 <AX element pid: 17847, elementOrHash.elementID: 4678174208.570>
+                                  Other, 0x116c71f40 <AX element pid: 17847, elementOrHash.elementID: 4655736448.571>
+                                  Other, 0x116c72580 <AX element pid: 17847, elementOrHash.elementID: 4657263296.572>
+                                    ScrollView, 0x116c72440 <AX element pid: 17847, elementOrHash.elementID: 4678156288.573>
+                                      Other, 0x109626bc0 <AX element pid: 17847, elementOrHash.elementID: 4657252096.575>
+                                        StaticText, 0x109625cc0 <AX element pid: 17847, elementOrHash.elementID: 4657250304.581>
+                                      Other, 0x109627d40 <AX element pid: 17847, elementOrHash.elementID: 4442936320.576>
+                                        Other, 0x109626580 <AX element pid: 17847, elementOrHash.elementID: 4657140096.582>
+                                      Other, 0x109625040 <AX element pid: 17847, elementOrHash.elementID: 4442937856.577>
+                                        Other, 0x109626080 <AX element pid: 17847, elementOrHash.elementID: 4657140544.583>
+                                      Other, 0x109626d00 <AX element pid: 17847, elementOrHash.elementID: 4442937856.577>
+                                        Other, 0x109627700 <AX element pid: 17847, elementOrHash.elementID: 4657140544.583>
+                                      Other, 0x109625e00 <AX element pid: 17847, elementOrHash.elementID: 4442936320.576>
+                                        Other, 0x109626440 <AX element pid: 17847, elementOrHash.elementID: 4657140096.582>
+                                    ScrollView, 0x109604500 <AX element pid: 17847, elementOrHash.elementID: 4638812160.574>
+                                      Other, 0x109606d00 <AX element pid: 17847, elementOrHash.elementID: 4442896896.578>
+                                        Other, 0x109605540 <AX element pid: 17847, elementOrHash.elementID: 4657261056.584>
+                                          Button, 0x110835cc0 <AX element pid: 17847, elementOrHash.elementID: 4443081728.587>
+                                      Other, 0x110837700 <AX element pid: 17847, elementOrHash.elementID: 4442947072.579>
+                                        Other, 0x110834a00 <AX element pid: 17847, elementOrHash.elementID: 4655736000.585>
+                                      Other, 0x110837c00 <AX element pid: 17847, elementOrHash.elementID: 4442939392.580>
+                                        Other, 0x110834500 <AX element pid: 17847, elementOrHash.elementID: 4655736896.586>
+                                      Other, 0x110836580 <AX element pid: 17847, elementOrHash.elementID: 4442947072.579>
+                                        Other, 0x110834140 <AX element pid: 17847, elementOrHash.elementID: 4655736000.585>
+                                      Other, 0x110836440 <AX element pid: 17847, elementOrHash.elementID: 4442939392.580>
+                                        Other, 0x1108366c0 <AX element pid: 17847, elementOrHash.elementID: 4655736896.586>
+  Window, 0x110837480 <AX element pid: 17847, elementOrHash.elementID: 4573261056.204>
+    Other, 0x110835f40 <AX element pid: 17847, elementOrHash.elementID: 4443188224.206>
+      Other, 0x110836e40 <AX element pid: 17847, elementOrHash.elementID: 4636046464.208>
+      Other, 0x110835900 <AX element pid: 17847, elementOrHash.elementID: 4443187712.209>
+        Other, 0x110835a40, identifier: 'inputView' <AX element pid: 17847, elementOrHash.elementID: 4442864128.518>
+  Window, 0x1108370c0 <AX element pid: 17847, elementOrHash.elementID: 4679409152.515>
+    Other, 0x110834dc0 <AX element pid: 17847, elementOrHash.elementID: 4442849280.516>
+      Other, 0x110834000 <AX element pid: 17847, elementOrHash.elementID: 4657475840.517>
+        Other, 0x110834280, identifier: 'SystemInputAssistantView' <AX element pid: 17847, elementOrHash.elementID: 4635513344.212>
+          Other, 0x110836940 <AX element pid: 17847, elementOrHash.elementID: 4636046912.216>
+            Other, 0x110837200, identifier: 'CenterPageView' <AX element pid: 17847, elementOrHash.elementID: 4443139584.221>
+              Other, 0x1095ff980 <AX element pid: 17847, elementOrHash.elementID: 4636047360.226>
+                ScrollView, 0x1095fe6c0 <AX element pid: 17847, elementOrHash.elementID: 4398161408.229>
+              Other, 0x1095fcc80 <AX element pid: 17847, elementOrHash.elementID: 4636048704.227>
+                Other, 0x1095fe940 <AX element pid: 17847, elementOrHash.elementID: 4636640128.230>
+                  Other, 0x1095ff480 <AX element pid: 17847, elementOrHash.elementID: 4636467328.268>
+                    Other, 0x1095ff340 <AX element pid: 17847, elementOrHash.elementID: 4443079680.269>
+                      Other, 0x1095fdf40 <AX element pid: 17847, elementOrHash.elementID: 4636639680.270>
+                        Button, 0x1095fd400 <AX element pid: 17847, elementOrHash.elementID: 4635517952.271>
+                        Button, 0x1095fde00 <AX element pid: 17847, elementOrHash.elementID: 4635518720.272>
+                        Button, 0x1095fee40 <AX element pid: 17847, elementOrHash.elementID: 4635519488.273>
+        Other, 0x1095fd040 <AX element pid: 17847, elementOrHash.elementID: 4657476288.519>
+          Other, 0x1095fc280 <AX element pid: 17847, elementOrHash.elementID: 4678179584.521>
+            Other, 0x109744dc0 <AX element pid: 17847, elementOrHash.elementID: 4638350208.524>
+        Other, 0x109744500 <AX element pid: 17847, elementOrHash.elementID: 4636648192.214>
+          Keyboard, 0x1097443c0 <AX element pid: 17847, elementOrHash.elementID: 4635516416.218>
+            Other, 0x109745cc0 <AX element pid: 17847, elementOrHash.elementID: 4583881728.223>
+              Other, 0x109744000, identifier: 'UIKeyboardLayoutStar Preview' <AX element pid: 17847, elementOrHash.elementID: 4398732544.228>
+                Key, 0x109746580 <AX element pid: 17847, elementOrHash.elementID: 4657638576.452>
+                Key, 0x109744a00 <AX element pid: 17847, elementOrHash.elementID: 4657642576.453>
+                Key, 0x1171d4140 <AX element pid: 17847, elementOrHash.elementID: 4657635856.454>
+                Key, 0x1171d61c0 <AX element pid: 17847, elementOrHash.elementID: 4657638496.455>
+                Key, 0x1171d5a40 <AX element pid: 17847, elementOrHash.elementID: 4657640336.456>
+                Key, 0x1171d4280 <AX element pid: 17847, elementOrHash.elementID: 4657638896.457>
+                Key, 0x1171d7c00 <AX element pid: 17847, elementOrHash.elementID: 4657638416.458>
+                Key, 0x1171d5f40 <AX element pid: 17847, elementOrHash.elementID: 4657639216.459>
+                Key, 0x1171d6f80 <AX element pid: 17847, elementOrHash.elementID: 4657641536.460>
+                Key, 0x1171d5400 <AX element pid: 17847, elementOrHash.elementID: 4657641296.461>
+                Key, 0x1171d7340 <AX element pid: 17847, elementOrHash.elementID: 4657638816.462>
+                Key, 0x1171d66c0 <AX element pid: 17847, elementOrHash.elementID: 4657638096.463>
+                Key, 0x1171d52c0 <AX element pid: 17847, elementOrHash.elementID: 4638369872.464>
+                Key, 0x116c7a300 <AX element pid: 17847, elementOrHash.elementID: 4638364512.465>
+                Key, 0x116c79400 <AX element pid: 17847, elementOrHash.elementID: 4638364592.466>
+                Key, 0x116c78500 <AX element pid: 17847, elementOrHash.elementID: 4638364672.467>
+                Key, 0x116c7ad00 <AX element pid: 17847, elementOrHash.elementID: 4638361472.468>
+                Key, 0x116c7ae40 <AX element pid: 17847, elementOrHash.elementID: 4638361392.469>
+                Key, 0x116c7a080 <AX element pid: 17847, elementOrHash.elementID: 4638361632.470>
+                Key, 0x116c79f40 <AX element pid: 17847, elementOrHash.elementID: 4638361552.471>
+                Key, 0x116c7a940 <AX element pid: 17847, elementOrHash.elementID: 4638361792.472>
+                Key, 0x116eebd40 <AX element pid: 17847, elementOrHash.elementID: 4638361712.473>
+                Key, 0x116eeae40 <AX element pid: 17847, elementOrHash.elementID: 4638369552.474>
+                Key, 0x116ee9900 <AX element pid: 17847, elementOrHash.elementID: 4638369632.475>
+                Key, 0x116ee8b40 <AX element pid: 17847, elementOrHash.elementID: 4638369792.476>
+                Button, 0x1173fc000, identifier: 'shift', Selected <AX element pid: 17847, elementOrHash.elementID: 4638369712.477>
+                Key, 0x1173fc140 <AX element pid: 17847, elementOrHash.elementID: 4638364752.478>
+                Key, 0x1173fc280 <AX element pid: 17847, elementOrHash.elementID: 4638364832.479>
+                Key, 0x1173fc3c0 <AX element pid: 17847, elementOrHash.elementID: 4638364912.480>
+                Key, 0x1173fc500 <AX element pid: 17847, elementOrHash.elementID: 4638365072.481>
+                Key, 0x1173fc640 <AX element pid: 17847, elementOrHash.elementID: 4638359632.482>
+                Key, 0x1173fc780 <AX element pid: 17847, elementOrHash.elementID: 4638359712.483>
+                Key, 0x1173fc8c0 <AX element pid: 17847, elementOrHash.elementID: 4638359792.484>
+                Key, 0x1173fca00, identifier: 'delete' <AX element pid: 17847, elementOrHash.elementID: 4638359872.485>
+                Key, 0x1173fcb40, identifier: 'more' <AX element pid: 17847, elementOrHash.elementID: 4638359952.486>
+                Key, 0x1173fcc80, identifier: 'space' <AX element pid: 17847, elementOrHash.elementID: 4638360032.487>
+                Button, 0x1173fcdc0, identifier: 'Search', Disabled <AX element pid: 17847, elementOrHash.elementID: 4638360112.488>
+        Other, 0x1173fcf00 <AX element pid: 17847, elementOrHash.elementID: 4442975232.520>
+          Button, 0x1173fd040 <AX element pid: 17847, elementOrHash.elementID: 4683910656.522>
+            StaticText, 0x1173fd180 <AX element pid: 17847, elementOrHash.elementID: 4442975744.525>
+          Button, 0x1173fd2c0, identifier: 'dictation' <AX element pid: 17847, elementOrHash.elementID: 4683911552.523>
+            StaticText, 0x1173fd400 <AX element pid: 17847, elementOrHash.elementID: 4442888704.526>
+          Button, 0x1173fd540, identifier: 'dictation' <AX element pid: 17847, elementOrHash.elementID: 4683911552.523>
+            StaticText, 0x1173fd680 <AX element pid: 17847, elementOrHash.elementID: 4442888704.526>
+2026-10-28 14:17:42.505 E  GlassPlayer[17847:d607] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:42.519 E  GlassPlayer[17847:d607] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:42.607 E  GlassPlayer[17847:d617] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:42.611 E  GlassPlayer[17847:d617] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:42.783 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:42.960 E  GlassPlayer[17847:d546] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:43.425 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:43.431 E  GlassPlayer[17847:d620] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:17:43.936 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:17:43.937 E  GlassPlayer[17847:d546] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:01.656 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:01.656 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:01.806 E  GlassPlayer[20022:ea0a] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-28 14:18:01.943 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:01.943 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:03.840 F  GlassPlayer[20022:ea56] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-28 14:18:04.271 E  GlassPlayer[20022:ea56] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:04.343 E  GlassPlayer[20022:ea56] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:04.436 E  GlassPlayer[20022:ea56] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:07.334 E  GlassPlayer[20022:ea4f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:07.340 E  GlassPlayer[20022:ea4f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:07.340 E  GlassPlayer[20022:ea4f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:07.506 E  GlassPlayer[20022:eee7] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:07.516 E  GlassPlayer[20022:eee7] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:07.517 E  GlassPlayer[20022:eee7] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:07.620 E  GlassPlayer[20022:ea4f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:07.622 E  GlassPlayer[20022:ea4f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:07.624 E  GlassPlayer[20022:ea4f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:07.727 E  GlassPlayer[20022:ea0a] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-28 14:18:08.927 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:08.933 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:08.934 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:08.934 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:12.142 E  GlassPlayer[20022:ea0a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:12.147 E  GlassPlayer[20022:ea0a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:12.424 E  GlassPlayer[20022:ea0a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:12.428 E  GlassPlayer[20022:ea0a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:12.558 E  GlassPlayer[20022:ea60] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:12.559 E  GlassPlayer[20022:ea60] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:12.561 E  GlassPlayer[20022:ea60] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:13.048 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:13.048 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:13.048 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:14.697 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIFocus] <compose failure [shared UUID]>
+2026-10-28 14:18:14.793 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.794 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.794 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.794 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.794 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.795 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.795 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.797 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.797 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.797 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.799 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.799 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.799 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.815 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:14.815 E  GlassPlayer[20022:ea0a] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:15.061 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.062 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.062 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.062 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.427 E  GlassPlayer[20022:eed7] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:15.429 E  GlassPlayer[20022:eed7] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:15.695 E  GlassPlayer[20022:eed7] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:15.696 E  GlassPlayer[20022:eed7] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:15.784 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.785 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.785 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.786 E  GlassPlayer[20022:eed7] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:15.786 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.799 E  GlassPlayer[20022:eed7] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:15.800 E  GlassPlayer[20022:eed7] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:15.856 E  GlassPlayer[20022:ea0a] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:18:15.856 E  GlassPlayer[20022:eed7] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:15.862 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.870 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.870 E  GlassPlayer[20022:ea0a] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:15.870 E  GlassPlayer[20022:eed7] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:15.877 E  GlassPlayer[20022:eed7] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:15.935 E  GlassPlayer[20022:eed7] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:15.953 E  GlassPlayer[20022:eed7] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:15.976 E  GlassPlayer[20022:eed7] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:15.986 E  GlassPlayer[20022:eed7] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:16.043 E  GlassPlayer[20022:eed7] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:16.127 E  GlassPlayer[20022:eed7] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:16.144 E  GlassPlayer[20022:eed7] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:16.157 E  GlassPlayer[20022:eed7] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:17.034 E  GlassPlayer[20022:ea0a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:17.053 E  GlassPlayer[20022:ea0a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:17.461 E  GlassPlayer[20022:f197] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:17.462 E  GlassPlayer[20022:f197] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:17.531 E  GlassPlayer[20022:f197] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:17.532 E  GlassPlayer[20022:f197] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:17.534 E  GlassPlayer[20022:f197] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:17.536 E  GlassPlayer[20022:f197] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:17.537 E  GlassPlayer[20022:f197] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:17.540 E  GlassPlayer[20022:f197] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:17.542 E  GlassPlayer[20022:f197] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:17.543 E  GlassPlayer[20022:f197] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:17.545 E  GlassPlayer[20022:f197] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:17.547 E  GlassPlayer[20022:f197] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:17.549 E  GlassPlayer[20022:f197] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:17.550 E  GlassPlayer[20022:f197] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:17.551 E  GlassPlayer[20022:f197] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:17.552 E  GlassPlayer[20022:f197] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:17.553 E  GlassPlayer[20022:f197] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:17.555 E  GlassPlayer[20022:f197] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:18.722 E  GlassPlayer[20022:ea0a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:18.734 E  GlassPlayer[20022:ea0a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:33.970 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:33.970 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:34.089 E  GlassPlayer[20878:f377] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-28 14:18:34.170 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:34.170 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:35.583 F  GlassPlayer[20878:f3d2] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-28 14:18:35.947 E  GlassPlayer[20878:f958] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:35.948 E  GlassPlayer[20878:f958] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:35.949 E  GlassPlayer[20878:f958] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:37.049 E  GlassPlayer[20878:f3e6] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:37.051 E  GlassPlayer[20878:f3e6] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:37.053 E  GlassPlayer[20878:f3e6] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:37.110 E  GlassPlayer[20878:f958] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:37.113 E  GlassPlayer[20878:f958] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:37.114 E  GlassPlayer[20878:f958] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:37.177 E  GlassPlayer[20878:f958] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:37.186 E  GlassPlayer[20878:f958] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:37.187 E  GlassPlayer[20878:f958] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:37.257 E  GlassPlayer[20878:f377] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-28 14:18:37.822 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:37.826 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:37.828 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:37.828 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:40.949 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:40.953 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:41.235 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:41.238 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:41.423 E  GlassPlayer[20878:f3d1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:41.428 E  GlassPlayer[20878:f3d1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:41.429 E  GlassPlayer[20878:f3d1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:18:41.749 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:41.749 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:41.749 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:42.661 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIFocus] <compose failure [shared UUID]>
+2026-10-28 14:18:42.691 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.691 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.692 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.692 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.692 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.692 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.692 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.700 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.700 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.700 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.703 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.703 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.703 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.706 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.706 E  GlassPlayer[20878:f377] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:18:42.809 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:42.809 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:42.809 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:42.809 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:43.021 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.022 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.082 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.083 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.184 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.185 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.263 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.265 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:43.265 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.266 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:43.327 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:43.328 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:43.329 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.384 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:43.396 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:43.396 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:43.396 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.427 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.428 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.434 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:18:43.435 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.487 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.489 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.501 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.503 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.504 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.512 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.514 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.525 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.525 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.527 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.529 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.530 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.531 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.533 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.535 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.538 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.539 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.558 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.569 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.569 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.572 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:43.573 E  GlassPlayer[20878:f3e6] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:18:43.603 E  GlassPlayer[20878:f3e6] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:18:44.634 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:44.659 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:44.916 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:44.930 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:45.244 E  GlassPlayer[20878:fbf2] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:45.247 E  GlassPlayer[20878:fbf2] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:46.816 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:46.848 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:47.581 E  GlassPlayer[20878:f3d1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:47.582 E  GlassPlayer[20878:f3d1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:47.952 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:48.008 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:48.758 E  GlassPlayer[20878:fa65] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:48.759 E  GlassPlayer[20878:fa65] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:18:49.366 E  GlassPlayer[20878:fd62] [com.apple.locationd.Core:Core] <compose failure [shared UUID]>
+2026-10-28 14:18:49.664 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:49.668 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:49.668 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:49.669 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:49.669 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:49.669 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:49.669 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:49.669 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:49.670 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:50.171 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:50.171 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:50.172 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:50.172 E  GlassPlayer[20878:f377] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:18:50.190 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:18:50.190 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:18:50.191 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:18:50.224 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:18:50.225 E  GlassPlayer[20878:f377] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:19:02.017 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:02.018 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:02.024 E  GlassPlayer[22072:fecf] [com.apple.app_launch_measurement:General] <compose failure [shared UUID]>
+2026-10-28 14:19:02.148 E  GlassPlayer[22072:fe48] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-28 14:19:02.210 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:02.220 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:02.869 E  GlassPlayer[22072:feb9] [com.apple.app_launch_measurement:General] <compose failure [shared UUID]>
+2026-10-28 14:19:03.907 F  GlassPlayer[22072:feb9] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-28 14:19:04.773 E  GlassPlayer[22072:feb9] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:04.783 E  GlassPlayer[22072:feb9] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:04.803 E  GlassPlayer[22072:feb9] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:06.204 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:06.207 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:06.208 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:06.410 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:06.416 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:06.419 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:06.629 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:06.651 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:06.653 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:06.808 E  GlassPlayer[22072:fe48] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-28 14:19:07.731 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:07.737 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:07.737 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:07.737 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:11.013 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:11.017 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:11.369 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:11.375 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:11.542 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:11.543 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:11.546 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-10-28 14:19:11.920 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:11.920 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:11.920 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:12.965 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIFocus] <compose failure [shared UUID]>
+2026-10-28 14:19:13.000 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.000 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.000 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.000 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.000 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.001 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.001 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.001 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.001 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.002 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.005 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.005 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.005 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.019 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.019 E  GlassPlayer[22072:fe48] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-10-28 14:19:13.128 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:13.129 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:13.129 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:13.129 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:13.303 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:13.303 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:13.304 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:13.383 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:13.384 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:13.461 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:13.463 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:13.471 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:13.473 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:13.591 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:13.697 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:13.698 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:13.743 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:13.852 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:13.854 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:13.952 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-10-28 14:19:13.952 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:13.963 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:14.035 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:14.036 E  GlassPlayer[22072:fe48] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:14.036 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.041 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.042 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.120 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.121 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.155 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.164 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.168 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.172 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.174 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.177 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.178 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.179 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.180 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.182 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.184 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.186 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.187 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.189 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.190 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.193 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.194 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:14.195 E  GlassPlayer[22072:feca] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-10-28 14:19:14.197 E  GlassPlayer[22072:feca] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-10-28 14:19:15.276 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:15.314 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:15.722 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:15.765 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:16.195 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:16.195 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:17.733 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:17.749 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:18.141 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:18.143 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:18.278 E  GlassPlayer[22072:fec1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:18.286 E  GlassPlayer[22072:fec1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:18.520 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:18.523 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:18.664 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:18.665 E  GlassPlayer[22072:febe] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:20.223 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:20.240 E  GlassPlayer[22072:fe48] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-10-28 14:19:33.898 E  GlassPlayer[22864:10587] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:33.899 E  GlassPlayer[22864:10587] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:34.384 E  GlassPlayer[22864:10587] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-28 14:19:34.933 E  GlassPlayer[22864:10587] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:34.933 E  GlassPlayer[22864:10587] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:35.458 E  GlassPlayer[22864:10587] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-10-28 14:19:35.648 F  GlassPlayer[22864:10587] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-10-28 14:19:40.984 E  GlassPlayer[22864:10bb2] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:19:40.986 E  GlassPlayer[22864:10bb3] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:19:40.994 E  GlassPlayer[22864:10bee] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:19:40.995 E  GlassPlayer[22864:10bef] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:19:41.002 E  GlassPlayer[22864:10bed] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-28 14:19:41.002 E  GlassPlayer[22864:10bed] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-28 14:19:41.357 E  GlassPlayer[22864:10b76] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:19:41.722 F  GlassPlayer[22864:10b9f] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-28 14:19:42.195 E  GlassPlayer[22864:10b76] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:19:42.432 E  GlassPlayer[22864:10b76] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:19:42.513 E  GlassPlayer[22864:10b76] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:19:42.575 E  GlassPlayer[22864:10b76] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:19:50.996 E  GlassPlayer[22864:10b76] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:51.046 E  GlassPlayer[22864:10c71] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:19:51.076 E  GlassPlayer[22864:10c72] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:19:51.843 E  GlassPlayer[22864:10587] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:51.844 E  GlassPlayer[22864:10587] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:51.845 E  GlassPlayer[22864:10587] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:19:51.846 E  GlassPlayer[22864:10587] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:20:06.050 E  GlassPlayer[22864:10e3b] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:20:06.053 E  GlassPlayer[22864:10e3c] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:20:06.058 E  GlassPlayer[22864:10e40] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:20:06.059 E  GlassPlayer[22864:10e41] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:20:49.956 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:20:49.957 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:20:50.254 E  GlassPlayer[23783:10fd5] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-28 14:20:50.699 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:20:50.699 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:20:51.058 E  GlassPlayer[23783:10fd5] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-10-28 14:20:51.127 F  GlassPlayer[23783:10fd5] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-10-28 14:20:52.630 E  GlassPlayer[23783:11ca4] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:20:52.656 E  GlassPlayer[23783:11ca5] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:20:52.659 E  GlassPlayer[23783:11cc4] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:20:52.660 E  GlassPlayer[23783:11cc5] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:20:52.688 E  GlassPlayer[23783:11c95] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:20:52.716 E  GlassPlayer[23783:11c95] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:20:52.720 E  GlassPlayer[23783:11c95] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:20:52.754 E  GlassPlayer[23783:11c95] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:20:52.786 E  GlassPlayer[23783:11c95] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:20:54.220 E  GlassPlayer[23783:11ce1] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-28 14:20:54.220 E  GlassPlayer[23783:11ce1] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-28 14:20:54.970 E  GlassPlayer[23783:11a90] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-28 14:20:54.970 E  GlassPlayer[23783:11a90] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-28 14:20:54.971 E  GlassPlayer[23783:11a90] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-28 14:20:54.971 E  GlassPlayer[23783:11a90] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-28 14:20:55.280 F  GlassPlayer[23783:11a82] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-28 14:21:02.559 E  GlassPlayer[23783:11c95] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:02.571 E  GlassPlayer[23783:11f1c] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:02.572 E  GlassPlayer[23783:11f1d] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:02.977 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:02.977 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:02.977 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:02.977 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:06.633 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:06.633 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:06.634 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:06.634 E  GlassPlayer[23783:10fd5] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:07.413 E  GlassPlayer[23783:12160] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:07.414 E  GlassPlayer[23783:12161] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:07.415 E  GlassPlayer[23783:12164] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:07.415 E  GlassPlayer[23783:12165] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:23.400 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:23.401 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:23.649 E  GlassPlayer[25905:12423] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-28 14:21:24.130 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:24.131 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:24.478 E  GlassPlayer[25905:12423] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-10-28 14:21:24.538 F  GlassPlayer[25905:12423] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-10-28 14:21:25.441 E  GlassPlayer[25905:12793] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:25.463 E  GlassPlayer[25905:12794] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:25.466 E  GlassPlayer[25905:1279b] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:25.466 E  GlassPlayer[25905:1279c] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:25.499 E  GlassPlayer[25905:1278f] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:21:25.511 E  GlassPlayer[25905:1278f] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:21:25.545 E  GlassPlayer[25905:1278f] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:21:25.629 E  GlassPlayer[25905:1278f] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:21:25.677 E  GlassPlayer[25905:1278f] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-10-28 14:21:26.645 E  GlassPlayer[25905:12549] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-28 14:21:26.645 E  GlassPlayer[25905:12549] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-28 14:21:26.645 E  GlassPlayer[25905:12549] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-28 14:21:26.645 E  GlassPlayer[25905:12549] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-28 14:21:26.692 E  GlassPlayer[25905:12549] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-28 14:21:26.694 E  GlassPlayer[25905:12549] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-28 14:21:27.093 F  GlassPlayer[25905:12550] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-28 14:21:27.220 E  GlassPlayer[25905:127d8] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-28 14:21:27.221 E  GlassPlayer[25905:127d8] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-10-28 14:21:34.330 E  GlassPlayer[25905:1278f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:34.339 E  GlassPlayer[25905:12b37] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:34.341 E  GlassPlayer[25905:12b38] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:34.744 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:34.745 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:34.745 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:34.745 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:36.381 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:36.381 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:36.381 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:36.382 E  GlassPlayer[25905:12423] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-28 14:21:36.694 E  GlassPlayer[25905:12cad] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:36.696 E  GlassPlayer[25905:12cae] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:36.702 E  GlassPlayer[25905:12cb1] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-10-28 14:21:36.703 E  GlassPlayer[25905:12cb2] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
