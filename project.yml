@@ -160,6 +160,13 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.glassplayer.tests
+        # The engine is linked into the app only (the tests run inside it).
+        OTHER_LDFLAGS: ""
+    # The app's bridging header imports mpv's headers; a test target that
+    # imports the app has to find them too (search paths only).
+    configFiles:
+      Debug: Vendor/engine.xcconfig
+      Release: Vendor/engine.xcconfig
 
   GlassPlayerUITests:
     type: bundle.ui-testing

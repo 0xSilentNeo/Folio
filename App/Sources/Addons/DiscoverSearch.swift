@@ -27,8 +27,8 @@ final class DiscoverSearch: ObservableObject {
         case failed(offline: Bool)
     }
 
-    static let debounce: Duration = .milliseconds(300)
-    static let minLength = 2
+    nonisolated static let debounce: Duration = .milliseconds(300)
+    nonisolated static let minLength = 2
 
     @Published private(set) var phase: Phase = .idle
     /// IMDb titles, and the query they answer.

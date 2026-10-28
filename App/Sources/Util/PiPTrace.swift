@@ -13,7 +13,7 @@ import UIKit
 /// report you send has the whole timeline.
 @MainActor
 enum PiPTrace {
-    static let subsystem = "dev.silentneo.glassplayer"
+    nonisolated static let subsystem = "dev.silentneo.glassplayer"
     nonisolated static let logger = Logger(subsystem: subsystem, category: "pip")
     nonisolated static let signposter = OSSignposter(subsystem: subsystem, category: "pip")
 
