@@ -9,6 +9,9 @@ on:
     paths: ['App/Sources/**', 'Tests/**', 'project.yml', '.github/workflows/unit-tests.yml']
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: xcode-27
@@ -51,3 +54,12 @@ jobs:
             -destination "id=${{ steps.sim.outputs.udid }}" -derivedDataPath build \
             CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" 2>&1 | tee test.log | grep -E "Test Case|error:|Executed|TEST (SUCCEEDED|FAILED)" || true
           grep -q "TEST SUCCEEDED" test.log
+
+      - name: Publish the log to the lab-unittests branch
+        if: always()
+        run: |
+          git config user.name lab-bot
+          git config user.email lab@users.noreply.github.com
+          mkdir -p out && tail -4000 test.log > out/test.log 2>/dev/null; grep -E "error:|Test Case.*failed|XCTAssert" test.log > out/errors.log 2>/dev/null || true
+          cd out && git init -q && git checkout -q -b lab-unittests && git add -A && git commit -qm "unit tests ${{ github.run_id }}" \
+            && git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" lab-unittests
