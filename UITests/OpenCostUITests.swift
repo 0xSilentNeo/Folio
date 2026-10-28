@@ -41,7 +41,7 @@ final class OpenCostUITests: XCTestCase {
         let app = XCUIApplication()
         let style = ProcessInfo.processInfo.environment["LAB_TITLE_STYLE"] ?? "full"
         app.launchArguments = ["-uiTestLibrary", "-libraryView", "details", "-heroView", "details", "-tileArtwork", "poster",
-                               "-librarySort", "size", "-librarySortAsc", "NO", "-metadataFetching", "YES",
+                               "-librarySort", "size", "-librarySortAsc", "NO", "-metadataFetching", "NO",
                                "-titlePageStyle", style, "-appearance", "dark", "-renderer", "gl"]
         app.launch()
         XCUIDevice.shared.orientation = .portrait
@@ -61,16 +61,17 @@ final class OpenCostUITests: XCTestCase {
         let edgeA = CGPoint(x: 4, y: H * 0.55), edgeB = CGPoint(x: W * 0.85, y: H * 0.55)
         let origin = app.coordinate(withNormalizedOffset: .zero)
         func xcTap(_ p: CGPoint) { origin.withOffset(CGVector(dx: p.x, dy: p.y)).tap() }
-        // Home's gear is covered whenever a page is open (the page's own
-        // title would match "MobLand" too).
         let gear = app.buttons["Settings"].firstMatch
+        // A page is open while its ‹ is there (pages draw their own since
+        // 1.17.1; the system bar's is also called Back).
+        let backButton = app.buttons["Back"].firstMatch
         func backToHome() {
             // 1.16.1's hidden page can start playback (its 27 Oct bug).
             if app.buttons["Close player"].exists {
                 mark("the player opened: closing it")
                 app.buttons["Close player"].tap(); sleep(3)
             }
-            for _ in 0..<3 where !gear.isHittable {
+            for _ in 0..<3 where backButton.exists {
                 mark("not on Home yet: swipe back again")
                 synth(swipe(edgeA, edgeB)); sleep(2)
             }

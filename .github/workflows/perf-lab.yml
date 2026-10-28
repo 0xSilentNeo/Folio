@@ -144,6 +144,7 @@ jobs:
           done
           cp -c "$SRC" "$M/Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.AAC2.0.H.264.MSubs-ToonsHub.mkv"
           find "$M" -type f | sed "s|$M/||" | sort
+          python3 scripts/lab/seed_history.py "$CONT" "$M"
 
       - name: Run the test with Time Profiler and screen recording
         run: |

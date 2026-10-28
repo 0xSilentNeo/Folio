@@ -69,7 +69,7 @@ for ev, el in ET.iterparse(tp_path, events=("end",)):
     elif tag == "binary":
         if el.get("id") and el.get("name"):
             store[el.get("id")] = el.get("name")
-    elif tag == "backtrace":
+    elif tag in ("backtrace", "tagged-backtrace"):
         if el.get("ref"):
             continue
         frames = []
@@ -93,7 +93,7 @@ for ev, el in ET.iterparse(tp_path, events=("end",)):
             el.clear(); continue
         t = int(col("sample-time") or 0) / 1e9
         w = int(col("weight") or 1000000) / 1e6
-        bt = col("backtrace") or []
+        bt = col("tagged-backtrace") or col("backtrace") or []
         samples.append((t, w, bt))
         el.clear()
 print(f"{len(samples)} main-thread samples")
@@ -146,7 +146,7 @@ for i, (t, what) in enumerate(marks):
 for (letter, k), (n, busy, io, ia, lf) in sorted(per_kind.items()):
     print(f"\n== {letter}: {k} — {n} times, main thread busy {busy / n:.0f} ms each on average (1.2 s window)")
     print("   our functions (inclusive, ms per time):")
-    for name, v in io.most_common(28):
+    for name, v in io.most_common(60):
         print(f"     {v / n:7.1f}  {name}")
     print("   system functions (inclusive, ms per time):")
     for name, v in ia.most_common(28):
