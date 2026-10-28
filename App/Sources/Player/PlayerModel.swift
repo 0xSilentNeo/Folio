@@ -1351,6 +1351,9 @@ final class PlayerModel: ObservableObject {
         #endif
         guard renderer == .metal, mode == .main, fileLoaded, !isPiPActive,
               UIApplication.shared.applicationState == .active, let c = client else { return }
+        // The frame only goes to the PiP layer: none with PiP off (it was read
+        // back after every seek and pause regardless).
+        guard defaults.bool(forKey: SettingsKey.pipEnabled), PiPManager.isSupported else { return }
         guard Date().timeIntervalSince(lastSnapshot) > 2 else { return }
         lastSnapshot = Date()
         let sink = pip.makeSink()
