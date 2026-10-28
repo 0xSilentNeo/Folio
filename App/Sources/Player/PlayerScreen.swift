@@ -681,11 +681,14 @@ struct ScrubBubble: View {
 /// scale with a slight dim, like the system's glass buttons.
 struct PressStyle: ButtonStyle {
     var scale: CGFloat = 0.9
+    /// Called when the finger goes down (a head start for what the tap opens).
+    var onPress: (() -> Void)? = nil
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? scale : 1)
             .opacity(configuration.isPressed ? 0.8 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
+            .onChange(of: configuration.isPressed) { _, pressed in if pressed { onPress?() } }
     }
 }
 

@@ -262,6 +262,26 @@ final class ThumbLoader: ObservableObject {
         }
     }
 
+    /// Loads episode pictures into the shared cache before a title page
+    /// shows them, so its rows have them on their first frame.
+    ///
+    /// 28 Oct recording: the first time MobLand opened, its rows showed
+    /// placeholder art for ~0.3 s and the pictures faded in mid-zoom; the
+    /// second time (in this cache) they were there from the start. Started
+    /// when your finger goes down on the title (Home), which is ~0.1–0.3 s
+    /// before the page appears; same keys and sizes as the page's rows.
+    private static var prefetched: [String: Date] = [:]
+    static func prefetch(_ files: [URL]) {
+        let now = Date()
+        for f in files {
+            let key = f.path
+            guard cache.object(forKey: key as NSString) == nil,
+                  now.timeIntervalSince(prefetched[key] ?? .distantPast) > 30 else { continue }
+            prefetched[key] = now
+            ThumbLoader().load(key: key, fileURL: f, artwork: nil, lookupName: f.lastPathComponent, art: .wide)
+        }
+    }
+
     /// Addon items ("type|metaId|videoId"): a 16:9 picture from IMDb by id —
     /// the episode still, else the title's backdrop — else the given poster.
     func loadAddonArt(key: String, ref: String, fallback: String?) {
