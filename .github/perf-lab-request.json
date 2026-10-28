@@ -1,1 +1,1 @@
-{"refs": ["v1.17.4", "1d90481e036b9eb7b7bfa6fbde89a3dca9d943e9"], "only": "GlassPlayerUITests/OpenCostUITests/test60OpenClose", "title_style": "full", "note": "run 4: 1.17.4 again (its profiler didn't attach) and every fix so far"}
+{"refs": ["v1.16.1", "38890a06db3ce4a65edb73026930b864a2ddbaf0"], "only": "GlassPlayerUITests/OpenCostUITests/test60OpenClose", "title_style": "full", "note": "run 5: 1.16.1 baseline (its last run stalled) and the fixes with episodes worked out once"}
