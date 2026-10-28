@@ -269,7 +269,6 @@ extension View {
     func ignoresTapsWhileLeaving() -> some View { modifier(LeaveGuard()) }
 }
 
-private struct PageLeavingKey: EnvironmentKey { static let defaultValue = false }
 private struct ZoomsFromTileKey: EnvironmentKey { static let defaultValue = false }
 extension EnvironmentValues {
     /// The page zooms out of a tile and back into it (zoomDestination, iOS 18+).
@@ -277,18 +276,13 @@ extension EnvironmentValues {
         get { self[ZoomsFromTileKey.self] }
         set { self[ZoomsFromTileKey.self] = newValue }
     }
-    /// True from the moment a pushed page starts going away (LeaveGuard).
-    var pageLeaving: Bool {
-        get { self[PageLeavingKey.self] }
-        set { self[PageLeavingKey.self] = newValue }
-    }
 }
 
 /// Whether a page is going away, readable at the moment a tap's action runs.
 ///
-/// A class, not a value: the `pageLeaving` environment value is a copy taken
-/// when the page's view was last updated, so an action closure can read a
-/// stale `false` after the page started going back (27 Oct log, 19:12:55:
+/// A class, not a value: an environment value (`pageLeaving`, until 1.17.4)
+/// is a copy taken when the page's view was last updated, so an action
+/// closure could read a stale `false` after the page started going back (27 Oct log, 19:12:55:
 /// "page leaving: taps off", then 114 ms later an episode row played). This
 /// is set synchronously — by the page's Back button before it asks to go
 /// back, and by UIKit's viewWillDisappear — and read when the action runs.
@@ -338,15 +332,24 @@ extension EnvironmentValues {
     }
 }
 
+/// No SwiftUI state here: a page that starts going back doesn't change
+/// anything SwiftUI draws. UIKit's isUserInteractionEnabled on the page's view
+/// stops its touches at once, and PageLife answers "can this tap act?" when an
+/// action runs.
+///
+/// Until 1.17.4 a @State flag went true too (`allowsHitTesting`, the
+/// `pageLeaving` environment value): the whole page was built again at the
+/// start of every back — and, since 1.17.3, at the moment you let go of a
+/// swipe back on a page still opening, when iOS has to start sending it back.
+/// 28 Oct log: after those let-gos the log's 100 ms timer came 170–610 ms
+/// late, and that's where your recording's page hovers, vanishes and comes
+/// back.
 private struct LeaveGuard: ViewModifier {
-    @State private var leaving = false
     @State private var life = PageLife()
     func body(content: Content) -> some View {
         content
-            .allowsHitTesting(!leaving)
-            .environment(\.pageLeaving, leaving)
             .environment(\.pageLife, life)
-            .background(LeavingProbe(life: life) { leaving = $0 }.frame(width: 0, height: 0).accessibilityHidden(true))
+            .background(LeavingProbe(life: life).frame(width: 0, height: 0).accessibilityHidden(true))
     }
 }
 
@@ -354,9 +357,7 @@ private struct LeaveGuard: ViewModifier {
 /// page's appearance callbacks (automatic forwarding).
 private struct LeavingProbe: UIViewControllerRepresentable {
     let life: PageLife
-    let onChange: (Bool) -> Void
     final class Probe: UIViewController {
-        var onChange: ((Bool) -> Void)?
         var life: PageLife?
         /// Tells the probe when the page's view enters the window: that is
         /// when a push starts, whatever SwiftUI does with appearance calls.
@@ -377,7 +378,6 @@ private struct LeavingProbe: UIViewControllerRepresentable {
             if let v = life?.page?.view { BackWatch.cancelled(v) }
             setPageTouchable(true)
             watchOpening()
-            onChange?(false)
         }
 
         // MARK: Going back before the page is open
@@ -450,7 +450,6 @@ private struct LeavingProbe: UIViewControllerRepresentable {
                     vc.view.isUserInteractionEnabled = false
                     BackWatch.began(vc.view, nav: nav)
                     dlog("nav", "page going back before it was open (\(ms) ms in): no taps on it until it's gone")
-                    onChange?(true)
                     opening?.invalidate(); opening = nil
                 } else {
                     if !life.leaving { vc.view.isUserInteractionEnabled = true }
@@ -475,7 +474,6 @@ private struct LeavingProbe: UIViewControllerRepresentable {
             if let page = life?.page, let nav = page.navigationController ?? navigationController { BackWatch.began(page.view, nav: nav) }
             PopTouchLab.start(for: self)
             dlog("nav", "page leaving: taps off")
-            onChange?(true)
             // Pages that keep the system bar (Settings, folders, addon titles):
             // react-native-screens #5054 (iOS 27.0, traced in UIKit) — when the
             // screen below hides the bar, UIKit fades it out (alpha 0) alongside
@@ -492,8 +490,8 @@ private struct LeavingProbe: UIViewControllerRepresentable {
             }
         }
     }
-    func makeUIViewController(context: Context) -> Probe { let p = Probe(); p.onChange = onChange; p.life = life; return p }
-    func updateUIViewController(_ vc: Probe, context: Context) { vc.onChange = onChange; vc.life = life }
+    func makeUIViewController(context: Context) -> Probe { let p = Probe(); p.life = life; return p }
+    func updateUIViewController(_ vc: Probe, context: Context) { vc.life = life }
 }
 
 /// Lab (`-popTouchLab`): from the moment a page starts going back, where a
@@ -558,13 +556,33 @@ enum BackWatch {
     }
 
     /// Going back was let go (the page stays).
-    static func cancelled(_ v: UIView) { if page === v { page = nil } }
+    static func cancelled(_ v: UIView) {
+        guard page === v else { return }
+        page = nil
+        runWaiters(gone: false)
+    }
 
     /// UIKit's viewDidDisappear: the move is over.
     static func ended(_ v: UIView) {
         guard page === v else { return }
         dlog("nav", "page gone \(ms) ms after it started going back\(v.window != nil ? " (its view still in the window)" : "")")
         page = nil
+        runWaiters(gone: true)
+    }
+
+    /// A page is going back and still on screen (in the window).
+    static var pageGoingBack: Bool { page?.window != nil }
+
+    private static var waiters: [(Bool) -> Void] = []
+    /// Runs `f` once the page going back is gone (true), or stays because the
+    /// swipe was let go (false); at once (true) when no page is going back.
+    static func whenGone(_ f: @escaping (Bool) -> Void) {
+        if pageGoingBack { waiters.append(f) } else { f(true) }
+    }
+    private static func runWaiters(gone: Bool) {
+        let w = waiters
+        waiters = []
+        w.forEach { $0(gone) }
     }
 
     /// A touch while a page is going back: where it went.

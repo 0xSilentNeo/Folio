@@ -93,7 +93,7 @@ struct TitleHeroView: View {
                             TiltPlayButton(title: entry?.canResume == true ? "Resume" : "Play",
                                            subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { tapped(file, "Play") }
                             if entry?.canResume == true {
-                                Button { if !pageLeaving && pageLife?.cantAct == nil { restart() } } label: {
+                                Button { if pageLife?.cantAct == nil { restart() } } label: {
                                     Label("Start over", systemImage: "arrow.counterclockwise").font(.subheadline.weight(.semibold))
                                         .padding(.horizontal, 16).frame(height: 44).glass(cornerRadius: 22, interactive: true)
                                 }
@@ -259,7 +259,7 @@ struct TitleHeroView: View {
     }
 
     private func goBack() {
-        if pageLeaving || pageLife?.leaving == true { dlog("nav", "title page: Back ignored (page already going back)"); return }
+        if pageLife?.leaving == true { dlog("nav", "title page: Back ignored (page already going back)"); return }
         dlog("nav", "title page: Back")
         pageLife?.leave()          // no touches or actions from here, before the pop even starts
         dismiss()
@@ -267,7 +267,6 @@ struct TitleHeroView: View {
 
     // MARK: Actions
 
-    @Environment(\.pageLeaving) private var pageLeaving
     @Environment(\.pageLife) private var pageLife
     @Environment(\.zoomsFromTile) private var zoomsFromTile
 
@@ -279,7 +278,7 @@ struct TitleHeroView: View {
     /// page was still zooming in — taps you meant, on a page you could see
     /// (27 Oct report: "the buttons were not getting registered"); gone.
     private func tapped(_ f: URL, _ control: String) {
-        if let why = pageLeaving ? "page going back" : pageLife?.cantAct {
+        if let why = pageLife?.cantAct {
             dlog("nav", "title page: \(control) ignored (\(why))")
             return
         }
