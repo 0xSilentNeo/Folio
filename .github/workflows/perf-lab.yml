@@ -6,6 +6,10 @@ name: Perf lab (profile + record a UI test on several app versions)
 # Results go to the perf-<ref> branch and an artifact.
 
 on:
+  # A push that changes the request file runs it too (a new workflow can only
+  # be dispatched once it's on the default branch).
+  push:
+    paths: ['.github/perf-lab-request.json']
   workflow_dispatch:
     inputs:
       refs:
@@ -25,13 +29,36 @@ permissions:
   contents: write
 
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      refs: ${{ steps.p.outputs.refs }}
+      only: ${{ steps.p.outputs.only }}
+      style: ${{ steps.p.outputs.style }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            R=.github/perf-lab-request.json
+            echo "refs=$(jq -c .refs $R)" >> "$GITHUB_OUTPUT"
+            echo "only=$(jq -r '.only // "GlassPlayerUITests/OpenCostUITests/test60OpenClose"' $R)" >> "$GITHUB_OUTPUT"
+            echo "style=$(jq -r '.title_style // "full"' $R)" >> "$GITHUB_OUTPUT"
+          else
+            echo 'refs=${{ github.event.inputs.refs }}' >> "$GITHUB_OUTPUT"
+            echo "only=${{ github.event.inputs.only }}" >> "$GITHUB_OUTPUT"
+            echo "style=${{ github.event.inputs.title_style }}" >> "$GITHUB_OUTPUT"
+          fi
+          cat "$GITHUB_OUTPUT"
+
   run:
+    needs: plan
     runs-on: ${{ github.event.inputs.runner || 'xcode-27' }}
     timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
-        ref: ${{ fromJSON(github.event.inputs.refs || '["v1.16.1","v1.17.4"]') }}
+        ref: ${{ fromJSON(needs.plan.outputs.refs) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -128,8 +155,8 @@ jobs:
           for i in $(seq 1 100); do grep -q "Recording started" lab/record.err 2>/dev/null && break; sleep 0.05; done
           python3 -c 'import datetime;print(datetime.datetime.now().astimezone().isoformat())' > lab/record-start.txt
           cat lab/record-start.txt
-          ONLY="${{ github.event.inputs.only }}"
-          TEST_RUNNER_LAB_TITLE_STYLE="${{ github.event.inputs.title_style }}" \
+          ONLY="${{ needs.plan.outputs.only }}"
+          TEST_RUNNER_LAB_TITLE_STYLE="${{ needs.plan.outputs.style }}" \
           xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release \
             -destination "id=$UDID" -derivedDataPath build -only-testing:"$ONLY" > lab/test.log 2>&1 &
           TEST=$!
