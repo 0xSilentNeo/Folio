@@ -56,6 +56,8 @@ final class PlayerUIState: ObservableObject {
 
     private var hideWork: DispatchWorkItem?
 
+    deinit { dlog("player", "player screen state freed") }
+
     func showControls(autoHide: Bool = true) {
         controlsVisible = true
         if autoHide { scheduleHide() } else { hideWork?.cancel() }
@@ -99,6 +101,7 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
         view.backgroundColor = .black
         rootView.onRotationLock = { [weak self] locked in self?.setRotationLocked(locked) }
         rootView.onClose = { [weak self] in self?.closePlayer() }
+        watchAway()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -130,11 +133,75 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask { orientationMask }
 
     func closePlayer(animated: Bool = true) {
+        if !awayObservers.isEmpty { UIDevice.current.endGeneratingDeviceOrientationNotifications() }
+        awayObservers.forEach { NotificationCenter.default.removeObserver($0) }
+        awayObservers = []
+        // The screen's panel opener holds the screen, and with it this state
+        // and the model: let go of it, or the whole session stays in memory
+        // after closing (AuditUITests: no "player model freed" line).
+        ui.presentNow = nil
         model.close()
         PlayerPresenter.dismiss(animated: animated)
     }
 
+    // MARK: Away: come back the way round the player was left
+
+    /// iOS shows the app's last snapshot in the app switcher and while the
+    /// app comes back, but only when the app comes back the way round the
+    /// snapshot was taken. A player left in landscape and opened again with
+    /// the phone upright came back upright, with no snapshot that way round:
+    /// iOS showed the launch screen (the leaf) in the switcher and for an
+    /// instant on the way in (simulator run 29 Oct: the snapshot files iOS
+    /// kept, and the recording of the return). So while the app is away the
+    /// player only turns the way it was left; it follows the phone again
+    /// from the phone's next turn after coming back.
+    private var heldWhileAway = false
+    private var deviceAtReturn: UIDeviceOrientation = .unknown
+    private var awayObservers: [NSObjectProtocol] = []
+
+    private func watchAway() {
+        UIDevice.current.beginGeneratingDeviceOrientationNotifications()   // nested calls are counted
+        let nc = NotificationCenter.default
+        awayObservers.append(nc.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.holdWhileAway() }
+        })
+        awayObservers.append(nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.deviceAtReturn = UIDevice.current.orientation }
+        })
+        awayObservers.append(nc.addObserver(forName: UIDevice.orientationDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.phoneTurned() }
+        })
+    }
+
+    private func holdWhileAway() {
+        guard UIDevice.current.userInterfaceIdiom == .phone, let o = view.window?.windowScene?.interfaceOrientation else { return }
+        let held: UIInterfaceOrientationMask = switch o {
+        case .landscapeLeft: .landscapeLeft
+        case .landscapeRight: .landscapeRight
+        case .portraitUpsideDown: .portraitUpsideDown
+        default: .portrait
+        }
+        deviceAtReturn = .unknown
+        guard orientationMask != held else { return }
+        heldWhileAway = true
+        orientationMask = held
+        setNeedsUpdateOfSupportedInterfaceOrientations()
+        dlog("player", "away: the player stays \(o.isLandscape ? "landscape" : "upright") until the phone is turned")
+    }
+
+    /// The phone turned after coming back: follow it again.
+    private func phoneTurned() {
+        guard heldWhileAway, UIApplication.shared.applicationState == .active else { return }
+        let d = UIDevice.current.orientation
+        guard d.isPortrait || d.isLandscape, deviceAtReturn != .unknown, d != deviceAtReturn else { return }
+        heldWhileAway = false
+        orientationMask = ui.rotationLocked ? orientationMask : Self.stayLandscape ? .landscape : .allButUpsideDown
+        setNeedsUpdateOfSupportedInterfaceOrientations()
+        dlog("player", "phone turned after coming back: the player follows it again")
+    }
+
     private func setRotationLocked(_ locked: Bool) {
+        heldWhileAway = false
         if locked, let o = view.window?.windowScene?.interfaceOrientation {
             switch o {
             case .landscapeLeft: orientationMask = .landscapeLeft

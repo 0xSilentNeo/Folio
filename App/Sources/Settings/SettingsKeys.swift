@@ -50,6 +50,7 @@ enum SettingsKey {
     static let pipEnabled = "pipEnabled"
     static let pipAuto = "pipAuto"
     static let pipReturnOnOpen = "pipReturnOnOpen"      // opening the app ends PiP, video continues in the player
+    static let pipTrace = "pipTrace"                    // Diagnostics: trace PiP transitions (PiPTrace)
 
     // Subtitles / audio
     static let subLangs = "subLangs"

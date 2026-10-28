@@ -63,16 +63,28 @@ enum LibraryOrganizer {
         infoLock.lock()
         if let c = infoCache[url.path] { infoLock.unlock(); return c }
         infoLock.unlock()
-        let v = try? url.resourceValues(forKeys: [.creationDateKey, .addedToDirectoryDateKey, .fileSizeKey])
-        let r = (date: v?.addedToDirectoryDate ?? v?.creationDate ?? .distantPast, size: Int64(v?.fileSize ?? 0))
+        let r = read(url)
         infoLock.lock(); infoCache[url.path] = r; infoLock.unlock()
         return r
     }
 
-    /// Re-reads file info for a fresh scan (off the main thread).
+    private static func read(_ url: URL) -> (date: Date, size: Int64) {
+        let v = try? url.resourceValues(forKeys: [.creationDateKey, .addedToDirectoryDateKey, .fileSizeKey])
+        return (date: v?.addedToDirectoryDate ?? v?.creationDate ?? .distantPast, size: Int64(v?.fileSize ?? 0))
+    }
+
+    /// Re-reads file info for a fresh scan (off the main thread). The library
+    /// is scanned each time the app becomes active; only a change in what was
+    /// read makes the groups be worked out again (a new generation).
     static func warmInfo(_ urls: [URL]) {
-        infoLock.lock(); infoCache = [:]; infoGeneration += 1; infoLock.unlock()
-        for u in urls { _ = info(u) }
+        var fresh: [String: (date: Date, size: Int64)] = [:]
+        for u in urls { fresh[u.path] = read(u) }
+        infoLock.lock(); defer { infoLock.unlock() }
+        let same = fresh.count == infoCache.count
+            && fresh.allSatisfy { k, v in infoCache[k].map { $0.date == v.date && $0.size == v.size } ?? false }
+        guard !same else { return }
+        infoCache = fresh
+        infoGeneration += 1
     }
 
     /// The last groups worked out, for the same files, order and file info.

@@ -313,6 +313,7 @@ struct PlayerScreen: View {
                     }
                     .opacity(model.isPiPPossible || model.isPiPActive ? 1 : 0.35)
                     .disabled(!model.isPiPPossible && !model.isPiPActive)
+                    .accessibilityLabel(model.isPiPActive ? "Exit Picture in Picture" : "Picture in Picture")
                 }
             }
             .padding(.horizontal, side)

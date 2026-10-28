@@ -146,7 +146,8 @@ final class MotionTilt: ObservableObject {
     private let manager = CMMotionManager()
     private var base: (roll: Double, pitch: Double)?
     private var wanted = false
-    private var observers: [NSObjectProtocol] = []
+    /// Removed when the button goes (each title page makes one).
+    private nonisolated(unsafe) var observers: [NSObjectProtocol] = []
 
     init() {
         // Motion updates re-render the button: pause them while a video plays
@@ -162,6 +163,8 @@ final class MotionTilt: ObservableObject {
             })
         }
     }
+
+    deinit { observers.forEach { NotificationCenter.default.removeObserver($0) } }
 
     func start() {
         wanted = true

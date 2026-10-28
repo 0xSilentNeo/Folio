@@ -145,6 +145,29 @@ targets:
       testTargets: [GlassPlayerUITests]
       gatherCoverageData: false
 
+  # Unit tests (Debug only: they import the app with @testable). Run with
+  # the GlassPlayerUnitTests scheme, so the app scheme's Release UI tests
+  # don't build them.
+  GlassPlayerTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Tests
+    dependencies:
+      - target: GlassPlayer
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.glassplayer.tests
+        # The engine is linked into the app only (the tests run inside it).
+        OTHER_LDFLAGS: ""
+    # The app's bridging header imports mpv's headers; a test target that
+    # imports the app has to find them too (search paths only).
+    configFiles:
+      Debug: Vendor/engine.xcconfig
+      Release: Vendor/engine.xcconfig
+
   GlassPlayerUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -158,3 +181,14 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.glassplayer.uitests
         TEST_TARGET_NAME: GlassPlayer
+
+schemes:
+  GlassPlayerUnitTests:
+    build:
+      targets:
+        GlassPlayer: [test]
+        GlassPlayerTests: [test]
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets: [GlassPlayerTests]

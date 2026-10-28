@@ -51,7 +51,10 @@ struct LaunchSplash: View {
             .opacity(phase == 3 ? 0 : 1)
         }
         .allowsHitTesting(false)
-        .task { await run() }
+        .task {
+            dlog("app", "launch splash shown")
+            await run()
+        }
     }
 
     /// The page with the leaf resting on it, as on the app icon.

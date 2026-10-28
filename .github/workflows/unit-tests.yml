@@ -1,0 +1,65 @@
+name: Unit tests
+
+# Runs the GlassPlayerUnitTests scheme (Debug, simulator) on branch pushes
+# that touch the app or the tests.
+
+on:
+  push:
+    branches-ignore: [main]
+    paths: ['App/Sources/**', 'Tests/**', 'project.yml', '.github/workflows/unit-tests.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          pick() { for x in "$@"; do [ -d "$x" ] || continue; case "$x" in *beta*|*Beta*|*Release_Candidate*) continue;; esac
+            echo "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$x/Contents/version.plist") $x"; done | sort -V | tail -1 | cut -d' ' -f2-; }
+          XC=$(pick /Applications/Xcode_27*.app)
+          [ -z "$XC" ] && XC=$(pick /Applications/Xcode_26*.app)
+          [ -z "$XC" ] && XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+
+      - name: Fetch engine (stock MPVKit — simulator slices)
+        run: ENGINE=stock SLICE=simulator bash scripts/fetch-engine.sh
+
+      - name: Generate project
+        run: |
+          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+          xcodegen generate --spec project.yml
+
+      - name: Pick a simulator
+        id: sim
+        run: |
+          xcrun simctl list devices available -j > devices.json
+          UDID=$(jq -r '.devices | to_entries[] | select(.key|test("SimRuntime.iOS-")) | .key as $rt | .value[]
+                 | select(.isAvailable and (.name|test("^iPhone [0-9]+ Pro$")))
+                 | "\($rt | capture("iOS-(?<v>[0-9-]+)").v | gsub("-";".")) \(.name | capture("(?<n>[0-9]+)").n) \(.udid)"' devices.json \
+                 | sort -t' ' -k1,1V -k2,2n | tail -1 | cut -d' ' -f3)
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Test
+        run: |
+          set -o pipefail
+          xcodebuild test -project GlassPlayer.xcodeproj -scheme GlassPlayerUnitTests -configuration Debug \
+            -destination "id=${{ steps.sim.outputs.udid }}" -derivedDataPath build \
+            CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" 2>&1 | tee test.log | grep -E "Test Case|error:|Executed|TEST (SUCCEEDED|FAILED)" || true
+          grep -q "TEST SUCCEEDED" test.log
+
+      - name: Publish the log to the lab-unittests branch
+        if: always()
+        run: |
+          git config user.name lab-bot
+          git config user.email lab@users.noreply.github.com
+          mkdir -p out && tail -4000 test.log > out/test.log 2>/dev/null; grep -E "error:|Test Case.*failed|XCTAssert" test.log > out/errors.log 2>/dev/null || true
+          cd out && git init -q && git checkout -q -b lab-unittests && git add -A && git commit -qm "unit tests ${{ github.run_id }}" \
+            && git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" lab-unittests

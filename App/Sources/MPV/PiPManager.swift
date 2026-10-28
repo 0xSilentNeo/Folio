@@ -2,6 +2,7 @@ import AVKit
 import AVFoundation
 import CoreMedia
 import UIKit
+import QuartzCore
 
 /// View hosting the AVSampleBufferDisplayLayer that Picture in Picture shows.
 /// It sits *behind* the opaque GL view, so it is in the window with a real
@@ -39,6 +40,16 @@ final class PiPManager: NSObject {
 
     var onPossibleChanged: ((Bool) -> Void)?
     private(set) var isActive = false
+
+    /// When the last frame went into the PiP layer, and how many so far
+    /// (PiPTrace: which picture the layer holds when it's in front).
+    private var lastEnqueue: CFTimeInterval = 0
+    private var enqueued = 0
+    var lastFrameAge: Double? {
+        enqueueLock.lock(); defer { enqueueLock.unlock() }
+        return lastEnqueue > 0 ? CACurrentMediaTime() - lastEnqueue : nil
+    }
+    var framesEnqueued: Int { enqueueLock.lock(); defer { enqueueLock.unlock() }; return enqueued }
 
     override init() {
         let v = SampleBufferView()
@@ -126,6 +137,8 @@ final class PiPManager: NSObject {
         }
         if displayLayer.status == .failed { displayLayer.flush() }
         displayLayer.enqueue(sb)
+        lastEnqueue = CACurrentMediaTime()
+        enqueued += 1
     }
 
     /// Frame sink for the renderers (built outside any actor context).

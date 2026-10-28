@@ -663,7 +663,8 @@ struct BackSwipeProbe: UIViewRepresentable {
         /// recording has the page's ‹ and ••• still over Home for ~1 s after it
         /// had zoomed back into its tile — its move not finished yet.
         private func startMoveLog(_ nav: UINavigationController) {
-            guard moveTimer == nil else { return }
+            watchPlayer()
+            guard moveTimer == nil, PlayerPresenter.current == nil else { return }
             let t = Timer(timeInterval: 0.1, repeats: true) { [weak self, weak nav] _ in
                 MainActor.assumeIsolated {
                     guard let self else { return }
@@ -680,6 +681,28 @@ struct BackSwipeProbe: UIViewRepresentable {
             }
             RunLoop.main.add(t, forMode: .common)
             moveTimer = t
+        }
+
+        /// The player covers the app by hiding its windows, so this page stays
+        /// in its window and the move log would tick ten times a second for the
+        /// whole video. It stops while the player is up.
+        private var playerObservers: [NSObjectProtocol] = []
+        private func watchPlayer() {
+            guard playerObservers.isEmpty else { return }
+            let nc = NotificationCenter.default
+            playerObservers.append(nc.addObserver(forName: .playerWillShow, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let t = self.moveTimer else { return }
+                    t.invalidate(); self.moveTimer = nil
+                    dlog("nav", "title page move log paused while the player is up")
+                }
+            })
+            playerObservers.append(nc.addObserver(forName: .playerDidHide, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, self.window != nil, let nav = self.navRef, !Self.labProbe else { return }
+                    self.startMoveLog(nav)
+                }
+            })
         }
 
         // MARK: Lab (`-navProbe`): the page during its own transitions
@@ -702,6 +725,8 @@ struct BackSwipeProbe: UIViewRepresentable {
             if newWindow == nil {
                 link?.invalidate(); link = nil
                 moveTimer?.invalidate(); moveTimer = nil
+                playerObservers.forEach { NotificationCenter.default.removeObserver($0) }
+                playerObservers = []
                 if Self.labProbe { dlog("navprobe", "page left the window") }
             }
         }
