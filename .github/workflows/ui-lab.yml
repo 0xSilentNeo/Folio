@@ -127,7 +127,8 @@ jobs:
           CONT=$(xcrun simctl get_app_container "$UDID" dev.silentneo.glassplayer data || true)
           [ -n "$CONT" ] && find "$CONT" -path "*diagnostics*" \( -name "*.log" -o -name "pip-ui-*.jpg" \) -exec cp {} lab/ \; || true
           # The app switcher snapshots iOS keeps for the app (PiP trace runs).
-          [ -n "$CONT" ] && [ -d "$CONT/Library/SplashBoard" ] && { mkdir -p lab/splashboard; cp -R "$CONT/Library/SplashBoard/." lab/splashboard/; find lab/splashboard -type f -exec ls -la {} \; > lab/splashboard.txt; } || true
+          # As one archive: its file names have colons, which artifacts refuse.
+          [ -n "$CONT" ] && [ -d "$CONT/Library/SplashBoard" ] && { find "$CONT/Library/SplashBoard" -type f -exec ls -la {} \; > lab/splashboard.txt; tar -czf lab/splashboard.tgz -C "$CONT/Library" SplashBoard; } || true
           mkdir -p lab/crashes && cp ~/Library/Logs/DiagnosticReports/*GlassPlayer* lab/crashes/ 2>/dev/null || true
           kill -INT $REC; wait $REC || true
           ls -la lab
