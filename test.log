@@ -1,0 +1,513 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=3435E92E-E723-410E-9BCA-775192FDE386 -derivedDataPath build "-only-testing:GlassPlayerUITests/AuditUITests" "-only-testing:GlassPlayerUITests/SwitcherUITests" "-only-testing:GlassPlayerUITests/SearchUITests"
+
+2026-10-28 14:12:59.241358+0000 GlassPlayerUITests-Runner[31167:84933] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-28 14:13:08.701.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-28 14:13:08.713.
+Test Suite 'AuditUITests' started at 2026-10-28 14:13:08.713.
+Test Case '-[GlassPlayerUITests.AuditUITests test1PlayerFreedAfterClose]' started.
+    t =     0.02s Start Test at 2026-10-28 14:13:08.733
+    t =     0.10s Set Up
+    t =     0.11s Open dev.silentneo.glassplayer
+    t =     0.11s     Launch dev.silentneo.glassplayer
+2026-10-28 14:13:11.440 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 14:13:11.441 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: no debugger version
+objc[31167]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.1J99ut/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x10a094398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.1J99ut/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x10a1cc310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =     8.12s         Setting up automation session
+    t =    15.63s         Wait for dev.silentneo.glassplayer to idle
+    t =    19.83s Setting device orientation to Portrait
+    t =    19.86s     Device orientation changed to Portrait
+    t =    19.95s     Wait for dev.silentneo.glassplayer to idle
+    t =    19.97s Waiting 25.0s for "Lab Show" StaticText to exist
+    t =    21.00s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Show" StaticText`
+    t =    21.00s         Checking existence of `"Lab Show" StaticText`
+    t =    21.68s Tap "Lab Show" StaticText
+    t =    21.68s     Wait for dev.silentneo.glassplayer to idle
+    t =    21.70s     Find the "Lab Show" StaticText
+    t =    22.50s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    22.67s     Synthesize event
+    t =    23.31s     Wait for dev.silentneo.glassplayer to idle
+    t =    23.73s Waiting 8.0s for "heroPlay" Any to exist
+    t =    24.80s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    24.80s         Checking existence of `"heroPlay" Any`
+    t =    27.05s Tap "heroPlay" Any
+    t =    27.05s     Wait for dev.silentneo.glassplayer to idle
+    t =    27.05s     Find the "heroPlay" Any
+    t =    27.17s     Check for interrupting elements affecting "heroPlay" Button
+    t =    27.30s     Synthesize event
+    t =    27.69s     Wait for dev.silentneo.glassplayer to idle
+    t =    28.04s Waiting 20.0s for "Close player" Button to exist
+<unknown>:0: warning: -[GlassPlayerUITests.AuditUITests test1PlayerFreedAfterClose] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    29.52s     Interface orientation changed to Landscape Right
+    t =    29.52s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    29.52s         Checking existence of `"Close player" Button`
+AUDIT close 1 1793196827.686438
+    t =    38.97s Tap "Close player" Button
+    t =    38.98s     Wait for dev.silentneo.glassplayer to idle
+    t =    38.99s     Find the "Close player" Button
+    t =    39.48s     Check for interrupting elements affecting "xmark" Button
+    t =    39.81s     Synthesize event
+    t =    40.27s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.51s Waiting 6.0s for "heroPlay" Button to exist
+    t =    45.51s     Interface orientation changed to Portrait
+    t =    46.56s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Button`
+    t =    46.56s         Checking existence of `"heroPlay" Button`
+    t =    48.91s Tap "heroPlay" Button
+    t =    48.91s     Wait for dev.silentneo.glassplayer to idle
+    t =    48.92s     Find the "heroPlay" Button
+    t =    49.06s     Check for interrupting elements affecting "heroPlay" Button
+    t =    49.19s     Synthesize event
+    t =    49.70s         Interface orientation changed to Landscape Right
+    t =    49.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    50.21s Waiting 20.0s for "Close player" Button to exist
+    t =    51.26s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    51.26s         Checking existence of `"Close player" Button`
+AUDIT close 2 1793196848.2836661
+    t =    59.57s Tap "Close player" Button
+    t =    59.59s     Wait for dev.silentneo.glassplayer to idle
+    t =    59.60s     Find the "Close player" Button
+    t =    59.71s     Check for interrupting elements affecting "xmark" Button
+    t =    59.85s     Synthesize event
+    t =    60.20s     Wait for dev.silentneo.glassplayer to idle
+    t =    65.50s Waiting 6.0s for "heroPlay" Button to exist
+    t =    65.51s     Interface orientation changed to Portrait
+    t =    66.54s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Button`
+    t =    66.54s         Checking existence of `"heroPlay" Button`
+    t =    66.68s Tear Down
+Test Case '-[GlassPlayerUITests.AuditUITests test1PlayerFreedAfterClose]' passed (67.235 seconds).
+Test Suite 'AuditUITests' passed at 2026-10-28 14:14:15.968.
+	 Executed 1 test, with 0 failures (0 unexpected) in 67.235 (67.255) seconds
+Test Suite 'SearchUITests' started at 2026-10-28 14:14:15.969.
+Test Case '-[GlassPlayerUITests.SearchUITests test1LiveSearchAndHistory]' started.
+    t =     0.00s Start Test at 2026-10-28 14:14:15.972
+    t =     0.08s Set Up
+    t =     0.08s Open dev.silentneo.glassplayer
+    t =     0.08s     Launch dev.silentneo.glassplayer
+    t =     0.08s         Terminate dev.silentneo.glassplayer:31825
+2026-10-28 14:14:17.233 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 14:14:17.233 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.60s         Setting up automation session
+    t =    10.33s         Wait for dev.silentneo.glassplayer to idle
+    t =    13.12s Setting device orientation to Portrait
+    t =    13.14s     Wait for dev.silentneo.glassplayer to idle
+    t =    13.14s Checking existence of `"Discover" Button`
+    t =    13.92s Waiting 20.0s for "Discover" Button to exist
+    t =    14.97s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    14.97s         Checking existence of `"Discover" Button`
+    t =    15.11s Tap "Discover" Button
+    t =    15.11s     Wait for dev.silentneo.glassplayer to idle
+    t =    15.12s     Find the "Discover" Button
+    t =    15.19s     Check for interrupting elements affecting "Discover" Button
+    t =    15.28s     Synthesize event
+    t =    15.73s     Wait for dev.silentneo.glassplayer to idle
+    t =    18.28s Waiting 10.0s for "Search" Button to exist
+    t =    19.32s     Checking `Expect predicate `existsNoRetry == 1` for object "Search" Button`
+    t =    19.32s         Checking existence of `"Search" Button`
+    t =    19.59s Tap "Search" Button
+    t =    19.59s     Wait for dev.silentneo.glassplayer to idle
+    t =    19.59s     Find the "Search" Button
+    t =    19.86s     Check for interrupting elements affecting "magnifyingglass" Button
+    t =    20.00s     Synthesize event
+    t =    20.35s     Wait for dev.silentneo.glassplayer to idle
+    t =    23.19s Waiting 10.0s for SearchField (First Match) to exist
+    t =    24.27s     Checking `Expect predicate `existsNoRetry == 1` for object SearchField (First Match)`
+    t =    24.29s         Checking existence of `SearchField (First Match)`
+    t =    27.18s Waiting 5.0s for Keyboard (First Match) to exist
+    t =    28.20s     Checking `Expect predicate `existsNoRetry == 1` for object Keyboard (First Match)`
+    t =    28.20s         Checking existence of `Keyboard (First Match)`
+    t =    31.47s Get number of matches for: Descendants matching type Keyboard
+SEARCH keyboard up: true
+    t =    31.81s Type 'lab' into SearchField (First Match)
+    t =    31.81s     Wait for dev.silentneo.glassplayer to idle
+    t =    31.82s     Find the SearchField (First Match)
+    t =    32.22s     Check for interrupting elements affecting "Movies, shows, anime" SearchField
+    t =    32.31s     Synthesize event
+    t =    32.59s     Wait for dev.silentneo.glassplayer to idle
+    t =    32.67s Waiting 5.0s for "Lab Movie" StaticText to exist
+    t =    33.73s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Movie" StaticText`
+    t =    33.73s         Checking existence of `"Lab Movie" StaticText`
+    t =    37.94s         Capturing element debug description
+    t =    37.94s     Checking existence of `"Lab Movie" StaticText`
+SEARCH live results after 6896 ms (no Search pressed)
+    t =    39.57s Checking existence of `"Lab Series" StaticText`
+    t =    39.70s Get number of matches for: Descendants matching type Keyboard
+    t =    39.78s Tap "Lab Movie" StaticText
+    t =    39.78s     Wait for dev.silentneo.glassplayer to idle
+    t =    39.78s     Find the "Lab Movie" StaticText
+    t =    40.07s     Check for interrupting elements affecting "Lab Movie" StaticText
+    t =    40.16s     Synthesize event
+    t =    40.49s     Wait for dev.silentneo.glassplayer to idle
+    t =    43.12s Waiting 8.0s for "heroPlay" Any to exist
+    t =    44.18s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    44.18s         Checking existence of `"heroPlay" Any`
+SEARCH first tap with the keyboard up opened the title: true
+    t =    45.93s Checking existence of `Button (First Match)`
+    t =    46.49s Tap Button (First Match)
+    t =    46.49s     Wait for dev.silentneo.glassplayer to idle
+    t =    46.52s     Find the Button (First Match)
+    t =    46.85s     Check for interrupting elements affecting "BackButton" Button
+    t =    47.06s     Synthesize event
+    t =    47.60s     Wait for dev.silentneo.glassplayer to idle
+    t =    51.15s Checking existence of `Button (First Match)`
+    t =    52.59s Tap Button (First Match)
+    t =    52.59s     Wait for dev.silentneo.glassplayer to idle
+    t =    52.62s     Find the Button (First Match)
+    t =    53.20s     Check for interrupting elements affecting "Clear text" Button
+    t =    53.33s     Synthesize event
+    t =    53.66s     Wait for dev.silentneo.glassplayer to idle
+    t =    54.03s Waiting 5.0s for "Recent search, lab" Button to exist
+    t =    55.09s     Checking `Expect predicate `existsNoRetry == 1` for object "Recent search, lab" Button`
+    t =    55.09s         Checking existence of `"Recent search, lab" Button`
+    t =    55.60s Checking existence of `"Recent search, lab" Button`
+SEARCH recent after opening a result: true
+    t =    56.10s Type 'labx
+' into SearchField (First Match)
+    t =    56.10s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.11s     Find the SearchField (First Match)
+    t =    56.47s     Check for interrupting elements affecting "Movies, shows, anime" SearchField
+    t =    56.59s     Synthesize event
+    t =    56.93s     Wait for dev.silentneo.glassplayer to idle
+    t =    57.17s Waiting 5.0s for "No titles match “labx”." StaticText to exist
+    t =    58.24s     Checking `Expect predicate `existsNoRetry == 1` for object "No titles match “labx”." StaticText`
+    t =    58.24s         Checking existence of `"No titles match “labx”." StaticText`
+SEARCH no-results state shown
+    t =    58.32s Checking existence of `Button (First Match)`
+    t =    58.40s Tap Button (First Match)
+    t =    58.40s     Wait for dev.silentneo.glassplayer to idle
+    t =    58.41s     Find the Button (First Match)
+    t =    58.50s     Check for interrupting elements affecting "Clear text" Button
+    t =    58.56s     Synthesize event
+    t =    59.18s     Wait for dev.silentneo.glassplayer to idle
+    t =    59.56s Waiting 5.0s for "Recent search, labx" Button to exist
+    t =    60.62s     Checking `Expect predicate `existsNoRetry == 1` for object "Recent search, labx" Button`
+    t =    60.62s         Checking existence of `"Recent search, labx" Button`
+    t =    61.27s Checking existence of `"Recent search, labx" Button`
+    t =    61.60s Checking existence of `"Recent search, lab" Button`
+    t =    62.04s Find the "Recent search, labx" Button
+    t =    62.42s Find the "Recent search, lab" Button
+    t =    62.85s Swipe left "Recent search, labx" Button
+    t =    62.86s     Wait for dev.silentneo.glassplayer to idle
+    t =    62.87s     Find the "Recent search, labx" Button
+    t =    63.50s     Check for interrupting elements affecting "Recent search, labx" Button
+    t =    63.65s     Synthesize event
+    t =    64.25s     Wait for dev.silentneo.glassplayer to idle
+    t =    64.76s Waiting 3.0s for "Delete" Button to exist
+    t =    65.83s     Checking `Expect predicate `existsNoRetry == 1` for object "Delete" Button`
+    t =    65.83s         Checking existence of `"Delete" Button`
+    t =    66.35s Tap "Delete" Button
+    t =    66.36s     Wait for dev.silentneo.glassplayer to idle
+    t =    66.36s     Find the "Delete" Button
+    t =    66.79s     Check for interrupting elements affecting "trash" Button
+    t =    66.94s     Synthesize event
+    t =    67.25s     Wait for dev.silentneo.glassplayer to idle
+    t =    68.53s Checking existence of `"Recent search, labx" Button`
+    t =    68.64s Checking existence of `"Recent search, labx" Button`
+SEARCH swipe to delete: true
+    t =    68.74s Tap "Clear recent searches" Button
+    t =    68.74s     Wait for dev.silentneo.glassplayer to idle
+    t =    68.74s     Find the "Clear recent searches" Button
+    t =    69.12s     Check for interrupting elements affecting "Clear recent searches" Button
+    t =    69.22s     Synthesize event
+    t =    69.55s     Wait for dev.silentneo.glassplayer to idle
+    t =    69.90s Waiting 3.0s for "Clear" Button to exist
+    t =    70.91s     Checking `Expect predicate `existsNoRetry == 1` for object "Clear" Button`
+    t =    70.91s         Checking existence of `"Clear" Button`
+    t =    71.56s Tap "Clear" Button
+    t =    71.56s     Wait for dev.silentneo.glassplayer to idle
+    t =    71.56s     Find the "Clear" Button
+    t =    72.32s     Check for interrupting elements affecting "Clear" Button
+    t =    72.50s     Synthesize event
+    t =    72.85s     Wait for dev.silentneo.glassplayer to idle
+    t =    74.40s Checking existence of `"Recent search, lab" Button`
+    t =    74.50s Checking existence of `"Recent search, lab" Button`
+SEARCH clear all: true
+    t =    74.60s Type 'lab movie
+' into SearchField (First Match)
+    t =    74.60s     Wait for dev.silentneo.glassplayer to idle
+    t =    74.60s     Find the SearchField (First Match)
+    t =    74.90s     Check for interrupting elements affecting "Movies, shows, anime" SearchField
+    t =    74.98s     Synthesize event
+    t =    75.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    77.91s Terminate dev.silentneo.glassplayer:33167
+    t =    78.99s Open dev.silentneo.glassplayer
+    t =    78.99s     Launch dev.silentneo.glassplayer
+2026-10-28 14:15:35.008 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 14:15:35.008 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    79.75s         Setting up automation session
+    t =    86.66s         Wait for dev.silentneo.glassplayer to idle
+    t =    89.38s Setting device orientation to Portrait
+    t =    89.39s     Wait for dev.silentneo.glassplayer to idle
+    t =    89.40s Checking existence of `"Discover" Button`
+    t =    89.92s Waiting 20.0s for "Discover" Button to exist
+    t =    90.95s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    90.95s         Checking existence of `"Discover" Button`
+    t =    91.03s Tap "Discover" Button
+    t =    91.04s     Wait for dev.silentneo.glassplayer to idle
+    t =    91.04s     Find the "Discover" Button
+    t =    91.09s     Check for interrupting elements affecting "sparkles.tv" Button
+    t =    91.16s     Synthesize event
+    t =    91.56s     Wait for dev.silentneo.glassplayer to idle
+    t =    93.88s Waiting 10.0s for "Search" Button to exist
+    t =    94.90s     Checking `Expect predicate `existsNoRetry == 1` for object "Search" Button`
+    t =    94.90s         Checking existence of `"Search" Button`
+    t =    95.17s Tap "Search" Button
+    t =    95.18s     Wait for dev.silentneo.glassplayer to idle
+    t =    95.18s     Find the "Search" Button
+    t =    95.48s     Check for interrupting elements affecting "magnifyingglass" Button
+    t =    95.87s     Synthesize event
+    t =    96.31s     Wait for dev.silentneo.glassplayer to idle
+    t =    98.53s Checking existence of `Button (First Match)`
+    t =    99.01s Waiting 5.0s for "Recent search, lab movie" Button to exist
+    t =   100.04s     Checking `Expect predicate `existsNoRetry == 1` for object "Recent search, lab movie" Button`
+    t =   100.04s         Checking existence of `"Recent search, lab movie" Button`
+SEARCH history after relaunch: true
+    t =   100.53s Tear Down
+Test Case '-[GlassPlayerUITests.SearchUITests test1LiveSearchAndHistory]' passed (100.865 seconds).
+Test Case '-[GlassPlayerUITests.SearchUITests test2ScrollDismissesKeyboard]' started.
+    t =     0.00s Start Test at 2026-10-28 14:15:56.838
+    t =     0.07s Set Up
+    t =     0.07s Open dev.silentneo.glassplayer
+    t =     0.07s     Launch dev.silentneo.glassplayer
+    t =     0.07s         Terminate dev.silentneo.glassplayer:35197
+2026-10-28 14:15:57.926 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 14:15:57.926 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.69s         Setting up automation session
+    t =     9.95s         Wait for dev.silentneo.glassplayer to idle
+    t =    12.85s Setting device orientation to Portrait
+    t =    12.89s     Wait for dev.silentneo.glassplayer to idle
+    t =    12.90s Checking existence of `"Discover" Button`
+    t =    14.14s Waiting 20.0s for "Discover" Button to exist
+    t =    15.22s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    15.22s         Checking existence of `"Discover" Button`
+    t =    15.63s Tap "Discover" Button
+    t =    15.63s     Wait for dev.silentneo.glassplayer to idle
+    t =    15.64s     Find the "Discover" Button
+    t =    15.85s     Check for interrupting elements affecting "sparkles.tv" Button
+    t =    16.02s     Synthesize event
+    t =    16.54s     Wait for dev.silentneo.glassplayer to idle
+    t =    18.92s Waiting 10.0s for "Search" Button to exist
+    t =    19.97s     Checking `Expect predicate `existsNoRetry == 1` for object "Search" Button`
+    t =    19.97s         Checking existence of `"Search" Button`
+    t =    20.48s Tap "Search" Button
+    t =    20.48s     Wait for dev.silentneo.glassplayer to idle
+    t =    20.48s     Find the "Search" Button
+    t =    20.74s     Check for interrupting elements affecting "magnifyingglass" Button
+    t =    20.83s     Synthesize event
+    t =    21.16s     Wait for dev.silentneo.glassplayer to idle
+    t =    23.22s Waiting 10.0s for SearchField (First Match) to exist
+    t =    24.28s     Checking `Expect predicate `existsNoRetry == 1` for object SearchField (First Match)`
+    t =    24.28s         Checking existence of `SearchField (First Match)`
+    t =    24.75s Type 'lab' into SearchField (First Match)
+    t =    24.75s     Wait for dev.silentneo.glassplayer to idle
+    t =    24.76s     Find the SearchField (First Match)
+    t =    25.09s     Check for interrupting elements affecting "Movies, shows, anime" SearchField
+    t =    25.67s     Synthesize event
+    t =    26.14s     Wait for dev.silentneo.glassplayer to idle
+    t =    26.19s Waiting 5.0s for "Lab Movie" StaticText to exist
+    t =    27.19s     Checking `Expect predicate `existsNoRetry == 1` for object "Lab Movie" StaticText`
+    t =    27.19s         Checking existence of `"Lab Movie" StaticText`
+    t =    27.64s Get number of matches for: Descendants matching type Keyboard
+    t =    27.72s Swipe up "Lab Series" StaticText
+    t =    27.72s     Wait for dev.silentneo.glassplayer to idle
+    t =    27.73s     Find the "Lab Series" StaticText
+    t =    28.20s     Check for interrupting elements affecting "Lab Series" StaticText
+    t =    28.34s     Synthesize event
+    t =    28.84s     Wait for dev.silentneo.glassplayer to idle
+    t =    30.37s Get number of matches for: Descendants matching type Keyboard
+SEARCH keyboard after scrolling: dismissed
+    t =    30.50s Get number of matches for: Descendants matching type Keyboard
+    t =    30.58s Tear Down
+Test Case '-[GlassPlayerUITests.SearchUITests test2ScrollDismissesKeyboard]' passed (30.863 seconds).
+Test Case '-[GlassPlayerUITests.SearchUITests test3Offline]' started.
+    t =     0.00s Start Test at 2026-10-28 14:16:27.707
+    t =     0.07s Set Up
+    t =     0.07s Open dev.silentneo.glassplayer
+    t =     0.07s     Launch dev.silentneo.glassplayer
+    t =     0.07s         Terminate dev.silentneo.glassplayer:35892
+2026-10-28 14:16:28.813 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 14:16:28.813 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.26s         Setting up automation session
+    t =     9.33s         Wait for dev.silentneo.glassplayer to idle
+    t =    11.86s Setting device orientation to Portrait
+    t =    11.87s     Wait for dev.silentneo.glassplayer to idle
+    t =    11.88s Checking existence of `"Discover" Button`
+    t =    12.53s Waiting 20.0s for "Discover" Button to exist
+    t =    13.58s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    13.59s         Checking existence of `"Discover" Button`
+    t =    13.71s Tap "Discover" Button
+    t =    13.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    13.71s     Find the "Discover" Button
+    t =    13.82s     Check for interrupting elements affecting "sparkles.tv" Button
+    t =    13.94s     Synthesize event
+    t =    14.44s     Wait for dev.silentneo.glassplayer to idle
+    t =    16.95s Waiting 10.0s for "Search" Button to exist
+    t =    17.98s     Checking `Expect predicate `existsNoRetry == 1` for object "Search" Button`
+    t =    17.98s         Checking existence of `"Search" Button`
+    t =    18.12s Tap "Search" Button
+    t =    18.12s     Wait for dev.silentneo.glassplayer to idle
+    t =    18.12s     Find the "Search" Button
+    t =    18.26s     Check for interrupting elements affecting "magnifyingglass" Button
+    t =    18.33s     Synthesize event
+    t =    18.65s     Wait for dev.silentneo.glassplayer to idle
+    t =    20.38s Waiting 10.0s for SearchField (First Match) to exist
+    t =    21.45s     Checking `Expect predicate `existsNoRetry == 1` for object SearchField (First Match)`
+    t =    21.45s         Checking existence of `SearchField (First Match)`
+    t =    21.70s Type 'dune' into SearchField (First Match)
+    t =    21.70s     Wait for dev.silentneo.glassplayer to idle
+    t =    21.71s     Find the SearchField (First Match)
+    t =    21.87s     Check for interrupting elements affecting "Movies, shows, anime" SearchField
+    t =    22.02s     Synthesize event
+    t =    22.32s     Wait for dev.silentneo.glassplayer to idle
+    t =    22.45s Waiting 5.0s for "You're offline." StaticText to exist
+    t =    23.48s     Checking `Expect predicate `existsNoRetry == 1` for object "You're offline." StaticText`
+    t =    23.48s         Checking existence of `"You're offline." StaticText`
+    t =    23.76s Checking existence of `"Try Again" Button`
+SEARCH offline state: true, retry button: true
+    t =    23.83s Checking existence of `"Try Again" Button`
+    t =    23.91s Tap "Try Again" Button
+    t =    23.91s     Wait for dev.silentneo.glassplayer to idle
+    t =    23.91s     Find the "Try Again" Button
+    t =    24.01s     Check for interrupting elements affecting "Try Again" Button
+    t =    24.10s     Synthesize event
+    t =    24.44s     Wait for dev.silentneo.glassplayer to idle
+    t =    24.44s Waiting 5.0s for "You're offline." StaticText to exist
+    t =    25.48s     Checking `Expect predicate `existsNoRetry == 1` for object "You're offline." StaticText`
+    t =    25.48s         Checking existence of `"You're offline." StaticText`
+    t =    29.76s         Capturing element debug description
+    t =    29.76s     Checking existence of `"You're offline." StaticText`
+    t =    48.50s Tear Down
+Test Case '-[GlassPlayerUITests.SearchUITests test3Offline]' passed (48.933 seconds).
+Test Suite 'SearchUITests' passed at 2026-10-28 14:17:16.640.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 180.661 (180.671) seconds
+Test Suite 'SwitcherUITests' started at 2026-10-28 14:17:16.641.
+Test Case '-[GlassPlayerUITests.SwitcherUITests test1LeftInLandscapeBackInPortrait]' started.
+    t =     0.00s Start Test at 2026-10-28 14:17:16.643
+    t =     0.06s Set Up
+    t =     0.06s Setting device orientation to Portrait
+    t =     0.10s     Wait for dev.silentneo.glassplayer to idle
+    t =     0.12s Open dev.silentneo.glassplayer
+    t =     0.13s     Launch dev.silentneo.glassplayer
+    t =     0.13s         Terminate dev.silentneo.glassplayer:36368
+2026-10-28 14:17:17.920 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 14:17:17.920 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.26s         Setting up automation session
+    t =     8.87s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.SwitcherUITests test1LeftInLandscapeBackInPortrait] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    11.56s             Interface orientation changed to Landscape Right
+    t =    15.11s Waiting 30.0s for "Close player" Button to exist
+    t =    16.16s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    16.17s         Checking existence of `"Close player" Button`
+SWITCHER home 1793197059.126117
+    t =    22.49s Pressing Home button
+    t =    23.00s     Interface orientation changed to Portrait
+SWITCHER switcher 1793197062.6481252
+    t =    26.01s Press Application 'com.apple.springboard'[0.50, 0.99] for 0.1 seconds, then drag to Application 'com.apple.springboard'[0.50, 0.55] with velocity of 250.00 pixels per second, and then hold for 1.2 seconds 
+    t =    26.01s     Wait for com.apple.springboard to idle
+    t =    26.38s     Find the Application 'com.apple.springboard'
+    t =    26.59s     Check for interrupting elements affecting " " Application
+    t =    26.65s     Synthesize event
+    t =    26.65s         Find the Application 'com.apple.springboard'
+    t =    26.70s         Find the Application 'com.apple.springboard'
+    t =    26.76s         Find the Application 'com.apple.springboard'
+    t =    26.82s         Find the Application 'com.apple.springboard'
+    t =    26.94s         Find the Application 'com.apple.springboard'
+    t =    30.11s     Wait for com.apple.springboard to idle
+SWITCHER card tap 1793197071.079455
+    t =    34.44s Tap Application 'com.apple.springboard'[0.50, 0.45]
+    t =    34.44s     Wait for com.apple.springboard to idle
+    t =    34.44s     Find the Application 'com.apple.springboard'
+    t =    34.49s     Check for interrupting elements affecting " " Application
+    t =    34.53s     Synthesize event
+    t =    34.53s         Find the Application 'com.apple.springboard'
+    t =    34.55s         Find the Application 'com.apple.springboard'
+    t =    34.58s         Find the Application 'com.apple.springboard'
+    t =    35.10s     Wait for com.apple.springboard to idle
+    t =    35.55s         Interface orientation changed to Landscape Right
+SWITCHER card tap missed; activate 1793197076.3491402
+    t =    39.71s Open dev.silentneo.glassplayer
+    t =    39.71s     Activate dev.silentneo.glassplayer
+    t =    39.74s         Wait for dev.silentneo.glassplayer to idle
+SWITCHER back 4 1793197080.400271
+    t =    43.76s Wait for dev.silentneo.glassplayer to become Running Foreground
+    t =    43.77s Tear Down
+Test Case '-[GlassPlayerUITests.SwitcherUITests test1LeftInLandscapeBackInPortrait]' passed (44.575 seconds).
+Test Case '-[GlassPlayerUITests.SwitcherUITests test2LeftInLandscapeBackInLandscape]' started.
+    t =     0.00s Start Test at 2026-10-28 14:18:01.219
+    t =     0.07s Set Up
+    t =     0.07s Setting device orientation to Portrait
+    t =     0.09s     Wait for dev.silentneo.glassplayer to idle
+    t =     0.09s Open dev.silentneo.glassplayer
+    t =     0.09s     Launch dev.silentneo.glassplayer
+    t =     0.09s         Terminate dev.silentneo.glassplayer:37236
+    t =     1.77s             Interface orientation changed to Portrait
+2026-10-28 14:18:05.368 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 14:18:05.368 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     7.54s         Setting up automation session
+    t =    13.91s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.SwitcherUITests test2LeftInLandscapeBackInLandscape] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    17.04s             Interface orientation changed to Landscape Right
+    t =    18.87s Waiting 30.0s for "Close player" Button to exist
+    t =    19.93s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    19.93s         Checking existence of `"Close player" Button`
+SWITCHER home 1793197108.368802
+    t =    27.15s Pressing Home button
+    t =    27.65s     Interface orientation changed to Portrait
+    t =    30.71s Setting device orientation to Landscape Left
+    t =    30.72s     Device orientation changed to Landscape Left
+    t =    30.73s     Wait for com.apple.springboard to idle
+SWITCHER activate in landscape 1793197113.958617
+    t =    32.74s Open dev.silentneo.glassplayer
+    t =    32.74s     Activate dev.silentneo.glassplayer
+    t =    32.89s         Interface orientation changed to Landscape Right
+    t =    33.87s         Wait for dev.silentneo.glassplayer to idle
+SWITCHER back 4 1793197119.383851
+    t =    38.17s Setting device orientation to Portrait
+    t =    38.19s     Device orientation changed to Portrait
+    t =    38.22s     Wait for dev.silentneo.glassplayer to idle
+    t =    38.45s         Interface orientation changed to Portrait
+    t =    38.68s Wait for dev.silentneo.glassplayer to become Running Foreground
+    t =    38.68s Tear Down
+Test Case '-[GlassPlayerUITests.SwitcherUITests test2LeftInLandscapeBackInLandscape]' passed (39.797 seconds).
+Test Case '-[GlassPlayerUITests.SwitcherUITests test3UprightPlayer]' started.
+    t =     0.00s Start Test at 2026-10-28 14:18:41.017
+    t =     0.08s Set Up
+    t =     0.08s Setting device orientation to Portrait
+    t =     0.11s     Wait for dev.silentneo.glassplayer to idle
+    t =     0.12s Open dev.silentneo.glassplayer
+    t =     0.12s     Launch dev.silentneo.glassplayer
+    t =     0.12s         Terminate dev.silentneo.glassplayer:37830
+2026-10-28 14:18:42.308 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-28 14:18:42.310 xcodebuild[30171:81779] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.85s         Setting up automation session
+    t =     8.64s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.SwitcherUITests test3UprightPlayer] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    12.26s Waiting 30.0s for "Close player" Button to exist
+    t =    13.27s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    13.27s         Checking existence of `"Close player" Button`
+SWITCHER home 1793197139.752028
+    t =    18.74s Pressing Home button
+SWITCHER activate 1793197143.259035
+    t =    22.25s Open dev.silentneo.glassplayer
+    t =    22.25s     Activate dev.silentneo.glassplayer
+    t =    22.35s         Wait for dev.silentneo.glassplayer to idle
+SWITCHER back 3 1793197147.37205
+    t =    26.36s Wait for dev.silentneo.glassplayer to become Running Foreground
+    t =    26.37s Tear Down
+Test Case '-[GlassPlayerUITests.SwitcherUITests test3UprightPlayer]' passed (27.866 seconds).
+Test Suite 'SwitcherUITests' passed at 2026-10-28 14:19:08.883.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 112.238 (112.242) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-28 14:19:08.884.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 360.134 (360.171) seconds
+Test Suite 'Selected tests' passed at 2026-10-28 14:19:08.885.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 360.134 (360.184) seconds
+2026-10-28 14:19:56.819 xcodebuild[30171:81779] [MT] IDETestOperationsObserverDebug: 425.595 elapsed -- Testing started completed.
+2026-10-28 14:19:56.821 xcodebuild[30171:81779] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-28 14:19:56.822 xcodebuild[30171:81779] [MT] IDETestOperationsObserverDebug: 425.595 sec, +425.595 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.28_14-12-50-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
