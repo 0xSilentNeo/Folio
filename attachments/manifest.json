@@ -1,0 +1,62 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "7697144E-4842-4A9E-81C1-FC1DF6C5AEB8",
+        "deviceName" : "shots",
+        "exportedFileName" : "3A9D6056-1DB9-4E8C-B0B8-33036742A793.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "header-05-long-not-anime-accessibility-l_0_BB282AD8-CAFB-4176-A12A-C060E8352296.png",
+        "timestamp" : 1793264402.101
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "7697144E-4842-4A9E-81C1-FC1DF6C5AEB8",
+        "deviceName" : "shots",
+        "exportedFileName" : "8532A713-64AD-45A3-8607-23835F2B42F5.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "header-04-classroom-xxxl_0_0EE4EB59-22A1-4BFC-BCC2-E7FE300580F5.png",
+        "timestamp" : 1793264389.872
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "7697144E-4842-4A9E-81C1-FC1DF6C5AEB8",
+        "deviceName" : "shots",
+        "exportedFileName" : "A33BC814-9704-4D84-BA3E-72454C5A1606.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "header-03-long_0_2E1FC2F3-B959-420C-A320-0C866115D2C1.png",
+        "timestamp" : 1793264375.46
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "7697144E-4842-4A9E-81C1-FC1DF6C5AEB8",
+        "deviceName" : "shots",
+        "exportedFileName" : "DE8303F0-8090-4CA5-B9CF-BB18EB6EE143.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "header-02-not-anime-long-episode_0_E47452C6-1632-44DA-902F-715A4AFBCE69.png",
+        "timestamp" : 1793264361.937
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "7697144E-4842-4A9E-81C1-FC1DF6C5AEB8",
+        "deviceName" : "shots",
+        "exportedFileName" : "CD431DE3-0E46-45D1-A519-303E1EE36A4F.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "header-01-classroom-no-romaji-long-episode_0_B756A815-77C7-42A0-BE7D-7C008B7197D3.png",
+        "timestamp" : 1793264347.253
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "7697144E-4842-4A9E-81C1-FC1DF6C5AEB8",
+        "deviceName" : "shots",
+        "exportedFileName" : "9EF3F4F9-27F2-4154-BBE2-AF446FC46A63.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "header-00-classroom_0_A3869B5B-F28F-4BE2-9E58-99D34CF2B7C6.png",
+        "timestamp" : 1793264328.823
+      }
+    ],
+    "testIdentifier" : "ShotsUITests/test5TitleHeader()",
+    "testIdentifierURL" : "test://com.apple.xcode/GlassPlayer/GlassPlayerUITests/ShotsUITests/test5TitleHeader"
+  }
+]

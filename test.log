@@ -1,0 +1,186 @@
+Command line invocation:
+    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=7697144E-4842-4A9E-81C1-FC1DF6C5AEB8 -derivedDataPath build -resultBundlePath lab/shots.xcresult "-only-testing:GlassPlayerUITests/ShotsUITests/test5TitleHeader"
+
+Writing result bundle at path:
+	/Users/runner/work/GlassPlayer/GlassPlayer/lab/shots.xcresult
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS Simulator, arch:arm64, id:7697144E-4842-4A9E-81C1-FC1DF6C5AEB8, OS:26.2, name:shots }
+{ platform:iOS Simulator, arch:x86_64, id:7697144E-4842-4A9E-81C1-FC1DF6C5AEB8, OS:26.2, name:shots }
+2026-10-29 08:58:07.600838+0000 GlassPlayerUITests-Runner[11409:37150] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-29 08:58:14.838.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-29 08:58:14.840.
+Test Suite 'ShotsUITests' started at 2026-10-29 08:58:14.841.
+Test Case '-[GlassPlayerUITests.ShotsUITests test5TitleHeader]' started.
+    t =     0.00s Start Test at 2026-10-29 08:58:14.845
+    t =     0.72s Set Up
+    t =     0.73s Open dev.silentneo.glassplayer
+    t =     0.73s     Launch dev.silentneo.glassplayer
+    t =    15.35s         Setting up automation session
+    t =    19.35s         Wait for dev.silentneo.glassplayer to idle
+    t =    23.38s Setting device orientation to Portrait
+    t =    23.43s     Device orientation changed to Portrait
+    t =    23.56s     Wait for dev.silentneo.glassplayer to idle
+    t =    23.60s Get all elements bound by index for: Elements matching predicate 'label == "Classroom of the Elite" OR label == "Lab Show"'
+    t =    26.61s Checking existence of `StaticText (Element at index 0)`
+    t =    26.86s Find the StaticText (Element at index 0)
+    t =    27.43s Checking existence of `StaticText (Element at index 1)`
+    t =    27.69s Find the StaticText (Element at index 1)
+    t =    27.97s Find the "Lab Show" StaticText
+    t =    28.28s Find the "Classroom of the Elite" StaticText
+    t =    28.45s Tap "Lab Show" StaticText
+    t =    28.45s     Wait for dev.silentneo.glassplayer to idle
+    t =    28.45s     Find the "Lab Show" StaticText
+    t =    28.58s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    28.77s     Synthesize event
+    t =    29.32s     Wait for dev.silentneo.glassplayer to idle
+    t =    30.23s Waiting 8.0s for "Back" Button to exist
+    t =    31.25s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    31.25s         Checking existence of `"Back" Button`
+    t =    33.98s Added attachment named 'header-00-classroom'
+SHOT header-00-classroom
+    t =    33.99s Terminate dev.silentneo.glassplayer:11894
+    t =    35.06s Open dev.silentneo.glassplayer
+    t =    35.06s     Launch dev.silentneo.glassplayer
+    t =    37.12s         Setting up automation session
+    t =    39.68s         Wait for dev.silentneo.glassplayer to idle
+    t =    42.76s Setting device orientation to Portrait
+    t =    42.78s     Wait for dev.silentneo.glassplayer to idle
+    t =    42.78s Get all elements bound by index for: Elements matching predicate 'label == "Classroom of the Elite" OR label == "Lab Show"'
+    t =    43.64s Checking existence of `StaticText (Element at index 0)`
+    t =    43.82s Find the StaticText (Element at index 0)
+    t =    43.96s Checking existence of `StaticText (Element at index 1)`
+    t =    44.10s Find the StaticText (Element at index 1)
+    t =    44.48s Find the "Lab Show" StaticText
+    t =    44.71s Find the "Classroom of the Elite" StaticText
+    t =    44.80s Tap "Lab Show" StaticText
+    t =    44.80s     Wait for dev.silentneo.glassplayer to idle
+    t =    44.81s     Find the "Lab Show" StaticText
+    t =    45.20s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    45.73s     Synthesize event
+    t =    46.11s     Wait for dev.silentneo.glassplayer to idle
+    t =    46.49s Waiting 8.0s for "Back" Button to exist
+    t =    47.55s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    47.57s         Checking existence of `"Back" Button`
+    t =    52.41s Added attachment named 'header-01-classroom-no-romaji-long-episode'
+SHOT header-01-classroom-no-romaji-long-episode
+    t =    52.44s Terminate dev.silentneo.glassplayer:12405
+    t =    54.49s Open dev.silentneo.glassplayer
+    t =    54.49s     Launch dev.silentneo.glassplayer
+    t =    57.24s         Setting up automation session
+    t =    58.27s         Wait for dev.silentneo.glassplayer to idle
+    t =    61.27s Setting device orientation to Portrait
+    t =    61.29s     Wait for dev.silentneo.glassplayer to idle
+    t =    61.30s Get all elements bound by index for: Elements matching predicate 'label == "Classroom of the Elite" OR label == "Lab Show"'
+    t =    62.02s Checking existence of `StaticText (Element at index 0)`
+    t =    62.30s Find the StaticText (Element at index 0)
+    t =    62.49s Checking existence of `StaticText (Element at index 1)`
+    t =    62.53s Find the StaticText (Element at index 1)
+    t =    62.64s Find the "Lab Show" StaticText
+    t =    62.73s Find the "Classroom of the Elite" StaticText
+    t =    62.81s Tap "Lab Show" StaticText
+    t =    62.81s     Wait for dev.silentneo.glassplayer to idle
+    t =    62.81s     Find the "Lab Show" StaticText
+    t =    62.87s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    62.93s     Synthesize event
+    t =    63.23s     Wait for dev.silentneo.glassplayer to idle
+    t =    63.43s Waiting 8.0s for "Back" Button to exist
+    t =    64.47s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    64.48s         Checking existence of `"Back" Button`
+    t =    67.10s Added attachment named 'header-02-not-anime-long-episode'
+SHOT header-02-not-anime-long-episode
+    t =    67.10s Terminate dev.silentneo.glassplayer:12777
+    t =    68.13s Open dev.silentneo.glassplayer
+    t =    68.13s     Launch dev.silentneo.glassplayer
+    t =    69.60s         Setting up automation session
+    t =    71.69s         Wait for dev.silentneo.glassplayer to idle
+    t =    73.90s Setting device orientation to Portrait
+    t =    73.92s     Wait for dev.silentneo.glassplayer to idle
+    t =    73.93s Get all elements bound by index for: Elements matching predicate 'label == "The Irregular at Magic High School: The Girl Who Summons the Stars" OR label == "Lab Show"'
+    t =    74.75s Checking existence of `StaticText (Element at index 0)`
+    t =    74.94s Find the StaticText (Element at index 0)
+    t =    75.14s Checking existence of `StaticText (Element at index 1)`
+    t =    75.25s Find the StaticText (Element at index 1)
+    t =    75.66s Find the "Lab Show" StaticText
+    t =    75.87s Find the "The Irregular at Magic High School: The Girl Who Summons the Stars" StaticText
+    t =    76.07s Tap "Lab Show" StaticText
+    t =    76.07s     Wait for dev.silentneo.glassplayer to idle
+    t =    76.07s     Find the "Lab Show" StaticText
+    t =    76.15s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    76.22s     Synthesize event
+    t =    76.54s     Wait for dev.silentneo.glassplayer to idle
+    t =    76.93s Waiting 8.0s for "Back" Button to exist
+    t =    77.96s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    77.97s         Checking existence of `"Back" Button`
+    t =    80.62s Added attachment named 'header-03-long'
+SHOT header-03-long
+    t =    80.63s Terminate dev.silentneo.glassplayer:13021
+    t =    81.67s Open dev.silentneo.glassplayer
+    t =    81.67s     Launch dev.silentneo.glassplayer
+    t =    82.59s         Setting up automation session
+    t =    86.18s         Wait for dev.silentneo.glassplayer to idle
+    t =    89.06s Setting device orientation to Portrait
+    t =    89.08s     Wait for dev.silentneo.glassplayer to idle
+    t =    89.09s Get all elements bound by index for: Elements matching predicate 'label == "Classroom of the Elite" OR label == "Lab Show"'
+    t =    89.55s Checking existence of `StaticText (Element at index 0)`
+    t =    89.66s Find the StaticText (Element at index 0)
+    t =    89.90s Checking existence of `StaticText (Element at index 1)`
+    t =    89.97s Find the StaticText (Element at index 1)
+    t =    90.12s Find the "Lab Show" StaticText
+    t =    90.23s Find the "Classroom of the Elite" StaticText
+    t =    90.35s Tap "Lab Show" StaticText
+    t =    90.35s     Wait for dev.silentneo.glassplayer to idle
+    t =    90.38s     Find the "Lab Show" StaticText
+    t =    90.48s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =    90.66s     Synthesize event
+    t =    90.98s     Wait for dev.silentneo.glassplayer to idle
+    t =    91.51s Waiting 8.0s for "Back" Button to exist
+    t =    92.59s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    92.59s         Checking existence of `"Back" Button`
+    t =    95.03s Added attachment named 'header-04-classroom-xxxl'
+SHOT header-04-classroom-xxxl
+    t =    95.04s Terminate dev.silentneo.glassplayer:13316
+    t =    96.05s Open dev.silentneo.glassplayer
+    t =    96.05s     Launch dev.silentneo.glassplayer
+    t =    97.18s         Setting up automation session
+    t =    99.33s         Wait for dev.silentneo.glassplayer to idle
+    t =   102.30s Setting device orientation to Portrait
+    t =   102.32s     Wait for dev.silentneo.glassplayer to idle
+    t =   102.33s Get all elements bound by index for: Elements matching predicate 'label == "The Irregular at Magic High School: The Girl Who Summons the Stars" OR label == "Lab Show"'
+    t =   102.79s Checking existence of `StaticText (Element at index 0)`
+    t =   102.84s Find the StaticText (Element at index 0)
+    t =   102.94s Checking existence of `StaticText (Element at index 1)`
+    t =   103.00s Find the StaticText (Element at index 1)
+    t =   103.07s Find the "Lab Show" StaticText
+    t =   103.12s Find the "The Irregular at Magic High School: The Girl Who Summons the Stars" StaticText
+    t =   103.20s Tap "Lab Show" StaticText
+    t =   103.20s     Wait for dev.silentneo.glassplayer to idle
+    t =   103.20s     Find the "Lab Show" StaticText
+    t =   103.24s     Check for interrupting elements affecting "Lab Show" StaticText
+    t =   103.31s     Synthesize event
+    t =   103.62s     Wait for dev.silentneo.glassplayer to idle
+    t =   103.84s Waiting 8.0s for "Back" Button to exist
+    t =   104.92s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   104.92s         Checking existence of `"Back" Button`
+    t =   107.26s Added attachment named 'header-05-long-not-anime-accessibility-l'
+SHOT header-05-long-not-anime-accessibility-l
+    t =   107.26s Terminate dev.silentneo.glassplayer:13616
+    t =   108.29s Tear Down
+Test Case '-[GlassPlayerUITests.ShotsUITests test5TitleHeader]' passed (108.491 seconds).
+Test Suite 'ShotsUITests' passed at 2026-10-29 09:00:03.336.
+	 Executed 1 test, with 0 failures (0 unexpected) in 108.491 (108.495) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-29 09:00:03.337.
+	 Executed 1 test, with 0 failures (0 unexpected) in 108.491 (108.497) seconds
+Test Suite 'Selected tests' passed at 2026-10-29 09:00:03.339.
+	 Executed 1 test, with 0 failures (0 unexpected) in 108.491 (108.500) seconds
+2026-10-29 09:00:04.569 xcodebuild[9179:31316] [MT] IDETestOperationsObserverDebug: 150.682 elapsed -- Testing started completed.
+2026-10-29 09:00:04.569 xcodebuild[9179:31316] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-29 09:00:04.569 xcodebuild[9179:31316] [MT] IDETestOperationsObserverDebug: 150.682 sec, +150.682 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/lab/shots.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
