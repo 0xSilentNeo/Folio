@@ -81,6 +81,7 @@ final class WebDAVClient {
     }
 
     func list(_ url: URL) async throws -> [DAVItem] {
+        if LabDAV.on { return try LabDAV.list(url) }
         var req = URLRequest(url: url)
         req.httpMethod = "PROPFIND"
         req.setValue("1", forHTTPHeaderField: "Depth")

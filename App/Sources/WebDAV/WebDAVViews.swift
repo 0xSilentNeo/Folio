@@ -158,6 +158,7 @@ struct WebDAVBrowserView: View {
                     } label: {
                         DAVRow(item: item, clean: cleanTitles, entry: nil)
                     }
+                    .accessibilityIdentifier("dav:" + item.name)
                 } else {
                     HStack(spacing: 6) {
                         Button { open(item) } label: {
@@ -169,6 +170,7 @@ struct WebDAVBrowserView: View {
                             DownloadButton(item: item, server: server, package: title, siblings: items)
                         }
                     }
+                    .accessibilityIdentifier("dav:" + item.name)
                     .contextMenu {
                         if item.isMedia { Button { open(item) } label: { Label("Play", systemImage: "play") } }
                         Button { UIPasteboard.general.string = item.url.absoluteString } label: { Label("Copy link", systemImage: "link") }
@@ -209,6 +211,7 @@ struct WebDAVBrowserView: View {
                         } label: { Label("Download all \(media.count) videos", systemImage: "arrow.down.circle") }
                     }
                 } label: { ToolbarGlyph("arrow.up.arrow.down.circle") }
+                .accessibilityIdentifier("davSortMenu")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
