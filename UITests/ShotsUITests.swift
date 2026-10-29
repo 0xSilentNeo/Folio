@@ -38,6 +38,46 @@ final class ShotsUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
     }
 
+    /// Title-page header with a long name, without a romaji title, and at
+    /// large text sizes: whether the title is cut off and what's under it.
+    /// Saved as header-NN-<case>.png.
+    func test5TitleHeader() {
+        let classroom = "-shotsTitle=Classroom of the Elite"
+        let long = "-shotsTitle=The Irregular at Magic High School: The Girl Who Summons the Stars"
+        // The device screenshot (29 Oct): an anime with no romaji showed a
+        // three-line episode name, and the title was cut to one line.
+        let quote = "-shotsEpisodeTitle=Nothing is as dangerous as an ignorant friend; a wise enemy is to be preferred."
+        let cases: [(String, [String])] = [
+            ("classroom", [classroom]),
+            ("classroom-no-romaji-long-episode", [classroom, "-shotsNoOriginal", quote]),
+            ("not-anime-long-episode", [classroom, "-shotsNotAnime", quote]),
+            ("long", [long]),
+            ("classroom-xxxl", [classroom, quote, "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryXXXL"]),
+            ("long-not-anime-accessibility-l", [long, "-shotsNotAnime", quote, "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL"]),
+        ]
+        mode = "header"; n = 0
+        for (name, args) in cases {
+            let app = XCUIApplication()
+            app.launchArguments = ["-shots", "-appearance", "dark", "-noSplash"] + args
+            app.launch()
+            XCUIDevice.shared.orientation = .portrait
+            let shown = String(args[0].dropFirst("-shotsTitle=".count))
+            let q = app.staticTexts.matching(NSPredicate(format: "label == %@ OR label == %@", shown, "Lab Show"))
+            let end = Date().addingTimeInterval(25)
+            var tile: XCUIElement?
+            while Date() < end, tile == nil {
+                tile = q.allElementsBoundByIndex.filter { $0.exists && $0.isHittable }.max { $0.frame.minY < $1.frame.minY }
+                if tile == nil { usleep(300_000) }
+            }
+            guard let tile else { XCTFail("no tile for \(name)"); continue }
+            tile.tap()
+            XCTAssertTrue(app.buttons["Back"].waitForExistence(timeout: 8), "title page did not open (\(name))")
+            sleep(2)
+            shot(name)
+            app.terminate()
+        }
+    }
+
     private func tour(_ m: String, short: Bool = false) {
         mode = m; n = 0
         let app = XCUIApplication()

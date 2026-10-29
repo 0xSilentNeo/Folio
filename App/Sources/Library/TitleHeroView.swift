@@ -32,6 +32,7 @@ struct TitleHeroView: View {
     }
     @Environment(\.dismiss) private var dismiss
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var confirmDelete = false
     /// An episode whose Delete was swiped: asks first.
     @State private var pendingDelete: URL?
@@ -172,7 +173,12 @@ struct TitleHeroView: View {
             if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
             else { GeneratedArt(seed: title) }
         } content: {
-                HStack(alignment: .bottom, spacing: 14) {
+                // Accessibility text sizes: the title block goes under the
+                // poster, with the whole width, instead of a narrow column.
+                let layout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 14))
+                    : AnyLayout(HStackLayout(alignment: .bottom, spacing: 14))
+                layout {
                     if let poster = meta?.poster, let u = URL(string: poster) {
                         CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
                             .frame(width: 122, height: 191)
@@ -190,12 +196,24 @@ struct TitleHeroView: View {
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 6) {
-            DecipherText(text: title, font: .system(size: 28, weight: .bold, design: .rounded)).lineLimit(2)
-            // Anime: the show's own (romaji) title; otherwise the episode name.
-            if isAnime, let o = meta?.originalName, !o.isEmpty {
-                Text(o).font(.subheadline.weight(.medium)).foregroundStyle(.secondary).lineLimit(2)
+            // The whole title: up to three lines, a little smaller before it's
+            // cut, at its full height whatever the lines under it need (the
+            // 29 Oct screenshot had it cut to one line), and with the text size.
+            DecipherText(text: title, font: .system(.title, design: .rounded, weight: .bold))
+                .lineLimit(typeSize.isAccessibilitySize ? 5 : 3)
+                .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: false, vertical: true)
+                .layoutPriority(1)
+            // Anime: the show's own (romaji) title, or nothing. Never the
+            // episode name in its place (1.18.0 showed it whenever the romaji
+            // was missing, and IMDb's saved copy had lost it). Other titles:
+            // the episode name.
+            if isAnime {
+                if let o = meta?.originalName, !o.isEmpty {
+                    Text(o).font(.subheadline.weight(.medium)).foregroundStyle(.secondary).lineLimit(2)
+                }
             } else if let ep = meta?.episodeTitle ?? episodeLabel {
-                Text(ep).font(.headline).foregroundStyle(.primary.opacity(0.8))
+                Text(ep).font(.headline).foregroundStyle(.primary.opacity(0.8)).lineLimit(3)
             }
             FlowLayout(spacing: 8, lineSpacing: 8) {
                 if showRatings, let r = meta?.rating { chip("★ \(r)", strong: true) }

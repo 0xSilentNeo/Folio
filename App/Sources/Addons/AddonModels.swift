@@ -190,9 +190,10 @@ struct MetaVideo: Codable, Hashable, Identifiable {
         overview = c.flexString(.overview) ?? c.flexString(.description)
         rating = c.flexString(.rating)
         imdbId = c.flexString(.imdbId)
+        originalTitle = c.flexString(.originalTitle)
     }
 
-    enum CodingKeys: String, CodingKey { case id, title, name, season, episode, number, released, thumbnail, overview, description, rating, imdbId }
+    enum CodingKeys: String, CodingKey { case id, title, name, season, episode, number, released, thumbnail, overview, description, rating, imdbId, originalTitle }
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
@@ -205,6 +206,7 @@ struct MetaVideo: Codable, Hashable, Identifiable {
         try c.encodeIfPresent(overview, forKey: .overview)
         try c.encodeIfPresent(rating, forKey: .rating)
         try c.encodeIfPresent(imdbId, forKey: .imdbId)
+        try c.encodeIfPresent(originalTitle, forKey: .originalTitle)
     }
 
     var label: String {
@@ -272,6 +274,7 @@ struct MetaItem: Codable, Hashable, Identifiable {
         videos = try? c.decodeIfPresent([MetaVideo].self, forKey: .videos)
         rank = c.flexInt(.rank)
         cast = c.flexStrings(.cast)
+        originalName = c.flexString(.originalName)
         director = c.flexStrings(.director)
         contentRating = c.flexString(.contentRating)
         countries = c.flexStrings(.countries)
@@ -281,7 +284,7 @@ struct MetaItem: Codable, Hashable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case id, type, name, poster, posterShape, background, logo, description, releaseInfo, year, imdbRating, runtime, genres, genre, videos
-        case rank, cast, director, contentRating, countries, credits, wikipedia
+        case rank, cast, originalName, director, contentRating, countries, credits, wikipedia
     }
 
     func encode(to encoder: Encoder) throws {
@@ -301,6 +304,7 @@ struct MetaItem: Codable, Hashable, Identifiable {
         try c.encodeIfPresent(videos, forKey: .videos)
         try c.encodeIfPresent(rank, forKey: .rank)
         try c.encodeIfPresent(cast, forKey: .cast)
+        try c.encodeIfPresent(originalName, forKey: .originalName)
         try c.encodeIfPresent(director, forKey: .director)
         try c.encodeIfPresent(contentRating, forKey: .contentRating)
         try c.encodeIfPresent(countries, forKey: .countries)

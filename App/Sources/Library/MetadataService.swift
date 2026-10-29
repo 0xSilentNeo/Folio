@@ -30,7 +30,7 @@ struct MediaMeta: Codable, Hashable {
     /// next use (1.13.1 fixed the cast photos and the original title).
     var version: Int?
     var titleLanguage: String?
-    static let currentVersion = 3   // 3: absolute episode numbers mapped to seasons; OAD/Movie files
+    static let currentVersion = 4   // 3: absolute episode numbers mapped to seasons; OAD/Movie files. 4: original title kept (it was lost in IMDb's saved copy)
 
     /// Best 16:9 art for a tile; poster as a last resort.
     var wideArt: String? { episodeThumb ?? background ?? poster }

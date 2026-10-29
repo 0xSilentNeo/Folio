@@ -4,6 +4,7 @@ import AVFoundation
 import MediaPlayer
 import Combine
 import CoreVideo
+import os
 
 struct MediaTrack: Identifiable, Hashable {
     let id: Int
@@ -196,7 +197,6 @@ final class PlayerModel: ObservableObject {
     private var pendingMain = false
     private var pipRestoring = false
     private var energyNoteFor: String?
-    private var awaitingFirstFrameAfterPiP = false
     /// PiP trace (PiPTrace, off unless switched on in Diagnostics).
     private var traceSampler: PiPTrace.Sampler?
     private let traceHitches = PiPTrace.HitchWatch()
@@ -561,6 +561,11 @@ final class PlayerModel: ObservableObject {
 
         let opts = startOptions(for: item, toast: true)
         c.set("demuxer-readahead-secs", "60")
+        if raisedBuffer, !bufferTrimmed {
+            raisedBuffer = false
+            c.set("demuxer-max-bytes", "\(max(32, defaults.integer(forKey: SettingsKey.cacheMB)))MiB")
+        }
+        readToEndCheck?.invalidate(); readToEndCheck = nil
         if let a = appended, a.index == queueIndex, a.path == item.mpvPath {
             // Prepared near the end of the last episode: next in mpv's playlist,
             // opened (and buffered, once the last file was fully read) already.
@@ -674,13 +679,18 @@ final class PlayerModel: ObservableObject {
     /// Playback → Get the next episode ready). Network items only; library
     /// files open at once anyway.
     private func maybePrepareNext() {
-        // Two minutes before the Up Next card (credits start when known), or
-        // three before the end. 1.17.0 waited for the end only, and with long
-        // credits the countdown finished before anything was ready (27 Oct
-        // log: credits 3506–3750, card at 3506, nothing prepared).
+        // Four minutes before the Up Next card (credits start when known), or
+        // five before the end, so the next episode is open before the card
+        // shows (with 15 s to spare): finding its stream and opening its link
+        // took 24–37 s in the 28–29 Oct logs, and mpv only opens it once this
+        // file has been read to the end (readToEnd). 1.17.x started two
+        // minutes before the card, and Play Next on the card still had to
+        // load the episode (29 Oct log: 3.3 and 5.8 s). 1.17.0 waited for the
+        // end only, and with long credits the countdown finished before
+        // anything was ready (27 Oct log: credits 3506–3750, card at 3506).
         let cardAt = upNextTrigger?.time ?? duration
         guard defaults.bool(forKey: SettingsKey.prepareNext), hasNext, playbackMode == "playlist", preparing == nil, fileLoaded,
-              duration > 120, position >= cardAt - 120 || duration - position < 180 else { return }
+              duration > 120, position >= cardAt - Self.prepareLead || duration - position < Self.prepareLead + 60 else { return }
         let i = queueIndex + 1
         guard appended?.index != i, episodeStates[i] != .pick, episodeStates[i] != .unavailable else { return }
         let next = resolvedItems[i] ?? queue[i]
@@ -690,6 +700,53 @@ final class PlayerModel: ObservableObject {
             await self?.prepare(i)
             self?.preparing = nil
         }
+    }
+
+    static let prepareLead: Double = 240
+
+    /// mpv opens the next playlist entry only once this file has been read to
+    /// its end (mpv manual, --prefetch-playlist: "opens the URL of the next
+    /// playlist entry as soon as the current URL is fully read"), and it
+    /// reads ahead no more than the buffer limit (demuxer-max-bytes, Settings
+    /// → Playback → buffer). With more of the file left than that, the next
+    /// episode wasn't opened before Play Next. The limit is raised to what's
+    /// left of the file, up to a quarter of the memory iOS still gives the app
+    /// and 768 MB, until the next file starts (not after a memory warning).
+    private var raisedBuffer = false
+    private var readToEndCheck: Timer?
+    private func readToEnd() {
+        guard let c = client, duration > 0 else { return }
+        let mb = 1_048_576.0
+        let size = Double(c.int("file-size") ?? 0)
+        let limit = Double(max(32, defaults.integer(forKey: SettingsKey.cacheMB))) * mb
+        let left = size > 0 ? size * max(0, duration - position) / duration * 1.15 + 16 * mb : 0
+        if left > limit, !bufferTrimmed {
+            let cap = min(768 * mb, Double(os_proc_available_memory()) / 4)
+            let target = max(limit, min(left, cap))
+            c.set("demuxer-max-bytes", "\(Int(target / mb))MiB")
+            raisedBuffer = true
+            dlog("player", "next episode: \(Int(left / mb)) MB of this file left; buffer limit \(Int(limit / mb)) → \(Int(target / mb)) MB so it's read to the end and mpv opens the next one\(target < left ? " (capped: less memory to spare)" : "")")
+        } else {
+            dlog("player", "next episode: \(Int(left / mb)) MB of this file left, within the \(Int(limit / mb)) MB buffer")
+        }
+        // Report when the file has been read to its end (mpv then opens the next).
+        let cardAt = upNextTrigger?.time ?? duration
+        readToEndCheck?.invalidate()
+        let t = Timer(timeInterval: 2, repeats: true) { [weak self] timer in
+            MainActor.assumeIsolated {
+                guard let self, let c = self.client, !self.closed, self.appended != nil else { timer.invalidate(); return }
+                guard self.fileReadToEnd(c) else { return }
+                timer.invalidate()
+                dlog("player", String(format: "next episode: this file read to the end at %.0f s, %.0f s before the Up Next card; mpv opens the next file now", self.position, cardAt - self.position))
+            }
+        }
+        RunLoop.main.add(t, forMode: .common)
+        readToEndCheck = t
+    }
+
+    /// mpv's reader has hit the end of this file (demuxer-cache-state "eof").
+    private func fileReadToEnd(_ c: MPVClient) -> Bool {
+        (c.string("demuxer-cache-state") ?? "").range(of: #""eof"\s*:\s*true"#, options: .regularExpression) != nil
     }
 
     private func prepare(_ i: Int) async {
@@ -728,6 +785,7 @@ final class PlayerModel: ObservableObject {
         let opts = startOptions(for: item, toast: false)
         c.command(["loadfile", item.mpvPath, "append", "-1", opts.joined(separator: ",")])
         appended = (i, item.mpvPath)
+        readToEnd()
         dlog("player", "next episode ready: \(item.displayTitle) — buffers once this file is read to the end")
     }
 
@@ -1129,7 +1187,11 @@ final class PlayerModel: ObservableObject {
         showToast(names.isEmpty ? "Shaders off" : "\(names.count) shader\(names.count == 1 ? "" : "s") on")
     }
 
-    func startPiP() { pip.start() }
+    /// The PiP button: the current frame into PiP's layer first (see aboutToLeave).
+    func startPiP() {
+        takeSnapshot(leaving: true)
+        pip.start()
+    }
     func stopPiP() { pip.stop() }
 
     // MARK: Toast
@@ -1245,7 +1307,14 @@ final class PlayerModel: ObservableObject {
             return
         }
         if position >= trigger.time && position < duration - 0.3 {
-            if upNext == nil { upNext = UpNext(start: trigger.time, autoplay: trigger.autoplay, next: queue[queueIndex + 1]) }
+            if upNext == nil {
+                upNext = UpNext(start: trigger.time, autoplay: trigger.autoplay, next: queue[queueIndex + 1])
+                // Whether Play Next will be instant: the next file is in mpv's
+                // playlist, and this one has been read to the end (mpv opens the
+                // next one only then).
+                let read = client.map(fileReadToEnd) ?? false
+                dlog("player", "up next card at \(Int(position)) s: next episode \(appended?.index == queueIndex + 1 ? "prepared" : preparing == queueIndex + 1 ? "still being prepared" : "not prepared"), this file \(read ? "read to the end" : "not read to the end yet")")
+            }
             if trigger.autoplay, !paused, position >= trigger.time + Self.upNextCountdown {
                 // Once: until the next file loads (load() clears this), the card
                 // stays down. 1.17.0 put it back on the next position update while
@@ -1345,16 +1414,18 @@ final class PlayerModel: ObservableObject {
     }
 
     private var lastSnapshot = Date.distantPast
-    private func takeSnapshot() {
+    /// `leaving`: the app is about to leave (willResignActive) and PiP may
+    /// start from it; taken whatever the time since the last one.
+    private func takeSnapshot(leaving: Bool = false) {
         #if targetEnvironment(simulator)
         return                        // the simulator's Metal driver aborts on readback
         #endif
         guard renderer == .metal, mode == .main, fileLoaded, !isPiPActive,
-              UIApplication.shared.applicationState == .active, let c = client else { return }
+              leaving || UIApplication.shared.applicationState == .active, let c = client else { return }
         // The frame only goes to the PiP layer: none with PiP off (it was read
         // back after every seek and pause regardless).
         guard defaults.bool(forKey: SettingsKey.pipEnabled), PiPManager.isSupported else { return }
-        guard Date().timeIntervalSince(lastSnapshot) > 2 else { return }
+        guard leaving || Date().timeIntervalSince(lastSnapshot) > 2 else { return }
         lastSnapshot = Date()
         let sink = pip.makeSink()
         snapshotQueue.async { [weak self] in
@@ -1620,7 +1691,11 @@ final class PlayerModel: ObservableObject {
         mv.frame = container.bounds
         mv.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         container.addSubview(mv)
-        container.sendSubviewToBack(pip.view)
+        // Coming back from PiP, PiP's layer stays in front until this view has
+        // shown a frame of its own (waitForMetalFrame). Until 1.18.0 it was
+        // sent behind here, as PiP ended, and the view's old picture (the
+        // frame from when PiP started) showed: 29 Oct recording, 8.22–8.29 s.
+        if pipLayerInFront { container.bringSubviewToFront(pip.view) } else { container.sendSubviewToBack(pip.view) }
         mv.setNeedsLayout()
         dlog("player", "metal view attached")
         PiPTrace.event("Metal view attached (\(Int(container.bounds.width))×\(Int(container.bounds.height)))")
@@ -1629,8 +1704,46 @@ final class PlayerModel: ObservableObject {
     /// While PiP hands back to the main renderer, keep the (correctly
     /// sized) PiP layer on top so the restore animation never shows a
     /// stretched or black frame.
+    /// Coming back from PiP: PiP's layer (its last frame) stays in front until
+    /// the Metal view shows a frame of the video as it is now: the first frame
+    /// on screen (the drawable's presented handler) after mpv's
+    /// playback-restart, the first frame of the seek that follows the switch.
+    /// In the 29 Oct recording the view's first picture after the switch was
+    /// an old frame (8.22–8.29 s), 60 ms after the switch and before the
+    /// seek's frame, so frames before the restart don't count. 1.17–1.18.0
+    /// used playback-restart + 150 ms, which says playback resumed, not that
+    /// the output has shown anything. At most 1.5 s.
+    private var metalWaitToken = 0
+    private var metalWaitRestarted = false
+    private func waitForMetalFrame() {
+        metalWaitToken += 1
+        metalWaitRestarted = false
+        let token = metalWaitToken
+        let t0 = CACurrentMediaTime()
+        metalView?.metalLayer.onPresented = { @Sendable [weak self] shownAt in
+            guard shownAt > 0 else { return }
+            DispatchQueue.main.async { self?.metalFrameShown(token, ms: Int((shownAt - t0) * 1000)) }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.metalFrameShown(token, ms: nil) }
+    }
+
+    private func metalFrameShown(_ token: Int, ms: Int?) {
+        guard token == metalWaitToken else { return }
+        if let ms, !metalWaitRestarted {
+            PiPTrace.event("Metal frame on screen \(ms) ms after PiP ended, before the seek's first frame: PiP layer stays in front")
+            return
+        }
+        metalWaitToken += 1
+        metalView?.metalLayer.onPresented = nil
+        PiPTrace.event(ms.map { "Metal view's first frame after the seek on screen \($0) ms after PiP ended" } ?? "no Metal frame after the seek 1.5 s after PiP ended")
+        if pipLayerInFront { setPiPLayerOnTop(false) }
+    }
+
+    private var pipLayerInFront = false
     private func setPiPLayerOnTop(_ onTop: Bool) {
         guard let container = videoContainer else { return }
+        pipLayerInFront = onTop
+        if !onTop { metalView?.metalLayer.onPresented = nil }
         if onTop { container.bringSubviewToFront(pip.view) } else { container.sendSubviewToBack(pip.view) }
         PiPTrace.event("PiP layer \(onTop ? "to the front" : "to the back") (its last frame came \(pip.lastFrameAge.map { "\(Int($0 * 1000)) ms ago" } ?? "never"), \(pip.framesEnqueued) frame(s) so far; Metal view \(metalView?.superview != nil ? "in" : "out of") the window)")
     }
@@ -1660,6 +1773,9 @@ final class PlayerModel: ObservableObject {
         observers.append(nc.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.memoryWarning() }
         })
+        observers.append(nc.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.aboutToLeave() }
+        })
         observers.append(nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.didBecomeActive() }
         })
@@ -1679,6 +1795,19 @@ final class PlayerModel: ObservableObject {
                 if reason == .newDeviceAvailable || reason == .oldDeviceUnavailable { self?.updateOutputChannels() }
             }
         })
+    }
+
+    /// The app is about to leave the screen, and PiP may start from it on its
+    /// own. PiP's opening animation shows whatever picture its layer holds,
+    /// and that was refreshed only after seeks, pauses and every 45 s: the
+    /// 29 Oct recording has PiP open on a shot from several seconds earlier
+    /// (2.57–2.94 s) and jump to the current one (2.96 s). A current frame now
+    /// goes into the layer first; the switch to PiP's renderer waits for it
+    /// (switchToSoftware: snapshotQueue.sync).
+    private func aboutToLeave() {
+        guard isPiPPossible, defaults.bool(forKey: SettingsKey.pipAuto), !isPiPActive else { return }
+        PiPTrace.event("app about to leave: the PiP layer gets the current frame (its last one came \(pip.lastFrameAge.map { "\(Int($0 * 1000)) ms ago" } ?? "never"))")
+        takeSnapshot(leaving: true)
     }
 
     /// Leaving the app.
@@ -1997,11 +2126,8 @@ extension PlayerModel: MPVClientDelegate {
             }
         case .playbackRestart:
             buffering = false
-            PiPTrace.event("mpv: playback restart (first frame after the seek)\(awaitingFirstFrameAfterPiP ? "; PiP layer goes back in 150 ms" : "")")
-            if awaitingFirstFrameAfterPiP {
-                awaitingFirstFrameAfterPiP = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in self?.setPiPLayerOnTop(false) }
-            }
+            metalWaitRestarted = true
+            PiPTrace.event("mpv: playback restart (first frame after the seek)")
             if renderer == .metal { scheduleSnapshot(after: 0.8) }
         case .videoReconfig:
             PiPTrace.event("mpv: video reconfig")
@@ -2129,7 +2255,7 @@ extension PlayerModel: PiPManagerDelegate {
     nonisolated func pipWillStart() {
         onMain { [weak self] in
             guard let self else { return }
-            self.traceTransition("PiP will start (app \(UIApplication.shared.applicationState == .active ? "active" : "not active"))", seconds: 3)
+            self.traceTransition("PiP will start (app \(UIApplication.shared.applicationState == .active ? "active" : "not active"); the PiP layer's picture came \(self.pip.lastFrameAge.map { "\(Int($0 * 1000)) ms ago" } ?? "never"))", seconds: 3)
             self.isPiPActive = true
             self.pipRestoring = false
             self.switchToSoftware()
@@ -2165,13 +2291,8 @@ extension PlayerModel: PiPManagerDelegate {
                 self.setPaused(true)
                 self.scheduleParkedCheck()
             } else {
-                self.awaitingFirstFrameAfterPiP = true
+                self.waitForMetalFrame()
                 self.switchToMain()
-                // Fallback in case no playback-restart arrives (paused video).
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
-                    self?.awaitingFirstFrameAfterPiP = false
-                    self?.setPiPLayerOnTop(false)
-                }
             }
             self.pipRestoring = false
         }

@@ -55,7 +55,7 @@ enum PiPTrace {
     /// change for more than 1.5 frame durations) and jumps (frames skipped),
     /// with mpv's dropped/delayed frame counters before and after.
     final class Sampler: @unchecked Sendable {
-        private struct Sample { let t: CFTimeInterval; let pos: Double; let frame: Int64 }
+        private struct Sample { let t: CFTimeInterval; let pos: Double; let frame: Int64; let audio: Double }
         private let client: MPVClient
         private let queue = DispatchQueue(label: "pip.trace.sampler", qos: .utility)
         private var timer: DispatchSourceTimer?
@@ -85,7 +85,8 @@ enum PiPTrace {
                         return
                     }
                     guard !client.isShutDown else { return }
-                    samples.append(Sample(t: CACurrentMediaTime(), pos: client.double("time-pos") ?? -1, frame: client.int("estimated-frame-number") ?? -1))
+                    samples.append(Sample(t: CACurrentMediaTime(), pos: client.double("time-pos") ?? -1, frame: client.int("estimated-frame-number") ?? -1,
+                                          audio: client.double("audio-pts") ?? -1))
                 }
                 timer = t
                 t.resume()
@@ -115,6 +116,18 @@ enum PiPTrace {
                 if step > 1 || step < 0 { jumps.append("\(step > 0 ? "+" : "")\(step) frames at +\(ms(b.t))") }
                 lastChange = b
             }
+            // Sound: audio-pts standing still for over 100 ms while playing (the
+            // 29 Oct recording had ~0.25 s of silence at each PiP transition).
+            var silences: [String] = []
+            var lastAudio = samples.first
+            for s in samples.dropFirst() {
+                guard let a = lastAudio else { break }
+                if abs(s.audio - a.audio) > 0.0005 {
+                    let held = (s.t - a.t) * 1000
+                    if held > 100 { silences.append("\(Int(held)) ms from +\(ms(a.t))") }
+                    lastAudio = s
+                }
+            }
             var counters: [String] = []
             for n in Self.counterNames {
                 let now = client.int(n) ?? -1
@@ -124,6 +137,7 @@ enum PiPTrace {
             return String(format: "%@ video timeline: %ld samples over %ld ms, %.3g fps (%.1f ms a frame); longest hold %.0f ms; ", label, samples.count, span, fps, frameMS, longestStall)
                 + "stalls: \(stalls.isEmpty ? "none" : stalls.prefix(12).joined(separator: ", ")); "
                 + "jumps: \(jumps.isEmpty ? "none" : jumps.prefix(12).joined(separator: ", ")); "
+                + "sound stopped: \(silences.isEmpty ? "never" : silences.prefix(8).joined(separator: ", ")); "
                 + "mpv counters: \(counters.isEmpty ? "unchanged" : counters.joined(separator: ", "))"
         }
     }

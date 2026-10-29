@@ -144,8 +144,8 @@ enum IMDbSource {
         let lang = language
         store("chart|/chart/moviemeter/|\(lang)", [film, show])
         store("chart|/chart/tvmeter/|\(lang)", [show, film])
-        store("title3|\(film.id)|\(lang)", film)
-        store("title3|\(show.id)|\(lang)", show)
+        store("title4|\(film.id)|\(lang)", film)
+        store("title4|\(show.id)|\(lang)", show)
         store("seasons|\(show.id)", SeasonList(seasons: [1, 2]))
         for season in [1, 2] {
             let eps = (1...6).map { e -> MetaVideo in
@@ -153,7 +153,7 @@ enum IMDbSource {
                 v.overview = "What happens in episode \(e)."
                 return v
             }
-            store("episodes|\(show.id)|\(season)|\(lang)", eps)
+            store("episodes2|\(show.id)|\(season)|\(lang)", eps)
         }
         // Live search as you type "lab" (and its first two letters).
         for q in ["la", "lab", "lab m", "lab mo", "lab mov", "lab movi", "lab movie"] { store("suggest|\(q)", q.count > 3 ? [film] : [film, show]) }
@@ -323,7 +323,9 @@ enum IMDbSource {
     // MARK: - Title details
 
     static func details(id: String, type hint: String) async -> MetaItem? {
-        let key = "title3|\(id)|\(language)"
+        // title4 (1.18.1): titles saved before kept no original (romaji) title,
+        // MetaItem's Codable left it out, so each one is fetched once more.
+        let key = "title4|\(id)|\(language)"
         if let hit = cached(key, ttl: 7 * 86400, as: MetaItem.self) { return hit }
         guard let page = await html("/title/\(id)/") else { return nil }
         let m = parseDetails(page: page, id: id, hint: hint)
@@ -411,6 +413,11 @@ enum IMDbSource {
                     dlog("imdb", "cast \(id): no cast list found in page data")
                 }
                 dlog("imdb", "title \(id): \(mains.count) candidate object(s); name \(m2!.name), original \(m2!.originalName ?? "none")")
+                if let best = mains.max(by: { $0.score < $1.score })?.d {
+                    // The page data's own fields, as IMDb sent them.
+                    let raw = ["titleText", "originalTitleText"].map { k in "\(k)=\(best[k].map { String(describing: $0) } ?? "absent")" }
+                    dlog("imdb", "title \(id) raw: \(raw.joined(separator: " "))")
+                }
                 if (m2!.genres ?? []).contains(where: { $0.caseInsensitiveCompare("Animation") == .orderedSame }),
                    (m2!.countries ?? []).contains("JP") {
                     m2!.genres = (m2!.genres ?? []) + ["Anime"]
@@ -459,12 +466,12 @@ enum IMDbSource {
     /// original-language one (Settings → General → Episode titles).
     static func episodes(id: String, season: Int) async -> [MetaVideo] {
         let raw = await imdbEpisodes(id: id, season: season)
-        let show = cachedStale("title3|\(id)|\(language)", as: MetaItem.self)
+        let show = cachedStale("title4|\(id)|\(language)", as: MetaItem.self)
         return await EpisodeTitles.apply(raw, imdbID: id, name: show?.name, year: show?.releaseInfo)
     }
 
     private static func imdbEpisodes(id: String, season: Int) async -> [MetaVideo] {
-        let key = "episodes|\(id)|\(season)|\(language)"
+        let key = "episodes2|\(id)|\(season)|\(language)"
         if let hit = cached(key, ttl: 86400, as: [MetaVideo].self) { return hit }
         guard let page = await html("/title/\(id)/episodes/", ["season": String(season)]) else { return [] }
         var out: [MetaVideo] = []

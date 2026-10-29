@@ -51,6 +51,7 @@ enum SettingsKey {
     static let pipAuto = "pipAuto"
     static let pipReturnOnOpen = "pipReturnOnOpen"      // opening the app ends PiP, video continues in the player
     static let pipTrace = "pipTrace"                    // Diagnostics: trace PiP transitions (PiPTrace)
+    static let netTrace = "netTrace"                    // Diagnostics: time every addon request (NetTrace)
 
     // Subtitles / audio
     static let subLangs = "subLangs"
@@ -89,6 +90,7 @@ enum SettingsKey {
     static let cleanTitles = "cleanTitles"
     static let showOnlyMedia = "showOnlyMedia"
     static let folderSorts = "folderSorts"
+    static let folderSortLast = "folderSortLast"         // WebDAV: the last sort chosen, for folders without their own
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [

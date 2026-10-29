@@ -156,13 +156,41 @@ actor SkipService {
 
     private var tvCache: [String: SkipLookup] = [:]
 
+    /// Both services are asked at once. They used to be asked one after the
+    /// other, and IntroDB running into its 15 s timeout held the Skip button
+    /// back until 15.5 s into each episode (29 Oct log: four episodes in a
+    /// row, the segments 15.5 s after the file loaded). IntroDB is still
+    /// preferred: its answer wins when it comes within 2 s of TheIntroDB's.
     func lookupTV(imdbId: String, season: Int?, episode: Int?, duration: Double) async -> SkipLookup {
         let key = "\(imdbId)|\(season ?? -1)|\(episode ?? -1)"
         if let c = tvCache[key] { return c }
-        var r = await introDB(imdbId: imdbId, season: season, episode: episode, duration: duration)
-        if r.segments.isEmpty {
-            let t = await theIntroDB(imdbId: imdbId, season: season, episode: episode, duration: duration)
-            r.segments = t.segments
+        enum Answer { case introDB(SkipLookup), theIntroDB(SkipLookup), graceOver }
+        let r: SkipLookup = await withTaskGroup(of: Answer.self) { g in
+            g.addTask { .introDB(await self.introDB(imdbId: imdbId, season: season, episode: episode, duration: duration)) }
+            g.addTask { .theIntroDB(await self.theIntroDB(imdbId: imdbId, season: season, episode: episode, duration: duration)) }
+            var fallback: SkipLookup?
+            var postCredits = false
+            var introDone = false
+            var chosen: SkipLookup?
+            while chosen == nil, let answer = await g.next() {
+                switch answer {
+                case .introDB(let res):
+                    introDone = true
+                    postCredits = res.postCredits
+                    if !res.segments.isEmpty { chosen = res } else if let f = fallback { chosen = f }
+                case .theIntroDB(let res):
+                    guard !res.segments.isEmpty else { continue }
+                    if introDone { chosen = res; break }
+                    fallback = res
+                    g.addTask { try? await Task.sleep(nanoseconds: 2_000_000_000); return .graceOver }
+                case .graceOver:
+                    chosen = fallback
+                }
+            }
+            g.cancelAll()
+            var out = chosen ?? fallback ?? SkipLookup()
+            out.postCredits = postCredits
+            return out
         }
         tvCache[key] = r
         return r
@@ -363,8 +391,19 @@ actor SkipService {
         var req = URLRequest(url: url)
         req.timeoutInterval = timeout
         req.setValue("GlassPlayer/1.0", forHTTPHeaderField: "User-Agent")
-        guard let result = try? await session.data(for: req),
-              (result.1 as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? false else { return nil }
+        let t0 = CFAbsoluteTimeGetCurrent()
+        func took() -> Int { Int((CFAbsoluteTimeGetCurrent() - t0) * 1000) }
+        let result: (Data, URLResponse)
+        do { result = try await session.data(for: req) } catch {
+            // A lookup that lost the race is cancelled on purpose: not a failure.
+            if (error as? URLError)?.code != .cancelled { dlog("skip", "\(url.host ?? "?") didn't answer in \(took()) ms: \(error.localizedDescription)") }
+            return nil
+        }
+        let status = (result.1 as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200..<300).contains(status) else {
+            dlog("skip", "\(url.host ?? "?") answered HTTP \(status) in \(took()) ms")
+            return nil
+        }
         return try? JSONSerialization.jsonObject(with: result.0)
     }
 }

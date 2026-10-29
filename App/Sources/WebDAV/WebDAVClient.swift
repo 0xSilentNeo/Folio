@@ -38,7 +38,15 @@ struct DAVItem: Identifiable, Hashable {
     let isDirectory: Bool
     let size: Int64?
     let modified: Date?
+    /// `creationdate` (RFC 4918 §15.1), when the server sends it.
+    var created: Date? = nil
     let contentType: String?
+
+    /// When the item came to the server, for "Recently Added": its creation
+    /// date when the server sends one, else its last change (`getlastmodified`,
+    /// RFC 4918 §15.7, which every server here sends; a debrid service's
+    /// folder or file doesn't change after it's added). Nil when neither came.
+    var added: Date? { created ?? modified }
 
     var isMedia: Bool { !isDirectory && TitleParser.isMedia(name) }
     var isSubtitle: Bool { !isDirectory && TitleParser.isSubtitle(name) }
@@ -81,6 +89,7 @@ final class WebDAVClient {
     }
 
     func list(_ url: URL) async throws -> [DAVItem] {
+        if LabDAV.on { return try LabDAV.list(url) }
         var req = URLRequest(url: url)
         req.httpMethod = "PROPFIND"
         req.setValue("1", forHTTPHeaderField: "Depth")
@@ -88,7 +97,7 @@ final class WebDAVClient {
         if let auth = server.authHeader { req.setValue(auth, forHTTPHeaderField: "Authorization") }
         req.httpBody = """
         <?xml version="1.0" encoding="utf-8"?>
-        <d:propfind xmlns:d="DAV:"><d:prop><d:displayname/><d:resourcetype/><d:getcontentlength/><d:getlastmodified/><d:getcontenttype/></d:prop></d:propfind>
+        <d:propfind xmlns:d="DAV:"><d:prop><d:displayname/><d:resourcetype/><d:getcontentlength/><d:getlastmodified/><d:creationdate/><d:getcontenttype/></d:prop></d:propfind>
         """.data(using: .utf8)
         let (data, resp) = try await session.data(for: req)
         guard let http = resp as? HTTPURLResponse else { throw WebDAVError.parse }
@@ -98,9 +107,28 @@ final class WebDAVClient {
         let parser = PropfindParser(base: url)
         guard parser.parse(data) else { throw WebDAVError.parse }
         let selfPath = url.standardized.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        return parser.items.filter { item in
+        let items = parser.items.filter { item in
             item.url.standardized.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")) != selfPath
         }
+        Self.logProperties(host: url.host ?? "?", items)
+        return items
+    }
+
+    /// Which of the asked-for properties the server actually sends, once per
+    /// server per launch ("Recently Added" uses creationdate, else
+    /// getlastmodified). Folders usually have no getcontentlength.
+    private static let loggedLock = NSLock()
+    nonisolated(unsafe) private static var logged: Set<String> = []
+    static func logProperties(host: String, _ items: [DAVItem]) {
+        loggedLock.lock()
+        let first = logged.insert(host).inserted
+        loggedLock.unlock()
+        guard first, !items.isEmpty else { return }
+        let dirs = items.filter(\.isDirectory), files = items.filter { !$0.isDirectory }
+        func count(_ list: [DAVItem], _ has: (DAVItem) -> Bool) -> String { "\(list.filter(has).count)/\(list.count)" }
+        dlog("webdav", "properties from \(host): getlastmodified folders \(count(dirs) { $0.modified != nil }), files \(count(files) { $0.modified != nil }); "
+             + "creationdate folders \(count(dirs) { $0.created != nil }), files \(count(files) { $0.created != nil }); "
+             + "getcontentlength folders \(count(dirs) { $0.size != nil }), files \(count(files) { $0.size != nil })")
     }
 
     /// Playable URL + headers for mpv.
@@ -128,6 +156,7 @@ final class PropfindParser: NSObject, XMLParserDelegate {
     private var isCollection = false
     private var length = ""
     private var modified = ""
+    private var created = ""
     private var contentType = ""
     private var text = ""
     private var inResponse = false
@@ -144,6 +173,16 @@ final class PropfindParser: NSObject, XMLParserDelegate {
 
     init(base: URL) { self.base = base }
 
+    /// creationdate is an RFC 3339 date-time ("2025-03-10T09:00:00Z"),
+    /// sometimes with fractions of a second.
+    private static func isoDate(_ s: String) -> Date? {
+        guard !s.isEmpty else { return nil }
+        let f = ISO8601DateFormatter()
+        if let d = f.date(from: s) { return d }
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f.date(from: s)
+    }
+
     func parse(_ data: Data) -> Bool {
         let p = XMLParser(data: data)
         p.shouldProcessNamespaces = true
@@ -156,7 +195,7 @@ final class PropfindParser: NSObject, XMLParserDelegate {
         switch elementName.lowercased() {
         case "response":
             inResponse = true
-            href = ""; displayName = ""; isCollection = false; length = ""; modified = ""; contentType = ""
+            href = ""; displayName = ""; isCollection = false; length = ""; modified = ""; created = ""; contentType = ""
         case "collection":
             if inResponse { isCollection = true }
         case "propstat":
@@ -174,6 +213,7 @@ final class PropfindParser: NSObject, XMLParserDelegate {
         case "displayname": if propstatOK { displayName = value }
         case "getcontentlength": if propstatOK { length = value }
         case "getlastmodified": if propstatOK { modified = value }
+        case "creationdate": if propstatOK { created = value }
         case "getcontenttype": if propstatOK { contentType = value }
         case "status": if value.contains(" 404") { propstatOK = false }
         case "response":
@@ -182,9 +222,11 @@ final class PropfindParser: NSObject, XMLParserDelegate {
             let fallbackName = url.lastPathComponent.removingPercentEncoding ?? url.lastPathComponent
             let name = displayName.isEmpty ? fallbackName : displayName
             let isDir = isCollection || href.hasSuffix("/") && length.isEmpty
-            items.append(DAVItem(url: url, name: name, isDirectory: isDir,
-                                 size: Int64(length), modified: Self.dateFormatter.date(from: modified),
-                                 contentType: contentType.isEmpty ? nil : contentType))
+            var item = DAVItem(url: url, name: name, isDirectory: isDir,
+                               size: Int64(length), modified: Self.dateFormatter.date(from: modified),
+                               contentType: contentType.isEmpty ? nil : contentType)
+            item.created = Self.isoDate(created)
+            items.append(item)
         default: break
         }
         text = ""

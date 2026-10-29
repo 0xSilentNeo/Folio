@@ -14,6 +14,7 @@ enum UILab {
     static var keepControls: Bool { uiTest || uiTestLibrary }
 
     static func start() {
+        if LabDAV.on { LabDAV.seed() }
         if ShotsSeed.enabled { ShotsSeed.run(); return }
         if CommandLine.arguments.contains("-avLab") { avLab(); return }
         if CommandLine.arguments.contains("-labDiscover") { IMDbSource.seedForLab(); return }
