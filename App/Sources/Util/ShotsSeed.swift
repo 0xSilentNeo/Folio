@@ -39,6 +39,10 @@ enum ShotsSeed {
         // title-page header checks; `-shotsNoOriginal`: without a romaji title.
         if let t = CommandLine.arguments.first(where: { $0.hasPrefix("-shotsTitle=") }) { show.name = String(t.dropFirst("-shotsTitle=".count)) }
         if CommandLine.arguments.contains("-shotsNoOriginal") { show.originalName = nil }
+        // `-shotsNotAnime`: a show that isn't anime (the line under the title is
+        // the episode name); `-shotsEpisodeTitle=<text>`: that episode name.
+        if CommandLine.arguments.contains("-shotsNotAnime") { show.genres = ["Drama", "Thriller"] }
+        let episodeTitle = CommandLine.arguments.first(where: { $0.hasPrefix("-shotsEpisodeTitle=") }).map { String($0.dropFirst("-shotsEpisodeTitle=".count)) }
         show.credits = cast
         show.contentRating = "M"
         show.version = MediaMeta.currentVersion
@@ -54,7 +58,7 @@ enum ShotsSeed {
         for (i, n) in files.enumerated() {
             var m = n.hasPrefix("Bright") ? movie : show
             if !n.hasPrefix("Bright") {
-                m.episodeTitle = "Episode title \(i + 1)"
+                m.episodeTitle = episodeTitle ?? "Episode title \(i + 1)"
                 m.episodeThumb = art.still
                 m.episodeOverview = "What happens in episode \(i + 1): a longer line so the details view wraps."
             }

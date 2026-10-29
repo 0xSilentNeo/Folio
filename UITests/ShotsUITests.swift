@@ -44,12 +44,16 @@ final class ShotsUITests: XCTestCase {
     func test5TitleHeader() {
         let classroom = "-shotsTitle=Classroom of the Elite"
         let long = "-shotsTitle=The Irregular at Magic High School: The Girl Who Summons the Stars"
+        // The device screenshot (29 Oct): an anime with no romaji showed a
+        // three-line episode name, and the title was cut to one line.
+        let quote = "-shotsEpisodeTitle=Nothing is as dangerous as an ignorant friend; a wise enemy is to be preferred."
         let cases: [(String, [String])] = [
             ("classroom", [classroom]),
-            ("classroom-no-romaji", [classroom, "-shotsNoOriginal"]),
+            ("classroom-no-romaji-long-episode", [classroom, "-shotsNoOriginal", quote]),
+            ("not-anime-long-episode", [classroom, "-shotsNotAnime", quote]),
             ("long", [long]),
-            ("classroom-xxxl", [classroom, "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryXXXL"]),
-            ("long-accessibility-xl", [long, "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXL"]),
+            ("classroom-xxxl", [classroom, quote, "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryXXXL"]),
+            ("long-not-anime-accessibility-l", [long, "-shotsNotAnime", quote, "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL"]),
         ]
         mode = "header"; n = 0
         for (name, args) in cases {
