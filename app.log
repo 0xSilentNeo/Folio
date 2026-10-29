@@ -1,0 +1,142 @@
+08:32:13.373 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.28 GB
+08:32:13.671 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:32:13.671 [lab] shots seeded
+08:32:15.566 [hang] main thread unresponsive for 2.2 s
+08:32:18.675 [scene] CC90D319 connects (portrait)
+08:32:18.677 [scene] CC90D319 will enter foreground (portrait)
+08:32:19.474 [app] first screen 10103 ms after process start
+08:32:19.475 [app] root view appeared (1 in this run, splash off)
+08:32:20.958 [scene] CC90D319 active (portrait)
+08:32:20.976 [app] active
+08:32:24.381 [nav] home: open Lab Show
+08:32:24.408 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:32:24.830 [nav] title page appear Lab Show S01E01.mp4
+08:32:24.860 [nav] page opening: its move started
+08:32:24.978 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:32:25.236 [nav] title page move: animated
+08:32:25.865 [nav] page opening: its move ended after 1004 ms
+08:32:25.964 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:32:32.224 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.26 GB
+08:32:32.465 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:32:32.465 [lab] shots seeded
+08:32:34.532 [hang] main thread unresponsive for 2.3 s
+08:32:37.138 [scene] CC90D319 connects (portrait)
+08:32:37.139 [scene] CC90D319 will enter foreground (portrait)
+08:32:37.403 [app] first screen 7060 ms after process start
+08:32:37.403 [app] root view appeared (1 in this run, splash off)
+08:32:38.134 [scene] CC90D319 active (portrait)
+08:32:38.158 [app] active
+08:32:41.249 [nav] home: open Lab Show
+08:32:41.271 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:32:41.627 [nav] title page appear Lab Show S01E01.mp4
+08:32:41.640 [nav] page opening: its move started
+08:32:41.734 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:32:41.951 [nav] title page move: animated
+08:32:42.601 [nav] page opening: its move ended after 961 ms
+08:32:42.706 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:32:48.304 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.24 GB
+08:32:48.594 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:32:48.594 [lab] shots seeded
+08:32:50.549 [hang] main thread unresponsive for 2.3 s
+08:32:53.971 [scene] CC90D319 connects (portrait)
+08:32:53.972 [scene] CC90D319 will enter foreground (portrait)
+08:32:54.267 [app] first screen 7597 ms after process start
+08:32:54.267 [app] root view appeared (1 in this run, splash off)
+08:32:54.982 [scene] CC90D319 active (portrait)
+08:32:54.998 [app] active
+08:32:58.965 [nav] home: open Lab Show
+08:32:58.987 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:32:59.318 [nav] title page appear Lab Show S01E01.mp4
+08:32:59.328 [nav] page opening: its move started
+08:32:59.454 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:32:59.716 [nav] title page move: animated
+08:33:00.355 [nav] page opening: its move ended after 1026 ms
+08:33:00.458 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:33:06.670 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.23 GB
+08:33:06.889 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:33:06.889 [lab] shots seeded
+08:33:09.165 [hang] main thread unresponsive for 2.5 s
+08:33:11.508 [scene] CC90D319 connects (portrait)
+08:33:11.509 [scene] CC90D319 will enter foreground (portrait)
+08:33:11.773 [app] first screen 7108 ms after process start
+08:33:11.773 [app] root view appeared (1 in this run, splash off)
+08:33:12.643 [scene] CC90D319 active (portrait)
+08:33:12.660 [app] active
+08:33:15.948 [nav] home: open Lab Show
+08:33:15.971 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:33:16.279 [nav] title page appear Lab Show S01E01.mp4
+08:33:16.306 [nav] page opening: its move started
+08:33:16.410 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:33:16.666 [nav] title page move: animated
+08:33:17.301 [nav] page opening: its move ended after 994 ms
+08:33:17.375 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:33:23.284 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.22 GB
+08:33:23.615 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:33:23.616 [lab] shots seeded
+08:33:25.455 [hang] main thread unresponsive for 2.2 s
+08:33:29.783 [scene] CC90D319 connects (portrait)
+08:33:29.784 [scene] CC90D319 will enter foreground (portrait)
+08:33:30.101 [app] first screen 8688 ms after process start
+08:33:30.101 [app] root view appeared (1 in this run, splash off)
+08:33:30.768 [scene] CC90D319 active (portrait)
+08:33:30.771 [app] active
+08:33:34.181 [nav] home: open Lab Show
+08:33:34.201 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:33:34.480 [nav] title page appear Lab Show S01E01.mp4
+08:33:34.495 [nav] page opening: its move started
+08:33:34.616 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:33:34.872 [nav] title page move: animated
+08:33:35.564 [nav] page opening: its move ended after 1069 ms
+08:33:35.585 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:33:41.089 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.2 GB
+08:33:41.325 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:33:41.326 [lab] shots seeded
+08:33:43.384 [hang] main thread unresponsive for 2.3 s
+08:33:46.461 [scene] CC90D319 connects (portrait)
+08:33:46.462 [scene] CC90D319 will enter foreground (portrait)
+08:33:46.746 [app] first screen 7214 ms after process start
+08:33:46.747 [app] root view appeared (1 in this run, splash off)
+08:33:47.574 [scene] CC90D319 active (portrait)
+08:33:47.614 [app] active
+08:33:50.781 [nav] home: open Lab Show
+08:33:50.803 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:33:51.108 [nav] title page appear Lab Show S01E01.mp4
+08:33:51.127 [nav] page opening: its move started
+08:33:51.218 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:33:51.410 [nav] title page move: animated
+08:33:52.231 [nav] page opening: its move ended after 1103 ms
+08:33:52.235 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:33:58.728 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.22 GB
+08:33:58.760 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+08:34:01.028 [hang] main thread unresponsive for 2.3 s
+08:34:04.039 [scene] CC90D319 connects (portrait)
+08:34:04.040 [scene] CC90D319 will enter foreground (portrait)
+08:34:04.324 [app] first screen 7448 ms after process start
+08:34:04.324 [app] root view appeared (1 in this run, splash off)
+08:34:05.142 [scene] CC90D319 active (portrait)
+08:34:05.184 [app] active
+08:34:13.623 [webdav] properties from dav.lab.invalid: getlastmodified folders 2/3, files 4/5; creationdate folders 0/3, files 2/5; getcontentlength folders 0/3, files 5/5
+08:34:35.411 [energy] cpu 81% (main 63%, other 17%) mem 54 MB (0 MB left) thermal=nominal playing=no
+08:35:05.403 [energy] cpu 70% (main 36%, other 33%) mem 54 MB (0 MB left) thermal=nominal playing=no
+08:35:35.431 [energy] cpu 68% (main 54%, other 14%) mem 53 MB (0 MB left) thermal=nominal playing=no
+08:36:05.426 [energy] cpu 62% (main 34%, other 29%) mem 54 MB (0 MB left) thermal=nominal playing=no
+08:36:35.398 [energy] cpu 26% (main 14%, other 12%) mem 62 MB (0 MB left) thermal=nominal playing=no
+08:37:05.399 [energy] cpu 23% (main 12%, other 11%) mem 65 MB (0 MB left) thermal=nominal playing=no
+08:37:35.491 [energy] cpu 17% (main 11%, other 5%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:38:05.481 [energy] cpu 42% (main 31%, other 11%) mem 65 MB (0 MB left) thermal=nominal playing=no
+08:38:35.444 [energy] cpu 79% (main 44%, other 35%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:39:05.398 [energy] cpu 46% (main 35%, other 11%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:39:35.415 [energy] cpu 19% (main 16%, other 3%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:40:05.415 [energy] cpu 4% (main 3%, other 1%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:40:35.398 [energy] cpu 76% (main 41%, other 35%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:41:05.429 [energy] cpu 72% (main 37%, other 36%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:41:35.656 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=31.61 GB
+08:41:35.684 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+08:41:37.987 [hang] main thread unresponsive for 2.4 s
+08:41:41.395 [scene] CC90D319 connects (portrait)
+08:41:41.396 [scene] CC90D319 will enter foreground (portrait)
+08:41:41.860 [app] first screen 8922 ms after process start
+08:41:41.860 [app] root view appeared (1 in this run, splash off)
+08:41:42.898 [scene] CC90D319 active (portrait)
+08:41:42.940 [app] active
+08:41:52.538 [webdav] properties from dav.lab.invalid: getlastmodified folders 2/3, files 4/5; creationdate folders 0/3, files 2/5; getcontentlength folders 0/3, files 5/5
