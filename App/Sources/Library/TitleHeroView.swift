@@ -200,7 +200,7 @@ struct TitleHeroView: View {
             // cut, at its full height whatever the lines under it need (the
             // 29 Oct screenshot had it cut to one line), and with the text size.
             DecipherText(text: title, font: .system(.title, design: .rounded, weight: .bold))
-                .lineLimit(3)
+                .lineLimit(typeSize.isAccessibilitySize ? 5 : 3)
                 .minimumScaleFactor(0.8)
                 .fixedSize(horizontal: false, vertical: true)
                 .layoutPriority(1)
