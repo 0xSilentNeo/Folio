@@ -1705,13 +1705,19 @@ final class PlayerModel: ObservableObject {
     /// sized) PiP layer on top so the restore animation never shows a
     /// stretched or black frame.
     /// Coming back from PiP: PiP's layer (its last frame) stays in front until
-    /// the Metal view has a frame of its own on the screen (the drawable's
-    /// presented handler), then goes behind it. 1.17–1.18.0 used mpv's
-    /// playback-restart + 150 ms, which says playback resumed, not that the
-    /// output has shown anything. At most 1.5 s (a frame that never shows).
+    /// the Metal view shows a frame of the video as it is now: the first frame
+    /// on screen (the drawable's presented handler) after mpv's
+    /// playback-restart, the first frame of the seek that follows the switch.
+    /// In the 29 Oct recording the view's first picture after the switch was
+    /// an old frame (8.22–8.29 s), 60 ms after the switch and before the
+    /// seek's frame, so frames before the restart don't count. 1.17–1.18.0
+    /// used playback-restart + 150 ms, which says playback resumed, not that
+    /// the output has shown anything. At most 1.5 s.
     private var metalWaitToken = 0
+    private var metalWaitRestarted = false
     private func waitForMetalFrame() {
         metalWaitToken += 1
+        metalWaitRestarted = false
         let token = metalWaitToken
         let t0 = CACurrentMediaTime()
         metalView?.metalLayer.onPresented = { @Sendable [weak self] shownAt in
@@ -1723,9 +1729,13 @@ final class PlayerModel: ObservableObject {
 
     private func metalFrameShown(_ token: Int, ms: Int?) {
         guard token == metalWaitToken else { return }
+        if let ms, !metalWaitRestarted {
+            PiPTrace.event("Metal frame on screen \(ms) ms after PiP ended, before the seek's first frame: PiP layer stays in front")
+            return
+        }
         metalWaitToken += 1
         metalView?.metalLayer.onPresented = nil
-        PiPTrace.event(ms.map { "Metal view's first frame on screen \($0) ms after PiP ended" } ?? "no Metal frame on screen 1.5 s after PiP ended")
+        PiPTrace.event(ms.map { "Metal view's first frame after the seek on screen \($0) ms after PiP ended" } ?? "no Metal frame after the seek 1.5 s after PiP ended")
         if pipLayerInFront { setPiPLayerOnTop(false) }
     }
 
@@ -2116,6 +2126,7 @@ extension PlayerModel: MPVClientDelegate {
             }
         case .playbackRestart:
             buffering = false
+            metalWaitRestarted = true
             PiPTrace.event("mpv: playback restart (first frame after the seek)")
             if renderer == .metal { scheduleSnapshot(after: 0.8) }
         case .videoReconfig:
