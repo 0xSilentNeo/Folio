@@ -1,0 +1,150 @@
+08:32:58.092 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.31 GB
+08:32:58.311 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:32:58.311 [lab] shots seeded
+08:33:00.414 [hang] main thread unresponsive for 2.3 s
+08:33:01.892 [scene] EDFD6DE0 connects (portrait)
+08:33:01.893 [scene] EDFD6DE0 will enter foreground (portrait)
+08:33:02.373 [app] first screen 5992 ms after process start
+08:33:02.373 [app] root view appeared (1 in this run, splash off)
+08:33:03.283 [scene] EDFD6DE0 active (portrait)
+08:33:03.289 [app] active
+08:33:06.138 [nav] home: open Lab Show
+08:33:06.155 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:33:06.456 [nav] title page appear Lab Show S01E01.mp4
+08:33:06.478 [nav] page opening: its move started
+08:33:06.564 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:33:06.849 [nav] title page move: animated
+08:33:07.825 [nav] page opening: its move ended after 1347 ms
+08:33:07.832 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:33:12.938 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.29 GB
+08:33:13.084 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:33:13.084 [lab] shots seeded
+08:33:15.263 [hang] main thread unresponsive for 2.3 s
+08:33:16.600 [scene] EDFD6DE0 connects (portrait)
+08:33:16.600 [scene] EDFD6DE0 will enter foreground (portrait)
+08:33:16.795 [app] first screen 5164 ms after process start
+08:33:16.795 [app] root view appeared (1 in this run, splash off)
+08:33:17.316 [scene] EDFD6DE0 active (portrait)
+08:33:17.347 [app] active
+08:33:19.838 [nav] home: open Lab Show
+08:33:19.855 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:33:20.083 [nav] title page appear Lab Show S01E01.mp4
+08:33:20.096 [nav] page opening: its move started
+08:33:20.173 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:33:20.283 [nav] title page move: animated
+08:33:21.055 [nav] page opening: its move ended after 959 ms
+08:33:21.114 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:33:30.001 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.27 GB
+08:33:30.210 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:33:30.210 [lab] shots seeded
+08:33:32.225 [hang] main thread unresponsive for 2.2 s
+08:33:34.099 [scene] EDFD6DE0 connects (portrait)
+08:33:34.099 [scene] EDFD6DE0 will enter foreground (portrait)
+08:33:34.311 [app] first screen 6120 ms after process start
+08:33:34.311 [app] root view appeared (1 in this run, splash off)
+08:33:34.950 [scene] EDFD6DE0 active (portrait)
+08:33:34.964 [app] active
+08:33:37.771 [nav] home: open Lab Show
+08:33:37.788 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:33:38.022 [nav] title page appear Lab Show S01E01.mp4
+08:33:38.037 [nav] page opening: its move started
+08:33:38.124 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:33:38.278 [nav] title page move: animated
+08:33:39.011 [nav] page opening: its move ended after 973 ms
+08:33:39.068 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:33:44.266 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.26 GB
+08:33:44.447 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:33:44.447 [lab] shots seeded
+08:33:46.496 [hang] main thread unresponsive for 2.3 s
+08:33:48.059 [scene] EDFD6DE0 connects (portrait)
+08:33:48.060 [scene] EDFD6DE0 will enter foreground (portrait)
+08:33:48.275 [app] first screen 5267 ms after process start
+08:33:48.275 [app] root view appeared (1 in this run, splash off)
+08:33:48.795 [scene] EDFD6DE0 active (portrait)
+08:33:48.799 [app] active
+08:33:51.271 [nav] home: open Lab Show
+08:33:51.287 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:33:51.508 [nav] title page appear Lab Show S01E01.mp4
+08:33:51.517 [nav] page opening: its move started
+08:33:51.593 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:33:51.736 [nav] title page move: animated
+08:33:52.471 [nav] page opening: its move ended after 954 ms
+08:33:52.525 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:33:57.456 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.24 GB
+08:33:57.614 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:33:57.614 [lab] shots seeded
+08:33:59.605 [hang] main thread unresponsive for 2.2 s
+08:34:00.933 [scene] EDFD6DE0 connects (portrait)
+08:34:00.934 [scene] EDFD6DE0 will enter foreground (portrait)
+08:34:01.161 [app] first screen 4958 ms after process start
+08:34:01.161 [app] root view appeared (1 in this run, splash off)
+08:34:01.793 [scene] EDFD6DE0 active (portrait)
+08:34:01.797 [app] active
+08:34:04.538 [nav] home: open Lab Show
+08:34:04.556 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:34:04.784 [nav] title page appear Lab Show S01E01.mp4
+08:34:04.796 [nav] page opening: its move started
+08:34:04.875 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:34:05.076 [nav] title page move: animated
+08:34:05.738 [nav] page opening: its move ended after 941 ms
+08:34:05.840 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:34:10.853 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.23 GB
+08:34:11.017 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+08:34:11.017 [lab] shots seeded
+08:34:13.089 [hang] main thread unresponsive for 2.3 s
+08:34:14.062 [scene] EDFD6DE0 connects (portrait)
+08:34:14.063 [scene] EDFD6DE0 will enter foreground (portrait)
+08:34:14.289 [app] first screen 4645 ms after process start
+08:34:14.290 [app] root view appeared (1 in this run, splash off)
+08:34:14.900 [scene] EDFD6DE0 active (portrait)
+08:34:14.915 [app] active
+08:34:17.305 [nav] home: open Lab Show
+08:34:17.320 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+08:34:17.529 [nav] title page appear Lab Show S01E01.mp4
+08:34:17.540 [nav] page opening: its move started
+08:34:17.607 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+08:34:17.844 [nav] title page move: animated
+08:34:18.473 [nav] page opening: its move ended after 932 ms
+08:34:18.519 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+08:34:24.403 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.24 GB
+08:34:24.450 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+08:34:26.512 [hang] main thread unresponsive for 2.1 s
+08:34:27.746 [scene] EDFD6DE0 connects (portrait)
+08:34:27.747 [scene] EDFD6DE0 will enter foreground (portrait)
+08:34:27.970 [app] first screen 5031 ms after process start
+08:34:27.970 [app] root view appeared (1 in this run, splash off)
+08:34:28.597 [scene] EDFD6DE0 active (portrait)
+08:34:28.611 [app] active
+08:34:36.726 [webdav] properties from dav.lab.invalid: getlastmodified folders 2/3, files 4/5; creationdate folders 0/3, files 2/5; getcontentlength folders 0/3, files 5/5
+08:34:58.625 [energy] cpu 33% (main 22%, other 12%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:35:28.655 [energy] cpu 1% (other 1%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:35:59.102 [energy] cpu 0% mem 64 MB (0 MB left) thermal=nominal playing=no
+08:36:29.105 [energy] cpu 0% mem 64 MB (0 MB left) thermal=nominal playing=no
+08:36:59.106 [energy] cpu 0% mem 65 MB (0 MB left) thermal=nominal playing=no
+08:37:28.694 [energy] cpu 16% (main 12%, other 5%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:37:59.108 [energy] cpu 43% (main 26%, other 17%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:38:28.647 [energy] cpu 43% (main 24%, other 20%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:38:58.655 [energy] cpu 72% (main 42%, other 30%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:39:16.479 [hang] main thread unresponsive for 5.4 s
+08:39:57.702 [energy] cpu 23% (main 22%, other 1%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:39:59.947 [energy] cpu 9% (main 9%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:40:28.663 [energy] cpu 80% (main 64%, other 16%) mem 65 MB (0 MB left) thermal=nominal playing=no
+08:40:59.127 [energy] cpu 76% (other 42%, main 34%) mem 65 MB (0 MB left) thermal=nominal playing=no
+08:41:29.107 [energy] cpu 65% (main 53%, other 12%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:41:58.630 [energy] cpu 79% (main 49%, other 31%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:42:28.637 [energy] cpu 81% (other 43%, main 38%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:42:59.105 [energy] cpu 7% (main 6%, com.apple.UIKit.in 1%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:43:29.124 [energy] cpu 77% (main 54%, other 23%) mem 64 MB (0 MB left) thermal=nominal playing=no
+08:43:59.109 [energy] cpu 77% (other 43%, main 35%) mem 65 MB (0 MB left) thermal=nominal playing=no
+08:44:29.104 [energy] cpu 13% (main 8%, com.apple.UIKit.in 5%) mem 65 MB (0 MB left) thermal=nominal playing=no
+08:44:48.115 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=30.86 GB
+08:44:48.234 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+08:44:50.488 [hang] main thread unresponsive for 2.4 s
+08:44:57.213 [scene] EDFD6DE0 connects (portrait)
+08:44:57.217 [scene] EDFD6DE0 will enter foreground (portrait)
+08:44:58.140 [app] first screen 13946 ms after process start
+08:44:58.140 [app] root view appeared (1 in this run, splash off)
+08:45:00.084 [scene] EDFD6DE0 active (portrait)
+08:45:00.086 [app] active
+08:45:10.177 [webdav] properties from dav.lab.invalid: getlastmodified folders 2/3, files 4/5; creationdate folders 0/3, files 2/5; getcontentlength folders 0/3, files 5/5
+08:45:13.780 [hang] main thread unresponsive for 1.6 s
