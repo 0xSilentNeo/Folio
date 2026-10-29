@@ -45,7 +45,10 @@ final class GPMetalLayer: CAMetalLayer {
     /// MoltenVK takes each frame's drawable from here (mpv's video thread).
     override func nextDrawable() -> CAMetalDrawable? {
         let d = super.nextDrawable()
+        #if !targetEnvironment(simulator)
+        // The simulator SDK doesn't offer presented handlers (no PiP there either).
         if let d, let report = onPresented { d.addPresentedHandler { report($0.presentedTime) } }
+        #endif
         return d
     }
 
