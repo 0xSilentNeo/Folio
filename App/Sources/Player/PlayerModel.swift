@@ -4,6 +4,7 @@ import AVFoundation
 import MediaPlayer
 import Combine
 import CoreVideo
+import os
 
 struct MediaTrack: Identifiable, Hashable {
     let id: Int
@@ -560,6 +561,11 @@ final class PlayerModel: ObservableObject {
 
         let opts = startOptions(for: item, toast: true)
         c.set("demuxer-readahead-secs", "60")
+        if raisedBuffer, !bufferTrimmed {
+            raisedBuffer = false
+            c.set("demuxer-max-bytes", "\(max(32, defaults.integer(forKey: SettingsKey.cacheMB)))MiB")
+        }
+        readToEndCheck?.invalidate(); readToEndCheck = nil
         if let a = appended, a.index == queueIndex, a.path == item.mpvPath {
             // Prepared near the end of the last episode: next in mpv's playlist,
             // opened (and buffered, once the last file was fully read) already.
@@ -673,13 +679,18 @@ final class PlayerModel: ObservableObject {
     /// Playback → Get the next episode ready). Network items only; library
     /// files open at once anyway.
     private func maybePrepareNext() {
-        // Two minutes before the Up Next card (credits start when known), or
-        // three before the end. 1.17.0 waited for the end only, and with long
-        // credits the countdown finished before anything was ready (27 Oct
-        // log: credits 3506–3750, card at 3506, nothing prepared).
+        // Four minutes before the Up Next card (credits start when known), or
+        // five before the end, so the next episode is open before the card
+        // shows (with 15 s to spare): finding its stream and opening its link
+        // took 24–37 s in the 28–29 Oct logs, and mpv only opens it once this
+        // file has been read to the end (readToEnd). 1.17.x started two
+        // minutes before the card, and Play Next on the card still had to
+        // load the episode (29 Oct log: 3.3 and 5.8 s). 1.17.0 waited for the
+        // end only, and with long credits the countdown finished before
+        // anything was ready (27 Oct log: credits 3506–3750, card at 3506).
         let cardAt = upNextTrigger?.time ?? duration
         guard defaults.bool(forKey: SettingsKey.prepareNext), hasNext, playbackMode == "playlist", preparing == nil, fileLoaded,
-              duration > 120, position >= cardAt - 120 || duration - position < 180 else { return }
+              duration > 120, position >= cardAt - Self.prepareLead || duration - position < Self.prepareLead + 60 else { return }
         let i = queueIndex + 1
         guard appended?.index != i, episodeStates[i] != .pick, episodeStates[i] != .unavailable else { return }
         let next = resolvedItems[i] ?? queue[i]
@@ -689,6 +700,53 @@ final class PlayerModel: ObservableObject {
             await self?.prepare(i)
             self?.preparing = nil
         }
+    }
+
+    static let prepareLead: Double = 240
+
+    /// mpv opens the next playlist entry only once this file has been read to
+    /// its end (mpv manual, --prefetch-playlist: "opens the URL of the next
+    /// playlist entry as soon as the current URL is fully read"), and it
+    /// reads ahead no more than the buffer limit (demuxer-max-bytes, Settings
+    /// → Playback → buffer). With more of the file left than that, the next
+    /// episode wasn't opened before Play Next. The limit is raised to what's
+    /// left of the file, up to a quarter of the memory iOS still gives the app
+    /// and 768 MB, until the next file starts (not after a memory warning).
+    private var raisedBuffer = false
+    private var readToEndCheck: Timer?
+    private func readToEnd() {
+        guard let c = client, duration > 0 else { return }
+        let mb = 1_048_576.0
+        let size = Double(c.int("file-size") ?? 0)
+        let limit = Double(max(32, defaults.integer(forKey: SettingsKey.cacheMB))) * mb
+        let left = size > 0 ? size * max(0, duration - position) / duration * 1.15 + 16 * mb : 0
+        if left > limit, !bufferTrimmed {
+            let cap = min(768 * mb, Double(os_proc_available_memory()) / 4)
+            let target = max(limit, min(left, cap))
+            c.set("demuxer-max-bytes", "\(Int(target / mb))MiB")
+            raisedBuffer = true
+            dlog("player", "next episode: \(Int(left / mb)) MB of this file left; buffer limit \(Int(limit / mb)) → \(Int(target / mb)) MB so it's read to the end and mpv opens the next one\(target < left ? " (capped: less memory to spare)" : "")")
+        } else {
+            dlog("player", "next episode: \(Int(left / mb)) MB of this file left, within the \(Int(limit / mb)) MB buffer")
+        }
+        // Report when the file has been read to its end (mpv then opens the next).
+        let cardAt = upNextTrigger?.time ?? duration
+        readToEndCheck?.invalidate()
+        let t = Timer(timeInterval: 2, repeats: true) { [weak self] timer in
+            MainActor.assumeIsolated {
+                guard let self, let c = self.client, !self.closed, self.appended != nil else { timer.invalidate(); return }
+                guard self.fileReadToEnd(c) else { return }
+                timer.invalidate()
+                dlog("player", String(format: "next episode: this file read to the end at %.0f s, %.0f s before the Up Next card; mpv opens the next file now", self.position, cardAt - self.position))
+            }
+        }
+        RunLoop.main.add(t, forMode: .common)
+        readToEndCheck = t
+    }
+
+    /// mpv's reader has hit the end of this file (demuxer-cache-state "eof").
+    private func fileReadToEnd(_ c: MPVClient) -> Bool {
+        (c.string("demuxer-cache-state") ?? "").range(of: #""eof"\s*:\s*true"#, options: .regularExpression) != nil
     }
 
     private func prepare(_ i: Int) async {
@@ -727,6 +785,7 @@ final class PlayerModel: ObservableObject {
         let opts = startOptions(for: item, toast: false)
         c.command(["loadfile", item.mpvPath, "append", "-1", opts.joined(separator: ",")])
         appended = (i, item.mpvPath)
+        readToEnd()
         dlog("player", "next episode ready: \(item.displayTitle) — buffers once this file is read to the end")
     }
 
@@ -1248,7 +1307,14 @@ final class PlayerModel: ObservableObject {
             return
         }
         if position >= trigger.time && position < duration - 0.3 {
-            if upNext == nil { upNext = UpNext(start: trigger.time, autoplay: trigger.autoplay, next: queue[queueIndex + 1]) }
+            if upNext == nil {
+                upNext = UpNext(start: trigger.time, autoplay: trigger.autoplay, next: queue[queueIndex + 1])
+                // Whether Play Next will be instant: the next file is in mpv's
+                // playlist, and this one has been read to the end (mpv opens the
+                // next one only then).
+                let read = client.map(fileReadToEnd) ?? false
+                dlog("player", "up next card at \(Int(position)) s: next episode \(appended?.index == queueIndex + 1 ? "prepared" : preparing == queueIndex + 1 ? "still being prepared" : "not prepared"), this file \(read ? "read to the end" : "not read to the end yet")")
+            }
             if trigger.autoplay, !paused, position >= trigger.time + Self.upNextCountdown {
                 // Once: until the next file loads (load() clears this), the card
                 // stays down. 1.17.0 put it back on the next position update while
