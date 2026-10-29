@@ -30,6 +30,24 @@ final class GPMetalLayer: CAMetalLayer {
 
     private func setEDR(_ v: Bool) { super.wantsExtendedDynamicRangeContent = v }
 
+    /// Called (on any thread) when a frame mpv drew is on the screen, with
+    /// the time it appeared (MTLDrawable.addPresentedHandler; presentedTime
+    /// is 0 for a frame that was never shown). Set only while something waits
+    /// for that (PiP hand-back); nil otherwise, so no per-frame work.
+    private let presentedLock = NSLock()
+    private var _onPresented: (@Sendable (CFTimeInterval) -> Void)?
+    var onPresented: (@Sendable (CFTimeInterval) -> Void)? {
+        get { presentedLock.lock(); defer { presentedLock.unlock() }; return _onPresented }
+        set { presentedLock.lock(); _onPresented = newValue; presentedLock.unlock() }
+    }
+
+    /// MoltenVK takes each frame's drawable from here (mpv's video thread).
+    override func nextDrawable() -> CAMetalDrawable? {
+        let d = super.nextDrawable()
+        if let d, let report = onPresented { d.addPresentedHandler { report($0.presentedTime) } }
+        return d
+    }
+
     /// A Core Animation commit on one of mpv's threads must not run UIKit
     /// layout (Auto Layout throws off the main thread): do it on main instead.
     override func layoutSublayers() {

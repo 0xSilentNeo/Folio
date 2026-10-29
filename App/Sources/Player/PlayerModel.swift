@@ -196,7 +196,6 @@ final class PlayerModel: ObservableObject {
     private var pendingMain = false
     private var pipRestoring = false
     private var energyNoteFor: String?
-    private var awaitingFirstFrameAfterPiP = false
     /// PiP trace (PiPTrace, off unless switched on in Diagnostics).
     private var traceSampler: PiPTrace.Sampler?
     private let traceHitches = PiPTrace.HitchWatch()
@@ -1129,7 +1128,11 @@ final class PlayerModel: ObservableObject {
         showToast(names.isEmpty ? "Shaders off" : "\(names.count) shader\(names.count == 1 ? "" : "s") on")
     }
 
-    func startPiP() { pip.start() }
+    /// The PiP button: the current frame into PiP's layer first (see aboutToLeave).
+    func startPiP() {
+        takeSnapshot(leaving: true)
+        pip.start()
+    }
     func stopPiP() { pip.stop() }
 
     // MARK: Toast
@@ -1345,16 +1348,18 @@ final class PlayerModel: ObservableObject {
     }
 
     private var lastSnapshot = Date.distantPast
-    private func takeSnapshot() {
+    /// `leaving`: the app is about to leave (willResignActive) and PiP may
+    /// start from it; taken whatever the time since the last one.
+    private func takeSnapshot(leaving: Bool = false) {
         #if targetEnvironment(simulator)
         return                        // the simulator's Metal driver aborts on readback
         #endif
         guard renderer == .metal, mode == .main, fileLoaded, !isPiPActive,
-              UIApplication.shared.applicationState == .active, let c = client else { return }
+              leaving || UIApplication.shared.applicationState == .active, let c = client else { return }
         // The frame only goes to the PiP layer: none with PiP off (it was read
         // back after every seek and pause regardless).
         guard defaults.bool(forKey: SettingsKey.pipEnabled), PiPManager.isSupported else { return }
-        guard Date().timeIntervalSince(lastSnapshot) > 2 else { return }
+        guard leaving || Date().timeIntervalSince(lastSnapshot) > 2 else { return }
         lastSnapshot = Date()
         let sink = pip.makeSink()
         snapshotQueue.async { [weak self] in
@@ -1620,7 +1625,11 @@ final class PlayerModel: ObservableObject {
         mv.frame = container.bounds
         mv.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         container.addSubview(mv)
-        container.sendSubviewToBack(pip.view)
+        // Coming back from PiP, PiP's layer stays in front until this view has
+        // shown a frame of its own (waitForMetalFrame). Until 1.18.0 it was
+        // sent behind here, as PiP ended, and the view's old picture (the
+        // frame from when PiP started) showed: 29 Oct recording, 8.22–8.29 s.
+        if pipLayerInFront { container.bringSubviewToFront(pip.view) } else { container.sendSubviewToBack(pip.view) }
         mv.setNeedsLayout()
         dlog("player", "metal view attached")
         PiPTrace.event("Metal view attached (\(Int(container.bounds.width))×\(Int(container.bounds.height)))")
@@ -1629,8 +1638,36 @@ final class PlayerModel: ObservableObject {
     /// While PiP hands back to the main renderer, keep the (correctly
     /// sized) PiP layer on top so the restore animation never shows a
     /// stretched or black frame.
+    /// Coming back from PiP: PiP's layer (its last frame) stays in front until
+    /// the Metal view has a frame of its own on the screen (the drawable's
+    /// presented handler), then goes behind it. 1.17–1.18.0 used mpv's
+    /// playback-restart + 150 ms, which says playback resumed, not that the
+    /// output has shown anything. At most 1.5 s (a frame that never shows).
+    private var metalWaitToken = 0
+    private func waitForMetalFrame() {
+        metalWaitToken += 1
+        let token = metalWaitToken
+        let t0 = CACurrentMediaTime()
+        metalView?.metalLayer.onPresented = { @Sendable [weak self] shownAt in
+            guard shownAt > 0 else { return }
+            DispatchQueue.main.async { self?.metalFrameShown(token, ms: Int((shownAt - t0) * 1000)) }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.metalFrameShown(token, ms: nil) }
+    }
+
+    private func metalFrameShown(_ token: Int, ms: Int?) {
+        guard token == metalWaitToken else { return }
+        metalWaitToken += 1
+        metalView?.metalLayer.onPresented = nil
+        PiPTrace.event(ms.map { "Metal view's first frame on screen \($0) ms after PiP ended" } ?? "no Metal frame on screen 1.5 s after PiP ended")
+        if pipLayerInFront { setPiPLayerOnTop(false) }
+    }
+
+    private var pipLayerInFront = false
     private func setPiPLayerOnTop(_ onTop: Bool) {
         guard let container = videoContainer else { return }
+        pipLayerInFront = onTop
+        if !onTop { metalView?.metalLayer.onPresented = nil }
         if onTop { container.bringSubviewToFront(pip.view) } else { container.sendSubviewToBack(pip.view) }
         PiPTrace.event("PiP layer \(onTop ? "to the front" : "to the back") (its last frame came \(pip.lastFrameAge.map { "\(Int($0 * 1000)) ms ago" } ?? "never"), \(pip.framesEnqueued) frame(s) so far; Metal view \(metalView?.superview != nil ? "in" : "out of") the window)")
     }
@@ -1660,6 +1697,9 @@ final class PlayerModel: ObservableObject {
         observers.append(nc.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.memoryWarning() }
         })
+        observers.append(nc.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.aboutToLeave() }
+        })
         observers.append(nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.didBecomeActive() }
         })
@@ -1679,6 +1719,19 @@ final class PlayerModel: ObservableObject {
                 if reason == .newDeviceAvailable || reason == .oldDeviceUnavailable { self?.updateOutputChannels() }
             }
         })
+    }
+
+    /// The app is about to leave the screen, and PiP may start from it on its
+    /// own. PiP's opening animation shows whatever picture its layer holds,
+    /// and that was refreshed only after seeks, pauses and every 45 s: the
+    /// 29 Oct recording has PiP open on a shot from several seconds earlier
+    /// (2.57–2.94 s) and jump to the current one (2.96 s). A current frame now
+    /// goes into the layer first; the switch to PiP's renderer waits for it
+    /// (switchToSoftware: snapshotQueue.sync).
+    private func aboutToLeave() {
+        guard isPiPPossible, defaults.bool(forKey: SettingsKey.pipAuto), !isPiPActive else { return }
+        PiPTrace.event("app about to leave: the PiP layer gets the current frame (its last one came \(pip.lastFrameAge.map { "\(Int($0 * 1000)) ms ago" } ?? "never"))")
+        takeSnapshot(leaving: true)
     }
 
     /// Leaving the app.
@@ -1997,11 +2050,7 @@ extension PlayerModel: MPVClientDelegate {
             }
         case .playbackRestart:
             buffering = false
-            PiPTrace.event("mpv: playback restart (first frame after the seek)\(awaitingFirstFrameAfterPiP ? "; PiP layer goes back in 150 ms" : "")")
-            if awaitingFirstFrameAfterPiP {
-                awaitingFirstFrameAfterPiP = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in self?.setPiPLayerOnTop(false) }
-            }
+            PiPTrace.event("mpv: playback restart (first frame after the seek)")
             if renderer == .metal { scheduleSnapshot(after: 0.8) }
         case .videoReconfig:
             PiPTrace.event("mpv: video reconfig")
@@ -2129,7 +2178,7 @@ extension PlayerModel: PiPManagerDelegate {
     nonisolated func pipWillStart() {
         onMain { [weak self] in
             guard let self else { return }
-            self.traceTransition("PiP will start (app \(UIApplication.shared.applicationState == .active ? "active" : "not active"))", seconds: 3)
+            self.traceTransition("PiP will start (app \(UIApplication.shared.applicationState == .active ? "active" : "not active"); the PiP layer's picture came \(self.pip.lastFrameAge.map { "\(Int($0 * 1000)) ms ago" } ?? "never"))", seconds: 3)
             self.isPiPActive = true
             self.pipRestoring = false
             self.switchToSoftware()
@@ -2165,13 +2214,8 @@ extension PlayerModel: PiPManagerDelegate {
                 self.setPaused(true)
                 self.scheduleParkedCheck()
             } else {
-                self.awaitingFirstFrameAfterPiP = true
+                self.waitForMetalFrame()
                 self.switchToMain()
-                // Fallback in case no playback-restart arrives (paused video).
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
-                    self?.awaitingFirstFrameAfterPiP = false
-                    self?.setPiPLayerOnTop(false)
-                }
             }
             self.pipRestoring = false
         }
