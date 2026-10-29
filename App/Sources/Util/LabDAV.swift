@@ -17,8 +17,9 @@ enum LabDAV {
     static func list(_ url: URL) throws -> [DAVItem] {
         let parser = PropfindParser(base: url)
         guard parser.parse(Data(xml.utf8)) else { throw WebDAVError.parse }
-        dlog("webdav", "lab listing: \(parser.items.count) entries")
-        return parser.items.filter { $0.url.path != "/" }
+        let items = parser.items.filter { $0.url.path != "/" }
+        WebDAVClient.logProperties(host: url.host ?? "?", items)
+        return items
     }
 
     private static func entry(_ href: String, dir: Bool, size: Int64? = nil, modified: String? = nil, created: String? = nil) -> String {

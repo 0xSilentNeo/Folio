@@ -50,25 +50,45 @@ final class WebDAVUITests: XCTestCase {
         if items.isEmpty { print("DAVMENU \(label): nothing found; tree:\n\(app.debugDescription)") }
     }
 
-    func test1MenuAndOrder() throws {
+    /// Every control's state and the order through each sort and direction.
+    func test1MenusAndOrder() throws {
         let app = openFolder()
         order(app, "as opened")
-        let menu = app.descendants(matching: .any).matching(identifier: "davSortMenu").firstMatch
-        XCTAssertTrue(menu.waitForExistence(timeout: 5), "no sort menu button")
-        menu.tap()
-        sleep(1)
-        dumpMenu(app, "sort menu")
-        // Does "Clean titles" act when tapped? (A row's label changes with it.)
-        let clean = app.collectionViews.descendants(matching: .any).matching(NSPredicate(format: "label == 'Clean titles'")).firstMatch
-        if clean.exists {
-            let before = clean.value.map { "\($0)" } ?? ""
-            clean.tap()
-            sleep(1)
-            menu.tap(); sleep(1)
-            let again = app.collectionViews.descendants(matching: .any).matching(NSPredicate(format: "label == 'Clean titles'")).firstMatch
-            print("DAVMENU clean titles tap: before='\(before)' after='\(again.value.map { "\($0)" } ?? "")' selected=\(again.isSelected)")
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap()   // close the menu
-            sleep(1)
+        let sortMenu = app.descendants(matching: .any).matching(identifier: "davSortMenu").firstMatch
+        let direction = app.descendants(matching: .any).matching(identifier: "davSortDirection").firstMatch
+        let more = app.descendants(matching: .any).matching(identifier: "davMoreMenu").firstMatch
+        for (name, e) in [("sort menu", sortMenu), ("direction", direction), ("more menu", more)] {
+            XCTAssertTrue(e.waitForExistence(timeout: 5), "no \(name) button")
+            print("DAVBUTTON \(name): enabled=\(e.isEnabled) label='\(e.label)'")
         }
+        // Each sort as picked (it starts in its own direction), then reversed.
+        for sort in ["Name", "Recently Added", "Size"] {
+            sortMenu.tap(); sleep(1)
+            dumpMenu(app, "sort menu (before picking \(sort))")
+            let choice = app.collectionViews.buttons[sort].firstMatch
+            XCTAssertTrue(choice.waitForExistence(timeout: 3), "\(sort) not in the sort menu")
+            choice.tap(); sleep(1)
+            order(app, "\(sort), \(direction.label)")
+            direction.tap(); sleep(1)
+            order(app, "\(sort), \(direction.label)")
+        }
+        // The More menu's toggles act.
+        more.tap(); sleep(1)
+        dumpMenu(app, "more menu")
+        let onlyMedia = app.collectionViews.descendants(matching: .any).matching(NSPredicate(format: "label == 'Only media files'")).firstMatch
+        XCTAssertTrue(onlyMedia.waitForExistence(timeout: 3), "no Only media files")
+        XCTAssertTrue(onlyMedia.isEnabled, "Only media files is disabled")
+        onlyMedia.tap(); sleep(1)
+        let shown = order(app, "only media files on")
+        XCTAssertFalse(shown.contains("notes.txt"), "Only media files did nothing")
+        more.tap(); sleep(1)
+        app.collectionViews.descendants(matching: .any).matching(NSPredicate(format: "label == 'Only media files'")).firstMatch.tap()
+        sleep(1)
+        // Relaunch: the last choice (Size, reversed) is still there.
+        app.terminate()
+        let again = openFolder()
+        order(again, "after relaunch")
+        let dir2 = again.descendants(matching: .any).matching(identifier: "davSortDirection").firstMatch
+        print("DAVBUTTON after relaunch: direction='\(dir2.label)' sort='\(again.descendants(matching: .any).matching(identifier: "davSortMenu").firstMatch.label)'")
     }
 }

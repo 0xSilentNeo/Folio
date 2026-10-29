@@ -89,6 +89,7 @@ enum SettingsKey {
     static let cleanTitles = "cleanTitles"
     static let showOnlyMedia = "showOnlyMedia"
     static let folderSorts = "folderSorts"
+    static let folderSortLast = "folderSortLast"         // WebDAV: the last sort chosen, for folders without their own
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [

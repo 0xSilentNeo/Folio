@@ -118,12 +118,69 @@ struct ServerEditView: View {
     }
 }
 
+/// Folder sort. `recent` keeps the raw value "date" so choices saved before
+/// 1.18.1 still read back.
 enum DAVSort: String, CaseIterable, Codable {
-    case name, date, size
-    var label: String { rawValue.capitalized }
+    case recent = "date", name, size
+    var label: String {
+        switch self {
+        case .recent: return "Recently Added"
+        case .name: return "Name"
+        case .size: return "Size"
+        }
+    }
+    /// The direction a sort starts in when you pick it: newest and largest
+    /// first, names A to Z.
+    var startsAscending: Bool { self == .name }
 }
 
 struct FolderSortPref: Codable { var sort: DAVSort; var ascending: Bool }
+
+/// The browser's order, worked out once per listing (not at every redraw).
+///
+/// - Folders always come first, in every sort.
+/// - Name: the name you see (the clean title of a media file when Clean
+///   titles is on), compared the way Finder does — localized and
+///   numeric-aware (`localizedStandardCompare`: "Episode 2" before "Episode 10").
+/// - Recently Added: `DAVItem.added` (creationdate, else getlastmodified).
+///   Folders sort by it too. Items the server gives no date are last, by name.
+/// - Size: files by getcontentlength; folders have none (servers don't
+///   send it for collections), so they're kept by name, A to Z, whichever
+///   way the files go. Files without a size are last, by name.
+/// - Ties go by name, A to Z.
+enum DAVOrder {
+    struct Keyed { let item: DAVItem; let name: String }
+
+    static func keyed(_ items: [DAVItem], clean: Bool) -> [Keyed] {
+        items.map { Keyed(item: $0, name: clean && $0.isMedia ? TitleParser.clean($0.name) : $0.name) }
+    }
+
+    static func sorted(_ list: [Keyed], by sort: DAVSort, ascending: Bool) -> [DAVItem] {
+        func byName(_ a: Keyed, _ b: Keyed) -> Bool { a.name.localizedStandardCompare(b.name) == .orderedAscending }
+        /// Present values in the chosen direction, missing ones last.
+        func compare<T: Comparable>(_ x: T?, _ y: T?, _ a: Keyed, _ b: Keyed) -> Bool {
+            switch (x, y) {
+            case let (x?, y?) where x != y: return ascending ? x < y : x > y
+            case (.some, .none): return true
+            case (.none, .some): return false
+            default: return byName(a, b)
+            }
+        }
+        return list.sorted { a, b in
+            if a.item.isDirectory != b.item.isDirectory { return a.item.isDirectory }
+            switch sort {
+            case .name:
+                let r = a.name.localizedStandardCompare(b.name)
+                return r == .orderedSame ? false : (r == .orderedAscending) == ascending
+            case .recent:
+                return compare(a.item.added, b.item.added, a, b)
+            case .size:
+                if a.item.isDirectory { return byName(a, b) }
+                return compare(a.item.size, b.item.size, a, b)
+            }
+        }.map(\.item)
+    }
+}
 
 struct WebDAVBrowserView: View {
     let server: WebDAVServer
@@ -132,11 +189,16 @@ struct WebDAVBrowserView: View {
 
     @ObservedObject private var history = HistoryStore.shared
     @State private var items: [DAVItem] = []
+    /// `items` with their sort keys (worked out when the listing or Clean
+    /// titles changes), and in the chosen order.
+    @State private var keyed: [DAVOrder.Keyed] = []
+    @State private var ordered: [DAVItem] = []
     @State private var loading = true
     @State private var error: String?
     @State private var filter = ""
     @State private var sort: DAVSort = .name
     @State private var ascending = true
+    @State private var prefLoaded = false
     @AppStorage(SettingsKey.cleanTitles) private var cleanTitles = true
     @AppStorage(SettingsKey.showOnlyMedia) private var onlyMedia = false
 
@@ -195,14 +257,38 @@ struct WebDAVBrowserView: View {
         .refreshable { await load() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                // Only the three sorts, the current one checked.
                 Menu {
-                    Picker("Sort by", selection: $sort) {
+                    Picker("Sort by", selection: sortChoice) {
                         ForEach(DAVSort.allCases, id: \.self) { Text($0.label).tag($0) }
                     }
-                    Toggle("Ascending", isOn: $ascending)
-                    Divider()
-                    Toggle("Clean titles", isOn: $cleanTitles)
-                    Toggle("Only media files", isOn: $onlyMedia)
+                } label: { ToolbarGlyph("line.3.horizontal.decrease.circle") }
+                .accessibilityLabel("Sort by, \(sort.label)")
+                .accessibilityIdentifier("davSortMenu")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                // Direction: one arrow that turns over, up for ascending.
+                Button {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { ascending.toggle() }
+                } label: {
+                    ToolbarGlyph("arrow.up")
+                        .rotationEffect(.degrees(ascending ? 0 : 180))
+                }
+                .accessibilityLabel(ascending ? "Ascending" : "Descending")
+                .accessibilityHint("Reverses the order")
+                .accessibilityIdentifier("davSortDirection")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    // Menus show a toggle as a checkmark item only in the
+                    // automatic style; the app-wide switch style
+                    // (GlassPlayerApp, BrandSwitchStyle) left them disabled in
+                    // menus (1.18.0 UI test: enabled=false).
+                    Group {
+                        Toggle("Clean titles", isOn: $cleanTitles)
+                        Toggle("Only media files", isOn: $onlyMedia)
+                    }
+                    .toggleStyle(.automatic)
                     let media = visible.filter(\.isMedia)
                     if !media.isEmpty {
                         Divider()
@@ -210,8 +296,9 @@ struct WebDAVBrowserView: View {
                             DownloadManager.shared.enqueue(media + items.filter(\.isSubtitle), server: server, package: title)
                         } label: { Label("Download all \(media.count) videos", systemImage: "arrow.down.circle") }
                     }
-                } label: { ToolbarGlyph("arrow.up.arrow.down.circle") }
-                .accessibilityIdentifier("davSortMenu")
+                } label: { ToolbarGlyph("ellipsis.circle") }
+                .accessibilityLabel("More")
+                .accessibilityIdentifier("davMoreMenu")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
@@ -223,26 +310,40 @@ struct WebDAVBrowserView: View {
             loadSortPref()
             if items.isEmpty { await load() }
         }
-        .onChange(of: sort) { _, _ in saveSortPref() }
-        .onChange(of: ascending) { _, _ in saveSortPref() }
+        .onChange(of: sort) { _, _ in saveSortPref(); reorder() }
+        .onChange(of: ascending) { _, _ in saveSortPref(); reorder() }
+        .onChange(of: cleanTitles) { _, _ in rekey() }
     }
 
+    /// Picking a sort starts it in its own direction (newest, largest, A to
+    /// Z); the arrow then reverses it.
+    private var sortChoice: Binding<DAVSort> {
+        Binding(get: { sort }, set: { new in
+            guard new != sort else { return }
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                sort = new
+                ascending = new.startsAscending
+            }
+        })
+    }
+
+    /// The listing in order, then the filters (cheap; the sort is done).
     private var visible: [DAVItem] {
-        var list = items
+        var list = ordered
         if onlyMedia { list = list.filter { $0.isDirectory || $0.isMedia } }
         if !filter.isEmpty {
             list = list.filter { $0.name.localizedCaseInsensitiveContains(filter) || TitleParser.clean($0.name).localizedCaseInsensitiveContains(filter) }
         }
-        return list.sorted { a, b in
-            if a.isDirectory != b.isDirectory { return a.isDirectory }
-            let r: Bool
-            switch sort {
-            case .name: r = a.name.localizedStandardCompare(b.name) == .orderedAscending
-            case .date: r = (a.modified ?? .distantPast) < (b.modified ?? .distantPast)
-            case .size: r = (a.size ?? 0) < (b.size ?? 0)
-            }
-            return ascending ? r : !r
-        }
+        return list
+    }
+
+    private func rekey() {
+        keyed = DAVOrder.keyed(items, clean: cleanTitles)
+        reorder()
+    }
+
+    private func reorder() {
+        ordered = DAVOrder.sorted(keyed, by: sort, ascending: ascending)
     }
 
     private func load() async {
@@ -250,6 +351,7 @@ struct WebDAVBrowserView: View {
         defer { loading = false }
         do {
             items = try await client.list(url)
+            rekey()
             error = nil
         } catch {
             self.error = error.localizedDescription
@@ -277,17 +379,23 @@ struct WebDAVBrowserView: View {
         PlayerPresenter.play(queue: queue, index: index)
     }
 
+    /// This folder's own choice, else the last one made in any folder.
     private func loadSortPref() {
-        guard let data = UserDefaults.standard.dictionary(forKey: SettingsKey.folderSorts)?[sortKey] as? Data,
-              let pref = try? JSONDecoder().decode(FolderSortPref.self, from: data) else { return }
+        guard !prefLoaded else { return }
+        prefLoaded = true
+        let own = (UserDefaults.standard.dictionary(forKey: SettingsKey.folderSorts)?[sortKey] as? Data)
+            ?? UserDefaults.standard.data(forKey: SettingsKey.folderSortLast)
+        guard let data = own, let pref = try? JSONDecoder().decode(FolderSortPref.self, from: data) else { return }
         sort = pref.sort
         ascending = pref.ascending
     }
 
     private func saveSortPref() {
+        guard prefLoaded, let data = try? JSONEncoder().encode(FolderSortPref(sort: sort, ascending: ascending)) else { return }
         var dict = UserDefaults.standard.dictionary(forKey: SettingsKey.folderSorts) ?? [:]
-        dict[sortKey] = try? JSONEncoder().encode(FolderSortPref(sort: sort, ascending: ascending))
+        dict[sortKey] = data
         UserDefaults.standard.set(dict, forKey: SettingsKey.folderSorts)
+        UserDefaults.standard.set(data, forKey: SettingsKey.folderSortLast)
     }
 }
 
@@ -316,7 +424,7 @@ struct DAVRow: View {
                 label.font(.subheadline.weight(.medium)).lineLimit(2)
                 HStack(spacing: 6) {
                     if let size = item.size, !item.isDirectory { Text(size.byteString) }
-                    if let d = item.modified { Text(d, format: .dateTime.day().month().year()) }
+                    if let d = item.added { Text(d, format: .dateTime.day().month().year()) }
                     if let entry, entry.isFinished {
                         Label("Watched", systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accent)
                     } else if let entry, entry.canResume {
