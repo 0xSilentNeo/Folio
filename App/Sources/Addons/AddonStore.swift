@@ -34,7 +34,20 @@ enum AddonAPI {
         guard let url = URL(string: urlString) else { throw AddonError.badURL }
         var req = URLRequest(url: url)
         req.setValue("application/json", forHTTPHeaderField: "Accept")
-        let (data, resp) = try await session.data(for: req)
+        // Each request's timing (NetTrace): slow at the server, queued, or not connecting.
+        let host = url.host ?? "?"
+        let others = NetTrace.begin(host)
+        defer { NetTrace.end(host) }
+        let timer = NetTrace.Timer()
+        let t0 = CFAbsoluteTimeGetCurrent()
+        let data: Data, resp: URLResponse
+        do {
+            (data, resp) = try await session.data(for: req, delegate: timer)
+        } catch {
+            NetTrace.report("addon", url: url, others: others, started: t0, timer: timer, status: nil, bytes: nil, error: error)
+            throw error
+        }
+        NetTrace.report("addon", url: url, others: others, started: t0, timer: timer, status: (resp as? HTTPURLResponse)?.statusCode, bytes: data.count, error: nil)
         if let http = resp as? HTTPURLResponse, !(200..<300).contains(http.statusCode) { throw AddonError.http(http.statusCode) }
         do { return try JSONDecoder().decode(T.self, from: data) } catch { throw AddonError.decode }
     }

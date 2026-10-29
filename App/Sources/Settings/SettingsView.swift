@@ -845,6 +845,7 @@ struct DiagnosticsView: View {
     @State private var report: URL?
     @State private var making = false
     @AppStorage(SettingsKey.pipTrace) private var pipTrace = false
+    @AppStorage(SettingsKey.netTrace) private var netTrace = false
 
     var body: some View {
         List {
@@ -852,6 +853,11 @@ struct DiagnosticsView: View {
                 Toggle("Trace Picture in Picture", isOn: $pipTrace)
             } footer: {
                 Text("Records each step of going into and coming back from Picture in Picture in the app log: the system's PiP events, when the video output switches, which picture is in front, every frame the video shows for a few seconds, and what the app's windows look like when it goes to the background. Turn it on, reproduce the problem, then share a report. Leave it off otherwise.")
+            }
+            Section {
+                Toggle("Trace network requests", isOn: $netTrace)
+            } footer: {
+                Text("Times every addon request in the app log: how long it waited to go out, the connection, and the wait for the server's answer. Requests that fail or take over 5 seconds are always logged. Addon settings and keys in the addresses are left out.")
             }
             Section {
                 if let report {

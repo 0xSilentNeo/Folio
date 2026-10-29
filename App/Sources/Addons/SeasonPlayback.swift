@@ -176,10 +176,19 @@ enum LinkWarmer {
         r.setValue("libmpv", forHTTPHeaderField: "User-Agent")       // what the player sends
         for (k, v) in headers { r.setValue(v, forHTTPHeaderField: k) }
         let t0 = Date()
-        guard let (_, resp) = try? await URLSession.shared.data(for: r), let http = resp as? HTTPURLResponse else {
+        let host = url.host ?? "?"
+        let others = NetTrace.begin(host)
+        defer { NetTrace.end(host) }
+        let timer = NetTrace.Timer()
+        let c0 = CFAbsoluteTimeGetCurrent()
+        let answer: (Data, URLResponse)
+        do { answer = try await URLSession.shared.data(for: r, delegate: timer) } catch {
+            NetTrace.report("link", url: url, others: others, started: c0, timer: timer, status: nil, bytes: nil, error: error)
             dlog("player", "next episode: link didn't answer")
             return nil
         }
+        NetTrace.report("link", url: url, others: others, started: c0, timer: timer, status: (answer.1 as? HTTPURLResponse)?.statusCode, bytes: answer.0.count, error: nil)
+        guard let http = answer.1 as? HTTPURLResponse else { return nil }
         dlog("player", String(format: "next episode: link answered HTTP %d in %.1f s%@", http.statusCode, Date().timeIntervalSince(t0),
                               http.url?.host != url.host ? " (redirected to \(http.url?.host ?? "?"))" : ""))
         return (200..<300).contains(http.statusCode) ? http.url : nil
