@@ -19,8 +19,10 @@ jobs:
             for u in https://aiostreams-nightly.fortheweak.cloud/ \
                      https://aiostreams-nightly.fortheweak.cloud/stremio/manifest.json \
                      https://meteorfortheweebs.midnightignite.me/ \
-                     https://meteorfortheweebs.midnightignite.me/manifest.json; do
-              curl -sS -m 30 -o /dev/null -w "round $round %{http_code} dns=%{time_namelookup} connect=%{time_connect} tls=%{time_appconnect} firstbyte=%{time_starttransfer} total=%{time_total} $u\n" "$u" 2>&1 | tail -1 | tee -a probe.txt
+                     https://meteorfortheweebs.midnightignite.me/manifest.json \
+                     "https://api.introdb.app/segments?imdb_id=tt37532356&season=1&episode=20" \
+                     "https://api.theintrodb.org/v3/media?imdb_id=tt37532356&season=1&episode=20"; do
+              curl -sS -m 30 -H 'User-Agent: GlassPlayer/1.0' -o /dev/null -w "round $round %{http_code} dns=%{time_namelookup} connect=%{time_connect} tls=%{time_appconnect} firstbyte=%{time_starttransfer} total=%{time_total} $u\n" "$u" 2>&1 | tail -1 | tee -a probe.txt
             done
             sleep 10
           done
