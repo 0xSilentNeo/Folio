@@ -1,5 +1,6 @@
 import UIKit
 import QuartzCore
+import Metal
 
 /// CAMetalLayer handed to mpv (vo=gpu-next, gpu-context=moltenvk) via `wid`.
 final class GPMetalLayer: CAMetalLayer {
