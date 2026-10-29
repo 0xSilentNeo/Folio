@@ -35,6 +35,10 @@ enum ShotsSeed {
                              logo: nil, description: String(repeating: "Students compare their test results while the points arrive late. ", count: 4),
                              year: "2017", rating: "7.7", genres: ["Animation", "Drama", "Thriller", "Anime"])
         show.originalName = "Rabo Shō: jitsuryoku shijō shugi no kyōshitsu e"
+        // `-shotsTitle=<name>`: the show under another (long) name, for the
+        // title-page header checks; `-shotsNoOriginal`: without a romaji title.
+        if let t = CommandLine.arguments.first(where: { $0.hasPrefix("-shotsTitle=") }) { show.name = String(t.dropFirst("-shotsTitle=".count)) }
+        if CommandLine.arguments.contains("-shotsNoOriginal") { show.originalName = nil }
         show.credits = cast
         show.contentRating = "M"
         show.version = MediaMeta.currentVersion
