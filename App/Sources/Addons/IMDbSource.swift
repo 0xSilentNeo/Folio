@@ -388,7 +388,7 @@ enum IMDbSource {
                         m2!.countries = list.compactMap { $0["id"] as? String }
                     }
                     if m2!.description == nil, let plot = d["plot"] as? [String: Any], let pt = plot["plotText"] as? [String: Any], let s = pt["plainText"] as? String {
-                        m2!.description = s
+                        m2!.description = unescape(s)
                     }
                     if m2!.releaseInfo == nil, let ry = d["releaseYear"] as? [String: Any], let y = ry["year"] as? Int { m2!.releaseInfo = String(y) }
                     if m2!.background == nil, let img = d["primaryVideos"] as? [String: Any], let edges = img["edges"] as? [[String: Any]],
@@ -487,10 +487,10 @@ enum IMDbSource {
                 let ep = int(d["episode"]) ?? int(numbers?["episodeNumber"])
                 let se = int(d["season"]) ?? int(numbers?["seasonNumber"]) ?? season
                 guard let ep else { return true }
-                var v = MetaVideo(id: "\(id):\(se):\(ep)", title: title, season: se, episode: ep)
-                if let original, original != title { v.originalTitle = original }
+                var v = MetaVideo(id: "\(id):\(se):\(ep)", title: unescape(title), season: se, episode: ep)
+                if let original, original != title { v.originalTitle = unescape(original) }
                 v.thumbnail = sized(imageURL(d["image"]) ?? imageURL(d["primaryImage"]), width: 480)
-                v.overview = (d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String
+                v.overview = unescape((d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String)
                 if let rd = d["releaseDate"] as? [String: Any], let y = rd["year"] as? Int {
                     v.released = String(format: "%04d-%02d-%02d", y, (rd["month"] as? Int) ?? 1, (rd["day"] as? Int) ?? 1)
                 } else if let s = d["releaseDate"] as? String { v.released = s }
@@ -565,7 +565,7 @@ enum IMDbSource {
             let rating = (d["ratingSummary"] as? [String: Any])?["aggregateRating"] ?? (d["ratingsSummary"] as? [String: Any])?["aggregateRating"] ?? d["aggregateRating"]
             var m = MetaItem(id: id, type: itemType, name: unescape(name),
                              poster: sized(imageURL(d["primaryImage"]) ?? imageURL(d["image"]) ?? imageURL(d["poster"]), width: 240),
-                             description: (d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String,
+                             description: unescape((d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String),
                              releaseInfo: (int(d["releaseYear"]) ?? int((d["releaseYear"] as? [String: Any])?["year"])).map(String.init),
                              imdbRating: Self.rating(rating),
                              genres: genreList(d), rank: int(d["currentRank"]) ?? int(d["rank"]))
@@ -672,12 +672,8 @@ enum IMDbSource {
         guard h + m > 0 else { return nil }
         return h > 0 ? "\(h)h \(m)m" : "\(m) min"
     }
-    static func unescape(_ s: String?) -> String? {
-        guard var s else { return nil }
-        for (a, b) in [("&amp;", "&"), ("&quot;", "\""), ("&#39;", "'"), ("&apos;", "'"), ("&#x27;", "'"), ("&lt;", "<"), ("&gt;", ">"), ("&nbsp;", " ")] {
-            s = s.replacingOccurrences(of: a, with: b)
-        }
-        return s
-    }
+    /// Text from IMDb with its HTML character references decoded (all of
+    /// them: until 1.19.0 a short list, and episode plots weren't decoded).
+    static func unescape(_ s: String?) -> String? { s?.decodingHTMLEntities }
     static func unescape(_ s: String) -> String { unescape(Optional(s)) ?? s }
 }

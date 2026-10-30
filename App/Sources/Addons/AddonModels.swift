@@ -10,6 +10,9 @@ private extension KeyedDecodingContainer {
         if let d = try? decodeIfPresent(Double.self, forKey: key) { return String(d) }
         return nil
     }
+    /// Text shown to you (names, titles, descriptions): HTML character
+    /// references decoded, for addon answers and IMDb data read back from disk.
+    func flexText(_ key: Key) -> String? { flexString(key)?.decodingHTMLEntities }
     func flexInt(_ key: Key) -> Int? {
         if let i = try? decodeIfPresent(Int.self, forKey: key) { return i }
         if let s = try? decodeIfPresent(String.self, forKey: key) { return Int(s) }
@@ -182,15 +185,15 @@ struct MetaVideo: Codable, Hashable, Identifiable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
-        title = c.flexString(.title) ?? c.flexString(.name)
+        title = c.flexText(.title) ?? c.flexText(.name)
         season = c.flexInt(.season)
         episode = c.flexInt(.episode) ?? c.flexInt(.number)
         released = c.flexString(.released)
         thumbnail = c.flexString(.thumbnail)
-        overview = c.flexString(.overview) ?? c.flexString(.description)
+        overview = c.flexText(.overview) ?? c.flexText(.description)
         rating = c.flexString(.rating)
         imdbId = c.flexString(.imdbId)
-        originalTitle = c.flexString(.originalTitle)
+        originalTitle = c.flexText(.originalTitle)
     }
 
     enum CodingKeys: String, CodingKey { case id, title, name, season, episode, number, released, thumbnail, overview, description, rating, imdbId, originalTitle }
@@ -261,12 +264,12 @@ struct MetaItem: Codable, Hashable, Identifiable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         type = (try? c.decode(String.self, forKey: .type)) ?? "movie"
-        name = c.flexString(.name) ?? id
+        name = c.flexText(.name) ?? id
         poster = c.flexString(.poster)
         posterShape = c.flexString(.posterShape)
         background = c.flexString(.background)
         logo = c.flexString(.logo)
-        description = c.flexString(.description)
+        description = c.flexText(.description)
         releaseInfo = c.flexString(.releaseInfo) ?? c.flexString(.year)
         imdbRating = c.flexString(.imdbRating)
         runtime = c.flexString(.runtime)
@@ -274,7 +277,7 @@ struct MetaItem: Codable, Hashable, Identifiable {
         videos = try? c.decodeIfPresent([MetaVideo].self, forKey: .videos)
         rank = c.flexInt(.rank)
         cast = c.flexStrings(.cast)
-        originalName = c.flexString(.originalName)
+        originalName = c.flexText(.originalName)
         director = c.flexStrings(.director)
         contentRating = c.flexString(.contentRating)
         countries = c.flexStrings(.countries)

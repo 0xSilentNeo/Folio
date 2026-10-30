@@ -592,6 +592,33 @@ struct WatchedBadge: View {
 }
 
 struct HeroCard: View {
+    /// The line under a Continue Watching title, the same for every source:
+    /// "S1 · E24 · Higashi Village and Nishino Village" for an episode, the
+    /// synopsis for a film — never a raw release name. Until 1.19.0 it was
+    /// whatever the item carried: a WebDAV file's folder name ("[AnoZu]
+    /// Daemons of the Shadow Realm S01 1080p…"), an addon's "S1 · E24 —
+    /// title", or a library file's bare episode title (30 Oct screenshots).
+    static func line(_ item: MediaItem, meta: MediaMeta?) -> String? {
+        var season: Int?, episode: Int?, title: String?
+        if let ref = item.addonRef {
+            // "type|tt…|tt…:S:E", and the addon episode's label "S1 · E24 — title".
+            let v = ref.split(separator: "|", omittingEmptySubsequences: false).last?.split(separator: ":") ?? []
+            if v.count >= 3 { season = Int(v[v.count - 2]); episode = Int(v[v.count - 1]) }
+            title = item.subtitle?.components(separatedBy: " — ").dropFirst().joined(separator: " — ")
+            if title?.isEmpty == true { title = nil }
+        } else {
+            let p = TitleParser.parse(item.fileName)
+            season = meta?.episodeSeason ?? p.season
+            episode = meta?.episodeNumber ?? p.episode
+            if episode != nil, season == nil { season = 1 }
+        }
+        title = meta?.episodeTitle ?? title ?? ReleaseName.file(item.fileName)?.episodeTitle
+        if let episode {
+            return (["S\(season ?? 1) · E\(episode)"] + [title].compactMap { $0 }).joined(separator: " · ")
+        }
+        return meta?.synopsis
+    }
+
     let entry: HistoryEntry
     var height: CGFloat = 230
     @StateObject private var thumb = ThumbLoader()
@@ -612,8 +639,7 @@ struct HeroCard: View {
             LinearGradient(colors: [.clear, .black.opacity(0.35), .black.opacity(0.9)], startPoint: .top, endPoint: .bottom)
             VStack(alignment: .leading, spacing: 8) {
                 Text(thumb.meta?.name ?? entry.item.displayTitle).font(.headline.weight(.bold)).lineLimit(1)
-                let line = [entry.item.subtitle, thumb.meta?.episodeTitle].compactMap { $0 }.first ?? thumb.meta?.synopsis
-                if let line { Text(line).font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(1) }
+                if let line = Self.line(entry.item, meta: thumb.meta) { Text(line).font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(1) }
                 HStack(spacing: 12) {
                     Label("Resume", systemImage: "play.fill")
                         .font(.subheadline.weight(.semibold))
@@ -805,7 +831,7 @@ struct HistoryRow: View {
                 Text(thumb.meta?.name ?? entry.item.displayTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
                 HStack(spacing: 6) {
                     Image(systemName: icon)
-                    if let s = entry.item.subtitle ?? thumb.meta?.episodeTitle { Text(s).lineLimit(1) }
+                    if let s = HeroCard.line(entry.item, meta: thumb.meta) { Text(s).lineLimit(1) }
                     Text(entry.updated, style: .relative)
                 }
                 .font(.caption).foregroundStyle(.secondary)
