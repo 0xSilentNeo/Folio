@@ -306,7 +306,50 @@ enum LaunchTiming {
         return Date(timeIntervalSince1970: Double(t.tv_sec) + Double(t.tv_usec) / 1_000_000)
     }
 
+    /// When the root view appeared (Home's share of launch is measured from it).
+    private nonisolated(unsafe) static var rootAppeared: CFTimeInterval?
+    private nonisolated(unsafe) static var homeLogged = false
+    private nonisolated(unsafe) static var frameWatch: FrameWatch?
+
+    /// Home's own share of launch (1.20.0, to compare Home before and after
+    /// a change): from the root view appearing to Home appearing, to the next
+    /// frame the screen draws, and to the first moment after it the main
+    /// thread is free to take a touch. Once per launch.
+    @MainActor
+    static func homeAppeared() {
+        guard !homeLogged else { return }
+        homeLogged = true
+        let t0 = rootAppeared ?? CACurrentMediaTime()
+        let appeared = CACurrentMediaTime()
+        frameWatch = FrameWatch { frame in
+            DispatchQueue.main.async {
+                let free = CACurrentMediaTime()
+                func ms(_ t: CFTimeInterval) -> Int { Int((t - t0) * 1000) }
+                dlog("app", "Home: appeared \(ms(appeared)) ms after the root view, next frame at \(ms(frame)) ms, main thread free at \(ms(free)) ms")
+                frameWatch = nil
+            }
+        }
+    }
+
+    /// Calls back once, on the next frame the display draws.
+    private final class FrameWatch: NSObject {
+        private var link: CADisplayLink?
+        private let done: (CFTimeInterval) -> Void
+        init(_ done: @escaping (CFTimeInterval) -> Void) {
+            self.done = done
+            super.init()
+            link = CADisplayLink(target: self, selector: #selector(tick))
+            link?.add(to: .main, forMode: .common)
+        }
+        @objc private func tick(_ l: CADisplayLink) {
+            l.invalidate()
+            link = nil
+            done(CACurrentMediaTime())
+        }
+    }
+
     static func firstFrame() {
+        if rootAppeared == nil { rootAppeared = CACurrentMediaTime() }
         guard !logged else { return }
         logged = true
         let prewarmed = ProcessInfo.processInfo.environment["ActivePrewarm"] == "1"
