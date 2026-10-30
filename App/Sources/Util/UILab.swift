@@ -43,6 +43,20 @@ enum UILab {
             UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
             guard let url = Bundle.main.url(forResource: "lab", withExtension: "mp4", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab", withExtension: "mp4") else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                // `-uiTestQueue=N[,start]`: N episodes of the lab clip as a queue,
+                // playing episode `start` (1-based, default 1).
+                if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-uiTestQueue=") }) {
+                    let v = arg.dropFirst("-uiTestQueue=".count).split(separator: ",").compactMap { Int($0) }
+                    let n = max(1, v.first ?? 10), start = min(n, max(1, v.count > 1 ? v[1] : 1))
+                    let queue = (1...n).map { i -> MediaItem in
+                        let name = String(format: "Lab Show S01E%02d.mp4", i)
+                        var m = MediaItem(url: url.path, title: TitleParser.clean(name), source: .local)
+                        m.historyKey = "lab-\(i)"
+                        return m
+                    }
+                    PlayerPresenter.play(queue: queue, index: start - 1)
+                    return
+                }
                 var m = MediaItem(url: url.path, title: "Lab clip", source: .local); m.historyKey = "lab"
                 PlayerPresenter.play(m)
             }

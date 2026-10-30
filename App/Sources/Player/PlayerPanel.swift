@@ -417,6 +417,7 @@ struct NowPlayingPanelContent: View {
                         }
                         .scrollIndicators(.hidden)
                         .onAppear {
+                            LibTrace.panel.log("now playing opens: tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), list id \(tab), scrolling to id \(model.queueIndex)")
                             // Open on the playing episode, not on episode 1.
                             if tab == 0, model.queue.count > 3 { proxy.scrollTo(model.queueIndex, anchor: .center) }
                         }
