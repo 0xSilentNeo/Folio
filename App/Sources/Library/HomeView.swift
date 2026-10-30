@@ -41,9 +41,12 @@ struct HomeView: View {
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
-            .background(PathWatch(path: $path, pending: pending) { openPending() })
+            .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
-            .onChange(of: libraryView) { old, new in LibTrace.zoom.log("home layout \(old) → \(new)") }
+            .onChange(of: libraryView) { old, new in
+                layoutGeneration += 1
+                LibTrace.zoom.log("home layout \(old) → \(new) (zoom ids now \(layoutGeneration)|…)")
+            }
         }
     }
 
@@ -102,6 +105,7 @@ struct HomeView: View {
     private struct PathWatch: View {
         @Binding var path: [LibraryRoute]
         let pending: PendingOpen
+        let layout: Int
         let openPending: () -> Void
         var body: some View {
             Color.clear
@@ -111,8 +115,8 @@ struct HomeView: View {
                     dlog("nav", "home path \(old.count) → \(new.count): \(new)")
                     // Trace: where each zoom source of the page is, as it opens
                     // and for 2.5 s after it went back.
-                    if new.count > old.count, let r = new.last, let id = r.zoomID { ZoomProbe.dump(id, "opening \(r)") }
-                    if new.count < old.count, let r = old.last, let id = r.zoomID { ZoomProbe.timeline(id, "back from \(r)") }
+                    if new.count > old.count, let r = new.last, let id = r.zoomID { ZoomProbe.dump(HomeView.zoomID(id, layout), "opening \(r)") }
+                    if new.count < old.count, let r = old.last, let id = r.zoomID { ZoomProbe.timeline(HomeView.zoomID(id, layout), "back from \(r)") }
                     if new.isEmpty, pending.route != nil { DispatchQueue.main.async { openPending() } }
                 }
         }
@@ -125,6 +129,20 @@ struct HomeView: View {
     }
     @State private var pending = PendingOpen()
 
+    /// The id a title's tile or row zooms with: its group id, in the current
+    /// layout's generation. Home is a List (a UICollectionView), and a row
+    /// removed when you switch layouts stays in it as a hidden cell, still
+    /// registered as a zoom source with the same id (lab run, 30 Oct: after
+    /// Details → Thumbnails, "2 source(s) for s|lab show: (20, 588, 362, 112)
+    /// hidden (ListCollectionViewCell isHidden); (145, 457, 112, 168)
+    /// visible"). The zoom then grew from and shrank into that hidden
+    /// Details row — the card your 30 Oct recording shows floating over
+    /// the grid — instead of the tile. A new generation at each switch means
+    /// a left-over row never has the id the page zooms with.
+    @State private var layoutGeneration = 0
+    private func zoomID(_ id: String) -> String { Self.zoomID(id, layoutGeneration) }
+    static func zoomID(_ id: String, _ generation: Int) -> String { "\(generation)|\(id)" }
+
     /// Settings zooms out of its button, a title page out of its poster (iOS 18+).
     @ViewBuilder
     private func destination(_ route: LibraryRoute) -> some View {
@@ -132,9 +150,9 @@ struct HomeView: View {
         case .settings:
             SettingsView().zoomDestination("settings", in: zoomNS)
         case .group(let id):
-            LibraryRoute.destination(route).zoomDestination(id, in: zoomNS, zoom: !listPushes)
+            LibraryRoute.destination(route).zoomDestination(zoomID(id), in: zoomNS, zoom: !listPushes)
         case .folder(let path):
-            LibraryRoute.destination(route).zoomDestination("d|" + path, in: zoomNS, zoom: !listPushes)
+            LibraryRoute.destination(route).zoomDestination(zoomID("d|" + path), in: zoomNS, zoom: !listPushes)
         default:
             LibraryRoute.destination(route)
         }
@@ -328,12 +346,12 @@ struct HomeView: View {
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
-                        folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: style == .push ? nil : ZoomSource(g.id, zoomNS), zoomWholeRow: style == .row) }
+                        folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: style == .push ? nil : ZoomSource(zoomID(g.id), zoomNS), zoomWholeRow: style == .row) }
                     } else {
                         groupLink(g) {
                             LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
                                        fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                       poster: posters, zoom: opensPage(g) && style != .push ? ZoomSource(g.id, zoomNS) : nil,
+                                       poster: posters, zoom: opensPage(g) && style != .push ? ZoomSource(zoomID(g.id), zoomNS) : nil,
                                        zoomWholeRow: style == .row,
                                        size: g.size,
                                        watched: allWatched(g))
@@ -356,14 +374,14 @@ struct HomeView: View {
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
-                        folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(g.id, zoomNS)) }
+                        folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(zoomID(g.id), zoomNS)) }
                     } else {
                         groupLink(g) {
                             MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
                                       key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
                                       progress: history.entry(forURL: g.nextUp.path)?.progress,
                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                      poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil,
+                                      poster: posters, zoom: opensPage(g) ? ZoomSource(zoomID(g.id), zoomNS) : nil,
                                       watched: allWatched(g), sizeBadge: g.size)
                         }
                     }
@@ -406,7 +424,10 @@ struct HomeView: View {
                 // A swipe across a tile (no swipe actions on Home any more)
                 // is not a tap: it neither opens the title nor plays it.
                 Button { if !TouchTracker.wasSwipe("home: \(g.title)") { dlog("nav", "home: open \(g.title)"); open(.group(g.id)) } } label: { label() }
-                    .buttonStyle(PressStyle(scale: 0.97, onPress: { ThumbLoader.prefetch(firstEpisodes(g)) }))
+                    .buttonStyle(PressStyle(scale: 0.97, onPress: {
+                        let mode = LibraryViewMode(rawValue: UserDefaults.standard.string(forKey: "heroView") ?? "") ?? .grid
+                        ThumbLoader.prefetch(firstEpisodes(g), points: LibraryList.picturePoints(mode))
+                    }))
             } else {
                 Button { if !TouchTracker.wasSwipe("home: \(g.title)") { playLocal(g.nextUp) } } label: { label() }
                     .buttonStyle(PressStyle(scale: 0.97))
@@ -541,6 +562,8 @@ struct HeroCard: View {
     let entry: HistoryEntry
     var height: CGFloat = 230
     @StateObject private var thumb = ThumbLoader()
+    /// The card's width (16:9 of its height): the picture's longest side.
+    private var points: CGFloat { (height - 8) * 16 / 9 }
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -549,7 +572,7 @@ struct HeroCard: View {
             // card's contents, pushing the title and Resume off its left edge.)
             Color.clear
                 .overlay {
-                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+                    if let img = thumb.image ?? ThumbLoader.cached(key: entry.item.id, points: points) { Image(uiImage: img).resizable().scaledToFill() }
                     else { GeneratedArt(seed: entry.item.displayTitle) }
                 }
                 .clipped()
@@ -582,10 +605,10 @@ struct HeroCard: View {
             if let ref = entry.item.addonRef {
                 // Addon streams: the link's file name means nothing, and the
                 // item's artwork is the portrait poster. Wide art by IMDb id.
-                thumb.loadAddonArt(key: entry.item.id, ref: ref, fallback: entry.item.artwork)
+                thumb.loadAddonArt(key: entry.item.id, ref: ref, fallback: entry.item.artwork, points: points)
             } else {
                 thumb.load(key: entry.item.id, fileURL: entry.item.resolvedURL?.isFileURL == true ? entry.item.resolvedURL : nil,
-                           artwork: entry.item.artwork, lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title)
+                           artwork: entry.item.artwork, lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title, points: points)
             }
         }
     }
@@ -614,13 +637,19 @@ struct MediaTile: View {
     var sizeBadge: Int64? = nil
     @StateObject private var thumb = ThumbLoader()
 
+    /// The picture's longest side: a poster tile is ~112 × 168 pt on a
+    /// phone, a 16:9 tile ~184 pt wide.
+    static func points(poster: Bool) -> CGFloat { poster ? 168 : 184 }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .bottomLeading) {
                 Color.clear.aspectRatio(poster ? 2.0 / 3.0 : 16.0 / 9.0, contentMode: .fit)
                     .overlay {
-                        if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
-                        else { GeneratedArt(seed: title) }
+                        // A tile made again (Home redrawn, a page gone back) has its picture from its first frame.
+                        if let img = thumb.image ?? ThumbLoader.cached(key: key, art: poster ? .poster : .wide, points: Self.points(poster: poster)) {
+                            Image(uiImage: img).resizable().scaledToFill()
+                        } else { GeneratedArt(seed: title) }
                     }
                     .clipped()
                 if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress) }
@@ -651,7 +680,7 @@ struct MediaTile: View {
         }
         .onAppear {
             LibTrace.image.log("tile \(title) appeared (loader #\(thumb.serial), picture \(thumb.image == nil ? "none yet" : "shown"))")
-            thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName, art: poster ? .poster : .wide)
+            thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName, art: poster ? .poster : .wide, points: Self.points(poster: poster))
         }
         .onDisappear { LibTrace.image.log("tile \(title) disappeared (loader #\(thumb.serial))") }
     }
@@ -762,7 +791,7 @@ struct HistoryRow: View {
         .background(Theme.card.opacity(0.7), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .onAppear {
             thumb.load(key: entry.item.id, fileURL: nil, artwork: entry.item.artwork,
-                       lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title)
+                       lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title, points: 96)
         }
     }
 
@@ -911,7 +940,7 @@ private struct FolderThumb: View {
                 if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() } else { GeneratedArt(seed: file.lastPathComponent) }
             }
             .clipped()
-            .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide) }
+            .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide, points: 100) }
     }
 }
 

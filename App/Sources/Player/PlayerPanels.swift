@@ -283,7 +283,7 @@ struct UpNextCard: View {
         .glass(cornerRadius: 20)
         .onAppear {
             let n = upNext.next
-            thumb.load(key: "upnext|" + (n.historyKey ?? n.url), fileURL: nil, artwork: n.artwork, lookupName: n.fileName, preferMeta: true)
+            thumb.load(key: "upnext|" + (n.historyKey ?? n.url), fileURL: nil, artwork: n.artwork, lookupName: n.fileName, preferMeta: true, points: 112)
         }
     }
 }

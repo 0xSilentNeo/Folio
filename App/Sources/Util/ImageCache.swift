@@ -3,10 +3,16 @@ import UIKit
 import ImageIO
 import CryptoKit
 
-/// Artwork cache: memory → disk → network. Images are stored on disk as
-/// downloaded and decoded off the main thread, already downsampled to the
-/// size they're shown at, so a library full of posters appears instantly on
-/// every launch after the first (it used to re-download each one).
+/// The app's one image pipeline: memory → disk → network. Images are stored
+/// on disk as downloaded and decoded off the main thread, already
+/// downsampled to the size they're shown at, so a library full of posters
+/// appears instantly on every launch after the first (it used to
+/// re-download each one).
+///
+/// Pictures are also kept by what they show (`picture(forKey:)`): a tile
+/// that's made again — a list redrawn, a page gone back — finds its picture
+/// in the same memory at once, before any metadata lookup. Until 1.19.0
+/// ThumbLoader kept those in a second cache of its own.
 final class ImageCache: @unchecked Sendable {
     static let shared = ImageCache()
 
@@ -38,6 +44,16 @@ final class ImageCache: @unchecked Sendable {
         memory.object(forKey: memKey(url, Int(maxPixel)))
     }
 
+    /// A picture kept for what it shows (an item's key and size), in the
+    /// same memory as everything else.
+    func picture(forKey key: String) -> UIImage? { memory.object(forKey: ("item|" + key) as NSString) }
+
+    func remember(_ image: UIImage, forKey key: String) {
+        memory.setObject(image, forKey: ("item|" + key) as NSString, cost: Self.cost(image))
+    }
+
+    private static func cost(_ img: UIImage) -> Int { Int(img.size.width * img.size.height * img.scale * img.scale * 4) }
+
     func image(_ url: URL, maxPixel: CGFloat) async -> UIImage? {
         let px = Int(maxPixel)
         let mk = memKey(url, px)
@@ -61,7 +77,7 @@ final class ImageCache: @unchecked Sendable {
         lock.unlock()
         let img = await task.value
         lock.lock(); inflight[key] = nil; lock.unlock()
-        if let img { memory.setObject(img, forKey: mk, cost: Int(img.size.width * img.size.height * img.scale * img.scale * 4)) }
+        if let img { memory.setObject(img, forKey: mk, cost: Self.cost(img)) }
         return img
     }
 

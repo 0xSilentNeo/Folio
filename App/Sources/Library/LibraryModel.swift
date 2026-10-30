@@ -216,13 +216,13 @@ enum LibraryRoute: Hashable {
     case folder(String)       // folder path
     case settings
 
-    /// The id the page zooms out of on Home (HomeView.destination).
-    var zoomID: AnyHashable? {
+    /// The id the page zooms out of on Home, before the layout generation
+    /// (HomeView.zoomID); nil for pages that don't zoom from Home.
+    var zoomID: String? {
         switch self {
-        case .group(let id): return AnyHashable(id)
-        case .folder(let path): return AnyHashable("d|" + path)
-        case .settings: return AnyHashable("settings")
-        case .file: return nil
+        case .group(let id): return id
+        case .folder(let path): return "d|" + path
+        case .settings, .file: return nil
         }
     }
 
