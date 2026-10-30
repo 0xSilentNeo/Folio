@@ -1,0 +1,295 @@
+Command line invocation:
+    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=B7CD7ED2-0DFF-42FE-A30F-21CD2E3D3D2C -derivedDataPath build "-only-testing:GlassPlayerUITests/RoundLabUITests/test6FilesAppSort"
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS Simulator, arch:arm64, id:B7CD7ED2-0DFF-42FE-A30F-21CD2E3D3D2C, OS:26.2, name:iPhone 17 Pro }
+{ platform:iOS Simulator, arch:x86_64, id:B7CD7ED2-0DFF-42FE-A30F-21CD2E3D3D2C, OS:26.2, name:iPhone 17 Pro }
+2026-10-30 10:33:10.762131+0000 GlassPlayerUITests-Runner[24094:68317] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-30 10:33:16.611.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-30 10:33:16.614.
+Test Suite 'RoundLabUITests' started at 2026-10-30 10:33:16.614.
+Test Case '-[GlassPlayerUITests.RoundLabUITests test6FilesAppSort]' started.
+    t =     0.00s Start Test at 2026-10-30 10:33:16.616
+    t =     0.73s Set Up
+    t =     0.74s Open com.apple.DocumentsApp
+    t =     0.75s     Launch com.apple.DocumentsApp
+    t =     1.64s         Setting up automation session
+    t =     3.60s         Wait for com.apple.DocumentsApp to idle
+    t =    10.51s Checking existence of `"Browse" Button`
+    t =    10.61s Tap "Browse" Button
+    t =    10.61s     Wait for com.apple.DocumentsApp to idle
+    t =    10.61s     Find the "Browse" Button
+    t =    10.64s     Check for interrupting elements affecting "Browse" Button
+    t =    10.73s     Synthesize event
+    t =    11.17s     Wait for com.apple.DocumentsApp to idle
+    t =    15.42s Waiting 5.0s for "On My iPhone" StaticText to exist
+    t =    16.49s     Checking `Expect predicate `existsNoRetry == 1` for object "On My iPhone" StaticText`
+    t =    16.49s         Checking existence of `"On My iPhone" StaticText`
+    t =    16.56s Tap "On My iPhone" StaticText
+    t =    16.56s     Wait for com.apple.DocumentsApp to idle
+    t =    16.57s     Find the "On My iPhone" StaticText
+    t =    16.61s     Check for interrupting elements affecting "On My iPhone" StaticText
+    t =    16.67s     Synthesize event
+    t =    16.98s     Wait for com.apple.DocumentsApp to idle
+    t =    18.99s Waiting 5.0s for "OverflowBarButtonItem" Button to exist
+    t =    20.01s     Checking `Expect predicate `existsNoRetry == 1` for object "OverflowBarButtonItem" Button`
+    t =    20.01s         Checking existence of `"OverflowBarButtonItem" Button`
+    t =    20.06s Tap "OverflowBarButtonItem" Button
+    t =    20.06s     Wait for com.apple.DocumentsApp to idle
+    t =    20.07s     Find the "OverflowBarButtonItem" Button
+    t =    20.11s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =    20.18s     Synthesize event
+    t =    20.65s     Wait for com.apple.DocumentsApp to idle
+    t =    25.25s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =    25.45s Find the Button (Element at index 0)
+    t =    25.53s Find the "DOC.sortMenuButton.name.ascending" Button
+    t =    25.62s Find the "DOC.sortMenuButton.name.ascending" Button
+    t =    25.69s Find the Button (Element at index 1)
+    t =    25.75s Find the "DOC.sortMenuButton.kind" Button
+    t =    25.83s Find the "DOC.sortMenuButton.kind" Button
+    t =    25.89s Find the Button (Element at index 2)
+    t =    25.99s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    26.09s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    26.19s Find the Button (Element at index 3)
+    t =    26.27s Find the "DOC.sortMenuButton.size" Button
+    t =    26.37s Find the "DOC.sortMenuButton.size" Button
+    t =    26.47s Find the Button (Element at index 4)
+    t =    26.57s Find the "DOC.sortMenuButton.tags" Button
+    t =    26.67s Find the "DOC.sortMenuButton.tags" Button
+LAB 20.26 menu before picking dateModified: DOC.sortMenuButton.name.ascending 'Name, Ascending' selected | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified 'Date' | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =    26.81s Checking existence of `Button (First Match)`
+LAB 20.42 pick dateModified
+    t =    26.93s Tap Button (First Match)
+    t =    26.93s     Wait for com.apple.DocumentsApp to idle
+    t =    26.93s     Find the Button (First Match)
+    t =    27.06s     Check for interrupting elements affecting "DOC.sortMenuButton.dateModified" Button
+    t =    27.29s     Synthesize event
+    t =    27.69s     Wait for com.apple.DocumentsApp to idle
+    t =    31.28s Tap "OverflowBarButtonItem" Button
+    t =    31.28s     Wait for com.apple.DocumentsApp to idle
+    t =    31.29s     Find the "OverflowBarButtonItem" Button
+    t =    31.35s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =    31.42s     Synthesize event
+    t =    31.83s     Wait for com.apple.DocumentsApp to idle
+    t =    35.04s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =    35.12s Find the Button (Element at index 0)
+    t =    35.18s Find the "DOC.sortMenuButton.name" Button
+    t =    35.25s Find the "DOC.sortMenuButton.name" Button
+    t =    35.30s Find the Button (Element at index 1)
+    t =    35.35s Find the "DOC.sortMenuButton.kind" Button
+    t =    35.40s Find the "DOC.sortMenuButton.kind" Button
+    t =    35.47s Find the Button (Element at index 2)
+    t =    35.55s Find the "DOC.sortMenuButton.dateModified.descending" Button
+    t =    35.60s Find the "DOC.sortMenuButton.dateModified.descending" Button
+    t =    35.68s Find the Button (Element at index 3)
+    t =    35.74s Find the "DOC.sortMenuButton.size" Button
+    t =    35.79s Find the "DOC.sortMenuButton.size" Button
+    t =    35.86s Find the Button (Element at index 4)
+    t =    35.95s Find the "DOC.sortMenuButton.tags" Button
+    t =    36.01s Find the "DOC.sortMenuButton.tags" Button
+LAB 29.55 menu before picking dateModified: DOC.sortMenuButton.name 'Name' | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified.descending 'Date, Newest to Oldest' selected | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =    36.06s Checking existence of `Button (First Match)`
+LAB 29.60 pick dateModified
+    t =    36.10s Tap Button (First Match)
+    t =    36.10s     Wait for com.apple.DocumentsApp to idle
+    t =    36.11s     Find the Button (First Match)
+    t =    36.17s     Check for interrupting elements affecting "DOC.sortMenuButton.dateModified.descending" Button
+    t =    36.24s     Synthesize event
+    t =    36.76s     Wait for com.apple.DocumentsApp to idle
+    t =    39.81s Tap "OverflowBarButtonItem" Button
+    t =    39.82s     Wait for com.apple.DocumentsApp to idle
+    t =    39.82s     Find the "OverflowBarButtonItem" Button
+    t =    39.86s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =    39.92s     Synthesize event
+    t =    40.46s     Wait for com.apple.DocumentsApp to idle
+    t =    43.49s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =    43.63s Find the Button (Element at index 0)
+    t =    43.75s Find the "DOC.sortMenuButton.name" Button
+    t =    43.83s Find the "DOC.sortMenuButton.name" Button
+    t =    43.89s Find the Button (Element at index 1)
+    t =    44.04s Find the "DOC.sortMenuButton.kind" Button
+    t =    44.14s Find the "DOC.sortMenuButton.kind" Button
+    t =    44.22s Find the Button (Element at index 2)
+    t =    44.28s Find the "DOC.sortMenuButton.dateModified.ascending" Button
+    t =    44.37s Find the "DOC.sortMenuButton.dateModified.ascending" Button
+    t =    44.44s Find the Button (Element at index 3)
+    t =    44.50s Find the "DOC.sortMenuButton.size" Button
+    t =    44.60s Find the "DOC.sortMenuButton.size" Button
+    t =    44.68s Find the Button (Element at index 4)
+    t =    44.76s Find the "DOC.sortMenuButton.tags" Button
+    t =    44.83s Find the "DOC.sortMenuButton.tags" Button
+LAB 38.37 menu before picking dateModified: DOC.sortMenuButton.name 'Name' | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified.ascending 'Date, Oldest to Newest' selected | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =    44.88s Checking existence of `Button (First Match)`
+LAB 38.42 pick dateModified
+    t =    44.93s Tap Button (First Match)
+    t =    44.93s     Wait for com.apple.DocumentsApp to idle
+    t =    44.93s     Find the Button (First Match)
+    t =    45.02s     Check for interrupting elements affecting "DOC.sortMenuButton.dateModified.ascending" Button
+    t =    45.11s     Synthesize event
+    t =    45.41s     Wait for com.apple.DocumentsApp to idle
+    t =    48.74s Tap "OverflowBarButtonItem" Button
+    t =    48.74s     Wait for com.apple.DocumentsApp to idle
+    t =    48.75s     Find the "OverflowBarButtonItem" Button
+    t =    48.84s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =    48.89s     Synthesize event
+    t =    49.44s     Wait for com.apple.DocumentsApp to idle
+    t =    52.39s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =    52.48s Find the Button (Element at index 0)
+    t =    52.54s Find the "DOC.sortMenuButton.name" Button
+    t =    52.60s Find the "DOC.sortMenuButton.name" Button
+    t =    52.64s Find the Button (Element at index 1)
+    t =    52.69s Find the "DOC.sortMenuButton.kind" Button
+    t =    52.74s Find the "DOC.sortMenuButton.kind" Button
+    t =    52.80s Find the Button (Element at index 2)
+    t =    52.86s Find the "DOC.sortMenuButton.dateModified.descending" Button
+    t =    52.93s Find the "DOC.sortMenuButton.dateModified.descending" Button
+    t =    52.98s Find the Button (Element at index 3)
+    t =    53.04s Find the "DOC.sortMenuButton.size" Button
+    t =    53.09s Find the "DOC.sortMenuButton.size" Button
+    t =    53.16s Find the Button (Element at index 4)
+    t =    53.23s Find the "DOC.sortMenuButton.tags" Button
+    t =    53.30s Find the "DOC.sortMenuButton.tags" Button
+LAB 46.89 menu before picking name: DOC.sortMenuButton.name 'Name' | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified.descending 'Date, Newest to Oldest' selected | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =    53.40s Checking existence of `Button (First Match)`
+LAB 46.95 pick name
+    t =    53.46s Tap Button (First Match)
+    t =    53.46s     Wait for com.apple.DocumentsApp to idle
+    t =    53.46s     Find the Button (First Match)
+    t =    53.53s     Check for interrupting elements affecting "DOC.sortMenuButton.name" Button
+    t =    53.62s     Synthesize event
+    t =    53.93s     Wait for com.apple.DocumentsApp to idle
+    t =    57.24s Tap "OverflowBarButtonItem" Button
+    t =    57.24s     Wait for com.apple.DocumentsApp to idle
+    t =    57.25s     Find the "OverflowBarButtonItem" Button
+    t =    57.30s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =    57.35s     Synthesize event
+    t =    57.76s     Wait for com.apple.DocumentsApp to idle
+    t =    60.91s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =    60.98s Find the Button (Element at index 0)
+    t =    61.03s Find the "DOC.sortMenuButton.name.ascending" Button
+    t =    61.08s Find the "DOC.sortMenuButton.name.ascending" Button
+    t =    61.14s Find the Button (Element at index 1)
+    t =    61.21s Find the "DOC.sortMenuButton.kind" Button
+    t =    61.26s Find the "DOC.sortMenuButton.kind" Button
+    t =    61.32s Find the Button (Element at index 2)
+    t =    61.40s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    61.47s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    61.51s Find the Button (Element at index 3)
+    t =    61.57s Find the "DOC.sortMenuButton.size" Button
+    t =    61.62s Find the "DOC.sortMenuButton.size" Button
+    t =    61.67s Find the Button (Element at index 4)
+    t =    61.73s Find the "DOC.sortMenuButton.tags" Button
+    t =    61.78s Find the "DOC.sortMenuButton.tags" Button
+LAB 55.32 menu before picking name: DOC.sortMenuButton.name.ascending 'Name, Ascending' selected | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified 'Date' | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =    61.83s Checking existence of `Button (First Match)`
+LAB 55.36 pick name
+    t =    61.87s Tap Button (First Match)
+    t =    61.87s     Wait for com.apple.DocumentsApp to idle
+    t =    61.87s     Find the Button (First Match)
+    t =    61.95s     Check for interrupting elements affecting "DOC.sortMenuButton.name.ascending" Button
+    t =    62.02s     Synthesize event
+    t =    62.31s     Wait for com.apple.DocumentsApp to idle
+    t =    65.66s Tap "OverflowBarButtonItem" Button
+    t =    65.66s     Wait for com.apple.DocumentsApp to idle
+    t =    65.66s     Find the "OverflowBarButtonItem" Button
+    t =    65.70s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =    65.75s     Synthesize event
+    t =    66.09s     Wait for com.apple.DocumentsApp to idle
+    t =    69.15s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =    69.22s Find the Button (Element at index 0)
+    t =    69.30s Find the "DOC.sortMenuButton.name.descending" Button
+    t =    69.36s Find the "DOC.sortMenuButton.name.descending" Button
+    t =    69.41s Find the Button (Element at index 1)
+    t =    69.46s Find the "DOC.sortMenuButton.kind" Button
+    t =    69.52s Find the "DOC.sortMenuButton.kind" Button
+    t =    69.57s Find the Button (Element at index 2)
+    t =    69.62s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    69.67s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    69.72s Find the Button (Element at index 3)
+    t =    69.79s Find the "DOC.sortMenuButton.size" Button
+    t =    69.85s Find the "DOC.sortMenuButton.size" Button
+    t =    69.90s Find the Button (Element at index 4)
+    t =    69.95s Find the "DOC.sortMenuButton.tags" Button
+    t =    70.01s Find the "DOC.sortMenuButton.tags" Button
+LAB 63.55 menu before picking size: DOC.sortMenuButton.name.descending 'Name, Descending' selected | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified 'Date' | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =    70.06s Checking existence of `Button (First Match)`
+LAB 63.59 pick size
+    t =    70.10s Tap Button (First Match)
+    t =    70.10s     Wait for com.apple.DocumentsApp to idle
+    t =    70.10s     Find the Button (First Match)
+    t =    70.15s     Check for interrupting elements affecting "DOC.sortMenuButton.size" Button
+    t =    70.24s     Synthesize event
+    t =    70.55s     Wait for com.apple.DocumentsApp to idle
+    t =    73.84s Tap "OverflowBarButtonItem" Button
+    t =    73.84s     Wait for com.apple.DocumentsApp to idle
+    t =    73.84s     Find the "OverflowBarButtonItem" Button
+    t =    73.89s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =    73.93s     Synthesize event
+    t =    74.28s     Wait for com.apple.DocumentsApp to idle
+    t =    77.44s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =    77.52s Find the Button (Element at index 0)
+    t =    77.60s Find the "DOC.sortMenuButton.name" Button
+    t =    77.66s Find the "DOC.sortMenuButton.name" Button
+    t =    77.73s Find the Button (Element at index 1)
+    t =    77.79s Find the "DOC.sortMenuButton.kind" Button
+    t =    77.86s Find the "DOC.sortMenuButton.kind" Button
+    t =    77.93s Find the Button (Element at index 2)
+    t =    78.00s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    78.07s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    78.11s Find the Button (Element at index 3)
+    t =    78.17s Find the "DOC.sortMenuButton.size.descending" Button
+    t =    78.22s Find the "DOC.sortMenuButton.size.descending" Button
+    t =    78.28s Find the Button (Element at index 4)
+    t =    78.34s Find the "DOC.sortMenuButton.tags" Button
+    t =    78.39s Find the "DOC.sortMenuButton.tags" Button
+LAB 71.93 menu before picking size: DOC.sortMenuButton.name 'Name' | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified 'Date' | DOC.sortMenuButton.size.descending 'Size, Largest to Smallest' selected | DOC.sortMenuButton.tags 'Tags'
+    t =    78.44s Checking existence of `Button (First Match)`
+LAB 71.97 pick size
+    t =    78.48s Tap Button (First Match)
+    t =    78.48s     Wait for com.apple.DocumentsApp to idle
+    t =    78.48s     Find the Button (First Match)
+    t =    78.52s     Check for interrupting elements affecting "DOC.sortMenuButton.size.descending" Button
+    t =    78.60s     Synthesize event
+    t =    78.89s     Wait for com.apple.DocumentsApp to idle
+    t =    82.19s Tap "OverflowBarButtonItem" Button
+    t =    82.19s     Wait for com.apple.DocumentsApp to idle
+    t =    82.19s     Find the "OverflowBarButtonItem" Button
+    t =    82.27s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =    82.31s     Synthesize event
+    t =    82.69s     Wait for com.apple.DocumentsApp to idle
+    t =    85.85s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =    85.92s Find the Button (Element at index 0)
+    t =    85.99s Find the "DOC.sortMenuButton.name" Button
+    t =    86.05s Find the "DOC.sortMenuButton.name" Button
+    t =    86.10s Find the Button (Element at index 1)
+    t =    86.16s Find the "DOC.sortMenuButton.kind" Button
+    t =    86.22s Find the "DOC.sortMenuButton.kind" Button
+    t =    86.28s Find the Button (Element at index 2)
+    t =    86.36s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    86.42s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    86.47s Find the Button (Element at index 3)
+    t =    86.55s Find the "DOC.sortMenuButton.size.ascending" Button
+    t =    86.64s Find the "DOC.sortMenuButton.size.ascending" Button
+    t =    86.71s Find the Button (Element at index 4)
+    t =    86.79s Find the "DOC.sortMenuButton.tags" Button
+    t =    86.86s Find the "DOC.sortMenuButton.tags" Button
+LAB 80.41 menu at the end: DOC.sortMenuButton.name 'Name' | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified 'Date' | DOC.sortMenuButton.size.ascending 'Size, Smallest to Largest' selected | DOC.sortMenuButton.tags 'Tags'
+    t =    86.92s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test6FilesAppSort]' passed (87.366 seconds).
+Test Suite 'RoundLabUITests' passed at 2026-10-30 10:34:43.982.
+	 Executed 1 test, with 0 failures (0 unexpected) in 87.366 (87.367) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-30 10:34:43.982.
+	 Executed 1 test, with 0 failures (0 unexpected) in 87.366 (87.368) seconds
+Test Suite 'Selected tests' passed at 2026-10-30 10:34:43.983.
+	 Executed 1 test, with 0 failures (0 unexpected) in 87.366 (87.371) seconds
+2026-10-30 10:34:44.952 xcodebuild[23034:65600] [MT] IDETestOperationsObserverDebug: 104.306 elapsed -- Testing started completed.
+2026-10-30 10:34:44.952 xcodebuild[23034:65600] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-30 10:34:44.952 xcodebuild[23034:65600] [MT] IDETestOperationsObserverDebug: 104.306 sec, +104.306 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.30_10-32-51-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
