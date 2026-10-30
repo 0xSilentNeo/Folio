@@ -11,7 +11,8 @@ enum UILab {
     static var uiTest: Bool { CommandLine.arguments.contains("-uiTest") }
     /// XCUITest of the library: two episodes in Media, no autoplay.
     static var uiTestLibrary: Bool { CommandLine.arguments.contains("-uiTestLibrary") }
-    static var keepControls: Bool { uiTest || uiTestLibrary }
+    /// `-labAutoHide`: the controls hide after 4 s as in normal use.
+    static var keepControls: Bool { (uiTest || uiTestLibrary) && !CommandLine.arguments.contains("-labAutoHide") }
 
     static func start() {
         if LabDAV.on { LabDAV.seed() }

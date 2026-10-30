@@ -18,6 +18,7 @@ struct PlayerScreen: View {
     @GestureState private var catcherTouched = false
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @ObservedObject private var tune = UITune.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var glassNS
     /// Read once when the player opens: switching path mid-playback would
     /// leave a panel from the other path on screen.
@@ -58,11 +59,10 @@ struct PlayerScreen: View {
                         .accessibilityHidden(true)
                 }
 
-                if ui.controlsVisible && !ui.locked {
+                // Locked, only the lock pill shows (controls(): the rest fades out).
+                if ui.controlsVisible {
                     controls(geo, compact: compact).transition(.opacity)
                 }
-
-                if ui.locked && ui.controlsVisible { lockedOverlay.transition(.opacity) }
 
                 skipButton(geo)
                 upNextCard(geo)
@@ -300,19 +300,20 @@ struct PlayerScreen: View {
             HStack(spacing: 10) {
                 GlassIcon("xmark", size: 17) { onClose() }
                     .accessibilityLabel("Close player")
+                    .opacity(ui.locked ? 0 : 1)
+                    .allowsHitTesting(!ui.locked)
+                    .accessibilityHidden(ui.locked)
                 Spacer()
-                GlassIcon("lock", size: 16) {
-                    ui.closePanel()
-                    ui.locked = true
-                    ui.showControls()
-                }
-                .accessibilityLabel("Lock controls")
+                // Grows to the left into the pill, so PiP beside it stays put.
+                LockControl(locked: ui.locked, onLock: { setLocked(true) }, onUnlock: { setLocked(false) })
                 if PiPManager.isSupported && UserDefaults.standard.bool(forKey: SettingsKey.pipEnabled) {
                     GlassIcon(model.isPiPActive ? "pip.exit" : "pip.enter", size: 17) {
                         model.isPiPActive ? model.stopPiP() : model.startPiP()
                     }
-                    .opacity(model.isPiPPossible || model.isPiPActive ? 1 : 0.35)
+                    .opacity(ui.locked ? 0 : model.isPiPPossible || model.isPiPActive ? 1 : 0.35)
                     .disabled(!model.isPiPPossible && !model.isPiPActive)
+                    .allowsHitTesting(!ui.locked)
+                    .accessibilityHidden(ui.locked)
                     .accessibilityLabel(model.isPiPActive ? "Exit Picture in Picture" : "Picture in Picture")
                 }
             }
@@ -320,6 +321,25 @@ struct PlayerScreen: View {
             .padding(.top, geo.safeAreaInsets.top > 0 ? 4 : 14)
             .allowsHitTesting(otherControlsLive)
             Spacer()
+            if !ui.locked { bottomControls(geo, compact: compact, side: side).transition(.opacity) }
+        }
+        .foregroundStyle(.white)
+        .ignoresSafeArea(.container, edges: .horizontal)
+    }
+
+    /// Locks or unlocks the controls. Locked: only the lock pill shows (with
+    /// the controls: a tap on the video shows it for 4 s); the video's
+    /// gestures, Skip and Up Next are off (VideoSurface, skipButton, upNextCard).
+    private func setLocked(_ on: Bool) {
+        ui.closePanel()
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .smooth(duration: 0.4)) { ui.locked = on }
+        ui.showControls()
+        dlog("ui", on ? "controls locked" : "controls unlocked")
+    }
+
+    @ViewBuilder
+    private func bottomControls(_ geo: GeometryProxy, compact: Bool, side: CGFloat) -> some View {
+        Group {
             if compact {
                 VStack(spacing: 8) {
                     TimeBar(model: model, ui: ui, clock: model.clock).allowsHitTesting(otherControlsLive)
@@ -342,8 +362,6 @@ struct PlayerScreen: View {
                 .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 10 : 18)
             }
         }
-        .foregroundStyle(.white)
-        .ignoresSafeArea(.container, edges: .horizontal)
     }
 
     private var step: Int { max(1, UserDefaults.standard.integer(forKey: SettingsKey.seekStep)) }
@@ -420,24 +438,6 @@ struct PlayerScreen: View {
         .foregroundStyle(.white)
         .allowsHitTesting(false)
         .transition(.opacity)
-    }
-
-    private var lockedOverlay: some View {
-        VStack {
-            Spacer()
-            Button {
-                ui.locked = false
-                ui.showControls()
-            } label: {
-                Label("Unlock", systemImage: "lock.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .padding(.horizontal, 18).padding(.vertical, 12)
-                    .glass(cornerRadius: 22, interactive: true)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.white)
-            .padding(.bottom, 36)
-        }
     }
 
     @ViewBuilder
@@ -712,6 +712,110 @@ struct GlassIcon: View {
         }
         .buttonStyle(PressStyle())
         .foregroundStyle(.white)
+    }
+}
+
+/// The lock button, and the "Locked" pill it becomes: the pills' glass,
+/// height (UITune.pillHeight), capsule shape, caption type and padding.
+///
+/// One button on one glass capsule that changes size: 44 pt wide and high
+/// (a capsule that size is the round button), then the pill's width and
+/// height, with the words fading in. It grows to the left, so PiP beside it
+/// stays put; a tap mid-way turns it round from where it is (SwiftUI's
+/// animations carry on from the current value: "Animations are
+/// interruptible", WWDC23 "Explore SwiftUI animation").
+///
+/// 1.20.0's first take put the round button and the pill in one
+/// GlassEffectContainer with the same glassEffectID (Apple, "Applying
+/// Liquid Glass to custom views"). The lab recording (run 41080455561, 30
+/// Oct) has no morph: the round button at +0.127 s, the whole pill at
+/// +0.153 s, while the close button beside it faded over 0.4 s in the same
+/// animation.
+///
+/// Reduce Motion, and systems before iOS 26: the round button and the pill
+/// fade into each other.
+struct LockControl: View {
+    let locked: Bool
+    let onLock: () -> Void
+    let onUnlock: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ObservedObject private var tune = UITune.shared
+
+    var body: some View {
+        Group {
+            #if compiler(>=6.2)
+            if #available(iOS 26.0, *) {
+                if reduceMotion {
+                    fade
+                } else {
+                    Button(action: locked ? onUnlock : onLock) {
+                        face(pill: locked)
+                            .glassEffect(.regular.interactive(), in: .capsule)
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(PressStyle())
+                    .modifier(LockAccessibility(locked: locked))
+                }
+            } else {
+                fade
+            }
+            #else
+            fade
+            #endif
+        }
+        // The pill is a little taller than the round buttons: the row keeps
+        // one height either way, so nothing beside it moves.
+        .frame(height: max(44, tune.pillHeight))
+        .foregroundStyle(.white)
+    }
+
+    /// The round button (pill: false) or the pill.
+    private func face(pill: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: pill ? "lock.fill" : "lock")
+                .font(.system(size: pill ? 15 : 16, weight: .semibold))
+                .contentTransition(.symbolEffect(.replace))
+            if pill {
+                Text("Locked").font(.caption.weight(.semibold))
+                Text("Tap to unlock").font(.caption).foregroundStyle(.white.opacity(0.65))
+            }
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+        .padding(.horizontal, pill ? 16 : 0)
+        .frame(minWidth: 44)
+        .frame(height: pill ? tune.pillHeight : 44)
+    }
+
+    /// The two on top of each other, right edges together, so they fade into
+    /// each other in place: side by side in the row, the leaving one kept its
+    /// space until its fade ended and the row jumped (independent review,
+    /// 1.20.0).
+    private var fade: some View {
+        ZStack(alignment: .trailing) {
+            if locked {
+                Button(action: onUnlock) { face(pill: true).glass(cornerRadius: tune.pillHeight / 2, interactive: true) }
+                    .buttonStyle(PressStyle())
+                    .modifier(LockAccessibility(locked: true))
+                    .transition(.opacity)
+            } else {
+                Button(action: onLock) { face(pill: false).glassCircle() }
+                    .buttonStyle(PressStyle())
+                    .modifier(LockAccessibility(locked: false))
+                    .transition(.opacity)
+            }
+        }
+    }
+
+    private struct LockAccessibility: ViewModifier {
+        let locked: Bool
+        func body(content: Content) -> some View {
+            content.accessibilityElement(children: .ignore)
+                .accessibilityLabel(locked ? "Controls locked" : "Lock controls")
+                .accessibilityHint(locked ? "Double-tap to unlock" : "")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityIdentifier(locked ? "lockPill" : "lockButton")
+        }
     }
 }
 
