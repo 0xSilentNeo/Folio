@@ -1,0 +1,17 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0 -derivedDataPath build "-only-testing:GlassPlayerUITests/PiPUITests"
+
+2026-10-30 16:45:39.410734+0000 GlassPlayerUITests-Runner[12074:40628] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-30 16:45:51.438.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-30 16:45:51.444.
+Test Suite 'PiPUITests' started at 2026-10-30 16:45:51.445.
+Test Case '-[GlassPlayerUITests.PiPUITests test1ButtonHomeAndBack]' started.
+    t =     0.05s Start Test at 2026-10-30 16:45:51.499
+    t =     0.17s Set Up
+    t =     0.18s Open dev.silentneo.glassplayer
+    t =     0.18s     Launch dev.silentneo.glassplayer
+2026-10-30 16:45:53.146 xcodebuild[11165:36528] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:45:53.146 xcodebuild[11165:36528] [MT] IDELaunchParametersSnapshot: no debugger version
+objc[12074]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.7VnJht/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x107d1c398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.7VnJht/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x107e4c310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =     6.45s         Setting up automation session
