@@ -85,16 +85,16 @@ struct HomeView: View {
     ///   the old page for the new title: your 19:23 recording opens Classroom
     ///   with MobLand's title on it, and its page never ran onAppear.
     private func open(_ route: LibraryRoute) {
-        LibTrace.title.event("open", "home opens \(route)")
+        LibTrace.title.event("open", "home opens \(route.logName)")
         if path.isEmpty { path.append(route); return }
         pending.route = route                     // the latest tap wins
         guard !pending.waiting else { return }
         pending.waiting = true
-        dlog("nav", "home: \(route) opens when the page going back is gone (path \(path.count))")
+        dlog("nav", "home: \(route.logName) opens when the page going back is gone (path \(path.count))")
         BackWatch.whenGone { gone in
             guard gone else {
                 // The swipe back was let go: that page stays, and it's what you see.
-                dlog("nav", "home: the page stayed; \(pending.route.map { "\($0)" } ?? "nothing") not opened")
+                dlog("nav", "home: the page stayed; \(pending.route.map(\.logName) ?? "nothing") not opened")
                 pending.route = nil
                 pending.waiting = false
                 return
@@ -109,7 +109,7 @@ struct HomeView: View {
         guard let r = pending.route else { return }
         pending.route = nil
         pending.waiting = false
-        if let why { dlog("nav", "home: opening \(r) (\(why))") }
+        if let why { dlog("nav", "home: opening \(r.logName) (\(why))") }
         path.append(r)
     }
 
@@ -127,11 +127,11 @@ struct HomeView: View {
                 .frame(width: 0, height: 0)
                 .accessibilityHidden(true)
                 .onChange(of: path) { old, new in
-                    dlog("nav", "home path \(old.count) → \(new.count): \(new)")
+                    dlog("nav", "home path \(old.count) → \(new.count): \(new.map(\.logName))")
                     // Trace: where each zoom source of the page is, as it opens
                     // and for 2.5 s after it went back.
-                    if new.count > old.count, let r = new.last, let id = r.zoomID { ZoomProbe.dump(HomeView.zoomID(id, layout), "opening \(r)") }
-                    if new.count < old.count, let r = old.last, let id = r.zoomID { ZoomProbe.timeline(HomeView.zoomID(id, layout), "back from \(r)") }
+                    if new.count > old.count, let r = new.last, let id = r.zoomID { ZoomProbe.dump(HomeView.zoomID(id, layout), "opening \(r.logName)") }
+                    if new.count < old.count, let r = old.last, let id = r.zoomID { ZoomProbe.timeline(HomeView.zoomID(id, layout), "back from \(r.logName)") }
                     if new.isEmpty, pending.route != nil { DispatchQueue.main.async { openPending() } }
                 }
         }
