@@ -326,7 +326,7 @@ struct Explained<Content: View>: View {
 /// Everything mpv in one place (1.17.0): the video engine, scripts, shaders,
 /// config files and logs.
 struct MPVSettings: View {
-    @AppStorage(SettingsKey.renderer) private var renderer = "gl"
+    @AppStorage(SettingsKey.renderer) private var renderer = "metal"
     @AppStorage(SettingsKey.hdrOutput) private var hdr = true
     @AppStorage(SettingsKey.hwdec) private var hwdec = "auto"
     @AppStorage(SettingsKey.cacheMB) private var cacheMB = 150
@@ -336,7 +336,7 @@ struct MPVSettings: View {
 
     private var rendererText: String {
         renderer == "gl"
-            ? "OpenGL (recommended): every frame goes straight into the picture Picture in Picture shows, as in Outplayer, so PiP starts and ends without a pause. HDR and Dolby Vision show at normal brightness (SDR); no compute shaders."
+            ? "OpenGL (being tested): every frame goes straight into the picture Picture in Picture shows, as in Outplayer, so PiP starts and ends without a switch. HDR and Dolby Vision show at normal brightness (SDR); no compute shaders."
             : "Metal: mpv's newer renderer, with HDR, Dolby Vision and every shader. Picture in Picture switches renderer as it starts and ends, with a short pause in picture and sound."
     }
     private var pictureText: String {
