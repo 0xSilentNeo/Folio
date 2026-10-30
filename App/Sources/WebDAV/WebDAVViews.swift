@@ -236,8 +236,10 @@ struct WebDAVBrowserView: View {
                     .contextMenu {
                         if item.isMedia { Button { open(item) } label: { Label("Play", systemImage: "play") } }
                         Button { UIPasteboard.general.string = item.url.absoluteString } label: { Label("Copy link", systemImage: "link") }
-                        if let e = history.entry(forURL: item.url.absoluteString) {
-                            Button { history.markWatched(e) } label: { Label("Mark as watched", systemImage: "checkmark.circle") }
+                        if item.isMedia {
+                            WatchedMenuItems(keys: [item.url.absoluteString]) { _ in client.mediaItem(for: item, cleanTitles: cleanTitles) }
+                        }
+                        if let e = history.entry(forURL: item.url.absoluteString), e.canResume {
                             Button(role: .destructive) { history.remove(e) } label: { Label("Clear progress", systemImage: "arrow.uturn.backward") }
                         }
                         Text(item.name)
