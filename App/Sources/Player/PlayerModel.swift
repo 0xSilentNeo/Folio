@@ -921,8 +921,12 @@ final class PlayerModel: ObservableObject {
         refreshTracks()
         refreshChapters()
         readDuration()
-        for sub in item.subtitles {
-            c.commandAsync(["sub-add", sub.url, "auto", sub.title ?? sub.lang ?? "Addon", sub.lang ?? ""])
+        addedSubtitles = []
+        addSubtitles(item.subtitles)
+        // Subtitle addons that answered after the stream started (AddonPlayback.subtitleWait).
+        if let id = addonVideoID {
+            let late = AddonPlayback.lateSubtitles(for: id)
+            if addSubtitles(late) > 0 { dlog("player", "subtitles that came after the start added: \(late.count)") }
         }
         maybeRequestSegments()
         updateNowPlaying()
@@ -1785,8 +1789,39 @@ final class PlayerModel: ObservableObject {
         dlog("player/warn", "memory warning: buffer limit now 64 MB ahead, 16 MB behind (\(EnergyMonitor.memory))")
     }
 
+    /// The addon video id of what's playing ("addon:tt…:1:5" history keys).
+    private var addonVideoID: String? {
+        guard let k = item.historyKey, k.hasPrefix("addon:") else { return nil }
+        return String(k.dropFirst("addon:".count))
+    }
+
+    /// Subtitle files given to mpv for the file playing (by address).
+    private var addedSubtitles: Set<String> = []
+
+    /// Adds subtitle files not given to mpv yet; returns how many.
+    @discardableResult
+    private func addSubtitles(_ subs: [ExternalSubtitle]) -> Int {
+        guard let c = client else { return 0 }
+        var n = 0
+        for sub in subs where addedSubtitles.insert(sub.url).inserted {
+            c.commandAsync(["sub-add", sub.url, "auto", sub.title ?? sub.lang ?? "Addon", sub.lang ?? ""])
+            n += 1
+        }
+        return n
+    }
+
     private func registerLifecycle() {
         let nc = NotificationCenter.default
+        // Subtitle addons answering after the stream started: into the playing
+        // file when it's that video (before it has loaded, onFileLoaded adds them).
+        observers.append(nc.addObserver(forName: AddonPlayback.lateSubtitlesArrived, object: nil, queue: .main) { [weak self] note in
+            guard let id = note.userInfo?["videoId"] as? String, let subs = note.userInfo?["subtitles"] as? [ExternalSubtitle] else { return }
+            MainActor.assumeIsolated {
+                guard let self, self.fileLoaded, self.addonVideoID == id else { return }
+                let n = self.addSubtitles(subs)
+                if n > 0 { dlog("player", "late subtitles added to the playing file: \(n)") }
+            }
+        })
         observers.append(nc.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.didEnterBackground() }
         })
