@@ -388,39 +388,52 @@ struct PlatformDetailView: View {
 
     var body: some View {
         // One scroll view per tab, each kept while the page is open: a tab
-        // comes back where you left it.
-        ZStack {
-            ForEach(["series", "movie"], id: \.self) { t in
-                if page.tabs[t]?.started == true {
-                    tabPage(t)
-                        .opacity(type == t ? 1 : 0)
-                        .allowsHitTesting(type == t)
-                        .accessibilityHidden(type != t)
+        // comes back where you left it. The safe area is read before the
+        // pages go under the bar, so the header starts below it.
+        GeometryReader { geo in
+            ZStack {
+                ForEach(["series", "movie"], id: \.self) { t in
+                    if page.tabs[t]?.started == true {
+                        tabPage(t, barBottom: geo.safeAreaInsets.top)
+                            .opacity(type == t ? 1 : 0)
+                            .allowsHitTesting(type == t)
+                            .accessibilityHidden(type != t)
+                    }
                 }
             }
+            .ignoresSafeArea(edges: .top)
         }
         .background(Theme.background.ignoresSafeArea())
-        .ignoresSafeArea(edges: .top)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { page.show(type) }
         .onChange(of: type) { _, t in page.show(t) }
     }
 
-    private func tabPage(_ t: String) -> some View {
+    /// `barBottom`: where the navigation bar ends (the top safe-area inset,
+    /// status bar and bar). The service's colours run up under the bar; its
+    /// badge and name start below it, so the back button never covers them
+    /// (until 1.19.0 they sat 20 pt above the bottom of a fixed 170 pt band:
+    /// on an iPhone 17 Pro the badge's top was at 96 pt, the back button's
+    /// bottom at 106 pt — 30 Oct screenshot and lab run). Like the title
+    /// page's header (TitleHeroView: safe area + its bar).
+    private func tabPage(_ t: String, barBottom: CGFloat) -> some View {
         let tab = page.tabs[t] ?? PlatformPageModel.Tab()
         return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 // The service's colours with its name in white, then a fade into the page.
                 VStack(spacing: 0) {
-                    ZStack(alignment: .bottomLeading) {
-                        LinearGradient(colors: [platform.color, platform.color2], startPoint: .top, endPoint: .bottom)
-                            .frame(height: 170)
-                        HStack(spacing: 12) {
-                            PlatformBadge(platform: platform, size: 54)
-                            Text(platform.name).font(.largeTitle.weight(.heavy)).foregroundStyle(.white)
-                        }
-                        .padding(20)
+                    HStack(spacing: 12) {
+                        PlatformBadge(platform: platform, size: 54)
+                            .accessibilityIdentifier("platformBadge")
+                        Text(platform.name).font(.largeTitle.weight(.heavy)).foregroundStyle(.white)
+                            .lineLimit(2).minimumScaleFactor(0.7)
+                            .accessibilityAddTraits(.isHeader)
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, barBottom + 16)
+                    .padding(.bottom, 20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(LinearGradient(colors: [platform.color, platform.color2], startPoint: .top, endPoint: .bottom))
                     LinearGradient(colors: [platform.color2, Theme.background], startPoint: .top, endPoint: .bottom).frame(height: 36)
                 }
                 Picker("", selection: $type) {

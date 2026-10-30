@@ -120,9 +120,9 @@ final class RoundLabUITests: XCTestCase {
         shows.tap(); sleep(4); mark("Shows again")
     }
 
-    func test5ProviderHeaders() {
+    private func providerHeaders(_ extra: [String]) {
         let app = XCUIApplication()
-        app.launchArguments = ["-libTrace", "-noSplash", "-appearance", "light"]
+        app.launchArguments = ["-libTrace", "-noSplash", "-appearance", "light"] + extra
         app.launch()
         t0 = Date()
         XCUIDevice.shared.orientation = .portrait
@@ -137,10 +137,19 @@ final class RoundLabUITests: XCTestCase {
             p.tap()
             sleep(2)
             let back = app.navigationBars.buttons.firstMatch
-            mark("\(name): back button \(back.frame)")
+            let badge = app.descendants(matching: .any).matching(identifier: "platformBadge").allElementsBoundByIndex.first { $0.exists && $0.isHittable }
+            let b = badge?.frame ?? .zero
+            mark("\(name): back button \(back.frame), badge \(b)")
+            XCTAssertFalse(back.frame.intersects(b), "\(name): the back button covers the logo")
             back.tap()
             sleep(1)
         }
+    }
+
+    func test5ProviderHeaders() { providerHeaders([]) }
+
+    func test7ProviderHeadersLargestText() {
+        providerHeaders(["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
     }
 
     // MARK: Item 3: how the Files app sorts (iOS's own app)
