@@ -476,7 +476,7 @@ struct LibraryList: View {
     }
 
     private func row(_ f: URL) -> some View {
-        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, showSize: true,
+        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, size: LibraryOrganizer.info(f).size,
                    watched: history.isWatched(f))
     }
 }
@@ -494,8 +494,10 @@ struct LibraryRow: View {
     var zoom: ZoomSource? = nil
     /// …or out of the whole row (ListTransition.row).
     var zoomWholeRow = false
-    /// The file's size at the bottom right, level with the picture's bottom edge.
-    var showSize = false
+    /// A size at the bottom right, level with the picture's bottom edge: the
+    /// file's (episode rows) or the title's, all its episodes (Home). Read
+    /// from the library scan, never worked out while drawing.
+    var size: Int64? = nil
     /// Watched (for a show's row on Home: every episode): an eye at the end.
     var watched = false
     @StateObject private var thumb = ThumbLoader()
@@ -537,11 +539,11 @@ struct LibraryRow: View {
                 Text(secondary).font(.caption).foregroundStyle(.secondary).lineLimit(detail ? 3 : 1)
             }
             Spacer(minLength: 0)
-            if showSize {
+            if let size {
                 VStack(alignment: .trailing, spacing: 0) {
                     marks.padding(.top, 4)
                     Spacer(minLength: 4)
-                    Text(LibraryOrganizer.info(file).size.byteString)
+                    Text(size.byteString)
                         .font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.secondary)
                         .lineLimit(1).fixedSize()
                 }

@@ -335,6 +335,7 @@ struct HomeView: View {
                                        fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
                                        poster: posters, zoom: opensPage(g) && style != .push ? ZoomSource(g.id, zoomNS) : nil,
                                        zoomWholeRow: style == .row,
+                                       size: g.size,
                                        watched: allWatched(g))
                         }
                     }
@@ -363,7 +364,7 @@ struct HomeView: View {
                                       progress: history.entry(forURL: g.nextUp.path)?.progress,
                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
                                       poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil,
-                                      watched: allWatched(g))
+                                      watched: allWatched(g), sizeBadge: g.size)
                         }
                     }
                 })
@@ -608,6 +609,9 @@ struct MediaTile: View {
     var trailingNote: String? = nil
     /// Every file behind the tile is watched: an eye on the picture.
     var watched = false
+    /// Home's titles: their size on the picture, bottom right, as folder
+    /// tiles have it (above the progress bar when there is one).
+    var sizeBadge: Int64? = nil
     @StateObject private var thumb = ThumbLoader()
 
     var body: some View {
@@ -622,11 +626,22 @@ struct MediaTile: View {
                 if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress) }
             }
             .overlay(alignment: .topTrailing) { if watched { WatchedBadge() } }
+            .overlay(alignment: .bottomTrailing) {
+                if let sizeBadge {
+                    SizeBadge(size: sizeBadge)
+                        .padding(poster ? 8 : 11)
+                        .padding(.bottom, !watched && (progress ?? 0) > 0.01 ? 10 : 0)
+                        .accessibilityHidden(true)      // read after the title instead (below)
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: poster ? 12 : 16, style: .continuous))
             .zoomSource(zoom, cornerRadius: poster ? 12 : 16)
             Text(fixedTitle ?? thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(fixedSubtitle ?? (poster ? nil : thumb.meta?.episodeTitle) ?? subtitle).lineLimit(1)
+                let line = fixedSubtitle ?? (poster ? nil : thumb.meta?.episodeTitle) ?? subtitle
+                // VoiceOver: "Lab Show, 3 episodes, 83 KB" — the size badge sits
+                // on the picture, so it would otherwise be read before the title.
+                Text(line).lineLimit(1).accessibilityLabel(sizeBadge.map { "\(line), \($0.byteString)" } ?? line)
                 if let trailingNote {
                     Spacer(minLength: 0)
                     Text(trailingNote).monospacedDigit().lineLimit(1).fixedSize()
@@ -900,7 +915,7 @@ private struct FolderThumb: View {
     }
 }
 
-/// The folder's total size, bottom right (local folders only).
+/// A total size on a picture, bottom right (folder and title tiles).
 struct SizeBadge: View {
     let size: Int64
     var body: some View {
