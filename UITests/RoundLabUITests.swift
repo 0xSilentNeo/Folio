@@ -80,11 +80,14 @@ final class RoundLabUITests: XCTestCase {
         mark("playing E\(start): open Now Playing")
         app.buttons["Now Playing"].tap()
         sleep(2)
-        let window = app.windows.firstMatch.frame
-        let rows = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'S01E'")).allElementsBoundByIndex
-            .filter { $0.exists && !$0.frame.isEmpty && window.intersects($0.frame) && $0.isHittable }
-            .map { "\($0.label.prefix(6))@\(Int($0.frame.minY))" }
+        // Rows are "q0"…"q9" (accessibility identifiers); the playing one is selected.
+        let rows = (0..<10).map { app.buttons["q\($0)"].firstMatch }
+            .filter { $0.exists && $0.isHittable }
+            .map { "\($0.identifier)\($0.isSelected ? " (playing)" : "")@\(Int($0.frame.minY))" }
         mark("playing E\(start): rows on screen \(rows)")
+        let current = app.buttons["q\(start - 1)"].firstMatch
+        XCTAssertTrue(current.exists && current.isHittable, "E\(start) not on screen when the panel opens")
+        XCTAssertTrue(current.isSelected, "E\(start) not marked as playing")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.5)).tap()
         sleep(1)
     }
@@ -92,6 +95,7 @@ final class RoundLabUITests: XCTestCase {
     func test3PlaylistOpensOnPlayingEpisode() {
         nowPlaying(start: 1)
         nowPlaying(start: 6)
+        nowPlaying(start: 10)
     }
 
     // MARK: Item 9 and 6: a provider page

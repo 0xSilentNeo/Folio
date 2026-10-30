@@ -402,9 +402,30 @@ struct NowPlayingPanelContent: View {
     /// The title and tabs stay pinned at the top and only the list scrolls
     /// (until 1.14.1 the whole panel scrolled and the tabs went off screen).
     var pinnedHeader = false
-    @State private var tab = 0
+    @State private var tab: Int
     @AppStorage("screenshotSubs") private var screenshotSubs = true
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
+
+    init(model: PlayerModel, ui: PlayerUIState, pinnedHeader: Bool = false) {
+        self.model = model
+        self.ui = ui
+        self.pinnedHeader = pinnedHeader
+        // One file with chapters: open on Chapters.
+        _tab = State(initialValue: !model.chapters.isEmpty && model.queue.count <= 1 ? 1 : 0)
+    }
+
+    /// The current row's id on a tab: "q<index>" (Playlist), "c<chapter>"
+    /// (Chapters). Markers have no current one. (Until 1.19.0 rows were
+    /// ids 0, 1, 2… and the list around them was id `tab` — also 0 on the
+    /// Playlist tab, so "scroll to episode 1" scrolled to the whole list and
+    /// centred it: E05/E06 showed while E01 played, 30 Oct screenshot.)
+    static func current(_ model: PlayerModel, tab: Int) -> String? {
+        switch tab {
+        case 0: return model.queue.indices.contains(model.queueIndex) ? "q\(model.queueIndex)" : nil
+        case 1: return model.currentChapter >= 0 ? "c\(model.currentChapter)" : nil
+        default: return nil
+        }
+    }
 
     var body: some View {
         Group {
@@ -413,14 +434,21 @@ struct NowPlayingPanelContent: View {
                     header.padding(.horizontal, 16).padding(.top, 22)
                     ScrollViewReader { proxy in
                         ScrollView {
-                            list.padding(.horizontal, 16).padding(.bottom, 16)
+                            list.padding(.horizontal, 16)
                         }
                         .scrollIndicators(.hidden)
+                        // Rows fade out under the tabs and at the bottom edge instead
+                        // of being cut by a hard line; at rest none is faded.
+                        .contentMargins(.vertical, 14, for: .scrollContent)
+                        .mask(edgeFade)
                         .onAppear {
-                            LibTrace.panel.log("now playing opens: tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), list id \(tab), scrolling to id \(model.queueIndex)")
-                            // Open on the playing episode, not on episode 1.
-                            if tab == 0, model.queue.count > 3 { proxy.scrollTo(model.queueIndex, anchor: .center) }
+                            // Opening (the panel is kept between openings): on the current row, without animating.
+                            scroll(proxy, animated: false)
+                            LibTrace.panel.log("now playing opens on \(Self.current(model, tab: tab) ?? "no row") (tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), chapter \(model.currentChapter))")
                         }
+                        .onChange(of: model.queueIndex) { _, _ in scroll(proxy, animated: true) }
+                        .onChange(of: model.currentChapter) { _, _ in scroll(proxy, animated: true) }
+                        .onChange(of: tab) { _, _ in scroll(proxy, animated: false) }
                     }
                 }
             } else {
@@ -428,7 +456,32 @@ struct NowPlayingPanelContent: View {
             }
         }
         .animation(.spring(response: 0.36, dampingFraction: 0.84), value: tab)
-        .onAppear { if !model.chapters.isEmpty && model.queue.count <= 1 { tab = 1 } }
+    }
+
+    /// The current row, centred so the ones before and after show too (the
+    /// panel is about three rows tall). Opening and switching tabs: at once.
+    /// The next episode started (Up Next, auto-next) or the chapter moved on:
+    /// the list follows, smoothly.
+    ///
+    /// 1.19.0 lab run: an initial scrollPosition(id:) value left the list at
+    /// the top when the panel opened on episode 6 ("opens on q5", the row
+    /// not on screen); ScrollViewReader.scrollTo on appear moves it.
+    private func scroll(_ proxy: ScrollViewProxy, animated: Bool) {
+        guard let id = Self.current(model, tab: tab) else { return }
+        if animated {
+            withAnimation(.smooth(duration: 0.35)) { proxy.scrollTo(id, anchor: .center) }
+        } else {
+            var t = Transaction(); t.disablesAnimations = true
+            withTransaction(t) { proxy.scrollTo(id, anchor: .center) }
+        }
+    }
+
+    private var edgeFade: some View {
+        VStack(spacing: 0) {
+            LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 14)
+            Color.black
+            LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 14)
+        }
     }
 
     private var header: some View {
@@ -460,7 +513,8 @@ struct NowPlayingPanelContent: View {
                     PlaylistRow(item: item, active: i == model.queueIndex, state: model.episodeStates[i]) {
                         model.playFromPlaylist(i)
                     }
-                    .id(i)
+                    .id("q\(i)")
+                    .accessibilityIdentifier("q\(i)")
                 }
             case 1:
                 if model.chapters.isEmpty { Text("No chapters").foregroundStyle(.white.opacity(0.5)).padding(.vertical, 8) }
@@ -468,6 +522,8 @@ struct NowPlayingPanelContent: View {
                     ListRow(icon: "bookmark", title: ch.title, trailing: PlayerModel.format(ch.time), active: ch.id == model.currentChapter) {
                         model.jump(to: ch)
                     }
+                    .id("c\(ch.id)")
+                    .accessibilityIdentifier("c\(ch.id)")
                 }
             default:
                 ForEach(model.userMarkers) { m in
@@ -484,7 +540,7 @@ struct NowPlayingPanelContent: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .id(tab)
+        .id("tab\(tab)")
         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
     }
 }
@@ -509,6 +565,7 @@ struct ListRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PressStyle(scale: 0.97))
+        .accessibilityAddTraits(active ? .isSelected : [])
     }
 }
 
@@ -569,6 +626,7 @@ struct PlaylistRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PressStyle(scale: 0.97))
+        .accessibilityAddTraits(active ? .isSelected : [])
         .onAppear {
             thumb.load(key: item.historyKey ?? item.url, fileURL: item.url.hasPrefix("/") ? URL(fileURLWithPath: item.url) : nil,
                        artwork: item.artwork, lookupName: item.resolvedURL?.lastPathComponent ?? item.title)
