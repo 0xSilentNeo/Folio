@@ -1,0 +1,104 @@
+16:01:05.499 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.39 GB
+16:01:05.714 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:01:05.735 [lab] shots seeded
+16:01:09.333 [hang] main thread unresponsive for 3.9 s
+16:01:09.806 [scene] 14F4B7E8 connects (portrait)
+16:01:09.807 [scene] 14F4B7E8 will enter foreground (portrait)
+16:01:10.580 [app] first screen 11174 ms after process start
+16:01:10.580 [app] root view appeared (1 in this run, splash off)
+16:01:11.940 [meta] saved library metadata with its text decoded (once)
+16:01:11.963 [scene] 14F4B7E8 active (portrait)
+16:01:11.967 [app] active
+16:01:13.992 [poster] 'MobLand' (series): IMDb → MobLand 2025 tt31510819 — exact name, the only one, score 4.5
+16:01:13.993 [poster] 'Daemons of the Shadow Realm' (series): IMDb → Daemons of the Shadow Realm 2026 tt37532356 — exact name, the only one, score 4.5
+16:01:14.100 [poster] 'The Gentlemen' (series): IMDb → The Gentlemen 2024 tt13210838 — exact name, the only one, score 4.5
+16:01:23.198 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.37 GB
+16:01:23.491 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:01:23.535 [lab] shots seeded
+16:01:25.836 [hang] main thread unresponsive for 2.7 s
+16:01:28.803 [scene] 14F4B7E8 connects (portrait)
+16:01:28.804 [scene] 14F4B7E8 will enter foreground (portrait)
+16:01:29.070 [app] first screen 7672 ms after process start
+16:01:29.071 [app] root view appeared (1 in this run, splash off)
+16:01:29.973 [scene] 14F4B7E8 active (portrait)
+16:01:29.980 [app] active
+16:01:36.226 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.36 GB
+16:01:36.491 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:01:36.527 [lab] shots seeded
+16:01:38.527 [hang] main thread unresponsive for 2.3 s
+16:01:41.230 [scene] 14F4B7E8 connects (portrait)
+16:01:41.231 [scene] 14F4B7E8 will enter foreground (portrait)
+16:01:41.544 [app] first screen 7284 ms after process start
+16:01:41.544 [app] root view appeared (1 in this run, splash off)
+16:01:42.355 [scene] 14F4B7E8 active (portrait)
+16:01:42.360 [app] active
+16:01:47.638 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.35 GB
+16:01:47.882 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:01:47.916 [lab] shots seeded
+16:01:50.082 [hang] main thread unresponsive for 2.5 s
+16:01:51.855 [scene] 14F4B7E8 connects (portrait)
+16:01:51.856 [scene] 14F4B7E8 will enter foreground (portrait)
+16:01:52.145 [app] first screen 6231 ms after process start
+16:01:52.145 [app] root view appeared (1 in this run, splash off)
+16:01:53.170 [scene] 14F4B7E8 active (portrait)
+16:01:53.190 [app] active
+16:01:59.268 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.34 GB
+16:01:59.494 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:01:59.535 [lab] shots seeded
+16:02:01.410 [hang] main thread unresponsive for 2.2 s
+16:02:05.615 [scene] 14F4B7E8 connects (portrait)
+16:02:05.616 [scene] 14F4B7E8 will enter foreground (portrait)
+16:02:05.888 [app] first screen 8616 ms after process start
+16:02:05.888 [app] root view appeared (1 in this run, splash off)
+16:02:06.787 [scene] 14F4B7E8 active (portrait)
+16:02:06.795 [app] active
+16:02:12.321 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.33 GB
+16:02:12.541 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:02:12.592 [lab] shots seeded
+16:02:14.474 [hang] main thread unresponsive for 2.2 s
+16:02:18.078 [scene] 14F4B7E8 connects (portrait)
+16:02:18.080 [scene] 14F4B7E8 will enter foreground (portrait)
+16:02:18.410 [app] first screen 7751 ms after process start
+16:02:18.411 [app] root view appeared (1 in this run, splash off)
+16:02:19.390 [scene] 14F4B7E8 active (portrait)
+16:02:19.445 [app] active
+16:02:25.570 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.32 GB
+16:02:25.843 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:02:25.884 [lab] shots seeded
+16:02:27.796 [hang] main thread unresponsive for 2.3 s
+16:02:30.957 [scene] 14F4B7E8 connects (portrait)
+16:02:30.958 [scene] 14F4B7E8 will enter foreground (portrait)
+16:02:31.273 [app] first screen 7775 ms after process start
+16:02:31.273 [app] root view appeared (1 in this run, splash off)
+16:02:32.119 [scene] 14F4B7E8 active (portrait)
+16:02:32.160 [app] active
+16:02:37.284 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.31 GB
+16:02:37.513 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:02:37.546 [lab] shots seeded
+16:02:39.653 [hang] main thread unresponsive for 2.4 s
+16:02:43.234 [scene] 14F4B7E8 connects (portrait)
+16:02:43.236 [scene] 14F4B7E8 will enter foreground (portrait)
+16:02:43.505 [app] first screen 7963 ms after process start
+16:02:43.505 [app] root view appeared (1 in this run, splash off)
+16:02:44.436 [scene] 14F4B7E8 active (portrait)
+16:02:44.441 [app] active
+16:02:50.323 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.3 GB
+16:02:50.549 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:02:50.596 [lab] shots seeded
+16:02:52.577 [hang] main thread unresponsive for 2.3 s
+16:02:55.032 [scene] 14F4B7E8 connects (portrait)
+16:02:55.033 [scene] 14F4B7E8 will enter foreground (portrait)
+16:02:55.325 [app] first screen 6511 ms after process start
+16:02:55.325 [app] root view appeared (1 in this run, splash off)
+16:02:56.283 [scene] 14F4B7E8 active (portrait)
+16:02:56.288 [app] active
+16:03:01.773 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.28 GB
+16:03:02.200 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:03:02.266 [lab] shots seeded
+16:03:04.005 [hang] main thread unresponsive for 2.3 s
+16:03:07.986 [scene] 14F4B7E8 connects (portrait)
+16:03:07.987 [scene] 14F4B7E8 will enter foreground (portrait)
+16:03:08.352 [app] first screen 8540 ms after process start
+16:03:08.353 [app] root view appeared (1 in this run, splash off)
+16:03:09.310 [scene] 14F4B7E8 active (portrait)
+16:03:09.321 [app] active

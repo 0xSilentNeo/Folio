@@ -1,0 +1,99 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0 -derivedDataPath build "-only-testing:GlassPlayerUITests/LaunchUITests"
+
+2026-10-30 16:00:32.035723+0000 GlassPlayerUITests-Runner[11291:37204] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-30 16:00:50.099.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-30 16:00:50.101.
+Test Suite 'LaunchUITests' started at 2026-10-30 16:00:50.102.
+Test Case '-[GlassPlayerUITests.LaunchUITests testHomeLaunchToInteractive]' started.
+    t =     0.01s Start Test at 2026-10-30 16:00:50.115
+    t =     0.13s Set Up
+    t =     0.14s Open dev.silentneo.glassplayer
+    t =     0.14s     Launch dev.silentneo.glassplayer
+2026-10-30 16:00:54.221 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:00:54.222 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: no debugger version
+objc[11291]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.yG8eO7/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x107ce8398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.yG8eO7/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x107df4310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =    18.10s         Setting up automation session
+    t =    19.34s         Wait for dev.silentneo.glassplayer to idle
+    t =    27.92s Terminate dev.silentneo.glassplayer:11367
+    t =    30.75s Open dev.silentneo.glassplayer
+    t =    30.75s     Launch dev.silentneo.glassplayer
+2026-10-30 16:01:20.880 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:01:20.880 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    33.10s         Setting up automation session
+    t =    38.57s         Wait for dev.silentneo.glassplayer to idle
+    t =    42.86s Open dev.silentneo.glassplayer
+    t =    42.86s     Launch dev.silentneo.glassplayer
+    t =    42.86s         Terminate dev.silentneo.glassplayer:11478
+2026-10-30 16:01:34.065 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:01:34.065 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    45.00s         Setting up automation session
+    t =    50.98s         Wait for dev.silentneo.glassplayer to idle
+    t =    54.61s Open dev.silentneo.glassplayer
+    t =    54.61s     Launch dev.silentneo.glassplayer
+    t =    54.61s         Terminate dev.silentneo.glassplayer:11628
+2026-10-30 16:01:45.740 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:01:45.740 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    56.35s         Setting up automation session
+    t =    61.74s         Wait for dev.silentneo.glassplayer to idle
+    t =    65.78s Open dev.silentneo.glassplayer
+    t =    65.78s     Launch dev.silentneo.glassplayer
+    t =    65.78s         Terminate dev.silentneo.glassplayer:11654
+2026-10-30 16:01:57.060 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:01:57.061 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    67.54s         Setting up automation session
+    t =    75.34s         Wait for dev.silentneo.glassplayer to idle
+    t =    79.34s Open dev.silentneo.glassplayer
+    t =    79.34s     Launch dev.silentneo.glassplayer
+    t =    79.34s         Terminate dev.silentneo.glassplayer:11677
+2026-10-30 16:02:10.494 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:02:10.494 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    81.53s         Setting up automation session
+    t =    87.88s         Wait for dev.silentneo.glassplayer to idle
+    t =    92.14s Open dev.silentneo.glassplayer
+    t =    92.14s     Launch dev.silentneo.glassplayer
+    t =    92.14s         Terminate dev.silentneo.glassplayer:11704
+2026-10-30 16:02:23.263 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:02:23.264 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    93.89s         Setting up automation session
+    t =   100.68s         Wait for dev.silentneo.glassplayer to idle
+    t =   104.23s Open dev.silentneo.glassplayer
+    t =   104.23s     Launch dev.silentneo.glassplayer
+    t =   104.23s         Terminate dev.silentneo.glassplayer:11737
+2026-10-30 16:02:35.376 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:02:35.377 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =   106.12s         Setting up automation session
+    t =   113.03s         Wait for dev.silentneo.glassplayer to idle
+    t =   117.01s Open dev.silentneo.glassplayer
+    t =   117.01s     Launch dev.silentneo.glassplayer
+    t =   117.01s         Terminate dev.silentneo.glassplayer:11866
+2026-10-30 16:02:48.280 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:02:48.454 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =   119.45s         Setting up automation session
+    t =   124.79s         Wait for dev.silentneo.glassplayer to idle
+    t =   128.41s Open dev.silentneo.glassplayer
+    t =   128.41s     Launch dev.silentneo.glassplayer
+    t =   128.41s         Terminate dev.silentneo.glassplayer:12177
+2026-10-30 16:02:59.560 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:02:59.560 xcodebuild[10922:35007] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =   130.57s         Setting up automation session
+    t =   137.64s         Wait for dev.silentneo.glassplayer to idle
+    t =   141.89s Tear Down
+Test Case '-[GlassPlayerUITests.LaunchUITests testHomeLaunchToInteractive]' passed (143.283 seconds).
+Test Suite 'LaunchUITests' passed at 2026-10-30 16:03:13.398.
+	 Executed 1 test, with 0 failures (0 unexpected) in 143.283 (143.296) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-30 16:03:13.416.
+	 Executed 1 test, with 0 failures (0 unexpected) in 143.283 (143.315) seconds
+Test Suite 'Selected tests' passed at 2026-10-30 16:03:13.418.
+	 Executed 1 test, with 0 failures (0 unexpected) in 143.283 (143.319) seconds
+2026-10-30 16:03:14.401 xcodebuild[10922:35007] [MT] IDETestOperationsObserverDebug: 184.757 elapsed -- Testing started completed.
+2026-10-30 16:03:14.401 xcodebuild[10922:35007] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-30 16:03:14.401 xcodebuild[10922:35007] [MT] IDETestOperationsObserverDebug: 184.757 sec, +184.757 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/Folio/Folio/build/Logs/Test/Test-GlassPlayer-2026.10.30_16-00-08-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
