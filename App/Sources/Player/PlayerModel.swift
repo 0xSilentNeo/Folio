@@ -291,6 +291,8 @@ final class PlayerModel: ObservableObject {
                 errorMessage = "Video output failed: \(error.localizedDescription)"
             }
             pip.view.onLayout = { [weak glRenderer] pixels in glRenderer?.setViewSize(pixels) }
+            let b = pip.view.bounds.size, n = pip.view.layouts
+            Task { @MainActor in PiPTrace.event("OpenGL renderer listening for the view's size: \(Int(b.width))×\(Int(b.height)) pt after \(n) layout(s)") }
         }
         metalView?.onResize = { [weak self] in self?.nudgeRedraw() }
         mode = .main

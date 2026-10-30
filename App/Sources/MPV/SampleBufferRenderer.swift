@@ -40,6 +40,8 @@ final class SampleBufferRenderer {
     private var viewSize = (0, 0)
     private var pipSize: (Int, Int)?
     private var lastLoggedSize = (0, 0)
+    /// The last reason a frame wasn't drawn (logged once each time it changes).
+    private var lastSkip: String?
 
     static func make(output: @escaping (CVPixelBuffer) -> Void) -> SampleBufferRenderer? {
         guard let ctx = EAGLContext(api: .openGLES3) else { return nil }
@@ -137,6 +139,7 @@ final class SampleBufferRenderer {
         queue.async { [weak self] in
             guard let self, (w, h) != self.viewSize else { return }
             self.viewSize = (w, h)
+            self.trace("view size now \(w)×\(h) px")
             self.render()
         }
     }
@@ -164,22 +167,24 @@ final class SampleBufferRenderer {
     private func render() {
         guard let c = ctx, allowed, let cache else { return }
         let (w, h) = pipSize ?? viewSize
-        guard w > 0, h > 0 else { return }
+        guard w > 0, h > 0 else { return skip("the player view has no size yet") }
         EAGLContext.setCurrent(eagl)
-        guard let pool = ensurePool(w, h) else { return }
+        guard let pool = ensurePool(w, h) else { return skip("no pixel buffer pool for \(w)×\(h)") }
         var pbOut: CVPixelBuffer?
         // From a pool: a buffer the layer may still be showing is never drawn into.
-        guard CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &pbOut) == kCVReturnSuccess, let pb = pbOut else { return }
+        let made = CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &pbOut)
+        guard made == kCVReturnSuccess, let pb = pbOut else { return skip("no pixel buffer (\(made))") }
         var texOut: CVOpenGLESTexture?
-        guard CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, cache, pb, nil, GLenum(GL_TEXTURE_2D), GL_RGBA,
-                                                           GLsizei(w), GLsizei(h), GLenum(GL_BGRA), GLenum(GL_UNSIGNED_BYTE), 0, &texOut) == kCVReturnSuccess,
-              let tex = texOut else { return }
+        let wrapped = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, cache, pb, nil, GLenum(GL_TEXTURE_2D), GL_RGBA,
+                                                                   GLsizei(w), GLsizei(h), GLenum(GL_BGRA), GLenum(GL_UNSIGNED_BYTE), 0, &texOut)
+        guard wrapped == kCVReturnSuccess, let tex = texOut else { return skip("no texture for the pixel buffer (\(wrapped))") }
         glBindTexture(CVOpenGLESTextureGetTarget(tex), CVOpenGLESTextureGetName(tex))
         glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_S), GL_CLAMP_TO_EDGE)
         glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_T), GL_CLAMP_TO_EDGE)
         glBindFramebuffer(GLenum(GL_FRAMEBUFFER), fbo)
         glFramebufferTexture2D(GLenum(GL_FRAMEBUFFER), GLenum(GL_COLOR_ATTACHMENT0), CVOpenGLESTextureGetTarget(tex), CVOpenGLESTextureGetName(tex), 0)
-        guard glCheckFramebufferStatus(GLenum(GL_FRAMEBUFFER)) == GLenum(GL_FRAMEBUFFER_COMPLETE) else { return }
+        let status = glCheckFramebufferStatus(GLenum(GL_FRAMEBUFFER))
+        guard status == GLenum(GL_FRAMEBUFFER_COMPLETE) else { return skip("framebuffer incomplete (0x\(String(status, radix: 16)))") }
         glViewport(0, 0, GLsizei(w), GLsizei(h))
 
         var target = mpv_opengl_fbo(fbo: Int32(fbo), w: Int32(w), h: Int32(h), internal_format: 0)
@@ -194,18 +199,28 @@ final class SampleBufferRenderer {
                 return mpv_render_context_render(c, &params)
             }
         }
-        guard r >= 0 else { return }
+        guard r >= 0 else { return skip("mpv couldn't render (\(r))") }
         // The GPU has finished the frame before the layer reads the surface.
         glFinish()
         glBindTexture(GLenum(GL_TEXTURE_2D), 0)
         CVOpenGLESTextureCacheFlush(cache, 0)
         output(pb)
+        lastSkip = nil
         if (w, h) != lastLoggedSize {
             lastLoggedSize = (w, h)
             let line = "frames now \(w)×\(h)\(pipSize != nil ? " (PiP's size)" : " (the player view's size)")"
             Task { @MainActor in PiPTrace.event(line) }
         }
     }
+
+    /// Why no frame was drawn, once per reason in a row (render queue).
+    private func skip(_ why: String) {
+        guard why != lastSkip else { return }
+        lastSkip = why
+        trace("no frame: \(why)")
+    }
+
+    private func trace(_ line: String) { Task { @MainActor in PiPTrace.event(line) } }
 
     private func ensurePool(_ w: Int, _ h: Int) -> CVPixelBufferPool? {
         if let pool, poolSize == (w, h) { return pool }

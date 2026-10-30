@@ -14,9 +14,12 @@ final class SampleBufferView: UIView {
 
     /// The view's size in pixels, after each layout (the OpenGL renderer draws at it).
     var onLayout: ((CGSize) -> Void)?
+    /// Layout passes so far (trace).
+    private(set) var layouts = 0
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        layouts += 1
         let scale = window?.screen.scale ?? UIScreen.main.scale
         onLayout?(CGSize(width: bounds.width * scale, height: bounds.height * scale))
     }
@@ -98,6 +101,7 @@ final class PiPManager: NSObject {
     static var isSupported: Bool { AVPictureInPictureController.isPictureInPictureSupported() }
 
     func setUp(autoStart: Bool) {
+        Task { @MainActor in PiPTrace.event("PiP supported: \(Self.isSupported ? "yes" : "no")") }
         guard Self.isSupported, controller == nil else { return }
         let source = AVPictureInPictureController.ContentSource(sampleBufferDisplayLayer: view.displayLayer, playbackDelegate: self)
         let c = AVPictureInPictureController(contentSource: source)
@@ -107,6 +111,7 @@ final class PiPManager: NSObject {
         possibleObservation = c.observe(\.isPictureInPicturePossible, options: [.initial, .new]) { [weak self] c, _ in
             let possible = c.isPictureInPicturePossible
             DispatchQueue.main.async { self?.onPossibleChanged?(possible) }
+            Task { @MainActor in PiPTrace.event("PiP \(possible ? "possible" : "not possible")") }
         }
     }
 
