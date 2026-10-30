@@ -154,34 +154,23 @@ final class RoundLabUITests: XCTestCase {
         else if files.buttons["Browse"].exists { files.buttons["Browse"].tap(); sleep(2) }
         let onPhone = files.staticTexts["On My iPhone"].firstMatch
         if onPhone.waitForExistence(timeout: 5) { onPhone.tap(); sleep(2) }
-        mark("files screen:\n\(files.debugDescription)")
-        // The view options / More button: try the likely names, then dump the menu.
-        for name in ["More", "View Options", "Sort", "ellipsis.circle", "ellipsis"] {
-            let b = files.buttons[name].firstMatch
-            guard b.exists, b.isHittable else { continue }
-            mark("tap \(name)")
-            b.tap()
-            sleep(2)
-            mark("menu:\n\(files.debugDescription)")
-            for option in ["Name", "Date", "Size", "Kind"] {
-                let o = files.buttons[option].firstMatch
-                guard o.exists else { continue }
-                mark("pick \(option)")
-                o.tap(); sleep(2)
-                b.tap(); sleep(2)
-                mark("menu after picking \(option):\n\(files.debugDescription)")
-                let again = files.buttons[option].firstMatch
-                if again.exists {
-                    mark("pick \(option) again")
-                    again.tap(); sleep(2)
-                    b.tap(); sleep(2)
-                    mark("menu after picking \(option) again:\n\(files.debugDescription)")
-                }
-                files.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)).tap()
-                sleep(1)
-                break
-            }
-            break
+        let more = files.buttons["OverflowBarButtonItem"].firstMatch
+        XCTAssertTrue(more.waitForExistence(timeout: 5), "no More button")
+        /// The sort items of the open menu: identifier, label, selected.
+        func sortItems(_ when: String) {
+            let items = files.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'DOC.sortMenuButton'")).allElementsBoundByIndex
+            mark("\(when): " + items.map { "\($0.identifier) '\($0.label)'\($0.isSelected ? " selected" : "")" }.joined(separator: " | "))
         }
+        func pick(_ key: String) {
+            more.tap(); sleep(2)
+            sortItems("menu before picking \(key)")
+            let item = files.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "DOC.sortMenuButton.\(key)")).firstMatch
+            guard item.exists else { mark("no \(key) item"); return }
+            mark("pick \(key)")
+            item.tap(); sleep(2)
+        }
+        for key in ["dateModified", "dateModified", "dateModified", "name", "name", "size", "size"] { pick(key) }
+        more.tap(); sleep(2)
+        sortItems("menu at the end")
     }
 }
