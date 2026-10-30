@@ -601,10 +601,22 @@ struct HeroCard: View {
     static func line(_ item: MediaItem, meta: MediaMeta?) -> String? {
         var season: Int?, episode: Int?, title: String?
         if let ref = item.addonRef {
-            // "type|tt…|tt…:S:E", and the addon episode's label "S1 · E24 — title".
-            let v = ref.split(separator: "|", omittingEmptySubsequences: false).last?.split(separator: ":") ?? []
-            if v.count >= 3 { season = Int(v[v.count - 2]); episode = Int(v[v.count - 1]) }
-            title = item.subtitle?.components(separatedBy: " — ").dropFirst().joined(separator: " — ")
+            // The addon episode's label (MetaVideo.label): "S1 · E24 — title",
+            // or just the title when the addon gives no season and episode.
+            let label = item.subtitle ?? ""
+            let video = ref.split(separator: "|", omittingEmptySubsequences: false).last.map(String.init) ?? ""
+            let parts = label.components(separatedBy: " — ")
+            if let m = parts[0].firstMatch(of: #/^S(\d+) · E(\d+)$/#) {
+                season = Int(m.1); episode = Int(m.2)
+                title = parts.dropFirst().joined(separator: " — ")
+            } else {
+                // The video id: "tt…:S:E" (IMDb), "kitsu:<id>:<episode>" and
+                // "mal:<id>:<episode>" (no season: one entry per season).
+                let v = video.split(separator: ":")
+                if v.count == 3, v[0].hasPrefix("tt") { season = Int(v[1]); episode = Int(v[2]) }
+                else if v.count == 3, v[0] == "kitsu" || v[0] == "mal" { episode = Int(v[2]) }
+                if label != video { title = label }
+            }
             if title?.isEmpty == true { title = nil }
         } else {
             let p = TitleParser.parse(item.fileName)
@@ -614,7 +626,8 @@ struct HeroCard: View {
         }
         title = meta?.episodeTitle ?? title ?? ReleaseName.file(item.fileName)?.episodeTitle
         if let episode {
-            return (["S\(season ?? 1) · E\(episode)"] + [title].compactMap { $0 }).joined(separator: " · ")
+            let number = season.map { "S\($0) · E\(episode)" } ?? "E\(episode)"
+            return ([number] + [title].compactMap { $0 }).joined(separator: " · ")
         }
         return meta?.synopsis
     }
