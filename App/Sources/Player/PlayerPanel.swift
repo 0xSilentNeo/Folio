@@ -441,7 +441,6 @@ struct NowPlayingPanelContent: View {
                         // of being cut by a hard line; at rest none is faded.
                         .contentMargins(.vertical, 14, for: .scrollContent)
                         .mask(edgeFade)
-                        .modifier(PanelScrollTrace(tab: tab))
                         .onAppear {
                             // Opening (the panel is kept between openings): on the current row, without animating.
                             scroll(proxy, animated: false)
@@ -543,34 +542,6 @@ struct NowPlayingPanelContent: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .id("tab\(tab)")
         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
-    }
-}
-
-/// Trace (library and images): where the panel's list sits in the first
-/// 2 s after it opens or changes tab — its offset, the visible height and
-/// the content's — so a report shows whether it opened on the current row
-/// (iOS 18 and later: onScrollGeometryChange).
-private struct PanelScrollTrace: ViewModifier {
-    let tab: Int
-    @State private var since = Date()
-
-    @ViewBuilder
-    func body(content: Content) -> some View {
-        if #available(iOS 18.0, *) {
-            if LibTrace.on {
-                content
-                    .onScrollGeometryChange(for: [Int].self, of: { g in [Int(g.contentOffset.y), Int(g.containerSize.height), Int(g.contentSize.height)] }) { _, g in
-                        guard Date().timeIntervalSince(since) < 2 else { return }
-                        LibTrace.panel.log("tab \(tab) list at y \(g[0]) of \(g[2]), \(g[1]) pt showing")
-                    }
-                    .onAppear { since = Date() }
-                    .onChange(of: tab) { _, _ in since = Date() }
-            } else {
-                content
-            }
-        } else {
-            content
-        }
     }
 }
 
