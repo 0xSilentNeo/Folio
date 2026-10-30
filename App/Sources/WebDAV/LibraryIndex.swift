@@ -250,10 +250,10 @@ final class LibraryIndexStore: ObservableObject {
 
     func state(_ id: UUID) -> State { states[id] ?? State() }
 
-    static var directory: URL {
+    nonisolated static var directory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("LibraryIndex", isDirectory: true)
     }
-    static func file(_ id: UUID) -> URL { directory.appendingPathComponent(id.uuidString + ".json") }
+    nonisolated static func file(_ id: UUID) -> URL { directory.appendingPathComponent(id.uuidString + ".json") }
 
     /// Loads the saved index (off the main thread) if it isn't in memory yet.
     func load(_ server: WebDAVServer) async {
