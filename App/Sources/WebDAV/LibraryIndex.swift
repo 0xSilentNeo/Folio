@@ -243,6 +243,10 @@ final class LibraryIndexStore: ObservableObject {
 
     @Published private(set) var states: [UUID: State] = [:]
     private var loading: [UUID: Task<Void, Never>] = [:]
+    /// Servers whose saved index was read (or found missing) this launch:
+    /// a refresh right after the first load doesn't read the disk again
+    /// (1.19.0 logged "no saved index, building one" twice in a row).
+    private var readFromDisk: Set<UUID> = []
     private var refreshes: [UUID: Task<Void, Never>] = [:]
 
     typealias Summary = IndexSummaries.Summary
@@ -262,12 +266,13 @@ final class LibraryIndexStore: ObservableObject {
 
     /// Loads the saved index (off the main thread) if it isn't in memory yet.
     func load(_ server: WebDAVServer) async {
-        if states[server.id]?.index != nil { return }
+        if states[server.id]?.index != nil || readFromDisk.contains(server.id) { return }
         if let t = loading[server.id] { await t.value; return }
         let id = server.id, account = LibraryIndex.account(server)
         let t = Task {
             let read = await Task.detached(priority: .userInitiated) { Self.read(Self.file(id), account: account) }.value
             guard !Task.isCancelled else { return }        // cleared while reading (account changed)
+            readFromDisk.insert(id)
             if let note = read.note { dlog("index", "\(server.name): \(note)") }
             if let index = read.index, states[id]?.index == nil { apply(index, to: id) }
         }
@@ -341,6 +346,7 @@ final class LibraryIndexStore: ObservableObject {
         refreshes[id]?.cancel()
         refreshes[id] = nil
         states[id] = nil
+        readFromDisk.remove(id)
         summaries.set(nil, for: id)
         try? FileManager.default.removeItem(at: Self.file(id))
         dlog("index", "index cleared for server \(id.uuidString.prefix(8))")
