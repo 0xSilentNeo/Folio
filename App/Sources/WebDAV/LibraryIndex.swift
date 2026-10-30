@@ -267,12 +267,13 @@ final class LibraryIndexStore: ObservableObject {
         let id = server.id, account = LibraryIndex.account(server)
         let t = Task {
             let read = await Task.detached(priority: .userInitiated) { Self.read(Self.file(id), account: account) }.value
+            guard !Task.isCancelled else { return }        // cleared while reading (account changed)
             if let note = read.note { dlog("index", "\(server.name): \(note)") }
             if let index = read.index, states[id]?.index == nil { apply(index, to: id) }
         }
         loading[id] = t
         await t.value
-        loading[id] = nil
+        if loading[id] == t { loading[id] = nil }
     }
 
     /// Shows the saved index at once; refreshes in the background when it's
@@ -335,6 +336,8 @@ final class LibraryIndexStore: ObservableObject {
     /// Forgets a server's index (the server was removed, or its address,
     /// user name or start folder changed).
     func clear(_ id: UUID) {
+        loading[id]?.cancel()
+        loading[id] = nil
         refreshes[id]?.cancel()
         refreshes[id] = nil
         states[id] = nil
