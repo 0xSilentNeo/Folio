@@ -112,7 +112,75 @@ enum ShotsSeed {
 
         // Discover: the IMDb cache, with the same pictures.
         IMDbSource.seedForLab(art: (art.posterDark, art.backdropDark, art.posterBright, art.backdropBright))
+        seedRealDebrid()
         dlog("lab", "shots seeded")
+    }
+
+    // MARK: Real-Debrid
+
+    /// `-shotsRealDebrid`: a Real-Debrid account with a saved library of 25
+    /// releases, checked just now, so the app asks the server nothing (the
+    /// index is fresh for 10 minutes: LibraryIndexStore.freshFor). Two titles
+    /// have a second, older release. The address is under real-debrid.com
+    /// (Home goes by the host) but doesn't exist, so a page that does list
+    /// the server sends no request with these made-up details anywhere.
+    /// `-shotsRealDebridOffline`: the last check couldn't reach the server.
+    /// Without either: the lab account is removed (it's kept between launches).
+    private static let labServerID = UUID(uuidString: "00000000-0000-0000-0000-00000000DEB1")!
+    static let labReleases = [
+        "The.Gentlemen.S01.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX",
+        "Daemons.of.the.Shadow.Realm.S01.1080p.CR.WEB-DL.AAC2.0.H.264-VARYG",
+        "MobLand.S01.2160p.AMZN.WEB-DL.DDP5.1.H.265-NTb",
+        "The.Gentlemen.S01.1080p.NF.WEB-DL.DDP5.1.H.264-FLUX",
+        "Dune.Part.Two.2024.2160p.UHD.BluRay.REMUX.DV.HDR.HEVC.TrueHD.7.1.Atmos-FGT",
+        "Daemons.of.the.Shadow.Realm.S01E05.1080p.CR.WEB-DL.AAC2.0.H.264-VARYG",
+        "Mashle.Magic.and.Muscles.S02.1080p.CR.WEB-DL.AAC2.0.H.264-VARYG",
+        "Severance.S02.2160p.ATVP.WEB-DL.DDP5.1.Atmos.DV.H.265-FLUX",
+        "Classroom.of.the.Elite.S03.1080p.CR.WEB-DL.AAC2.0.H.264-VARYG",
+        "Oppenheimer.2023.2160p.UHD.BluRay.REMUX.HDR.HEVC.DTS-HD.MA.5.1-FGT",
+        "Slow.Horses.S04.2160p.ATVP.WEB-DL.DDP5.1.Atmos.DV.H.265-FLUX",
+        "Frieren.Beyond.Journeys.End.S01.1080p.CR.WEB-DL.AAC2.0.H.264-VARYG",
+        "The.Bear.S03.1080p.DSNP.WEB-DL.DDP5.1.H.264-NTb",
+        "Shogun.2024.S01.2160p.DSNP.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX",
+        "Arcane.S02.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX",
+        "Civil.War.2024.1080p.BluRay.DDP5.1.x264-ZoroSenpai",
+        "Andor.S02.2160p.DSNP.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX",
+        "The.Last.of.Us.S02.2160p.MAX.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX",
+        "Blue.Eye.Samurai.S01.1080p.NF.WEB-DL.DDP5.1.H.264-FLUX",
+        "Furiosa.A.Mad.Max.Saga.2024.2160p.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX",
+        "Pluribus.S01.2160p.ATVP.WEB-DL.DDP5.1.Atmos.DV.H.265-FLUX",
+        "Dandadan.S01.1080p.CR.WEB-DL.AAC2.0.H.264-VARYG",
+        "The.Penguin.S01.2160p.MAX.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX",
+        "Conclave.2024.1080p.WEB-DL.DDP5.1.H.264-FLUX",
+        "Silo.S02.2160p.ATVP.WEB-DL.DDP5.1.Atmos.DV.H.265-FLUX",
+    ]
+
+    private static func seedRealDebrid() {
+        let on = CommandLine.arguments.contains("-shotsRealDebrid") || CommandLine.arguments.contains("-shotsRealDebridOffline")
+        let store = ServerStore.shared
+        guard on else {
+            if let s = store.server(id: labServerID) { store.remove(s) }
+            return
+        }
+        let server = WebDAVServer(id: labServerID, name: "Real-Debrid", baseURL: "https://lab.invalid.real-debrid.com/", username: "lab")
+        store.servers = [server]
+        guard let rootURL = WebDAVClient(server: server).url(forPath: server.rootPath) else { return }
+        let now = Date()
+        var index = LibraryIndex(account: LibraryIndex.account(server), root: LibraryIndex.key(rootURL))
+        index.refreshed = now
+        index.lastCheck = LibraryIndex.Check(date: now, ok: !CommandLine.arguments.contains("-shotsRealDebridOffline"), unauthorized: false)
+        var subfolders: [String] = []
+        for (i, name) in labReleases.enumerated() {
+            let folder = rootURL.appendingPathComponent(name, isDirectory: true)
+            let added = now.addingTimeInterval(-Double(i + 1) * 3600)        // newest first, an hour apart
+            let file = LibraryIndex.File(url: folder.appendingPathComponent(name + ".mkv"), name: name + ".mkv",
+                                         size: 1_500_000_000 + Int64(i) * 250_000_000, added: added)
+            index.folders[LibraryIndex.key(folder)] = LibraryIndex.Folder(name: name, etag: nil, modified: added, added: added, listed: now,
+                                                                          subfolders: [], files: [file])
+            subfolders.append(LibraryIndex.key(folder))
+        }
+        index.folders[index.root] = LibraryIndex.Folder(name: "", etag: nil, modified: nil, added: nil, listed: now, subfolders: subfolders, files: [])
+        LibraryIndexStore.write(index, to: LibraryIndexStore.file(labServerID))
     }
 
     /// MetadataService's on-disk entry (same field names, same date encoding).
