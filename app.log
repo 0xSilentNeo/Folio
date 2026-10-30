@@ -1,0 +1,91 @@
+17:15:26.213 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.2 GB
+17:15:28.445 [hang] main thread unresponsive for 2.3 s
+17:15:31.341 [scene] 86F5C226 connects (portrait)
+17:15:31.342 [scene] 86F5C226 will enter foreground (portrait)
+17:15:32.015 [app] first screen 8124 ms after process start
+17:15:32.016 [app] root view appeared (1 in this run, splash off)
+17:15:33.095 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/E54E6C70-E47A-473E-8A49-348B77B974F7/GlassPlayer.app/lab/lab.mp4
+17:15:33.999 [scene] 86F5C226 active (portrait)
+17:15:34.023 [app] active
+17:15:34.632 [player] start renderer=metal
+17:15:34.632 [lab] engine not started (lab)
+17:15:34.742 [app] Home: appeared 350 ms after the root view, next frame at 2726 ms, main thread free at 2726 ms
+17:15:36.064 [perf] panel tracks prebuilt in 151 ms
+17:15:36.915 [perf] panel settings prebuilt in 699 ms
+17:15:37.422 [perf] panel nowPlaying prebuilt in 111 ms
+17:15:37.986 [perf] panel tracks prebuilt in 12 ms
+17:15:38.975 [perf] panel settings prebuilt in 104 ms
+17:15:38.994 [perf] panel nowPlaying prebuilt in 18 ms
+17:15:42.780 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+17:15:42.943 [imdb] webkit load /title/tt35511966
+17:15:47.490 [ui] controls locked
+17:15:49.655 [hang] main thread unresponsive for 1.6 s
+17:15:52.188 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+17:16:00.176 [ui] controls unlocked
+17:16:07.712 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.18 GB
+17:16:09.974 [hang] main thread unresponsive for 2.3 s
+17:16:12.665 [scene] 86F5C226 connects (portrait)
+17:16:12.669 [scene] 86F5C226 will enter foreground (portrait)
+17:16:13.053 [app] first screen 7495 ms after process start
+17:16:13.053 [app] root view appeared (1 in this run, splash off)
+17:16:13.721 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/E54E6C70-E47A-473E-8A49-348B77B974F7/GlassPlayer.app/lab/lab.mp4
+17:16:14.253 [scene] 86F5C226 active (portrait)
+17:16:14.276 [app] active
+17:16:14.614 [player] start renderer=metal
+17:16:14.614 [lab] engine not started (lab)
+17:16:14.775 [app] Home: appeared 210 ms after the root view, next frame at 1721 ms, main thread free at 1722 ms
+17:16:16.228 [perf] panel tracks prebuilt in 54 ms
+17:16:16.837 [perf] panel settings prebuilt in 353 ms
+17:16:16.906 [perf] panel nowPlaying prebuilt in 60 ms
+17:16:17.265 [perf] panel tracks prebuilt in 0 ms
+17:16:17.294 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+17:16:17.470 [imdb] webkit load /title/tt35511966
+17:16:17.696 [perf] panel settings prebuilt in 0 ms
+17:16:17.880 [perf] panel nowPlaying prebuilt in 0 ms
+17:16:22.239 [ui] controls locked
+17:16:29.245 [ui] controls unlocked
+17:16:31.990 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+17:16:36.238 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.14 GB
+17:16:38.493 [hang] main thread unresponsive for 2.3 s
+17:16:39.671 [scene] 86F5C226 connects (landscape)
+17:16:39.672 [scene] 86F5C226 will enter foreground (landscape)
+17:16:39.893 [app] first screen 5146 ms after process start
+17:16:39.893 [app] root view appeared (1 in this run, splash off)
+17:16:40.366 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/E54E6C70-E47A-473E-8A49-348B77B974F7/GlassPlayer.app/lab/lab.mp4
+17:16:40.955 [scene] 86F5C226 active (landscape)
+17:16:40.975 [app] active
+17:16:41.230 [player] start renderer=metal
+17:16:41.231 [lab] engine not started (lab)
+17:16:41.315 [app] Home: appeared 131 ms after the root view, next frame at 1422 ms, main thread free at 1422 ms
+17:16:42.933 [perf] panel tracks prebuilt in 70 ms
+17:16:43.530 [perf] panel settings prebuilt in 327 ms
+17:16:43.600 [perf] panel nowPlaying prebuilt in 57 ms
+17:16:43.621 [perf] panel tracks prebuilt in 0 ms
+17:16:43.852 [perf] panel settings prebuilt in 0 ms
+17:16:43.904 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+17:16:44.130 [imdb] webkit load /title/tt35511966
+17:16:44.304 [perf] panel nowPlaying prebuilt in 0 ms
+17:16:47.025 [ui] controls locked
+17:16:48.422 [ui] controls unlocked
+17:16:54.965 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.14 GB
+17:16:57.190 [hang] main thread unresponsive for 2.2 s
+17:16:58.586 [scene] 86F5C226 connects (portrait)
+17:16:58.588 [scene] 86F5C226 will enter foreground (portrait)
+17:16:58.827 [app] first screen 5321 ms after process start
+17:16:58.827 [app] root view appeared (1 in this run, splash off)
+17:16:59.248 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/E54E6C70-E47A-473E-8A49-348B77B974F7/GlassPlayer.app/lab/lab.mp4
+17:16:59.745 [scene] 86F5C226 active (portrait)
+17:16:59.748 [app] active
+17:17:00.013 [player] start renderer=metal
+17:17:00.013 [lab] engine not started (lab)
+17:17:00.058 [app] Home: appeared 142 ms after the root view, next frame at 1231 ms, main thread free at 1231 ms
+17:17:01.742 [perf] panel tracks prebuilt in 58 ms
+17:17:02.311 [perf] panel settings prebuilt in 317 ms
+17:17:02.394 [perf] panel nowPlaying prebuilt in 78 ms
+17:17:02.457 [perf] panel tracks prebuilt in 0 ms
+17:17:02.774 [perf] panel settings prebuilt in 0 ms
+17:17:02.937 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+17:17:03.049 [imdb] webkit load /title/tt35511966
+17:17:03.079 [perf] panel nowPlaying prebuilt in 0 ms
+17:17:06.685 [ui] controls locked
+17:17:18.456 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)

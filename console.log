@@ -1,0 +1,986 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-30 17:15:33.011 E  GlassPlayer[10730:8af2] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:15:33.011 E  GlassPlayer[10730:8af2] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:15:33.371 E  GlassPlayer[10730:8af2] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-30 17:15:33.975 E  GlassPlayer[10730:8af2] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:15:33.976 E  GlassPlayer[10730:8af2] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:15:34.391 E  GlassPlayer[10730:8af2] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-10-30 17:15:34.527 F  GlassPlayer[10730:8af2] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-10-30 17:15:38.678 F  GlassPlayer[10730:92a9] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-30 17:15:39.469 E  GlassPlayer[10730:8af2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:15:39.469 E  GlassPlayer[10730:8af2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:15:39.469 E  GlassPlayer[10730:8af2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:15:39.470 E  GlassPlayer[10730:8af2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:15:40.073 F  GlassPlayer[10730:8af2] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:15:40.146 F  GlassPlayer[10730:8af2] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:15:41.678 F  GlassPlayer[10730:8af2] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:15:41.837 E  GlassPlayer[10730:8af2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:41.837 E  GlassPlayer[10730:8af2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:41.839 E  GlassPlayer[10730:8af2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:41.841 E  GlassPlayer[10730:8af2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:41.843 E  GlassPlayer[10730:8af2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:41.843 E  GlassPlayer[10730:8af2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:41.858 E  GlassPlayer[10730:8af2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:41.859 E  GlassPlayer[10730:8af2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:41.861 E  GlassPlayer[10730:8af2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:41.861 E  GlassPlayer[10730:8af2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:42.216 E  GlassPlayer[10730:8af2] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:15:43.683 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638357760.36 (AX element pid: 10730, elementOrHash.elementID: 4638357760.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:43.687 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638358528.37 (AX element pid: 10730, elementOrHash.elementID: 4638358528.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:43.690 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4650958848.38 (AX element pid: 10730, elementOrHash.elementID: 4650958848.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:44.176 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638357760.36 (AX element pid: 10730, elementOrHash.elementID: 4638357760.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:44.193 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638358528.37 (AX element pid: 10730, elementOrHash.elementID: 4638358528.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:44.212 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4650958848.38 (AX element pid: 10730, elementOrHash.elementID: 4650958848.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:44.573 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638357760.36 (AX element pid: 10730, elementOrHash.elementID: 4638357760.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:44.636 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638358528.37 (AX element pid: 10730, elementOrHash.elementID: 4638358528.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:44.650 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4650958848.38 (AX element pid: 10730, elementOrHash.elementID: 4650958848.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.094 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638357760.36 (AX element pid: 10730, elementOrHash.elementID: 4638357760.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.097 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638358528.37 (AX element pid: 10730, elementOrHash.elementID: 4638358528.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.132 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4650958848.38 (AX element pid: 10730, elementOrHash.elementID: 4650958848.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.403 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638357760.36 (AX element pid: 10730, elementOrHash.elementID: 4638357760.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.409 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638358528.37 (AX element pid: 10730, elementOrHash.elementID: 4638358528.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.417 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4650958848.38 (AX element pid: 10730, elementOrHash.elementID: 4650958848.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.608 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638357760.36 (AX element pid: 10730, elementOrHash.elementID: 4638357760.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.615 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638358528.37 (AX element pid: 10730, elementOrHash.elementID: 4638358528.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.617 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4650958848.38 (AX element pid: 10730, elementOrHash.elementID: 4650958848.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.894 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638357760.36 (AX element pid: 10730, elementOrHash.elementID: 4638357760.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.904 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638358528.37 (AX element pid: 10730, elementOrHash.elementID: 4638358528.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.914 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4650958848.38 (AX element pid: 10730, elementOrHash.elementID: 4650958848.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:45.959 E  GlassPlayer[10730:8af2] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:15:45.959 E  GlassPlayer[10730:8af2] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:15:46.214 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638357760.36 (AX element pid: 10730, elementOrHash.elementID: 4638357760.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:46.217 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638358528.37 (AX element pid: 10730, elementOrHash.elementID: 4638358528.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:46.221 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4650958848.38 (AX element pid: 10730, elementOrHash.elementID: 4650958848.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:46.683 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638357760.36 (AX element pid: 10730, elementOrHash.elementID: 4638357760.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:46.691 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4638358528.37 (AX element pid: 10730, elementOrHash.elementID: 4638358528.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:46.694 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 4650958848.38 (AX element pid: 10730, elementOrHash.elementID: 4650958848.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:15:47.586 E  GlassPlayer[10730:8af2] (5827BB56-52E1-3D0B-AC02-7A3201246563) <compose failure [shared UUID]>
+2026-10-30 17:15:47.933 E  GlassPlayer[10730:8af2] (5827BB56-52E1-3D0B-AC02-7A3201246563) <compose failure [shared UUID]>
+2026-10-30 17:15:48.052 E  GlassPlayer[10730:9478] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-10-30 17:15:48.276 F  GlassPlayer[10730:8b68] [com.apple.defaults:User Defaults] <compose failure [shared UUID]>
+2026-10-30 17:15:49.137 E  GlassPlayer[10730:9478] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:49.138 E  GlassPlayer[10730:9478] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:15:49.143 E  GlassPlayer[10730:9478] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:15:49.144 E  GlassPlayer[10730:9478] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:15:49.144 E  GlassPlayer[10730:9478] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:15:49.172 E  GlassPlayer[10730:8af2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:15:50.316 E  GlassPlayer[10730:9478] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:15:50.741 E  GlassPlayer[10730:9478] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:15:50.793 E  GlassPlayer[10730:8af2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:15:51.309 E  GlassPlayer[10730:9478] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:51.309 E  GlassPlayer[10730:9478] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:51.369 E  GlassPlayer[10730:9478] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:15:52.121 E  GlassPlayer[10730:8af2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:16:02.692 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492462080.60 (AX element pid: 10730, elementOrHash.elementID: 5492462080.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.693 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492465920.61 (AX element pid: 10730, elementOrHash.elementID: 5492465920.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.694 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492466688.62 (AX element pid: 10730, elementOrHash.elementID: 5492466688.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.785 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492462080.60 (AX element pid: 10730, elementOrHash.elementID: 5492462080.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.786 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492465920.61 (AX element pid: 10730, elementOrHash.elementID: 5492465920.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.787 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492466688.62 (AX element pid: 10730, elementOrHash.elementID: 5492466688.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.884 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492462080.60 (AX element pid: 10730, elementOrHash.elementID: 5492462080.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.886 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492465920.61 (AX element pid: 10730, elementOrHash.elementID: 5492465920.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.888 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492466688.62 (AX element pid: 10730, elementOrHash.elementID: 5492466688.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.957 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492462080.60 (AX element pid: 10730, elementOrHash.elementID: 5492462080.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.958 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492465920.61 (AX element pid: 10730, elementOrHash.elementID: 5492465920.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:02.959 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492466688.62 (AX element pid: 10730, elementOrHash.elementID: 5492466688.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.046 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492462080.60 (AX element pid: 10730, elementOrHash.elementID: 5492462080.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.047 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492465920.61 (AX element pid: 10730, elementOrHash.elementID: 5492465920.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.048 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492466688.62 (AX element pid: 10730, elementOrHash.elementID: 5492466688.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.116 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492462080.60 (AX element pid: 10730, elementOrHash.elementID: 5492462080.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.117 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492465920.61 (AX element pid: 10730, elementOrHash.elementID: 5492465920.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.117 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492466688.62 (AX element pid: 10730, elementOrHash.elementID: 5492466688.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.193 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492462080.60 (AX element pid: 10730, elementOrHash.elementID: 5492462080.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.194 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492465920.61 (AX element pid: 10730, elementOrHash.elementID: 5492465920.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.199 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492466688.62 (AX element pid: 10730, elementOrHash.elementID: 5492466688.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.278 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492462080.60 (AX element pid: 10730, elementOrHash.elementID: 5492462080.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.279 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492465920.61 (AX element pid: 10730, elementOrHash.elementID: 5492465920.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.280 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492466688.62 (AX element pid: 10730, elementOrHash.elementID: 5492466688.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.477 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492462080.60 (AX element pid: 10730, elementOrHash.elementID: 5492462080.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.478 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492465920.61 (AX element pid: 10730, elementOrHash.elementID: 5492465920.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.479 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492466688.62 (AX element pid: 10730, elementOrHash.elementID: 5492466688.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.578 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492462080.60 (AX element pid: 10730, elementOrHash.elementID: 5492462080.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.579 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492465920.61 (AX element pid: 10730, elementOrHash.elementID: 5492465920.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:03.580 Df GlassPlayer[10730:8af2] [com.apple.dt.xctest:Default] AX element pid: 10730, elementOrHash.elementID: 5492466688.62 (AX element pid: 10730, elementOrHash.elementID: 5492466688.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:13.586 E  GlassPlayer[11667:9819] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:13.587 E  GlassPlayer[11667:9819] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:13.643 E  GlassPlayer[11667:98bb] [com.apple.app_launch_measurement:General] <compose failure [shared UUID]>
+2026-10-30 17:16:13.905 E  GlassPlayer[11667:9819] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-30 17:16:14.229 E  GlassPlayer[11667:9819] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:14.229 E  GlassPlayer[11667:9819] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:14.507 E  GlassPlayer[11667:9819] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-10-30 17:16:14.569 F  GlassPlayer[11667:9819] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-10-30 17:16:15.263 E  GlassPlayer[11667:98c0] [com.apple.app_launch_measurement:General] <compose failure [shared UUID]>
+2026-10-30 17:16:17.149 E  GlassPlayer[11667:98ac] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-30 17:16:17.150 E  GlassPlayer[11667:98ac] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-30 17:16:17.298 F  GlassPlayer[11667:98ac] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-30 17:16:18.490 F  GlassPlayer[11667:9819] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:16:18.495 F  GlassPlayer[11667:9819] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:16:18.587 F  GlassPlayer[11667:9819] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:16:18.653 E  GlassPlayer[11667:9819] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:18.653 E  GlassPlayer[11667:9819] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:18.655 E  GlassPlayer[11667:9819] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:18.696 E  GlassPlayer[11667:9819] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:18.696 E  GlassPlayer[11667:9819] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:18.696 E  GlassPlayer[11667:9819] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:18.697 E  GlassPlayer[11667:9819] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:18.697 E  GlassPlayer[11667:9819] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:18.698 E  GlassPlayer[11667:9819] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:18.698 E  GlassPlayer[11667:9819] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:18.770 F  GlassPlayer[11667:98b2] [com.apple.defaults:User Defaults] <compose failure [shared UUID]>
+2026-10-30 17:16:20.079 E  GlassPlayer[11667:9819] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:16:20.606 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233216.36 (AX element pid: 11667, elementOrHash.elementID: 4612233216.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:20.608 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233984.37 (AX element pid: 11667, elementOrHash.elementID: 4612233984.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:20.618 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612234752.38 (AX element pid: 11667, elementOrHash.elementID: 4612234752.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:20.915 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233216.36 (AX element pid: 11667, elementOrHash.elementID: 4612233216.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:20.918 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233984.37 (AX element pid: 11667, elementOrHash.elementID: 4612233984.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:20.920 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612234752.38 (AX element pid: 11667, elementOrHash.elementID: 4612234752.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.045 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233216.36 (AX element pid: 11667, elementOrHash.elementID: 4612233216.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.046 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233984.37 (AX element pid: 11667, elementOrHash.elementID: 4612233984.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.048 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612234752.38 (AX element pid: 11667, elementOrHash.elementID: 4612234752.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.141 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233216.36 (AX element pid: 11667, elementOrHash.elementID: 4612233216.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.142 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233984.37 (AX element pid: 11667, elementOrHash.elementID: 4612233984.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.143 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612234752.38 (AX element pid: 11667, elementOrHash.elementID: 4612234752.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.240 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233216.36 (AX element pid: 11667, elementOrHash.elementID: 4612233216.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.241 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233984.37 (AX element pid: 11667, elementOrHash.elementID: 4612233984.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.243 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612234752.38 (AX element pid: 11667, elementOrHash.elementID: 4612234752.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.352 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233216.36 (AX element pid: 11667, elementOrHash.elementID: 4612233216.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.355 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233984.37 (AX element pid: 11667, elementOrHash.elementID: 4612233984.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.356 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612234752.38 (AX element pid: 11667, elementOrHash.elementID: 4612234752.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.481 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233216.36 (AX element pid: 11667, elementOrHash.elementID: 4612233216.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.483 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233984.37 (AX element pid: 11667, elementOrHash.elementID: 4612233984.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.485 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612234752.38 (AX element pid: 11667, elementOrHash.elementID: 4612234752.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.650 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233216.36 (AX element pid: 11667, elementOrHash.elementID: 4612233216.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.651 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233984.37 (AX element pid: 11667, elementOrHash.elementID: 4612233984.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.653 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612234752.38 (AX element pid: 11667, elementOrHash.elementID: 4612234752.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.894 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233216.36 (AX element pid: 11667, elementOrHash.elementID: 4612233216.36) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.896 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612233984.37 (AX element pid: 11667, elementOrHash.elementID: 4612233984.37) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:21.897 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4612234752.38 (AX element pid: 11667, elementOrHash.elementID: 4612234752.38) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:22.743 E  GlassPlayer[11667:9e00] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:16:22.744 E  GlassPlayer[11667:9e00] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:16:24.444 E  GlassPlayer[11667:9e00] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:24.445 E  GlassPlayer[11667:9e00] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:24.446 E  GlassPlayer[11667:9e00] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:31.353 E  GlassPlayer[11667:9e00] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-10-30 17:16:31.729 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672839936.60 (AX element pid: 11667, elementOrHash.elementID: 4672839936.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:31.732 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672840704.61 (AX element pid: 11667, elementOrHash.elementID: 4672840704.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:31.733 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672841472.62 (AX element pid: 11667, elementOrHash.elementID: 4672841472.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:31.871 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672839936.60 (AX element pid: 11667, elementOrHash.elementID: 4672839936.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:31.872 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672840704.61 (AX element pid: 11667, elementOrHash.elementID: 4672840704.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:31.873 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672841472.62 (AX element pid: 11667, elementOrHash.elementID: 4672841472.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:31.972 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672839936.60 (AX element pid: 11667, elementOrHash.elementID: 4672839936.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:31.973 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672840704.61 (AX element pid: 11667, elementOrHash.elementID: 4672840704.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:31.974 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672841472.62 (AX element pid: 11667, elementOrHash.elementID: 4672841472.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.039 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672839936.60 (AX element pid: 11667, elementOrHash.elementID: 4672839936.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.040 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672840704.61 (AX element pid: 11667, elementOrHash.elementID: 4672840704.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.041 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672841472.62 (AX element pid: 11667, elementOrHash.elementID: 4672841472.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.181 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672839936.60 (AX element pid: 11667, elementOrHash.elementID: 4672839936.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.184 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672840704.61 (AX element pid: 11667, elementOrHash.elementID: 4672840704.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.189 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672841472.62 (AX element pid: 11667, elementOrHash.elementID: 4672841472.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.310 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672839936.60 (AX element pid: 11667, elementOrHash.elementID: 4672839936.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.313 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672840704.61 (AX element pid: 11667, elementOrHash.elementID: 4672840704.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.315 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672841472.62 (AX element pid: 11667, elementOrHash.elementID: 4672841472.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.399 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672839936.60 (AX element pid: 11667, elementOrHash.elementID: 4672839936.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.401 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672840704.61 (AX element pid: 11667, elementOrHash.elementID: 4672840704.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.402 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672841472.62 (AX element pid: 11667, elementOrHash.elementID: 4672841472.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.696 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672839936.60 (AX element pid: 11667, elementOrHash.elementID: 4672839936.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.700 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672840704.61 (AX element pid: 11667, elementOrHash.elementID: 4672840704.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.701 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672841472.62 (AX element pid: 11667, elementOrHash.elementID: 4672841472.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.995 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672839936.60 (AX element pid: 11667, elementOrHash.elementID: 4672839936.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.996 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672840704.61 (AX element pid: 11667, elementOrHash.elementID: 4672840704.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:32.997 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672841472.62 (AX element pid: 11667, elementOrHash.elementID: 4672841472.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:33.149 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672839936.60 (AX element pid: 11667, elementOrHash.elementID: 4672839936.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:33.150 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672840704.61 (AX element pid: 11667, elementOrHash.elementID: 4672840704.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:33.151 Df GlassPlayer[11667:9819] [com.apple.dt.xctest:Default] AX element pid: 11667, elementOrHash.elementID: 4672841472.62 (AX element pid: 11667, elementOrHash.elementID: 4672841472.62) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:40.296 E  GlassPlayer[12626:a309] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:40.297 E  GlassPlayer[12626:a309] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:40.601 E  GlassPlayer[12626:a309] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-30 17:16:40.905 E  GlassPlayer[12626:a309] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:40.906 E  GlassPlayer[12626:a309] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:41.167 E  GlassPlayer[12626:a309] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-10-30 17:16:41.192 F  GlassPlayer[12626:a309] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-10-30 17:16:43.765 E  GlassPlayer[12626:a3ef] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-30 17:16:43.765 E  GlassPlayer[12626:a3ef] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-30 17:16:43.886 F  GlassPlayer[12626:a3d6] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-30 17:16:45.250 F  GlassPlayer[12626:a309] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:16:45.258 F  GlassPlayer[12626:a309] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:16:45.348 F  GlassPlayer[12626:a309] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:16:45.384 E  GlassPlayer[12626:a309] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:45.384 E  GlassPlayer[12626:a309] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:45.385 E  GlassPlayer[12626:a309] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:45.470 E  GlassPlayer[12626:a309] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:45.470 E  GlassPlayer[12626:a309] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:45.470 E  GlassPlayer[12626:a309] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:45.482 E  GlassPlayer[12626:a309] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:45.482 E  GlassPlayer[12626:a309] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:45.486 E  GlassPlayer[12626:a309] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:45.487 E  GlassPlayer[12626:a309] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:45.511 F  GlassPlayer[12626:a3e7] [com.apple.defaults:User Defaults] <compose failure [shared UUID]>
+2026-10-30 17:16:46.765 E  GlassPlayer[12626:a309] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:16:49.572 E  GlassPlayer[12626:a85b] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:16:49.572 E  GlassPlayer[12626:a85b] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:16:50.972 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782208.59 (AX element pid: 12626, elementOrHash.elementID: 4714782208.59) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:50.973 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782976.60 (AX element pid: 12626, elementOrHash.elementID: 4714782976.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:50.974 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714784512.61 (AX element pid: 12626, elementOrHash.elementID: 4714784512.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.048 E  GlassPlayer[12626:a85b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:51.048 E  GlassPlayer[12626:a85b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:51.049 E  GlassPlayer[12626:a85b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:16:51.146 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782208.59 (AX element pid: 12626, elementOrHash.elementID: 4714782208.59) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.148 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782976.60 (AX element pid: 12626, elementOrHash.elementID: 4714782976.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.150 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714784512.61 (AX element pid: 12626, elementOrHash.elementID: 4714784512.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.279 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782208.59 (AX element pid: 12626, elementOrHash.elementID: 4714782208.59) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.280 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782976.60 (AX element pid: 12626, elementOrHash.elementID: 4714782976.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.282 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714784512.61 (AX element pid: 12626, elementOrHash.elementID: 4714784512.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.430 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782208.59 (AX element pid: 12626, elementOrHash.elementID: 4714782208.59) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.431 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782976.60 (AX element pid: 12626, elementOrHash.elementID: 4714782976.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.433 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714784512.61 (AX element pid: 12626, elementOrHash.elementID: 4714784512.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.539 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782208.59 (AX element pid: 12626, elementOrHash.elementID: 4714782208.59) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.540 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782976.60 (AX element pid: 12626, elementOrHash.elementID: 4714782976.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.541 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714784512.61 (AX element pid: 12626, elementOrHash.elementID: 4714784512.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.649 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782208.59 (AX element pid: 12626, elementOrHash.elementID: 4714782208.59) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.652 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782976.60 (AX element pid: 12626, elementOrHash.elementID: 4714782976.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.652 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714784512.61 (AX element pid: 12626, elementOrHash.elementID: 4714784512.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.736 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782208.59 (AX element pid: 12626, elementOrHash.elementID: 4714782208.59) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.737 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782976.60 (AX element pid: 12626, elementOrHash.elementID: 4714782976.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.737 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714784512.61 (AX element pid: 12626, elementOrHash.elementID: 4714784512.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.822 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782208.59 (AX element pid: 12626, elementOrHash.elementID: 4714782208.59) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.822 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782976.60 (AX element pid: 12626, elementOrHash.elementID: 4714782976.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:51.823 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714784512.61 (AX element pid: 12626, elementOrHash.elementID: 4714784512.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:52.025 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782208.59 (AX element pid: 12626, elementOrHash.elementID: 4714782208.59) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:52.026 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714782976.60 (AX element pid: 12626, elementOrHash.elementID: 4714782976.60) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:52.027 Df GlassPlayer[12626:a309] [com.apple.dt.xctest:Default] AX element pid: 12626, elementOrHash.elementID: 4714784512.61 (AX element pid: 12626, elementOrHash.elementID: 4714784512.61) faulted in {
+    "XC_kAXXCAttributeAutomationType" = 0;
+    "XC_kAXXCAttributeElementBaseType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeElementType" = "_TtGC5UIKit22UICorePlatformViewHostGVS_32PlatformViewRepresentableAdaptorVS_30ToolbarCustomViewRepresentable__";
+    "XC_kAXXCAttributeTraits" = 8589934592;
+}: (no error) for elementType using XC_kAXXCAttributeElementType, XC_kAXXCAttributeElementBaseType, XC_kAXXCAttributeTraits, XC_kAXXCAttributeAutomationType
+2026-10-30 17:16:59.191 E  GlassPlayer[13265:aa46] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:59.191 E  GlassPlayer[13265:aa46] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:59.399 E  GlassPlayer[13265:aa46] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-10-30 17:16:59.721 E  GlassPlayer[13265:aa46] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:59.722 E  GlassPlayer[13265:aa46] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-10-30 17:16:59.917 E  GlassPlayer[13265:aa46] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-10-30 17:16:59.985 F  GlassPlayer[13265:aa46] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-10-30 17:17:02.500 F  GlassPlayer[13265:aa7c] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-10-30 17:17:02.801 E  GlassPlayer[13265:aa7d] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-30 17:17:02.801 E  GlassPlayer[13265:aa7d] [com.apple.network:connection] <compose failure [shared UUID]>
+2026-10-30 17:17:04.012 F  GlassPlayer[13265:aa46] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:17:04.044 F  GlassPlayer[13265:aa46] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:17:04.172 F  GlassPlayer[13265:aa46] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-10-30 17:17:04.225 E  GlassPlayer[13265:aa46] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:04.225 E  GlassPlayer[13265:aa46] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:04.226 E  GlassPlayer[13265:aa46] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:04.255 E  GlassPlayer[13265:aa46] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:04.255 E  GlassPlayer[13265:aa46] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:04.256 E  GlassPlayer[13265:aa46] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:04.256 E  GlassPlayer[13265:aa46] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:04.256 E  GlassPlayer[13265:aa46] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:04.257 E  GlassPlayer[13265:aa46] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:04.257 E  GlassPlayer[13265:aa46] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:04.353 F  GlassPlayer[13265:aa6e] [com.apple.defaults:User Defaults] <compose failure [shared UUID]>
+2026-10-30 17:17:06.327 E  GlassPlayer[13265:aa46] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:17:08.694 E  GlassPlayer[13265:ad9b] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:17:08.695 E  GlassPlayer[13265:ad9b] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-10-30 17:17:10.179 E  GlassPlayer[13265:ad9b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:10.179 E  GlassPlayer[13265:ad9b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:10.180 E  GlassPlayer[13265:ad9b] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-10-30 17:17:17.877 E  GlassPlayer[13265:ad9b] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>

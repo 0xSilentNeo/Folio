@@ -1,0 +1,454 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0 -derivedDataPath build "-only-testing:GlassPlayerUITests/PlayerLockUITests"
+
+2026-10-30 17:15:06.008781+0000 GlassPlayerUITests-Runner[10396:34381] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-30 17:15:20.174.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-30 17:15:20.175.
+Test Suite 'PlayerLockUITests' started at 2026-10-30 17:15:20.175.
+Test Case '-[GlassPlayerUITests.PlayerLockUITests test1Portrait]' started.
+    t =     0.04s Start Test at 2026-10-30 17:15:20.212
+    t =     0.15s Set Up
+    t =     0.19s Open dev.silentneo.glassplayer
+    t =     0.19s     Launch dev.silentneo.glassplayer
+2026-10-30 17:15:21.237 xcodebuild[10040:33410] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:15:21.237 xcodebuild[10040:33410] [MT] IDELaunchParametersSnapshot: no debugger version
+objc[10396]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.v4CseX/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x107c94398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.v4CseX/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x107dcc310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =     4.45s         Setting up automation session
+    t =    10.89s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.PlayerLockUITests test1Portrait] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    16.09s Setting device orientation to Portrait
+    t =    16.09s     Interface orientation changed to Landscape Right
+    t =    16.15s     Device orientation changed to Portrait
+    t =    16.30s     Interface orientation changed to Portrait
+    t =    16.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    17.44s Waiting 20.0s for "Lock controls" Button to exist
+    t =    18.50s     Checking `Expect predicate `existsNoRetry == 1` for object "Lock controls" Button`
+    t =    18.50s         Checking existence of `"Lock controls" Button`
+    t =    21.14s Checking existence of `"Close player" Button`
+    t =    21.20s Find the "Close player" Button
+    t =    21.33s Find the "xmark" Button
+    t =    21.55s Find the "xmark" Button
+    t =    21.72s Find the "xmark" Button
+    t =    21.89s Find the "xmark" Button
+    t =    22.09s Checking existence of `"Lock controls" Button`
+    t =    22.18s Find the "Lock controls" Button
+    t =    22.31s Find the "lockButton" Button
+    t =    22.49s Find the "lockButton" Button
+    t =    22.55s Find the "lockButton" Button
+    t =    22.95s Find the "lockButton" Button
+    t =    23.21s Checking existence of `"lockPill" Button`
+    t =    23.64s Checking existence of `"Picture in Picture" Button`
+    t =    24.13s Checking existence of `"Now Playing" Button`
+    t =    24.72s Find the "Now Playing" Button
+    t =    25.01s Find the "Now Playing" Button
+    t =    25.34s Find the "Now Playing" Button
+    t =    25.52s Find the "Now Playing" Button
+    t =    25.84s Find the "Now Playing" Button
+LAB 8.75 portrait: unlocked: close (16, 67, 44, 44), lock (342, 67, 44, 44), pill gone, PiP gone, Now Playing (343, 789, 38, 38)
+    t =    26.19s Checking existence of `"xmark" Button`
+    t =    26.23s Find the "xmark" Button
+    t =    26.29s Checking existence of `"Picture in Picture" Button`
+    t =    26.57s Tap "Lock controls" Button
+    t =    26.57s     Wait for dev.silentneo.glassplayer to idle
+    t =    26.58s     Find the "Lock controls" Button
+    t =    26.63s     Check for interrupting elements affecting "lockButton" Button
+    t =    26.71s     Synthesize event
+    t =    27.38s     Wait for dev.silentneo.glassplayer to idle
+LAB 12.66 portrait: lock tapped
+    t =    30.24s Checking existence of `"Close player" Button`
+    t =    31.28s Find the "Close player" Button
+    t =    31.36s Find the "xmark" Button
+    t =    31.57s Find the "xmark" Button
+    t =    32.06s Find the "xmark" Button
+    t =    32.16s Find the "xmark" Button
+    t =    32.52s Checking existence of `"Lock controls" Button`
+    t =    32.88s Checking existence of `"lockPill" Button`
+    t =    33.00s Find the "lockPill" Button
+    t =    33.07s Find the "lockPill" Button
+    t =    33.28s Find the "lockPill" Button
+    t =    33.42s Find the "lockPill" Button
+    t =    33.54s Find the "lockPill" Button
+    t =    33.59s Checking existence of `"Picture in Picture" Button`
+    t =    33.63s Checking existence of `"Now Playing" Button`
+LAB 16.23 portrait: +0.15 s: close (16, 67, 44, 44) not hittable, lock gone, pill (205, 66, 181, 46), PiP gone, Now Playing gone
+    t =    33.66s Checking existence of `"xmark" Button`
+    t =    33.69s Find the "xmark" Button
+    t =    33.71s Checking existence of `"Picture in Picture" Button`
+    t =    34.11s Checking existence of `"Close player" Button`
+    t =    34.16s Find the "Close player" Button
+    t =    34.21s Find the "xmark" Button
+    t =    34.26s Find the "xmark" Button
+    t =    34.32s Find the "xmark" Button
+    t =    34.36s Find the "xmark" Button
+    t =    34.44s Checking existence of `"Lock controls" Button`
+    t =    34.54s Checking existence of `"lockPill" Button`
+    t =    34.58s Find the "lockPill" Button
+    t =    34.67s Find the "lockPill" Button
+    t =    34.73s Find the "lockPill" Button
+    t =    34.86s Find the "lockPill" Button
+    t =    34.93s Find the "lockPill" Button
+    t =    35.05s Checking existence of `"Picture in Picture" Button`
+    t =    35.12s Checking existence of `"Now Playing" Button`
+LAB 17.77 portrait: +0.5 s: close (16, 67, 44, 44) not hittable, lock gone, pill (205, 66, 181, 46), PiP gone, Now Playing gone
+    t =    35.20s Checking existence of `"xmark" Button`
+    t =    35.24s Find the "xmark" Button
+    t =    35.28s Checking existence of `"Picture in Picture" Button`
+    t =    36.37s Checking existence of `"Close player" Button`
+    t =    36.43s Find the "Close player" Button
+    t =    36.47s Find the "xmark" Button
+    t =    36.55s Find the "xmark" Button
+    t =    36.59s Find the "xmark" Button
+    t =    36.62s Find the "xmark" Button
+    t =    36.69s Checking existence of `"Lock controls" Button`
+    t =    36.74s Checking existence of `"lockPill" Button`
+    t =    36.78s Find the "lockPill" Button
+    t =    36.83s Find the "lockPill" Button
+    t =    36.86s Find the "lockPill" Button
+    t =    36.93s Find the "lockPill" Button
+    t =    37.00s Find the "lockPill" Button
+    t =    37.05s Checking existence of `"Picture in Picture" Button`
+    t =    37.10s Checking existence of `"Now Playing" Button`
+LAB 19.76 portrait: locked: close (16, 67, 44, 44) not hittable, lock gone, pill (205, 66, 181, 46), PiP gone, Now Playing gone
+    t =    37.19s Checking existence of `"xmark" Button`
+    t =    37.21s Find the "xmark" Button
+    t =    37.24s Checking existence of `"Picture in Picture" Button`
+    t =    37.27s Find the "lockPill" Button
+    t =    37.34s Find the "Now Playing" Button
+    t =    38.40s     Find the "Now Playing" Button (retry 1)
+    t =    39.48s     Find the "Now Playing" Button (retry 2)
+    t =    39.56s Tap "lockPill" Button
+    t =    39.56s     Wait for dev.silentneo.glassplayer to idle
+    t =    39.56s     Find the "lockPill" Button
+    t =    39.63s     Check for interrupting elements affecting "lockPill" Button
+    t =    39.69s     Synthesize event
+    t =    40.03s     Wait for dev.silentneo.glassplayer to idle
+LAB 23.55 portrait: pill tapped
+    t =    42.00s Checking existence of `"Close player" Button`
+    t =    42.07s Find the "Close player" Button
+    t =    42.10s Find the "Close player" Button
+    t =    42.13s Find the "Close player" Button
+    t =    42.16s Find the "Close player" Button
+    t =    42.20s Find the "Close player" Button
+    t =    42.25s Checking existence of `"Lock controls" Button`
+    t =    42.27s Find the "Lock controls" Button
+    t =    42.30s Find the "lockButton" Button
+    t =    42.34s Find the "lockButton" Button
+    t =    42.37s Find the "lockButton" Button
+    t =    42.40s Find the "lockButton" Button
+    t =    42.43s Checking existence of `"lockPill" Button`
+    t =    42.54s Checking existence of `"Picture in Picture" Button`
+    t =    42.63s Checking existence of `"Now Playing" Button`
+    t =    42.73s Find the "Now Playing" Button
+    t =    42.80s Find the "Now Playing" Button
+    t =    42.89s Find the "Now Playing" Button
+    t =    42.96s Find the "Now Playing" Button
+    t =    43.04s Find the "Now Playing" Button
+LAB 25.73 portrait: unlocked again: close (16, 67, 44, 44), lock (342, 67, 44, 44), pill gone, PiP gone, Now Playing (343, 789, 38, 38)
+    t =    43.16s Checking existence of `"Close player" Button`
+    t =    43.20s Find the "Close player" Button
+    t =    43.23s Checking existence of `"Picture in Picture" Button`
+    t =    43.32s Find the "Lock controls" Button
+    t =    43.35s Find the "Now Playing" Button
+    t =    43.46s Tear Down
+Test Case '-[GlassPlayerUITests.PlayerLockUITests test1Portrait]' passed (43.774 seconds).
+Test Case '-[GlassPlayerUITests.PlayerLockUITests test2Landscape]' started.
+    t =     0.00s Start Test at 2026-10-30 17:16:03.988
+    t =     0.07s Set Up
+    t =     0.07s Open dev.silentneo.glassplayer
+    t =     0.07s     Launch dev.silentneo.glassplayer
+    t =     0.07s         Terminate dev.silentneo.glassplayer:10730
+2026-10-30 17:16:05.110 xcodebuild[10040:33410] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:16:05.110 xcodebuild[10040:33410] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.10s         Setting up automation session
+    t =     8.53s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.PlayerLockUITests test2Landscape] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    10.94s             Interface orientation changed to Landscape Right
+    t =    12.22s Setting device orientation to Landscape Left
+    t =    12.24s     Device orientation changed to Landscape Left
+    t =    12.25s     Wait for dev.silentneo.glassplayer to idle
+    t =    12.26s Waiting 20.0s for "Lock controls" Button to exist
+    t =    13.29s     Checking `Expect predicate `existsNoRetry == 1` for object "Lock controls" Button`
+    t =    13.29s         Checking existence of `"Lock controls" Button`
+    t =    15.86s Checking existence of `"Close player" Button`
+    t =    15.91s Find the "Close player" Button
+    t =    15.95s Find the "xmark" Button
+    t =    15.99s Find the "xmark" Button
+    t =    16.01s Find the "xmark" Button
+    t =    16.07s Find the "xmark" Button
+    t =    16.11s Checking existence of `"Lock controls" Button`
+    t =    16.14s Find the "Lock controls" Button
+    t =    16.17s Find the "lockButton" Button
+    t =    16.26s Find the "lockButton" Button
+    t =    16.34s Find the "lockButton" Button
+    t =    16.41s Find the "lockButton" Button
+    t =    16.47s Checking existence of `"lockPill" Button`
+    t =    16.73s Checking existence of `"Picture in Picture" Button`
+    t =    16.96s Checking existence of `"Now Playing" Button`
+    t =    17.07s Find the "Now Playing" Button
+    t =    17.18s Find the "Now Playing" Button
+    t =    17.28s Find the "Now Playing" Button
+    t =    17.39s Find the "Now Playing" Button
+    t =    17.53s Find the "Now Playing" Button
+LAB 5.46 landscape: unlocked: close (87, 15, 43, 44), lock (742, 15, 44, 44), pill gone, PiP gone, Now Playing (744, 325, 38, 38)
+    t =    17.72s Checking existence of `"xmark" Button`
+    t =    17.76s Find the "xmark" Button
+    t =    17.83s Checking existence of `"Picture in Picture" Button`
+    t =    17.96s Tap "Lock controls" Button
+    t =    17.96s     Wait for dev.silentneo.glassplayer to idle
+    t =    17.97s     Find the "Lock controls" Button
+    t =    18.01s     Check for interrupting elements affecting "lockButton" Button
+    t =    18.05s     Synthesize event
+    t =    18.39s     Wait for dev.silentneo.glassplayer to idle
+LAB 6.96 landscape: lock tapped
+    t =    19.37s Checking existence of `"Close player" Button`
+    t =    19.42s Find the "Close player" Button
+    t =    19.45s Find the "xmark" Button
+    t =    19.49s Find the "xmark" Button
+    t =    19.51s Find the "xmark" Button
+    t =    19.54s Find the "xmark" Button
+    t =    19.59s Checking existence of `"Lock controls" Button`
+    t =    19.63s Checking existence of `"lockPill" Button`
+    t =    19.65s Find the "lockPill" Button
+    t =    19.68s Find the "lockPill" Button
+    t =    19.73s Find the "lockPill" Button
+    t =    19.76s Find the "lockPill" Button
+    t =    19.80s Find the "lockPill" Button
+    t =    19.84s Checking existence of `"Picture in Picture" Button`
+    t =    19.91s Checking existence of `"Now Playing" Button`
+LAB 7.69 landscape: +0.15 s: close (87, 15, 43, 44) not hittable, lock gone, pill (605, 14, 181, 46), PiP gone, Now Playing gone
+    t =    19.95s Checking existence of `"xmark" Button`
+    t =    19.97s Find the "xmark" Button
+    t =    20.00s Checking existence of `"Picture in Picture" Button`
+    t =    20.42s Checking existence of `"Close player" Button`
+    t =    20.47s Find the "Close player" Button
+    t =    20.51s Find the "xmark" Button
+    t =    20.56s Find the "xmark" Button
+    t =    20.59s Find the "xmark" Button
+    t =    20.62s Find the "xmark" Button
+    t =    20.66s Checking existence of `"Lock controls" Button`
+    t =    20.76s Checking existence of `"lockPill" Button`
+    t =    20.80s Find the "lockPill" Button
+    t =    20.83s Find the "lockPill" Button
+    t =    20.91s Find the "lockPill" Button
+    t =    20.95s Find the "lockPill" Button
+    t =    21.00s Find the "lockPill" Button
+    t =    21.09s Checking existence of `"Picture in Picture" Button`
+    t =    21.13s Checking existence of `"Now Playing" Button`
+LAB 8.91 landscape: +0.5 s: close (87, 15, 43, 44) not hittable, lock gone, pill (605, 14, 181, 46), PiP gone, Now Playing gone
+    t =    21.17s Checking existence of `"xmark" Button`
+    t =    21.19s Find the "xmark" Button
+    t =    21.21s Checking existence of `"Picture in Picture" Button`
+    t =    22.27s Checking existence of `"Close player" Button`
+    t =    22.29s Find the "Close player" Button
+    t =    22.31s Find the "xmark" Button
+    t =    22.35s Find the "xmark" Button
+    t =    22.38s Find the "xmark" Button
+    t =    22.41s Find the "xmark" Button
+    t =    22.44s Checking existence of `"Lock controls" Button`
+    t =    22.48s Checking existence of `"lockPill" Button`
+    t =    22.50s Find the "lockPill" Button
+    t =    22.52s Find the "lockPill" Button
+    t =    22.55s Find the "lockPill" Button
+    t =    22.57s Find the "lockPill" Button
+    t =    22.60s Find the "lockPill" Button
+    t =    22.68s Checking existence of `"Picture in Picture" Button`
+    t =    22.74s Checking existence of `"Now Playing" Button`
+LAB 10.56 landscape: locked: close (87, 15, 43, 44) not hittable, lock gone, pill (605, 14, 181, 46), PiP gone, Now Playing gone
+    t =    22.82s Checking existence of `"xmark" Button`
+    t =    22.84s Find the "xmark" Button
+    t =    22.87s Checking existence of `"Picture in Picture" Button`
+    t =    22.90s Find the "lockPill" Button
+    t =    22.93s Find the "Now Playing" Button
+    t =    23.98s     Find the "Now Playing" Button (retry 1)
+    t =    25.02s     Find the "Now Playing" Button (retry 2)
+    t =    25.05s Tap "lockPill" Button
+    t =    25.05s     Wait for dev.silentneo.glassplayer to idle
+    t =    25.06s     Find the "lockPill" Button
+    t =    25.08s     Check for interrupting elements affecting "lockPill" Button
+    t =    25.11s     Synthesize event
+    t =    25.43s     Wait for dev.silentneo.glassplayer to idle
+LAB 13.96 landscape: pill tapped
+    t =    27.23s Checking existence of `"Close player" Button`
+    t =    27.25s Find the "Close player" Button
+    t =    27.27s Find the "Close player" Button
+    t =    27.30s Find the "Close player" Button
+    t =    27.32s Find the "Close player" Button
+    t =    27.38s Find the "Close player" Button
+    t =    27.46s Checking existence of `"Lock controls" Button`
+    t =    27.50s Find the "Lock controls" Button
+    t =    27.53s Find the "lockButton" Button
+    t =    27.56s Find the "lockButton" Button
+    t =    27.59s Find the "lockButton" Button
+    t =    27.61s Find the "lockButton" Button
+    t =    27.68s Checking existence of `"lockPill" Button`
+    t =    27.77s Checking existence of `"Picture in Picture" Button`
+    t =    27.91s Checking existence of `"Now Playing" Button`
+    t =    28.01s Find the "Now Playing" Button
+    t =    28.07s Find the "Now Playing" Button
+    t =    28.24s Find the "Now Playing" Button
+    t =    28.35s Find the "Now Playing" Button
+    t =    28.45s Find the "Now Playing" Button
+LAB 16.56 landscape: unlocked again: close (87, 15, 43, 44), lock (742, 15, 44, 44), pill gone, PiP gone, Now Playing (744, 325, 38, 38)
+    t =    28.82s Checking existence of `"Close player" Button`
+    t =    28.91s Find the "Close player" Button
+    t =    28.93s Checking existence of `"Picture in Picture" Button`
+    t =    29.03s Find the "Lock controls" Button
+    t =    29.08s Find the "Now Playing" Button
+    t =    29.23s Tear Down
+Test Case '-[GlassPlayerUITests.PlayerLockUITests test2Landscape]' passed (29.486 seconds).
+Test Case '-[GlassPlayerUITests.PlayerLockUITests test3TapMidMorph]' started.
+    t =     0.00s Start Test at 2026-10-30 17:16:33.475
+    t =     0.07s Set Up
+    t =     0.08s Open dev.silentneo.glassplayer
+    t =     0.08s     Launch dev.silentneo.glassplayer
+    t =     0.08s         Terminate dev.silentneo.glassplayer:11667
+    t =     0.35s             Interface orientation changed to Portrait
+2026-10-30 17:16:34.583 xcodebuild[10040:33410] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:16:34.583 xcodebuild[10040:33410] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.38s         Interface orientation changed to Landscape Right
+    t =     1.96s         Setting up automation session
+    t =     6.07s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.PlayerLockUITests test3TapMidMorph] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =     8.88s Setting device orientation to Portrait
+    t =     8.89s     Device orientation changed to Portrait
+    t =     9.01s     Interface orientation changed to Portrait
+    t =     9.01s     Wait for dev.silentneo.glassplayer to idle
+    t =     9.30s Waiting 20.0s for "Lock controls" Button to exist
+    t =    10.40s     Checking `Expect predicate `existsNoRetry == 1` for object "Lock controls" Button`
+    t =    10.40s         Checking existence of `"Lock controls" Button`
+    t =    13.03s Tap "Lock controls" Button
+    t =    13.03s     Wait for dev.silentneo.glassplayer to idle
+    t =    13.03s     Find the "Lock controls" Button
+    t =    13.18s     Check for interrupting elements affecting "lockButton" Button
+    t =    13.29s     Synthesize event
+    t =    13.69s     Wait for dev.silentneo.glassplayer to idle
+LAB 5.26 lock tapped
+    t =    14.69s Checking existence of `"lockPill" Button`
+    t =    14.71s Tap "lockPill" Button
+    t =    14.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    14.72s     Find the "lockPill" Button
+    t =    14.76s     Check for interrupting elements affecting "lockPill" Button
+    t =    14.80s     Synthesize event
+    t =    15.11s     Wait for dev.silentneo.glassplayer to idle
+LAB 6.61 pill tapped 0.12 s in
+    t =    16.92s Checking existence of `"Close player" Button`
+    t =    16.96s Find the "Close player" Button
+    t =    16.99s Find the "xmark" Button
+    t =    17.04s Find the "xmark" Button
+    t =    17.09s Find the "xmark" Button
+    t =    17.14s Find the "xmark" Button
+    t =    17.21s Checking existence of `"Lock controls" Button`
+    t =    17.24s Find the "Lock controls" Button
+    t =    17.27s Find the "lockButton" Button
+    t =    17.31s Find the "lockButton" Button
+    t =    17.35s Find the "lockButton" Button
+    t =    17.38s Find the "lockButton" Button
+    t =    17.42s Checking existence of `"lockPill" Button`
+    t =    17.52s Checking existence of `"Picture in Picture" Button`
+    t =    17.69s Checking existence of `"Now Playing" Button`
+    t =    17.85s Find the "Now Playing" Button
+    t =    17.99s Find the "Now Playing" Button
+    t =    18.10s Find the "Now Playing" Button
+    t =    18.20s Find the "Now Playing" Button
+    t =    18.30s Find the "Now Playing" Button
+LAB 9.09 after the second tap: close (16, 67, 44, 44), lock (342, 67, 44, 44), pill gone, PiP gone, Now Playing (343, 789, 38, 38)
+    t =    18.40s Checking existence of `"xmark" Button`
+    t =    18.42s Find the "xmark" Button
+    t =    18.45s Checking existence of `"Picture in Picture" Button`
+    t =    18.57s Find the "Lock controls" Button
+    t =    18.61s Tear Down
+Test Case '-[GlassPlayerUITests.PlayerLockUITests test3TapMidMorph]' passed (18.850 seconds).
+Test Case '-[GlassPlayerUITests.PlayerLockUITests test4AutoHide]' started.
+    t =     0.00s Start Test at 2026-10-30 17:16:52.325
+    t =     0.03s Set Up
+    t =     0.03s Open dev.silentneo.glassplayer
+    t =     0.03s     Launch dev.silentneo.glassplayer
+    t =     0.03s         Terminate dev.silentneo.glassplayer:12626
+2026-10-30 17:16:53.368 xcodebuild[10040:33410] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:16:53.368 xcodebuild[10040:33410] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.85s         Setting up automation session
+    t =     6.13s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.PlayerLockUITests test4AutoHide] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =     7.83s             Interface orientation changed to Landscape Right
+    t =     9.12s Setting device orientation to Landscape Left
+    t =     9.14s     Device orientation changed to Landscape Left
+    t =     9.15s     Wait for dev.silentneo.glassplayer to idle
+    t =     9.15s Waiting 20.0s for "Lock controls" Button to exist
+    t =    10.17s     Checking `Expect predicate `existsNoRetry == 1` for object "Lock controls" Button`
+    t =    10.17s         Checking existence of `"Lock controls" Button`
+    t =    12.46s Tap Target Application 'dev.silentneo.glassplayer'[0.50, 0.50]
+    t =    12.46s     Wait for dev.silentneo.glassplayer to idle
+    t =    12.46s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    12.50s     Check for interrupting elements affecting "Folio" Application
+    t =    12.54s     Synthesize event
+    t =    12.54s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    12.56s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    12.61s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    12.94s     Wait for dev.silentneo.glassplayer to idle
+    t =    13.94s Find the "Lock controls" Button
+    t =    14.04s Tap "Lock controls" Button
+    t =    14.04s     Wait for dev.silentneo.glassplayer to idle
+    t =    14.04s     Find the "Lock controls" Button
+    t =    14.08s     Check for interrupting elements affecting "lockButton" Button
+    t =    14.15s     Synthesize event
+    t =    14.52s     Wait for dev.silentneo.glassplayer to idle
+LAB 6.17 locked
+    t =    21.33s Checking existence of `"Close player" Button`
+    t =    21.38s Checking existence of `"Lock controls" Button`
+    t =    21.42s Checking existence of `"lockPill" Button`
+    t =    21.44s Checking existence of `"Picture in Picture" Button`
+    t =    21.48s Checking existence of `"Now Playing" Button`
+LAB 12.37 6 s later: close gone, lock gone, pill gone, PiP gone, Now Playing gone
+    t =    21.52s Checking existence of `"Close player" Button`
+    t =    21.57s Checking existence of `"Picture in Picture" Button`
+    t =    21.62s Find the "lockPill" Button
+    t =    22.67s     Find the "lockPill" Button (retry 1)
+    t =    23.69s     Find the "lockPill" Button (retry 2)
+    t =    23.72s Tap Target Application 'dev.silentneo.glassplayer'[0.50, 0.50]
+    t =    23.72s     Wait for dev.silentneo.glassplayer to idle
+    t =    23.73s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    23.75s     Check for interrupting elements affecting "Folio" Application
+    t =    23.78s     Synthesize event
+    t =    23.78s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    23.79s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    23.82s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    24.12s     Wait for dev.silentneo.glassplayer to idle
+    t =    25.12s Checking existence of `"Close player" Button`
+    t =    25.14s Find the "Close player" Button
+    t =    25.17s Find the "xmark" Button
+    t =    25.19s Find the "xmark" Button
+    t =    25.22s Find the "xmark" Button
+    t =    25.24s Find the "xmark" Button
+    t =    25.28s Checking existence of `"Lock controls" Button`
+    t =    25.32s Checking existence of `"lockPill" Button`
+    t =    25.34s Find the "lockPill" Button
+    t =    25.38s Find the "lockPill" Button
+    t =    25.41s Find the "lockPill" Button
+    t =    25.43s Find the "lockPill" Button
+    t =    25.46s Find the "lockPill" Button
+    t =    25.51s Checking existence of `"Picture in Picture" Button`
+    t =    25.62s Checking existence of `"Now Playing" Button`
+LAB 16.49 after a tap on the video: close (87, 15, 43, 44) not hittable, lock gone, pill (605, 14, 181, 46), PiP gone, Now Playing gone
+    t =    25.64s Checking existence of `"xmark" Button`
+    t =    25.67s Find the "xmark" Button
+    t =    25.70s Checking existence of `"Picture in Picture" Button`
+    t =    25.74s Find the "lockPill" Button
+    t =    25.81s Tear Down
+Test Case '-[GlassPlayerUITests.PlayerLockUITests test4AutoHide]' passed (26.157 seconds).
+Test Suite 'PlayerLockUITests' passed at 2026-10-30 17:17:18.482.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 118.267 (118.307) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-30 17:17:18.492.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 118.267 (118.317) seconds
+Test Suite 'Selected tests' passed at 2026-10-30 17:17:18.495.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 118.267 (118.321) seconds
+2026-10-30 17:20:36.403 xcodebuild[10040:33410] [MT] IDETestOperationsObserverDebug: 337.551 elapsed -- Testing started completed.
+2026-10-30 17:20:36.419 xcodebuild[10040:33410] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-30 17:20:36.419 xcodebuild[10040:33410] [MT] IDETestOperationsObserverDebug: 337.562 sec, +337.562 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/Folio/Folio/build/Logs/Test/Test-GlassPlayer-2026.10.30_17-14-57-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
