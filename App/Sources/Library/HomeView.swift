@@ -272,12 +272,12 @@ struct HomeView: View {
     // MARK: Library
 
     @AppStorage("libraryView") private var libraryView = LibraryViewMode.grid.rawValue
-    @AppStorage("librarySort") private var librarySort = LibrarySort.name.rawValue
+    @AppStorage("librarySort") private var librarySort: LibrarySort = .name
     @AppStorage("librarySortAsc") private var librarySortAsc = true
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
 
     private var groups: [LibraryGroup] {
-        LibraryOrganizer.groups(local.files, sort: LibrarySort(rawValue: librarySort) ?? .name, ascending: librarySortAsc)
+        LibraryOrganizer.groups(local.files, sort: librarySort, ascending: librarySortAsc)
     }
 
     @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
@@ -306,7 +306,7 @@ struct HomeView: View {
             Text("Library").font(.title3.weight(.bold))
             Text("\(groups.count)").font(.subheadline).foregroundStyle(.secondary)
             Spacer()
-            SortMenu(sort: $librarySort, ascending: $librarySortAsc)
+            LibrarySortMenu(sort: $librarySort, ascending: $librarySortAsc)
             ViewModeMenu(mode: $libraryView)
         }
         .padding(.horizontal, margin)

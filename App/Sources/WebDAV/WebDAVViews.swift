@@ -125,23 +125,7 @@ struct ServerEditView: View {
     }
 }
 
-/// Folder sort. `recent` keeps the raw value "date" so choices saved before
-/// 1.18.1 still read back.
-enum DAVSort: String, CaseIterable, Codable {
-    case recent = "date", name, size
-    var label: String {
-        switch self {
-        case .recent: return "Recently Added"
-        case .name: return "Name"
-        case .size: return "Size"
-        }
-    }
-    /// The direction a sort starts in when you pick it: newest and largest
-    /// first, names A to Z.
-    var startsAscending: Bool { self == .name }
-}
-
-struct FolderSortPref: Codable { var sort: DAVSort; var ascending: Bool }
+struct FolderSortPref: Codable { var sort: LibrarySort; var ascending: Bool }
 
 /// The browser's order, worked out once per listing (not at every redraw).
 ///
@@ -162,7 +146,7 @@ enum DAVOrder {
         items.map { Keyed(item: $0, name: clean && $0.isMedia ? TitleParser.clean($0.name) : $0.name) }
     }
 
-    static func sorted(_ list: [Keyed], by sort: DAVSort, ascending: Bool) -> [DAVItem] {
+    static func sorted(_ list: [Keyed], by sort: LibrarySort, ascending: Bool) -> [DAVItem] {
         func byName(_ a: Keyed, _ b: Keyed) -> Bool { a.name.localizedStandardCompare(b.name) == .orderedAscending }
         /// Present values in the chosen direction, missing ones last.
         func compare<T: Comparable>(_ x: T?, _ y: T?, _ a: Keyed, _ b: Keyed) -> Bool {
@@ -203,7 +187,7 @@ struct WebDAVBrowserView: View {
     @State private var loading = true
     @State private var error: String?
     @State private var filter = ""
-    @State private var sort: DAVSort = .name
+    @State private var sort: LibrarySort = .name
     @State private var ascending = true
     @State private var prefLoaded = false
     @AppStorage(SettingsKey.cleanTitles) private var cleanTitles = true
@@ -266,26 +250,7 @@ struct WebDAVBrowserView: View {
         .refreshable { await load() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                // Only the three sorts, the current one checked.
-                Menu {
-                    Picker("Sort by", selection: sortChoice) {
-                        ForEach(DAVSort.allCases, id: \.self) { Text($0.label).tag($0) }
-                    }
-                } label: { ToolbarGlyph("line.3.horizontal.decrease.circle") }
-                .accessibilityLabel("Sort by, \(sort.label)")
-                .accessibilityIdentifier("davSortMenu")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                // Direction: one arrow that turns over, up for ascending.
-                Button {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { ascending.toggle() }
-                } label: {
-                    ToolbarGlyph("arrow.up")
-                        .rotationEffect(.degrees(ascending ? 0 : 180))
-                }
-                .accessibilityLabel(ascending ? "Ascending" : "Descending")
-                .accessibilityHint("Reverses the order")
-                .accessibilityIdentifier("davSortDirection")
+                LibrarySortMenu(sort: $sort, ascending: $ascending, inToolbar: true)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -322,18 +287,6 @@ struct WebDAVBrowserView: View {
         .onChange(of: sort) { _, _ in saveSortPref(); reorder() }
         .onChange(of: ascending) { _, _ in saveSortPref(); reorder() }
         .onChange(of: cleanTitles) { _, _ in rekey() }
-    }
-
-    /// Picking a sort starts it in its own direction (newest, largest, A to
-    /// Z); the arrow then reverses it.
-    private var sortChoice: Binding<DAVSort> {
-        Binding(get: { sort }, set: { new in
-            guard new != sort else { return }
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                sort = new
-                ascending = new.startsAscending
-            }
-        })
     }
 
     /// The listing in order, then the filters (cheap; the sort is done).

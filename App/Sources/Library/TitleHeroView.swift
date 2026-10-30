@@ -355,25 +355,6 @@ enum LibraryViewMode: String, CaseIterable {
     var icon: String { self == .grid ? "square.grid.2x2" : self == .list ? "list.bullet" : "rectangle.grid.1x2" }
 }
 
-struct SortMenu: View {
-    @Binding var sort: String
-    @Binding var ascending: Bool
-    var body: some View {
-        Menu {
-            Picker("Sort by", selection: $sort) {
-                ForEach(LibrarySort.allCases, id: \.rawValue) { Label($0.title, systemImage: $0.icon).tag($0.rawValue) }
-            }
-            Divider()
-            Button { ascending.toggle() } label: {
-                Label(ascending ? "Ascending" : "Descending", systemImage: ascending ? "arrow.up" : "arrow.down")
-            }
-        } label: {
-            Image(systemName: "arrow.up.arrow.down").font(.system(size: 13, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
-        }
-        .foregroundStyle(.primary)
-    }
-}
-
 struct ViewModeMenu: View {
     @Binding var mode: String
     var body: some View {
