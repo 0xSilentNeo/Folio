@@ -39,7 +39,12 @@ final class RealDebridSectionUITests: XCTestCase {
 
     /// The releases on screen, left to right.
     private func visible(_ app: XCUIApplication) -> [XCUIElement] {
-        app.buttons.matching(releases).allElementsBoundByIndex.filter { $0.exists && $0.isHittable }.sorted { $0.frame.minX < $1.frame.minX }
+        // By frame: isHittable fails outright on a release the lazy row has
+        // let go of (run 41084826672: "Activation point invalid").
+        let window = app.windows.firstMatch.frame
+        return app.buttons.matching(releases).allElementsBoundByIndex
+            .filter { $0.exists && !$0.frame.isEmpty && window.contains(CGPoint(x: $0.frame.midX, y: $0.frame.midY)) }
+            .sorted { $0.frame.minX < $1.frame.minX }
     }
 
     func test1Shown() {
