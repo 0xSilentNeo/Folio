@@ -18,11 +18,19 @@ enum ShotsSeed {
         UserDefaults.standard.set(true, forKey: SettingsKey.metadataFetching)
 
         // Library: three episodes and a film (copies of the bundled clip).
+        // `-shotsLibrary=N` (Home grid checks): N entries on Home — the series,
+        // the film and the folder first, then films with short and long names.
+        let homeEntries = CommandLine.arguments.first(where: { $0.hasPrefix("-shotsLibrary=") }).flatMap { Int($0.dropFirst("-shotsLibrary=".count)) } ?? 3
         guard let src = Bundle.main.url(forResource: "lab", withExtension: "mp4", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab", withExtension: "mp4") else { return }
         let dir = MPVFiles.mediaDir
+        // A set number of entries starts from an empty library (each test launch).
+        if CommandLine.arguments.contains(where: { $0.hasPrefix("-shotsLibrary=") }) { try? FileManager.default.removeItem(at: dir) }
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let files = ["Lab Show S01E01.mp4", "Lab Show S01E02.mp4", "Lab Show S01E03.mp4", "Bright Movie 2024.mp4"]
-        for n in files {
+        let files = (homeEntries >= 1 ? ["Lab Show S01E01.mp4", "Lab Show S01E02.mp4", "Lab Show S01E03.mp4"] : []) + (homeEntries >= 2 ? ["Bright Movie 2024.mp4"] : [])
+        let extras = (0..<max(0, homeEntries - 3)).map { i in
+            i % 3 == 1 ? "A Film With A Very Long Name That Keeps Going Well Past The Tile \(2001 + i).mp4" : "Extra Film \(i + 1) \(2001 + i).mp4"
+        }
+        for n in files + extras {
             let d = dir.appendingPathComponent(n)
             if !FileManager.default.fileExists(atPath: d.path) { try? FileManager.default.copyItem(at: src, to: d) }
         }
@@ -68,11 +76,13 @@ enum ShotsSeed {
         try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
         if let d = try? JSONEncoder().encode(entries) { try? d.write(to: support.appendingPathComponent("metadata.json"), options: .atomic) }
         // A folder of different titles (1.15.0 folder tile).
-        let mixed = dir.appendingPathComponent("Weekend picks", isDirectory: true)
-        try? FileManager.default.createDirectory(at: mixed, withIntermediateDirectories: true)
-        for n in ["Lab Show S01E04.mp4", "Bright Movie 2024.mp4", "Another Film 2019.mp4"] {
-            let d = mixed.appendingPathComponent(n)
-            if !FileManager.default.fileExists(atPath: d.path) { try? FileManager.default.copyItem(at: src, to: d) }
+        if homeEntries >= 3 {
+            let mixed = dir.appendingPathComponent("Weekend picks", isDirectory: true)
+            try? FileManager.default.createDirectory(at: mixed, withIntermediateDirectories: true)
+            for n in ["Lab Show S01E04.mp4", "Bright Movie 2024.mp4", "Another Film 2019.mp4"] {
+                let d = mixed.appendingPathComponent(n)
+                if !FileManager.default.fileExists(atPath: d.path) { try? FileManager.default.copyItem(at: src, to: d) }
+            }
         }
         LocalMediaStore.shared.refresh()
 
@@ -94,9 +104,11 @@ enum ShotsSeed {
         }
 
         // Continue Watching: episode 1, a third of the way in.
-        var item = MediaItem(url: dir.appendingPathComponent(files[0]).path, title: "Lab Show S01E01", source: .local)
-        item.historyKey = item.url
-        HistoryStore.shared.record(item, position: 410, duration: 1420)
+        if homeEntries >= 1 {
+            var item = MediaItem(url: dir.appendingPathComponent(files[0]).path, title: "Lab Show S01E01", source: .local)
+            item.historyKey = item.url
+            HistoryStore.shared.record(item, position: 410, duration: 1420)
+        }
 
         // Discover: the IMDb cache, with the same pictures.
         IMDbSource.seedForLab(art: (art.posterDark, art.backdropDark, art.posterBright, art.backdropBright))

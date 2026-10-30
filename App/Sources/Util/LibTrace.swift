@@ -53,6 +53,9 @@ enum LibTrace {
     static let panel = Channel("panel")
     /// The WebDAV library index: each folder listed or kept, and why.
     static let index = Channel("index")
+    /// Home's layout: the grid's width, columns and size, and where each
+    /// entry sits in it.
+    static let layout = Channel("layout")
 
     /// Milliseconds since `start`, for "… after N ms".
     static func ms(since start: CFTimeInterval) -> Int { Int((CACurrentMediaTime() - start) * 1000) }
@@ -124,4 +127,24 @@ struct ZoomProbe: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: Probe, context: Context) { uiView.id = id }
+}
+
+/// Trace (library and images): where an entry sits in Home's grid (the
+/// grid's own coordinate space, so scrolling doesn't log), each time that
+/// changes.
+struct GridProbe: ViewModifier {
+    let name: String
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if LibTrace.on {
+            content.onGeometryChange(for: CGRect.self, of: { $0.frame(in: .named(GridProbe.space)).integral }) { r in
+                LibTrace.layout.log("\(name) at (\(Int(r.minX)), \(Int(r.minY)), \(Int(r.width)), \(Int(r.height)))")
+            }
+        } else {
+            content
+        }
+    }
+
+    static let space = "homeGrid"
 }

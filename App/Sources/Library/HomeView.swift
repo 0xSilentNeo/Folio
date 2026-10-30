@@ -268,6 +268,7 @@ struct HomeView: View {
                             .frame(width: cardW)
                             .onTapGesture { ContinueQueue.play(e.item) }
                             .contextMenu { historyMenu(e) }
+                            .accessibilityIdentifier("continue:" + e.item.title)
                     }
                 }
                 .scrollTargetLayout()
@@ -368,6 +369,7 @@ struct HomeView: View {
             let style = ListTransition.current
             if let rd = realDebridSummary {
                 realDebridLink { RealDebridRow(summary: rd, detail: mode == .details) }
+                    .accessibilityIdentifier("home:Real-Debrid")
                     .padding(.horizontal, margin)
                     .padding(.vertical, mode == .details ? 6 : 2)
                     .homeRow()
@@ -388,6 +390,7 @@ struct HomeView: View {
                         }
                     }
                 })
+                .accessibilityIdentifier("home:" + g.title)
                 .padding(.horizontal, margin)
                 .padding(.vertical, mode == .details ? 6 : 2)
                 .homeRow()
@@ -404,6 +407,8 @@ struct HomeView: View {
             if let rd = realDebridSummary {
                 realDebridLink { RealDebridTile(summary: rd, poster: posters) }
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                    .modifier(GridProbe(name: "Real-Debrid"))
+                    .accessibilityIdentifier("home:Real-Debrid")
             }
             ForEach(groups) { g in
                 askToDelete(g, Group {
@@ -420,7 +425,13 @@ struct HomeView: View {
                         }
                     }
                 })
+                .modifier(GridProbe(name: g.title))
+                .accessibilityIdentifier("home:" + g.title)
             }
+        }
+        .coordinateSpace(.named(GridProbe.space))
+        .onGeometryChange(for: CGSize.self, of: { $0.size }) { size in
+            LibTrace.layout.log("grid for \(Int(width)) pt: \(cols) columns, \(groups.count + (realDebridSummary == nil ? 0 : 1)) entries, \(Int(size.width))×\(Int(size.height)) pt")
         }
         .padding(.horizontal, margin)
     }
