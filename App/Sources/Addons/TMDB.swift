@@ -87,6 +87,44 @@ enum TMDB {
         }
     }
 
+    /// One result of TMDB's combined search (/search/multi): what the
+    /// Real-Debrid library's poster matching (ReleaseMatch) scores.
+    struct SearchResult: Sendable {
+        let id: Int
+        let isMovie: Bool
+        let name: String
+        let originalName: String?
+        let year: Int?
+        let popularity: Double
+        let poster: String?
+        let isAnimation: Bool
+        let japanese: Bool
+    }
+
+    /// Films and series for `query`, in TMDB's order (the WebDAV browser
+    /// script searches /search/multi the same way, without the year).
+    static func searchMulti(_ query: String) async -> [SearchResult]? {
+        guard enabled, let obj = await get("/search/multi", ["query": query, "include_adult": "false"]),
+              let results = obj["results"] as? [[String: Any]] else { return nil }
+        return results.compactMap { r in
+            guard let id = r["id"] as? Int, let type = r["media_type"] as? String, type == "movie" || type == "tv" else { return nil }
+            let date = (r["release_date"] as? String) ?? (r["first_air_date"] as? String) ?? ""
+            return SearchResult(id: id, isMovie: type == "movie",
+                                name: (r["title"] as? String) ?? (r["name"] as? String) ?? "",
+                                originalName: (r["original_title"] as? String) ?? (r["original_name"] as? String),
+                                year: Int(date.prefix(4)), popularity: (r["popularity"] as? Double) ?? 0,
+                                poster: (r["poster_path"] as? String).map { image + "w342" + $0 },
+                                isAnimation: ((r["genre_ids"] as? [Int]) ?? []).contains(16),
+                                japanese: (r["original_language"] as? String) == "ja")
+        }
+    }
+
+    /// The IMDb id of a TMDB film or series.
+    static func imdbID(tmdb id: Int, isMovie: Bool) async -> String? {
+        guard let obj = await get("/\(isMovie ? "movie" : "tv")/\(id)/external_ids"), let imdb = obj["imdb_id"] as? String, imdb.hasPrefix("tt") else { return nil }
+        return imdb
+    }
+
     /// IMDb id for a tmdb:ID item (needed for details and streams).
     static func imdbID(for meta: MetaItem) async -> String? {
         guard meta.id.hasPrefix("tmdb:"), let num = meta.id.split(separator: ":").last else { return nil }

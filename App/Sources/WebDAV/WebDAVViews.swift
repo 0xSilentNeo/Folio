@@ -143,7 +143,11 @@ enum DAVOrder {
     struct Keyed { let item: DAVItem; let name: String }
 
     static func keyed(_ items: [DAVItem], clean: Bool) -> [Keyed] {
-        items.map { Keyed(item: $0, name: clean && $0.isMedia ? TitleParser.clean($0.name) : $0.name) }
+        items.map { i in
+            guard clean else { return Keyed(item: i, name: i.name) }
+            if i.isDirectory, let r = ReleaseName.folder(i.name) { return Keyed(item: i, name: r.titleWithYear + (r.label.map { " " + $0 } ?? "")) }
+            return Keyed(item: i, name: i.isMedia ? TitleParser.clean(i.name) : i.name)
+        }
     }
 
     static func sorted(_ list: [Keyed], by sort: LibrarySort, ascending: Bool) -> [DAVItem] {
@@ -184,6 +188,8 @@ struct WebDAVBrowserView: View {
     /// titles changes), and in the chosen order.
     @State private var keyed: [DAVOrder.Keyed] = []
     @State private var ordered: [DAVItem] = []
+    /// What each entry shows under its clean title (worked out with the keys).
+    @State private var attributeLines: [URL: [String]] = [:]
     @State private var loading = true
     @State private var error: String?
     @State private var filter = ""
@@ -207,15 +213,20 @@ struct WebDAVBrowserView: View {
             ForEach(visible) { item in
                 if item.isDirectory {
                     NavigationLink {
-                        WebDAVBrowserView(server: server, url: item.url, title: item.name)
+                        WebDAVBrowserView(server: server, url: item.url, title: cleanTitles ? ReleaseName.folder(item.name)?.title ?? item.name : item.name)
                     } label: {
-                        DAVRow(item: item, clean: cleanTitles, entry: nil)
+                        DAVRow(item: item, clean: cleanTitles, entry: nil, attributes: attributeLines[item.url] ?? [])
                     }
                     .accessibilityIdentifier("dav:" + item.name)
+                    .contextMenu {
+                        // The original name stays at hand.
+                        Button { UIPasteboard.general.string = item.name } label: { Label("Copy original name", systemImage: "doc.on.doc") }
+                        Text(item.name)
+                    }
                 } else {
                     HStack(spacing: 6) {
                         Button { open(item) } label: {
-                            DAVRow(item: item, clean: cleanTitles, entry: history.entry(forURL: item.url.absoluteString))
+                            DAVRow(item: item, clean: cleanTitles, entry: history.entry(forURL: item.url.absoluteString), attributes: attributeLines[item.url] ?? [])
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .buttonStyle(.plain)
@@ -294,13 +305,17 @@ struct WebDAVBrowserView: View {
         var list = ordered
         if onlyMedia { list = list.filter { $0.isDirectory || $0.isMedia } }
         if !filter.isEmpty {
-            list = list.filter { $0.name.localizedCaseInsensitiveContains(filter) || TitleParser.clean($0.name).localizedCaseInsensitiveContains(filter) }
+            list = list.filter { i in
+                i.name.localizedCaseInsensitiveContains(filter) || TitleParser.clean(i.name).localizedCaseInsensitiveContains(filter)
+                    || (i.isDirectory && ReleaseName.folder(i.name)?.title.localizedCaseInsensitiveContains(filter) == true)
+            }
         }
         return list
     }
 
     private func rekey() {
         keyed = DAVOrder.keyed(items, clean: cleanTitles)
+        attributeLines = DAVRow.attributeLines(items, clean: cleanTitles)
         reorder()
     }
 
@@ -365,25 +380,44 @@ struct DAVRow: View {
     let item: DAVItem
     let clean: Bool
     let entry: HistoryEntry?
+    /// With Clean titles: what tells this entry apart from the others shown
+    /// with it (ReleaseName.distinguishing) — resolution, source, HDR, group…
+    var attributes: [String] = []
     @StateObject private var thumb = ThumbLoader()
+
+    /// A release folder read with the WebDAV browser script's rules
+    /// (ReleaseName.folder); nil for folders like "torrents" or "Season 1".
+    private var release: ReleaseName? { clean && item.isDirectory ? ReleaseName.folder(item.name) : nil }
+    /// A media file read the same way (its episode title from the name).
+    private var fileRelease: ReleaseName? { clean && item.isMedia ? ReleaseName.file(item.name) : nil }
 
     var body: some View {
         HStack(spacing: 12) {
-            ZStack {
-                if item.isMedia, let img = thumb.image {
-                    Image(uiImage: img).resizable().scaledToFill()
-                        .frame(width: 72, height: 42)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            Group {
+                if let release {
+                    ReleasePoster(release: release, width: 40)
                 } else {
-                    RoundedRectangle(cornerRadius: 10).fill(item.isDirectory ? Theme.accentSoft : Theme.card)
-                        .frame(width: item.isMedia ? 72 : 40, height: item.isMedia ? 42 : 40)
-                    Image(systemName: icon).foregroundStyle(item.isDirectory ? Theme.accent : .primary.opacity(0.8))
+                    ZStack {
+                        if item.isMedia, let img = thumb.image ?? ThumbLoader.cached(key: item.url.absoluteString, points: 72) {
+                            Image(uiImage: img).resizable().scaledToFill()
+                                .frame(width: 72, height: 42)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        } else {
+                            RoundedRectangle(cornerRadius: 10).fill(item.isDirectory ? Theme.accentSoft : Theme.card)
+                                .frame(width: item.isMedia ? 72 : 40, height: item.isMedia ? 42 : 40)
+                            Image(systemName: icon).foregroundStyle(item.isDirectory ? Theme.accent : .primary.opacity(0.8))
+                        }
+                    }
+                    .frame(width: item.isMedia ? 72 : 40, height: item.isMedia ? 42 : 40)
                 }
             }
-            .frame(width: item.isMedia ? 72 : 40, height: item.isMedia ? 42 : 40)
             .onAppear { if item.isMedia && clean { thumb.load(key: item.url.absoluteString, fileURL: nil, artwork: nil, lookupName: item.name, points: 72) } }
             VStack(alignment: .leading, spacing: 3) {
                 label.font(.subheadline.weight(.medium)).lineLimit(2)
+                let details = ([release?.label, release?.year].compactMap { $0 } + attributes)
+                if !details.isEmpty {
+                    Text(details.joined(separator: " · ")).font(.caption.weight(.medium)).foregroundStyle(.secondary).lineLimit(2)
+                }
                 HStack(spacing: 6) {
                     if let size = item.size, !item.isDirectory { Text(size.byteString) }
                     if let d = item.added { Text(d, format: .dateTime.day().month().year()) }
@@ -405,23 +439,24 @@ struct DAVRow: View {
 
     /// "S2 · E1  Beast Titan", "OAD 5  Attack on Titan", "Movie 1  Guren no Yumiya".
     /// The episode number always shows (1.14.1 dropped it, and files past
-    /// season 1 showed only the show's name).
+    /// season 1 showed only the show's name). A release folder: its clean title.
     private var label: Text {
+        if let release { return Text(release.title) }
         guard item.isMedia, clean else { return Text(displayName) }
         let p = TitleParser.parse(item.name)
         let m = thumb.meta
         let tag = TitleParser.tag(p, season: m?.episodeSeason, episode: m?.episodeNumber)
         let rest: String
         if p.extra == "Movie" { rest = p.subtitle ?? m?.name ?? p.title }
-        else if let t = m?.episodeTitle { rest = t }
-        else { rest = m?.name ?? p.title }
+        else if let t = m?.episodeTitle ?? fileRelease?.episodeTitle { rest = t }
+        else { rest = m?.name ?? fileRelease?.title ?? p.title }
         guard let tag else { return Text(m?.name ?? displayName) }
         return Text("\(Text(tag).fontWeight(.bold))  \(rest)")
     }
 
     private var displayName: String {
         guard clean, !item.isDirectory, item.isMedia else { return item.name }
-        return TitleParser.clean(item.name)
+        return fileRelease?.titleWithYear ?? TitleParser.clean(item.name)
     }
 
     private var icon: String {
@@ -432,6 +467,23 @@ struct DAVRow: View {
         }
         if item.isSubtitle { return "captions.bubble" }
         return "doc"
+    }
+
+    /// With Clean titles on: what to show under each entry so none look the
+    /// same. Release folders always show their attributes (resolution,
+    /// source, HDR, DV, group, then more when two would still look alike);
+    /// files only when two would show the same title.
+    static func attributeLines(_ items: [DAVItem], clean: Bool) -> [URL: [String]] {
+        guard clean else { return [:] }
+        var out: [URL: [String]] = [:]
+        let folders = items.compactMap { i in i.isDirectory ? ReleaseName.folder(i.name).map { (i.url, $0) } : nil }
+        for (k, v) in zip(folders.map(\.0), ReleaseName.distinguishing(folders.map(\.1))) { out[k] = v }
+        let files = items.compactMap { i in i.isMedia ? ReleaseName.file(i.name).map { (i.url, $0) } : nil }
+        let alike = Dictionary(grouping: files) { [$0.1.title, $0.1.label ?? "", $0.1.year ?? ""].joined(separator: "|").lowercased() }
+        for group in alike.values where group.count > 1 {
+            for (k, v) in zip(group.map(\.0), ReleaseName.distinguishing(group.map(\.1))) { out[k] = v }
+        }
+        return out
     }
 }
 

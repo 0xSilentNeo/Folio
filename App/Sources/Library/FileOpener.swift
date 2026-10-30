@@ -282,8 +282,12 @@ final class ThumbLoader: ObservableObject {
                 // Metadata is cached on disk forever; artwork on disk too (ImageCache).
                 if let m = await MetadataService.shared.lookup(filename: lookupName) {
                     self.meta = m
+                    if art == .poster, let p = m.poster, let u = URL(string: p), m.id.hasPrefix("tt") {
+                        // Kept by IMDb id: the same poster as the Real-Debrid library's for this title.
+                        if let img = await ImageCache.shared.poster(id: m.id, url: u, maxPixel: CGFloat(pixels)) { set(img, cacheKey, from: "poster \(m.id)") }
+                    }
                     let pick = art == .poster ? (m.poster ?? m.background) : m.wideArt
-                    if (self.image == nil || preferMeta), let pick, let u = URL(string: pick) { await self.fetch(u, cacheKey) }
+                    if (self.image == nil || (preferMeta && art != .poster)), let pick, let u = URL(string: pick) { await self.fetch(u, cacheKey) }
                 }
             }
             if art == .poster, image == nil, let artwork, let u = URL(string: artwork) { await fetch(u, cacheKey) }

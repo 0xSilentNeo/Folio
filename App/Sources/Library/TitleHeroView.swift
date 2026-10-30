@@ -219,11 +219,18 @@ struct TitleHeroView: View {
                 if showRatings, let r = meta?.rating { chip("★ \(r)", strong: true) }
                 if let y = meta?.year ?? parsed.year.map(String.init) { chip(y) }
                 if let c = meta?.contentRating { chip(c) }
-                if let res = parsed.resolution { chip(res) }
+                // The release's own details, read by the one release-name parser.
+                ForEach(releaseChips, id: \.self) { chip($0) }
                 chip(file.pathExtension.uppercased())
                 if let e = entry, e.isFinished { chip("Watched") }
             }
         }
+    }
+
+    /// Resolution, source, HDR and Dolby Vision from the file's name.
+    private var releaseChips: [String] {
+        let kinds: [ReleaseName.Kind] = [.resolution, .source, .hdr, .dolbyVision]
+        return ReleaseName.file(file.lastPathComponent)?.attributes.filter { kinds.contains($0.kind) }.map(\.text) ?? parsed.resolution.map { [$0] } ?? []
     }
 
     private var episodeLabel: String? {
