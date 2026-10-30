@@ -388,7 +388,7 @@ enum IMDbSource {
                         m2!.countries = list.compactMap { $0["id"] as? String }
                     }
                     if m2!.description == nil, let plot = d["plot"] as? [String: Any], let pt = plot["plotText"] as? [String: Any], let s = pt["plainText"] as? String {
-                        m2!.description = unescape(s)
+                        m2!.description = unescape(s) as String
                     }
                     if m2!.releaseInfo == nil, let ry = d["releaseYear"] as? [String: Any], let y = ry["year"] as? Int { m2!.releaseInfo = String(y) }
                     if m2!.background == nil, let img = d["primaryVideos"] as? [String: Any], let edges = img["edges"] as? [[String: Any]],
@@ -487,8 +487,8 @@ enum IMDbSource {
                 let ep = int(d["episode"]) ?? int(numbers?["episodeNumber"])
                 let se = int(d["season"]) ?? int(numbers?["seasonNumber"]) ?? season
                 guard let ep else { return true }
-                var v = MetaVideo(id: "\(id):\(se):\(ep)", title: unescape(title), season: se, episode: ep)
-                if let original, original != title { v.originalTitle = unescape(original) }
+                var v = MetaVideo(id: "\(id):\(se):\(ep)", title: unescape(title) as String, season: se, episode: ep)
+                if let original, original != title { v.originalTitle = unescape(original) as String }
                 v.thumbnail = sized(imageURL(d["image"]) ?? imageURL(d["primaryImage"]), width: 480)
                 v.overview = unescape((d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String)
                 if let rd = d["releaseDate"] as? [String: Any], let y = rd["year"] as? Int {
