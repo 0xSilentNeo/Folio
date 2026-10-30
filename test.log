@@ -1,0 +1,247 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0 -derivedDataPath build "-only-testing:GlassPlayerUITests/EpisodeRowsUITests"
+
+2026-10-30 17:16:32.806409+0000 GlassPlayerUITests-Runner[9136:30344] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+objc[9136]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.J4sXy0/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x108094398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.J4sXy0/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x1081cc310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+Test Suite 'Selected tests' started at 2026-10-30 17:16:43.008.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-30 17:16:43.009.
+Test Suite 'EpisodeRowsUITests' started at 2026-10-30 17:16:43.009.
+Test Case '-[GlassPlayerUITests.EpisodeRowsUITests test1Default]' started.
+    t =     0.01s Start Test at 2026-10-30 17:16:43.024
+    t =     0.13s Set Up
+    t =     0.14s Open dev.silentneo.glassplayer
+    t =     0.14s     Launch dev.silentneo.glassplayer
+2026-10-30 17:16:44.719 xcodebuild[8293:28235] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:16:44.719 xcodebuild[8293:28235] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     6.56s         Setting up automation session
+    t =    14.71s         Wait for dev.silentneo.glassplayer to idle
+    t =    18.95s Setting device orientation to Portrait
+    t =    18.99s     Device orientation changed to Portrait
+    t =    19.06s     Wait for dev.silentneo.glassplayer to idle
+    t =    19.07s Waiting 20.0s for "home:Lab Show" Button to exist
+    t =    20.14s     Checking `Expect predicate `existsNoRetry == 1` for object "home:Lab Show" Button`
+    t =    20.14s         Checking existence of `"home:Lab Show" Button`
+    t =    20.71s Tap "home:Lab Show" Button
+    t =    20.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    20.72s     Find the "home:Lab Show" Button
+    t =    21.03s     Check for interrupting elements affecting "home:Lab Show" Button
+    t =    21.13s     Synthesize event
+    t =    21.70s     Wait for dev.silentneo.glassplayer to idle
+    t =    25.24s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    26.28s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    26.28s         Checking existence of `"viewModeMenu" Button`
+    t =    26.51s Tap "viewModeMenu" Button
+    t =    26.51s     Wait for dev.silentneo.glassplayer to idle
+    t =    26.51s     Find the "viewModeMenu" Button
+    t =    27.09s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    27.52s     Synthesize event
+    t =    27.92s     Wait for dev.silentneo.glassplayer to idle
+    t =    30.68s Tap "List" Button
+    t =    30.68s     Wait for dev.silentneo.glassplayer to idle
+    t =    30.68s     Find the "List" Button
+    t =    31.25s     Check for interrupting elements affecting "List" Button
+    t =    31.88s     Synthesize event
+    t =    32.34s     Wait for dev.silentneo.glassplayer to idle
+    t =    35.97s Get all elements bound by index for: Elements matching predicate 'label == "The Crossroads Where Everything We Knew Comes Apart"'
+    t =    36.41s Checking existence of `StaticText (Element at index 0)`
+    t =    36.53s Find the StaticText (Element at index 0)
+    t =    36.66s Checking existence of `StaticText (Element at index 1)`
+    t =    36.83s Find the StaticText (Element at index 1)
+    t =    36.94s Checking existence of `StaticText (Element at index 2)`
+    t =    37.04s Find the StaticText (Element at index 2)
+    t =    37.26s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    37.49s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    37.68s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    37.93s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    38.13s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    38.30s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    38.48s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    38.78s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    38.96s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    39.18s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    39.38s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    39.59s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+LAB 20.70 default text, List: 3 episode title(s) on screen at (116, 618, 257, 18) (116, 678, 257, 18) (116, 738, 257, 18)
+    t =    39.79s Swipe up Target Application 'dev.silentneo.glassplayer'
+    t =    39.79s     Wait for dev.silentneo.glassplayer to idle
+    t =    39.80s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    39.90s     Check for interrupting elements affecting "Folio" Application
+    t =    40.01s     Synthesize event
+    t =    40.47s     Wait for dev.silentneo.glassplayer to idle
+LAB 24.08 default text, List: scrolled to the episodes
+    t =    43.15s Swipe down Target Application 'dev.silentneo.glassplayer'
+    t =    43.15s     Wait for dev.silentneo.glassplayer to idle
+    t =    43.17s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    43.36s     Check for interrupting elements affecting "Folio" Application
+    t =    43.58s     Synthesize event
+    t =    44.04s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.74s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    46.80s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    46.80s         Checking existence of `"viewModeMenu" Button`
+    t =    47.06s Tap "viewModeMenu" Button
+    t =    47.06s     Wait for dev.silentneo.glassplayer to idle
+    t =    47.06s     Find the "viewModeMenu" Button
+    t =    47.49s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    47.74s     Synthesize event
+    t =    48.17s     Wait for dev.silentneo.glassplayer to idle
+    t =    50.46s Tap "Details" Button
+    t =    50.46s     Wait for dev.silentneo.glassplayer to idle
+    t =    50.46s     Find the "Details" Button
+    t =    50.61s     Check for interrupting elements affecting "Details" Button
+    t =    50.73s     Synthesize event
+    t =    51.03s     Wait for dev.silentneo.glassplayer to idle
+    t =    54.57s Get all elements bound by index for: Elements matching predicate 'label == "The Crossroads Where Everything We Knew Comes Apart"'
+    t =    54.67s Checking existence of `StaticText (Element at index 0)`
+    t =    54.77s Find the StaticText (Element at index 0)
+    t =    54.91s Checking existence of `StaticText (Element at index 1)`
+    t =    55.00s Find the StaticText (Element at index 1)
+    t =    55.12s Checking existence of `StaticText (Element at index 2)`
+    t =    55.20s Find the StaticText (Element at index 2)
+    t =    55.36s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    55.47s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    55.72s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    55.92s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    56.14s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    56.32s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    56.48s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    56.66s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+LAB 37.75 default text, Details: 2 episode title(s) on screen at (190, 620, 183, 38) (190, 734, 183, 38)
+    t =    56.82s Swipe up Target Application 'dev.silentneo.glassplayer'
+    t =    56.82s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.83s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    56.91s     Check for interrupting elements affecting "Folio" Application
+    t =    57.05s     Synthesize event
+    t =    57.54s     Wait for dev.silentneo.glassplayer to idle
+LAB 41.82 default text, Details: scrolled to the episodes
+    t =    60.91s Swipe down Target Application 'dev.silentneo.glassplayer'
+    t =    60.91s     Wait for dev.silentneo.glassplayer to idle
+    t =    60.91s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    61.03s     Check for interrupting elements affecting "Folio" Application
+    t =    61.15s     Synthesize event
+    t =    61.61s     Wait for dev.silentneo.glassplayer to idle
+    t =    63.99s Terminate dev.silentneo.glassplayer:9584
+    t =    65.02s Tear Down
+Test Case '-[GlassPlayerUITests.EpisodeRowsUITests test1Default]' passed (65.337 seconds).
+Test Case '-[GlassPlayerUITests.EpisodeRowsUITests test2LargeText]' started.
+    t =     0.00s Start Test at 2026-10-30 17:17:48.361
+    t =     0.04s Set Up
+    t =     0.04s Open dev.silentneo.glassplayer
+    t =     0.04s     Launch dev.silentneo.glassplayer
+2026-10-30 17:17:48.410 xcodebuild[8293:28235] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:17:48.410 xcodebuild[8293:28235] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     0.89s         Setting up automation session
+    t =     8.04s         Wait for dev.silentneo.glassplayer to idle
+    t =    10.89s Setting device orientation to Portrait
+    t =    10.90s     Wait for dev.silentneo.glassplayer to idle
+    t =    10.91s Waiting 20.0s for "home:Lab Show" Button to exist
+    t =    11.94s     Checking `Expect predicate `existsNoRetry == 1` for object "home:Lab Show" Button`
+    t =    11.94s         Checking existence of `"home:Lab Show" Button`
+    t =    12.53s Tap "home:Lab Show" Button
+    t =    12.53s     Wait for dev.silentneo.glassplayer to idle
+    t =    12.53s     Find the "home:Lab Show" Button
+    t =    12.80s     Check for interrupting elements affecting "home:Lab Show" Button
+    t =    12.90s     Synthesize event
+    t =    13.34s     Wait for dev.silentneo.glassplayer to idle
+    t =    16.88s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    17.92s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    17.92s         Checking existence of `"viewModeMenu" Button`
+    t =    18.09s Tap "viewModeMenu" Button
+    t =    18.09s     Wait for dev.silentneo.glassplayer to idle
+    t =    18.10s     Find the "viewModeMenu" Button
+    t =    18.25s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    18.37s     Synthesize event
+    t =    18.40s         Scroll element to visible
+    t =    18.41s         Find the "viewModeMenu" Button
+    t =    18.65s         Computed hit point {365, 654} after scrolling to visible
+    t =    18.96s     Wait for dev.silentneo.glassplayer to idle
+    t =    22.08s Tap "List" Button
+    t =    22.08s     Wait for dev.silentneo.glassplayer to idle
+    t =    22.09s     Find the "List" Button
+    t =    22.22s     Check for interrupting elements affecting "List" Button
+    t =    22.39s     Synthesize event
+    t =    22.70s     Wait for dev.silentneo.glassplayer to idle
+    t =    26.28s Get all elements bound by index for: Elements matching predicate 'label == "The Crossroads Where Everything We Knew Comes Apart"'
+    t =    26.75s Checking existence of `StaticText (Element at index 0)`
+    t =    26.92s Find the StaticText (Element at index 0)
+    t =    27.15s Checking existence of `StaticText (Element at index 1)`
+    t =    27.26s Find the StaticText (Element at index 1)
+    t =    27.44s Checking existence of `StaticText (Element at index 2)`
+    t =    27.53s Find the StaticText (Element at index 2)
+    t =    27.67s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    27.76s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    27.91s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    28.11s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+LAB 17.32 UICTContentSizeCategoryAccessibilityL, List: 1 episode title(s) on screen at (116, 724, 234, 36)
+    t =    28.23s Swipe up Target Application 'dev.silentneo.glassplayer'
+    t =    28.23s     Wait for dev.silentneo.glassplayer to idle
+    t =    28.25s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    28.32s     Check for interrupting elements affecting "Folio" Application
+    t =    28.42s     Synthesize event
+    t =    28.86s     Wait for dev.silentneo.glassplayer to idle
+LAB 21.80 UICTContentSizeCategoryAccessibilityL, List: scrolled to the episodes
+    t =    32.71s Swipe down Target Application 'dev.silentneo.glassplayer'
+    t =    32.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    32.72s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    32.81s     Check for interrupting elements affecting "Folio" Application
+    t =    32.94s     Synthesize event
+    t =    33.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    36.53s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    37.57s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    37.57s         Checking existence of `"viewModeMenu" Button`
+    t =    38.21s Tap "viewModeMenu" Button
+    t =    38.21s     Wait for dev.silentneo.glassplayer to idle
+    t =    38.22s     Find the "viewModeMenu" Button
+    t =    38.52s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    38.92s     Synthesize event
+    t =    39.39s     Wait for dev.silentneo.glassplayer to idle
+    t =    41.92s Tap "Details" Button
+    t =    41.93s     Wait for dev.silentneo.glassplayer to idle
+    t =    41.93s     Find the "Details" Button
+    t =    42.02s     Check for interrupting elements affecting "Details" Button
+    t =    42.12s     Synthesize event
+    t =    42.44s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.96s Get all elements bound by index for: Elements matching predicate 'label == "The Crossroads Where Everything We Knew Comes Apart"'
+    t =    46.08s Checking existence of `StaticText (Element at index 0)`
+    t =    46.17s Find the StaticText (Element at index 0)
+    t =    46.32s Checking existence of `StaticText (Element at index 1)`
+    t =    46.43s Find the StaticText (Element at index 1)
+    t =    46.56s Checking existence of `StaticText (Element at index 2)`
+    t =    46.71s Find the StaticText (Element at index 2)
+    t =    46.87s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    47.01s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    47.16s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+    t =    47.28s Find the "The Crossroads Where Everything We Knew Comes Apart" StaticText
+LAB 36.50 UICTContentSizeCategoryAccessibilityL, Details: 1 episode title(s) on screen at (190, 736, 176, 72)
+    t =    47.41s Swipe up Target Application 'dev.silentneo.glassplayer'
+    t =    47.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    47.42s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    47.54s     Check for interrupting elements affecting "Folio" Application
+    t =    47.67s     Synthesize event
+    t =    48.17s     Wait for dev.silentneo.glassplayer to idle
+LAB 41.36 UICTContentSizeCategoryAccessibilityL, Details: scrolled to the episodes
+    t =    52.27s Swipe down Target Application 'dev.silentneo.glassplayer'
+    t =    52.27s     Wait for dev.silentneo.glassplayer to idle
+    t =    52.27s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    52.36s     Check for interrupting elements affecting "Folio" Application
+    t =    52.47s     Synthesize event
+    t =    52.92s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.09s Terminate dev.silentneo.glassplayer:10907
+    t =    57.11s Tear Down
+Test Case '-[GlassPlayerUITests.EpisodeRowsUITests test2LargeText]' passed (57.390 seconds).
+Test Suite 'EpisodeRowsUITests' passed at 2026-10-30 17:18:45.752.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 122.726 (122.743) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-30 17:18:45.753.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 122.726 (122.744) seconds
+Test Suite 'Selected tests' passed at 2026-10-30 17:18:45.753.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 122.726 (122.746) seconds
+2026-10-30 17:18:46.494 xcodebuild[8293:28235] [MT] IDETestOperationsObserverDebug: 142.128 elapsed -- Testing started completed.
+2026-10-30 17:18:46.494 xcodebuild[8293:28235] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-30 17:18:46.494 xcodebuild[8293:28235] [MT] IDETestOperationsObserverDebug: 142.128 sec, +142.128 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/Folio/Folio/build/Logs/Test/Test-GlassPlayer-2026.10.30_17-16-23-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

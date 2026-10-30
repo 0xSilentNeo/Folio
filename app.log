@@ -1,0 +1,41 @@
+17:16:51.918 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.39 GB
+17:16:52.241 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+17:16:52.256 [lab] shots seeded
+17:16:54.130 [hang] main thread unresponsive for 2.2 s
+17:16:57.962 [scene] F1C8F445 connects (portrait)
+17:16:57.964 [scene] F1C8F445 will enter foreground (portrait)
+17:16:58.734 [app] first screen 9851 ms after process start
+17:16:58.734 [app] root view appeared (1 in this run, splash off)
+17:17:00.248 [meta] saved library metadata with its text decoded (once)
+17:17:00.274 [scene] F1C8F445 active (portrait)
+17:17:00.277 [app] active
+17:17:00.834 [app] Home: appeared 439 ms after the root view, next frame at 2091 ms, main thread free at 2100 ms
+17:17:04.519 [nav] home: open Lab Show
+17:17:04.528 [nav] home path 0 → 1: ["group(s|lab show)"]
+17:17:04.941 [nav] title page appear Lab Show S01E01.mp4
+17:17:04.963 [nav] page opening: its move started
+17:17:05.064 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+17:17:05.227 [nav] title page move: animated
+17:17:06.022 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+17:17:06.066 [nav] page opening: its move ended after 1102 ms
+17:17:30.434 [energy] cpu 31% (main 29%, com.apple.SwiftUI. 2%) mem 73 MB (0 MB left) thermal=nominal playing=no
+17:17:50.531 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.33 GB
+17:17:50.804 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+17:17:50.806 [lab] shots seeded
+17:17:52.895 [hang] main thread unresponsive for 2.4 s
+17:17:56.465 [scene] F1C8F445 connects (portrait)
+17:17:56.466 [scene] F1C8F445 will enter foreground (portrait)
+17:17:56.812 [app] first screen 8081 ms after process start
+17:17:56.812 [app] root view appeared (1 in this run, splash off)
+17:17:57.695 [scene] F1C8F445 active (portrait)
+17:17:57.702 [app] active
+17:17:58.203 [app] Home: appeared 204 ms after the root view, next frame at 1373 ms, main thread free at 1391 ms
+17:18:01.493 [nav] home: open Lab Show
+17:18:01.498 [nav] home path 0 → 1: ["group(s|lab show)"]
+17:18:01.899 [nav] title page appear Lab Show S01E01.mp4
+17:18:01.915 [nav] page opening: its move started
+17:18:02.027 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+17:18:02.356 [nav] title page move: animated
+17:18:02.927 [nav] page opening: its move ended after 1011 ms
+17:18:02.981 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+17:18:28.076 [energy] cpu 92% (main 86%, other 5%, com.apple.SwiftUI. 1%) mem 81 MB (0 MB left) thermal=nominal playing=no
