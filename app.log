@@ -1,0 +1,203 @@
+16:41:31.558 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.71 GB
+16:41:31.905 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:41:31.955 [lab] shots seeded
+16:41:33.847 [hang] main thread unresponsive for 2.3 s
+16:41:38.216 [scene] 1E2EE047 connects (portrait)
+16:41:38.218 [scene] 1E2EE047 will enter foreground (portrait)
+16:41:39.077 [app] first screen 10759 ms after process start
+16:41:39.077 [app] root view appeared (1 in this run, splash off)
+16:41:40.252 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+16:41:40.751 [meta] saved library metadata with its text decoded (once)
+16:41:40.796 [scene] 1E2EE047 active (portrait)
+16:41:40.799 [app] active
+16:41:41.346 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+16:41:41.347 [zoom] source 0|s|extra film added at (145.0, 458.0, 112.0, 167.0)
+16:41:41.348 [zoom] source 0|s|lab show added at (270.0, 458.0, 112.0, 167.0)
+16:41:41.349 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks added at (20.0, 690.0, 112.0, 168.0)
+16:41:41.361 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
+16:41:41.361 [layout] Extra Film at (125, 0, 112, 215)
+16:41:41.362 [layout] Weekend picks at (0, 232, 112, 215)
+16:41:41.362 [layout] collage space of Weekend picks at (5, 237, 102, 158)
+16:41:41.362 [layout] collage grid of Weekend picks at (5, 237, 102, 158)
+16:41:41.362 [layout] Lab Show at (250, 0, 112, 215)
+16:41:41.362 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+16:41:41.363 [image] tile Extra Film appeared (loader #3, picture none yet)
+16:41:41.363 [image] loader #3 Extra Film 1 2001.mp4|poster|504: not in memory, loading
+16:41:41.364 [image] folder tile Weekend picks appeared
+16:41:41.364 [image] loader #5 Lab Show S01E04.mp4|poster|300: not in memory, loading
+16:41:41.365 [image] loader #6 Bright Movie 2024.mp4|poster|300: not in memory, loading
+16:41:41.365 [image] loader #7 Another Film 2019.mp4|poster|300: not in memory, loading
+16:41:41.365 [image] tile Lab Show appeared (loader #4, picture none yet)
+16:41:41.366 [image] loader #4 Lab Show S01E01.mp4|poster|504: not in memory, loading
+16:41:41.366 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+16:41:41.366 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+16:41:41.443 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 1191 ms
+16:41:41.492 [app] Home: appeared 426 ms after the root view, next frame at 2401 ms, main thread free at 2415 ms
+16:41:41.537 [image] loader #4 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 170 ms
+16:41:41.540 [image] loader #6 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 174 ms
+16:41:41.547 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 180 ms
+16:41:58.794 [poster] 'Daemons of the Shadow Realm' (series): IMDb → Daemons of the Shadow Realm 2026 tt37532356 — exact name, the only one, score 4.5
+16:41:58.798 [poster] 'The Gentlemen' (series): IMDb → The Gentlemen 2024 tt13210838 — exact name, the only one, score 4.5
+16:41:58.808 [poster] 'Dune Part Two (2024)' (movie): IMDb → Dune: Part Two 2024 tt15239678 — exact name and year, score 6.5
+16:41:58.846 [poster] 'MobLand' (series): IMDb → MobLand 2025 tt31510819 — exact name, the only one, score 4.5
+16:41:58.919 [poster] 'Mashle Magic and Muscles' (series): IMDb → Mashle: Magic and Muscles 2023 tt21209804 — exact name, the only one, score 4.5
+16:41:58.984 [poster] 'Classroom of the Elite' (series): IMDb → Classroom of the Elite 2017 tt7263328 — exact name, the only one, score 4.5
+16:41:59.008 [poster] 'Severance' (series): IMDb no confident match — 2 titles with this name and no year to choose, score 4.5; placeholder
+16:42:11.247 [energy] cpu 49% (main 35%, other 14%) mem 66 MB (0 MB left) thermal=nominal playing=no
+16:42:12.685 [poster] 'Oppenheimer (2023)' (movie): IMDb → Oppenheimer 2023 tt15398776 — exact name and year, score 6.5
+16:42:12.998 [poster] 'Slow Horses' (series): IMDb → Slow Horses 2022 tt5875444 — exact name, the only one, score 4.5
+16:42:13.165 [poster] 'Frieren Beyond Journeys End' (series): IMDb → Frieren: Beyond Journey's End 2023 tt22248376 — exact name, the only one, score 4.5
+16:42:14.222 [poster] 'The Bear' (series): IMDb → The Bear 2022 tt14452776 — exact name, the only one, score 4.5
+16:42:31.069 [poster] 'Shogun (2024)' (series): IMDb → Shōgun 2024 tt2788316 — exact name and year, score 6.5
+16:42:31.573 [poster] 'Arcane' (series): IMDb → Arcane 2021 tt11126994 — exact name, the only one, score 4.5
+16:42:31.856 [poster] 'Civil War (2024)' (movie): IMDb → Civil War 2024 tt17279496 — exact name and year, score 6.5
+16:42:32.744 [poster] 'Andor' (series): IMDb → Andor 2022 tt9253284 — exact name, the only one, score 4.5
+16:42:41.265 [energy] cpu 71% (main 54%, other 17%) mem 67 MB (0 MB left) thermal=nominal playing=no
+16:42:45.417 [poster] 'Blue Eye Samurai' (series): IMDb → Blue Eye Samurai 2023 tt13309742 — exact name, the only one, score 4.5
+16:42:45.553 [poster] 'The Last of Us' (series): IMDb → The Last of Us 2023 tt3581920 — exact name, the only one, score 4.5
+16:42:45.665 [poster] 'Furiosa A Mad Max Saga (2024)' (movie): IMDb → Furiosa: A Mad Max Saga 2024 tt12037194 — exact name and year, score 6.5
+16:42:57.544 [poster] 'Pluribus' (series): IMDb → Pluribus 2025 tt22202452 — exact name, the only one, score 4.5
+16:42:58.515 [poster] 'Dandadan' (series): IMDb → Dandadan 2024 tt30217403 — exact name, the only one, score 4.5
+16:43:10.989 [energy] cpu 44% (main 32%, other 12%) mem 67 MB (0 MB left) thermal=nominal playing=no
+16:43:40.811 [energy] cpu 9% (main 9%) mem 67 MB (0 MB left) thermal=nominal playing=no
+16:44:06.181 [title] home opens webdavFolder("00000000-0000-0000-0000-00000000DEB1", "https://lab.invalid.real-debrid.com/The.Gentlemen.S01.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX/", "The.Gentlemen.S01.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX")
+16:44:06.208 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.webdavFolder("00000000-0000-0000-0000-00000000DEB1", "https://lab.invalid.real-debrid.com/The.Gentlemen.S01.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX/", "The.Gentlemen.S01.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX")]
+16:44:07.287 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 removed from the window
+16:44:07.288 [zoom] source 0|s|extra film removed from the window
+16:44:07.289 [zoom] source 0|s|lab show removed from the window
+16:44:07.289 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks removed from the window
+16:44:07.307 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 38.0, 112.0, 168.0)
+16:44:07.308 [zoom] source 0|s|extra film added at (145.0, 38.0, 112.0, 168.0)
+16:44:07.309 [zoom] source 0|s|lab show added at (270.0, 38.0, 112.0, 168.0)
+16:44:07.310 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks added at (20.0, 270.0, 112.0, 168.0)
+16:44:07.876 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 removed from the window
+16:44:07.877 [zoom] source 0|s|extra film removed from the window
+16:44:07.877 [zoom] source 0|s|lab show removed from the window
+16:44:07.877 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks removed from the window
+16:44:07.989 [image] tile Extra Film disappeared (loader #3)
+16:44:07.990 [image] folder tile Weekend picks disappeared
+16:44:07.990 [image] tile Lab Show disappeared (loader #4)
+16:44:07.991 [image] tile Bright Movie (2024) disappeared (loader #2)
+16:44:11.273 [energy] cpu 0% mem 70 MB (0 MB left) thermal=nominal playing=no
+16:44:11.678 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 added at (-101.0, 38.0, 112.0, 168.0)
+16:44:11.680 [zoom] source 0|s|extra film added at (24.0, 38.0, 112.0, 168.0)
+16:44:11.681 [zoom] source 0|s|lab show added at (149.0, 38.0, 112.0, 168.0)
+16:44:11.683 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks added at (-101.0, 270.0, 112.0, 168.0)
+16:44:11.750 [image] tile Extra Film appeared (loader #3, picture none yet)
+16:44:11.758 [image] folder tile Weekend picks appeared
+16:44:11.759 [image] tile Lab Show appeared (loader #4, picture shown)
+16:44:11.759 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+16:44:11.796 [nav] home path 1 → 0: []
+16:44:17.969 [title] home opens webdav("00000000-0000-0000-0000-00000000DEB1")
+16:44:17.977 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.webdav("00000000-0000-0000-0000-00000000DEB1")]
+16:44:18.127 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 removed from the window
+16:44:18.128 [zoom] source 0|s|extra film removed from the window
+16:44:18.128 [zoom] source 0|s|lab show removed from the window
+16:44:18.129 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks removed from the window
+16:44:18.147 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 38.0, 112.0, 168.0)
+16:44:18.148 [zoom] source 0|s|extra film added at (145.0, 38.0, 112.0, 168.0)
+16:44:18.148 [zoom] source 0|s|lab show added at (270.0, 38.0, 112.0, 168.0)
+16:44:18.148 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks added at (20.0, 270.0, 112.0, 168.0)
+16:44:18.691 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 removed from the window
+16:44:18.692 [zoom] source 0|s|extra film removed from the window
+16:44:18.692 [zoom] source 0|s|lab show removed from the window
+16:44:18.692 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks removed from the window
+16:44:18.736 [image] tile Extra Film disappeared (loader #3)
+16:44:18.736 [image] folder tile Weekend picks disappeared
+16:44:18.737 [image] tile Lab Show disappeared (loader #4)
+16:44:18.737 [image] tile Bright Movie (2024) disappeared (loader #2)
+16:44:22.295 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 added at (-101.0, 38.0, 112.0, 168.0)
+16:44:22.301 [zoom] source 0|s|extra film added at (24.0, 38.0, 112.0, 168.0)
+16:44:22.302 [zoom] source 0|s|lab show added at (149.0, 38.0, 112.0, 168.0)
+16:44:22.303 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks added at (-101.0, 270.0, 112.0, 168.0)
+16:44:22.351 [image] tile Extra Film appeared (loader #3, picture none yet)
+16:44:22.411 [image] folder tile Weekend picks appeared
+16:44:22.412 [image] tile Lab Show appeared (loader #4, picture shown)
+16:44:22.412 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+16:44:22.441 [nav] home path 1 → 0: []
+16:44:40.405 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.42 GB
+16:44:40.712 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:44:40.778 [lab] shots seeded
+16:44:42.619 [hang] main thread unresponsive for 2.3 s
+16:44:47.029 [scene] 1E2EE047 connects (portrait)
+16:44:47.030 [scene] 1E2EE047 will enter foreground (portrait)
+16:44:47.371 [app] first screen 9112 ms after process start
+16:44:47.371 [app] root view appeared (1 in this run, splash off)
+16:44:47.899 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+16:44:48.171 [scene] 1E2EE047 active (portrait)
+16:44:48.173 [app] active
+16:44:48.595 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
+16:44:48.596 [layout] Weekend picks at (0, 232, 112, 215)
+16:44:48.596 [layout] collage space of Weekend picks at (5, 237, 102, 158)
+16:44:48.596 [layout] collage grid of Weekend picks at (5, 237, 102, 158)
+16:44:48.597 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+16:44:48.597 [layout] Extra Film at (125, 0, 112, 215)
+16:44:48.597 [layout] Lab Show at (250, 0, 112, 215)
+16:44:48.597 [image] folder tile Weekend picks appeared
+16:44:48.597 [image] loader #7 Lab Show S01E04.mp4|poster|300: not in memory, loading
+16:44:48.600 [image] loader #6 Bright Movie 2024.mp4|poster|300: not in memory, loading
+16:44:48.601 [image] loader #5 Another Film 2019.mp4|poster|300: not in memory, loading
+16:44:48.601 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+16:44:48.601 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+16:44:48.602 [image] tile Extra Film appeared (loader #3, picture none yet)
+16:44:48.602 [image] loader #3 Extra Film 1 2001.mp4|poster|504: not in memory, loading
+16:44:48.603 [image] tile Lab Show appeared (loader #4, picture none yet)
+16:44:48.603 [image] loader #4 Lab Show S01E01.mp4|poster|504: not in memory, loading
+16:44:48.608 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+16:44:48.610 [zoom] source 0|s|extra film added at (145.0, 458.0, 112.0, 167.0)
+16:44:48.611 [zoom] source 0|s|lab show added at (270.0, 458.0, 112.0, 167.0)
+16:44:48.611 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks added at (20.0, 690.0, 112.0, 168.0)
+16:44:48.664 [app] Home: appeared 165 ms after the root view, next frame at 900 ms, main thread free at 1293 ms
+16:44:48.666 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 767 ms
+16:44:48.753 [image] loader #6 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 155 ms
+16:44:48.754 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 152 ms
+16:44:48.754 [image] loader #4 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 151 ms
+16:45:07.972 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.39 GB
+16:45:08.224 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:45:08.258 [lab] shots seeded
+16:45:10.219 [hang] main thread unresponsive for 2.3 s
+16:45:13.619 [scene] 1E2EE047 connects (portrait)
+16:45:13.622 [scene] 1E2EE047 will enter foreground (portrait)
+16:45:13.943 [app] first screen 8067 ms after process start
+16:45:13.943 [app] root view appeared (1 in this run, splash off)
+16:45:14.550 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+16:45:14.748 [scene] 1E2EE047 active (portrait)
+16:45:14.754 [app] active
+16:45:15.114 [app] Home: appeared 192 ms after the root view, next frame at 966 ms, main thread free at 1171 ms
+16:45:30.506 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.38 GB
+16:45:30.813 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:45:30.854 [lab] shots seeded
+16:45:32.541 [hang] main thread unresponsive for 2.1 s
+16:45:36.272 [scene] 1E2EE047 connects (portrait)
+16:45:36.273 [scene] 1E2EE047 will enter foreground (portrait)
+16:45:36.545 [app] first screen 8186 ms after process start
+16:45:36.546 [app] root view appeared (1 in this run, splash off)
+16:45:37.051 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+16:45:37.267 [scene] 1E2EE047 active (portrait)
+16:45:37.269 [app] active
+16:45:37.529 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 478 ms
+16:45:37.827 [layout] grid for 402 pt: 3 columns, 4 entries, 362×598 pt
+16:45:37.827 [layout] Bright Movie (2024) at (0, 0, 112, 290)
+16:45:37.827 [layout] Weekend picks at (0, 307, 112, 291)
+16:45:37.827 [layout] collage space of Weekend picks at (5, 312, 102, 158)
+16:45:37.828 [layout] collage grid of Weekend picks at (5, 312, 102, 158)
+16:45:37.828 [layout] Lab Show at (250, 0, 112, 290)
+16:45:37.828 [layout] Extra Film at (125, 0, 112, 290)
+16:45:37.828 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+16:45:37.828 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+16:45:37.832 [image] folder tile Weekend picks appeared
+16:45:37.832 [image] loader #7 Lab Show S01E04.mp4|poster|300: not in memory, loading
+16:45:37.832 [image] loader #6 Bright Movie 2024.mp4|poster|300: not in memory, loading
+16:45:37.832 [image] loader #5 Another Film 2019.mp4|poster|300: not in memory, loading
+16:45:37.832 [image] tile Lab Show appeared (loader #4, picture none yet)
+16:45:37.833 [image] loader #4 Lab Show S01E01.mp4|poster|504: not in memory, loading
+16:45:37.833 [image] tile Extra Film appeared (loader #3, picture none yet)
+16:45:37.833 [image] loader #3 Extra Film 1 2001.mp4|poster|504: not in memory, loading
+16:45:37.846 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 838.0, 112.0, 167.0)
+16:45:37.847 [zoom] source 0|s|extra film added at (145.0, 838.0, 112.0, 167.0)
+16:45:37.849 [zoom] source 0|s|lab show added at (270.0, 838.0, 112.0, 167.0)
+16:45:37.849 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B97FE695-370B-4015-A29B-A7D25E4157C2/Documents/Media/Weekend picks added at (20.0, 1145.0, 112.0, 168.0)
+16:45:37.900 [app] Home: appeared 158 ms after the root view, next frame at 1346 ms, main thread free at 1355 ms
+16:45:37.921 [image] loader #4 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 87 ms
+16:45:37.924 [image] loader #6 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 91 ms
+16:45:37.992 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 163 ms
