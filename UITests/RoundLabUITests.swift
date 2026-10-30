@@ -81,7 +81,7 @@ final class RoundLabUITests: XCTestCase {
         app.buttons["Now Playing"].tap()
         sleep(2)
         let window = app.windows.firstMatch.frame
-        let rows = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'S01E'")).allElementsBoundByIndex
+        let rows = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'S01E'")).allElementsBoundByIndex
             .filter { $0.exists && !$0.frame.isEmpty && window.intersects($0.frame) && $0.isHittable }
             .map { "\($0.label.prefix(6))@\(Int($0.frame.minY))" }
         mark("playing E\(start): rows on screen \(rows)")
