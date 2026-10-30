@@ -310,6 +310,11 @@ final class LibraryIndexStore: ObservableObject {
                  + "failed \(report.failed)\(report.unauthorized ? " (login refused)" : ""); \(fresh.folders.count) folders, \(files.count) media files"
                  + (report.changedWithoutSign > 0 ? "; \(report.changedWithoutSign) folder(s) changed without a new getetag/getlastmodified" : ""))
             apply(fresh, to: id)
+            // Trace: the release names, for the release-name parser's tests.
+            if LibTrace.on, let root = fresh.folders[fresh.root] {
+                let names = root.subfolders.compactMap { fresh.folders[$0]?.name }.prefix(400)
+                LibTrace.index.log("release names in the start folder (\(names.count)):\n" + names.joined(separator: "\n"))
+            }
             let url = Self.file(id)
             await Task.detached(priority: .utility) { Self.write(fresh, to: url) }.value
         }
