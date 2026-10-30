@@ -403,11 +403,6 @@ struct NowPlayingPanelContent: View {
     /// (until 1.14.1 the whole panel scrolled and the tabs went off screen).
     var pinnedHeader = false
     @State private var tab: Int
-    /// The row the list is scrolled to (scrollPosition(id:anchor:)): set to
-    /// the playing episode or current chapter before the list is first laid
-    /// out, so it opens there with no scroll animation, centred so the ones
-    /// before and after show too.
-    @State private var position: String?
     @AppStorage("screenshotSubs") private var screenshotSubs = true
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
 
@@ -416,9 +411,7 @@ struct NowPlayingPanelContent: View {
         self.ui = ui
         self.pinnedHeader = pinnedHeader
         // One file with chapters: open on Chapters.
-        let start = !model.chapters.isEmpty && model.queue.count <= 1 ? 1 : 0
-        _tab = State(initialValue: start)
-        _position = State(initialValue: Self.current(model, tab: start))
+        _tab = State(initialValue: !model.chapters.isEmpty && model.queue.count <= 1 ? 1 : 0)
     }
 
     /// The current row's id on a tab: "q<index>" (Playlist), "c<chapter>"
@@ -439,24 +432,25 @@ struct NowPlayingPanelContent: View {
             if pinnedHeader {
                 VStack(alignment: .leading, spacing: 12) {
                     header.padding(.horizontal, 16).padding(.top, 22)
-                    ScrollView {
-                        list.padding(.horizontal, 16)
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            list.padding(.horizontal, 16)
+                        }
+                        .scrollIndicators(.hidden)
+                        // Rows fade out under the tabs and at the bottom edge instead
+                        // of being cut by a hard line; at rest none is faded.
+                        .contentMargins(.vertical, 14, for: .scrollContent)
+                        .mask(edgeFade)
+                        .modifier(PanelScrollTrace(tab: tab))
+                        .onAppear {
+                            // Opening (the panel is kept between openings): on the current row, without animating.
+                            scroll(proxy, animated: false)
+                            LibTrace.panel.log("now playing opens on \(Self.current(model, tab: tab) ?? "no row") (tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), chapter \(model.currentChapter))")
+                        }
+                        .onChange(of: model.queueIndex) { _, _ in scroll(proxy, animated: true) }
+                        .onChange(of: model.currentChapter) { _, _ in scroll(proxy, animated: true) }
+                        .onChange(of: tab) { _, _ in scroll(proxy, animated: false) }
                     }
-                    .scrollIndicators(.hidden)
-                    .scrollPosition(id: $position, anchor: .center)
-                    // Rows fade out under the tabs and at the bottom edge instead
-                    // of being cut by a hard line; at rest none is faded.
-                    .contentMargins(.vertical, 14, for: .scrollContent)
-                    .mask(edgeFade)
-                    .onAppear {
-                        // The panel is kept between openings: back on the current row, without animating.
-                        var t = Transaction(); t.disablesAnimations = true
-                        withTransaction(t) { position = Self.current(model, tab: tab) }
-                        LibTrace.panel.log("now playing opens on \(position ?? "no row") (tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), chapter \(model.currentChapter))")
-                    }
-                    .onChange(of: model.queueIndex) { _, _ in follow() }
-                    .onChange(of: model.currentChapter) { _, _ in follow() }
-                    .onChange(of: tab) { _, t in position = Self.current(model, tab: t) }
                 }
             } else {
                 VStack(alignment: .leading, spacing: 12) { header; list }
@@ -465,10 +459,22 @@ struct NowPlayingPanelContent: View {
         .animation(.spring(response: 0.36, dampingFraction: 0.84), value: tab)
     }
 
+    /// The current row, centred so the ones before and after show too (the
+    /// panel is about three rows tall). Opening and switching tabs: at once.
     /// The next episode started (Up Next, auto-next) or the chapter moved on:
     /// the list follows, smoothly.
-    private func follow() {
-        withAnimation(.smooth(duration: 0.35)) { position = Self.current(model, tab: tab) }
+    ///
+    /// 1.19.0 lab run: an initial scrollPosition(id:) value left the list at
+    /// the top when the panel opened on episode 6 ("opens on q5", the row
+    /// not on screen); ScrollViewReader.scrollTo on appear moves it.
+    private func scroll(_ proxy: ScrollViewProxy, animated: Bool) {
+        guard let id = Self.current(model, tab: tab) else { return }
+        if animated {
+            withAnimation(.smooth(duration: 0.35)) { proxy.scrollTo(id, anchor: .center) }
+        } else {
+            var t = Transaction(); t.disablesAnimations = true
+            withTransaction(t) { proxy.scrollTo(id, anchor: .center) }
+        }
     }
 
     private var edgeFade: some View {
@@ -509,6 +515,7 @@ struct NowPlayingPanelContent: View {
                         model.playFromPlaylist(i)
                     }
                     .id("q\(i)")
+                    .accessibilityIdentifier("q\(i)")
                 }
             case 1:
                 if model.chapters.isEmpty { Text("No chapters").foregroundStyle(.white.opacity(0.5)).padding(.vertical, 8) }
@@ -517,6 +524,7 @@ struct NowPlayingPanelContent: View {
                         model.jump(to: ch)
                     }
                     .id("c\(ch.id)")
+                    .accessibilityIdentifier("c\(ch.id)")
                 }
             default:
                 ForEach(model.userMarkers) { m in
@@ -532,10 +540,37 @@ struct NowPlayingPanelContent: View {
                 Text("Long-press a marker to remove it.").font(.caption2).foregroundStyle(.white.opacity(0.45))
             }
         }
-        .scrollTargetLayout()          // its rows are what scrollPosition(id:) finds
         .frame(maxWidth: .infinity, alignment: .leading)
         .id("tab\(tab)")
         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
+    }
+}
+
+/// Trace (library and images): where the panel's list sits in the first
+/// 2 s after it opens or changes tab — its offset, the visible height and
+/// the content's — so a report shows whether it opened on the current row
+/// (iOS 18 and later: onScrollGeometryChange).
+private struct PanelScrollTrace: ViewModifier {
+    let tab: Int
+    @State private var since = Date()
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            if LibTrace.on {
+                content
+                    .onScrollGeometryChange(for: [Int].self, of: { g in [Int(g.contentOffset.y), Int(g.containerSize.height), Int(g.contentSize.height)] }) { _, g in
+                        guard Date().timeIntervalSince(since) < 2 else { return }
+                        LibTrace.panel.log("tab \(tab) list at y \(g[0]) of \(g[2]), \(g[1]) pt showing")
+                    }
+                    .onAppear { since = Date() }
+                    .onChange(of: tab) { _, _ in since = Date() }
+            } else {
+                content
+            }
+        } else {
+            content
+        }
     }
 }
 
@@ -559,6 +594,7 @@ struct ListRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PressStyle(scale: 0.97))
+        .accessibilityAddTraits(active ? .isSelected : [])
     }
 }
 
@@ -619,6 +655,7 @@ struct PlaylistRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PressStyle(scale: 0.97))
+        .accessibilityAddTraits(active ? .isSelected : [])
         .onAppear {
             thumb.load(key: item.historyKey ?? item.url, fileURL: item.url.hasPrefix("/") ? URL(fileURLWithPath: item.url) : nil,
                        artwork: item.artwork, lookupName: item.resolvedURL?.lastPathComponent ?? item.title, points: 64)
