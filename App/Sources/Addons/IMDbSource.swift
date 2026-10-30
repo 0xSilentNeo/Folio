@@ -137,7 +137,10 @@ enum IMDbSource {
         try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
         return d
     }
-    private static let cacheVersion = "v2|"   // bump when parsed shapes change
+    /// Bump when parsed shapes change. v3 (1.20.0): entries saved before
+    /// 1.19.0 hold undecoded HTML references ("O&#39;Hara"), and cached text
+    /// is no longer decoded on the way back — each title downloads once more.
+    private static let cacheVersion = "v3|"
     private static func cacheFile(_ key: String) -> URL {
         let h = SHA256.hash(data: Data((cacheVersion + key).utf8)).compactMap { String(format: "%02x", $0) }.joined().prefix(32)
         return dir.appendingPathComponent(String(h) + ".json")

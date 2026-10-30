@@ -62,8 +62,21 @@ enum AddonAPI {
         return s.addingPercentEncoding(withAllowedCharacters: allowed) ?? s
     }
 
-    struct CatalogResponse: Decodable { var metas: [MetaItem]? }
-    struct MetaResponse: Decodable { var meta: MetaItem? }
+    /// An addon's answer, its text's HTML references decoded (MetaItem.htmlDecoded).
+    struct CatalogResponse: Decodable {
+        var metas: [MetaItem]?
+        init(from decoder: Decoder) throws {
+            metas = try decoder.container(keyedBy: CodingKeys.self).decodeIfPresent([MetaItem].self, forKey: .metas)?.map(\.htmlDecoded)
+        }
+        enum CodingKeys: String, CodingKey { case metas }
+    }
+    struct MetaResponse: Decodable {
+        var meta: MetaItem?
+        init(from decoder: Decoder) throws {
+            meta = try decoder.container(keyedBy: CodingKeys.self).decodeIfPresent(MetaItem.self, forKey: .meta)?.htmlDecoded
+        }
+        enum CodingKeys: String, CodingKey { case meta }
+    }
     struct StreamsResponse: Decodable { var streams: [AddonStream]? }
     struct SubtitlesResponse: Decodable { var subtitles: [AddonSubtitle]? }
 
