@@ -733,13 +733,17 @@ struct MediaTile: View {
                     SizeBadge(size: sizeBadge)
                         .padding(poster ? 8 : 11)
                         .padding(.bottom, !watched && (progress ?? 0) > 0.01 ? 10 : 0)
+                        .accessibilityHidden(true)      // read after the title instead (below)
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: poster ? 12 : 16, style: .continuous))
             .zoomSource(zoom, cornerRadius: poster ? 12 : 16)
             Text(fixedTitle ?? thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(fixedSubtitle ?? (poster ? nil : thumb.meta?.episodeTitle) ?? subtitle).lineLimit(1)
+                let line = fixedSubtitle ?? (poster ? nil : thumb.meta?.episodeTitle) ?? subtitle
+                // VoiceOver: "Lab Show, 3 episodes, 83 KB" — the size badge sits
+                // on the picture, so it would otherwise be read before the title.
+                Text(line).lineLimit(1).accessibilityLabel(sizeBadge.map { "\(line), \($0.byteString)" } ?? line)
                 if let trailingNote {
                     Spacer(minLength: 0)
                     Text(trailingNote).monospacedDigit().lineLimit(1).fixedSize()
