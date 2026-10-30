@@ -381,7 +381,7 @@ struct DAVRow: View {
                 }
             }
             .frame(width: item.isMedia ? 72 : 40, height: item.isMedia ? 42 : 40)
-            .onAppear { if item.isMedia && clean { thumb.load(key: item.url.absoluteString, fileURL: nil, artwork: nil, lookupName: item.name) } }
+            .onAppear { if item.isMedia && clean { thumb.load(key: item.url.absoluteString, fileURL: nil, artwork: nil, lookupName: item.name, points: 72) } }
             VStack(alignment: .leading, spacing: 3) {
                 label.font(.subheadline.weight(.medium)).lineLimit(2)
                 HStack(spacing: 6) {

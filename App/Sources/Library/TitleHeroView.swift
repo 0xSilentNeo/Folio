@@ -374,6 +374,16 @@ struct ViewModeMenu: View {
 
 /// Files in list or details style (grid is laid out by the caller).
 struct LibraryList: View {
+    /// How big an episode's picture is in each style (points, longest side):
+    /// rows and tiles decode at it, and Home's prefetch uses the same size.
+    static func picturePoints(_ mode: LibraryViewMode) -> CGFloat {
+        switch mode {
+        case .grid: return MediaTile.points(poster: false)
+        case .details: return 150
+        case .list: return 78
+        }
+    }
+
     let files: [URL]
     let mode: LibraryViewMode
     var current: URL? = nil
@@ -538,7 +548,7 @@ struct LibraryRow: View {
         .zoomSource(zoomWholeRow ? zoom : nil, cornerRadius: detail ? 16 : 12)
         .onAppear {
             LibTrace.image.log("row \(fixedTitle ?? file.lastPathComponent) (\(mode.rawValue)) appeared (loader #\(thumb.serial), picture \(thumb.image == nil ? "none yet" : "shown"))")
-            thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide)
+            thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide, points: max(thumbW, thumbH))
         }
         .onDisappear { LibTrace.image.log("row \(fixedTitle ?? file.lastPathComponent) (\(mode.rawValue)) disappeared (loader #\(thumb.serial))") }
     }
@@ -560,8 +570,10 @@ struct LibraryRow: View {
         ZStack(alignment: .bottomLeading) {
             Color.clear.frame(width: thumbW, height: thumbH)
                 .overlay {
-                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill().blur(radius: spoilerHidden && !poster ? 12 : 0) }
-                    else { GeneratedArt(seed: file.lastPathComponent) }
+                    // A row made again (a list redrawn) has its picture from its first frame.
+                    if let img = thumb.image ?? ThumbLoader.cached(key: file.path, art: poster ? .poster : .wide, points: max(thumbW, thumbH)) {
+                        Image(uiImage: img).resizable().scaledToFill().blur(radius: spoilerHidden && !poster ? 12 : 0)
+                    } else { GeneratedArt(seed: file.lastPathComponent) }
                 }
                 .clipped()
             if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress).frame(width: thumbW, height: thumbH) }

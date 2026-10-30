@@ -621,7 +621,7 @@ struct PlaylistRow: View {
         .buttonStyle(PressStyle(scale: 0.97))
         .onAppear {
             thumb.load(key: item.historyKey ?? item.url, fileURL: item.url.hasPrefix("/") ? URL(fileURLWithPath: item.url) : nil,
-                       artwork: item.artwork, lookupName: item.resolvedURL?.lastPathComponent ?? item.title)
+                       artwork: item.artwork, lookupName: item.resolvedURL?.lastPathComponent ?? item.title, points: 64)
         }
     }
 }
