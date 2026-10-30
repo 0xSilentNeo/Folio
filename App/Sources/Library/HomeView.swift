@@ -951,7 +951,7 @@ struct FolderTile: View {
         VStack(alignment: .leading, spacing: 8) {
             Color.clear
                 .aspectRatio(poster ? 2.0 / 3.0 : 16.0 / 9.0, contentMode: .fit)
-                .overlay { FolderCollage(files: group.collageFiles, poster: poster, gap: poster ? 4 : 6, cell: poster ? 7 : 9) .padding(poster ? 5 : 7) }
+                .overlay { FolderCollage(files: group.collageFiles, poster: poster, gap: poster ? 4 : 6, cell: poster ? 7 : 9, probe: group.title) .padding(poster ? 5 : 7) }
                 .overlay(alignment: .bottomTrailing) { SizeBadge(size: group.size).padding(poster ? 8 : 11) }
                 .background(Theme.fill, in: RoundedRectangle(cornerRadius: poster ? 12 : 18, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: poster ? 12 : 18, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 0.5))
@@ -996,6 +996,9 @@ struct FolderCollage: View {
     let poster: Bool
     let gap: CGFloat
     let cell: CGFloat
+    /// Trace: the folder's name, to log where the collage's grid is drawn
+    /// against the space it was given (LibTrace.layout).
+    var probe: String? = nil
 
     var body: some View {
         let cols = [GridItem(.flexible(), spacing: gap), GridItem(.flexible(), spacing: gap)]
@@ -1010,7 +1013,9 @@ struct FolderCollage: View {
                     .clipShape(RoundedRectangle(cornerRadius: cell, style: .continuous))
                 }
             }
+            .modifier(GridProbe(name: "collage grid of \(probe ?? "?")"))
         }
+        .modifier(GridProbe(name: "collage space of \(probe ?? "?")"))
     }
 }
 
