@@ -787,18 +787,23 @@ struct LockControl: View {
         .frame(height: pill ? tune.pillHeight : 44)
     }
 
-    @ViewBuilder
+    /// The two on top of each other, right edges together, so they fade into
+    /// each other in place: side by side in the row, the leaving one kept its
+    /// space until its fade ended and the row jumped (independent review,
+    /// 1.20.0).
     private var fade: some View {
-        if locked {
-            Button(action: onUnlock) { face(pill: true).glass(cornerRadius: tune.pillHeight / 2, interactive: true) }
-                .buttonStyle(PressStyle())
-                .modifier(LockAccessibility(locked: true))
-                .transition(.opacity)
-        } else {
-            Button(action: onLock) { face(pill: false).glassCircle() }
-                .buttonStyle(PressStyle())
-                .modifier(LockAccessibility(locked: false))
-                .transition(.opacity)
+        ZStack(alignment: .trailing) {
+            if locked {
+                Button(action: onUnlock) { face(pill: true).glass(cornerRadius: tune.pillHeight / 2, interactive: true) }
+                    .buttonStyle(PressStyle())
+                    .modifier(LockAccessibility(locked: true))
+                    .transition(.opacity)
+            } else {
+                Button(action: onLock) { face(pill: false).glassCircle() }
+                    .buttonStyle(PressStyle())
+                    .modifier(LockAccessibility(locked: false))
+                    .transition(.opacity)
+            }
         }
     }
 
