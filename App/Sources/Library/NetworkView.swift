@@ -59,7 +59,7 @@ struct LocalFolderView: View {
 
     private var folders: [URL] { items.filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true } }
     private var media: [URL] { LibraryOrganizer.sorted(items.filter { TitleParser.isMedia($0.lastPathComponent) }) }
-    @AppStorage("librarySort") private var librarySort = LibrarySort.name.rawValue
+    @AppStorage("librarySort") private var librarySort: LibrarySort = .name
     @AppStorage("librarySortAsc") private var librarySortAsc = true
     @Environment(\.dismiss) private var dismiss
     @Environment(\.zoomsFromTile) private var zooms
@@ -109,7 +109,7 @@ struct LocalFolderView: View {
         .background(HomeBackdrop().ignoresSafeArea())
         .brandListBackground()
         .pageChrome(zooms: zooms, title: title, back: { dismiss() }) {
-            HStack(spacing: 6) { SortMenu(sort: $librarySort, ascending: $librarySortAsc); ViewModeMenu(mode: $libraryView) }
+            HStack(spacing: 6) { LibrarySortMenu(sort: $librarySort, ascending: $librarySortAsc); ViewModeMenu(mode: $libraryView) }
         }
         .onAppear(perform: reload)
         .refreshable { reload() }

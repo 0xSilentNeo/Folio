@@ -219,11 +219,18 @@ struct TitleHeroView: View {
                 if showRatings, let r = meta?.rating { chip("★ \(r)", strong: true) }
                 if let y = meta?.year ?? parsed.year.map(String.init) { chip(y) }
                 if let c = meta?.contentRating { chip(c) }
-                if let res = parsed.resolution { chip(res) }
+                // The release's own details, read by the one release-name parser.
+                ForEach(releaseChips, id: \.self) { chip($0) }
                 chip(file.pathExtension.uppercased())
                 if let e = entry, e.isFinished { chip("Watched") }
             }
         }
+    }
+
+    /// Resolution, source, HDR and Dolby Vision from the file's name.
+    private var releaseChips: [String] {
+        let kinds: [ReleaseName.Kind] = [.resolution, .source, .hdr, .dolbyVision]
+        return ReleaseName.file(file.lastPathComponent)?.attributes.filter { kinds.contains($0.kind) }.map(\.text) ?? parsed.resolution.map { [$0] } ?? []
     }
 
     private var episodeLabel: String? {
@@ -284,17 +291,10 @@ struct TitleHeroView: View {
         Menu {
             Button { play(file) } label: { Label("Play", systemImage: "play") }
             if siblings.count > 1 {
-                if history.isWatched(file) {
-                    Button { history.setWatched([file], false) } label: { Label("Mark this episode as unwatched", systemImage: "eye.slash") }
-                } else {
-                    Button { history.setWatched([file], true) } label: { Label("Mark this episode as watched", systemImage: "eye") }
-                }
-                Button { history.setWatched(siblings, true) } label: { Label("Mark all as watched", systemImage: "eye") }
-                Button { history.setWatched(siblings, false) } label: { Label("Mark all as unwatched", systemImage: "eye.slash") }
-            } else if history.isWatched(file) {
-                Button { history.setWatched([file], false) } label: { Label("Mark as unwatched", systemImage: "eye.slash") }
+                WatchedMenuItems(files: [file], scope: .thisEpisode)
+                WatchedMenuItems(files: siblings, scope: .all)
             } else {
-                Button { history.setWatched([file], true) } label: { Label("Mark as watched", systemImage: "eye") }
+                WatchedMenuItems(files: [file])
             }
             Button(role: .destructive) { confirmDelete = true } label: { Label("Delete file", systemImage: "trash") }
         } label: {
@@ -362,25 +362,6 @@ enum LibraryViewMode: String, CaseIterable {
     var icon: String { self == .grid ? "square.grid.2x2" : self == .list ? "list.bullet" : "rectangle.grid.1x2" }
 }
 
-struct SortMenu: View {
-    @Binding var sort: String
-    @Binding var ascending: Bool
-    var body: some View {
-        Menu {
-            Picker("Sort by", selection: $sort) {
-                ForEach(LibrarySort.allCases, id: \.rawValue) { Label($0.title, systemImage: $0.icon).tag($0.rawValue) }
-            }
-            Divider()
-            Button { ascending.toggle() } label: {
-                Label(ascending ? "Ascending" : "Descending", systemImage: ascending ? "arrow.up" : "arrow.down")
-            }
-        } label: {
-            Image(systemName: "arrow.up.arrow.down").font(.system(size: 13, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
-        }
-        .foregroundStyle(.primary)
-    }
-}
-
 struct ViewModeMenu: View {
     @Binding var mode: String
     var body: some View {
@@ -393,11 +374,23 @@ struct ViewModeMenu: View {
                 .font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
         }
         .foregroundStyle(.primary)
+        .accessibilityLabel("View, \((LibraryViewMode(rawValue: mode) ?? .grid).title)")
+        .accessibilityIdentifier("viewModeMenu")
     }
 }
 
 /// Files in list or details style (grid is laid out by the caller).
 struct LibraryList: View {
+    /// How big an episode's picture is in each style (points, longest side):
+    /// rows and tiles decode at it, and Home's prefetch uses the same size.
+    static func picturePoints(_ mode: LibraryViewMode) -> CGFloat {
+        switch mode {
+        case .grid: return MediaTile.points(poster: false)
+        case .details: return 150
+        case .list: return 78
+        }
+    }
+
     let files: [URL]
     let mode: LibraryViewMode
     var current: URL? = nil
@@ -459,11 +452,7 @@ struct LibraryList: View {
         .accessibilityIdentifier("ep:" + f.lastPathComponent)
         .contextMenu {
             Button { play(f) } label: { Label("Play", systemImage: "play") }
-            if history.isWatched(f) {
-                Button { history.setWatched([f], false) } label: { Label("Mark as unwatched", systemImage: "eye.slash") }
-            } else {
-                Button { history.setWatched([f], true) } label: { Label("Mark as watched", systemImage: "eye") }
-            }
+            WatchedMenuItems(files: [f])
             Button(role: .destructive) {
                 if let pendingDelete { pendingDelete.wrappedValue = f } else { LocalMediaStore.shared.delete(f) }
             } label: { Label("Delete", systemImage: "trash") }
@@ -485,7 +474,7 @@ struct LibraryList: View {
     }
 
     private func row(_ f: URL) -> some View {
-        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, showSize: true,
+        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, size: LibraryOrganizer.info(f).size,
                    watched: history.isWatched(f))
     }
 }
@@ -503,8 +492,10 @@ struct LibraryRow: View {
     var zoom: ZoomSource? = nil
     /// …or out of the whole row (ListTransition.row).
     var zoomWholeRow = false
-    /// The file's size at the bottom right, level with the picture's bottom edge.
-    var showSize = false
+    /// A size at the bottom right, level with the picture's bottom edge: the
+    /// file's (episode rows) or the title's, all its episodes (Home). Read
+    /// from the library scan, never worked out while drawing.
+    var size: Int64? = nil
     /// Watched (for a show's row on Home: every episode): an eye at the end.
     var watched = false
     @StateObject private var thumb = ThumbLoader()
@@ -546,11 +537,11 @@ struct LibraryRow: View {
                 Text(secondary).font(.caption).foregroundStyle(.secondary).lineLimit(detail ? 3 : 1)
             }
             Spacer(minLength: 0)
-            if showSize {
+            if let size {
                 VStack(alignment: .trailing, spacing: 0) {
                     marks.padding(.top, 4)
                     Spacer(minLength: 4)
-                    Text(LibraryOrganizer.info(file).size.byteString)
+                    Text(size.byteString)
                         .font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.secondary)
                         .lineLimit(1).fixedSize()
                 }
@@ -562,7 +553,11 @@ struct LibraryRow: View {
         .padding(detail ? 8 : 6)
         .background(rowBackground)
         .zoomSource(zoomWholeRow ? zoom : nil, cornerRadius: detail ? 16 : 12)
-        .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide) }
+        .onAppear {
+            LibTrace.image.log("row \(fixedTitle ?? file.lastPathComponent) (\(mode.rawValue)) appeared (loader #\(thumb.serial), picture \(thumb.image == nil ? "none yet" : "shown"))")
+            thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide, points: max(thumbW, thumbH))
+        }
+        .onDisappear { LibTrace.image.log("row \(fixedTitle ?? file.lastPathComponent) (\(mode.rawValue)) disappeared (loader #\(thumb.serial))") }
     }
 
     /// Top right: the eye when watched, the play mark on the highlighted row.
@@ -582,8 +577,10 @@ struct LibraryRow: View {
         ZStack(alignment: .bottomLeading) {
             Color.clear.frame(width: thumbW, height: thumbH)
                 .overlay {
-                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill().blur(radius: spoilerHidden && !poster ? 12 : 0) }
-                    else { GeneratedArt(seed: file.lastPathComponent) }
+                    // A row made again (a list redrawn) has its picture from its first frame.
+                    if let img = thumb.image ?? ThumbLoader.cached(key: file.path, art: poster ? .poster : .wide, points: max(thumbW, thumbH)) {
+                        Image(uiImage: img).resizable().scaledToFill().blur(radius: spoilerHidden && !poster ? 12 : 0)
+                    } else { GeneratedArt(seed: file.lastPathComponent) }
                 }
                 .clipped()
             if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress).frame(width: thumbW, height: thumbH) }

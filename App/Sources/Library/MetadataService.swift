@@ -49,7 +49,20 @@ actor MetadataService {
     private init() {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         file = dir.appendingPathComponent("metadata.json")
-        if let d = try? Data(contentsOf: file), let c = try? JSONDecoder().decode([String: Entry].self, from: d) { cache = c }
+        if let d = try? Data(contentsOf: file), let c = try? JSONDecoder().decode([String: Entry].self, from: d) {
+            // Saved before 1.19.0, some text still has HTML character references ("O&#39;Hara"): decoded once here.
+            cache = c.mapValues { e in Entry(meta: e.meta.map(Self.decodingEntities), date: e.date) }
+        }
+    }
+
+    private static func decodingEntities(_ m: MediaMeta) -> MediaMeta {
+        var m = m
+        m.name = m.name.decodingHTMLEntities
+        m.description = m.description?.decodingHTMLEntities
+        m.episodeTitle = m.episodeTitle?.decodingHTMLEntities
+        m.episodeOverview = m.episodeOverview?.decodingHTMLEntities
+        m.originalName = m.originalName?.decodingHTMLEntities
+        return m
     }
 
     func lookup(filename: String) async -> MediaMeta? {

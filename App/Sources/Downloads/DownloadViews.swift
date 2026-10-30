@@ -406,7 +406,7 @@ private struct PackageCard: View {
         }
         .onAppear {
             if let first = all.first(where: \.isMedia) {
-                thumb.load(key: first.url.absoluteString, fileURL: nil, artwork: nil, lookupName: first.fileName, art: .poster)
+                thumb.load(key: first.url.absoluteString, fileURL: nil, artwork: nil, lookupName: first.fileName, art: .poster, points: 48)
             }
         }
     }

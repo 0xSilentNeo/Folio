@@ -3,10 +3,16 @@ import UIKit
 import ImageIO
 import CryptoKit
 
-/// Artwork cache: memory → disk → network. Images are stored on disk as
-/// downloaded and decoded off the main thread, already downsampled to the
-/// size they're shown at, so a library full of posters appears instantly on
-/// every launch after the first (it used to re-download each one).
+/// The app's one image pipeline: memory → disk → network. Images are stored
+/// on disk as downloaded and decoded off the main thread, already
+/// downsampled to the size they're shown at, so a library full of posters
+/// appears instantly on every launch after the first (it used to
+/// re-download each one).
+///
+/// Pictures are also kept by what they show (`picture(forKey:)`): a tile
+/// that's made again — a list redrawn, a page gone back — finds its picture
+/// in the same memory at once, before any metadata lookup. Until 1.19.0
+/// ThumbLoader kept those in a second cache of its own.
 final class ImageCache: @unchecked Sendable {
     static let shared = ImageCache()
 
@@ -38,6 +44,16 @@ final class ImageCache: @unchecked Sendable {
         memory.object(forKey: memKey(url, Int(maxPixel)))
     }
 
+    /// A picture kept for what it shows (an item's key and size), in the
+    /// same memory as everything else.
+    func picture(forKey key: String) -> UIImage? { memory.object(forKey: ("item|" + key) as NSString) }
+
+    func remember(_ image: UIImage, forKey key: String) {
+        memory.setObject(image, forKey: ("item|" + key) as NSString, cost: Self.cost(image))
+    }
+
+    private static func cost(_ img: UIImage) -> Int { Int(img.size.width * img.size.height * img.scale * img.scale * 4) }
+
     func image(_ url: URL, maxPixel: CGFloat) async -> UIImage? {
         let px = Int(maxPixel)
         let mk = memKey(url, px)
@@ -61,7 +77,7 @@ final class ImageCache: @unchecked Sendable {
         lock.unlock()
         let img = await task.value
         lock.lock(); inflight[key] = nil; lock.unlock()
-        if let img { memory.setObject(img, forKey: mk, cost: Int(img.size.width * img.size.height * img.scale * img.scale * 4)) }
+        if let img { memory.setObject(img, forKey: mk, cost: Self.cost(img)) }
         return img
     }
 
@@ -78,6 +94,39 @@ final class ImageCache: @unchecked Sendable {
         guard let cg = CGImageSourceCreateThumbnailAtIndex(src, 0, opts as CFDictionary) else { return nil }
         return UIImage(cgImage: cg)
     }
+
+    /// A title's poster, kept on disk under the title's id (an IMDb id when
+    /// there is one), not its address: Home's library and the Real-Debrid
+    /// library show the same picture for the same title, whichever source
+    /// (IMDb, TMDB) brought it first.
+    func poster(id: String, url: URL, maxPixel: CGFloat) async -> UIImage? {
+        let px = Int(maxPixel)
+        let key = "poster|\(id)|\(px)"
+        if let m = picture(forKey: key) { return m }
+        lock.lock()
+        if let t = inflight[key] { lock.unlock(); return await t.value }
+        let file = dir.appendingPathComponent("poster-" + SHA256.hash(data: Data(id.utf8)).prefix(16).map { String(format: "%02x", $0) }.joined())
+        let task = Task.detached(priority: .userInitiated) { [session] () -> UIImage? in
+            var data = try? Data(contentsOf: file)
+            if data == nil {
+                guard let (d, resp) = try? await session.data(from: url),
+                      (resp as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true, !d.isEmpty else { return nil }
+                try? d.write(to: file, options: .atomic)
+                data = d
+            }
+            guard let data else { return nil }
+            return Self.downsample(data, maxPixel: maxPixel)
+        }
+        inflight[key] = task
+        lock.unlock()
+        let img = await task.value
+        lock.lock(); inflight[key] = nil; lock.unlock()
+        if let img { remember(img, forKey: key) }
+        return img
+    }
+
+    /// Already in memory (safe while building a view).
+    func cachedPoster(id: String, maxPixel: CGFloat) -> UIImage? { picture(forKey: "poster|\(id)|\(Int(maxPixel))") }
 
     /// Size in bytes of the artwork cache on disk.
     func diskSize() -> Int64 {

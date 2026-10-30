@@ -52,6 +52,7 @@ enum SettingsKey {
     static let pipReturnOnOpen = "pipReturnOnOpen"      // opening the app ends PiP, video continues in the player
     static let pipTrace = "pipTrace"                    // Diagnostics: trace PiP transitions (PiPTrace)
     static let netTrace = "netTrace"                    // Diagnostics: time every addon request (NetTrace)
+    static let libTrace = "libTrace"                    // Diagnostics: library, artwork and Discover trace (LibTrace)
 
     // Subtitles / audio
     static let subLangs = "subLangs"

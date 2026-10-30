@@ -846,6 +846,7 @@ struct DiagnosticsView: View {
     @State private var making = false
     @AppStorage(SettingsKey.pipTrace) private var pipTrace = false
     @AppStorage(SettingsKey.netTrace) private var netTrace = false
+    @AppStorage(SettingsKey.libTrace) private var libTrace = false
 
     var body: some View {
         List {
@@ -858,6 +859,11 @@ struct DiagnosticsView: View {
                 Toggle("Trace network requests", isOn: $netTrace)
             } footer: {
                 Text("Times every addon request in the app log: how long it waited to go out, the connection, and the wait for the server's answer. Requests that fail or take over 5 seconds are always logged. Addon settings and keys in the addresses are left out.")
+            }
+            Section {
+                Toggle("Trace library and images", isOn: $libTrace)
+            } footer: {
+                Text("Records in the app log how pictures load (from memory, disk or the network), where each title's tile is while a page opens and closes, Discover's provider pages and their requests, and which row the player's lists open on. Turn it on, reproduce the problem, then share a report.")
             }
             Section {
                 if let report {

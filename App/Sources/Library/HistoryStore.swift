@@ -132,14 +132,17 @@ final class HistoryStore: ObservableObject {
         (path as NSString).range(of: "/Documents/Media/").location != NSNotFound
     }
 
+    /// The item as history keeps it: WebDAV credentials live in the Keychain
+    /// and are added back at play time.
+    private static func stored(_ item: MediaItem) -> MediaItem {
+        var stored = item
+        if case .webdav = item.source { stored.headers.removeValue(forKey: "Authorization") }
+        return stored
+    }
+
     func record(_ item: MediaItem, position: Double, duration: Double) {
         guard position.isFinite, duration.isFinite else { return }
-        var stored = item
-        if case .webdav = item.source {
-            // Credentials live in the Keychain; re-added at play time.
-            stored.headers.removeValue(forKey: "Authorization")
-        }
-        let entry = HistoryEntry(item: stored, position: position, duration: duration, updated: Date())
+        let entry = HistoryEntry(item: Self.stored(item), position: position, duration: duration, updated: Date())
         if let i = entries.firstIndex(where: { $0.id == item.id }) {
             entries[i] = entry
         } else {
@@ -164,25 +167,41 @@ final class HistoryStore: ObservableObject {
     }
 
     /// Library files, played or not.
-    func isWatched(_ file: URL) -> Bool { entry(forURL: file.path)?.isFinished == true }
+    func isWatched(_ file: URL) -> Bool { isWatched(key: file.path) }
+
+    /// Any item by its history key (a library file's path, a WebDAV file's URL).
+    func isWatched(key: String) -> Bool { entry(forURL: key)?.isFinished == true }
 
     func setWatched(_ files: [URL], _ watched: Bool) {
-        for f in files {
-            if let e = entry(forURL: f.path), let i = entries.firstIndex(where: { $0.id == e.id }) {
+        setWatched(files.map(\.path), watched, item: Self.libraryItem)
+    }
+
+    /// Marks items watched (finished, also when never played) or unwatched
+    /// (their entry goes: no progress, no resume point). `item` makes the
+    /// history item for a key that has no entry yet.
+    func setWatched(_ keys: [String], _ watched: Bool, item: (String) -> MediaItem) {
+        for key in keys {
+            if let e = entry(forURL: key), let i = entries.firstIndex(where: { $0.id == e.id }) {
                 if watched {
                     entries[i].watched = true
                     entries[i].position = entries[i].duration
                     entries[i].updated = Date()
                 } else {
-                    entries.remove(at: i)            // unwatched: no progress, no resume point
+                    entries.remove(at: i)
                 }
             } else if watched {
-                var m = MediaItem(url: f.path, title: TitleParser.clean(f.lastPathComponent), source: .local)
-                m.historyKey = f.path
-                entries.append(HistoryEntry(item: m, position: 0, duration: 0, updated: Date(), watched: true))
+                entries.append(HistoryEntry(item: Self.stored(item(key)), position: 0, duration: 0, updated: Date(), watched: true))
             }
         }
         scheduleSave()
+    }
+
+    /// A library file as a history item.
+    static func libraryItem(_ path: String) -> MediaItem {
+        let name = (path as NSString).lastPathComponent
+        var m = MediaItem(url: path, title: TitleParser.clean(name), source: .local)
+        m.historyKey = path
+        return m
     }
 
     func clear() {

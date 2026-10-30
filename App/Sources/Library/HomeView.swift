@@ -4,6 +4,8 @@ import UniformTypeIdentifiers
 struct HomeView: View {
     @ObservedObject private var history = HistoryStore.shared
     @ObservedObject private var local = LocalMediaStore.shared
+    @ObservedObject private var servers = ServerStore.shared
+    @ObservedObject private var indexSummaries = IndexSummaries.shared
     @State private var showOpenURL = false
     @State private var addServer = false
     @State private var showAddFiles = false
@@ -22,17 +24,18 @@ struct HomeView: View {
                     Group {
                         header(margin).padding(.top, 6)
                         if !history.continueWatching.isEmpty { continueWatching(width: geo.size.width, wide: wide, margin: margin).padding(.top, 30) }
-                        if !local.files.isEmpty { libraryHeader(margin).padding(.top, 30) }
+                        if hasLibrary { libraryHeader(margin).padding(.top, 30) }
                         else { howToAdd(margin).padding(.top, history.continueWatching.isEmpty ? 70 : 40) }
                     }
                     .homeRow()
-                    if !local.files.isEmpty { libraryRows(width: geo.size.width, margin: margin) }
+                    if hasLibrary { libraryRows(width: geo.size.width, margin: margin) }
                     Color.clear.frame(height: 28).homeRow()
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .scrollIndicators(.hidden)
                 .environment(\.defaultMinListRowHeight, 0)
+                .animation(.smooth(duration: 0.35), value: realDebridSummary != nil)
             }
             .background(HomeBackdrop().ignoresSafeArea())
             .background(TouchTracker.Host().frame(width: 0, height: 0).accessibilityHidden(true))
@@ -41,8 +44,15 @@ struct HomeView: View {
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
-            .background(PathWatch(path: $path, pending: pending) { openPending() })
+            .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
+            // The Real-Debrid entry's library, checked again in the background
+            // (again when the account is added or changed).
+            .task(id: realDebrid.map(LibraryIndex.account)) { if let rd = realDebrid { LibraryIndexStore.shared.refreshIfNeeded(rd) } }
+            .onChange(of: libraryView) { old, new in
+                layoutGeneration += 1
+                LibTrace.zoom.log("home layout \(old) → \(new) (zoom ids now \(layoutGeneration)|…)")
+            }
         }
     }
 
@@ -101,6 +111,7 @@ struct HomeView: View {
     private struct PathWatch: View {
         @Binding var path: [LibraryRoute]
         let pending: PendingOpen
+        let layout: Int
         let openPending: () -> Void
         var body: some View {
             Color.clear
@@ -108,6 +119,10 @@ struct HomeView: View {
                 .accessibilityHidden(true)
                 .onChange(of: path) { old, new in
                     dlog("nav", "home path \(old.count) → \(new.count): \(new)")
+                    // Trace: where each zoom source of the page is, as it opens
+                    // and for 2.5 s after it went back.
+                    if new.count > old.count, let r = new.last, let id = r.zoomID { ZoomProbe.dump(HomeView.zoomID(id, layout), "opening \(r)") }
+                    if new.count < old.count, let r = old.last, let id = r.zoomID { ZoomProbe.timeline(HomeView.zoomID(id, layout), "back from \(r)") }
                     if new.isEmpty, pending.route != nil { DispatchQueue.main.async { openPending() } }
                 }
         }
@@ -120,6 +135,20 @@ struct HomeView: View {
     }
     @State private var pending = PendingOpen()
 
+    /// The id a title's tile or row zooms with: its group id, in the current
+    /// layout's generation. Home is a List (a UICollectionView), and a row
+    /// removed when you switch layouts stays in it as a hidden cell, still
+    /// registered as a zoom source with the same id (lab run, 30 Oct: after
+    /// Details → Thumbnails, "2 source(s) for s|lab show: (20, 588, 362, 112)
+    /// hidden (ListCollectionViewCell isHidden); (145, 457, 112, 168)
+    /// visible"). The zoom then grew from and shrank into that hidden
+    /// Details row — the card your 30 Oct recording shows floating over
+    /// the grid — instead of the tile. A new generation at each switch means
+    /// a left-over row never has the id the page zooms with.
+    @State private var layoutGeneration = 0
+    private func zoomID(_ id: String) -> String { Self.zoomID(id, layoutGeneration) }
+    static func zoomID(_ id: String, _ generation: Int) -> String { "\(generation)|\(id)" }
+
     /// Settings zooms out of its button, a title page out of its poster (iOS 18+).
     @ViewBuilder
     private func destination(_ route: LibraryRoute) -> some View {
@@ -127,9 +156,9 @@ struct HomeView: View {
         case .settings:
             SettingsView().zoomDestination("settings", in: zoomNS)
         case .group(let id):
-            LibraryRoute.destination(route).zoomDestination(id, in: zoomNS, zoom: !listPushes)
+            LibraryRoute.destination(route).zoomDestination(zoomID(id), in: zoomNS, zoom: !listPushes)
         case .folder(let path):
-            LibraryRoute.destination(route).zoomDestination("d|" + path, in: zoomNS, zoom: !listPushes)
+            LibraryRoute.destination(route).zoomDestination(zoomID("d|" + path), in: zoomNS, zoom: !listPushes)
         default:
             LibraryRoute.destination(route)
         }
@@ -266,20 +295,35 @@ struct HomeView: View {
 
     // MARK: Library
 
+    /// The Real-Debrid account, when one is added with a user name.
+    private var realDebrid: WebDAVServer? { servers.servers.first(where: RealDebrid.isRealDebrid) }
+
+    /// Home's Real-Debrid entry (RealDebridEntry.swift): shown when the last
+    /// check of the library worked; kept while offline; gone on a refused login.
+    private var realDebridSummary: LibraryIndexStore.Summary? {
+        guard let rd = realDebrid, let s = indexSummaries.all[rd.id], s.refreshed != nil, !s.unauthorized else { return nil }
+        return s
+    }
+
+    private var hasLibrary: Bool { !local.files.isEmpty || realDebridSummary != nil }
+
+    private func realDebridLink<L: View>(@ViewBuilder label: () -> L) -> some View {
+        Button { if !TouchTracker.wasSwipe("home: Real-Debrid"), let rd = realDebrid { open(.webdav(rd.id.uuidString)) } } label: { label() }
+            .buttonStyle(PressStyle(scale: 0.97))
+    }
+
     @AppStorage("libraryView") private var libraryView = LibraryViewMode.grid.rawValue
-    @AppStorage("librarySort") private var librarySort = LibrarySort.name.rawValue
+    @AppStorage("librarySort") private var librarySort: LibrarySort = .name
     @AppStorage("librarySortAsc") private var librarySortAsc = true
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
 
     private var groups: [LibraryGroup] {
-        LibraryOrganizer.groups(local.files, sort: LibrarySort(rawValue: librarySort) ?? .name, ascending: librarySortAsc)
+        LibraryOrganizer.groups(local.files, sort: librarySort, ascending: librarySortAsc)
     }
 
     @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
 
     @State private var pendingDelete: LibraryGroup?
-    /// Thumbnails: the tile whose swipe actions are showing.
-    @State private var openTile: String?
 
     /// The delete question, attached to the title's own tile or row so it
     /// points at it (iOS shows confirmation dialogs as a popover from the view
@@ -290,18 +334,6 @@ struct HomeView: View {
                              titleVisibility: .visible) {
             Button("Delete", role: .destructive) { local.delete(g.folder.map { [$0] } ?? g.files) }
         }
-    }
-
-    /// Swipe actions of a Thumbnails tile: Delete (asks first) and, for a
-    /// title, Watched / Unwatched.
-    private func swipeActions(_ g: LibraryGroup) -> [SwipeAction] {
-        var a = [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = g }]
-        if g.folder == nil {
-            a.append(allWatched(g)
-                     ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched(g.files, false) }
-                     : SwipeAction(title: "Watched", icon: "eye", tint: Theme.swipeTint) { history.setWatched(g.files, true) })
-        }
-        return a
     }
 
     private func deleteQuestion(_ g: LibraryGroup) -> String {
@@ -315,7 +347,7 @@ struct HomeView: View {
             Text("Library").font(.title3.weight(.bold))
             Text("\(groups.count)").font(.subheadline).foregroundStyle(.secondary)
             Spacer()
-            SortMenu(sort: $librarySort, ascending: $librarySortAsc)
+            LibrarySortMenu(sort: $librarySort, ascending: $librarySortAsc)
             ViewModeMenu(mode: $libraryView)
         }
         .padding(.horizontal, margin)
@@ -334,16 +366,24 @@ struct HomeView: View {
         } else {
             let posters = tileArtwork == "poster"
             let style = ListTransition.current
+            if let rd = realDebridSummary {
+                realDebridLink { RealDebridRow(summary: rd, detail: mode == .details) }
+                    .padding(.horizontal, margin)
+                    .padding(.vertical, mode == .details ? 6 : 2)
+                    .homeRow()
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+            }
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
-                        folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: style == .push ? nil : ZoomSource(g.id, zoomNS), zoomWholeRow: style == .row) }
+                        folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: style == .push ? nil : ZoomSource(zoomID(g.id), zoomNS), zoomWholeRow: style == .row) }
                     } else {
                         groupLink(g) {
                             LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
                                        fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                       poster: posters, zoom: opensPage(g) && style != .push ? ZoomSource(g.id, zoomNS) : nil,
+                                       poster: posters, zoom: opensPage(g) && style != .push ? ZoomSource(zoomID(g.id), zoomNS) : nil,
                                        zoomWholeRow: style == .row,
+                                       size: g.size,
                                        watched: allWatched(g))
                         }
                     }
@@ -361,18 +401,22 @@ struct HomeView: View {
         let cols = posters ? max(3, Int((width - margin * 2 + 14) / 124)) : max(2, Int((width - margin * 2 + 14) / 184))
         let groups = self.groups
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
+            if let rd = realDebridSummary {
+                realDebridLink { RealDebridTile(summary: rd, poster: posters) }
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+            }
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
-                        folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(g.id, zoomNS)) }
+                        folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(zoomID(g.id), zoomNS)) }
                     } else {
                         groupLink(g) {
                             MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
                                       key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
                                       progress: history.entry(forURL: g.nextUp.path)?.progress,
                                       fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                      poster: posters, zoom: opensPage(g) ? ZoomSource(g.id, zoomNS) : nil,
-                                      watched: allWatched(g))
+                                      poster: posters, zoom: opensPage(g) ? ZoomSource(zoomID(g.id), zoomNS) : nil,
+                                      watched: allWatched(g), sizeBadge: g.size)
                         }
                     }
                 })
@@ -414,7 +458,10 @@ struct HomeView: View {
                 // A swipe across a tile (no swipe actions on Home any more)
                 // is not a tap: it neither opens the title nor plays it.
                 Button { if !TouchTracker.wasSwipe("home: \(g.title)") { dlog("nav", "home: open \(g.title)"); open(.group(g.id)) } } label: { label() }
-                    .buttonStyle(PressStyle(scale: 0.97, onPress: { ThumbLoader.prefetch(firstEpisodes(g)) }))
+                    .buttonStyle(PressStyle(scale: 0.97, onPress: {
+                        let mode = LibraryViewMode(rawValue: UserDefaults.standard.string(forKey: "heroView") ?? "") ?? .grid
+                        ThumbLoader.prefetch(firstEpisodes(g), points: LibraryList.picturePoints(mode))
+                    }))
             } else {
                 Button { if !TouchTracker.wasSwipe("home: \(g.title)") { playLocal(g.nextUp) } } label: { label() }
                     .buttonStyle(PressStyle(scale: 0.97))
@@ -422,11 +469,7 @@ struct HomeView: View {
         }
         .contextMenu {
             Button { playLocal(g.nextUp) } label: { Label(g.isSeries ? "Play next episode" : "Play", systemImage: "play") }
-            if allWatched(g) {
-                Button { history.setWatched(g.files, false) } label: { Label(g.isSeries ? "Mark all as unwatched" : "Mark as unwatched", systemImage: "eye.slash") }
-            } else {
-                Button { history.setWatched(g.files, true) } label: { Label(g.isSeries ? "Mark all as watched" : "Mark as watched", systemImage: "eye") }
-            }
+            WatchedMenuItems(files: g.files, scope: g.isSeries ? .all : .one)
             Button(role: .destructive) { pendingDelete = g } label: { Label(g.isSeries ? "Delete all episodes" : "Delete", systemImage: "trash") }
         }
     }
@@ -550,9 +593,51 @@ struct WatchedBadge: View {
 }
 
 struct HeroCard: View {
+    /// The line under a Continue Watching title, the same for every source:
+    /// "S1 · E24 · Higashi Village and Nishino Village" for an episode, the
+    /// synopsis for a film — never a raw release name. Until 1.19.0 it was
+    /// whatever the item carried: a WebDAV file's folder name ("[AnoZu]
+    /// Daemons of the Shadow Realm S01 1080p…"), an addon's "S1 · E24 —
+    /// title", or a library file's bare episode title (30 Oct screenshots).
+    static func line(_ item: MediaItem, meta: MediaMeta?) -> String? {
+        var season: Int?, episode: Int?, title: String?
+        if let ref = item.addonRef {
+            // The addon episode's label (MetaVideo.label): "S1 · E24 — title",
+            // or just the title when the addon gives no season and episode.
+            let label = item.subtitle ?? ""
+            let video = ref.split(separator: "|", omittingEmptySubsequences: false).last.map(String.init) ?? ""
+            let parts = label.components(separatedBy: " — ")
+            if let m = parts[0].firstMatch(of: #/^S(\d+) · E(\d+)$/#) {
+                season = Int(m.1); episode = Int(m.2)
+                title = parts.dropFirst().joined(separator: " — ")
+            } else {
+                // The video id: "tt…:S:E" (IMDb), "kitsu:<id>:<episode>" and
+                // "mal:<id>:<episode>" (no season: one entry per season).
+                let v = video.split(separator: ":")
+                if v.count == 3, v[0].hasPrefix("tt") { season = Int(v[1]); episode = Int(v[2]) }
+                else if v.count == 3, v[0] == "kitsu" || v[0] == "mal" { episode = Int(v[2]) }
+                if label != video { title = label }
+            }
+            if title?.isEmpty == true { title = nil }
+        } else {
+            let p = TitleParser.parse(item.fileName)
+            season = meta?.episodeSeason ?? p.season
+            episode = meta?.episodeNumber ?? p.episode
+            if episode != nil, season == nil { season = 1 }
+        }
+        title = meta?.episodeTitle ?? title ?? ReleaseName.file(item.fileName)?.episodeTitle
+        if let episode {
+            let number = season.map { "S\($0) · E\(episode)" } ?? "E\(episode)"
+            return ([number] + [title].compactMap { $0 }).joined(separator: " · ")
+        }
+        return meta?.synopsis
+    }
+
     let entry: HistoryEntry
     var height: CGFloat = 230
     @StateObject private var thumb = ThumbLoader()
+    /// The card's width (16:9 of its height): the picture's longest side.
+    private var points: CGFloat { (height - 8) * 16 / 9 }
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -561,15 +646,14 @@ struct HeroCard: View {
             // card's contents, pushing the title and Resume off its left edge.)
             Color.clear
                 .overlay {
-                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+                    if let img = thumb.image ?? ThumbLoader.cached(key: entry.item.id, points: points) { Image(uiImage: img).resizable().scaledToFill() }
                     else { GeneratedArt(seed: entry.item.displayTitle) }
                 }
                 .clipped()
             LinearGradient(colors: [.clear, .black.opacity(0.35), .black.opacity(0.9)], startPoint: .top, endPoint: .bottom)
             VStack(alignment: .leading, spacing: 8) {
                 Text(thumb.meta?.name ?? entry.item.displayTitle).font(.headline.weight(.bold)).lineLimit(1)
-                let line = [entry.item.subtitle, thumb.meta?.episodeTitle].compactMap { $0 }.first ?? thumb.meta?.synopsis
-                if let line { Text(line).font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(1) }
+                if let line = Self.line(entry.item, meta: thumb.meta) { Text(line).font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(1) }
                 HStack(spacing: 12) {
                     Label("Resume", systemImage: "play.fill")
                         .font(.subheadline.weight(.semibold))
@@ -594,10 +678,10 @@ struct HeroCard: View {
             if let ref = entry.item.addonRef {
                 // Addon streams: the link's file name means nothing, and the
                 // item's artwork is the portrait poster. Wide art by IMDb id.
-                thumb.loadAddonArt(key: entry.item.id, ref: ref, fallback: entry.item.artwork)
+                thumb.loadAddonArt(key: entry.item.id, ref: ref, fallback: entry.item.artwork, points: points)
             } else {
                 thumb.load(key: entry.item.id, fileURL: entry.item.resolvedURL?.isFileURL == true ? entry.item.resolvedURL : nil,
-                           artwork: entry.item.artwork, lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title)
+                           artwork: entry.item.artwork, lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title, points: points)
             }
         }
     }
@@ -621,25 +705,45 @@ struct MediaTile: View {
     var trailingNote: String? = nil
     /// Every file behind the tile is watched: an eye on the picture.
     var watched = false
+    /// Home's titles: their size on the picture, bottom right, as folder
+    /// tiles have it (above the progress bar when there is one).
+    var sizeBadge: Int64? = nil
     @StateObject private var thumb = ThumbLoader()
+
+    /// The picture's longest side: a poster tile is ~112 × 168 pt on a
+    /// phone, a 16:9 tile ~184 pt wide.
+    static func points(poster: Bool) -> CGFloat { poster ? 168 : 184 }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .bottomLeading) {
                 Color.clear.aspectRatio(poster ? 2.0 / 3.0 : 16.0 / 9.0, contentMode: .fit)
                     .overlay {
-                        if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
-                        else { GeneratedArt(seed: title) }
+                        // A tile made again (Home redrawn, a page gone back) has its picture from its first frame.
+                        if let img = thumb.image ?? ThumbLoader.cached(key: key, art: poster ? .poster : .wide, points: Self.points(poster: poster)) {
+                            Image(uiImage: img).resizable().scaledToFill()
+                        } else { GeneratedArt(seed: title) }
                     }
                     .clipped()
                 if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress) }
             }
             .overlay(alignment: .topTrailing) { if watched { WatchedBadge() } }
+            .overlay(alignment: .bottomTrailing) {
+                if let sizeBadge {
+                    SizeBadge(size: sizeBadge)
+                        .padding(poster ? 8 : 11)
+                        .padding(.bottom, !watched && (progress ?? 0) > 0.01 ? 10 : 0)
+                        .accessibilityHidden(true)      // read after the title instead (below)
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: poster ? 12 : 16, style: .continuous))
             .zoomSource(zoom, cornerRadius: poster ? 12 : 16)
             Text(fixedTitle ?? thumb.meta?.name ?? title).font(.subheadline.weight(.semibold)).lineLimit(1)
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(fixedSubtitle ?? (poster ? nil : thumb.meta?.episodeTitle) ?? subtitle).lineLimit(1)
+                let line = fixedSubtitle ?? (poster ? nil : thumb.meta?.episodeTitle) ?? subtitle
+                // VoiceOver: "Lab Show, 3 episodes, 83 KB" — the size badge sits
+                // on the picture, so it would otherwise be read before the title.
+                Text(line).lineLimit(1).accessibilityLabel(sizeBadge.map { "\(line), \($0.byteString)" } ?? line)
                 if let trailingNote {
                     Spacer(minLength: 0)
                     Text(trailingNote).monospacedDigit().lineLimit(1).fixedSize()
@@ -647,7 +751,11 @@ struct MediaTile: View {
             }
             .font(.caption2.weight(.medium)).foregroundStyle(.secondary)
         }
-        .onAppear { thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName, art: poster ? .poster : .wide) }
+        .onAppear {
+            LibTrace.image.log("tile \(title) appeared (loader #\(thumb.serial), picture \(thumb.image == nil ? "none yet" : "shown"))")
+            thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName, art: poster ? .poster : .wide, points: Self.points(poster: poster))
+        }
+        .onDisappear { LibTrace.image.log("tile \(title) disappeared (loader #\(thumb.serial))") }
     }
 }
 
@@ -741,7 +849,7 @@ struct HistoryRow: View {
                 Text(thumb.meta?.name ?? entry.item.displayTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
                 HStack(spacing: 6) {
                     Image(systemName: icon)
-                    if let s = entry.item.subtitle ?? thumb.meta?.episodeTitle { Text(s).lineLimit(1) }
+                    if let s = HeroCard.line(entry.item, meta: thumb.meta) { Text(s).lineLimit(1) }
                     Text(entry.updated, style: .relative)
                 }
                 .font(.caption).foregroundStyle(.secondary)
@@ -756,7 +864,7 @@ struct HistoryRow: View {
         .background(Theme.card.opacity(0.7), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .onAppear {
             thumb.load(key: entry.item.id, fileURL: nil, artwork: entry.item.artwork,
-                       lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title)
+                       lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title, points: 96)
         }
     }
 
@@ -840,6 +948,8 @@ struct FolderTile: View {
             Text(group.title).font(.subheadline.weight(.semibold)).lineLimit(1)
             Text("\(group.count) item\(group.count == 1 ? "" : "s")").font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
         }
+        .onAppear { LibTrace.image.log("folder tile \(group.title) appeared") }
+        .onDisappear { LibTrace.image.log("folder tile \(group.title) disappeared") }
     }
 }
 
@@ -903,11 +1013,11 @@ private struct FolderThumb: View {
                 if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() } else { GeneratedArt(seed: file.lastPathComponent) }
             }
             .clipped()
-            .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide) }
+            .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide, points: 100) }
     }
 }
 
-/// The folder's total size, bottom right (local folders only).
+/// A total size on a picture, bottom right (folder and title tiles).
 struct SizeBadge: View {
     let size: Int64
     var body: some View {

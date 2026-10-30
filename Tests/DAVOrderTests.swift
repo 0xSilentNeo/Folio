@@ -21,7 +21,7 @@ final class DAVOrderTests: XCTestCase {
         item("notes.txt"),
     ]
 
-    private func names(_ sort: DAVSort, _ ascending: Bool, clean: Bool = false) -> [String] {
+    private func names(_ sort: LibrarySort, _ ascending: Bool, clean: Bool = false) -> [String] {
         DAVOrder.sorted(DAVOrder.keyed(items, clean: clean), by: sort, ascending: ascending).map(\.name)
     }
 
@@ -48,9 +48,9 @@ final class DAVOrderTests: XCTestCase {
     }
 
     func testStartingDirections() {
-        XCTAssertTrue(DAVSort.name.startsAscending)
-        XCTAssertFalse(DAVSort.recent.startsAscending)
-        XCTAssertFalse(DAVSort.size.startsAscending)
-        XCTAssertEqual(DAVSort(rawValue: "date"), .recent, "choices saved before 1.18.1 still read back")
+        XCTAssertTrue(LibrarySort.name.startsAscending)
+        XCTAssertFalse(LibrarySort.recent.startsAscending)
+        XCTAssertFalse(LibrarySort.size.startsAscending)
+        XCTAssertEqual(LibrarySort(rawValue: "date"), .recent, "choices saved before 1.18.1 still read back")
     }
 }

@@ -208,42 +208,86 @@ final class LocalMediaStore: ObservableObject {
 
 /// Async artwork for a tile: saved player frame → explicit artwork →
 /// metadata lookup from the file name → embedded frame (MP4/MOV).
+///
+/// Every picture goes through ImageCache (the one image pipeline): decoded
+/// off the main thread at the size it's shown at (`points`, the view's
+/// longest side), kept in its memory under the item's key, so a view made
+/// again shows it from its first frame (`cached`).
 @MainActor
 final class ThumbLoader: ObservableObject {
     @Published var image: UIImage?
     @Published var meta: MediaMeta?
-    private static let cache = NSCache<NSString, UIImage>()
     private var loadedKey: String?
+    /// Trace: which loader this is (a view that's made again gets a new one).
+    private static var made = 0
+    let serial: Int
+    private var started: CFTimeInterval = 0
+    /// Pixels on the long side to decode at (points × screen scale, or the hero's width).
+    private var pixels = 900
+
+    init() {
+        Self.made += 1
+        serial = Self.made
+    }
+
+    /// Trace: the end of a key (a file name or an id), not the whole path.
+    nonisolated static func short(_ key: String) -> String { String((key as NSString).lastPathComponent.prefix(60)) }
 
     /// Which picture a view wants from the metadata.
     enum Art { case wide, poster }
 
+    static func pixels(points: CGFloat, hero: Int?) -> Int {
+        hero ?? Int((points * UIScreen.main.scale).rounded(.up))
+    }
+
+    /// The key a picture is kept under: the item, what kind of picture, its size.
+    static func cacheKey(_ key: String, art: Art, pixels: Int) -> String {
+        key + (art == .poster ? "|poster" : "|wide") + "|\(pixels)"
+    }
+
+    /// The picture already in memory for a view's item (read while building
+    /// the view, so a view made again never shows its placeholder first).
+    static func cached(key: String, art: Art = .wide, points: CGFloat, hero: Int? = nil) -> UIImage? {
+        ImageCache.shared.picture(forKey: cacheKey(key, art: art, pixels: pixels(points: points, hero: hero)))
+    }
+
     /// - `art: .poster`: the show/film's portrait poster (library tiles). Falls
     ///   back to the backdrop, never to an episode still or a saved frame.
     /// - `art: .wide`: 16:9 art — episode still, then backdrop, then poster.
-    /// Pixel width for a title page backdrop (`hero`): the art is fetched and
-    /// decoded at that size instead of tile size.
+    /// - `points`: the view's longest side; the picture is decoded at that
+    ///   many points (not more).
+    /// - `hero`: pixel width for a title page backdrop: the art is fetched and
+    ///   decoded at that size instead.
     private var hero: Int?
 
-    func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool? = nil, art: Art = .wide, hero: Int? = nil) {
+    func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool? = nil, art: Art = .wide,
+              points: CGFloat = 300, hero: Int? = nil) {
         self.hero = hero
-        let cacheKey = (art == .poster ? key + "|poster" : key) + (hero.map { "|hero\($0)" } ?? "")
+        pixels = Self.pixels(points: points, hero: hero)
+        let cacheKey = Self.cacheKey(key, art: art, pixels: pixels)
         guard loadedKey != cacheKey else { return }
         loadedKey = cacheKey
+        started = CACurrentMediaTime()
         // Poster / episode still first (Settings → Library → Tile artwork);
         // the saved player frame is the fallback, not the default.
         let preferMeta = art == .poster || (preferMeta ?? (UserDefaults.standard.string(forKey: SettingsKey.tileArtwork) != "frame"))
-        if let c = Self.cache.object(forKey: cacheKey as NSString) { image = c }
+        if let c = ImageCache.shared.picture(forKey: cacheKey) { image = c }
+        LibTrace.image.log("loader #\(serial) \(Self.short(cacheKey)): \(image == nil ? "not in memory, loading" : "from memory at once")")
+        let pixels = self.pixels
         Task {
             // Saved frame (Continue Watching) from disk, decoded off the main thread.
-            if image == nil, !preferMeta, let img = await Self.decodeFile(ThumbnailStore.url(for: key)) { set(img, cacheKey) }
+            if image == nil, !preferMeta, let img = await Self.decodeFile(ThumbnailStore.url(for: key), pixels: pixels) { set(img, cacheKey, from: "saved frame") }
             if image == nil, art == .wide, let artwork, let u = URL(string: artwork) { await fetch(u, cacheKey) }
             if let lookupName {
                 // Metadata is cached on disk forever; artwork on disk too (ImageCache).
                 if let m = await MetadataService.shared.lookup(filename: lookupName) {
                     self.meta = m
+                    if art == .poster, let p = m.poster, let u = URL(string: p), m.id.hasPrefix("tt") {
+                        // Kept by IMDb id: the same poster as the Real-Debrid library's for this title.
+                        if let img = await ImageCache.shared.poster(id: m.id, url: u, maxPixel: CGFloat(pixels)) { set(img, cacheKey, from: "poster \(m.id)") }
+                    }
                     let pick = art == .poster ? (m.poster ?? m.background) : m.wideArt
-                    if (self.image == nil || preferMeta), let pick, let u = URL(string: pick) { await self.fetch(u, cacheKey) }
+                    if (self.image == nil || (preferMeta && art != .poster)), let pick, let u = URL(string: pick) { await self.fetch(u, cacheKey) }
                 }
             }
             if art == .poster, image == nil, let artwork, let u = URL(string: artwork) { await fetch(u, cacheKey) }
@@ -251,44 +295,46 @@ final class ThumbLoader: ObservableObject {
                 let img: UIImage? = await Task.detached(priority: .utility) {
                     let gen = AVAssetImageGenerator(asset: AVURLAsset(url: fileURL))
                     gen.appliesPreferredTrackTransform = true
-                    gen.maximumSize = CGSize(width: 640, height: 360)
+                    gen.maximumSize = CGSize(width: max(640, pixels), height: max(360, pixels))
                     guard let cg = try? await gen.image(at: CMTime(seconds: 30, preferredTimescale: 600)).image else { return nil }
                     let img = UIImage(cgImage: cg)
                     if let data = img.jpegData(compressionQuality: 0.75) { try? data.write(to: ThumbnailStore.url(for: key)) }
                     return img
                 }.value
-                if let img, self.image == nil { set(img, cacheKey) }
+                if let img, self.image == nil { set(img, cacheKey, from: "frame from the file") }
             }
         }
     }
 
-    /// Loads episode pictures into the shared cache before a title page
-    /// shows them, so its rows have them on their first frame.
+    /// Loads episode pictures into memory before a title page shows them,
+    /// so its rows have them on their first frame.
     ///
     /// 28 Oct recording: the first time MobLand opened, its rows showed
     /// placeholder art for ~0.3 s and the pictures faded in mid-zoom; the
-    /// second time (in this cache) they were there from the start. Started
-    /// when your finger goes down on the title (Home), which is ~0.1–0.3 s
-    /// before the page appears; same keys and sizes as the page's rows.
+    /// second time (in memory) they were there from the start. Started when
+    /// your finger goes down on the title (Home), which is ~0.1–0.3 s before
+    /// the page appears; same keys and sizes as the page's rows (`points`).
     private static var prefetched: [String: Date] = [:]
-    static func prefetch(_ files: [URL]) {
+    static func prefetch(_ files: [URL], points: CGFloat) {
         let now = Date()
         for f in files {
             let key = f.path
-            guard cache.object(forKey: key as NSString) == nil,
+            guard cached(key: key, points: points) == nil,
                   now.timeIntervalSince(prefetched[key] ?? .distantPast) > 30 else { continue }
             prefetched[key] = now
-            ThumbLoader().load(key: key, fileURL: f, artwork: nil, lookupName: f.lastPathComponent, art: .wide)
+            ThumbLoader().load(key: key, fileURL: f, artwork: nil, lookupName: f.lastPathComponent, art: .wide, points: points)
         }
     }
 
     /// Addon items ("type|metaId|videoId"): a 16:9 picture from IMDb by id —
     /// the episode still, else the title's backdrop — else the given poster.
-    func loadAddonArt(key: String, ref: String, fallback: String?) {
-        let cacheKey = key + "|wide"
+    func loadAddonArt(key: String, ref: String, fallback: String?, points: CGFloat) {
+        pixels = Self.pixels(points: points, hero: nil)
+        let cacheKey = Self.cacheKey(key, art: .wide, pixels: pixels)
         guard loadedKey != cacheKey else { return }
         loadedKey = cacheKey
-        if let c = Self.cache.object(forKey: cacheKey as NSString) { image = c; return }
+        started = CACurrentMediaTime()
+        if let c = ImageCache.shared.picture(forKey: cacheKey) { image = c; return }
         Task {
             let parts = ref.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
             var wide: String?
@@ -304,24 +350,25 @@ final class ThumbLoader: ObservableObject {
         }
     }
 
-    private static func decodeFile(_ url: URL) async -> UIImage? {
+    private static func decodeFile(_ url: URL, pixels: Int) async -> UIImage? {
         await Task.detached(priority: .userInitiated) {
             guard let d = try? Data(contentsOf: url) else { return nil }
-            return ImageCache.downsample(d, maxPixel: 800)
+            return ImageCache.downsample(d, maxPixel: CGFloat(pixels))
         }.value
     }
 
     private func fetch(_ u: URL, _ key: String) async {
-        if let hero {
-            // IMDb serves any width of its images (`._V1_UX…_`); other hosts are left as they are.
-            let big = IMDbSource.sized(u.absoluteString, width: hero).flatMap(URL.init(string:)) ?? u
-            if let img = await ImageCache.shared.image(big, maxPixel: CGFloat(hero)) { set(img, key); return }
+        // IMDb serves any width of its images (`._V1_UX…_`); other hosts are left as they are.
+        let url = hero.flatMap { IMDbSource.sized(u.absoluteString, width: $0).flatMap(URL.init(string:)) } ?? u
+        let inMemory = ImageCache.shared.cached(url, maxPixel: CGFloat(pixels)) != nil
+        if let img = await ImageCache.shared.image(url, maxPixel: CGFloat(pixels)) {
+            set(img, key, from: inMemory ? "artwork memory" : "artwork disk or network")
         }
-        if let img = await ImageCache.shared.image(u, maxPixel: 900) { set(img, key) }
     }
 
-    private func set(_ img: UIImage, _ key: String) {
-        Self.cache.setObject(img, forKey: key as NSString)
+    private func set(_ img: UIImage, _ key: String, from: String = "") {
+        LibTrace.image.log("loader #\(serial) \(Self.short(key)): picture (\(from)) after \(LibTrace.ms(since: started)) ms\(image == nil ? "" : ", replacing one already shown")")
+        ImageCache.shared.remember(img, forKey: key)
         if image == nil { withAnimation(.easeOut(duration: 0.2)) { image = img } } else { image = img }
     }
 }

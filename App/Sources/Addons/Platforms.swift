@@ -49,31 +49,34 @@ enum PlatformCatalogs {
         return host + "/" + Data(config.utf8).base64EncodedString()
     }
 
-    /// type: "movie" | "series"; id: platform id or "netflix-top10-global".
-    static func catalog(type: String, id: String) async -> [MetaItem] {
-        let key = "\(region)|\(type)|\(id)"
-        lock.lock()
-        if let hit = cache[key], Date().timeIntervalSince(hit.0) < 1800 { lock.unlock(); return hit.1 }
-        lock.unlock()
-        let metas = (try? await AddonAPI.get(AddonAPI.CatalogResponse.self, "\(base)/catalog/\(type)/\(id).json").metas) ?? []
-        lock.lock(); cache[key] = (Date(), metas); lock.unlock()
-        return metas
+    /// The last list fetched for a catalog this launch, and when.
+    static func cached(type: String, id: String) -> (metas: [MetaItem], date: Date)? {
+        lock.lock(); defer { lock.unlock() }
+        return cache["\(region)|\(type)|\(id)"].map { ($0.1, $0.0) }
     }
 
-    /// Series and movies interleaved (series first), de-duplicated.
-    static func mixed(_ id: String, limit: Int = 30) async -> [MetaItem] {
-        // Two plain tasks rather than `async let` (see MetaDetailView.load).
-        let s = Task { await catalog(type: "series", id: id) }
-        let m = Task { await catalog(type: "movie", id: id) }
-        let series = await s.value, movies = await m.value
-        var out: [MetaItem] = []
-        var seen = Set<String>()
-        for i in 0..<max(series.count, movies.count) {
-            for list in [series, movies] where i < list.count {
-                if seen.insert(list[i].id).inserted { out.append(list[i]) }
-            }
+    /// type: "movie" | "series"; id: platform id. From memory when fetched in
+    /// the last 30 minutes, else from the addon. Throws when the request
+    /// fails or is cancelled, and then nothing is kept: until 1.19.0 any
+    /// failure, a cancelled request included, was kept as an empty list for
+    /// 30 minutes (your 30 Oct log: Prime Video's Movies request "cancelled"
+    /// as the tab switched, then that tab stayed empty).
+    static func catalog(type: String, id: String) async throws -> [MetaItem] {
+        let key = "\(region)|\(type)|\(id)"
+        if let hit = cached(type: type, id: id), Date().timeIntervalSince(hit.date) < 1800 {
+            LibTrace.discover.log("catalog \(key): \(hit.metas.count) title(s) from memory (\(Int(Date().timeIntervalSince(hit.date))) s old)")
+            return hit.metas
         }
-        return Array(out.prefix(limit))
+        let t0 = Date()
+        do {
+            let metas = try await AddonAPI.get(AddonAPI.CatalogResponse.self, "\(base)/catalog/\(type)/\(id).json").metas ?? []
+            LibTrace.discover.log("catalog \(key): \(metas.count) title(s) after \(Int(Date().timeIntervalSince(t0) * 1000)) ms")
+            lock.lock(); cache[key] = (Date(), metas); lock.unlock()
+            return metas
+        } catch {
+            LibTrace.discover.log("catalog \(key): failed (\((error as NSError).domain) \((error as NSError).code)) after \(Int(Date().timeIntervalSince(t0) * 1000)) ms; nothing kept")
+            throw error
+        }
     }
 }
 
@@ -321,27 +324,116 @@ struct PlatformBadge: View {
     }
 }
 
+/// A provider page's two tabs, kept while the page is open: switching is
+/// instant, nothing is fetched twice, a failed or interrupted load never
+/// empties a grid. Each tab's load runs to the end even when you switch
+/// away (until 1.19.0 switching cancelled it, and the cancelled request was
+/// kept as an empty list).
+@MainActor
+final class PlatformPageModel: ObservableObject {
+    struct Tab: Equatable {
+        var metas: [MetaItem] = []
+        var loading = false
+        var error: String?
+        /// The tab has been shown (its data is loaded only then).
+        var started = false
+    }
+
+    let platform: StreamingPlatform
+    @Published private(set) var tabs: [String: Tab] = [:]
+
+    init(platform: StreamingPlatform) { self.platform = platform }
+
+    /// The tab is on screen: the last list fetched this launch shows at once,
+    /// and the first time it's loaded (a fresh copy replaces it only when the
+    /// load works).
+    func show(_ type: String) {
+        guard tabs[type]?.started != true else { return }
+        var t = Tab()
+        t.started = true
+        if let hit = PlatformCatalogs.cached(type: type, id: platform.id) { t.metas = hit.metas }
+        tabs[type] = t
+        load(type)
+    }
+
+    func load(_ type: String) {
+        guard tabs[type]?.loading != true else { return }
+        tabs[type, default: Tab()].loading = true
+        tabs[type]?.error = nil
+        LibTrace.discover.log("\(platform.name) \(type): load starts (grid shows \(tabs[type]?.metas.count ?? 0))")
+        Task {
+            do {
+                let metas = try await PlatformCatalogs.catalog(type: type, id: platform.id)
+                if !metas.isEmpty || tabs[type]?.metas.isEmpty != false { tabs[type]?.metas = metas }
+                LibTrace.discover.log("\(platform.name) \(type): \(metas.count) title(s)")
+            } catch {
+                tabs[type]?.error = (error as? URLError)?.code == .notConnectedToInternet ? "You're offline." : "The catalog didn't load."
+                LibTrace.discover.log("\(platform.name) \(type): load failed, the grid keeps \(tabs[type]?.metas.count ?? 0) title(s)")
+            }
+            tabs[type]?.loading = false
+        }
+    }
+}
+
 struct PlatformDetailView: View {
     let platform: StreamingPlatform
     @Namespace private var zoomNS
+    @StateObject private var page: PlatformPageModel
     @State private var type = "series"
-    @State private var metas: [MetaItem] = []
-    @State private var loading = true
+
+    init(platform: StreamingPlatform) {
+        self.platform = platform
+        _page = StateObject(wrappedValue: PlatformPageModel(platform: platform))
+    }
 
     var body: some View {
-        ScrollView {
+        // One scroll view per tab, each kept while the page is open: a tab
+        // comes back where you left it. The safe area is read before the
+        // pages go under the bar, so the header starts below it.
+        GeometryReader { geo in
+            ZStack {
+                ForEach(["series", "movie"], id: \.self) { t in
+                    if page.tabs[t]?.started == true {
+                        tabPage(t, barBottom: geo.safeAreaInsets.top)
+                            .opacity(type == t ? 1 : 0)
+                            .allowsHitTesting(type == t)
+                            .accessibilityHidden(type != t)
+                    }
+                }
+            }
+            .ignoresSafeArea(edges: .top)
+        }
+        .background(Theme.background.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { page.show(type) }
+        .onChange(of: type) { _, t in page.show(t) }
+    }
+
+    /// `barBottom`: where the navigation bar ends (the top safe-area inset,
+    /// status bar and bar). The service's colours run up under the bar; its
+    /// badge and name start below it, so the back button never covers them
+    /// (until 1.19.0 they sat 20 pt above the bottom of a fixed 170 pt band:
+    /// on an iPhone 17 Pro the badge's top was at 96 pt, the back button's
+    /// bottom at 106 pt — 30 Oct screenshot and lab run). Like the title
+    /// page's header (TitleHeroView: safe area + its bar).
+    private func tabPage(_ t: String, barBottom: CGFloat) -> some View {
+        let tab = page.tabs[t] ?? PlatformPageModel.Tab()
+        return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 // The service's colours with its name in white, then a fade into the page.
                 VStack(spacing: 0) {
-                    ZStack(alignment: .bottomLeading) {
-                        LinearGradient(colors: [platform.color, platform.color2], startPoint: .top, endPoint: .bottom)
-                            .frame(height: 170)
-                        HStack(spacing: 12) {
-                            PlatformBadge(platform: platform, size: 54)
-                            Text(platform.name).font(.largeTitle.weight(.heavy)).foregroundStyle(.white)
-                        }
-                        .padding(20)
+                    HStack(spacing: 12) {
+                        PlatformBadge(platform: platform, size: 54)
+                            .accessibilityIdentifier("platformBadge")
+                        Text(platform.name).font(.largeTitle.weight(.heavy)).foregroundStyle(.white)
+                            .lineLimit(2).minimumScaleFactor(0.7)
+                            .accessibilityAddTraits(.isHeader)
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, barBottom + 16)
+                    .padding(.bottom, 20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(LinearGradient(colors: [platform.color, platform.color2], startPoint: .top, endPoint: .bottom))
                     LinearGradient(colors: [platform.color2, Theme.background], startPoint: .top, endPoint: .bottom).frame(height: 36)
                 }
                 Picker("", selection: $type) {
@@ -350,9 +442,21 @@ struct PlatformDetailView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, 20)
-                if loading { ProgressView().frame(maxWidth: .infinity).padding() }
+                if tab.loading && tab.metas.isEmpty { ProgressView().frame(maxWidth: .infinity).padding() }
+                if let error = tab.error {
+                    // Inline, over whatever the grid already has; never in its place.
+                    HStack(spacing: 10) {
+                        Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
+                        Text(error).font(.subheadline)
+                        Spacer(minLength: 0)
+                        Button("Retry") { page.load(t) }.buttonStyle(.bordered).tint(Theme.accent)
+                    }
+                    .padding(12)
+                    .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .padding(.horizontal, 20)
+                }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
-                    ForEach(metas) { m in
+                    ForEach(tab.metas) { m in
                         NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS, zoom: false) } label: {
                             PosterCard(meta: m, width: 108, zoom: ZoomSource(m.id, zoomNS))
                         }
@@ -360,15 +464,10 @@ struct PlatformDetailView: View {
                     }
                 }
                 .padding(.horizontal, 20)
+                if !tab.loading && tab.metas.isEmpty && tab.error == nil {
+                    Text("Nothing here right now.").font(.subheadline).foregroundStyle(.secondary).padding(.horizontal, 20)
+                }
             }
-        }
-        .background(Theme.background.ignoresSafeArea())
-        .ignoresSafeArea(edges: .top)
-        .navigationBarTitleDisplayMode(.inline)
-        .task(id: type) {
-            loading = true
-            metas = await PlatformCatalogs.catalog(type: type, id: platform.id)
-            loading = false
         }
     }
 }
