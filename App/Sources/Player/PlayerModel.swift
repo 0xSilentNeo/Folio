@@ -293,6 +293,10 @@ final class PlayerModel: ObservableObject {
             pip.view.onLayout = { [weak glRenderer] pixels in glRenderer?.setViewSize(pixels) }
             let b = pip.view.bounds.size, n = pip.view.layouts
             Task { @MainActor in PiPTrace.event("OpenGL renderer listening for the view's size: \(Int(b.width))×\(Int(b.height)) pt after \(n) layout(s)") }
+            // start() runs in viewDidAppear, after the view's layout: its size
+            // now, not at the next layout (which may not come until the phone
+            // turns).
+            pip.view.reportSize()
         }
         metalView?.onResize = { [weak self] in self?.nudgeRedraw() }
         mode = .main

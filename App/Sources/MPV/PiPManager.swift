@@ -20,6 +20,12 @@ final class SampleBufferView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         layouts += 1
+        reportSize()
+    }
+
+    /// Hands the current size to `onLayout` now (the OpenGL renderer starts
+    /// listening in viewDidAppear, after the view's layout has happened).
+    func reportSize() {
         let scale = window?.screen.scale ?? UIScreen.main.scale
         onLayout?(CGSize(width: bounds.width * scale, height: bounds.height * scale))
     }
