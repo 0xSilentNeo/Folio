@@ -1,0 +1,1289 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0 -derivedDataPath build "-only-testing:GlassPlayerUITests/RoundLabUITests"
+
+2026-10-30 16:59:35.659422+0000 GlassPlayerUITests-Runner[14227:46104] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-30 16:59:54.445.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-30 16:59:54.448.
+Test Suite 'RoundLabUITests' started at 2026-10-30 16:59:54.448.
+Test Case '-[GlassPlayerUITests.RoundLabUITests test1ZoomBackFreshLaunch]' started.
+    t =     0.01s Start Test at 2026-10-30 16:59:54.457
+    t =     0.13s Set Up
+    t =     0.15s Open dev.silentneo.glassplayer
+    t =     0.15s     Launch dev.silentneo.glassplayer
+2026-10-30 16:59:56.762 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 16:59:56.762 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: no debugger version
+objc[14227]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.ztpjfo/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x106a5c398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.ztpjfo/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x1073b4310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =     7.83s         Setting up automation session
+    t =    16.16s         Wait for dev.silentneo.glassplayer to idle
+    t =    20.98s Setting device orientation to Portrait
+    t =    21.00s     Device orientation changed to Portrait
+    t =    21.11s     Wait for dev.silentneo.glassplayer to idle
+    t =    21.22s Waiting 20.0s for "Library" StaticText to exist
+    t =    22.27s     Checking `Expect predicate `existsNoRetry == 1` for object "Library" StaticText`
+    t =    22.27s         Checking existence of `"Library" StaticText`
+    t =    25.68s Waiting 5.0s for Button (First Match) to exist
+    t =    26.72s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =    26.72s         Checking existence of `Button (First Match)`
+LAB 5.87 thumbnails, no layout switch: open
+    t =    27.14s Tap Button (First Match)
+    t =    27.14s     Wait for dev.silentneo.glassplayer to idle
+    t =    27.15s     Find the Button (First Match)
+    t =    27.37s     Check for interrupting elements affecting "home:Lab Show" Button
+    t =    27.50s     Synthesize event
+    t =    28.15s     Wait for dev.silentneo.glassplayer to idle
+    t =    31.95s Waiting 5.0s for "Back" Button to exist
+    t =    33.00s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    33.01s         Checking existence of `"Back" Button`
+LAB 11.95 thumbnails, no layout switch: back
+    t =    33.17s Tap "Back" Button
+    t =    33.17s     Wait for dev.silentneo.glassplayer to idle
+    t =    33.18s     Find the "Back" Button
+    t =    33.33s     Check for interrupting elements affecting "chevron.left" Button
+    t =    33.45s     Synthesize event
+    t =    33.78s     Wait for dev.silentneo.glassplayer to idle
+LAB 17.39 thumbnails, no layout switch: settled
+    t =    38.61s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test1ZoomBackFreshLaunch]' passed (38.891 seconds).
+Test Case '-[GlassPlayerUITests.RoundLabUITests test2ZoomBackAfterLayoutSwitch]' started.
+    t =     0.00s Start Test at 2026-10-30 17:00:33.348
+    t =     0.04s Set Up
+    t =     0.04s Open dev.silentneo.glassplayer
+    t =     0.04s     Launch dev.silentneo.glassplayer
+    t =     0.04s         Terminate dev.silentneo.glassplayer:14274
+2026-10-30 17:00:34.475 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:00:34.475 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.58s         Setting up automation session
+    t =     9.85s         Wait for dev.silentneo.glassplayer to idle
+    t =    12.86s Setting device orientation to Portrait
+    t =    12.87s     Wait for dev.silentneo.glassplayer to idle
+    t =    12.88s Waiting 20.0s for "Library" StaticText to exist
+    t =    13.93s     Checking `Expect predicate `existsNoRetry == 1` for object "Library" StaticText`
+    t =    13.94s         Checking existence of `"Library" StaticText`
+    t =    17.39s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    18.46s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    18.46s         Checking existence of `"viewModeMenu" Button`
+    t =    18.75s Tap "viewModeMenu" Button
+    t =    18.75s     Wait for dev.silentneo.glassplayer to idle
+    t =    18.75s     Find the "viewModeMenu" Button
+    t =    19.24s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    19.40s     Synthesize event
+    t =    19.88s     Wait for dev.silentneo.glassplayer to idle
+    t =    22.78s Waiting 3.0s for "Details" Button to exist
+    t =    23.82s     Checking `Expect predicate `existsNoRetry == 1` for object "Details" Button`
+    t =    23.82s         Checking existence of `"Details" Button`
+LAB 11.15 layout → Details
+    t =    24.03s Tap "Details" Button
+    t =    24.03s     Wait for dev.silentneo.glassplayer to idle
+    t =    24.04s     Find the "Details" Button
+    t =    24.22s     Check for interrupting elements affecting "Details" Button
+    t =    24.38s     Synthesize event
+    t =    24.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    28.54s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    29.58s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    29.58s         Checking existence of `"viewModeMenu" Button`
+    t =    30.19s Tap "viewModeMenu" Button
+    t =    30.19s     Wait for dev.silentneo.glassplayer to idle
+    t =    30.19s     Find the "viewModeMenu" Button
+    t =    30.67s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    30.76s     Synthesize event
+    t =    31.09s     Wait for dev.silentneo.glassplayer to idle
+    t =    33.40s Waiting 3.0s for "Thumbnails" Button to exist
+    t =    34.42s     Checking `Expect predicate `existsNoRetry == 1` for object "Thumbnails" Button`
+    t =    34.42s         Checking existence of `"Thumbnails" Button`
+LAB 21.78 layout → Thumbnails
+    t =    34.65s Tap "Thumbnails" Button
+    t =    34.65s     Wait for dev.silentneo.glassplayer to idle
+    t =    34.67s     Find the "Thumbnails" Button
+    t =    34.79s     Check for interrupting elements affecting "Thumbnails" Button
+    t =    34.94s     Synthesize event
+    t =    35.28s     Wait for dev.silentneo.glassplayer to idle
+    t =    38.84s Waiting 5.0s for Button (First Match) to exist
+    t =    39.89s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =    39.89s         Checking existence of `Button (First Match)`
+LAB 27.31 thumbnails after details: open
+    t =    40.18s Tap Button (First Match)
+    t =    40.18s     Wait for dev.silentneo.glassplayer to idle
+    t =    40.19s     Find the Button (First Match)
+    t =    40.54s     Check for interrupting elements affecting "home:Lab Show" Button
+    t =    40.62s     Synthesize event
+    t =    40.94s     Wait for dev.silentneo.glassplayer to idle
+    t =    44.27s Waiting 5.0s for "Back" Button to exist
+    t =    45.31s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    45.31s         Checking existence of `"Back" Button`
+LAB 32.57 thumbnails after details: back
+    t =    45.45s Tap "Back" Button
+    t =    45.45s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.45s     Find the "Back" Button
+    t =    45.62s     Check for interrupting elements affecting "chevron.left" Button
+    t =    45.73s     Synthesize event
+    t =    46.07s     Wait for dev.silentneo.glassplayer to idle
+LAB 37.99 thumbnails after details: settled
+    t =    50.87s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    51.91s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    51.91s         Checking existence of `"viewModeMenu" Button`
+    t =    52.40s Tap "viewModeMenu" Button
+    t =    52.40s     Wait for dev.silentneo.glassplayer to idle
+    t =    52.40s     Find the "viewModeMenu" Button
+    t =    52.89s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    53.13s     Synthesize event
+    t =    53.46s     Wait for dev.silentneo.glassplayer to idle
+    t =    55.78s Waiting 3.0s for "Details" Button to exist
+    t =    56.82s     Checking `Expect predicate `existsNoRetry == 1` for object "Details" Button`
+    t =    56.82s         Checking existence of `"Details" Button`
+LAB 44.22 layout → Details
+    t =    57.10s Tap "Details" Button
+    t =    57.10s     Wait for dev.silentneo.glassplayer to idle
+    t =    57.12s     Find the "Details" Button
+    t =    57.35s     Check for interrupting elements affecting "Details" Button
+    t =    57.52s     Synthesize event
+    t =    57.86s     Wait for dev.silentneo.glassplayer to idle
+    t =    61.44s Waiting 5.0s for Button (First Match) to exist
+    t =    62.49s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =    62.49s         Checking existence of `Button (First Match)`
+LAB 50.34 details: open
+    t =    63.21s Tap Button (First Match)
+    t =    63.21s     Wait for dev.silentneo.glassplayer to idle
+    t =    63.24s     Find the Button (First Match)
+    t =    63.72s     Check for interrupting elements affecting "home:Lab Show" Button
+    t =    63.87s     Synthesize event
+    t =    64.21s     Wait for dev.silentneo.glassplayer to idle
+    t =    68.21s Waiting 5.0s for "Back" Button to exist
+    t =    69.26s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    69.26s         Checking existence of `"Back" Button`
+LAB 56.52 details: back
+    t =    69.40s Tap "Back" Button
+    t =    69.40s     Wait for dev.silentneo.glassplayer to idle
+    t =    69.41s     Find the "Back" Button
+    t =    69.55s     Check for interrupting elements affecting "chevron.left" Button
+    t =    69.70s     Synthesize event
+    t =    70.19s     Wait for dev.silentneo.glassplayer to idle
+LAB 62.05 details: settled
+    t =    74.93s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    75.97s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    75.97s         Checking existence of `"viewModeMenu" Button`
+    t =    76.35s Tap "viewModeMenu" Button
+    t =    76.35s     Wait for dev.silentneo.glassplayer to idle
+    t =    76.36s     Find the "viewModeMenu" Button
+    t =    76.65s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    76.78s     Synthesize event
+    t =    77.16s     Wait for dev.silentneo.glassplayer to idle
+    t =    79.51s Waiting 3.0s for "List" Button to exist
+    t =    80.54s     Checking `Expect predicate `existsNoRetry == 1` for object "List" Button`
+    t =    80.54s         Checking existence of `"List" Button`
+LAB 67.86 layout → List
+    t =    80.73s Tap "List" Button
+    t =    80.73s     Wait for dev.silentneo.glassplayer to idle
+    t =    80.74s     Find the "List" Button
+    t =    80.92s     Check for interrupting elements affecting "List" Button
+    t =    81.07s     Synthesize event
+    t =    81.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    85.08s Waiting 5.0s for Button (First Match) to exist
+    t =    86.12s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =    86.13s         Checking existence of `Button (First Match)`
+LAB 73.68 list: open
+    t =    86.56s Tap Button (First Match)
+    t =    86.56s     Wait for dev.silentneo.glassplayer to idle
+    t =    86.56s     Find the Button (First Match)
+    t =    86.96s     Check for interrupting elements affecting "home:Lab Show" Button
+    t =    87.13s     Synthesize event
+    t =    87.48s     Wait for dev.silentneo.glassplayer to idle
+    t =    90.69s Waiting 5.0s for "Back" Button to exist
+    t =    91.72s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    91.73s         Checking existence of `"Back" Button`
+LAB 79.02 list: back
+    t =    91.89s Tap "Back" Button
+    t =    91.89s     Wait for dev.silentneo.glassplayer to idle
+    t =    91.90s     Find the "Back" Button
+    t =    92.02s     Check for interrupting elements affecting "chevron.left" Button
+    t =    92.16s     Synthesize event
+    t =    92.51s     Wait for dev.silentneo.glassplayer to idle
+LAB 84.45 list: settled
+    t =    97.33s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    98.37s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    98.38s         Checking existence of `"viewModeMenu" Button`
+    t =    98.63s Tap "viewModeMenu" Button
+    t =    98.63s     Wait for dev.silentneo.glassplayer to idle
+    t =    98.64s     Find the "viewModeMenu" Button
+    t =    98.87s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    98.99s     Synthesize event
+    t =    99.29s     Wait for dev.silentneo.glassplayer to idle
+    t =   101.63s Waiting 3.0s for "Thumbnails" Button to exist
+    t =   102.67s     Checking `Expect predicate `existsNoRetry == 1` for object "Thumbnails" Button`
+    t =   102.67s         Checking existence of `"Thumbnails" Button`
+LAB 89.88 layout → Thumbnails
+    t =   102.76s Tap "Thumbnails" Button
+    t =   102.76s     Wait for dev.silentneo.glassplayer to idle
+    t =   102.76s     Find the "Thumbnails" Button
+    t =   102.87s     Check for interrupting elements affecting "Thumbnails" Button
+    t =   102.97s     Synthesize event
+    t =   103.29s     Wait for dev.silentneo.glassplayer to idle
+    t =   106.83s Waiting 5.0s for Button (First Match) to exist
+    t =   107.87s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =   107.87s         Checking existence of `Button (First Match)`
+LAB 95.30 thumbnails again: open
+    t =   108.17s Tap Button (First Match)
+    t =   108.17s     Wait for dev.silentneo.glassplayer to idle
+    t =   108.18s     Find the Button (First Match)
+    t =   108.46s     Check for interrupting elements affecting "home:Lab Show" Button
+    t =   108.55s     Synthesize event
+    t =   108.89s     Wait for dev.silentneo.glassplayer to idle
+    t =   112.82s Waiting 5.0s for "Back" Button to exist
+    t =   113.87s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   113.87s         Checking existence of `"Back" Button`
+LAB 101.18 thumbnails again: back
+    t =   114.06s Tap "Back" Button
+    t =   114.06s     Wait for dev.silentneo.glassplayer to idle
+    t =   114.07s     Find the "Back" Button
+    t =   114.26s     Check for interrupting elements affecting "chevron.left" Button
+    t =   114.37s     Synthesize event
+    t =   114.71s     Wait for dev.silentneo.glassplayer to idle
+LAB 106.66 thumbnails again: settled
+    t =   119.56s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test2ZoomBackAfterLayoutSwitch]' passed (120.014 seconds).
+Test Case '-[GlassPlayerUITests.RoundLabUITests test3PlaylistOpensOnPlayingEpisode]' started.
+    t =     0.00s Start Test at 2026-10-30 17:02:33.364
+    t =     0.05s Set Up
+    t =     0.05s Open dev.silentneo.glassplayer
+    t =     0.05s     Launch dev.silentneo.glassplayer
+    t =     0.05s         Terminate dev.silentneo.glassplayer:15024
+2026-10-30 17:02:44.579 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:02:44.581 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    12.12s         Setting up automation session
+    t =    20.17s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.RoundLabUITests test3PlaylistOpensOnPlayingEpisode] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    23.86s             Interface orientation changed to Landscape Right
+    t =    28.67s Setting device orientation to Landscape Left
+    t =    28.68s     Device orientation changed to Landscape Left
+    t =    28.70s     Wait for dev.silentneo.glassplayer to idle
+    t =    28.71s Waiting 20.0s for "Now Playing" Button to exist
+    t =    29.76s     Checking `Expect predicate `existsNoRetry == 1` for object "Now Playing" Button`
+    t =    29.76s         Checking existence of `"Now Playing" Button`
+LAB 4.27 playing E1: open Now Playing
+    t =    32.97s Tap "Now Playing" Button
+    t =    32.98s     Wait for dev.silentneo.glassplayer to idle
+    t =    32.98s     Find the "Now Playing" Button
+    t =    33.03s     Check for interrupting elements affecting "Now Playing" Button
+    t =    33.12s     Synthesize event
+    t =    33.49s     Wait for dev.silentneo.glassplayer to idle
+    t =    36.69s Checking existence of `"q0" Button`
+    t =    37.02s Find the "q0" Button
+    t =    37.19s Checking existence of `"q1" Button`
+    t =    37.36s Find the "q1" Button
+    t =    37.59s Checking existence of `"q2" Button`
+    t =    37.74s Find the "q2" Button
+    t =    37.96s Checking existence of `"q3" Button`
+    t =    38.14s Find the "q3" Button
+    t =    38.34s Checking existence of `"q4" Button`
+    t =    38.50s Find the "q4" Button
+    t =    38.69s Checking existence of `"q5" Button`
+    t =    38.87s Find the "q5" Button
+    t =    39.08s Checking existence of `"q6" Button`
+    t =    39.25s Find the "q6" Button
+    t =    39.49s Checking existence of `"q7" Button`
+    t =    39.67s Find the "q7" Button
+    t =    39.87s Checking existence of `"q8" Button`
+    t =    40.03s Find the "q8" Button
+    t =    40.25s Checking existence of `"q9" Button`
+    t =    40.44s Find the "q9" Button
+    t =    40.65s Find the "q0" Button
+    t =    40.81s Find the "q0" Button
+    t =    40.96s Find the "q0" Button
+    t =    41.17s Find the "q1" Button
+    t =    41.36s Find the "q1" Button
+    t =    41.52s Find the "q1" Button
+LAB 13.04 playing E1: rows on screen ["q0 (playing)@199", "q1@259"]
+    t =    41.71s Checking existence of `"q0" Button`
+    t =    41.97s Find the "q0" Button
+    t =    42.22s Find the "q0" Button
+    t =    42.42s Tap Target Application 'dev.silentneo.glassplayer'[0.20, 0.50]
+    t =    42.42s     Wait for dev.silentneo.glassplayer to idle
+    t =    42.42s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    42.49s     Check for interrupting elements affecting "Folio" Application
+    t =    42.56s     Synthesize event
+    t =    42.56s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    42.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    42.67s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    43.03s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.28s Open dev.silentneo.glassplayer
+    t =    45.29s     Launch dev.silentneo.glassplayer
+    t =    45.29s         Terminate dev.silentneo.glassplayer:19304
+    t =    45.53s             Interface orientation changed to Portrait
+2026-10-30 17:03:19.696 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:03:19.696 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    46.64s         Interface orientation changed to Landscape Right
+    t =    47.12s         Setting up automation session
+    t =    55.15s         Wait for dev.silentneo.glassplayer to idle
+    t =    59.39s Setting device orientation to Landscape Left
+    t =    59.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    59.41s Waiting 20.0s for "Now Playing" Button to exist
+    t =    60.45s     Checking `Expect predicate `existsNoRetry == 1` for object "Now Playing" Button`
+    t =    60.45s         Checking existence of `"Now Playing" Button`
+LAB 4.29 playing E6: open Now Playing
+    t =    63.69s Tap "Now Playing" Button
+    t =    63.69s     Wait for dev.silentneo.glassplayer to idle
+    t =    63.70s     Find the "Now Playing" Button
+    t =    64.78s     Check for interrupting elements affecting "Now Playing" Button
+    t =    65.13s     Synthesize event
+    t =    65.66s     Wait for dev.silentneo.glassplayer to idle
+    t =    68.76s Checking existence of `"q0" Button`
+    t =    81.49s Find the "q0" Button
+    t =   100.64s Checking existence of `"q1" Button`
+    t =   107.64s Find the "q1" Button
+    t =   115.41s Checking existence of `"q2" Button`
+    t =   126.44s Find the "q2" Button
+    t =   130.93s Checking existence of `"q3" Button`
+    t =   138.40s Find the "q3" Button
+    t =   139.96s Checking existence of `"q4" Button`
+    t =   142.35s Find the "q4" Button
+    t =   144.39s Checking existence of `"q5" Button`
+    t =   149.95s Find the "q5" Button
+    t =   151.35s Checking existence of `"q6" Button`
+    t =   152.16s Find the "q6" Button
+    t =   152.83s Checking existence of `"q7" Button`
+    t =   153.71s Find the "q7" Button
+    t =   154.51s Checking existence of `"q8" Button`
+    t =   154.72s Find the "q8" Button
+    t =   154.93s Checking existence of `"q9" Button`
+    t =   155.14s Find the "q9" Button
+    t =   155.37s Find the "q4" Button
+    t =   155.58s Find the "q4" Button
+    t =   155.90s Find the "q4" Button
+    t =   156.19s Find the "q5" Button
+    t =   156.49s Find the "q5" Button
+    t =   156.82s Find the "q5" Button
+    t =   157.14s Find the "q6" Button
+    t =   157.42s Find the "q6" Button
+    t =   157.85s Find the "q6" Button
+LAB 98.75 playing E6: rows on screen ["q4@162", "q5 (playing)@222", "q6@282"]
+    t =   158.14s Checking existence of `"q5" Button`
+    t =   158.45s Find the "q5" Button
+    t =   158.79s Find the "q5" Button
+    t =   159.09s Tap Target Application 'dev.silentneo.glassplayer'[0.20, 0.50]
+    t =   159.09s     Wait for dev.silentneo.glassplayer to idle
+    t =   159.09s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   159.15s     Check for interrupting elements affecting "Folio" Application
+    t =   159.21s     Synthesize event
+    t =   159.22s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   159.25s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   159.31s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   159.75s     Wait for dev.silentneo.glassplayer to idle
+    t =   161.87s Open dev.silentneo.glassplayer
+    t =   161.87s     Launch dev.silentneo.glassplayer
+    t =   161.87s         Terminate dev.silentneo.glassplayer:20321
+    t =   162.27s             Interface orientation changed to Portrait
+2026-10-30 17:05:16.285 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:05:16.285 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =   163.46s         Interface orientation changed to Landscape Right
+    t =   164.16s         Setting up automation session
+    t =   170.51s         Wait for dev.silentneo.glassplayer to idle
+    t =   174.56s Setting device orientation to Landscape Left
+    t =   174.57s     Wait for dev.silentneo.glassplayer to idle
+    t =   174.58s Waiting 20.0s for "Now Playing" Button to exist
+    t =   175.61s     Checking `Expect predicate `existsNoRetry == 1` for object "Now Playing" Button`
+    t =   175.61s         Checking existence of `"Now Playing" Button`
+LAB 4.24 playing E10: open Now Playing
+    t =   178.80s Tap "Now Playing" Button
+    t =   178.80s     Wait for dev.silentneo.glassplayer to idle
+    t =   178.80s     Find the "Now Playing" Button
+    t =   178.87s     Check for interrupting elements affecting "Now Playing" Button
+    t =   178.93s     Synthesize event
+    t =   179.27s     Wait for dev.silentneo.glassplayer to idle
+    t =   182.34s Checking existence of `"q0" Button`
+    t =   182.60s Find the "q0" Button
+    t =   182.94s Checking existence of `"q1" Button`
+    t =   183.32s Find the "q1" Button
+    t =   183.75s Checking existence of `"q2" Button`
+    t =   183.98s Find the "q2" Button
+    t =   184.34s Checking existence of `"q3" Button`
+    t =   184.61s Find the "q3" Button
+    t =   184.98s Checking existence of `"q4" Button`
+    t =   185.33s Find the "q4" Button
+    t =   185.75s Checking existence of `"q5" Button`
+    t =   186.15s Find the "q5" Button
+    t =   186.90s Checking existence of `"q6" Button`
+    t =   187.37s Find the "q6" Button
+    t =   188.15s Checking existence of `"q7" Button`
+    t =   189.01s Find the "q7" Button
+    t =   190.41s Checking existence of `"q8" Button`
+    t =   191.72s Find the "q8" Button
+    t =   193.08s Checking existence of `"q9" Button`
+    t =   194.77s Find the "q9" Button
+    t =   195.84s Find the "q8" Button
+    t =   196.81s Find the "q8" Button
+    t =   197.77s Find the "q8" Button
+    t =   198.69s Find the "q9" Button
+    t =   199.40s Find the "q9" Button
+    t =   200.60s Find the "q9" Button
+LAB 26.98 playing E10: rows on screen ["q8@184", "q9 (playing)@244"]
+    t =   201.54s Checking existence of `"q9" Button`
+    t =   202.69s Find the "q9" Button
+    t =   203.76s Find the "q9" Button
+    t =   205.60s Tap Target Application 'dev.silentneo.glassplayer'[0.20, 0.50]
+    t =   205.60s     Wait for dev.silentneo.glassplayer to idle
+    t =   205.60s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   205.80s     Check for interrupting elements affecting "Folio" Application
+    t =   206.02s     Synthesize event
+    t =   206.03s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   206.12s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   206.31s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   206.77s     Wait for dev.silentneo.glassplayer to idle
+    t =   208.99s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test3PlaylistOpensOnPlayingEpisode]' passed (209.296 seconds).
+Test Case '-[GlassPlayerUITests.RoundLabUITests test4ProviderTabs]' started.
+    t =     0.00s Start Test at 2026-10-30 17:06:02.659
+    t =     0.04s Set Up
+    t =     0.04s Open dev.silentneo.glassplayer
+    t =     0.04s     Launch dev.silentneo.glassplayer
+    t =     0.05s         Terminate dev.silentneo.glassplayer:21735
+    t =     0.40s             Interface orientation changed to Portrait
+2026-10-30 17:06:03.748 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:06:03.748 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.35s         Interface orientation changed to Landscape Right
+    t =     2.00s         Setting up automation session
+    t =     7.90s         Wait for dev.silentneo.glassplayer to idle
+    t =    10.94s Setting device orientation to Portrait
+    t =    10.94s     Device orientation changed to Portrait
+    t =    11.01s     Interface orientation changed to Portrait
+    t =    11.06s     Wait for dev.silentneo.glassplayer to idle
+    t =    11.31s Checking existence of `"Discover" Button`
+    t =    12.33s Waiting 20.0s for "Discover" Button to exist
+    t =    13.36s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    13.37s         Checking existence of `"Discover" Button`
+    t =    13.45s Tap "Discover" Button
+    t =    13.45s     Wait for dev.silentneo.glassplayer to idle
+    t =    13.45s     Find the "Discover" Button
+    t =    13.57s     Check for interrupting elements affecting "sparkles.tv" Button
+    t =    13.67s     Synthesize event
+    t =    14.08s     Wait for dev.silentneo.glassplayer to idle
+    t =    19.66s Waiting 10.0s for "Prime Video" StaticText to exist
+    t =    20.77s     Checking `Expect predicate `existsNoRetry == 1` for object "Prime Video" StaticText`
+    t =    20.77s         Checking existence of `"Prime Video" StaticText`
+LAB 12.28 open Prime Video
+    t =    23.22s Tap "Prime Video" StaticText
+    t =    23.22s     Wait for dev.silentneo.glassplayer to idle
+    t =    23.30s     Find the "Prime Video" StaticText
+    t =    23.89s     Check for interrupting elements affecting "Prime Video" StaticText
+    t =    24.14s     Synthesize event
+    t =    24.47s     Wait for dev.silentneo.glassplayer to idle
+    t =    24.59s Waiting 5.0s for "Movies" Button to exist
+    t =    25.64s     Checking `Expect predicate `existsNoRetry == 1` for object "Movies" Button`
+    t =    25.64s         Checking existence of `"Movies" Button`
+LAB 15.64 Movies (Shows still loading)
+    t =    26.58s Tap "Movies" Button
+    t =    26.58s     Wait for dev.silentneo.glassplayer to idle
+    t =    26.59s     Find the "Movies" Button
+    t =    26.97s     Check for interrupting elements affecting "Movies" Button
+    t =    27.14s     Synthesize event
+    t =    27.45s     Wait for dev.silentneo.glassplayer to idle
+LAB 18.46 Shows
+    t =    29.40s Tap "Shows" Button
+    t =    29.40s     Wait for dev.silentneo.glassplayer to idle
+    t =    29.42s     Find the "Shows" Button
+    t =    30.13s     Check for interrupting elements affecting "Shows" Button
+    t =    30.31s     Synthesize event
+    t =    30.65s     Wait for dev.silentneo.glassplayer to idle
+LAB 29.16 Shows after 8 s
+    t =    40.10s Tap "Movies" Button
+    t =    40.10s     Wait for dev.silentneo.glassplayer to idle
+    t =    40.11s     Find the "Movies" Button
+    t =    40.32s     Check for interrupting elements affecting "Movies" Button
+    t =    40.44s     Synthesize event
+    t =    40.78s     Wait for dev.silentneo.glassplayer to idle
+LAB 39.27 Movies after 8 s
+    t =    50.21s Tap "Shows" Button
+    t =    50.21s     Wait for dev.silentneo.glassplayer to idle
+    t =    50.22s     Find the "Shows" Button
+    t =    50.47s     Check for interrupting elements affecting "Shows" Button
+    t =    50.61s     Synthesize event
+    t =    50.94s     Wait for dev.silentneo.glassplayer to idle
+LAB 45.45 Shows again
+    t =    56.39s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test4ProviderTabs]' passed (56.730 seconds).
+Test Case '-[GlassPlayerUITests.RoundLabUITests test5ProviderHeaders]' started.
+    t =     0.00s Start Test at 2026-10-30 17:06:59.390
+    t =     0.05s Set Up
+    t =     0.05s Open dev.silentneo.glassplayer
+    t =     0.05s     Launch dev.silentneo.glassplayer
+    t =     0.05s         Terminate dev.silentneo.glassplayer:23332
+2026-10-30 17:07:00.482 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:07:00.482 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.28s         Setting up automation session
+    t =     8.39s         Wait for dev.silentneo.glassplayer to idle
+    t =    12.57s Setting device orientation to Portrait
+    t =    12.58s     Wait for dev.silentneo.glassplayer to idle
+    t =    12.58s Checking existence of `"Discover" Button`
+    t =    13.14s Waiting 20.0s for "Discover" Button to exist
+    t =    14.15s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    14.15s         Checking existence of `"Discover" Button`
+    t =    14.73s Tap "Discover" Button
+    t =    14.74s     Wait for dev.silentneo.glassplayer to idle
+    t =    14.75s     Find the "Discover" Button
+    t =    15.04s     Check for interrupting elements affecting "sparkles.tv" Button
+    t =    15.62s     Synthesize event
+    t =    16.02s     Wait for dev.silentneo.glassplayer to idle
+    t =    21.56s Find the "Netflix" StaticText
+    t =    23.30s Waiting 3.0s for "Netflix" StaticText to exist
+    t =    24.34s     Checking `Expect predicate `existsNoRetry == 1` for object "Netflix" StaticText`
+    t =    24.34s         Checking existence of `"Netflix" StaticText`
+    t =    25.95s Tap "Netflix" StaticText
+    t =    25.95s     Wait for dev.silentneo.glassplayer to idle
+    t =    25.97s     Find the "Netflix" StaticText
+    t =    26.62s     Check for interrupting elements affecting "Netflix" StaticText
+    t =    26.73s     Synthesize event
+    t =    27.05s     Wait for dev.silentneo.glassplayer to idle
+    t =    29.16s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    29.42s Checking existence of `"platformBadge" Any`
+    t =    29.54s Find the "platformBadge" Any
+    t =    29.73s Find the "platformBadge" StaticText
+    t =    29.85s Find the Button (First Match)
+LAB 17.35 Netflix: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    29.94s Find the "BackButton" Button
+    t =    30.02s Tap "BackButton" Button
+    t =    30.02s     Wait for dev.silentneo.glassplayer to idle
+    t =    30.02s     Find the "BackButton" Button
+    t =    30.07s     Check for interrupting elements affecting "BackButton" Button
+    t =    30.22s     Synthesize event
+    t =    30.55s     Wait for dev.silentneo.glassplayer to idle
+    t =    32.08s Find the "Prime Video" StaticText
+    t =    32.35s Waiting 3.0s for "Prime Video" StaticText to exist
+    t =    33.38s     Checking `Expect predicate `existsNoRetry == 1` for object "Prime Video" StaticText`
+    t =    33.38s         Checking existence of `"Prime Video" StaticText`
+    t =    33.58s Tap "Prime Video" StaticText
+    t =    33.58s     Wait for dev.silentneo.glassplayer to idle
+    t =    33.58s     Find the "Prime Video" StaticText
+    t =    33.78s     Check for interrupting elements affecting "Prime Video" StaticText
+    t =    33.86s     Synthesize event
+    t =    34.38s     Wait for dev.silentneo.glassplayer to idle
+    t =    36.74s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    36.93s Checking existence of `"platformBadge" Any`
+    t =    37.07s Find the "platformBadge" Any
+    t =    37.21s Find the "platformBadge" StaticText
+    t =    37.37s Find the Button (First Match)
+LAB 24.86 Prime Video: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    37.44s Find the "BackButton" Button
+    t =    37.51s Tap "BackButton" Button
+    t =    37.51s     Wait for dev.silentneo.glassplayer to idle
+    t =    37.52s     Find the "BackButton" Button
+    t =    37.58s     Check for interrupting elements affecting "BackButton" Button
+    t =    37.69s     Synthesize event
+    t =    38.00s     Wait for dev.silentneo.glassplayer to idle
+    t =    39.47s Find the "HBO Max" StaticText
+    t =    39.72s Waiting 3.0s for "HBO Max" StaticText to exist
+    t =    40.75s     Checking `Expect predicate `existsNoRetry == 1` for object "HBO Max" StaticText`
+    t =    40.75s         Checking existence of `"HBO Max" StaticText`
+    t =    40.98s Tap "HBO Max" StaticText
+    t =    40.99s     Wait for dev.silentneo.glassplayer to idle
+    t =    40.99s     Find the "HBO Max" StaticText
+    t =    41.28s     Check for interrupting elements affecting "HBO Max" StaticText
+    t =    41.37s     Synthesize event
+    t =    41.69s     Wait for dev.silentneo.glassplayer to idle
+    t =    44.10s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    44.26s Checking existence of `"platformBadge" Any`
+    t =    44.37s Find the "platformBadge" Any
+    t =    44.70s Find the "platformBadge" StaticText
+    t =    44.96s Find the Button (First Match)
+LAB 32.52 HBO Max: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    45.11s Find the "BackButton" Button
+    t =    45.25s Tap "BackButton" Button
+    t =    45.25s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.26s     Find the "BackButton" Button
+    t =    45.38s     Check for interrupting elements affecting "BackButton" Button
+    t =    45.51s     Synthesize event
+    t =    45.83s     Wait for dev.silentneo.glassplayer to idle
+    t =    47.49s Find the "Disney+" StaticText
+    t =    47.81s Waiting 3.0s for "Disney+" StaticText to exist
+    t =    48.87s     Checking `Expect predicate `existsNoRetry == 1` for object "Disney+" StaticText`
+    t =    48.87s         Checking existence of `"Disney+" StaticText`
+    t =    49.07s Tap "Disney+" StaticText
+    t =    49.07s     Wait for dev.silentneo.glassplayer to idle
+    t =    49.08s     Find the "Disney+" StaticText
+    t =    49.27s     Check for interrupting elements affecting "Disney+" StaticText
+    t =    49.35s     Synthesize event
+    t =    49.67s     Wait for dev.silentneo.glassplayer to idle
+    t =    52.11s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    52.27s Checking existence of `"platformBadge" Any`
+    t =    52.40s Find the "platformBadge" Any
+    t =    52.53s Find the "platformBadge" StaticText
+    t =    52.66s Find the Button (First Match)
+LAB 40.15 Disney+: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    52.75s Find the "BackButton" Button
+    t =    52.83s Tap "BackButton" Button
+    t =    52.83s     Wait for dev.silentneo.glassplayer to idle
+    t =    52.83s     Find the "BackButton" Button
+    t =    52.91s     Check for interrupting elements affecting "BackButton" Button
+    t =    53.04s     Synthesize event
+    t =    53.37s     Wait for dev.silentneo.glassplayer to idle
+    t =    54.83s Find the "Apple TV+" StaticText
+    t =    55.14s Waiting 3.0s for "Apple TV+" StaticText to exist
+    t =    56.16s     Checking `Expect predicate `existsNoRetry == 1` for object "Apple TV+" StaticText`
+    t =    56.16s         Checking existence of `"Apple TV+" StaticText`
+    t =    56.45s Tap "Apple TV+" StaticText
+    t =    56.45s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.45s     Find the "Apple TV+" StaticText
+    t =    56.78s     Check for interrupting elements affecting "Apple TV+" StaticText
+    t =    56.85s     Synthesize event
+    t =    57.16s     Wait for dev.silentneo.glassplayer to idle
+    t =    59.65s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    59.79s Checking existence of `"platformBadge" Any`
+    t =    59.93s Find the "platformBadge" Any
+    t =    60.15s Find the "platformBadge" StaticText
+    t =    60.35s Find the Button (First Match)
+LAB 47.89 Apple TV+: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    60.47s Find the "BackButton" Button
+    t =    60.78s Tap "BackButton" Button
+    t =    60.78s     Wait for dev.silentneo.glassplayer to idle
+    t =    60.78s     Find the "BackButton" Button
+    t =    60.94s     Check for interrupting elements affecting "BackButton" Button
+    t =    61.12s     Synthesize event
+    t =    61.45s     Wait for dev.silentneo.glassplayer to idle
+    t =    62.96s Find the "Paramount+" StaticText
+    t =    63.54s Swipe left ScrollView (First Match)
+    t =    63.54s     Wait for dev.silentneo.glassplayer to idle
+    t =    63.55s     Find the ScrollView (First Match)
+    t =    63.74s     Check for interrupting elements affecting ScrollView
+    t =    63.84s     Synthesize event
+    t =    64.45s     Wait for dev.silentneo.glassplayer to idle
+    t =    64.45s Waiting 3.0s for "Paramount+" StaticText to exist
+    t =    65.46s     Checking `Expect predicate `existsNoRetry == 1` for object "Paramount+" StaticText`
+    t =    65.46s         Checking existence of `"Paramount+" StaticText`
+    t =    65.93s Tap "Paramount+" StaticText
+    t =    65.93s     Wait for dev.silentneo.glassplayer to idle
+    t =    65.94s     Find the "Paramount+" StaticText
+    t =    66.37s     Check for interrupting elements affecting "Paramount+" StaticText
+    t =    66.47s     Synthesize event
+    t =    66.52s         Scroll element to visible
+    t =    66.55s         Find the "Paramount+" StaticText
+    t =    67.45s         Computed hit point {101.99999999999996, 212.66666666666666} after scrolling to visible
+    t =    67.76s     Wait for dev.silentneo.glassplayer to idle
+    t =    70.18s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    70.35s Checking existence of `"platformBadge" Any`
+    t =    70.49s Find the "platformBadge" Any
+    t =    70.68s Find the "platformBadge" StaticText
+    t =    70.92s Find the Button (First Match)
+LAB 58.49 Paramount+: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    71.10s Find the "BackButton" Button
+    t =    71.21s Tap "BackButton" Button
+    t =    71.21s     Wait for dev.silentneo.glassplayer to idle
+    t =    71.23s     Find the "BackButton" Button
+    t =    71.33s     Check for interrupting elements affecting "BackButton" Button
+    t =    71.47s     Synthesize event
+    t =    71.80s     Wait for dev.silentneo.glassplayer to idle
+    t =    73.29s Find the "Hulu" StaticText
+    t =    73.73s Waiting 3.0s for "Hulu" StaticText to exist
+    t =    74.79s     Checking `Expect predicate `existsNoRetry == 1` for object "Hulu" StaticText`
+    t =    74.79s         Checking existence of `"Hulu" StaticText`
+    t =    75.10s Tap "Hulu" StaticText
+    t =    75.10s     Wait for dev.silentneo.glassplayer to idle
+    t =    75.10s     Find the "Hulu" StaticText
+    t =    75.40s     Check for interrupting elements affecting "Hulu" StaticText
+    t =    75.49s     Synthesize event
+    t =    75.83s     Wait for dev.silentneo.glassplayer to idle
+    t =    78.24s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    78.47s Checking existence of `"platformBadge" Any`
+    t =    78.62s Find the "platformBadge" Any
+    t =    78.79s Find the "platformBadge" StaticText
+    t =    78.93s Find the Button (First Match)
+LAB 66.43 Hulu: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    79.03s Find the "BackButton" Button
+    t =    79.11s Tap "BackButton" Button
+    t =    79.11s     Wait for dev.silentneo.glassplayer to idle
+    t =    79.12s     Find the "BackButton" Button
+    t =    79.24s     Check for interrupting elements affecting "BackButton" Button
+    t =    79.38s     Synthesize event
+    t =    79.73s     Wait for dev.silentneo.glassplayer to idle
+    t =    81.26s Find the "Peacock" StaticText
+    t =    81.88s Waiting 3.0s for "Peacock" StaticText to exist
+    t =    82.93s     Checking `Expect predicate `existsNoRetry == 1` for object "Peacock" StaticText`
+    t =    82.93s         Checking existence of `"Peacock" StaticText`
+    t =    83.41s Tap "Peacock" StaticText
+    t =    83.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    83.42s     Find the "Peacock" StaticText
+    t =    83.92s     Check for interrupting elements affecting "Peacock" StaticText
+    t =    84.01s     Synthesize event
+    t =    84.37s     Wait for dev.silentneo.glassplayer to idle
+    t =    86.76s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    87.00s Checking existence of `"platformBadge" Any`
+    t =    87.18s Find the "platformBadge" Any
+    t =    87.38s Find the "platformBadge" StaticText
+    t =    87.50s Find the Button (First Match)
+LAB 75.06 Peacock: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    87.66s Find the "BackButton" Button
+    t =    87.79s Tap "BackButton" Button
+    t =    87.79s     Wait for dev.silentneo.glassplayer to idle
+    t =    87.80s     Find the "BackButton" Button
+    t =    87.92s     Check for interrupting elements affecting "BackButton" Button
+    t =    88.05s     Synthesize event
+    t =    88.40s     Wait for dev.silentneo.glassplayer to idle
+    t =    89.89s Find the "Crunchyroll" StaticText
+    t =    90.44s Waiting 3.0s for "Crunchyroll" StaticText to exist
+    t =    91.46s     Checking `Expect predicate `existsNoRetry == 1` for object "Crunchyroll" StaticText`
+    t =    91.47s         Checking existence of `"Crunchyroll" StaticText`
+    t =    92.07s Tap "Crunchyroll" StaticText
+    t =    92.07s     Wait for dev.silentneo.glassplayer to idle
+    t =    92.07s     Find the "Crunchyroll" StaticText
+    t =    92.43s     Check for interrupting elements affecting "Crunchyroll" StaticText
+    t =    92.52s     Synthesize event
+    t =    92.87s     Wait for dev.silentneo.glassplayer to idle
+    t =    95.28s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    95.48s Checking existence of `"platformBadge" Any`
+    t =    95.61s Find the "platformBadge" Any
+    t =    95.80s Find the "platformBadge" StaticText
+    t =    95.92s Find the Button (First Match)
+LAB 83.44 Crunchyroll: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    96.03s Find the "BackButton" Button
+    t =    96.14s Tap "BackButton" Button
+    t =    96.14s     Wait for dev.silentneo.glassplayer to idle
+    t =    96.14s     Find the "BackButton" Button
+    t =    96.23s     Check for interrupting elements affecting "BackButton" Button
+    t =    96.38s     Synthesize event
+    t =    96.70s     Wait for dev.silentneo.glassplayer to idle
+    t =    98.22s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test5ProviderHeaders]' passed (98.638 seconds).
+Test Case '-[GlassPlayerUITests.RoundLabUITests test6FilesAppSort]' started.
+    t =     0.00s Start Test at 2026-10-30 17:08:38.028
+    t =     0.04s Set Up
+    t =     0.05s Open com.apple.DocumentsApp
+    t =     0.05s     Launch com.apple.DocumentsApp
+    t =     0.52s         Setting up automation session
+    t =     8.38s         Wait for com.apple.DocumentsApp to idle
+    t =    16.47s Checking existence of `"Browse" Button`
+    t =    16.91s Tap "Browse" Button
+    t =    16.92s     Wait for com.apple.DocumentsApp to idle
+    t =    16.92s     Find the "Browse" Button
+    t =    16.99s     Check for interrupting elements affecting "Browse" Button
+    t =    17.08s     Synthesize event
+    t =    17.40s     Wait for com.apple.DocumentsApp to idle
+    t =    22.64s Waiting 5.0s for "On My iPhone" StaticText to exist
+    t =    23.70s     Checking `Expect predicate `existsNoRetry == 1` for object "On My iPhone" StaticText`
+    t =    23.70s         Checking existence of `"On My iPhone" StaticText`
+    t =    23.80s Tap "On My iPhone" StaticText
+    t =    23.80s     Wait for com.apple.DocumentsApp to idle
+    t =    23.81s     Find the "On My iPhone" StaticText
+    t =    23.89s     Check for interrupting elements affecting "On My iPhone" StaticText
+    t =    23.99s     Synthesize event
+    t =    24.32s     Wait for com.apple.DocumentsApp to idle
+    t =    26.33s Waiting 5.0s for "OverflowBarButtonItem" Button to exist
+    t =    27.37s     Checking `Expect predicate `existsNoRetry == 1` for object "OverflowBarButtonItem" Button`
+    t =    27.37s         Checking existence of `"OverflowBarButtonItem" Button`
+    t =    27.50s Tap "OverflowBarButtonItem" Button
+    t =    27.50s     Wait for com.apple.DocumentsApp to idle
+    t =    27.50s     Find the "OverflowBarButtonItem" Button
+    t =    27.57s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =    27.67s     Synthesize event
+    t =    28.02s     Wait for com.apple.DocumentsApp to idle
+    t =    88.20s App animations complete notification not received, will attempt to continue.
+    t =    90.20s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =    90.36s Find the Button (Element at index 0)
+    t =    90.54s Find the "DOC.sortMenuButton.name.ascending" Button
+    t =    90.73s Find the "DOC.sortMenuButton.name.ascending" Button
+    t =    90.87s Find the Button (Element at index 1)
+    t =    90.96s Find the "DOC.sortMenuButton.kind" Button
+    t =    91.07s Find the "DOC.sortMenuButton.kind" Button
+    t =    91.15s Find the Button (Element at index 2)
+    t =    91.27s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    91.36s Find the "DOC.sortMenuButton.dateModified" Button
+    t =    91.45s Find the Button (Element at index 3)
+    t =    91.56s Find the "DOC.sortMenuButton.size" Button
+    t =    91.66s Find the "DOC.sortMenuButton.size" Button
+    t =    91.74s Find the Button (Element at index 4)
+    t =    91.83s Find the "DOC.sortMenuButton.tags" Button
+    t =    91.92s Find the "DOC.sortMenuButton.tags" Button
+LAB 79.55 menu before picking dateModified: DOC.sortMenuButton.name.ascending 'Name, Ascending' selected | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified 'Date' | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =    92.01s Checking existence of `Button (First Match)`
+LAB 79.61 pick dateModified
+    t =    92.08s Tap Button (First Match)
+    t =    92.08s     Wait for com.apple.DocumentsApp to idle
+    t =   152.11s App animations complete notification not received, will attempt to continue.
+    t =   152.11s     Find the Button (First Match)
+    t =   152.42s     Check for interrupting elements affecting "DOC.sortMenuButton.dateModified" Button
+    t =   152.64s     Synthesize event
+    t =   153.53s     Wait for com.apple.DocumentsApp to idle
+    t =   157.31s Tap "OverflowBarButtonItem" Button
+    t =   157.31s     Wait for com.apple.DocumentsApp to idle
+    t =   157.32s     Find the "OverflowBarButtonItem" Button
+    t =   157.44s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =   157.53s     Synthesize event
+    t =   157.97s     Wait for com.apple.DocumentsApp to idle
+    t =   161.11s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =   161.21s Find the Button (Element at index 0)
+    t =   161.30s Find the "DOC.sortMenuButton.name" Button
+    t =   161.39s Find the "DOC.sortMenuButton.name" Button
+    t =   161.48s Find the Button (Element at index 1)
+    t =   161.57s Find the "DOC.sortMenuButton.kind" Button
+    t =   161.65s Find the "DOC.sortMenuButton.kind" Button
+    t =   161.73s Find the Button (Element at index 2)
+    t =   161.82s Find the "DOC.sortMenuButton.dateModified.descending" Button
+    t =   161.90s Find the "DOC.sortMenuButton.dateModified.descending" Button
+    t =   161.96s Find the Button (Element at index 3)
+    t =   162.08s Find the "DOC.sortMenuButton.size" Button
+    t =   162.18s Find the "DOC.sortMenuButton.size" Button
+    t =   162.26s Find the Button (Element at index 4)
+    t =   162.35s Find the "DOC.sortMenuButton.tags" Button
+    t =   162.47s Find the "DOC.sortMenuButton.tags" Button
+LAB 150.10 menu before picking dateModified: DOC.sortMenuButton.name 'Name' | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified.descending 'Date, Newest to Oldest' selected | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =   162.56s Checking existence of `Button (First Match)`
+LAB 150.19 pick dateModified
+    t =   162.65s Tap Button (First Match)
+    t =   162.65s     Wait for com.apple.DocumentsApp to idle
+    t =   162.66s     Find the Button (First Match)
+    t =   162.76s     Check for interrupting elements affecting "DOC.sortMenuButton.dateModified.descending" Button
+    t =   162.89s     Synthesize event
+    t =   163.20s     Wait for com.apple.DocumentsApp to idle
+    t =   166.68s Tap "OverflowBarButtonItem" Button
+    t =   166.68s     Wait for com.apple.DocumentsApp to idle
+    t =   166.68s     Find the "OverflowBarButtonItem" Button
+    t =   166.75s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =   166.84s     Synthesize event
+    t =   167.16s     Wait for com.apple.DocumentsApp to idle
+    t =   170.31s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =   170.39s Find the Button (Element at index 0)
+    t =   170.47s Find the "DOC.sortMenuButton.name" Button
+    t =   170.55s Find the "DOC.sortMenuButton.name" Button
+    t =   170.61s Find the Button (Element at index 1)
+    t =   170.71s Find the "DOC.sortMenuButton.kind" Button
+    t =   170.79s Find the "DOC.sortMenuButton.kind" Button
+    t =   170.88s Find the Button (Element at index 2)
+    t =   170.95s Find the "DOC.sortMenuButton.dateModified.ascending" Button
+    t =   171.03s Find the "DOC.sortMenuButton.dateModified.ascending" Button
+    t =   171.10s Find the Button (Element at index 3)
+    t =   171.19s Find the "DOC.sortMenuButton.size" Button
+    t =   171.26s Find the "DOC.sortMenuButton.size" Button
+    t =   171.33s Find the Button (Element at index 4)
+    t =   171.39s Find the "DOC.sortMenuButton.tags" Button
+    t =   171.47s Find the "DOC.sortMenuButton.tags" Button
+LAB 159.08 menu before picking dateModified: DOC.sortMenuButton.name 'Name' | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified.ascending 'Date, Oldest to Newest' selected | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =   171.54s Checking existence of `Button (First Match)`
+LAB 159.14 pick dateModified
+    t =   171.60s Tap Button (First Match)
+    t =   171.60s     Wait for com.apple.DocumentsApp to idle
+    t =   171.60s     Find the Button (First Match)
+    t =   171.68s     Check for interrupting elements affecting "DOC.sortMenuButton.dateModified.ascending" Button
+    t =   171.76s     Synthesize event
+    t =   172.07s     Wait for com.apple.DocumentsApp to idle
+    t =   175.46s Tap "OverflowBarButtonItem" Button
+    t =   175.46s     Wait for com.apple.DocumentsApp to idle
+    t =   175.47s     Find the "OverflowBarButtonItem" Button
+    t =   175.56s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =   175.62s     Synthesize event
+    t =   175.96s     Wait for com.apple.DocumentsApp to idle
+    t =   179.05s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =   179.16s Find the Button (Element at index 0)
+    t =   179.25s Find the "DOC.sortMenuButton.name" Button
+    t =   179.33s Find the "DOC.sortMenuButton.name" Button
+    t =   179.40s Find the Button (Element at index 1)
+    t =   179.49s Find the "DOC.sortMenuButton.kind" Button
+    t =   179.59s Find the "DOC.sortMenuButton.kind" Button
+    t =   179.67s Find the Button (Element at index 2)
+    t =   179.75s Find the "DOC.sortMenuButton.dateModified.descending" Button
+    t =   179.82s Find the "DOC.sortMenuButton.dateModified.descending" Button
+    t =   179.89s Find the Button (Element at index 3)
+    t =   179.97s Find the "DOC.sortMenuButton.size" Button
+    t =   180.03s Find the "DOC.sortMenuButton.size" Button
+    t =   180.09s Find the Button (Element at index 4)
+    t =   180.17s Find the "DOC.sortMenuButton.tags" Button
+    t =   180.26s Find the "DOC.sortMenuButton.tags" Button
+LAB 167.88 menu before picking name: DOC.sortMenuButton.name 'Name' | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified.descending 'Date, Newest to Oldest' selected | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =   180.34s Checking existence of `Button (First Match)`
+LAB 167.96 pick name
+    t =   180.42s Tap Button (First Match)
+    t =   180.42s     Wait for com.apple.DocumentsApp to idle
+    t =   180.42s     Find the Button (First Match)
+    t =   180.49s     Check for interrupting elements affecting "DOC.sortMenuButton.name" Button
+    t =   180.58s     Synthesize event
+    t =   180.89s     Wait for com.apple.DocumentsApp to idle
+    t =   184.31s Tap "OverflowBarButtonItem" Button
+    t =   184.31s     Wait for com.apple.DocumentsApp to idle
+    t =   184.31s     Find the "OverflowBarButtonItem" Button
+    t =   184.39s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =   184.44s     Synthesize event
+    t =   184.78s     Wait for com.apple.DocumentsApp to idle
+    t =   187.87s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =   187.96s Find the Button (Element at index 0)
+    t =   188.03s Find the "DOC.sortMenuButton.name.ascending" Button
+    t =   188.11s Find the "DOC.sortMenuButton.name.ascending" Button
+    t =   188.19s Find the Button (Element at index 1)
+    t =   188.27s Find the "DOC.sortMenuButton.kind" Button
+    t =   188.35s Find the "DOC.sortMenuButton.kind" Button
+    t =   188.41s Find the Button (Element at index 2)
+    t =   188.50s Find the "DOC.sortMenuButton.dateModified" Button
+    t =   188.58s Find the "DOC.sortMenuButton.dateModified" Button
+    t =   188.66s Find the Button (Element at index 3)
+    t =   188.75s Find the "DOC.sortMenuButton.size" Button
+    t =   188.82s Find the "DOC.sortMenuButton.size" Button
+    t =   188.89s Find the Button (Element at index 4)
+    t =   188.96s Find the "DOC.sortMenuButton.tags" Button
+    t =   189.03s Find the "DOC.sortMenuButton.tags" Button
+LAB 176.64 menu before picking name: DOC.sortMenuButton.name.ascending 'Name, Ascending' selected | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified 'Date' | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =   189.11s Checking existence of `Button (First Match)`
+LAB 176.71 pick name
+    t =   189.17s Tap Button (First Match)
+    t =   189.17s     Wait for com.apple.DocumentsApp to idle
+    t =   189.17s     Find the Button (First Match)
+    t =   189.26s     Check for interrupting elements affecting "DOC.sortMenuButton.name.ascending" Button
+    t =   189.35s     Synthesize event
+    t =   189.67s     Wait for com.apple.DocumentsApp to idle
+    t =   193.05s Tap "OverflowBarButtonItem" Button
+    t =   193.05s     Wait for com.apple.DocumentsApp to idle
+    t =   193.06s     Find the "OverflowBarButtonItem" Button
+    t =   193.14s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =   193.23s     Synthesize event
+    t =   193.56s     Wait for com.apple.DocumentsApp to idle
+    t =   196.67s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =   196.75s Find the Button (Element at index 0)
+    t =   196.84s Find the "DOC.sortMenuButton.name.descending" Button
+    t =   196.90s Find the "DOC.sortMenuButton.name.descending" Button
+    t =   196.97s Find the Button (Element at index 1)
+    t =   197.05s Find the "DOC.sortMenuButton.kind" Button
+    t =   197.12s Find the "DOC.sortMenuButton.kind" Button
+    t =   197.19s Find the Button (Element at index 2)
+    t =   197.26s Find the "DOC.sortMenuButton.dateModified" Button
+    t =   197.36s Find the "DOC.sortMenuButton.dateModified" Button
+    t =   197.43s Find the Button (Element at index 3)
+    t =   197.51s Find the "DOC.sortMenuButton.size" Button
+    t =   197.59s Find the "DOC.sortMenuButton.size" Button
+    t =   197.67s Find the Button (Element at index 4)
+    t =   197.76s Find the "DOC.sortMenuButton.tags" Button
+    t =   197.84s Find the "DOC.sortMenuButton.tags" Button
+LAB 185.46 menu before picking size: DOC.sortMenuButton.name.descending 'Name, Descending' selected | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified 'Date' | DOC.sortMenuButton.size 'Size' | DOC.sortMenuButton.tags 'Tags'
+    t =   197.92s Checking existence of `Button (First Match)`
+LAB 185.53 pick size
+    t =   197.99s Tap Button (First Match)
+    t =   197.99s     Wait for com.apple.DocumentsApp to idle
+    t =   197.99s     Find the Button (First Match)
+    t =   198.06s     Check for interrupting elements affecting "DOC.sortMenuButton.size" Button
+    t =   198.17s     Synthesize event
+    t =   198.48s     Wait for com.apple.DocumentsApp to idle
+    t =   201.87s Tap "OverflowBarButtonItem" Button
+    t =   201.87s     Wait for com.apple.DocumentsApp to idle
+    t =   201.88s     Find the "OverflowBarButtonItem" Button
+    t =   201.95s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =   202.12s     Synthesize event
+    t =   202.49s     Wait for com.apple.DocumentsApp to idle
+    t =   205.63s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =   205.72s Find the Button (Element at index 0)
+    t =   205.80s Find the "DOC.sortMenuButton.name" Button
+    t =   205.88s Find the "DOC.sortMenuButton.name" Button
+    t =   205.97s Find the Button (Element at index 1)
+    t =   206.05s Find the "DOC.sortMenuButton.kind" Button
+    t =   206.14s Find the "DOC.sortMenuButton.kind" Button
+    t =   206.22s Find the Button (Element at index 2)
+    t =   206.31s Find the "DOC.sortMenuButton.dateModified" Button
+    t =   206.40s Find the "DOC.sortMenuButton.dateModified" Button
+    t =   206.46s Find the Button (Element at index 3)
+    t =   206.56s Find the "DOC.sortMenuButton.size.descending" Button
+    t =   206.65s Find the "DOC.sortMenuButton.size.descending" Button
+    t =   206.72s Find the Button (Element at index 4)
+    t =   206.81s Find the "DOC.sortMenuButton.tags" Button
+    t =   206.90s Find the "DOC.sortMenuButton.tags" Button
+LAB 194.53 menu before picking size: DOC.sortMenuButton.name 'Name' | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified 'Date' | DOC.sortMenuButton.size.descending 'Size, Largest to Smallest' selected | DOC.sortMenuButton.tags 'Tags'
+    t =   206.99s Checking existence of `Button (First Match)`
+LAB 194.61 pick size
+    t =   207.07s Tap Button (First Match)
+    t =   207.07s     Wait for com.apple.DocumentsApp to idle
+    t =   207.08s     Find the Button (First Match)
+    t =   207.17s     Check for interrupting elements affecting "DOC.sortMenuButton.size.descending" Button
+    t =   207.26s     Synthesize event
+    t =   207.58s     Wait for com.apple.DocumentsApp to idle
+    t =   210.99s Tap "OverflowBarButtonItem" Button
+    t =   210.99s     Wait for com.apple.DocumentsApp to idle
+    t =   210.99s     Find the "OverflowBarButtonItem" Button
+    t =   211.05s     Check for interrupting elements affecting "OverflowBarButtonItem" Button
+    t =   211.12s     Synthesize event
+    t =   211.45s     Wait for com.apple.DocumentsApp to idle
+    t =   214.50s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "DOC.sortMenuButton"'
+    t =   214.66s Find the Button (Element at index 0)
+    t =   214.76s Find the "DOC.sortMenuButton.name" Button
+    t =   214.87s Find the "DOC.sortMenuButton.name" Button
+    t =   214.95s Find the Button (Element at index 1)
+    t =   215.05s Find the "DOC.sortMenuButton.kind" Button
+    t =   215.15s Find the "DOC.sortMenuButton.kind" Button
+    t =   215.24s Find the Button (Element at index 2)
+    t =   215.32s Find the "DOC.sortMenuButton.dateModified" Button
+    t =   215.43s Find the "DOC.sortMenuButton.dateModified" Button
+    t =   215.52s Find the Button (Element at index 3)
+    t =   215.60s Find the "DOC.sortMenuButton.size.ascending" Button
+    t =   215.68s Find the "DOC.sortMenuButton.size.ascending" Button
+    t =   215.77s Find the Button (Element at index 4)
+    t =   215.86s Find the "DOC.sortMenuButton.tags" Button
+    t =   215.95s Find the "DOC.sortMenuButton.tags" Button
+LAB 203.56 menu at the end: DOC.sortMenuButton.name 'Name' | DOC.sortMenuButton.kind 'Kind' | DOC.sortMenuButton.dateModified 'Date' | DOC.sortMenuButton.size.ascending 'Size, Smallest to Largest' selected | DOC.sortMenuButton.tags 'Tags'
+    t =   216.03s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test6FilesAppSort]' passed (216.403 seconds).
+Test Case '-[GlassPlayerUITests.RoundLabUITests test7ProviderHeadersLargestText]' started.
+    t =     0.00s Start Test at 2026-10-30 17:12:14.434
+    t =     0.07s Set Up
+    t =     0.08s Open dev.silentneo.glassplayer
+    t =     0.08s     Launch dev.silentneo.glassplayer
+    t =     0.08s         Terminate dev.silentneo.glassplayer:25053
+2026-10-30 17:12:15.658 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 17:12:15.659 xcodebuild[13505:43667] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.35s         Setting up automation session
+    t =    10.39s         Wait for dev.silentneo.glassplayer to idle
+    t =    14.77s Setting device orientation to Portrait
+    t =    14.79s     Wait for dev.silentneo.glassplayer to idle
+    t =    14.80s Checking existence of `"Discover" Button`
+    t =    15.87s Waiting 20.0s for "Discover" Button to exist
+    t =    16.90s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    16.90s         Checking existence of `"Discover" Button`
+    t =    17.37s Tap "Discover" Button
+    t =    17.37s     Wait for dev.silentneo.glassplayer to idle
+    t =    17.47s     Find the "Discover" Button
+    t =    17.54s     Check for interrupting elements affecting "sparkles.tv" Button
+    t =    17.63s     Synthesize event
+    t =    17.97s     Wait for dev.silentneo.glassplayer to idle
+    t =    23.47s Find the "Netflix" StaticText
+    t =    24.39s Waiting 3.0s for "Netflix" StaticText to exist
+    t =    25.41s     Checking `Expect predicate `existsNoRetry == 1` for object "Netflix" StaticText`
+    t =    25.41s         Checking existence of `"Netflix" StaticText`
+    t =    27.04s Tap "Netflix" StaticText
+    t =    27.04s     Wait for dev.silentneo.glassplayer to idle
+    t =    27.05s     Find the "Netflix" StaticText
+    t =    28.51s     Check for interrupting elements affecting "Netflix" StaticText
+    t =    29.05s     Synthesize event
+    t =    29.43s     Wait for dev.silentneo.glassplayer to idle
+    t =    32.01s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    32.25s Checking existence of `"platformBadge" Any`
+    t =    32.44s Find the "platformBadge" Any
+    t =    32.74s Find the "platformBadge" StaticText
+    t =    32.92s Find the Button (First Match)
+LAB 18.33 Netflix: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =    33.23s Find the "BackButton" Button
+    t =    33.41s Tap "BackButton" Button
+    t =    33.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    33.42s     Find the "BackButton" Button
+    t =    33.64s     Check for interrupting elements affecting "BackButton" Button
+    t =    33.85s     Synthesize event
+    t =    34.17s     Wait for dev.silentneo.glassplayer to idle
+    t =    35.66s Find the "Prime Video" StaticText
+    t =    37.09s Waiting 3.0s for "Prime Video" StaticText to exist
+    t =    38.12s     Checking `Expect predicate `existsNoRetry == 1` for object "Prime Video" StaticText`
+    t =    38.12s         Checking existence of `"Prime Video" StaticText`
+    t =    38.41s Tap "Prime Video" StaticText
+    t =    38.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    38.41s     Find the "Prime Video" StaticText
+    t =    38.74s     Check for interrupting elements affecting "Prime Video" StaticText
+    t =    38.93s     Synthesize event
+    t =    39.35s     Wait for dev.silentneo.glassplayer to idle
+    t =    41.87s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    42.03s Checking existence of `"platformBadge" Any`
+    t =    42.14s Find the "platformBadge" Any
+    t =    42.28s Find the "platformBadge" StaticText
+    t =    42.60s Find the Button (First Match)
+LAB 27.99 Prime Video: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 176.0, 54.0, 54.0)
+    t =    42.82s Find the "BackButton" Button
+    t =    42.93s Tap "BackButton" Button
+    t =    42.93s     Wait for dev.silentneo.glassplayer to idle
+    t =    42.93s     Find the "BackButton" Button
+    t =    43.02s     Check for interrupting elements affecting "BackButton" Button
+    t =    43.24s     Synthesize event
+    t =    43.68s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.27s Find the "HBO Max" StaticText
+    t =    46.40s Waiting 3.0s for "HBO Max" StaticText to exist
+    t =    47.41s     Checking `Expect predicate `existsNoRetry == 1` for object "HBO Max" StaticText`
+    t =    47.41s         Checking existence of `"HBO Max" StaticText`
+    t =    47.71s Tap "HBO Max" StaticText
+    t =    47.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    47.72s     Find the "HBO Max" StaticText
+    t =    48.05s     Check for interrupting elements affecting "HBO Max" StaticText
+    t =    48.17s     Synthesize event
+    t =    48.50s     Wait for dev.silentneo.glassplayer to idle
+    t =    50.98s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    51.14s Checking existence of `"platformBadge" Any`
+    t =    51.24s Find the "platformBadge" Any
+    t =    51.41s Find the "platformBadge" StaticText
+    t =    51.55s Find the Button (First Match)
+LAB 36.93 HBO Max: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =    51.72s Find the "BackButton" Button
+    t =    51.87s Tap "BackButton" Button
+    t =    51.87s     Wait for dev.silentneo.glassplayer to idle
+    t =    51.88s     Find the "BackButton" Button
+    t =    52.07s     Check for interrupting elements affecting "BackButton" Button
+    t =    52.19s     Synthesize event
+    t =    52.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    54.10s Find the "Disney+" StaticText
+    t =    54.80s Waiting 3.0s for "Disney+" StaticText to exist
+    t =    55.81s     Checking `Expect predicate `existsNoRetry == 1` for object "Disney+" StaticText`
+    t =    55.81s         Checking existence of `"Disney+" StaticText`
+    t =    56.32s Tap "Disney+" StaticText
+    t =    56.32s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.32s     Find the "Disney+" StaticText
+    t =    56.75s     Check for interrupting elements affecting "Disney+" StaticText
+    t =    56.87s     Synthesize event
+    t =    57.20s     Wait for dev.silentneo.glassplayer to idle
+    t =    59.66s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    59.88s Checking existence of `"platformBadge" Any`
+    t =    60.00s Find the "platformBadge" Any
+    t =    60.18s Find the "platformBadge" StaticText
+    t =    60.30s Find the Button (First Match)
+LAB 45.65 Disney+: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =    60.44s Find the "BackButton" Button
+    t =    60.61s Tap "BackButton" Button
+    t =    60.61s     Wait for dev.silentneo.glassplayer to idle
+    t =    60.61s     Find the "BackButton" Button
+    t =    60.75s     Check for interrupting elements affecting "BackButton" Button
+    t =    60.87s     Synthesize event
+    t =    61.29s     Wait for dev.silentneo.glassplayer to idle
+    t =    62.79s Find the "Apple TV+" StaticText
+    t =    63.48s Waiting 3.0s for "Apple TV+" StaticText to exist
+    t =    64.51s     Checking `Expect predicate `existsNoRetry == 1` for object "Apple TV+" StaticText`
+    t =    64.51s         Checking existence of `"Apple TV+" StaticText`
+    t =    65.25s Tap "Apple TV+" StaticText
+    t =    65.26s     Wait for dev.silentneo.glassplayer to idle
+    t =    65.26s     Find the "Apple TV+" StaticText
+    t =    65.80s     Check for interrupting elements affecting "Apple TV+" StaticText
+    t =    65.94s     Synthesize event
+    t =    66.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    68.71s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    69.15s Checking existence of `"platformBadge" Any`
+    t =    69.26s Find the "platformBadge" Any
+    t =    69.40s Find the "platformBadge" StaticText
+    t =    69.57s Find the Button (First Match)
+LAB 54.88 Apple TV+: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 176.0, 54.0, 54.0)
+    t =    69.67s Find the "BackButton" Button
+    t =    69.77s Tap "BackButton" Button
+    t =    69.77s     Wait for dev.silentneo.glassplayer to idle
+    t =    69.78s     Find the "BackButton" Button
+    t =    69.86s     Check for interrupting elements affecting "BackButton" Button
+    t =    69.98s     Synthesize event
+    t =    70.31s     Wait for dev.silentneo.glassplayer to idle
+    t =    71.79s Find the "Paramount+" StaticText
+    t =    78.42s Swipe left ScrollView (First Match)
+    t =    78.42s     Wait for dev.silentneo.glassplayer to idle
+    t =    78.45s     Find the ScrollView (First Match)
+    t =    79.73s     Check for interrupting elements affecting ScrollView
+    t =    80.28s     Synthesize event
+    t =    83.47s     Wait for dev.silentneo.glassplayer to idle
+    t =    83.48s Waiting 3.0s for "Paramount+" StaticText to exist
+    t =    84.53s     Checking `Expect predicate `existsNoRetry == 1` for object "Paramount+" StaticText`
+    t =    84.54s         Checking existence of `"Paramount+" StaticText`
+    t =    86.19s Tap "Paramount+" StaticText
+    t =    86.19s     Wait for dev.silentneo.glassplayer to idle
+    t =    86.20s     Find the "Paramount+" StaticText
+    t =    96.65s     Check for interrupting elements affecting "Paramount+" StaticText
+    t =   100.62s     Synthesize event
+    t =   101.36s         Scroll element to visible
+    t =   101.37s         Find the "Paramount+" StaticText
+    t =   117.75s         Computed hit point {258, 230} after scrolling to visible
+    t =   118.07s     Wait for dev.silentneo.glassplayer to idle
+    t =   120.95s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =   121.89s Checking existence of `"platformBadge" Any`
+    t =   122.60s Find the "platformBadge" Any
+    t =   123.23s Find the "platformBadge" StaticText
+    t =   123.69s Find the Button (First Match)
+LAB 109.84 Paramount+: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 176.0, 54.0, 54.0)
+    t =   124.66s Find the "BackButton" Button
+    t =   125.89s Tap "BackButton" Button
+    t =   125.89s     Wait for dev.silentneo.glassplayer to idle
+    t =   125.90s     Find the "BackButton" Button
+    t =   129.30s     Check for interrupting elements affecting "BackButton" Button
+    t =   131.80s     Synthesize event
+    t =   132.76s     Wait for dev.silentneo.glassplayer to idle
+    t =   134.51s Find the "Hulu" StaticText
+    t =   137.58s Waiting 3.0s for "Hulu" StaticText to exist
+    t =   138.62s     Checking `Expect predicate `existsNoRetry == 1` for object "Hulu" StaticText`
+    t =   138.62s         Checking existence of `"Hulu" StaticText`
+    t =   140.84s         Capturing element debug description
+    t =   141.01s             Requesting snapshot of accessibility hierarchy for app with pid 34997
+    t =   141.02s             Requesting snapshot of accessibility hierarchy for app with pid 34997
+    t =   141.02s             Requesting snapshot of accessibility hierarchy for app with pid 34997
+    t =   141.02s             Requesting snapshot of accessibility hierarchy for app with pid 34997
+    t =   141.03s     Checking existence of `"Hulu" StaticText`
+    t =   145.34s Tap "Hulu" StaticText
+    t =   145.34s     Wait for dev.silentneo.glassplayer to idle
+    t =   145.35s     Find the "Hulu" StaticText
+    t =   147.18s     Check for interrupting elements affecting "Hulu" StaticText
+    t =   147.60s     Synthesize event
+    t =   149.06s     Wait for dev.silentneo.glassplayer to idle
+    t =   151.96s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =   152.15s Checking existence of `"platformBadge" Any`
+    t =   152.24s Find the "platformBadge" Any
+    t =   152.40s Find the "platformBadge" StaticText
+    t =   152.55s Find the Button (First Match)
+LAB 137.85 Hulu: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =   152.64s Find the "BackButton" Button
+    t =   152.76s Tap "BackButton" Button
+    t =   152.76s     Wait for dev.silentneo.glassplayer to idle
+    t =   152.77s     Find the "BackButton" Button
+    t =   152.84s     Check for interrupting elements affecting "BackButton" Button
+    t =   152.99s     Synthesize event
+    t =   153.33s     Wait for dev.silentneo.glassplayer to idle
+    t =   154.84s Find the "Peacock" StaticText
+    t =   155.76s Waiting 3.0s for "Peacock" StaticText to exist
+    t =   156.79s     Checking `Expect predicate `existsNoRetry == 1` for object "Peacock" StaticText`
+    t =   156.79s         Checking existence of `"Peacock" StaticText`
+    t =   159.02s         Capturing element debug description
+    t =   159.13s             Requesting snapshot of accessibility hierarchy for app with pid 34997
+    t =   159.13s             Requesting snapshot of accessibility hierarchy for app with pid 34997
+    t =   159.13s             Requesting snapshot of accessibility hierarchy for app with pid 34997
+    t =   159.13s             Requesting snapshot of accessibility hierarchy for app with pid 34997
+    t =   159.14s     Checking existence of `"Peacock" StaticText`
+    t =   169.12s Tap "Peacock" StaticText
+    t =   169.12s     Wait for dev.silentneo.glassplayer to idle
+    t =   169.12s     Find the "Peacock" StaticText
+    t =   170.36s     Check for interrupting elements affecting "Peacock" StaticText
+    t =   170.49s     Synthesize event
+    t =   171.39s     Wait for dev.silentneo.glassplayer to idle
+    t =   173.83s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =   173.99s Checking existence of `"platformBadge" Any`
+    t =   174.46s Find the "platformBadge" Any
+    t =   174.71s Find the "platformBadge" StaticText
+    t =   175.08s Find the Button (First Match)
+LAB 160.69 Peacock: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =   175.54s Find the "BackButton" Button
+    t =   175.80s Tap "BackButton" Button
+    t =   175.80s     Wait for dev.silentneo.glassplayer to idle
+    t =   175.81s     Find the "BackButton" Button
+    t =   176.06s     Check for interrupting elements affecting "BackButton" Button
+    t =   176.28s     Synthesize event
+    t =   176.64s     Wait for dev.silentneo.glassplayer to idle
+    t =   178.17s Find the "Crunchyroll" StaticText
+    t =   179.03s Swipe left ScrollView (First Match)
+    t =   179.03s     Wait for dev.silentneo.glassplayer to idle
+    t =   179.03s     Find the ScrollView (First Match)
+    t =   179.31s     Check for interrupting elements affecting ScrollView
+    t =   179.40s     Synthesize event
+    t =   180.04s     Wait for dev.silentneo.glassplayer to idle
+    t =   180.05s Waiting 3.0s for "Crunchyroll" StaticText to exist
+    t =   181.09s     Checking `Expect predicate `existsNoRetry == 1` for object "Crunchyroll" StaticText`
+    t =   181.09s         Checking existence of `"Crunchyroll" StaticText`
+    t =   181.62s Tap "Crunchyroll" StaticText
+    t =   181.62s     Wait for dev.silentneo.glassplayer to idle
+    t =   181.62s     Find the "Crunchyroll" StaticText
+    t =   182.05s     Check for interrupting elements affecting "Crunchyroll" StaticText
+    t =   182.25s     Synthesize event
+    t =   182.33s         Scroll element to visible
+    t =   182.33s         Find the "Crunchyroll" StaticText
+    t =   183.87s         Computed hit point {348.00000000000006, 230} after scrolling to visible
+    t =   184.23s     Wait for dev.silentneo.glassplayer to idle
+    t =   186.66s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =   186.88s Checking existence of `"platformBadge" Any`
+    t =   186.98s Find the "platformBadge" Any
+    t =   187.13s Find the "platformBadge" StaticText
+    t =   187.24s Find the Button (First Match)
+LAB 172.53 Crunchyroll: back button (16.0, 62.0, 44.0, 44.0), badge (20.0, 176.0, 54.0, 54.0)
+    t =   187.34s Find the "BackButton" Button
+    t =   187.45s Tap "BackButton" Button
+    t =   187.45s     Wait for dev.silentneo.glassplayer to idle
+    t =   187.45s     Find the "BackButton" Button
+    t =   187.53s     Check for interrupting elements affecting "BackButton" Button
+    t =   187.64s     Synthesize event
+    t =   187.97s     Wait for dev.silentneo.glassplayer to idle
+    t =   189.46s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test7ProviderHeadersLargestText]' passed (189.877 seconds).
+Test Suite 'RoundLabUITests' passed at 2026-10-30 17:15:24.310.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 929.849 (929.861) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-30 17:15:24.312.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 929.849 (929.864) seconds
+Test Suite 'Selected tests' passed at 2026-10-30 17:15:24.312.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 929.849 (929.867) seconds
+2026-10-30 17:16:31.494 xcodebuild[13505:43667] [MT] IDETestOperationsObserverDebug: 1026.726 elapsed -- Testing started completed.
+2026-10-30 17:16:31.495 xcodebuild[13505:43667] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-30 17:16:31.495 xcodebuild[13505:43667] [MT] IDETestOperationsObserverDebug: 1026.726 sec, +1026.726 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/Folio/Folio/build/Logs/Test/Test-GlassPlayer-2026.10.30_16-59-23-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

@@ -1,0 +1,1849 @@
+17:00:04.464 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.09 GB
+17:00:04.807 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+17:00:04.814 [lab] shots seeded
+17:00:06.715 [hang] main thread unresponsive for 2.3 s
+17:00:10.989 [scene] DF1B4D26 connects (portrait)
+17:00:10.990 [scene] DF1B4D26 will enter foreground (portrait)
+17:00:11.943 [app] first screen 11264 ms after process start
+17:00:11.943 [app] root view appeared (1 in this run, splash off)
+17:00:13.227 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+17:00:13.529 [meta] saved library metadata with its text decoded (once)
+17:00:13.580 [scene] DF1B4D26 active (portrait)
+17:00:13.592 [app] active
+17:00:14.129 [layout] grid for 402 pt: 3 columns, 3 entries, 362×215 pt
+17:00:14.130 [layout] Lab Show at (125, 0, 112, 215)
+17:00:14.130 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+17:00:14.130 [layout] Weekend picks at (250, 0, 112, 215)
+17:00:14.131 [layout] collage space of Weekend picks at (255, 5, 102, 158)
+17:00:14.131 [layout] collage grid of Weekend picks at (255, 5, 102, 158)
+17:00:14.132 [image] tile Lab Show appeared (loader #3, picture none yet)
+17:00:14.133 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+17:00:14.133 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+17:00:14.134 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+17:00:14.134 [image] folder tile Weekend picks appeared
+17:00:14.135 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+17:00:14.135 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+17:00:14.136 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+17:00:14.212 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:00:14.214 [zoom] source 0|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+17:00:14.215 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+17:00:14.278 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 1051 ms
+17:00:14.296 [app] Home: appeared 413 ms after the root view, next frame at 2334 ms, main thread free at 2353 ms
+17:00:14.392 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 258 ms
+17:00:14.395 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 261 ms
+17:00:14.400 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 264 ms
+17:00:22.433 [nav] home: open Lab Show
+17:00:22.445 [title] home opens group("s|lab show")
+17:00:22.467 [image] loader #7 Lab Show S01E01.mp4|wide|552: not in memory, loading
+17:00:22.468 [image] loader #8 Lab Show S01E02.mp4|wide|552: not in memory, loading
+17:00:22.469 [image] loader #9 Lab Show S01E03.mp4|wide|552: not in memory, loading
+17:00:22.472 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+17:00:22.481 [zoom] opening group("s|lab show"): 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:23.004 [nav] title page appear Lab Show S01E01.mp4
+17:00:23.005 [title] library title page appeared
+17:00:23.005 [image] loader #10 Lab Show S01E01.mp4|wide|2400: not in memory, loading
+17:00:23.006 [image] tile S1 · E2 appeared (loader #12, picture none yet)
+17:00:23.006 [image] loader #12 Lab Show S01E02.mp4|wide|552: not in memory, loading
+17:00:23.006 [image] tile S1 · E1 appeared (loader #11, picture none yet)
+17:00:23.006 [image] loader #11 Lab Show S01E01.mp4|wide|552: not in memory, loading
+17:00:23.006 [image] tile S1 · E5 appeared (loader #15, picture none yet)
+17:00:23.006 [image] loader #15 Lab Show S01E05.mp4|wide|552: not in memory, loading
+17:00:23.007 [image] tile S1 · E4 appeared (loader #14, picture none yet)
+17:00:23.008 [image] loader #14 Lab Show S01E04.mp4|wide|552: not in memory, loading
+17:00:23.008 [image] tile S1 · E3 appeared (loader #13, picture none yet)
+17:00:23.008 [image] loader #13 Lab Show S01E03.mp4|wide|552: not in memory, loading
+17:00:23.040 [nav] page opening: its move started
+17:00:23.176 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+17:00:23.357 [image] tile S1 · E5 disappeared (loader #15)
+17:00:23.387 [image] loader #13 Lab Show S01E03.mp4|wide|552: picture (artwork disk or network) after 378 ms
+17:00:23.387 [image] loader #11 Lab Show S01E01.mp4|wide|552: picture (artwork disk or network) after 381 ms
+17:00:23.392 [image] loader #12 Lab Show S01E02.mp4|wide|552: picture (artwork disk or network) after 382 ms
+17:00:23.392 [image] loader #9 Lab Show S01E03.mp4|wide|552: picture (artwork disk or network) after 923 ms
+17:00:23.393 [image] loader #8 Lab Show S01E02.mp4|wide|552: picture (artwork disk or network) after 924 ms
+17:00:23.393 [image] loader #7 Lab Show S01E01.mp4|wide|552: picture (artwork disk or network) after 930 ms
+17:00:23.393 [image] loader #10 Lab Show S01E01.mp4|wide|2400: picture (artwork disk or network) after 387 ms
+17:00:23.412 [nav] title page move: animated
+17:00:23.983 [image] loader #14 Lab Show S01E04.mp4|wide|552: picture (frame from the file) after 975 ms
+17:00:23.988 [image] loader #15 Lab Show S01E05.mp4|wide|552: picture (frame from the file) after 981 ms
+17:00:24.021 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:00:24.022 [zoom] source 0|s|lab show removed from the window
+17:00:24.022 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:00:24.034 [nav] page opening: its move ended after 993 ms
+17:00:24.075 [image] tile Lab Show disappeared (loader #3)
+17:00:24.076 [image] tile Bright Movie (2024) disappeared (loader #2)
+17:00:24.077 [image] folder tile Weekend picks disappeared
+17:00:24.094 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+17:00:28.037 [nav] title page: Back
+17:00:28.043 [nav] page leaving: taps off
+17:00:28.050 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:00:28.051 [zoom] source 0|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+17:00:28.051 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+17:00:28.080 [image] tile Lab Show appeared (loader #3, picture shown)
+17:00:28.081 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+17:00:28.081 [image] folder tile Weekend picks appeared
+17:00:28.116 [nav] home path 1 → 0: []
+17:00:28.137 [zoom] back from group("s|lab show") +20 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:28.146 [nav] title page move: animated
+17:00:28.220 [zoom] back from group("s|lab show") +103 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:28.321 [zoom] back from group("s|lab show") +204 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:28.451 [zoom] back from group("s|lab show") +334 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:28.538 [zoom] back from group("s|lab show") +421 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:28.637 [zoom] back from group("s|lab show") +520 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:28.745 [zoom] back from group("s|lab show") +627 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:28.839 [zoom] back from group("s|lab show") +722 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:28.955 [zoom] back from group("s|lab show") +838 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:28.975 [nav] page gone 931 ms after it started going back
+17:00:29.018 [nav] title page disappear Lab Show S01E01.mp4
+17:00:29.018 [image] tile S1 · E1 disappeared (loader #11)
+17:00:29.020 [image] tile S1 · E2 disappeared (loader #12)
+17:00:29.021 [image] tile S1 · E4 disappeared (loader #14)
+17:00:29.022 [image] tile S1 · E3 disappeared (loader #13)
+17:00:29.054 [zoom] back from group("s|lab show") +936 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:29.135 [zoom] back from group("s|lab show") +1018 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:29.236 [zoom] back from group("s|lab show") +1118 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:29.374 [zoom] back from group("s|lab show") +1256 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:29.472 [zoom] back from group("s|lab show") +1355 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:29.569 [zoom] back from group("s|lab show") +1451 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:29.689 [zoom] back from group("s|lab show") +1572 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:29.768 [zoom] back from group("s|lab show") +1651 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:29.902 [zoom] back from group("s|lab show") +1785 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:30.002 [zoom] back from group("s|lab show") +1885 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:30.106 [zoom] back from group("s|lab show") +1988 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:30.212 [zoom] back from group("s|lab show") +2094 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:30.320 [zoom] back from group("s|lab show") +2203 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:30.321 [zoom] back from group("s|lab show") +2204 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:30.528 [zoom] back from group("s|lab show") +2411 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:30.529 [zoom] back from group("s|lab show") +2412 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:30.735 [zoom] back from group("s|lab show") +2618 ms: 1 source(s) for 0|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:00:36.580 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.05 GB
+17:00:36.861 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+17:00:36.862 [lab] shots seeded
+17:00:38.753 [hang] main thread unresponsive for 2.2 s
+17:00:43.402 [scene] DF1B4D26 connects (portrait)
+17:00:43.403 [scene] DF1B4D26 will enter foreground (portrait)
+17:00:43.769 [app] first screen 8984 ms after process start
+17:00:43.769 [app] root view appeared (1 in this run, splash off)
+17:00:44.369 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+17:00:44.573 [scene] DF1B4D26 active (portrait)
+17:00:44.592 [app] active
+17:00:45.035 [layout] grid for 402 pt: 3 columns, 3 entries, 362×215 pt
+17:00:45.036 [layout] Weekend picks at (250, 0, 112, 215)
+17:00:45.036 [layout] collage space of Weekend picks at (255, 5, 102, 158)
+17:00:45.036 [layout] collage grid of Weekend picks at (255, 5, 102, 158)
+17:00:45.036 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+17:00:45.036 [layout] Lab Show at (125, 0, 112, 215)
+17:00:45.037 [image] folder tile Weekend picks appeared
+17:00:45.037 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+17:00:45.038 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+17:00:45.040 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+17:00:45.040 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+17:00:45.041 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+17:00:45.041 [image] tile Lab Show appeared (loader #3, picture none yet)
+17:00:45.041 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+17:00:45.046 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:00:45.049 [zoom] source 0|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+17:00:45.050 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+17:00:45.096 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 727 ms
+17:00:45.117 [app] Home: appeared 195 ms after the root view, next frame at 1326 ms, main thread free at 1348 ms
+17:00:45.142 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 101 ms
+17:00:45.143 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 105 ms
+17:00:45.148 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 107 ms
+17:00:58.021 [zoom] home layout grid → details (zoom ids now 1|…)
+17:00:58.036 [image] folder tile Weekend picks disappeared
+17:00:58.036 [image] tile Bright Movie (2024) disappeared (loader #2)
+17:00:58.037 [image] tile Lab Show disappeared (loader #3)
+17:00:58.173 [layout] collage space of ? at (32, 724, 142, 76)
+17:00:58.173 [layout] collage grid of ? at (32, 724, 142, 76)
+17:00:58.174 [image] loader #11 Lab Show S01E04.mp4|wide|300: not in memory, loading
+17:00:58.174 [image] loader #10 Bright Movie 2024.mp4|wide|300: not in memory, loading
+17:00:58.175 [image] loader #9 Another Film 2019.mp4|wide|300: not in memory, loading
+17:00:58.191 [zoom] source 1|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (20.0, 712.0, 362.0, 100.0)
+17:00:58.197 [image] row Lab Show (details) appeared (loader #8, picture none yet)
+17:00:58.198 [image] loader #8 Lab Show S01E01.mp4|poster|288: not in memory, loading
+17:00:58.201 [zoom] source 1|s|lab show added at (20.0, 588.0, 362.0, 112.0)
+17:00:58.207 [image] row Bright Movie 2024.mp4 (details) appeared (loader #7, picture none yet)
+17:00:58.207 [image] loader #7 Bright Movie 2024.mp4|poster|288: not in memory, loading
+17:00:58.210 [zoom] source 1|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 464.0, 362.0, 112.0)
+17:00:58.313 [image] loader #7 Bright Movie 2024.mp4|poster|288: picture (poster tt9000003) after 105 ms
+17:00:58.313 [image] loader #8 Lab Show S01E01.mp4|poster|288: picture (poster tt9000002) after 115 ms
+17:00:58.355 [image] loader #10 Bright Movie 2024.mp4|wide|300: picture (artwork disk or network) after 180 ms
+17:00:58.656 [image] loader #11 Lab Show S01E04.mp4|wide|300: picture (frame from the file) after 482 ms
+17:00:58.657 [image] loader #9 Another Film 2019.mp4|wide|300: picture (frame from the file) after 481 ms
+17:01:08.493 [zoom] home layout details → grid (zoom ids now 2|…)
+17:01:08.498 [image] row Lab Show (details) disappeared (loader #8)
+17:01:08.499 [image] row Bright Movie 2024.mp4 (details) disappeared (loader #7)
+17:01:08.553 [image] folder tile Weekend picks appeared
+17:01:08.554 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+17:01:08.554 [image] tile Lab Show appeared (loader #3, picture shown)
+17:01:14.086 [nav] home: open Lab Show
+17:01:14.095 [title] home opens group("s|lab show")
+17:01:14.099 [image] loader #12 Lab Show S01E01.mp4|wide|552: not in memory, loading
+17:01:14.100 [image] loader #13 Lab Show S01E02.mp4|wide|552: not in memory, loading
+17:01:14.100 [image] loader #14 Lab Show S01E03.mp4|wide|552: not in memory, loading
+17:01:14.102 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+17:01:14.102 [zoom] opening group("s|lab show"): 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:14.410 [nav] title page appear Lab Show S01E01.mp4
+17:01:14.411 [title] library title page appeared
+17:01:14.411 [image] loader #15 Lab Show S01E01.mp4|wide|2400: not in memory, loading
+17:01:14.412 [image] tile S1 · E1 appeared (loader #16, picture none yet)
+17:01:14.412 [image] loader #16 Lab Show S01E01.mp4|wide|552: not in memory, loading
+17:01:14.412 [image] tile S1 · E4 appeared (loader #19, picture none yet)
+17:01:14.412 [image] loader #19 Lab Show S01E04.mp4|wide|552: not in memory, loading
+17:01:14.413 [image] tile S1 · E2 appeared (loader #17, picture none yet)
+17:01:14.413 [image] loader #17 Lab Show S01E02.mp4|wide|552: not in memory, loading
+17:01:14.414 [image] tile S1 · E5 appeared (loader #20, picture none yet)
+17:01:14.414 [image] loader #20 Lab Show S01E05.mp4|wide|552: not in memory, loading
+17:01:14.415 [image] tile S1 · E3 appeared (loader #18, picture none yet)
+17:01:14.415 [image] loader #18 Lab Show S01E03.mp4|wide|552: not in memory, loading
+17:01:14.424 [nav] page opening: its move started
+17:01:14.477 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+17:01:14.596 [image] tile S1 · E5 disappeared (loader #20)
+17:01:14.636 [image] loader #15 Lab Show S01E01.mp4|wide|2400: picture (artwork disk or network) after 224 ms
+17:01:14.637 [image] loader #18 Lab Show S01E03.mp4|wide|552: picture (artwork disk or network) after 221 ms
+17:01:14.638 [image] loader #17 Lab Show S01E02.mp4|wide|552: picture (artwork disk or network) after 225 ms
+17:01:14.639 [image] loader #16 Lab Show S01E01.mp4|wide|552: picture (artwork disk or network) after 226 ms
+17:01:14.639 [image] loader #14 Lab Show S01E03.mp4|wide|552: picture (artwork disk or network) after 538 ms
+17:01:14.639 [image] loader #13 Lab Show S01E02.mp4|wide|552: picture (artwork disk or network) after 539 ms
+17:01:14.643 [image] loader #12 Lab Show S01E01.mp4|wide|552: picture (artwork disk or network) after 540 ms
+17:01:14.644 [image] loader #20 Lab Show S01E05.mp4|wide|552: picture (frame from the file) after 229 ms
+17:01:14.680 [image] loader #19 Lab Show S01E04.mp4|wide|552: picture (frame from the file) after 267 ms
+17:01:14.699 [nav] title page move: animated
+17:01:14.699 [energy] cpu 123% (main 83%, other 36%, com.apple.UIKit.in 2%, gcd 2%) mem 69 MB (0 MB left) thermal=nominal playing=no
+17:01:15.361 [zoom] source 1|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:01:15.363 [zoom] source 1|s|lab show removed from the window
+17:01:15.364 [zoom] source 1|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:01:15.366 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:01:15.366 [zoom] source 2|s|lab show removed from the window
+17:01:15.367 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:01:15.382 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+17:01:15.423 [nav] page opening: its move ended after 998 ms
+17:01:15.448 [image] folder tile Weekend picks disappeared
+17:01:15.448 [image] tile Bright Movie (2024) disappeared (loader #2)
+17:01:15.449 [image] tile Lab Show disappeared (loader #3)
+17:01:19.223 [nav] title page: Back
+17:01:19.229 [nav] page leaving: taps off
+17:01:19.243 [zoom] source 1|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 464.0, 362.0, 112.0)
+17:01:19.245 [zoom] source 1|s|lab show added at (20.0, 588.0, 363.0, 112.0)
+17:01:19.248 [zoom] source 1|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (20.0, 712.0, 362.0, 100.0)
+17:01:19.250 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:01:19.252 [zoom] source 2|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+17:01:19.254 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+17:01:19.281 [image] folder tile Weekend picks appeared
+17:01:19.282 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+17:01:19.282 [image] tile Lab Show appeared (loader #3, picture shown)
+17:01:19.318 [nav] home path 1 → 0: []
+17:01:19.342 [zoom] back from group("s|lab show") +23 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:19.347 [nav] title page move: animated
+17:01:19.421 [zoom] back from group("s|lab show") +102 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:19.523 [zoom] back from group("s|lab show") +203 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:19.622 [zoom] back from group("s|lab show") +303 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:19.722 [zoom] back from group("s|lab show") +402 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:19.837 [zoom] back from group("s|lab show") +518 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:19.939 [zoom] back from group("s|lab show") +619 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:20.036 [zoom] back from group("s|lab show") +716 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:20.155 [zoom] back from group("s|lab show") +836 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:20.167 [nav] page gone 937 ms after it started going back
+17:01:20.181 [nav] title page disappear Lab Show S01E01.mp4
+17:01:20.182 [image] tile S1 · E4 disappeared (loader #19)
+17:01:20.182 [image] tile S1 · E2 disappeared (loader #17)
+17:01:20.182 [image] tile S1 · E1 disappeared (loader #16)
+17:01:20.182 [image] tile S1 · E3 disappeared (loader #18)
+17:01:20.254 [zoom] back from group("s|lab show") +934 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:20.352 [zoom] back from group("s|lab show") +1033 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:20.468 [zoom] back from group("s|lab show") +1149 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:20.569 [zoom] back from group("s|lab show") +1249 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:20.669 [zoom] back from group("s|lab show") +1349 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:20.789 [zoom] back from group("s|lab show") +1469 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:20.894 [zoom] back from group("s|lab show") +1574 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:20.991 [zoom] back from group("s|lab show") +1672 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:21.102 [zoom] back from group("s|lab show") +1782 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:21.169 [zoom] back from group("s|lab show") +1849 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:21.302 [zoom] back from group("s|lab show") +1983 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:21.406 [zoom] back from group("s|lab show") +2086 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:21.522 [zoom] back from group("s|lab show") +2203 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:21.523 [zoom] back from group("s|lab show") +2203 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:21.635 [zoom] back from group("s|lab show") +2316 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:21.835 [zoom] back from group("s|lab show") +2516 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:21.836 [zoom] back from group("s|lab show") +2517 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:01:31.087 [zoom] home layout grid → details (zoom ids now 3|…)
+17:01:31.091 [image] folder tile Weekend picks disappeared
+17:01:31.091 [image] tile Bright Movie (2024) disappeared (loader #2)
+17:01:31.091 [image] tile Lab Show disappeared (loader #3)
+17:01:31.156 [image] row Lab Show (details) appeared (loader #8, picture shown)
+17:01:31.158 [image] row Bright Movie 2024.mp4 (details) appeared (loader #7, picture shown)
+17:01:37.353 [nav] home: open Lab Show
+17:01:37.354 [title] home opens group("s|lab show")
+17:01:37.357 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+17:01:37.358 [zoom] opening group("s|lab show"): 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:37.437 [nav] title page appear Lab Show S01E01.mp4
+17:01:37.438 [title] library title page appeared
+17:01:37.444 [image] loader #21 Lab Show S01E01.mp4|wide|2400: from memory at once
+17:01:37.444 [image] tile S1 · E4 appeared (loader #25, picture none yet)
+17:01:37.444 [image] loader #25 Lab Show S01E04.mp4|wide|552: from memory at once
+17:01:37.444 [image] tile S1 · E1 appeared (loader #22, picture none yet)
+17:01:37.445 [image] loader #22 Lab Show S01E01.mp4|wide|552: from memory at once
+17:01:37.445 [image] tile S1 · E5 appeared (loader #26, picture none yet)
+17:01:37.445 [image] loader #26 Lab Show S01E05.mp4|wide|552: from memory at once
+17:01:37.445 [image] tile S1 · E3 appeared (loader #24, picture none yet)
+17:01:37.446 [image] loader #24 Lab Show S01E03.mp4|wide|552: from memory at once
+17:01:37.446 [image] tile S1 · E2 appeared (loader #23, picture none yet)
+17:01:37.447 [image] loader #23 Lab Show S01E02.mp4|wide|552: from memory at once
+17:01:37.463 [nav] page opening: its move started
+17:01:37.525 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+17:01:37.580 [image] tile S1 · E5 disappeared (loader #26)
+17:01:37.601 [image] loader #21 Lab Show S01E01.mp4|wide|2400: picture (artwork memory) after 162 ms, replacing one already shown
+17:01:37.602 [image] loader #22 Lab Show S01E01.mp4|wide|552: picture (artwork memory) after 156 ms, replacing one already shown
+17:01:37.602 [image] loader #24 Lab Show S01E03.mp4|wide|552: picture (artwork memory) after 156 ms, replacing one already shown
+17:01:37.603 [image] loader #23 Lab Show S01E02.mp4|wide|552: picture (artwork memory) after 156 ms, replacing one already shown
+17:01:37.627 [nav] title page move: animated
+17:01:38.448 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:01:38.448 [zoom] source 2|s|lab show removed from the window
+17:01:38.449 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:01:38.450 [zoom] source 3|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:01:38.451 [zoom] source 3|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:01:38.455 [zoom] source 3|s|lab show removed from the window
+17:01:38.463 [nav] page opening: its move ended after 999 ms
+17:01:38.527 [image] row Bright Movie 2024.mp4 (details) disappeared (loader #7)
+17:01:38.528 [image] row Lab Show (details) disappeared (loader #8)
+17:01:38.543 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+17:01:43.237 [nav] title page: Back
+17:01:43.244 [nav] page leaving: taps off
+17:01:43.254 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:01:43.255 [zoom] source 2|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+17:01:43.256 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+17:01:43.273 [zoom] source 3|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 464.0, 362.0, 112.0)
+17:01:43.275 [zoom] source 3|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (20.0, 712.0, 362.0, 100.0)
+17:01:43.277 [zoom] source 3|s|lab show added at (20.0, 588.0, 363.0, 112.0)
+17:01:43.314 [image] row Lab Show (details) appeared (loader #8, picture shown)
+17:01:43.317 [image] row Bright Movie 2024.mp4 (details) appeared (loader #7, picture shown)
+17:01:43.364 [nav] home path 1 → 0: []
+17:01:43.391 [zoom] back from group("s|lab show") +26 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:43.399 [nav] title page move: animated
+17:01:43.477 [zoom] back from group("s|lab show") +112 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:43.573 [zoom] back from group("s|lab show") +208 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:43.672 [zoom] back from group("s|lab show") +307 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:43.773 [zoom] back from group("s|lab show") +407 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:43.871 [zoom] back from group("s|lab show") +506 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:43.989 [zoom] back from group("s|lab show") +624 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:44.105 [zoom] back from group("s|lab show") +740 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:44.205 [zoom] back from group("s|lab show") +839 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:44.220 [nav] page gone 976 ms after it started going back
+17:01:44.235 [nav] title page disappear Lab Show S01E01.mp4
+17:01:44.236 [image] tile S1 · E1 disappeared (loader #22)
+17:01:44.237 [image] tile S1 · E4 disappeared (loader #25)
+17:01:44.238 [image] tile S1 · E3 disappeared (loader #24)
+17:01:44.239 [image] tile S1 · E2 disappeared (loader #23)
+17:01:44.304 [zoom] back from group("s|lab show") +938 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:44.412 [zoom] back from group("s|lab show") +1047 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:44.485 [zoom] back from group("s|lab show") +1120 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:44.618 [zoom] back from group("s|lab show") +1253 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:44.620 [energy] cpu 18% (main 14%, com.apple.SwiftUI. 2%, com.apple.UIKit.in 2%, other 0%) mem 66 MB (0 MB left) thermal=nominal playing=no
+17:01:44.740 [zoom] back from group("s|lab show") +1374 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:44.822 [zoom] back from group("s|lab show") +1457 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:44.935 [zoom] back from group("s|lab show") +1570 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:45.035 [zoom] back from group("s|lab show") +1670 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:45.144 [zoom] back from group("s|lab show") +1770 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:45.254 [zoom] back from group("s|lab show") +1888 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:45.285 [zoom] back from group("s|lab show") +1919 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:45.456 [zoom] back from group("s|lab show") +2090 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:45.552 [zoom] back from group("s|lab show") +2187 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:45.635 [zoom] back from group("s|lab show") +2270 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:45.769 [zoom] back from group("s|lab show") +2403 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:45.769 [zoom] back from group("s|lab show") +2404 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:45.989 [zoom] back from group("s|lab show") +2624 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+17:01:54.663 [zoom] home layout details → list (zoom ids now 4|…)
+17:01:54.742 [layout] collage space of ? at (30, 744, 70, 36)
+17:01:54.742 [layout] collage grid of ? at (30, 744, 70, 36)
+17:01:54.743 [layout] collage space of ? at (30, 597, 70, 37)
+17:01:54.743 [layout] collage grid of ? at (30, 597, 70, 37)
+17:02:00.620 [nav] home: open Lab Show
+17:02:00.622 [title] home opens group("s|lab show")
+17:02:00.627 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+17:02:00.628 [zoom] opening group("s|lab show"): 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:00.783 [nav] title page appear Lab Show S01E01.mp4
+17:02:00.783 [title] library title page appeared
+17:02:00.804 [image] loader #27 Lab Show S01E01.mp4|wide|2400: from memory at once
+17:02:00.804 [image] tile S1 · E5 appeared (loader #32, picture none yet)
+17:02:00.805 [image] loader #32 Lab Show S01E05.mp4|wide|552: from memory at once
+17:02:00.805 [image] tile S1 · E1 appeared (loader #28, picture none yet)
+17:02:00.806 [image] loader #28 Lab Show S01E01.mp4|wide|552: from memory at once
+17:02:00.807 [image] tile S1 · E2 appeared (loader #29, picture none yet)
+17:02:00.808 [image] loader #29 Lab Show S01E02.mp4|wide|552: from memory at once
+17:02:00.809 [image] tile S1 · E3 appeared (loader #30, picture none yet)
+17:02:00.813 [image] loader #30 Lab Show S01E03.mp4|wide|552: from memory at once
+17:02:00.814 [image] tile S1 · E4 appeared (loader #31, picture none yet)
+17:02:00.815 [image] loader #31 Lab Show S01E04.mp4|wide|552: from memory at once
+17:02:00.845 [nav] page opening: its move started
+17:02:00.926 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+17:02:01.013 [image] tile S1 · E5 disappeared (loader #32)
+17:02:01.044 [image] loader #27 Lab Show S01E01.mp4|wide|2400: picture (artwork memory) after 260 ms, replacing one already shown
+17:02:01.045 [image] loader #28 Lab Show S01E01.mp4|wide|552: picture (artwork memory) after 239 ms, replacing one already shown
+17:02:01.046 [image] loader #29 Lab Show S01E02.mp4|wide|552: picture (artwork memory) after 237 ms, replacing one already shown
+17:02:01.046 [image] loader #30 Lab Show S01E03.mp4|wide|552: picture (artwork memory) after 236 ms, replacing one already shown
+17:02:01.047 [nav] title page move: animated
+17:02:01.863 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:02:01.863 [zoom] source 2|s|lab show removed from the window
+17:02:01.863 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:02:01.864 [zoom] source 4|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:02:01.864 [zoom] source 4|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:02:01.865 [zoom] source 4|s|lab show removed from the window
+17:02:01.881 [nav] page opening: its move ended after 1036 ms
+17:02:01.924 [image] row Bright Movie 2024.mp4 (list) disappeared (loader #7)
+17:02:01.925 [image] row Lab Show (list) disappeared (loader #8)
+17:02:01.927 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+17:02:05.656 [nav] title page: Back
+17:02:05.664 [nav] page leaving: taps off
+17:02:05.678 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:02:05.681 [zoom] source 2|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+17:02:05.681 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+17:02:05.690 [zoom] source 4|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 459.0, 362.0, 61.0)
+17:02:05.691 [zoom] source 4|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (20.0, 587.0, 362.0, 57.0)
+17:02:05.693 [zoom] source 4|s|lab show added at (20.0, 523.0, 362.0, 61.0)
+17:02:05.733 [image] row Lab Show (list) appeared (loader #8, picture shown)
+17:02:05.734 [image] loader #8 Lab Show S01E01.mp4|poster|144: from memory at once
+17:02:05.742 [image] row Bright Movie 2024.mp4 (list) appeared (loader #7, picture shown)
+17:02:05.743 [image] loader #7 Bright Movie 2024.mp4|poster|144: from memory at once
+17:02:05.763 [nav] home path 1 → 0: []
+17:02:05.794 [zoom] back from group("s|lab show") +30 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:05.798 [nav] title page move: animated
+17:02:05.810 [image] loader #8 Lab Show S01E01.mp4|poster|144: picture (poster tt9000002) after 76 ms, replacing one already shown
+17:02:05.811 [image] loader #7 Bright Movie 2024.mp4|poster|144: picture (poster tt9000003) after 68 ms, replacing one already shown
+17:02:05.870 [zoom] back from group("s|lab show") +106 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:05.976 [zoom] back from group("s|lab show") +212 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:06.070 [zoom] back from group("s|lab show") +306 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:06.171 [zoom] back from group("s|lab show") +407 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:06.302 [zoom] back from group("s|lab show") +538 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:06.389 [zoom] back from group("s|lab show") +625 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:06.472 [zoom] back from group("s|lab show") +708 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:06.605 [zoom] back from group("s|lab show") +841 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:06.617 [nav] page gone 953 ms after it started going back
+17:02:06.631 [nav] title page disappear Lab Show S01E01.mp4
+17:02:06.632 [image] tile S1 · E1 disappeared (loader #28)
+17:02:06.632 [image] tile S1 · E2 disappeared (loader #29)
+17:02:06.633 [image] tile S1 · E3 disappeared (loader #30)
+17:02:06.634 [image] tile S1 · E4 disappeared (loader #31)
+17:02:06.678 [zoom] back from group("s|lab show") +914 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:06.768 [zoom] back from group("s|lab show") +1005 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:06.905 [zoom] back from group("s|lab show") +1142 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.022 [zoom] back from group("s|lab show") +1255 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.127 [zoom] back from group("s|lab show") +1363 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.219 [zoom] back from group("s|lab show") +1455 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.335 [zoom] back from group("s|lab show") +1571 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.435 [zoom] back from group("s|lab show") +1671 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.536 [zoom] back from group("s|lab show") +1771 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.653 [zoom] back from group("s|lab show") +1890 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.752 [zoom] back from group("s|lab show") +1988 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.856 [zoom] back from group("s|lab show") +2092 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.969 [zoom] back from group("s|lab show") +2205 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:07.970 [zoom] back from group("s|lab show") +2206 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:08.168 [zoom] back from group("s|lab show") +2405 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:08.169 [zoom] back from group("s|lab show") +2405 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:08.387 [zoom] back from group("s|lab show") +2623 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+17:02:14.769 [energy] cpu 2% (main 2%) mem 76 MB (0 MB left) thermal=nominal playing=no
+17:02:16.489 [zoom] home layout list → grid (zoom ids now 5|…)
+17:02:16.493 [image] row Lab Show (list) disappeared (loader #8)
+17:02:16.493 [image] row Bright Movie 2024.mp4 (list) disappeared (loader #7)
+17:02:16.540 [image] folder tile Weekend picks appeared
+17:02:16.540 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+17:02:16.541 [image] tile Lab Show appeared (loader #3, picture shown)
+17:02:22.054 [nav] home: open Lab Show
+17:02:22.055 [title] home opens group("s|lab show")
+17:02:22.058 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+17:02:22.059 [zoom] opening group("s|lab show"): 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:22.134 [nav] title page appear Lab Show S01E01.mp4
+17:02:22.135 [title] library title page appeared
+17:02:22.140 [image] loader #33 Lab Show S01E01.mp4|wide|2400: from memory at once
+17:02:22.140 [image] tile S1 · E4 appeared (loader #37, picture none yet)
+17:02:22.141 [image] loader #37 Lab Show S01E04.mp4|wide|552: from memory at once
+17:02:22.141 [image] tile S1 · E3 appeared (loader #36, picture none yet)
+17:02:22.142 [image] loader #36 Lab Show S01E03.mp4|wide|552: from memory at once
+17:02:22.142 [image] tile S1 · E1 appeared (loader #34, picture none yet)
+17:02:22.142 [image] loader #34 Lab Show S01E01.mp4|wide|552: from memory at once
+17:02:22.144 [image] tile S1 · E2 appeared (loader #35, picture none yet)
+17:02:22.145 [image] loader #35 Lab Show S01E02.mp4|wide|552: from memory at once
+17:02:22.145 [image] tile S1 · E5 appeared (loader #38, picture none yet)
+17:02:22.146 [image] loader #38 Lab Show S01E05.mp4|wide|552: from memory at once
+17:02:22.166 [nav] page opening: its move started
+17:02:22.213 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+17:02:22.265 [image] tile S1 · E5 disappeared (loader #38)
+17:02:22.285 [image] loader #33 Lab Show S01E01.mp4|wide|2400: picture (artwork memory) after 149 ms, replacing one already shown
+17:02:22.286 [image] loader #36 Lab Show S01E03.mp4|wide|552: picture (artwork memory) after 144 ms, replacing one already shown
+17:02:22.287 [image] loader #34 Lab Show S01E01.mp4|wide|552: picture (artwork memory) after 144 ms, replacing one already shown
+17:02:22.287 [image] loader #35 Lab Show S01E02.mp4|wide|552: picture (artwork memory) after 142 ms, replacing one already shown
+17:02:22.316 [nav] title page move: animated
+17:02:23.089 [zoom] source 4|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:02:23.091 [zoom] source 4|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:02:23.091 [zoom] source 4|s|lab show removed from the window
+17:02:23.093 [zoom] source 5|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:02:23.094 [zoom] source 5|s|lab show removed from the window
+17:02:23.095 [zoom] source 5|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:02:23.108 [nav] page opening: its move ended after 942 ms
+17:02:23.145 [image] folder tile Weekend picks disappeared
+17:02:23.146 [image] tile Bright Movie (2024) disappeared (loader #2)
+17:02:23.147 [image] tile Lab Show disappeared (loader #3)
+17:02:23.170 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+17:02:27.856 [nav] title page: Back
+17:02:27.863 [nav] page leaving: taps off
+17:02:27.878 [zoom] source 4|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 459.0, 362.0, 61.0)
+17:02:27.882 [zoom] source 4|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (20.0, 587.0, 362.0, 57.0)
+17:02:27.884 [zoom] source 4|s|lab show added at (20.0, 523.0, 362.0, 61.0)
+17:02:27.887 [zoom] source 5|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:02:27.888 [zoom] source 5|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+17:02:27.890 [zoom] source 5|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+17:02:27.922 [image] folder tile Weekend picks appeared
+17:02:27.922 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+17:02:27.923 [image] tile Lab Show appeared (loader #3, picture shown)
+17:02:27.966 [nav] home path 1 → 0: []
+17:02:28.000 [zoom] back from group("s|lab show") +31 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:28.009 [nav] title page move: animated
+17:02:28.090 [zoom] back from group("s|lab show") +122 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:28.174 [zoom] back from group("s|lab show") +205 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:28.271 [zoom] back from group("s|lab show") +303 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:28.389 [zoom] back from group("s|lab show") +421 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:28.489 [zoom] back from group("s|lab show") +521 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:28.588 [zoom] back from group("s|lab show") +620 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:28.703 [zoom] back from group("s|lab show") +735 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:28.804 [zoom] back from group("s|lab show") +836 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:28.816 [nav] page gone 952 ms after it started going back
+17:02:28.837 [nav] title page disappear Lab Show S01E01.mp4
+17:02:28.838 [image] tile S1 · E3 disappeared (loader #36)
+17:02:28.839 [image] tile S1 · E1 disappeared (loader #34)
+17:02:28.839 [image] tile S1 · E2 disappeared (loader #35)
+17:02:28.839 [image] tile S1 · E4 disappeared (loader #37)
+17:02:28.904 [zoom] back from group("s|lab show") +935 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:29.006 [zoom] back from group("s|lab show") +1037 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:29.106 [zoom] back from group("s|lab show") +1138 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:29.222 [zoom] back from group("s|lab show") +1254 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:29.276 [zoom] back from group("s|lab show") +1307 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:29.437 [zoom] back from group("s|lab show") +1469 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:29.530 [zoom] back from group("s|lab show") +1562 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:29.637 [zoom] back from group("s|lab show") +1669 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:29.737 [zoom] back from group("s|lab show") +1768 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:29.856 [zoom] back from group("s|lab show") +1887 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:29.961 [zoom] back from group("s|lab show") +1993 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:30.035 [zoom] back from group("s|lab show") +2067 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:30.170 [zoom] back from group("s|lab show") +2202 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:30.170 [zoom] back from group("s|lab show") +2203 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:30.285 [zoom] back from group("s|lab show") +2316 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:30.437 [zoom] back from group("s|lab show") +2468 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:30.568 [zoom] back from group("s|lab show") +2600 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+17:02:47.489 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.83 GB
+17:02:49.795 [hang] main thread unresponsive for 2.3 s
+17:02:53.769 [scene] DF1B4D26 connects (portrait)
+17:02:53.771 [scene] DF1B4D26 will enter foreground (portrait)
+17:02:54.175 [app] first screen 9267 ms after process start
+17:02:54.175 [app] root view appeared (1 in this run, splash on)
+17:02:54.175 [app] launch splash shown
+17:02:54.776 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+17:02:54.899 [player] play requested: 10 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/26408448-D5BB-4D82-916C-E8659E3041F5/GlassPlayer.app/lab/lab.mp4
+17:02:55.968 [scene] DF1B4D26 active (portrait)
+17:02:55.971 [app] active
+17:02:56.708 [player] start renderer=metal
+17:02:56.708 [lab] engine not started (lab)
+17:02:56.789 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 2013 ms
+17:02:57.177 [layout] grid for 402 pt: 3 columns, 3 entries, 362×215 pt
+17:02:57.177 [layout] Weekend picks at (250, 0, 112, 215)
+17:02:57.179 [layout] collage space of Weekend picks at (255, 5, 102, 158)
+17:02:57.179 [layout] collage grid of Weekend picks at (255, 5, 102, 158)
+17:02:57.180 [layout] Lab Show at (125, 0, 112, 215)
+17:02:57.255 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+17:02:57.255 [image] folder tile Weekend picks appeared
+17:02:57.255 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+17:02:57.256 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+17:02:57.256 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+17:02:57.256 [image] tile Lab Show appeared (loader #3, picture none yet)
+17:02:57.256 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+17:02:57.256 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+17:02:57.769 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+17:02:57.776 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:02:57.777 [zoom] source 0|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+17:02:57.777 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+17:02:57.858 [app] Home: appeared 197 ms after the root view, next frame at 3668 ms, main thread free at 3683 ms
+17:02:58.001 [perf] panel tracks prebuilt in 121 ms
+17:02:58.007 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 751 ms
+17:02:58.573 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 751 ms
+17:02:58.617 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 1359 ms
+17:02:59.317 [perf] panel settings prebuilt in 691 ms
+17:02:59.393 [perf] panel nowPlaying prebuilt in 68 ms
+17:02:59.586 [panel] now playing opens on q0 (tab 0, item 1 of 10, chapter -1)
+17:02:59.592 [image] loader #16 lab-10|wide|192: not in memory, loading
+17:02:59.593 [image] loader #15 lab-9|wide|192: not in memory, loading
+17:02:59.593 [image] loader #14 lab-8|wide|192: not in memory, loading
+17:02:59.593 [image] loader #13 lab-7|wide|192: not in memory, loading
+17:02:59.593 [image] loader #12 lab-6|wide|192: not in memory, loading
+17:02:59.596 [image] loader #11 lab-5|wide|192: not in memory, loading
+17:02:59.596 [image] loader #10 lab-4|wide|192: not in memory, loading
+17:02:59.596 [image] loader #9 lab-3|wide|192: not in memory, loading
+17:02:59.892 [image] loader #8 lab-2|wide|192: not in memory, loading
+17:02:59.893 [image] loader #7 lab-1|wide|192: not in memory, loading
+17:03:00.235 [layout] grid for 340 pt: 3 columns, 3 entries, 300×215 pt
+17:03:00.236 [layout] Weekend picks at (209, 0, 91, 184)
+17:03:00.236 [layout] collage space of Weekend picks at (214, 5, 81, 126)
+17:03:00.236 [layout] collage grid of Weekend picks at (214, 5, 81, 126)
+17:03:00.237 [layout] Lab Show at (104, 0, 92, 184)
+17:03:00.237 [layout] Bright Movie (2024) at (-1, 0, 92, 184)
+17:03:00.240 [layout] grid for 340 pt: 3 columns, 3 entries, 300×184 pt
+17:03:00.240 [layout] Weekend picks at (209, -1, 91, 185)
+17:03:00.329 [layout] Lab Show at (104, -1, 92, 185)
+17:03:00.329 [layout] Bright Movie (2024) at (-1, -1, 92, 185)
+17:03:00.405 [layout] grid for 750 pt: 5 columns, 3 entries, 694×116 pt
+17:03:00.406 [layout] Weekend picks at (283, 0, 128, 239)
+17:03:00.406 [layout] collage space of Weekend picks at (288, 5, 118, 182)
+17:03:00.406 [layout] collage grid of Weekend picks at (288, 5, 118, 182)
+17:03:00.406 [layout] Lab Show at (141, 0, 129, 239)
+17:03:00.406 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+17:03:00.407 [layout] grid for 750 pt: 5 columns, 3 entries, 694×239 pt
+17:03:00.971 [image] loader #16 lab-10|wide|192: picture (artwork disk or network) after 1382 ms
+17:03:00.971 [image] loader #15 lab-9|wide|192: picture (artwork disk or network) after 1378 ms
+17:03:00.971 [image] loader #14 lab-8|wide|192: picture (artwork disk or network) after 1378 ms
+17:03:00.972 [image] loader #13 lab-7|wide|192: picture (artwork disk or network) after 1378 ms
+17:03:00.973 [image] loader #12 lab-6|wide|192: picture (artwork disk or network) after 1379 ms
+17:03:00.974 [image] loader #11 lab-5|wide|192: picture (artwork disk or network) after 1380 ms
+17:03:00.976 [image] loader #10 lab-4|wide|192: picture (artwork disk or network) after 1379 ms
+17:03:00.989 [image] loader #9 lab-3|wide|192: picture (artwork disk or network) after 1380 ms
+17:03:00.991 [image] loader #8 lab-2|wide|192: picture (artwork disk or network) after 1393 ms
+17:03:00.992 [image] loader #7 lab-1|wide|192: picture (artwork disk or network) after 1099 ms
+17:03:03.077 [perf] panel tracks prebuilt in 21 ms
+17:03:03.543 [perf] panel settings prebuilt in 178 ms
+17:03:03.689 [perf] panel nowPlaying prebuilt in 33 ms
+17:03:03.702 [panel] now playing opens on q0 (tab 0, item 1 of 10, chapter -1)
+17:03:03.704 [image] loader #26 lab-10|wide|192: from memory at once
+17:03:03.704 [image] loader #25 lab-9|wide|192: from memory at once
+17:03:03.704 [image] loader #24 lab-8|wide|192: from memory at once
+17:03:03.704 [image] loader #23 lab-7|wide|192: from memory at once
+17:03:03.705 [image] loader #22 lab-6|wide|192: from memory at once
+17:03:03.705 [image] loader #21 lab-5|wide|192: from memory at once
+17:03:03.705 [image] loader #20 lab-4|wide|192: from memory at once
+17:03:03.706 [image] loader #19 lab-3|wide|192: from memory at once
+17:03:03.708 [image] loader #18 lab-2|wide|192: from memory at once
+17:03:03.709 [image] loader #17 lab-1|wide|192: from memory at once
+17:03:03.722 [image] loader #26 lab-10|wide|192: picture (artwork memory) after 18 ms, replacing one already shown
+17:03:03.723 [image] loader #25 lab-9|wide|192: picture (artwork memory) after 19 ms, replacing one already shown
+17:03:03.731 [image] loader #24 lab-8|wide|192: picture (artwork memory) after 26 ms, replacing one already shown
+17:03:03.732 [image] loader #23 lab-7|wide|192: picture (artwork memory) after 27 ms, replacing one already shown
+17:03:03.732 [image] loader #22 lab-6|wide|192: picture (artwork memory) after 27 ms, replacing one already shown
+17:03:03.732 [image] loader #21 lab-5|wide|192: picture (artwork memory) after 27 ms, replacing one already shown
+17:03:03.734 [image] loader #20 lab-4|wide|192: picture (artwork memory) after 29 ms, replacing one already shown
+17:03:03.735 [image] loader #19 lab-3|wide|192: picture (artwork memory) after 29 ms, replacing one already shown
+17:03:03.735 [image] loader #18 lab-2|wide|192: picture (artwork memory) after 28 ms, replacing one already shown
+17:03:03.735 [image] loader #17 lab-1|wide|192: picture (artwork memory) after 26 ms, replacing one already shown
+17:03:06.625 [ui] panel nowPlaying
+17:03:06.629 [ui] present panel nowPlaying from bar item 340×≤252
+17:03:06.630 [ui] panel: want nowPlaying (shown=none idle)
+17:03:06.648 [ui] panel: open nowPlaying
+17:03:06.820 [ui] present panel nowPlaying from bar item 340×≤252
+17:03:08.025 [ui] panel: opened nowPlaying
+17:03:08.026 [perf] panel open nowPlaying: 56 frames in 1377 ms, worst 19 ms, 0 late (frame 16.7 ms) · built in 18 ms, 18 ms after the tap
+17:03:16.203 [ui] panel: tap outside
+17:03:16.261 [ui] panel: close nowPlaying
+17:03:17.620 [ui] panel: closed nowPlaying
+17:03:17.622 [perf] panel close nowPlaying: 71 frames in 1359 ms, worst 17 ms, 0 late (frame 16.7 ms)
+17:03:22.132 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.79 GB
+17:03:24.341 [hang] main thread unresponsive for 2.2 s
+17:03:28.714 [scene] DF1B4D26 connects (landscape)
+17:03:28.715 [scene] DF1B4D26 will enter foreground (landscape)
+17:03:29.136 [app] first screen 9276 ms after process start
+17:03:29.136 [app] root view appeared (1 in this run, splash on)
+17:03:29.136 [app] launch splash shown
+17:03:29.768 [image] loader #1 Lab Show S01E01.mp4|wide|960: not in memory, loading
+17:03:29.881 [player] play requested: 10 item(s), index 5, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/26408448-D5BB-4D82-916C-E8659E3041F5/GlassPlayer.app/lab/lab.mp4
+17:03:30.577 [scene] DF1B4D26 active (landscape)
+17:03:30.582 [app] active
+17:03:30.840 [image] loader #1 Lab Show S01E01.mp4|wide|960: picture (artwork disk or network) after 1068 ms
+17:03:31.140 [layout] grid for 750 pt: 5 columns, 3 entries, 694×239 pt
+17:03:31.140 [layout] Lab Show at (141, 0, 129, 239)
+17:03:31.140 [layout] Weekend picks at (283, 0, 128, 239)
+17:03:31.141 [layout] collage space of Weekend picks at (288, 5, 118, 182)
+17:03:31.141 [layout] collage grid of Weekend picks at (288, 5, 118, 182)
+17:03:31.141 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+17:03:31.141 [image] tile Lab Show appeared (loader #3, picture none yet)
+17:03:31.141 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+17:03:31.142 [image] folder tile Weekend picks appeared
+17:03:31.142 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+17:03:31.142 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+17:03:31.143 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+17:03:31.143 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+17:03:31.143 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+17:03:31.151 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (90.0, 397.0, 128.0, 192.0)
+17:03:31.155 [zoom] source 0|s|lab show added at (231.0, 397.0, 129.0, 192.0)
+17:03:31.156 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (373.0, 397.0, 128.0, 192.0)
+17:03:31.482 [player] start renderer=metal
+17:03:31.482 [lab] engine not started (lab)
+17:03:31.488 [app] Home: appeared 237 ms after the root view, next frame at 1720 ms, main thread free at 2352 ms
+17:03:31.616 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 474 ms
+17:03:31.621 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 478 ms
+17:03:31.630 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 487 ms
+17:03:32.590 [perf] panel tracks prebuilt in 96 ms
+17:03:33.206 [perf] panel settings prebuilt in 415 ms
+17:03:33.340 [perf] panel nowPlaying prebuilt in 111 ms
+17:03:33.374 [panel] now playing opens on q5 (tab 0, item 6 of 10, chapter -1)
+17:03:33.375 [image] loader #16 lab-10|wide|192: not in memory, loading
+17:03:33.376 [image] loader #15 lab-9|wide|192: not in memory, loading
+17:03:33.376 [image] loader #14 lab-8|wide|192: not in memory, loading
+17:03:33.377 [image] loader #13 lab-7|wide|192: not in memory, loading
+17:03:33.377 [image] loader #12 lab-6|wide|192: not in memory, loading
+17:03:33.377 [image] loader #11 lab-5|wide|192: not in memory, loading
+17:03:33.378 [image] loader #10 lab-4|wide|192: not in memory, loading
+17:03:33.379 [image] loader #9 lab-3|wide|192: not in memory, loading
+17:03:33.380 [image] loader #8 lab-2|wide|192: not in memory, loading
+17:03:33.381 [image] loader #7 lab-1|wide|192: not in memory, loading
+17:03:33.406 [image] loader #7 lab-1|wide|192: picture (artwork disk or network) after 25 ms
+17:03:33.407 [image] loader #8 lab-2|wide|192: picture (artwork disk or network) after 26 ms
+17:03:33.407 [image] loader #9 lab-3|wide|192: picture (artwork disk or network) after 28 ms
+17:03:33.408 [image] loader #10 lab-4|wide|192: picture (artwork disk or network) after 30 ms
+17:03:33.409 [image] loader #11 lab-5|wide|192: picture (artwork disk or network) after 31 ms
+17:03:33.409 [image] loader #12 lab-6|wide|192: picture (artwork disk or network) after 32 ms
+17:03:33.410 [image] loader #13 lab-7|wide|192: picture (artwork disk or network) after 33 ms
+17:03:33.410 [image] loader #14 lab-8|wide|192: picture (artwork disk or network) after 33 ms
+17:03:33.410 [image] loader #15 lab-9|wide|192: picture (artwork disk or network) after 34 ms
+17:03:33.418 [image] loader #16 lab-10|wide|192: picture (artwork disk or network) after 42 ms
+17:03:38.840 [ui] panel nowPlaying
+17:03:38.848 [ui] present panel nowPlaying from bar item 340×≤252
+17:03:38.849 [ui] panel: want nowPlaying (shown=none idle)
+17:03:38.851 [ui] panel: open nowPlaying
+17:03:38.942 [ui] present panel nowPlaying from bar item 340×≤252
+17:03:40.108 [ui] panel: opened nowPlaying
+17:03:40.108 [perf] panel open nowPlaying: 56 frames in 1257 ms, worst 17 ms, 0 late (frame 16.7 ms) · built in 2 ms, 2 ms after the tap
+17:03:44.586 [hang] main thread unresponsive for 2.9 s
+17:03:58.308 [hang] main thread unresponsive for 3.2 s
+17:04:13.563 [energy] cpu 1% (main 0%) mem 57 MB (0 MB left) thermal=nominal playing=no
+17:04:16.378 [hang] main thread unresponsive for 2.7 s
+17:04:24.393 [hang] main thread unresponsive for 3.6 s
+17:04:31.168 [hang] main thread unresponsive for 2.4 s
+17:04:39.289 [energy] cpu 4% (other 3%, main 1%) mem 57 MB (0 MB left) thermal=nominal playing=no
+17:04:41.924 [hang] main thread unresponsive for 2.3 s
+17:04:46.694 [hang] main thread unresponsive for 2.6 s
+17:04:59.762 [hang] main thread unresponsive for 2.1 s
+17:05:03.270 [energy] cpu 11% (main 7%, other 4%) mem 57 MB (0 MB left) thermal=nominal playing=no
+17:05:12.835 [ui] panel: tap outside
+17:05:12.866 [ui] panel: close nowPlaying
+17:05:14.169 [ui] panel: closed nowPlaying
+17:05:14.170 [perf] panel close nowPlaying: 69 frames in 1303 ms, worst 47 ms, 1 late (frame 16.7 ms)
+17:05:18.754 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.76 GB
+17:05:20.919 [hang] main thread unresponsive for 2.2 s
+17:05:24.083 [scene] DF1B4D26 connects (landscape)
+17:05:24.084 [scene] DF1B4D26 will enter foreground (landscape)
+17:05:24.484 [app] first screen 7846 ms after process start
+17:05:24.484 [app] root view appeared (1 in this run, splash on)
+17:05:24.484 [app] launch splash shown
+17:05:25.089 [image] loader #1 Lab Show S01E01.mp4|wide|960: not in memory, loading
+17:05:25.219 [player] play requested: 10 item(s), index 9, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/26408448-D5BB-4D82-916C-E8659E3041F5/GlassPlayer.app/lab/lab.mp4
+17:05:25.868 [scene] DF1B4D26 active (landscape)
+17:05:25.875 [app] active
+17:05:26.310 [player] start renderer=metal
+17:05:26.310 [lab] engine not started (lab)
+17:05:26.384 [image] loader #1 Lab Show S01E01.mp4|wide|960: picture (artwork disk or network) after 1295 ms
+17:05:26.658 [layout] grid for 750 pt: 5 columns, 3 entries, 694×239 pt
+17:05:26.658 [layout] Lab Show at (141, 0, 129, 239)
+17:05:26.659 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+17:05:26.659 [layout] Weekend picks at (283, 0, 128, 239)
+17:05:26.659 [layout] collage space of Weekend picks at (288, 5, 118, 182)
+17:05:26.659 [layout] collage grid of Weekend picks at (288, 5, 118, 182)
+17:05:26.659 [image] tile Lab Show appeared (loader #3, picture none yet)
+17:05:26.659 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+17:05:26.699 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+17:05:26.699 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+17:05:26.700 [image] folder tile Weekend picks appeared
+17:05:26.700 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+17:05:26.701 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+17:05:26.702 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+17:05:26.706 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (90.0, 397.0, 128.0, 192.0)
+17:05:26.748 [zoom] source 0|s|lab show added at (231.0, 397.0, 129.0, 192.0)
+17:05:26.751 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (373.0, 397.0, 128.0, 192.0)
+17:05:26.830 [app] Home: appeared 206 ms after the root view, next frame at 2327 ms, main thread free at 2345 ms
+17:05:26.868 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 167 ms
+17:05:26.869 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 169 ms
+17:05:26.870 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 209 ms
+17:05:27.840 [perf] panel tracks prebuilt in 80 ms
+17:05:28.484 [perf] panel settings prebuilt in 413 ms
+17:05:28.556 [perf] panel nowPlaying prebuilt in 66 ms
+17:05:28.584 [panel] now playing opens on q9 (tab 0, item 10 of 10, chapter -1)
+17:05:28.585 [image] loader #16 lab-10|wide|192: not in memory, loading
+17:05:28.585 [image] loader #15 lab-9|wide|192: not in memory, loading
+17:05:28.585 [image] loader #14 lab-8|wide|192: not in memory, loading
+17:05:28.586 [image] loader #13 lab-7|wide|192: not in memory, loading
+17:05:28.586 [image] loader #12 lab-6|wide|192: not in memory, loading
+17:05:28.586 [image] loader #11 lab-5|wide|192: not in memory, loading
+17:05:28.586 [image] loader #10 lab-4|wide|192: not in memory, loading
+17:05:28.590 [image] loader #9 lab-3|wide|192: not in memory, loading
+17:05:28.591 [image] loader #8 lab-2|wide|192: not in memory, loading
+17:05:28.591 [image] loader #7 lab-1|wide|192: not in memory, loading
+17:05:28.599 [image] loader #14 lab-8|wide|192: picture (artwork disk or network) after 14 ms
+17:05:28.600 [image] loader #7 lab-1|wide|192: picture (artwork disk or network) after 8 ms
+17:05:28.600 [image] loader #8 lab-2|wide|192: picture (artwork disk or network) after 9 ms
+17:05:28.600 [image] loader #9 lab-3|wide|192: picture (artwork disk or network) after 13 ms
+17:05:28.600 [image] loader #10 lab-4|wide|192: picture (artwork disk or network) after 14 ms
+17:05:28.609 [image] loader #11 lab-5|wide|192: picture (artwork disk or network) after 14 ms
+17:05:28.610 [image] loader #12 lab-6|wide|192: picture (artwork disk or network) after 24 ms
+17:05:28.610 [image] loader #13 lab-7|wide|192: picture (artwork disk or network) after 24 ms
+17:05:28.611 [image] loader #15 lab-9|wide|192: picture (artwork disk or network) after 25 ms
+17:05:28.615 [image] loader #16 lab-10|wide|192: picture (artwork disk or network) after 30 ms
+17:05:32.448 [ui] panel nowPlaying
+17:05:32.452 [ui] present panel nowPlaying from bar item 340×≤252
+17:05:32.452 [ui] panel: want nowPlaying (shown=none idle)
+17:05:32.453 [ui] panel: open nowPlaying
+17:05:32.527 [ui] present panel nowPlaying from bar item 340×≤252
+17:05:33.677 [ui] panel: opened nowPlaying
+17:05:33.678 [perf] panel open nowPlaying: 53 frames in 1224 ms, worst 301 ms, 4 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+17:05:56.005 [energy] cpu 44% (other 33%, main 11%) mem 58 MB (0 MB left) thermal=nominal playing=no
+17:05:58.657 [hang] main thread unresponsive for 1.6 s
+17:05:59.953 [ui] panel: tap outside
+17:05:59.995 [ui] panel: close nowPlaying
+17:06:01.317 [ui] panel: closed nowPlaying
+17:06:01.318 [perf] panel close nowPlaying: 70 frames in 1322 ms, worst 17 ms, 0 late (frame 16.7 ms)
+17:06:05.818 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.75 GB
+17:06:05.852 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+17:06:08.123 [hang] main thread unresponsive for 2.3 s
+17:06:10.753 [scene] DF1B4D26 connects (landscape)
+17:06:10.754 [scene] DF1B4D26 will enter foreground (landscape)
+17:06:11.094 [app] first screen 7216 ms after process start
+17:06:11.095 [app] root view appeared (1 in this run, splash off)
+17:06:11.703 [image] loader #1 Lab Show S01E01.mp4|wide|960: not in memory, loading
+17:06:11.955 [scene] DF1B4D26 active (landscape)
+17:06:11.985 [app] active
+17:06:12.115 [image] loader #1 Lab Show S01E01.mp4|wide|960: picture (artwork disk or network) after 410 ms
+17:06:12.398 [layout] grid for 750 pt: 5 columns, 3 entries, 694×239 pt
+17:06:12.399 [layout] Weekend picks at (283, 0, 128, 239)
+17:06:12.399 [layout] collage space of Weekend picks at (288, 5, 118, 182)
+17:06:12.399 [layout] collage grid of Weekend picks at (288, 5, 118, 182)
+17:06:12.399 [layout] Lab Show at (141, 0, 129, 239)
+17:06:12.399 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+17:06:12.399 [image] folder tile Weekend picks appeared
+17:06:12.400 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+17:06:12.400 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+17:06:12.410 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+17:06:12.411 [image] tile Lab Show appeared (loader #3, picture none yet)
+17:06:12.411 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+17:06:12.411 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+17:06:12.411 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+17:06:12.418 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (90.0, 397.0, 128.0, 192.0)
+17:06:12.422 [zoom] source 0|s|lab show added at (231.0, 397.0, 129.0, 192.0)
+17:06:12.424 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (373.0, 397.0, 128.0, 192.0)
+17:06:12.452 [app] Home: appeared 213 ms after the root view, next frame at 1027 ms, main thread free at 1358 ms
+17:06:12.480 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 80 ms
+17:06:12.481 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 69 ms
+17:06:12.487 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 76 ms
+17:06:13.883 [layout] grid for 402 pt: 3 columns, 3 entries, 362×389 pt
+17:06:13.883 [layout] Weekend picks at (250, 0, 112, 215)
+17:06:13.884 [layout] collage space of Weekend picks at (255, 5, 102, 158)
+17:06:13.884 [layout] collage grid of Weekend picks at (255, 5, 102, 158)
+17:06:13.884 [layout] Lab Show at (125, 0, 112, 215)
+17:06:13.884 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+17:06:13.932 [layout] grid for 402 pt: 3 columns, 3 entries, 362×215 pt
+17:06:16.543 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:06:16.543 [zoom] source 0|s|lab show removed from the window
+17:06:16.544 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:06:17.286 [image] folder tile Weekend picks disappeared
+17:06:17.286 [image] tile Lab Show disappeared (loader #3)
+17:06:17.286 [image] tile Bright Movie (2024) disappeared (loader #2)
+17:06:17.480 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:06:17.483 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:06:24.809 [hang] main thread unresponsive for 1.8 s
+17:06:26.961 [discover] Prime Video series: load starts (grid shows 0)
+17:06:27.150 [zoom] source tt9000001 removed from the window
+17:06:27.150 [zoom] source tt9000002 removed from the window
+17:06:27.153 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:06:27.154 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:06:27.700 [zoom] source tt9000001 removed from the window
+17:06:27.701 [zoom] source tt9000002 removed from the window
+17:06:27.739 [discover] catalog US|series|amp: 100 title(s) after 515 ms
+17:06:27.750 [discover] Prime Video series: 100 title(s)
+17:06:27.857 [zoom] source tt11743610 added at (22.0, 305.0, 109.0, 162.0)
+17:06:27.858 [zoom] source tt5875444 added at (147.0, 305.0, 108.0, 162.0)
+17:06:27.859 [zoom] source tt11540908 added at (271.0, 305.0, 109.0, 162.0)
+17:06:27.860 [zoom] source tt19231492 added at (22.0, 522.0, 109.0, 163.0)
+17:06:27.860 [zoom] source tt3718778 added at (147.0, 522.0, 108.0, 163.0)
+17:06:27.860 [zoom] source tt1844624 added at (271.0, 522.0, 109.0, 163.0)
+17:06:27.861 [zoom] source tt33270224 added at (22.0, 740.0, 109.0, 163.0)
+17:06:27.862 [zoom] source tt6151526 added at (147.0, 740.0, 108.0, 163.0)
+17:06:27.875 [zoom] source tt10946316 added at (271.0, 740.0, 109.0, 163.0)
+17:06:27.876 [zoom] source tt0111987 added at (22.0, 958.0, 109.0, 162.0)
+17:06:27.877 [zoom] source tt33043892 added at (147.0, 958.0, 108.0, 162.0)
+17:06:27.878 [zoom] source tt13138834 added at (271.0, 958.0, 109.0, 162.0)
+17:06:27.879 [zoom] source tt33078239 added at (22.0, 1175.0, 109.0, 163.0)
+17:06:27.880 [zoom] source tt9288030 added at (147.0, 1175.0, 108.0, 163.0)
+17:06:27.880 [zoom] source tt33539520 added at (271.0, 1175.0, 109.0, 163.0)
+17:06:27.881 [zoom] source tt10691770 added at (22.0, 1393.0, 109.0, 163.0)
+17:06:27.882 [zoom] source tt1399664 added at (147.0, 1393.0, 108.0, 163.0)
+17:06:27.882 [zoom] source tt3230854 added at (271.0, 1393.0, 109.0, 163.0)
+17:06:27.883 [zoom] source tt0460681 added at (22.0, 1611.0, 109.0, 162.0)
+17:06:27.883 [zoom] source tt0086742 added at (147.0, 1611.0, 108.0, 162.0)
+17:06:27.884 [zoom] source tt0096708 added at (271.0, 1611.0, 109.0, 162.0)
+17:06:29.940 [discover] Prime Video movie: load starts (grid shows 0)
+17:06:31.575 [discover] catalog US|movie|amp: 100 title(s) after 1548 ms
+17:06:31.576 [discover] Prime Video movie: 100 title(s)
+17:06:31.655 [zoom] source tt43655467 added at (22.0, 305.0, 109.0, 162.0)
+17:06:31.656 [zoom] source tt34494076 added at (147.0, 305.0, 108.0, 162.0)
+17:06:31.656 [zoom] source tt12042730 added at (271.0, 305.0, 109.0, 162.0)
+17:06:31.657 [zoom] source tt0084787 added at (22.0, 522.0, 109.0, 163.0)
+17:06:31.658 [zoom] source tt7784604 added at (147.0, 522.0, 108.0, 163.0)
+17:06:31.659 [zoom] source tt30851137 added at (271.0, 522.0, 109.0, 163.0)
+17:06:31.659 [zoom] source tt4263482 added at (22.0, 740.0, 109.0, 163.0)
+17:06:31.660 [zoom] source tt0085636 added at (147.0, 740.0, 108.0, 163.0)
+17:06:31.661 [zoom] source tt0074285 added at (271.0, 740.0, 109.0, 163.0)
+17:06:31.661 [zoom] source tt2866360 added at (22.0, 958.0, 109.0, 162.0)
+17:06:31.662 [zoom] source tt0246578 added at (147.0, 958.0, 108.0, 162.0)
+17:06:31.662 [zoom] source tt0093177 added at (271.0, 958.0, 109.0, 162.0)
+17:06:31.663 [zoom] source tt0101540 added at (22.0, 1175.0, 109.0, 163.0)
+17:06:31.663 [zoom] source tt0072271 added at (147.0, 1175.0, 108.0, 163.0)
+17:06:31.664 [zoom] source tt32565993 added at (271.0, 1175.0, 109.0, 163.0)
+17:06:31.664 [zoom] source tt1253864 added at (22.0, 1393.0, 109.0, 163.0)
+17:06:31.665 [zoom] source tt18077924 added at (147.0, 1393.0, 108.0, 163.0)
+17:06:31.668 [zoom] source tt0102926 added at (271.0, 1393.0, 109.0, 163.0)
+17:06:31.669 [zoom] source tt0284837 added at (22.0, 1611.0, 109.0, 162.0)
+17:06:31.675 [zoom] source tt27047903 added at (147.0, 1611.0, 108.0, 162.0)
+17:06:31.677 [zoom] source tt0082010 added at (271.0, 1611.0, 109.0, 162.0)
+17:06:42.009 [energy] cpu 0% mem 71 MB (0 MB left) thermal=nominal playing=no
+17:07:02.688 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.69 GB
+17:07:04.913 [hang] main thread unresponsive for 2.3 s
+17:07:07.945 [scene] DF1B4D26 connects (portrait)
+17:07:07.946 [scene] DF1B4D26 will enter foreground (portrait)
+17:07:08.243 [app] first screen 7396 ms after process start
+17:07:08.243 [app] root view appeared (1 in this run, splash off)
+17:07:08.786 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+17:07:08.979 [scene] DF1B4D26 active (portrait)
+17:07:09.021 [app] active
+17:07:09.126 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 338 ms
+17:07:09.447 [layout] grid for 402 pt: 3 columns, 3 entries, 362×215 pt
+17:07:09.447 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+17:07:09.448 [layout] Lab Show at (125, 0, 112, 215)
+17:07:09.448 [layout] Weekend picks at (250, 0, 112, 215)
+17:07:09.448 [layout] collage space of Weekend picks at (255, 5, 102, 158)
+17:07:09.448 [layout] collage grid of Weekend picks at (255, 5, 102, 158)
+17:07:09.448 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+17:07:09.448 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+17:07:09.459 [image] tile Lab Show appeared (loader #3, picture none yet)
+17:07:09.460 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+17:07:09.460 [image] folder tile Weekend picks appeared
+17:07:09.460 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+17:07:09.460 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+17:07:09.460 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+17:07:09.469 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:07:09.470 [zoom] source 0|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+17:07:09.470 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+17:07:10.728 [app] Home: appeared 169 ms after the root view, next frame at 1278 ms, main thread free at 2485 ms
+17:07:10.935 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 1475 ms
+17:07:10.935 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 1475 ms
+17:07:10.936 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 1487 ms
+17:07:15.225 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:07:15.226 [zoom] source 0|s|lab show removed from the window
+17:07:15.227 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:07:15.989 [image] tile Bright Movie (2024) disappeared (loader #2)
+17:07:15.990 [image] tile Lab Show disappeared (loader #3)
+17:07:15.990 [image] folder tile Weekend picks disappeared
+17:07:16.244 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:07:16.246 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:07:18.585 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+17:07:18.586 [imdb] webkit load /chart/moviemeter
+17:07:25.944 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+17:07:26.279 [discover] Netflix series: load starts (grid shows 0)
+17:07:26.409 [zoom] source tt9000001 removed from the window
+17:07:26.409 [zoom] source tt9000002 removed from the window
+17:07:26.420 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:07:26.420 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:07:26.690 [discover] catalog US|series|nfx: 98 title(s) after 200 ms
+17:07:26.691 [discover] Netflix series: 98 title(s)
+17:07:26.816 [zoom] source tt8594324 added at (22.0, 305.0, 109.0, 162.0)
+17:07:26.821 [zoom] source tt2531336 added at (147.0, 305.0, 108.0, 162.0)
+17:07:26.826 [zoom] source tt11379026 added at (271.0, 305.0, 109.0, 162.0)
+17:07:26.827 [zoom] source tt26933824 added at (22.0, 522.0, 109.0, 163.0)
+17:07:26.828 [zoom] source tt17491088 added at (147.0, 522.0, 108.0, 163.0)
+17:07:26.828 [zoom] source tt7587890 added at (271.0, 522.0, 109.0, 163.0)
+17:07:26.881 [zoom] source tt4934214 added at (22.0, 740.0, 109.0, 163.0)
+17:07:26.883 [zoom] source tt13210838 added at (147.0, 740.0, 108.0, 163.0)
+17:07:26.885 [zoom] source tt21097264 added at (271.0, 740.0, 109.0, 163.0)
+17:07:26.888 [zoom] source tt0203259 added at (22.0, 958.0, 109.0, 162.0)
+17:07:26.889 [zoom] source tt27995113 added at (147.0, 958.0, 108.0, 162.0)
+17:07:26.891 [zoom] source tt44941753 added at (271.0, 958.0, 109.0, 162.0)
+17:07:26.893 [zoom] source tt42220724 added at (22.0, 1175.0, 109.0, 163.0)
+17:07:26.894 [zoom] source tt35934755 added at (147.0, 1175.0, 108.0, 163.0)
+17:07:26.895 [zoom] source tt0472954 added at (271.0, 1175.0, 109.0, 163.0)
+17:07:26.904 [zoom] source tt0168366 added at (22.0, 1393.0, 109.0, 163.0)
+17:07:26.906 [zoom] source tt1196946 added at (147.0, 1393.0, 108.0, 163.0)
+17:07:26.908 [zoom] source tt39751377 added at (271.0, 1393.0, 109.0, 163.0)
+17:07:26.911 [zoom] source tt4236770 added at (22.0, 1611.0, 109.0, 162.0)
+17:07:26.912 [zoom] source tt0386676 added at (147.0, 1611.0, 108.0, 162.0)
+17:07:26.915 [zoom] source tt0903747 added at (271.0, 1611.0, 109.0, 162.0)
+17:07:26.963 [zoom] source tt9000001 removed from the window
+17:07:26.964 [zoom] source tt9000002 removed from the window
+17:07:29.756 [zoom] source tt9000001 added at (-101.0, 307.0, 113.0, 170.0)
+17:07:29.757 [zoom] source tt9000002 added at (23.0, 307.0, 114.0, 170.0)
+17:07:30.342 [zoom] source tt8594324 removed from the window
+17:07:30.342 [zoom] source tt2531336 removed from the window
+17:07:30.343 [zoom] source tt11379026 removed from the window
+17:07:30.343 [zoom] source tt26933824 removed from the window
+17:07:30.343 [zoom] source tt17491088 removed from the window
+17:07:30.344 [zoom] source tt7587890 removed from the window
+17:07:30.344 [zoom] source tt4934214 removed from the window
+17:07:30.344 [zoom] source tt13210838 removed from the window
+17:07:30.344 [zoom] source tt21097264 removed from the window
+17:07:30.350 [zoom] source tt0203259 removed from the window
+17:07:30.350 [zoom] source tt27995113 removed from the window
+17:07:30.351 [zoom] source tt44941753 removed from the window
+17:07:30.351 [zoom] source tt42220724 removed from the window
+17:07:30.351 [zoom] source tt35934755 removed from the window
+17:07:30.351 [zoom] source tt0472954 removed from the window
+17:07:30.352 [zoom] source tt0168366 removed from the window
+17:07:30.352 [zoom] source tt1196946 removed from the window
+17:07:30.352 [zoom] source tt39751377 removed from the window
+17:07:30.352 [zoom] source tt4236770 removed from the window
+17:07:30.361 [zoom] source tt0386676 removed from the window
+17:07:30.362 [zoom] source tt0903747 removed from the window
+17:07:33.379 [discover] Prime Video series: load starts (grid shows 0)
+17:07:33.408 [zoom] source tt9000001 removed from the window
+17:07:33.409 [zoom] source tt9000002 removed from the window
+17:07:33.412 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:07:33.413 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:07:33.479 [discover] catalog US|series|amp: 100 title(s) after 18 ms
+17:07:33.480 [discover] Prime Video series: 100 title(s)
+17:07:33.606 [zoom] source tt11743610 added at (22.0, 305.0, 109.0, 162.0)
+17:07:33.608 [zoom] source tt5875444 added at (147.0, 305.0, 108.0, 162.0)
+17:07:33.611 [zoom] source tt11540908 added at (271.0, 305.0, 109.0, 162.0)
+17:07:33.614 [zoom] source tt19231492 added at (22.0, 522.0, 109.0, 163.0)
+17:07:33.616 [zoom] source tt3718778 added at (147.0, 522.0, 108.0, 163.0)
+17:07:33.618 [zoom] source tt1844624 added at (271.0, 522.0, 109.0, 163.0)
+17:07:33.797 [zoom] source tt33270224 added at (22.0, 740.0, 109.0, 163.0)
+17:07:33.801 [zoom] source tt6151526 added at (147.0, 740.0, 108.0, 163.0)
+17:07:33.804 [zoom] source tt10946316 added at (271.0, 740.0, 109.0, 163.0)
+17:07:33.997 [zoom] source tt0111987 added at (22.0, 958.0, 109.0, 162.0)
+17:07:34.000 [zoom] source tt33043892 added at (147.0, 958.0, 108.0, 162.0)
+17:07:34.003 [zoom] source tt13138834 added at (271.0, 958.0, 109.0, 162.0)
+17:07:34.018 [zoom] source tt33078239 added at (22.0, 1175.0, 109.0, 163.0)
+17:07:34.020 [zoom] source tt9288030 added at (147.0, 1175.0, 108.0, 163.0)
+17:07:34.023 [zoom] source tt33539520 added at (271.0, 1175.0, 109.0, 163.0)
+17:07:34.029 [zoom] source tt10691770 added at (22.0, 1393.0, 109.0, 163.0)
+17:07:34.030 [zoom] source tt1399664 added at (147.0, 1393.0, 108.0, 163.0)
+17:07:34.031 [zoom] source tt3230854 added at (271.0, 1393.0, 109.0, 163.0)
+17:07:34.037 [zoom] source tt0460681 added at (22.0, 1611.0, 109.0, 162.0)
+17:07:34.040 [zoom] source tt0086742 added at (147.0, 1611.0, 108.0, 162.0)
+17:07:34.041 [zoom] source tt0096708 added at (271.0, 1611.0, 109.0, 162.0)
+17:07:34.081 [zoom] source tt9000001 removed from the window
+17:07:34.081 [zoom] source tt9000002 removed from the window
+17:07:37.195 [zoom] source tt9000001 added at (-101.0, 307.0, 113.0, 170.0)
+17:07:37.195 [zoom] source tt9000002 added at (23.0, 307.0, 114.0, 170.0)
+17:07:37.804 [zoom] source tt11743610 removed from the window
+17:07:37.805 [zoom] source tt5875444 removed from the window
+17:07:37.805 [zoom] source tt11540908 removed from the window
+17:07:37.805 [zoom] source tt19231492 removed from the window
+17:07:37.805 [zoom] source tt3718778 removed from the window
+17:07:37.805 [zoom] source tt1844624 removed from the window
+17:07:37.806 [zoom] source tt33270224 removed from the window
+17:07:37.806 [zoom] source tt6151526 removed from the window
+17:07:37.807 [zoom] source tt10946316 removed from the window
+17:07:37.807 [zoom] source tt0111987 removed from the window
+17:07:37.808 [zoom] source tt33043892 removed from the window
+17:07:37.808 [zoom] source tt13138834 removed from the window
+17:07:37.811 [zoom] source tt33078239 removed from the window
+17:07:37.811 [zoom] source tt9288030 removed from the window
+17:07:37.812 [zoom] source tt33539520 removed from the window
+17:07:37.812 [zoom] source tt10691770 removed from the window
+17:07:37.813 [zoom] source tt1399664 removed from the window
+17:07:37.813 [zoom] source tt3230854 removed from the window
+17:07:37.813 [zoom] source tt0460681 removed from the window
+17:07:37.813 [zoom] source tt0086742 removed from the window
+17:07:37.813 [zoom] source tt0096708 removed from the window
+17:07:39.237 [energy] cpu 25% (main 24%, other 1%) mem 63 MB (0 MB left) thermal=nominal playing=no
+17:07:40.897 [discover] HBO Max series: load starts (grid shows 0)
+17:07:40.927 [zoom] source tt9000001 removed from the window
+17:07:40.928 [zoom] source tt9000002 removed from the window
+17:07:40.930 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:07:40.931 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:07:41.024 [discover] catalog US|series|hbm: 100 title(s) after 59 ms
+17:07:41.025 [discover] HBO Max series: 100 title(s)
+17:07:41.158 [zoom] source tt2699128 added at (22.0, 305.0, 109.0, 162.0)
+17:07:41.159 [zoom] source tt2356777 added at (147.0, 305.0, 108.0, 162.0)
+17:07:41.161 [zoom] source tt2861424 added at (271.0, 305.0, 109.0, 162.0)
+17:07:41.163 [zoom] source tt0460681 added at (22.0, 522.0, 109.0, 163.0)
+17:07:41.165 [zoom] source tt1196946 added at (147.0, 522.0, 108.0, 163.0)
+17:07:41.166 [zoom] source tt0141842 added at (271.0, 522.0, 109.0, 163.0)
+17:07:41.168 [zoom] source tt2017109 added at (22.0, 740.0, 109.0, 163.0)
+17:07:41.171 [zoom] source tt3718778 added at (147.0, 740.0, 108.0, 163.0)
+17:07:41.173 [zoom] source tt0306414 added at (271.0, 740.0, 109.0, 163.0)
+17:07:41.176 [zoom] source tt1839578 added at (22.0, 958.0, 109.0, 162.0)
+17:07:41.177 [zoom] source tt8772296 added at (147.0, 958.0, 108.0, 162.0)
+17:07:41.179 [zoom] source tt0108778 added at (271.0, 958.0, 109.0, 162.0)
+17:07:41.180 [zoom] source tt11815682 added at (22.0, 1175.0, 109.0, 163.0)
+17:07:41.181 [zoom] source tt0185906 added at (147.0, 1175.0, 108.0, 163.0)
+17:07:41.182 [zoom] source tt13406094 added at (271.0, 1175.0, 109.0, 163.0)
+17:07:41.185 [zoom] source tt1442464 added at (22.0, 1393.0, 109.0, 163.0)
+17:07:41.188 [zoom] source tt6520930 added at (147.0, 1393.0, 108.0, 163.0)
+17:07:41.190 [zoom] source tt0264235 added at (271.0, 1393.0, 109.0, 163.0)
+17:07:41.193 [zoom] source tt2401256 added at (22.0, 1611.0, 109.0, 162.0)
+17:07:41.195 [zoom] source tt6905686 added at (147.0, 1611.0, 108.0, 162.0)
+17:07:41.196 [zoom] source tt10155688 added at (271.0, 1611.0, 109.0, 162.0)
+17:07:41.449 [zoom] source tt9000001 removed from the window
+17:07:41.449 [zoom] source tt9000002 removed from the window
+17:07:43.876 [imdb/error] webkit timeout for /chart/moviemeter
+17:07:44.067 [perf] imdb /chart/moviemeter/ via web view 27662 ms
+17:07:44.068 [perf] imdb warm-up done in 41346 ms
+17:07:45.140 [zoom] source tt9000001 added at (-101.0, 307.0, 113.0, 170.0)
+17:07:45.141 [zoom] source tt9000002 added at (23.0, 307.0, 114.0, 170.0)
+17:07:45.686 [zoom] source tt2699128 removed from the window
+17:07:45.687 [zoom] source tt2356777 removed from the window
+17:07:45.687 [zoom] source tt2861424 removed from the window
+17:07:45.688 [zoom] source tt0460681 removed from the window
+17:07:45.689 [zoom] source tt1196946 removed from the window
+17:07:45.690 [zoom] source tt0141842 removed from the window
+17:07:45.690 [zoom] source tt2017109 removed from the window
+17:07:45.691 [zoom] source tt3718778 removed from the window
+17:07:45.691 [zoom] source tt0306414 removed from the window
+17:07:45.743 [zoom] source tt1839578 removed from the window
+17:07:45.743 [zoom] source tt8772296 removed from the window
+17:07:45.743 [zoom] source tt0108778 removed from the window
+17:07:45.744 [zoom] source tt11815682 removed from the window
+17:07:45.744 [zoom] source tt0185906 removed from the window
+17:07:45.744 [zoom] source tt13406094 removed from the window
+17:07:45.744 [zoom] source tt1442464 removed from the window
+17:07:45.745 [zoom] source tt6520930 removed from the window
+17:07:45.746 [zoom] source tt0264235 removed from the window
+17:07:45.746 [zoom] source tt2401256 removed from the window
+17:07:45.823 [zoom] source tt6905686 removed from the window
+17:07:45.825 [zoom] source tt10155688 removed from the window
+17:07:48.876 [discover] Disney+ series: load starts (grid shows 0)
+17:07:48.902 [zoom] source tt9000001 removed from the window
+17:07:48.902 [zoom] source tt9000002 removed from the window
+17:07:48.904 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:07:48.905 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:07:49.028 [discover] catalog US|series|dnp: 100 title(s) after 78 ms
+17:07:49.028 [discover] Disney+ series: 100 title(s)
+17:07:49.162 [zoom] source tt23112594 added at (22.0, 305.0, 109.0, 162.0)
+17:07:49.164 [zoom] source tt11379026 added at (147.0, 305.0, 108.0, 162.0)
+17:07:49.165 [zoom] source tt7587890 added at (271.0, 305.0, 109.0, 162.0)
+17:07:49.167 [zoom] source tt4934214 added at (22.0, 522.0, 109.0, 163.0)
+17:07:49.168 [zoom] source tt1844624 added at (147.0, 522.0, 108.0, 163.0)
+17:07:49.169 [zoom] source tt21952924 added at (271.0, 522.0, 109.0, 163.0)
+17:07:49.170 [zoom] source tt0203259 added at (22.0, 740.0, 109.0, 163.0)
+17:07:49.172 [zoom] source tt7235466 added at (147.0, 740.0, 108.0, 163.0)
+17:07:49.175 [zoom] source tt0096697 added at (271.0, 740.0, 109.0, 163.0)
+17:07:49.176 [zoom] source tt0106179 added at (22.0, 958.0, 109.0, 162.0)
+17:07:49.177 [zoom] source tt2149175 added at (147.0, 958.0, 108.0, 162.0)
+17:07:49.182 [zoom] source tt0413573 added at (271.0, 958.0, 109.0, 162.0)
+17:07:49.187 [zoom] source tt40197357 added at (22.0, 1175.0, 109.0, 163.0)
+17:07:49.188 [zoom] source tt0168366 added at (147.0, 1175.0, 108.0, 163.0)
+17:07:49.191 [zoom] source tt37063558 added at (271.0, 1175.0, 109.0, 163.0)
+17:07:49.193 [zoom] source tt0804503 added at (22.0, 1393.0, 109.0, 163.0)
+17:07:49.195 [zoom] source tt10166622 added at (147.0, 1393.0, 108.0, 163.0)
+17:07:49.200 [zoom] source tt14452776 added at (271.0, 1393.0, 109.0, 163.0)
+17:07:49.204 [zoom] source tt7472896 added at (22.0, 1611.0, 109.0, 162.0)
+17:07:49.206 [zoom] source tt36303968 added at (147.0, 1611.0, 108.0, 162.0)
+17:07:49.209 [zoom] source tt0386676 added at (271.0, 1611.0, 109.0, 162.0)
+17:07:49.473 [zoom] source tt9000001 removed from the window
+17:07:49.474 [zoom] source tt9000002 removed from the window
+17:07:52.566 [zoom] source tt9000001 added at (-101.0, 307.0, 113.0, 170.0)
+17:07:52.566 [zoom] source tt9000002 added at (23.0, 307.0, 114.0, 170.0)
+17:07:53.161 [zoom] source tt23112594 removed from the window
+17:07:53.161 [zoom] source tt11379026 removed from the window
+17:07:53.161 [zoom] source tt7587890 removed from the window
+17:07:53.162 [zoom] source tt4934214 removed from the window
+17:07:53.163 [zoom] source tt1844624 removed from the window
+17:07:53.163 [zoom] source tt21952924 removed from the window
+17:07:53.163 [zoom] source tt0203259 removed from the window
+17:07:53.164 [zoom] source tt7235466 removed from the window
+17:07:53.164 [zoom] source tt0096697 removed from the window
+17:07:53.164 [zoom] source tt0106179 removed from the window
+17:07:53.165 [zoom] source tt2149175 removed from the window
+17:07:53.165 [zoom] source tt0413573 removed from the window
+17:07:53.165 [zoom] source tt40197357 removed from the window
+17:07:53.166 [zoom] source tt0168366 removed from the window
+17:07:53.166 [zoom] source tt37063558 removed from the window
+17:07:53.166 [zoom] source tt0804503 removed from the window
+17:07:53.167 [zoom] source tt10166622 removed from the window
+17:07:53.167 [zoom] source tt14452776 removed from the window
+17:07:53.167 [zoom] source tt7472896 removed from the window
+17:07:53.167 [zoom] source tt36303968 removed from the window
+17:07:53.167 [zoom] source tt0386676 removed from the window
+17:07:56.367 [discover] Apple TV+ series: load starts (grid shows 0)
+17:07:56.407 [zoom] source tt9000001 removed from the window
+17:07:56.408 [zoom] source tt9000002 removed from the window
+17:07:56.412 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:07:56.413 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:07:56.527 [discover] catalog US|series|atp: 99 title(s) after 66 ms
+17:07:56.527 [discover] Apple TV+ series: 99 title(s)
+17:07:56.666 [zoom] source tt5875444 added at (22.0, 305.0, 109.0, 162.0)
+17:07:56.667 [zoom] source tt26598805 added at (147.0, 305.0, 108.0, 162.0)
+17:07:56.670 [zoom] source tt10986410 added at (271.0, 305.0, 109.0, 162.0)
+17:07:56.673 [zoom] source tt33332385 added at (22.0, 522.0, 109.0, 163.0)
+17:07:56.675 [zoom] source tt19231492 added at (147.0, 522.0, 108.0, 163.0)
+17:07:56.676 [zoom] source tt14688458 added at (271.0, 522.0, 109.0, 163.0)
+17:07:56.680 [zoom] source tt6037988 added at (22.0, 740.0, 109.0, 163.0)
+17:07:56.682 [zoom] source tt34675596 added at (147.0, 740.0, 108.0, 163.0)
+17:07:56.686 [zoom] source tt10982034 added at (271.0, 740.0, 109.0, 163.0)
+17:07:56.689 [zoom] source tt7772588 added at (22.0, 958.0, 109.0, 162.0)
+17:07:56.690 [zoom] source tt29011445 added at (147.0, 958.0, 108.0, 162.0)
+17:07:56.693 [zoom] source tt15677150 added at (271.0, 958.0, 109.0, 162.0)
+17:07:56.695 [zoom] source tt6773088 added at (22.0, 1175.0, 109.0, 163.0)
+17:07:56.697 [zoom] source tt11280740 added at (147.0, 1175.0, 108.0, 163.0)
+17:07:56.699 [zoom] source tt34866681 added at (271.0, 1175.0, 109.0, 163.0)
+17:07:56.701 [zoom] source tt22202452 added at (22.0, 1393.0, 109.0, 163.0)
+17:07:56.703 [zoom] source tt19854762 added at (147.0, 1393.0, 108.0, 163.0)
+17:07:56.704 [zoom] source tt30459041 added at (271.0, 1393.0, 109.0, 163.0)
+17:07:56.705 [zoom] source tt32140872 added at (22.0, 1611.0, 109.0, 162.0)
+17:07:56.706 [zoom] source tt17220216 added at (147.0, 1611.0, 108.0, 162.0)
+17:07:56.711 [zoom] source tt7203552 added at (271.0, 1611.0, 109.0, 162.0)
+17:07:56.967 [zoom] source tt9000001 removed from the window
+17:07:56.967 [zoom] source tt9000002 removed from the window
+17:08:00.657 [zoom] source tt9000001 added at (-101.0, 307.0, 113.0, 170.0)
+17:08:00.658 [zoom] source tt9000002 added at (23.0, 307.0, 114.0, 170.0)
+17:08:01.252 [zoom] source tt5875444 removed from the window
+17:08:01.253 [zoom] source tt26598805 removed from the window
+17:08:01.253 [zoom] source tt10986410 removed from the window
+17:08:01.253 [zoom] source tt33332385 removed from the window
+17:08:01.254 [zoom] source tt19231492 removed from the window
+17:08:01.254 [zoom] source tt14688458 removed from the window
+17:08:01.254 [zoom] source tt6037988 removed from the window
+17:08:01.254 [zoom] source tt34675596 removed from the window
+17:08:01.254 [zoom] source tt10982034 removed from the window
+17:08:01.280 [zoom] source tt7772588 removed from the window
+17:08:01.280 [zoom] source tt29011445 removed from the window
+17:08:01.281 [zoom] source tt15677150 removed from the window
+17:08:01.281 [zoom] source tt6773088 removed from the window
+17:08:01.282 [zoom] source tt11280740 removed from the window
+17:08:01.282 [zoom] source tt34866681 removed from the window
+17:08:01.282 [zoom] source tt22202452 removed from the window
+17:08:01.283 [zoom] source tt19854762 removed from the window
+17:08:01.283 [zoom] source tt30459041 removed from the window
+17:08:01.283 [zoom] source tt32140872 removed from the window
+17:08:01.287 [zoom] source tt17220216 removed from the window
+17:08:01.287 [zoom] source tt7203552 removed from the window
+17:08:06.964 [discover] Paramount+ series: load starts (grid shows 0)
+17:08:06.992 [zoom] source tt9000001 removed from the window
+17:08:06.992 [zoom] source tt9000002 removed from the window
+17:08:06.996 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:08:06.997 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:08:07.075 [discover] catalog US|series|pmp: 100 title(s) after 40 ms
+17:08:07.075 [discover] Paramount+ series: 100 title(s)
+17:08:07.199 [zoom] source tt31510819 added at (22.0, 305.0, 109.0, 162.0)
+17:08:07.200 [zoom] source tt2297757 added at (147.0, 305.0, 108.0, 162.0)
+17:08:07.200 [zoom] source tt0092455 added at (271.0, 305.0, 109.0, 162.0)
+17:08:07.201 [zoom] source tt33270224 added at (22.0, 522.0, 109.0, 163.0)
+17:08:07.205 [zoom] source tt0121955 added at (147.0, 522.0, 108.0, 163.0)
+17:08:07.205 [zoom] source tt13875494 added at (271.0, 522.0, 109.0, 163.0)
+17:08:07.206 [zoom] source tt46269844 added at (22.0, 740.0, 109.0, 163.0)
+17:08:07.206 [zoom] source tt16358384 added at (147.0, 740.0, 108.0, 163.0)
+17:08:07.207 [zoom] source tt0052520 added at (271.0, 740.0, 109.0, 163.0)
+17:08:07.208 [zoom] source tt35854736 added at (22.0, 958.0, 109.0, 162.0)
+17:08:07.208 [zoom] source tt13111078 added at (147.0, 958.0, 108.0, 162.0)
+17:08:07.209 [zoom] source tt33078239 added at (271.0, 958.0, 109.0, 162.0)
+17:08:07.213 [zoom] source tt0364845 added at (22.0, 1175.0, 109.0, 163.0)
+17:08:07.214 [zoom] source tt36849871 added at (147.0, 1175.0, 108.0, 163.0)
+17:08:07.214 [zoom] source tt31589662 added at (271.0, 1175.0, 109.0, 163.0)
+17:08:07.215 [zoom] source tt0239195 added at (22.0, 1393.0, 109.0, 163.0)
+17:08:07.215 [zoom] source tt0098936 added at (147.0, 1393.0, 108.0, 163.0)
+17:08:07.220 [zoom] source tt7491982 added at (271.0, 1393.0, 109.0, 163.0)
+17:08:07.221 [zoom] source tt26591110 added at (22.0, 1611.0, 109.0, 162.0)
+17:08:07.222 [zoom] source tt35515227 added at (147.0, 1611.0, 108.0, 162.0)
+17:08:07.223 [zoom] source tt0285335 added at (271.0, 1611.0, 109.0, 162.0)
+17:08:07.535 [zoom] source tt9000001 removed from the window
+17:08:07.536 [zoom] source tt9000002 removed from the window
+17:08:09.208 [energy] cpu 0% mem 73 MB (0 MB left) thermal=nominal playing=no
+17:08:11.014 [zoom] source tt9000001 added at (-101.0, 307.0, 113.0, 170.0)
+17:08:11.015 [zoom] source tt9000002 added at (23.0, 307.0, 114.0, 170.0)
+17:08:11.597 [zoom] source tt31510819 removed from the window
+17:08:11.597 [zoom] source tt2297757 removed from the window
+17:08:11.598 [zoom] source tt0092455 removed from the window
+17:08:11.598 [zoom] source tt33270224 removed from the window
+17:08:11.598 [zoom] source tt0121955 removed from the window
+17:08:11.598 [zoom] source tt13875494 removed from the window
+17:08:11.598 [zoom] source tt46269844 removed from the window
+17:08:11.598 [zoom] source tt16358384 removed from the window
+17:08:11.599 [zoom] source tt0052520 removed from the window
+17:08:11.600 [zoom] source tt35854736 removed from the window
+17:08:11.601 [zoom] source tt13111078 removed from the window
+17:08:11.602 [zoom] source tt33078239 removed from the window
+17:08:11.602 [zoom] source tt0364845 removed from the window
+17:08:11.602 [zoom] source tt36849871 removed from the window
+17:08:11.602 [zoom] source tt31589662 removed from the window
+17:08:11.602 [zoom] source tt0239195 removed from the window
+17:08:11.603 [zoom] source tt0098936 removed from the window
+17:08:11.603 [zoom] source tt7491982 removed from the window
+17:08:11.604 [zoom] source tt26591110 removed from the window
+17:08:11.610 [zoom] source tt35515227 removed from the window
+17:08:11.610 [zoom] source tt0285335 removed from the window
+17:08:15.031 [discover] Hulu series: load starts (grid shows 0)
+17:08:15.058 [zoom] source tt9000001 removed from the window
+17:08:15.063 [zoom] source tt9000002 removed from the window
+17:08:15.065 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:08:15.066 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:08:15.156 [discover] catalog US|series|hlu: 98 title(s) after 49 ms
+17:08:15.158 [discover] Hulu series: 98 title(s)
+17:08:15.280 [zoom] source tt21952924 added at (22.0, 305.0, 109.0, 162.0)
+17:08:15.282 [zoom] source tt10166622 added at (147.0, 305.0, 108.0, 162.0)
+17:08:15.283 [zoom] source tt3718778 added at (271.0, 305.0, 109.0, 162.0)
+17:08:15.284 [zoom] source tt1844624 added at (22.0, 522.0, 109.0, 163.0)
+17:08:15.286 [zoom] source tt14218830 added at (147.0, 522.0, 108.0, 163.0)
+17:08:15.287 [zoom] source tt13875494 added at (271.0, 522.0, 109.0, 163.0)
+17:08:15.289 [zoom] source tt36885662 added at (22.0, 740.0, 109.0, 163.0)
+17:08:15.291 [zoom] source tt0096697 added at (147.0, 740.0, 108.0, 163.0)
+17:08:15.293 [zoom] source tt2149175 added at (271.0, 740.0, 109.0, 163.0)
+17:08:15.294 [zoom] source tt0364845 added at (22.0, 958.0, 109.0, 162.0)
+17:08:15.294 [zoom] source tt40197357 added at (147.0, 958.0, 108.0, 162.0)
+17:08:15.296 [zoom] source tt31289994 added at (271.0, 958.0, 109.0, 162.0)
+17:08:15.302 [zoom] source tt37063558 added at (22.0, 1175.0, 109.0, 163.0)
+17:08:15.304 [zoom] source tt0239195 added at (147.0, 1175.0, 108.0, 163.0)
+17:08:15.304 [zoom] source tt0413573 added at (271.0, 1175.0, 109.0, 163.0)
+17:08:15.307 [zoom] source tt36303968 added at (22.0, 1393.0, 109.0, 163.0)
+17:08:15.309 [zoom] source tt48356732 added at (147.0, 1393.0, 108.0, 163.0)
+17:08:15.311 [zoom] source tt0203259 added at (271.0, 1393.0, 109.0, 163.0)
+17:08:15.313 [zoom] source tt21376524 added at (22.0, 1611.0, 109.0, 162.0)
+17:08:15.315 [zoom] source tt0285335 added at (147.0, 1611.0, 108.0, 162.0)
+17:08:15.327 [zoom] source tt26748321 added at (271.0, 1611.0, 109.0, 162.0)
+17:08:15.585 [zoom] source tt9000001 removed from the window
+17:08:15.585 [zoom] source tt9000002 removed from the window
+17:08:18.985 [zoom] source tt9000001 added at (-101.0, 307.0, 113.0, 170.0)
+17:08:18.987 [zoom] source tt9000002 added at (23.0, 307.0, 114.0, 170.0)
+17:08:19.579 [zoom] source tt21952924 removed from the window
+17:08:19.580 [zoom] source tt10166622 removed from the window
+17:08:19.580 [zoom] source tt3718778 removed from the window
+17:08:19.581 [zoom] source tt1844624 removed from the window
+17:08:19.581 [zoom] source tt14218830 removed from the window
+17:08:19.581 [zoom] source tt13875494 removed from the window
+17:08:19.581 [zoom] source tt36885662 removed from the window
+17:08:19.581 [zoom] source tt0096697 removed from the window
+17:08:19.582 [zoom] source tt2149175 removed from the window
+17:08:19.582 [zoom] source tt0364845 removed from the window
+17:08:19.582 [zoom] source tt40197357 removed from the window
+17:08:19.582 [zoom] source tt31289994 removed from the window
+17:08:19.582 [zoom] source tt37063558 removed from the window
+17:08:19.582 [zoom] source tt0239195 removed from the window
+17:08:19.583 [zoom] source tt0413573 removed from the window
+17:08:19.583 [zoom] source tt36303968 removed from the window
+17:08:19.583 [zoom] source tt48356732 removed from the window
+17:08:19.585 [zoom] source tt0203259 removed from the window
+17:08:19.586 [zoom] source tt21376524 removed from the window
+17:08:19.586 [zoom] source tt0285335 removed from the window
+17:08:19.587 [zoom] source tt26748321 removed from the window
+17:08:23.545 [discover] Peacock series: load starts (grid shows 0)
+17:08:23.574 [zoom] source tt9000001 removed from the window
+17:08:23.574 [zoom] source tt9000002 removed from the window
+17:08:23.576 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:08:23.577 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:08:23.679 [discover] catalog US|series|pcp: 100 title(s) after 61 ms
+17:08:23.679 [discover] Peacock series: 100 title(s)
+17:08:23.818 [zoom] source tt23148340 added at (22.0, 305.0, 109.0, 162.0)
+17:08:23.824 [zoom] source tt6151526 added at (147.0, 305.0, 108.0, 162.0)
+17:08:23.826 [zoom] source tt15557874 added at (271.0, 305.0, 109.0, 162.0)
+17:08:23.838 [zoom] source tt0203259 added at (22.0, 522.0, 109.0, 163.0)
+17:08:23.842 [zoom] source tt0386676 added at (147.0, 522.0, 108.0, 163.0)
+17:08:23.843 [zoom] source tt0460681 added at (271.0, 522.0, 109.0, 163.0)
+17:08:23.844 [zoom] source tt1266020 added at (22.0, 740.0, 109.0, 163.0)
+17:08:23.845 [zoom] source tt4236770 added at (147.0, 740.0, 108.0, 163.0)
+17:08:23.848 [zoom] source tt2261391 added at (271.0, 740.0, 109.0, 163.0)
+17:08:23.853 [zoom] source tt42576767 added at (22.0, 958.0, 109.0, 162.0)
+17:08:23.856 [zoom] source tt1839578 added at (147.0, 958.0, 108.0, 162.0)
+17:08:23.857 [zoom] source tt0098844 added at (271.0, 958.0, 109.0, 162.0)
+17:08:23.858 [zoom] source tt1442437 added at (22.0, 1175.0, 109.0, 163.0)
+17:08:23.859 [zoom] source tt2805096 added at (147.0, 1175.0, 108.0, 163.0)
+17:08:23.860 [zoom] source tt0437005 added at (271.0, 1175.0, 109.0, 163.0)
+17:08:23.860 [zoom] source tt4655480 added at (22.0, 1393.0, 109.0, 163.0)
+17:08:23.862 [zoom] source tt29666911 added at (147.0, 1393.0, 108.0, 163.0)
+17:08:23.862 [zoom] source tt2467372 added at (271.0, 1393.0, 109.0, 163.0)
+17:08:23.863 [zoom] source tt4955642 added at (22.0, 1611.0, 109.0, 162.0)
+17:08:23.864 [zoom] source tt31106862 added at (147.0, 1611.0, 108.0, 162.0)
+17:08:23.864 [zoom] source tt0081871 added at (271.0, 1611.0, 109.0, 162.0)
+17:08:24.093 [zoom] source tt9000001 removed from the window
+17:08:24.093 [zoom] source tt9000002 removed from the window
+17:08:27.628 [zoom] source tt9000001 added at (-101.0, 307.0, 113.0, 170.0)
+17:08:27.630 [zoom] source tt9000002 added at (23.0, 307.0, 114.0, 170.0)
+17:08:28.211 [zoom] source tt23148340 removed from the window
+17:08:28.212 [zoom] source tt6151526 removed from the window
+17:08:28.212 [zoom] source tt15557874 removed from the window
+17:08:28.212 [zoom] source tt0203259 removed from the window
+17:08:28.212 [zoom] source tt0386676 removed from the window
+17:08:28.213 [zoom] source tt0460681 removed from the window
+17:08:28.213 [zoom] source tt1266020 removed from the window
+17:08:28.214 [zoom] source tt4236770 removed from the window
+17:08:28.214 [zoom] source tt2261391 removed from the window
+17:08:28.215 [zoom] source tt42576767 removed from the window
+17:08:28.216 [zoom] source tt1839578 removed from the window
+17:08:28.217 [zoom] source tt0098844 removed from the window
+17:08:28.217 [zoom] source tt1442437 removed from the window
+17:08:28.217 [zoom] source tt2805096 removed from the window
+17:08:28.217 [zoom] source tt0437005 removed from the window
+17:08:28.217 [zoom] source tt4655480 removed from the window
+17:08:28.218 [zoom] source tt29666911 removed from the window
+17:08:28.218 [zoom] source tt2467372 removed from the window
+17:08:28.219 [zoom] source tt4955642 removed from the window
+17:08:28.224 [zoom] source tt31106862 removed from the window
+17:08:28.225 [zoom] source tt0081871 removed from the window
+17:08:32.064 [discover] Crunchyroll series: load starts (grid shows 0)
+17:08:32.091 [zoom] source tt9000001 removed from the window
+17:08:32.091 [zoom] source tt9000002 removed from the window
+17:08:32.093 [zoom] source tt9000001 added at (20.0, 307.0, 113.0, 170.0)
+17:08:32.093 [zoom] source tt9000002 added at (144.0, 307.0, 114.0, 170.0)
+17:08:32.201 [discover] catalog US|series|cru: 91 title(s) after 70 ms
+17:08:32.201 [discover] Crunchyroll series: 91 title(s)
+17:08:32.312 [zoom] source tt26743760 added at (22.0, 305.0, 109.0, 162.0)
+17:08:32.314 [zoom] source tt22248376 added at (147.0, 305.0, 108.0, 162.0)
+17:08:32.317 [zoom] source tt12343534 added at (271.0, 305.0, 109.0, 162.0)
+17:08:32.322 [zoom] source tt39395275 added at (22.0, 522.0, 109.0, 163.0)
+17:08:32.324 [zoom] source tt0388629 added at (147.0, 522.0, 108.0, 163.0)
+17:08:32.326 [zoom] source tt7441658 added at (271.0, 522.0, 109.0, 163.0)
+17:08:32.331 [zoom] source tt2560140 added at (22.0, 740.0, 109.0, 163.0)
+17:08:32.338 [zoom] source tt0213338 added at (147.0, 740.0, 108.0, 163.0)
+17:08:32.445 [zoom] source tt21209876 added at (271.0, 740.0, 109.0, 163.0)
+17:08:32.448 [zoom] source tt0088509 added at (22.0, 958.0, 109.0, 162.0)
+17:08:32.449 [zoom] source tt0988824 added at (147.0, 958.0, 108.0, 162.0)
+17:08:32.468 [zoom] source tt5626028 added at (271.0, 958.0, 109.0, 162.0)
+17:08:32.471 [zoom] source tt0409591 added at (22.0, 1175.0, 109.0, 163.0)
+17:08:32.474 [zoom] source tt4644488 added at (147.0, 1175.0, 108.0, 163.0)
+17:08:32.488 [zoom] source tt9335498 added at (271.0, 1175.0, 109.0, 163.0)
+17:08:32.491 [zoom] source tt0214341 added at (22.0, 1393.0, 109.0, 163.0)
+17:08:32.492 [zoom] source tt5607616 added at (147.0, 1393.0, 108.0, 163.0)
+17:08:32.503 [zoom] source tt29742160 added at (271.0, 1393.0, 109.0, 163.0)
+17:08:32.505 [zoom] source tt6112556 added at (22.0, 1611.0, 109.0, 162.0)
+17:08:32.533 [zoom] source tt10233448 added at (147.0, 1611.0, 108.0, 162.0)
+17:08:32.536 [zoom] source tt39394153 added at (271.0, 1611.0, 109.0, 162.0)
+17:08:32.627 [zoom] source tt9000001 removed from the window
+17:08:32.628 [zoom] source tt9000002 removed from the window
+17:08:35.941 [zoom] source tt9000001 added at (-101.0, 307.0, 113.0, 170.0)
+17:08:35.943 [zoom] source tt9000002 added at (23.0, 307.0, 114.0, 170.0)
+17:08:36.539 [zoom] source tt26743760 removed from the window
+17:08:36.539 [zoom] source tt22248376 removed from the window
+17:08:36.540 [zoom] source tt12343534 removed from the window
+17:08:36.541 [zoom] source tt39395275 removed from the window
+17:08:36.541 [zoom] source tt0388629 removed from the window
+17:08:36.541 [zoom] source tt7441658 removed from the window
+17:08:36.541 [zoom] source tt2560140 removed from the window
+17:08:36.541 [zoom] source tt0213338 removed from the window
+17:08:36.541 [zoom] source tt21209876 removed from the window
+17:08:36.541 [zoom] source tt0088509 removed from the window
+17:08:36.542 [zoom] source tt0988824 removed from the window
+17:08:36.542 [zoom] source tt5626028 removed from the window
+17:08:36.542 [zoom] source tt0409591 removed from the window
+17:08:36.542 [zoom] source tt4644488 removed from the window
+17:08:36.542 [zoom] source tt9335498 removed from the window
+17:08:36.542 [zoom] source tt0214341 removed from the window
+17:08:36.543 [zoom] source tt5607616 removed from the window
+17:08:36.543 [zoom] source tt29742160 removed from the window
+17:08:36.544 [zoom] source tt6112556 removed from the window
+17:08:36.544 [zoom] source tt10233448 removed from the window
+17:08:36.545 [zoom] source tt39394153 removed from the window
+17:08:38.140 [scene] DF1B4D26 will deactivate (portrait)
+17:08:38.142 [app] resign active
+17:08:38.143 [energy] cpu 1% (main 1%) mem 74 MB (0 MB left) thermal=nominal playing=no · going to background
+17:08:49.179 [scene] DF1B4D26 in background (portrait)
+17:12:19.121 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=30.76 GB
+17:12:21.252 [hang] main thread unresponsive for 2.2 s
+17:12:25.261 [scene] DF1B4D26 connects (portrait)
+17:12:25.262 [scene] DF1B4D26 will enter foreground (portrait)
+17:12:25.894 [app] first screen 9762 ms after process start
+17:12:25.894 [app] root view appeared (1 in this run, splash off)
+17:12:26.902 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+17:12:27.182 [scene] DF1B4D26 active (portrait)
+17:12:27.184 [app] active
+17:12:28.019 [layout] grid for 402 pt: 3 columns, 3 entries, 362×290 pt
+17:12:28.019 [layout] Lab Show at (125, 0, 112, 290)
+17:12:28.020 [layout] Bright Movie (2024) at (0, 0, 112, 290)
+17:12:28.020 [layout] Weekend picks at (250, 0, 112, 290)
+17:12:28.020 [layout] collage space of Weekend picks at (255, 5, 102, 158)
+17:12:28.020 [layout] collage grid of Weekend picks at (255, 5, 102, 158)
+17:12:28.020 [image] tile Lab Show appeared (loader #3, picture none yet)
+17:12:28.020 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+17:12:28.053 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+17:12:28.053 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+17:12:28.054 [image] folder tile Weekend picks appeared
+17:12:28.054 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+17:12:28.054 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+17:12:28.054 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+17:12:28.060 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 838.0, 112.0, 167.0)
+17:12:28.062 [zoom] source 0|s|lab show added at (145.0, 838.0, 112.0, 167.0)
+17:12:28.062 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks added at (270.0, 838.0, 112.0, 167.0)
+17:12:28.129 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 1227 ms
+17:12:28.145 [app] Home: appeared 349 ms after the root view, next frame at 2231 ms, main thread free at 2251 ms
+17:12:28.210 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 156 ms
+17:12:28.211 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 190 ms
+17:12:28.213 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 159 ms
+17:12:30.849 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+17:12:31.585 [imdb] webkit load /chart/moviemeter
+17:12:32.228 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:12:32.230 [zoom] source 0|s|lab show removed from the window
+17:12:32.231 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/A06F6E46-4D07-464D-BD2B-1AAB4AD6A7FB/Documents/Media/Weekend picks removed from the window
+17:12:32.966 [image] tile Lab Show disappeared (loader #3)
+17:12:32.967 [image] tile Bright Movie (2024) disappeared (loader #2)
+17:12:32.967 [image] folder tile Weekend picks disappeared
+17:12:33.160 [zoom] source tt9000001 added at (20.0, 537.0, 113.0, 169.0)
+17:12:33.162 [zoom] source tt9000002 added at (144.0, 537.0, 114.0, 169.0)
+17:12:43.380 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+17:12:43.742 [discover] Netflix series: load starts (grid shows 0)
+17:12:44.045 [zoom] source tt9000001 removed from the window
+17:12:44.045 [zoom] source tt9000002 removed from the window
+17:12:44.055 [zoom] source tt9000001 added at (20.0, 537.0, 113.0, 169.0)
+17:12:44.055 [zoom] source tt9000002 added at (144.0, 537.0, 114.0, 169.0)
+17:12:44.415 [discover] catalog US|series|nfx: 98 title(s) after 48 ms
+17:12:44.419 [discover] Netflix series: 98 title(s)
+17:12:44.543 [zoom] source tt8594324 added at (22.0, 322.0, 109.0, 163.0)
+17:12:44.545 [zoom] source tt2531336 added at (147.0, 322.0, 108.0, 163.0)
+17:12:44.547 [zoom] source tt11379026 added at (271.0, 322.0, 109.0, 163.0)
+17:12:44.549 [zoom] source tt26933824 added at (22.0, 612.0, 109.0, 162.0)
+17:12:44.551 [zoom] source tt17491088 added at (147.0, 612.0, 108.0, 162.0)
+17:12:44.552 [zoom] source tt7587890 added at (271.0, 612.0, 109.0, 162.0)
+17:12:44.709 [zoom] source tt4934214 added at (22.0, 901.0, 109.0, 163.0)
+17:12:44.710 [zoom] source tt13210838 added at (147.0, 901.0, 108.0, 163.0)
+17:12:44.890 [zoom] source tt21097264 added at (271.0, 901.0, 109.0, 163.0)
+17:12:44.892 [zoom] source tt0203259 added at (22.0, 1190.0, 109.0, 163.0)
+17:12:44.893 [zoom] source tt27995113 added at (147.0, 1190.0, 108.0, 163.0)
+17:12:44.946 [zoom] source tt44941753 added at (271.0, 1190.0, 109.0, 163.0)
+17:12:44.951 [zoom] source tt42220724 added at (22.0, 1480.0, 109.0, 162.0)
+17:12:44.951 [zoom] source tt35934755 added at (147.0, 1480.0, 108.0, 162.0)
+17:12:44.970 [zoom] source tt0472954 added at (271.0, 1480.0, 109.0, 162.0)
+17:12:45.040 [zoom] source tt9000001 removed from the window
+17:12:45.041 [zoom] source tt9000002 removed from the window
+17:12:48.428 [zoom] source tt9000001 added at (-101.0, 537.0, 113.0, 169.0)
+17:12:48.431 [zoom] source tt9000002 added at (23.0, 537.0, 114.0, 169.0)
+17:12:49.018 [zoom] source tt8594324 removed from the window
+17:12:49.019 [zoom] source tt2531336 removed from the window
+17:12:49.019 [zoom] source tt11379026 removed from the window
+17:12:49.020 [zoom] source tt26933824 removed from the window
+17:12:49.020 [zoom] source tt17491088 removed from the window
+17:12:49.020 [zoom] source tt7587890 removed from the window
+17:12:49.021 [zoom] source tt4934214 removed from the window
+17:12:49.021 [zoom] source tt13210838 removed from the window
+17:12:49.021 [zoom] source tt21097264 removed from the window
+17:12:49.027 [zoom] source tt0203259 removed from the window
+17:12:49.027 [zoom] source tt27995113 removed from the window
+17:12:49.028 [zoom] source tt44941753 removed from the window
+17:12:49.029 [zoom] source tt42220724 removed from the window
+17:12:49.029 [zoom] source tt35934755 removed from the window
+17:12:49.030 [zoom] source tt0472954 removed from the window
+17:12:53.643 [discover] Prime Video series: load starts (grid shows 0)
+17:12:53.683 [zoom] source tt9000001 removed from the window
+17:12:53.684 [zoom] source tt9000002 removed from the window
+17:12:53.686 [zoom] source tt9000001 added at (20.0, 537.0, 113.0, 169.0)
+17:12:53.687 [zoom] source tt9000002 added at (144.0, 537.0, 114.0, 169.0)
+17:12:53.764 [discover] catalog US|series|amp: 100 title(s) after 15 ms
+17:12:53.765 [discover] Prime Video series: 100 title(s)
+17:12:53.887 [zoom] source tt11743610 added at (22.0, 392.0, 109.0, 163.0)
+17:12:53.889 [zoom] source tt5875444 added at (147.0, 392.0, 108.0, 163.0)
+17:12:53.890 [zoom] source tt11540908 added at (271.0, 392.0, 109.0, 163.0)
+17:12:53.917 [zoom] source tt19231492 added at (22.0, 682.0, 109.0, 162.0)
+17:12:53.918 [zoom] source tt3718778 added at (147.0, 682.0, 108.0, 162.0)
+17:12:53.926 [zoom] source tt1844624 added at (271.0, 682.0, 109.0, 162.0)
+17:12:53.927 [zoom] source tt33270224 added at (22.0, 971.0, 109.0, 163.0)
+17:12:53.929 [zoom] source tt6151526 added at (147.0, 971.0, 108.0, 163.0)
+17:12:53.940 [zoom] source tt10946316 added at (271.0, 971.0, 109.0, 163.0)
+17:12:53.941 [zoom] source tt0111987 added at (22.0, 1260.0, 109.0, 163.0)
+17:12:53.943 [zoom] source tt33043892 added at (147.0, 1260.0, 108.0, 163.0)
+17:12:53.951 [zoom] source tt13138834 added at (271.0, 1260.0, 109.0, 163.0)
+17:12:53.954 [zoom] source tt33078239 added at (22.0, 1550.0, 109.0, 162.0)
+17:12:53.956 [zoom] source tt9288030 added at (147.0, 1550.0, 108.0, 162.0)
+17:12:54.037 [zoom] source tt33539520 added at (271.0, 1550.0, 109.0, 162.0)
+17:12:54.235 [zoom] source tt9000001 removed from the window
+17:12:54.236 [zoom] source tt9000002 removed from the window
+17:12:56.813 [imdb/error] webkit timeout for /chart/moviemeter
+17:12:57.352 [energy] cpu 33% (main 25%, other 8%) mem 67 MB (0 MB left) thermal=nominal playing=no
+17:12:57.958 [zoom] source tt9000001 added at (-101.0, 537.0, 113.0, 169.0)
+17:12:57.959 [zoom] source tt9000002 added at (23.0, 537.0, 114.0, 169.0)
+17:12:58.230 [perf] imdb /chart/moviemeter/ via web view 29786 ms
+17:12:58.234 [perf] imdb warm-up done in 39060 ms
+17:12:58.587 [zoom] source tt11743610 removed from the window
+17:12:58.588 [zoom] source tt5875444 removed from the window
+17:12:58.590 [zoom] source tt11540908 removed from the window
+17:12:58.590 [zoom] source tt19231492 removed from the window
+17:12:58.592 [zoom] source tt3718778 removed from the window
+17:12:58.593 [zoom] source tt1844624 removed from the window
+17:12:58.594 [zoom] source tt33270224 removed from the window
+17:12:58.594 [zoom] source tt6151526 removed from the window
+17:12:58.594 [zoom] source tt10946316 removed from the window
+17:12:58.633 [zoom] source tt0111987 removed from the window
+17:12:58.634 [zoom] source tt33043892 removed from the window
+17:12:58.634 [zoom] source tt13138834 removed from the window
+17:12:58.635 [zoom] source tt33078239 removed from the window
+17:12:58.635 [zoom] source tt9288030 removed from the window
+17:12:58.636 [zoom] source tt33539520 removed from the window
+17:13:02.773 [discover] HBO Max series: load starts (grid shows 0)
+17:13:02.816 [zoom] source tt9000001 removed from the window
+17:13:02.817 [zoom] source tt9000002 removed from the window
+17:13:02.822 [zoom] source tt9000001 added at (20.0, 537.0, 113.0, 169.0)
+17:13:02.822 [zoom] source tt9000002 added at (144.0, 537.0, 114.0, 169.0)
+17:13:02.888 [discover] catalog US|series|hbm: 100 title(s) after 14 ms
+17:13:02.888 [discover] HBO Max series: 100 title(s)
+17:13:03.010 [zoom] source tt2699128 added at (22.0, 322.0, 109.0, 163.0)
+17:13:03.011 [zoom] source tt2356777 added at (147.0, 322.0, 108.0, 163.0)
+17:13:03.013 [zoom] source tt2861424 added at (271.0, 322.0, 109.0, 163.0)
+17:13:03.073 [zoom] source tt0460681 added at (22.0, 612.0, 109.0, 162.0)
+17:13:03.075 [zoom] source tt1196946 added at (147.0, 612.0, 108.0, 162.0)
+17:13:03.077 [zoom] source tt0141842 added at (271.0, 612.0, 109.0, 162.0)
+17:13:03.079 [zoom] source tt2017109 added at (22.0, 901.0, 109.0, 163.0)
+17:13:03.093 [zoom] source tt3718778 added at (147.0, 901.0, 108.0, 163.0)
+17:13:03.095 [zoom] source tt0306414 added at (271.0, 901.0, 109.0, 163.0)
+17:13:03.098 [zoom] source tt1839578 added at (22.0, 1190.0, 109.0, 163.0)
+17:13:03.122 [zoom] source tt8772296 added at (147.0, 1190.0, 108.0, 163.0)
+17:13:03.124 [zoom] source tt0108778 added at (271.0, 1190.0, 109.0, 163.0)
+17:13:03.126 [zoom] source tt11815682 added at (22.0, 1480.0, 109.0, 162.0)
+17:13:03.149 [zoom] source tt0185906 added at (147.0, 1480.0, 108.0, 162.0)
+17:13:03.150 [zoom] source tt13406094 added at (271.0, 1480.0, 109.0, 162.0)
+17:13:03.353 [zoom] source tt9000001 removed from the window
+17:13:03.353 [zoom] source tt9000002 removed from the window
+17:13:06.857 [zoom] source tt9000001 added at (-101.0, 537.0, 113.0, 169.0)
+17:13:06.860 [zoom] source tt9000002 added at (23.0, 537.0, 114.0, 169.0)
+17:13:07.442 [zoom] source tt2699128 removed from the window
+17:13:07.444 [zoom] source tt2356777 removed from the window
+17:13:07.444 [zoom] source tt2861424 removed from the window
+17:13:07.444 [zoom] source tt0460681 removed from the window
+17:13:07.445 [zoom] source tt1196946 removed from the window
+17:13:07.445 [zoom] source tt0141842 removed from the window
+17:13:07.445 [zoom] source tt2017109 removed from the window
+17:13:07.445 [zoom] source tt3718778 removed from the window
+17:13:07.445 [zoom] source tt0306414 removed from the window
+17:13:07.464 [zoom] source tt1839578 removed from the window
+17:13:07.465 [zoom] source tt8772296 removed from the window
+17:13:07.465 [zoom] source tt0108778 removed from the window
+17:13:07.465 [zoom] source tt11815682 removed from the window
+17:13:07.466 [zoom] source tt0185906 removed from the window
+17:13:07.466 [zoom] source tt13406094 removed from the window
+17:13:11.449 [discover] Disney+ series: load starts (grid shows 0)
+17:13:11.483 [zoom] source tt9000001 removed from the window
+17:13:11.483 [zoom] source tt9000002 removed from the window
+17:13:11.485 [zoom] source tt9000001 added at (20.0, 537.0, 113.0, 169.0)
+17:13:11.486 [zoom] source tt9000002 added at (144.0, 537.0, 114.0, 169.0)
+17:13:11.545 [discover] catalog US|series|dnp: 100 title(s) after 13 ms
+17:13:11.546 [discover] Disney+ series: 100 title(s)
+17:13:11.620 [zoom] source tt23112594 added at (22.0, 322.0, 109.0, 163.0)
+17:13:11.620 [zoom] source tt11379026 added at (147.0, 322.0, 108.0, 163.0)
+17:13:11.621 [zoom] source tt7587890 added at (271.0, 322.0, 109.0, 163.0)
+17:13:11.621 [zoom] source tt4934214 added at (22.0, 612.0, 109.0, 162.0)
+17:13:11.647 [zoom] source tt1844624 added at (147.0, 612.0, 108.0, 162.0)
+17:13:11.648 [zoom] source tt21952924 added at (271.0, 612.0, 109.0, 162.0)
+17:13:11.648 [zoom] source tt0203259 added at (22.0, 901.0, 109.0, 163.0)
+17:13:11.666 [zoom] source tt7235466 added at (147.0, 901.0, 108.0, 163.0)
+17:13:11.669 [zoom] source tt0096697 added at (271.0, 901.0, 109.0, 163.0)
+17:13:11.670 [zoom] source tt0106179 added at (22.0, 1190.0, 109.0, 163.0)
+17:13:11.680 [zoom] source tt2149175 added at (147.0, 1190.0, 108.0, 163.0)
+17:13:11.681 [zoom] source tt0413573 added at (271.0, 1190.0, 109.0, 163.0)
+17:13:11.683 [zoom] source tt40197357 added at (22.0, 1480.0, 109.0, 162.0)
+17:13:11.768 [zoom] source tt0168366 added at (147.0, 1480.0, 108.0, 162.0)
+17:13:11.771 [zoom] source tt37063558 added at (271.0, 1480.0, 109.0, 162.0)
+17:13:11.999 [zoom] source tt9000001 removed from the window
+17:13:11.999 [zoom] source tt9000002 removed from the window
+17:13:15.531 [zoom] source tt9000001 added at (-101.0, 537.0, 113.0, 169.0)
+17:13:15.532 [zoom] source tt9000002 added at (23.0, 537.0, 114.0, 169.0)
+17:13:16.176 [zoom] source tt23112594 removed from the window
+17:13:16.176 [zoom] source tt11379026 removed from the window
+17:13:16.177 [zoom] source tt7587890 removed from the window
+17:13:16.177 [zoom] source tt4934214 removed from the window
+17:13:16.177 [zoom] source tt1844624 removed from the window
+17:13:16.177 [zoom] source tt21952924 removed from the window
+17:13:16.178 [zoom] source tt0203259 removed from the window
+17:13:16.178 [zoom] source tt7235466 removed from the window
+17:13:16.178 [zoom] source tt0096697 removed from the window
+17:13:16.179 [zoom] source tt0106179 removed from the window
+17:13:16.179 [zoom] source tt2149175 removed from the window
+17:13:16.179 [zoom] source tt0413573 removed from the window
+17:13:16.179 [zoom] source tt40197357 removed from the window
+17:13:16.180 [zoom] source tt0168366 removed from the window
+17:13:16.180 [zoom] source tt37063558 removed from the window
+17:13:20.514 [discover] Apple TV+ series: load starts (grid shows 0)
+17:13:20.552 [zoom] source tt9000001 removed from the window
+17:13:20.553 [zoom] source tt9000002 removed from the window
+17:13:20.554 [zoom] source tt9000001 added at (20.0, 537.0, 113.0, 169.0)
+17:13:20.555 [zoom] source tt9000002 added at (144.0, 537.0, 114.0, 169.0)
+17:13:20.632 [discover] catalog US|series|atp: 99 title(s) after 17 ms
+17:13:20.633 [discover] Apple TV+ series: 99 title(s)
+17:13:20.731 [zoom] source tt5875444 added at (22.0, 392.0, 109.0, 163.0)
+17:13:20.732 [zoom] source tt26598805 added at (147.0, 392.0, 108.0, 163.0)
+17:13:20.735 [zoom] source tt10986410 added at (271.0, 392.0, 109.0, 163.0)
+17:13:20.738 [zoom] source tt33332385 added at (22.0, 682.0, 109.0, 162.0)
+17:13:20.740 [zoom] source tt19231492 added at (147.0, 682.0, 108.0, 162.0)
+17:13:20.740 [zoom] source tt14688458 added at (271.0, 682.0, 109.0, 162.0)
+17:13:20.741 [zoom] source tt6037988 added at (22.0, 971.0, 109.0, 163.0)
+17:13:20.742 [zoom] source tt34675596 added at (147.0, 971.0, 108.0, 163.0)
+17:13:20.770 [zoom] source tt10982034 added at (271.0, 971.0, 109.0, 163.0)
+17:13:20.774 [zoom] source tt7772588 added at (22.0, 1260.0, 109.0, 163.0)
+17:13:20.781 [zoom] source tt29011445 added at (147.0, 1260.0, 108.0, 163.0)
+17:13:20.861 [zoom] source tt15677150 added at (271.0, 1260.0, 109.0, 163.0)
+17:13:20.863 [zoom] source tt6773088 added at (22.0, 1550.0, 109.0, 162.0)
+17:13:20.866 [zoom] source tt11280740 added at (147.0, 1550.0, 108.0, 162.0)
+17:13:20.925 [zoom] source tt34866681 added at (271.0, 1550.0, 109.0, 162.0)
+17:13:21.082 [zoom] source tt9000001 removed from the window
+17:13:21.083 [zoom] source tt9000002 removed from the window
+17:13:24.592 [zoom] source tt9000001 added at (-101.0, 537.0, 113.0, 169.0)
+17:13:24.594 [zoom] source tt9000002 added at (23.0, 537.0, 114.0, 169.0)
+17:13:25.165 [zoom] source tt5875444 removed from the window
+17:13:25.166 [zoom] source tt26598805 removed from the window
+17:13:25.166 [zoom] source tt10986410 removed from the window
+17:13:25.167 [zoom] source tt33332385 removed from the window
+17:13:25.167 [zoom] source tt19231492 removed from the window
+17:13:25.167 [zoom] source tt14688458 removed from the window
+17:13:25.167 [zoom] source tt6037988 removed from the window
+17:13:25.167 [zoom] source tt34675596 removed from the window
+17:13:25.168 [zoom] source tt10982034 removed from the window
+17:13:25.168 [zoom] source tt7772588 removed from the window
+17:13:25.168 [zoom] source tt29011445 removed from the window
+17:13:25.168 [zoom] source tt15677150 removed from the window
+17:13:25.168 [zoom] source tt6773088 removed from the window
+17:13:25.169 [zoom] source tt11280740 removed from the window
+17:13:25.169 [zoom] source tt34866681 removed from the window
+17:13:28.287 [hang] main thread unresponsive for 2.1 s
+17:13:32.653 [energy] cpu 7% (main 7%) mem 71 MB (0 MB left) thermal=nominal playing=no
+17:13:42.500 [hang] main thread unresponsive for 1.9 s
+17:14:00.297 [hang] main thread unresponsive for 4.5 s
+17:14:11.219 [energy] cpu 0% mem 72 MB (0 MB left) thermal=nominal playing=no
+17:14:12.316 [discover] Paramount+ series: load starts (grid shows 0)
+17:14:12.535 [zoom] source tt9000001 removed from the window
+17:14:12.535 [zoom] source tt9000002 removed from the window
+17:14:12.542 [zoom] source tt9000001 added at (20.0, 537.0, 113.0, 169.0)
+17:14:12.542 [zoom] source tt9000002 added at (144.0, 537.0, 114.0, 169.0)
+17:14:13.355 [discover] catalog US|series|pmp: 100 title(s) after 14 ms
+17:14:13.359 [discover] Paramount+ series: 100 title(s)
+17:14:13.519 [zoom] source tt31510819 added at (22.0, 392.0, 109.0, 163.0)
+17:14:13.521 [zoom] source tt2297757 added at (147.0, 392.0, 108.0, 163.0)
+17:14:13.522 [zoom] source tt0092455 added at (271.0, 392.0, 109.0, 163.0)
+17:14:13.524 [zoom] source tt33270224 added at (22.0, 682.0, 109.0, 162.0)
+17:14:13.560 [zoom] source tt0121955 added at (147.0, 682.0, 108.0, 162.0)
+17:14:13.561 [zoom] source tt13875494 added at (271.0, 682.0, 109.0, 162.0)
+17:14:13.562 [zoom] source tt46269844 added at (22.0, 971.0, 109.0, 163.0)
+17:14:13.612 [zoom] source tt16358384 added at (147.0, 971.0, 108.0, 163.0)
+17:14:13.614 [zoom] source tt0052520 added at (271.0, 971.0, 109.0, 163.0)
+17:14:13.682 [zoom] source tt35854736 added at (22.0, 1260.0, 109.0, 163.0)
+17:14:13.683 [zoom] source tt13111078 added at (147.0, 1260.0, 108.0, 163.0)
+17:14:13.684 [zoom] source tt33078239 added at (271.0, 1260.0, 109.0, 163.0)
+17:14:13.685 [zoom] source tt0364845 added at (22.0, 1550.0, 109.0, 162.0)
+17:14:13.685 [zoom] source tt36849871 added at (147.0, 1550.0, 108.0, 162.0)
+17:14:13.737 [zoom] source tt31589662 added at (271.0, 1550.0, 109.0, 162.0)
+17:14:13.758 [zoom] source tt9000001 removed from the window
+17:14:13.759 [zoom] source tt9000002 removed from the window
+17:14:27.077 [zoom] source tt9000001 added at (-101.0, 537.0, 113.0, 169.0)
+17:14:27.079 [zoom] source tt9000002 added at (23.0, 537.0, 114.0, 169.0)
+17:14:27.250 [energy] cpu 56% (main 54%, other 2%, com.apple.UIKit.in 1%) mem 76 MB (0 MB left) thermal=nominal playing=no
+17:14:27.685 [zoom] source tt31510819 removed from the window
+17:14:27.686 [zoom] source tt2297757 removed from the window
+17:14:27.687 [zoom] source tt0092455 removed from the window
+17:14:27.688 [zoom] source tt33270224 removed from the window
+17:14:27.688 [zoom] source tt0121955 removed from the window
+17:14:27.688 [zoom] source tt13875494 removed from the window
+17:14:27.688 [zoom] source tt46269844 removed from the window
+17:14:27.689 [zoom] source tt16358384 removed from the window
+17:14:27.690 [zoom] source tt0052520 removed from the window
+17:14:27.691 [zoom] source tt35854736 removed from the window
+17:14:27.692 [zoom] source tt13111078 removed from the window
+17:14:27.693 [zoom] source tt33078239 removed from the window
+17:14:27.887 [zoom] source tt0364845 removed from the window
+17:14:27.888 [zoom] source tt36849871 removed from the window
+17:14:27.888 [zoom] source tt31589662 removed from the window
+17:14:31.070 [hang] main thread unresponsive for 2.3 s
+17:14:34.311 [hang] main thread unresponsive for 1.5 s
+17:14:43.305 [discover] Hulu series: load starts (grid shows 0)
+17:14:43.344 [zoom] source tt9000001 removed from the window
+17:14:43.344 [zoom] source tt9000002 removed from the window
+17:14:43.349 [zoom] source tt9000001 added at (20.0, 537.0, 113.0, 169.0)
+17:14:43.350 [zoom] source tt9000002 added at (144.0, 537.0, 114.0, 169.0)
+17:14:43.409 [discover] catalog US|series|hlu: 98 title(s) after 14 ms
+17:14:43.433 [discover] Hulu series: 98 title(s)
+17:14:43.534 [zoom] source tt21952924 added at (22.0, 322.0, 109.0, 163.0)
+17:14:43.536 [zoom] source tt10166622 added at (147.0, 322.0, 108.0, 163.0)
+17:14:43.539 [zoom] source tt3718778 added at (271.0, 322.0, 109.0, 163.0)
+17:14:43.767 [zoom] source tt1844624 added at (22.0, 612.0, 109.0, 162.0)
+17:14:43.770 [zoom] source tt14218830 added at (147.0, 612.0, 108.0, 162.0)
+17:14:43.771 [zoom] source tt13875494 added at (271.0, 612.0, 109.0, 162.0)
+17:14:43.771 [zoom] source tt36885662 added at (22.0, 901.0, 109.0, 163.0)
+17:14:44.015 [zoom] source tt0096697 added at (147.0, 901.0, 108.0, 163.0)
+17:14:44.018 [zoom] source tt2149175 added at (271.0, 901.0, 109.0, 163.0)
+17:14:44.019 [zoom] source tt0364845 added at (22.0, 1190.0, 109.0, 163.0)
+17:14:44.032 [zoom] source tt40197357 added at (147.0, 1190.0, 108.0, 163.0)
+17:14:44.035 [zoom] source tt31289994 added at (271.0, 1190.0, 109.0, 163.0)
+17:14:44.097 [zoom] source tt37063558 added at (22.0, 1480.0, 109.0, 162.0)
+17:14:44.099 [zoom] source tt0239195 added at (147.0, 1480.0, 108.0, 162.0)
+17:14:44.100 [zoom] source tt0413573 added at (271.0, 1480.0, 109.0, 162.0)
+17:14:44.158 [zoom] source tt9000001 removed from the window
+17:14:44.158 [zoom] source tt9000002 removed from the window
+17:14:47.575 [zoom] source tt9000001 added at (-101.0, 537.0, 113.0, 169.0)
+17:14:47.577 [zoom] source tt9000002 added at (23.0, 537.0, 114.0, 169.0)
+17:14:48.164 [zoom] source tt21952924 removed from the window
+17:14:48.164 [zoom] source tt10166622 removed from the window
+17:14:48.165 [zoom] source tt3718778 removed from the window
+17:14:48.165 [zoom] source tt1844624 removed from the window
+17:14:48.165 [zoom] source tt14218830 removed from the window
+17:14:48.165 [zoom] source tt13875494 removed from the window
+17:14:48.165 [zoom] source tt36885662 removed from the window
+17:14:48.165 [zoom] source tt0096697 removed from the window
+17:14:48.166 [zoom] source tt2149175 removed from the window
+17:14:48.170 [zoom] source tt0364845 removed from the window
+17:14:48.170 [zoom] source tt40197357 removed from the window
+17:14:48.170 [zoom] source tt31289994 removed from the window
+17:14:48.171 [zoom] source tt37063558 removed from the window
+17:14:48.171 [zoom] source tt0239195 removed from the window
+17:14:48.171 [zoom] source tt0413573 removed from the window
+17:14:53.122 [hang] main thread unresponsive for 2.3 s
+17:14:57.337 [energy] cpu 1% mem 73 MB (0 MB left) thermal=nominal playing=no
+17:15:05.640 [discover] Peacock series: load starts (grid shows 0)
+17:15:05.709 [zoom] source tt9000001 removed from the window
+17:15:05.710 [zoom] source tt9000002 removed from the window
+17:15:05.712 [zoom] source tt9000001 added at (20.0, 537.0, 113.0, 169.0)
+17:15:05.713 [zoom] source tt9000002 added at (144.0, 537.0, 114.0, 169.0)
+17:15:05.767 [discover] catalog US|series|pcp: 100 title(s) after 14 ms
+17:15:05.767 [discover] Peacock series: 100 title(s)
+17:15:05.853 [zoom] source tt23148340 added at (22.0, 322.0, 109.0, 163.0)
+17:15:05.856 [zoom] source tt6151526 added at (147.0, 322.0, 108.0, 163.0)
+17:15:05.865 [zoom] source tt15557874 added at (271.0, 322.0, 109.0, 163.0)
+17:15:05.867 [zoom] source tt0203259 added at (22.0, 612.0, 109.0, 162.0)
+17:15:05.869 [zoom] source tt0386676 added at (147.0, 612.0, 108.0, 162.0)
+17:15:05.871 [zoom] source tt0460681 added at (271.0, 612.0, 109.0, 162.0)
+17:15:05.896 [zoom] source tt1266020 added at (22.0, 901.0, 109.0, 163.0)
+17:15:05.902 [zoom] source tt4236770 added at (147.0, 901.0, 108.0, 163.0)
+17:15:05.908 [zoom] source tt2261391 added at (271.0, 901.0, 109.0, 163.0)
+17:15:05.961 [zoom] source tt42576767 added at (22.0, 1190.0, 109.0, 163.0)
+17:15:05.963 [zoom] source tt1839578 added at (147.0, 1190.0, 108.0, 163.0)
+17:15:05.965 [zoom] source tt0098844 added at (271.0, 1190.0, 109.0, 163.0)
+17:15:05.976 [zoom] source tt1442437 added at (22.0, 1480.0, 109.0, 162.0)
+17:15:05.979 [zoom] source tt2805096 added at (147.0, 1480.0, 108.0, 162.0)
+17:15:05.980 [zoom] source tt0437005 added at (271.0, 1480.0, 109.0, 162.0)
+17:15:06.226 [zoom] source tt9000001 removed from the window
+17:15:06.227 [zoom] source tt9000002 removed from the window
+17:15:10.933 [zoom] source tt9000001 added at (-101.0, 537.0, 113.0, 169.0)
+17:15:10.934 [zoom] source tt9000002 added at (23.0, 537.0, 114.0, 169.0)
+17:15:11.529 [zoom] source tt23148340 removed from the window
+17:15:11.529 [zoom] source tt6151526 removed from the window
+17:15:11.530 [zoom] source tt15557874 removed from the window
+17:15:11.530 [zoom] source tt0203259 removed from the window
+17:15:11.531 [zoom] source tt0386676 removed from the window
+17:15:11.531 [zoom] source tt0460681 removed from the window
+17:15:11.532 [zoom] source tt1266020 removed from the window
+17:15:11.532 [zoom] source tt4236770 removed from the window
+17:15:11.533 [zoom] source tt2261391 removed from the window
+17:15:11.548 [zoom] source tt42576767 removed from the window
+17:15:11.551 [zoom] source tt1839578 removed from the window
+17:15:11.551 [zoom] source tt0098844 removed from the window
+17:15:11.552 [zoom] source tt1442437 removed from the window
+17:15:11.552 [zoom] source tt2805096 removed from the window
+17:15:11.552 [zoom] source tt0437005 removed from the window
+17:15:18.475 [discover] Crunchyroll series: load starts (grid shows 0)
+17:15:18.506 [zoom] source tt9000001 removed from the window
+17:15:18.506 [zoom] source tt9000002 removed from the window
+17:15:18.509 [zoom] source tt9000001 added at (20.0, 537.0, 113.0, 169.0)
+17:15:18.510 [zoom] source tt9000002 added at (144.0, 537.0, 114.0, 169.0)
+17:15:18.617 [discover] catalog US|series|cru: 91 title(s) after 22 ms
+17:15:18.618 [discover] Crunchyroll series: 91 title(s)
+17:15:18.720 [zoom] source tt26743760 added at (22.0, 392.0, 109.0, 163.0)
+17:15:18.723 [zoom] source tt22248376 added at (147.0, 392.0, 108.0, 163.0)
+17:15:18.724 [zoom] source tt12343534 added at (271.0, 392.0, 109.0, 163.0)
+17:15:18.726 [zoom] source tt39395275 added at (22.0, 682.0, 109.0, 162.0)
+17:15:18.727 [zoom] source tt0388629 added at (147.0, 682.0, 108.0, 162.0)
+17:15:18.756 [zoom] source tt7441658 added at (271.0, 682.0, 109.0, 162.0)
+17:15:18.759 [zoom] source tt2560140 added at (22.0, 971.0, 109.0, 163.0)
+17:15:18.762 [zoom] source tt0213338 added at (147.0, 971.0, 108.0, 163.0)
+17:15:18.797 [zoom] source tt21209876 added at (271.0, 971.0, 109.0, 163.0)
+17:15:18.800 [zoom] source tt0088509 added at (22.0, 1260.0, 109.0, 163.0)
+17:15:18.803 [zoom] source tt0988824 added at (147.0, 1260.0, 108.0, 163.0)
+17:15:18.812 [zoom] source tt5626028 added at (271.0, 1260.0, 109.0, 163.0)
+17:15:18.815 [zoom] source tt0409591 added at (22.0, 1550.0, 109.0, 162.0)
+17:15:18.853 [zoom] source tt4644488 added at (147.0, 1550.0, 108.0, 162.0)
+17:15:18.859 [zoom] source tt9335498 added at (271.0, 1550.0, 109.0, 162.0)
+17:15:19.053 [zoom] source tt9000001 removed from the window
+17:15:19.053 [zoom] source tt9000002 removed from the window
+17:15:22.244 [zoom] source tt9000001 added at (-101.0, 537.0, 113.0, 169.0)
+17:15:22.246 [zoom] source tt9000002 added at (23.0, 537.0, 114.0, 169.0)
+17:15:22.826 [zoom] source tt26743760 removed from the window
+17:15:22.827 [zoom] source tt22248376 removed from the window
+17:15:22.827 [zoom] source tt12343534 removed from the window
+17:15:22.827 [zoom] source tt39395275 removed from the window
+17:15:22.827 [zoom] source tt0388629 removed from the window
+17:15:22.827 [zoom] source tt7441658 removed from the window
+17:15:22.827 [zoom] source tt2560140 removed from the window
+17:15:22.827 [zoom] source tt0213338 removed from the window
+17:15:22.828 [zoom] source tt21209876 removed from the window
+17:15:22.828 [zoom] source tt0088509 removed from the window
+17:15:22.829 [zoom] source tt0988824 removed from the window
+17:15:22.829 [zoom] source tt5626028 removed from the window
+17:15:22.830 [zoom] source tt0409591 removed from the window
+17:15:22.830 [zoom] source tt4644488 removed from the window
+17:15:22.830 [zoom] source tt9335498 removed from the window
