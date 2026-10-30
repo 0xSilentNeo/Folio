@@ -1,11 +1,34 @@
 import Foundation
 import SwiftUI
 
-/// How the library is ordered (Home, All, title pages).
-enum LibrarySort: String, CaseIterable {
-    case name, date, size
-    var title: String { self == .name ? "Name" : self == .date ? "Date added" : "Size" }
-    var icon: String { self == .name ? "textformat" : self == .date ? "calendar" : "internaldrive" }
+/// How a library list is ordered: Home's library, its folders and the
+/// WebDAV browser, all through one sort menu (LibrarySortMenu). The raw
+/// values are the ones saved before 1.19.0 ("date" was Home's "Date added"
+/// and the browser's "Recently Added"), so saved choices still read back.
+enum LibrarySort: String, CaseIterable, Codable {
+    case recent = "date", name, size
+
+    var title: String {
+        switch self {
+        case .recent: return "Recently Added"
+        case .name: return "Name"
+        case .size: return "Size"
+        }
+    }
+
+    /// The direction a sort starts in when you pick it: newest and largest
+    /// first, names A to Z.
+    var startsAscending: Bool { self == .name }
+
+    /// The order in words, shown under the checked sort as the Files app
+    /// does ("Name / Ascending", "Date / Newest to Oldest" — iOS 26.2, lab run).
+    func direction(ascending: Bool) -> String {
+        switch self {
+        case .recent: return ascending ? "Oldest to Newest" : "Newest to Oldest"
+        case .name: return ascending ? "Ascending" : "Descending"
+        case .size: return ascending ? "Smallest to Largest" : "Largest to Smallest"
+        }
+    }
 
     static var current: LibrarySort {
         get { LibrarySort(rawValue: UserDefaults.standard.string(forKey: "librarySort") ?? "") ?? .name }
@@ -160,7 +183,7 @@ enum LibraryOrganizer {
             let less: Bool
             switch sort {
             case .name: less = a.title.localizedStandardCompare(b.title) == .orderedAscending
-            case .date: less = a.date < b.date
+            case .recent: less = a.date < b.date
             case .size: less = a.size < b.size
             }
             return ascending ? less : !less
@@ -173,7 +196,7 @@ enum LibraryOrganizer {
             let less: Bool
             switch sort {
             case .name: less = a.lastPathComponent.localizedStandardCompare(b.lastPathComponent) == .orderedAscending
-            case .date: less = info(a).date < info(b).date
+            case .recent: less = info(a).date < info(b).date
             case .size: less = info(a).size < info(b).size
             }
             return ascending ? less : !less
