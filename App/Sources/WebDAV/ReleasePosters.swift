@@ -247,35 +247,41 @@ actor ReleaseMatcher {
 
 /// A release folder's poster in a list row: the matched title's poster
 /// (stored by IMDb id, shared with Home), else a placeholder with the
-/// title's initials — never a wrong poster, never a blank box.
+/// title's initials — never a wrong poster, never a blank box. `width` nil:
+/// fills the space it's given (a collage cell).
 struct ReleasePoster: View {
     let release: ReleaseName
-    var width: CGFloat = 44
-    @State private var image: UIImage?
-
-    private var height: CGFloat { width * 1.5 }
+    var width: CGFloat? = 44
+    /// The poster and the release it's for: a view kept while its release
+    /// changes (a collage cell when a new release arrives) never shows the
+    /// one before.
+    @State private var shown: (raw: String, image: UIImage)?
+    private var image: UIImage? { shown?.raw == release.raw ? shown?.image : nil }
 
     var body: some View {
         ZStack {
             if let image {
                 Image(uiImage: image).resizable().scaledToFill()
             } else {
-                RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.accentSoft)
-                Text(initials).font(.system(size: width * 0.34, weight: .bold, design: .rounded)).foregroundStyle(Theme.accent)
+                Rectangle().fill(Theme.accentSoft)
+                Text(initials).font(.system(size: (width ?? 44) * 0.34, weight: .bold, design: .rounded)).foregroundStyle(Theme.accent)
                     .minimumScaleFactor(0.5).padding(4)
             }
         }
-        .frame(width: width, height: height)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .frame(width: width, height: width.map { $0 * 1.5 })
+        .clipShape(RoundedRectangle(cornerRadius: width == nil ? 0 : 8, style: .continuous))
+        .clipped()
         .accessibilityHidden(true)
         // Only rows on screen look up (a row that scrolls away before its
         // turn drops its lookup: ReleaseMatcher).
         .task(id: release.raw) {
             guard UserDefaults.standard.bool(forKey: SettingsKey.metadataFetching) else { return }
+            let raw = release.raw
+            let px = (width.map { $0 * 1.5 } ?? 110) * UIScreen.main.scale
             guard let m = await ReleaseMatcher.shared.match(release), m.confident, let poster = m.poster, let url = URL(string: poster) else { return }
-            let img = await ImageCache.shared.poster(id: m.imdbID ?? poster, url: url, maxPixel: height * UIScreen.main.scale)
+            let img = await ImageCache.shared.poster(id: m.imdbID ?? poster, url: url, maxPixel: px)
             guard !Task.isCancelled, let img else { return }
-            withAnimation(.easeOut(duration: 0.2)) { image = img }
+            withAnimation(.easeOut(duration: 0.2)) { shown = (raw, img) }
         }
     }
 
