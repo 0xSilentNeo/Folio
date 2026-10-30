@@ -53,6 +53,7 @@ struct HomeView: View {
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
             .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
+            .onAppear { LaunchTiming.homeAppeared() }
             // The Real-Debrid section's library, checked again in the
             // background (again when the account is added or changed).
             .task(id: realDebrid.map(LibraryIndex.account)) { if let rd = realDebrid { LibraryIndexStore.shared.refreshIfNeeded(rd) } }
