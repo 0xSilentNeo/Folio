@@ -133,10 +133,14 @@ final class HomeGridUITests: XCTestCase {
         // here): a tap on the video brings them back (run 41088647870: the
         // player opened, "play requested" in app.log, but its controls had
         // already hidden).
-        if !close.waitForExistence(timeout: 6) {
+        // A tap shows hidden controls and hides shown ones, so tap, look, and
+        // tap again (run 41095822272: a single tap hid them).
+        var tries = 0
+        while !close.waitForExistence(timeout: 4), tries < 3 {
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45)).tap()
+            tries += 1
         }
-        guard close.waitForExistence(timeout: 9) else { XCTFail("\(label): the player didn't open"); return }
+        guard close.exists else { XCTFail("\(label): the player didn't open"); return }
         mark("\(label): playing")
         turn(app, .landscapeLeft)
         if !close.isHittable { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap(); sleep(1) }
