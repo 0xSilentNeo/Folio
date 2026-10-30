@@ -402,33 +402,81 @@ struct NowPlayingPanelContent: View {
     /// The title and tabs stay pinned at the top and only the list scrolls
     /// (until 1.14.1 the whole panel scrolled and the tabs went off screen).
     var pinnedHeader = false
-    @State private var tab = 0
+    @State private var tab: Int
+    /// The row the list is scrolled to (scrollPosition(id:anchor:)): set to
+    /// the playing episode or current chapter before the list is first laid
+    /// out, so it opens there with no scroll animation, centred so the ones
+    /// before and after show too.
+    @State private var position: String?
     @AppStorage("screenshotSubs") private var screenshotSubs = true
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
+
+    init(model: PlayerModel, ui: PlayerUIState, pinnedHeader: Bool = false) {
+        self.model = model
+        self.ui = ui
+        self.pinnedHeader = pinnedHeader
+        // One file with chapters: open on Chapters.
+        let start = !model.chapters.isEmpty && model.queue.count <= 1 ? 1 : 0
+        _tab = State(initialValue: start)
+        _position = State(initialValue: Self.current(model, tab: start))
+    }
+
+    /// The current row's id on a tab: "q<index>" (Playlist), "c<chapter>"
+    /// (Chapters). Markers have no current one. (Until 1.19.0 rows were
+    /// ids 0, 1, 2… and the list around them was id `tab` — also 0 on the
+    /// Playlist tab, so "scroll to episode 1" scrolled to the whole list and
+    /// centred it: E05/E06 showed while E01 played, 30 Oct screenshot.)
+    static func current(_ model: PlayerModel, tab: Int) -> String? {
+        switch tab {
+        case 0: return model.queue.indices.contains(model.queueIndex) ? "q\(model.queueIndex)" : nil
+        case 1: return model.currentChapter >= 0 ? "c\(model.currentChapter)" : nil
+        default: return nil
+        }
+    }
 
     var body: some View {
         Group {
             if pinnedHeader {
                 VStack(alignment: .leading, spacing: 12) {
                     header.padding(.horizontal, 16).padding(.top, 22)
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            list.padding(.horizontal, 16).padding(.bottom, 16)
-                        }
-                        .scrollIndicators(.hidden)
-                        .onAppear {
-                            LibTrace.panel.log("now playing opens: tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), list id \(tab), scrolling to id \(model.queueIndex)")
-                            // Open on the playing episode, not on episode 1.
-                            if tab == 0, model.queue.count > 3 { proxy.scrollTo(model.queueIndex, anchor: .center) }
-                        }
+                    ScrollView {
+                        list.padding(.horizontal, 16)
                     }
+                    .scrollIndicators(.hidden)
+                    .scrollPosition(id: $position, anchor: .center)
+                    // Rows fade out under the tabs and at the bottom edge instead
+                    // of being cut by a hard line; at rest none is faded.
+                    .contentMargins(.vertical, 14, for: .scrollContent)
+                    .mask(edgeFade)
+                    .onAppear {
+                        // The panel is kept between openings: back on the current row, without animating.
+                        var t = Transaction(); t.disablesAnimations = true
+                        withTransaction(t) { position = Self.current(model, tab: tab) }
+                        LibTrace.panel.log("now playing opens on \(position ?? "no row") (tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), chapter \(model.currentChapter))")
+                    }
+                    .onChange(of: model.queueIndex) { _, _ in follow() }
+                    .onChange(of: model.currentChapter) { _, _ in follow() }
+                    .onChange(of: tab) { _, t in position = Self.current(model, tab: t) }
                 }
             } else {
                 VStack(alignment: .leading, spacing: 12) { header; list }
             }
         }
         .animation(.spring(response: 0.36, dampingFraction: 0.84), value: tab)
-        .onAppear { if !model.chapters.isEmpty && model.queue.count <= 1 { tab = 1 } }
+    }
+
+    /// The next episode started (Up Next, auto-next) or the chapter moved on:
+    /// the list follows, smoothly.
+    private func follow() {
+        withAnimation(.smooth(duration: 0.35)) { position = Self.current(model, tab: tab) }
+    }
+
+    private var edgeFade: some View {
+        VStack(spacing: 0) {
+            LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 14)
+            Color.black
+            LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 14)
+        }
     }
 
     private var header: some View {
@@ -460,7 +508,7 @@ struct NowPlayingPanelContent: View {
                     PlaylistRow(item: item, active: i == model.queueIndex, state: model.episodeStates[i]) {
                         model.playFromPlaylist(i)
                     }
-                    .id(i)
+                    .id("q\(i)")
                 }
             case 1:
                 if model.chapters.isEmpty { Text("No chapters").foregroundStyle(.white.opacity(0.5)).padding(.vertical, 8) }
@@ -468,6 +516,7 @@ struct NowPlayingPanelContent: View {
                     ListRow(icon: "bookmark", title: ch.title, trailing: PlayerModel.format(ch.time), active: ch.id == model.currentChapter) {
                         model.jump(to: ch)
                     }
+                    .id("c\(ch.id)")
                 }
             default:
                 ForEach(model.userMarkers) { m in
@@ -483,8 +532,9 @@ struct NowPlayingPanelContent: View {
                 Text("Long-press a marker to remove it.").font(.caption2).foregroundStyle(.white.opacity(0.45))
             }
         }
+        .scrollTargetLayout()          // its rows are what scrollPosition(id:) finds
         .frame(maxWidth: .infinity, alignment: .leading)
-        .id(tab)
+        .id("tab\(tab)")
         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
     }
 }
