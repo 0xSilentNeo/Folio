@@ -20,14 +20,14 @@ enum ShotsSeed {
         // Library: three episodes and a film (copies of the bundled clip).
         // `-shotsLibrary=N` (Home grid checks): N entries on Home — the series,
         // the film and the folder first, then films with short and long names.
-        let entries = CommandLine.arguments.first(where: { $0.hasPrefix("-shotsLibrary=") }).flatMap { Int($0.dropFirst("-shotsLibrary=".count)) } ?? 3
+        let homeEntries = CommandLine.arguments.first(where: { $0.hasPrefix("-shotsLibrary=") }).flatMap { Int($0.dropFirst("-shotsLibrary=".count)) } ?? 3
         guard let src = Bundle.main.url(forResource: "lab", withExtension: "mp4", subdirectory: "lab") ?? Bundle.main.url(forResource: "lab", withExtension: "mp4") else { return }
         let dir = MPVFiles.mediaDir
         // A set number of entries starts from an empty library (each test launch).
         if CommandLine.arguments.contains(where: { $0.hasPrefix("-shotsLibrary=") }) { try? FileManager.default.removeItem(at: dir) }
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let files = (entries >= 1 ? ["Lab Show S01E01.mp4", "Lab Show S01E02.mp4", "Lab Show S01E03.mp4"] : []) + (entries >= 2 ? ["Bright Movie 2024.mp4"] : [])
-        let extras = (0..<max(0, entries - 3)).map { i in
+        let files = (homeEntries >= 1 ? ["Lab Show S01E01.mp4", "Lab Show S01E02.mp4", "Lab Show S01E03.mp4"] : []) + (homeEntries >= 2 ? ["Bright Movie 2024.mp4"] : [])
+        let extras = (0..<max(0, homeEntries - 3)).map { i in
             i % 3 == 1 ? "A Film With A Very Long Name That Keeps Going Well Past The Tile \(2001 + i).mp4" : "Extra Film \(i + 1) \(2001 + i).mp4"
         }
         for n in files + extras {
@@ -76,7 +76,7 @@ enum ShotsSeed {
         try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
         if let d = try? JSONEncoder().encode(entries) { try? d.write(to: support.appendingPathComponent("metadata.json"), options: .atomic) }
         // A folder of different titles (1.15.0 folder tile).
-        if entries >= 3 {
+        if homeEntries >= 3 {
             let mixed = dir.appendingPathComponent("Weekend picks", isDirectory: true)
             try? FileManager.default.createDirectory(at: mixed, withIntermediateDirectories: true)
             for n in ["Lab Show S01E04.mp4", "Bright Movie 2024.mp4", "Another Film 2019.mp4"] {
@@ -104,7 +104,7 @@ enum ShotsSeed {
         }
 
         // Continue Watching: episode 1, a third of the way in.
-        if entries >= 1 {
+        if homeEntries >= 1 {
             var item = MediaItem(url: dir.appendingPathComponent(files[0]).path, title: "Lab Show S01E01", source: .local)
             item.historyKey = item.url
             HistoryStore.shared.record(item, position: 410, duration: 1420)
