@@ -80,7 +80,7 @@ struct MetaDetailView: View {
             StreamsView(meta: m, video: t.video, seasonVideos: t.queue)
                 .zoomDestination(t.source, in: streamsNS, zoom: zooms)
         }
-        .task { await load() }
+        .task { LibTrace.title.event("appeared", "addon title page appeared"); await load() }
         .task(id: season) {
             guard usesIMDb, isSeries, !seasons.isEmpty else { return }
             loadingEpisodes = true
@@ -213,6 +213,8 @@ struct MetaDetailView: View {
         }
         if id.hasPrefix("tt") {
             let t0 = CACurrentMediaTime()
+            let signpost = LibTrace.title.begin("title page data")
+            defer { LibTrace.title.end("title page data", signpost) }
             // Details and the season list don't depend on each other: fetch both at once.
             // Not `async let`: 1.12.0 left the season `async let` un-awaited on the
             // film path, and the Swift runtime aborted the app on every title

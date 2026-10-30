@@ -84,6 +84,8 @@ final class ImageCache: @unchecked Sendable {
     /// Decodes at (at most) `maxPixel` on the long side, fully decoded now
     /// so drawing it on the main thread costs nothing.
     static func downsample(_ data: Data, maxPixel: CGFloat) -> UIImage? {
+        let signpost = LibTrace.image.begin("decode")
+        defer { LibTrace.image.end("decode", signpost) }
         guard let src = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
         let opts: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
