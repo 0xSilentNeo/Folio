@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var showOpenURL = false
     @State private var addServer = false
     @State private var showAddFiles = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var path: [LibraryRoute] = []
 
@@ -29,6 +30,12 @@ struct HomeView: View {
                     }
                     .homeRow()
                     if hasLibrary { libraryRows(width: geo.size.width, margin: margin) }
+                    if let rd = realDebridSummary {
+                        RealDebridSection(summary: rd, margin: margin, seeAllAction: { openRealDebrid(nil) }, open: { openRealDebrid($0) })
+                            .padding(.top, 30)
+                            .homeRow()
+                            .transition(reduceMotion ? AnyTransition.opacity : AnyTransition.opacity.combined(with: .move(edge: .bottom)))
+                    }
                     Color.clear.frame(height: 28).homeRow()
                 }
                 .listStyle(.plain)
@@ -46,8 +53,8 @@ struct HomeView: View {
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
             .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
-            // The Real-Debrid entry's library, checked again in the background
-            // (again when the account is added or changed).
+            // The Real-Debrid section's library, checked again in the
+            // background (again when the account is added or changed).
             .task(id: realDebrid.map(LibraryIndex.account)) { if let rd = realDebrid { LibraryIndexStore.shared.refreshIfNeeded(rd) } }
             .onChange(of: libraryView) { old, new in
                 layoutGeneration += 1
@@ -299,18 +306,23 @@ struct HomeView: View {
     /// The Real-Debrid account, when one is added with a user name.
     private var realDebrid: WebDAVServer? { servers.servers.first(where: RealDebrid.isRealDebrid) }
 
-    /// Home's Real-Debrid entry (RealDebridEntry.swift): shown when the last
-    /// check of the library worked; kept while offline; gone on a refused login.
+    /// Home's Real-Debrid section (RealDebridSection.swift): shown when the
+    /// last check of the library worked; kept while offline; gone on a
+    /// refused login.
     private var realDebridSummary: LibraryIndexStore.Summary? {
         guard let rd = realDebrid, let s = indexSummaries.all[rd.id], s.refreshed != nil, !s.unauthorized else { return nil }
         return s
     }
 
-    private var hasLibrary: Bool { !local.files.isEmpty || realDebridSummary != nil }
+    /// Library is your own files only (1.20.0); Real-Debrid has its own
+    /// section below it.
+    private var hasLibrary: Bool { !local.files.isEmpty }
 
-    private func realDebridLink<L: View>(@ViewBuilder label: () -> L) -> some View {
-        Button { if !TouchTracker.wasSwipe("home: Real-Debrid"), let rd = realDebrid { open(.webdav(rd.id.uuidString)) } } label: { label() }
-            .buttonStyle(PressStyle(scale: 0.97))
+    /// A release (its folder, as the Real-Debrid library opens it), or See
+    /// all (nil: the library).
+    private func openRealDebrid(_ release: LibraryIndexStore.Summary.Release?) {
+        guard !TouchTracker.wasSwipe("home: Real-Debrid"), let rd = realDebrid else { return }
+        open(release.map { LibraryRoute.webdavFolder(rd.id.uuidString, $0.url, $0.name) } ?? LibraryRoute.webdav(rd.id.uuidString))
     }
 
     @AppStorage("libraryView") private var libraryView = LibraryViewMode.grid.rawValue
@@ -367,14 +379,6 @@ struct HomeView: View {
         } else {
             let posters = tileArtwork == "poster"
             let style = ListTransition.current
-            if let rd = realDebridSummary {
-                realDebridLink { RealDebridRow(summary: rd, detail: mode == .details) }
-                    .accessibilityIdentifier("home:Real-Debrid")
-                    .padding(.horizontal, margin)
-                    .padding(.vertical, mode == .details ? 6 : 2)
-                    .homeRow()
-                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
-            }
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
@@ -404,12 +408,6 @@ struct HomeView: View {
         let cols = posters ? max(3, Int((width - margin * 2 + 14) / 124)) : max(2, Int((width - margin * 2 + 14) / 184))
         let groups = self.groups
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
-            if let rd = realDebridSummary {
-                realDebridLink { RealDebridTile(summary: rd, poster: posters) }
-                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
-                    .modifier(GridProbe(name: "Real-Debrid"))
-                    .accessibilityIdentifier("home:Real-Debrid")
-            }
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
@@ -431,7 +429,7 @@ struct HomeView: View {
         }
         .coordinateSpace(.named(GridProbe.space))
         .onGeometryChange(for: CGSize.self, of: { $0.size }) { size in
-            LibTrace.layout.log("grid for \(Int(width)) pt: \(cols) columns, \(groups.count + (realDebridSummary == nil ? 0 : 1)) entries, \(Int(size.width))×\(Int(size.height)) pt")
+            LibTrace.layout.log("grid for \(Int(width)) pt: \(cols) columns, \(groups.count) entries, \(Int(size.width))×\(Int(size.height)) pt")
         }
         .padding(.horizontal, margin)
     }

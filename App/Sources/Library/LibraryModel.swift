@@ -214,7 +214,10 @@ enum LibraryRoute: Hashable {
     case group(String)        // LibraryGroup.id
     case file(String)         // file path
     case folder(String)       // folder path
-    case webdav(String)       // a WebDAV server's id: its library (Home's Real-Debrid entry)
+    case webdav(String)       // a WebDAV server's id: its library (See all on Home's Real-Debrid section)
+    /// A folder on a WebDAV server: the server's id, the folder's address and
+    /// its name as the server has it (a release in Home's Real-Debrid row).
+    case webdavFolder(String, String, String)
     case settings
 
     /// The id the page zooms out of on Home, before the layout generation
@@ -223,7 +226,7 @@ enum LibraryRoute: Hashable {
         switch self {
         case .group(let id): return id
         case .folder(let path): return "d|" + path
-        case .settings, .file, .webdav: return nil
+        case .settings, .file, .webdav, .webdavFolder: return nil
         }
     }
 
@@ -244,6 +247,15 @@ enum LibraryRoute: Hashable {
         case .webdav(let id):
             if let s = UUID(uuidString: id).flatMap({ ServerStore.shared.server(id: $0) }), let url = WebDAVClient(server: s).url(forPath: s.rootPath) {
                 WebDAVBrowserView(server: s, url: url, title: s.name)
+            } else {
+                ContentUnavailableView("This server isn't added any more", systemImage: "externaldrive.badge.xmark")
+            }
+        case .webdavFolder(let id, let address, let name):
+            // The page the Real-Debrid library opens for the folder, with the
+            // same title (WebDAVBrowserView's folder rows).
+            if let s = UUID(uuidString: id).flatMap({ ServerStore.shared.server(id: $0) }), let url = URL(string: address) {
+                let clean = UserDefaults.standard.object(forKey: SettingsKey.cleanTitles) as? Bool ?? true
+                WebDAVBrowserView(server: s, url: url, title: clean ? ReleaseName.folder(name)?.title ?? name : name)
             } else {
                 ContentUnavailableView("This server isn't added any more", systemImage: "externaldrive.badge.xmark")
             }
