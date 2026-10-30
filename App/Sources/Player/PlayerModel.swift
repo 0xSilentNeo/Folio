@@ -334,9 +334,11 @@ final class PlayerModel: ObservableObject {
         stopPiPFeed()
         snapshotQueue.sync {}
         captureThumbnail()
+        // The OpenGL renderer first: it enqueues into PiP's layer from its own
+        // queue, and the layer is flushed below (independent review, 1.20.0).
+        glRenderer?.detach()
         pip.tearDown()
         if mode == .sw { sw.detach() }
-        glRenderer?.detach()
         mode = .none
         let scoped = scopedURL
         scopedURL = nil
@@ -1411,12 +1413,15 @@ final class PlayerModel: ObservableObject {
     /// quarter, half or all of the video's own size — the first that covers
     /// the window — or the video's size if the window is larger.
     private var pipSizeWork: DispatchWorkItem?
+    /// Between PiP's willStop and didStop (OpenGL renderer).
+    private var pipStopping = false
+
     private func pipWindowSized(_ size: CMVideoDimensions) {
-        guard renderer == .gl, isPiPActive else { return }
+        guard renderer == .gl, isPiPActive, !pipStopping else { return }
         PiPTrace.event("PiP window renders at \(size.width)×\(size.height)")
         pipSizeWork?.cancel()
         let w = DispatchWorkItem { [weak self] in
-            guard let self, self.isPiPActive, self.pendingW > 0, self.pendingH > 0 else { return }
+            guard let self, self.isPiPActive, !self.pipStopping, self.pendingW > 0, self.pendingH > 0 else { return }
             let base = (self.pendingW, self.pendingH)
             let pick = [4, 2, 1].map { ((base.0 / $0) & ~1, (base.1 / $0) & ~1) }
                 .first { $0.0 >= Int(size.width) && $0.1 >= Int(size.height) } ?? base
@@ -2283,6 +2288,7 @@ extension PlayerModel: MPVClientDelegate {
         if pendingW > 0, pendingH > 0, renderer == .metal {
             sw.setVideoSize(width: pendingW, height: pendingH)
         }
+        if pendingW > 0, pendingH > 0 { glRenderer?.setVideoSize(pendingW, pendingH) }
     }
 
     private func handleEOF() {
@@ -2327,7 +2333,10 @@ extension PlayerModel: PiPManagerDelegate {
             PiPTrace.event("PiP will stop")
             guard let self else { return }
             if self.renderer == .gl {
-                // Full-size frames again as the window grows back (Outplayer: at willStop).
+                // Full-size frames again as the window grows back (Outplayer:
+                // at willStop). A size change PiP reports while it closes is
+                // ignored (pipWindowSized), so none lands after this.
+                self.pipStopping = true
                 self.pipSizeWork?.cancel()
                 self.glRenderer?.setPiPSize(nil)
             } else {
@@ -2341,6 +2350,7 @@ extension PlayerModel: PiPManagerDelegate {
             guard let self else { return }
             PiPTrace.event("PiP did stop")
             self.isPiPActive = false
+            self.pipStopping = false
             self.returnFromPiP = false
             let state = UIApplication.shared.applicationState
             dlog("player", "pip stopped (app \(state == .active ? "active" : state == .inactive ? "inactive" : "background"), restoring=\(self.pipRestoring))")
@@ -2369,6 +2379,7 @@ extension PlayerModel: PiPManagerDelegate {
         onMain { [weak self] in
             guard let self else { return }
             self.isPiPActive = false
+            self.pipStopping = false
             self.showToast("PiP failed: \(message)")
             self.setPiPLayerOnTop(false)
             if self.mode == .sw { self.switchToMain() }

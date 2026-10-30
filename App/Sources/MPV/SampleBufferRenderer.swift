@@ -38,6 +38,8 @@ final class SampleBufferRenderer {
     private var flipY: Int32 = 0
     /// The view's size in pixels, and PiP's (when PiP is up and has said).
     private var viewSize = (0, 0)
+    /// The video's display size (mpv's dwidth × dheight), once known.
+    private var videoSize: (Int, Int)?
     private var pipSize: (Int, Int)?
     private var lastLoggedSize = (0, 0)
     /// The last reason a frame wasn't drawn (logged once each time it changes).
@@ -144,6 +146,28 @@ final class SampleBufferRenderer {
         }
     }
 
+    /// The video's display size. Frames take its shape, fitted inside the
+    /// view, not the view's: PiP's window takes the shape of the frames it's
+    /// given, and a frame with mpv's black bars drawn in (a portrait view, a
+    /// 2.17:1 landscape view around a 16:9 video) made the window the
+    /// screen's shape (independent review, 1.20.0). The layer letterboxes
+    /// them in the app (resizeAspect, its default).
+    func setVideoSize(_ w: Int, _ h: Int) {
+        queue.async { [weak self] in
+            guard let self, w > 0, h > 0, self.videoSize.map({ $0 != (w, h) }) ?? true else { return }
+            self.videoSize = (w, h)
+            self.render()
+        }
+    }
+
+    /// The frame size outside PiP: the video's shape fitted inside the view
+    /// (even numbers), or the view's size while the video's isn't known.
+    private func mainSize() -> (Int, Int) {
+        guard let v = videoSize, viewSize.0 > 0, viewSize.1 > 0 else { return viewSize }
+        let scale = min(Double(viewSize.0) / Double(v.0), Double(viewSize.1) / Double(v.1))
+        return (max(2, Int(Double(v.0) * scale) & ~1), max(2, Int(Double(v.1) * scale) & ~1))
+    }
+
     /// PiP's size for the frames (nil: PiP ended, back to the view's size).
     func setPiPSize(_ size: (Int, Int)?) {
         queue.async { [weak self] in
@@ -166,7 +190,7 @@ final class SampleBufferRenderer {
 
     private func render() {
         guard let c = ctx, allowed, let cache else { return }
-        let (w, h) = pipSize ?? viewSize
+        let (w, h) = pipSize ?? mainSize()
         guard w > 0, h > 0 else { return skip("the player view has no size yet") }
         EAGLContext.setCurrent(eagl)
         guard let pool = ensurePool(w, h) else { return skip("no pixel buffer pool for \(w)×\(h)") }
@@ -208,7 +232,7 @@ final class SampleBufferRenderer {
         lastSkip = nil
         if (w, h) != lastLoggedSize {
             lastLoggedSize = (w, h)
-            let line = "frames now \(w)×\(h)\(pipSize != nil ? " (PiP's size)" : " (the player view's size)")"
+            let line = "frames now \(w)×\(h)\(pipSize != nil ? " (PiP's size)" : videoSize != nil ? " (the video's shape in the player view)" : " (the player view's size)")"
             Task { @MainActor in PiPTrace.event(line) }
         }
     }
