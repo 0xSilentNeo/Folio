@@ -177,10 +177,14 @@ final class HTMLTextTests: XCTestCase {
         XCTAssertEqual("No references".decodingHTMLEntities, "No references")
     }
 
-    func testAddonModelsDecodeOnRead() throws {
-        let json = #"{"id":"tt1:1:1","title":"O&#39;Hara","overview":"Alice&#39;s day"}"#
-        let v = try JSONDecoder().decode(MetaVideo.self, from: Data(json.utf8))
-        XCTAssertEqual(v.title, "O'Hara")
-        XCTAssertEqual(v.overview, "Alice's day")
+    func testAddonAnswersDecodedOnce() throws {
+        let json = #"{"meta":{"id":"tt1","type":"series","name":"Tom &amp;amp; Jerry","description":"Alice&#39;s day","videos":[{"id":"tt1:1:1","title":"O&#39;Hara"}]}}"#
+        let m = try XCTUnwrap(JSONDecoder().decode(AddonAPI.MetaResponse.self, from: Data(json.utf8)).meta)
+        XCTAssertEqual(m.name, "Tom &amp; Jerry", "decoded once: a reference left after one decode stays")
+        XCTAssertEqual(m.description, "Alice's day")
+        XCTAssertEqual(m.videos?.first?.title, "O'Hara")
+        // Read back from a cache: stored text isn't decoded again.
+        let again = try JSONDecoder().decode(MetaItem.self, from: JSONEncoder().encode(m))
+        XCTAssertEqual(again.name, "Tom &amp; Jerry")
     }
 }
