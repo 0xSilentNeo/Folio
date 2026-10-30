@@ -1,0 +1,309 @@
+15:36:53.438 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=33.13 GB
+15:36:53.757 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+15:36:53.757 [lab] shots seeded
+15:36:55.889 [hang] main thread unresponsive for 2.5 s
+15:37:00.776 [scene] B15D418C connects (portrait)
+15:37:00.777 [scene] B15D418C will enter foreground (portrait)
+15:37:01.714 [app] first screen 10970 ms after process start
+15:37:01.714 [app] root view appeared (1 in this run, splash off)
+15:37:02.982 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+15:37:03.322 [scene] B15D418C active (portrait)
+15:37:03.325 [app] active
+15:37:03.850 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
+15:37:03.850 [layout] Lab Show at (250, 0, 112, 215)
+15:37:03.850 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+15:37:03.850 [layout] Weekend picks at (0, 232, 112, 215)
+15:37:03.851 [layout] Extra Film at (125, 0, 112, 215)
+15:37:03.851 [image] tile Lab Show appeared (loader #4, picture none yet)
+15:37:03.851 [image] loader #4 Lab Show S01E01.mp4|poster|504: not in memory, loading
+15:37:03.851 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+15:37:03.864 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+15:37:03.864 [image] folder tile Weekend picks appeared
+15:37:03.865 [image] loader #5 Another Film 2019.mp4|poster|300: not in memory, loading
+15:37:03.865 [image] loader #6 Bright Movie 2024.mp4|poster|300: not in memory, loading
+15:37:03.865 [image] loader #7 Lab Show S01E04.mp4|poster|300: not in memory, loading
+15:37:03.865 [image] tile Extra Film appeared (loader #3, picture none yet)
+15:37:03.865 [image] loader #3 Extra Film 1 2001.mp4|poster|504: not in memory, loading
+15:37:03.881 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+15:37:03.884 [zoom] source 0|s|extra film added at (145.0, 458.0, 112.0, 167.0)
+15:37:03.886 [zoom] source 0|s|lab show added at (270.0, 458.0, 112.0, 167.0)
+15:37:03.889 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Weekend picks added at (20.0, 690.0, 112.0, 168.0)
+15:37:03.924 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 942 ms
+15:37:04.016 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 164 ms
+15:37:04.059 [image] loader #4 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 207 ms
+15:37:04.060 [image] loader #6 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 194 ms
+15:37:11.730 [layout] grid for 750 pt: 5 columns, 4 entries, 694×239 pt
+15:37:11.730 [layout] Lab Show at (283, 0, 128, 239)
+15:37:11.731 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+15:37:11.731 [layout] Weekend picks at (424, 0, 129, 239)
+15:37:11.731 [layout] Extra Film at (141, 0, 129, 239)
+15:37:16.664 [layout] grid for 402 pt: 3 columns, 4 entries, 362×795 pt
+15:37:16.665 [layout] Lab Show at (250, 0, 112, 215)
+15:37:16.665 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+15:37:16.665 [layout] Weekend picks at (0, 232, 112, 215)
+15:37:16.665 [layout] Extra Film at (125, 0, 112, 215)
+15:37:16.721 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
+15:37:27.567 [zoom] home layout grid → list (zoom ids now 1|…)
+15:37:27.571 [image] tile Lab Show disappeared (loader #4)
+15:37:27.572 [image] tile Bright Movie (2024) disappeared (loader #2)
+15:37:27.572 [image] folder tile Weekend picks disappeared
+15:37:27.573 [image] tile Extra Film disappeared (loader #3)
+15:37:27.690 [image] loader #11 Another Film 2019.mp4|wide|300: not in memory, loading
+15:37:27.691 [image] loader #12 Bright Movie 2024.mp4|wide|300: not in memory, loading
+15:37:27.691 [image] loader #13 Lab Show S01E04.mp4|wide|300: not in memory, loading
+15:37:27.700 [zoom] source 1|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Weekend picks added at (20.0, 651.0, 362.0, 57.0)
+15:37:27.705 [image] row Lab Show (list) appeared (loader #10, picture none yet)
+15:37:27.706 [image] loader #10 Lab Show S01E01.mp4|poster|144: not in memory, loading
+15:37:27.709 [zoom] source 1|s|lab show added at (20.0, 587.0, 362.0, 61.0)
+15:37:27.715 [image] row Extra Film (list) appeared (loader #9, picture none yet)
+15:37:27.716 [image] loader #9 Extra Film 1 2001.mp4|poster|144: not in memory, loading
+15:37:27.718 [zoom] source 1|s|extra film added at (20.0, 523.0, 362.0, 61.0)
+15:37:27.722 [image] row Bright Movie 2024.mp4 (list) appeared (loader #8, picture none yet)
+15:37:27.722 [image] loader #8 Bright Movie 2024.mp4|poster|144: not in memory, loading
+15:37:27.723 [zoom] source 1|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 459.0, 362.0, 61.0)
+15:37:27.825 [image] loader #8 Bright Movie 2024.mp4|poster|144: picture (poster tt9000003) after 102 ms
+15:37:27.825 [image] loader #10 Lab Show S01E01.mp4|poster|144: picture (poster tt9000002) after 119 ms
+15:37:27.837 [image] loader #12 Bright Movie 2024.mp4|wide|300: picture (artwork disk or network) after 145 ms
+15:37:28.522 [image] loader #11 Another Film 2019.mp4|wide|300: picture (frame from the file) after 832 ms
+15:37:28.525 [image] loader #13 Lab Show S01E04.mp4|wide|300: picture (frame from the file) after 832 ms
+15:37:33.337 [energy] cpu 40% (main 37%, other 4%) mem 63 MB (0 MB left) thermal=nominal playing=no
+15:37:48.006 [zoom] home layout list → details (zoom ids now 2|…)
+15:38:03.963 [energy] cpu 26% (main 25%, other 1%) mem 72 MB (0 MB left) thermal=nominal playing=no
+15:38:08.890 [zoom] home layout details → grid (zoom ids now 3|…)
+15:38:08.898 [image] row Bright Movie 2024.mp4 (details) disappeared (loader #8)
+15:38:08.899 [image] row Lab Show (details) disappeared (loader #10)
+15:38:08.899 [image] row Extra Film (details) disappeared (loader #9)
+15:38:08.947 [image] tile Lab Show appeared (loader #4, picture shown)
+15:38:08.947 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+15:38:08.947 [image] folder tile Weekend picks appeared
+15:38:08.947 [image] tile Extra Film appeared (loader #3, picture none yet)
+15:38:14.427 [layout] grid for 750 pt: 5 columns, 4 entries, 694×239 pt
+15:38:14.427 [layout] Lab Show at (283, 0, 128, 239)
+15:38:14.427 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+15:38:14.427 [layout] Weekend picks at (424, 0, 129, 239)
+15:38:14.427 [layout] Extra Film at (141, 0, 129, 239)
+15:38:19.894 [layout] grid for 402 pt: 3 columns, 4 entries, 362×795 pt
+15:38:19.895 [layout] Lab Show at (250, 0, 112, 215)
+15:38:19.895 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+15:38:19.895 [layout] Weekend picks at (0, 232, 112, 215)
+15:38:19.895 [layout] Extra Film at (125, 0, 112, 215)
+15:38:19.942 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
+15:38:28.205 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.95 GB
+15:38:28.416 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+15:38:28.417 [lab] shots seeded
+15:38:30.259 [hang] main thread unresponsive for 2.1 s
+15:38:35.134 [scene] B15D418C connects (portrait)
+15:38:35.135 [scene] B15D418C will enter foreground (portrait)
+15:38:35.532 [app] first screen 9448 ms after process start
+15:38:35.532 [app] root view appeared (1 in this run, splash off)
+15:38:36.185 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+15:38:36.487 [scene] B15D418C active (portrait)
+15:38:36.497 [app] active
+15:38:52.061 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.91 GB
+15:38:52.323 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+15:38:52.323 [lab] shots seeded
+15:38:54.230 [hang] main thread unresponsive for 2.2 s
+15:38:57.777 [scene] B15D418C connects (portrait)
+15:38:57.778 [scene] B15D418C will enter foreground (portrait)
+15:38:58.169 [app] first screen 7984 ms after process start
+15:38:58.170 [app] root view appeared (1 in this run, splash off)
+15:38:58.898 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+15:38:59.068 [scene] B15D418C active (portrait)
+15:38:59.095 [app] active
+15:38:59.306 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 402 ms
+15:38:59.559 [layout] grid for 402 pt: 3 columns, 1 entries, 362×215 pt
+15:38:59.559 [layout] Lab Show at (0, 0, 112, 215)
+15:38:59.559 [image] tile Lab Show appeared (loader #2, picture none yet)
+15:38:59.560 [image] loader #2 Lab Show S01E01.mp4|poster|504: not in memory, loading
+15:38:59.564 [zoom] source 0|s|lab show added at (20.0, 458.0, 112.0, 167.0)
+15:38:59.629 [image] loader #2 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 69 ms
+15:39:05.515 [layout] grid for 750 pt: 5 columns, 1 entries, 694×239 pt
+15:39:05.516 [layout] Lab Show at (0, 0, 128, 239)
+15:39:09.178 [layout] grid for 402 pt: 3 columns, 1 entries, 362×389 pt
+15:39:09.179 [layout] Lab Show at (0, 0, 112, 215)
+15:39:09.205 [layout] grid for 402 pt: 3 columns, 1 entries, 362×215 pt
+15:39:15.642 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.89 GB
+15:39:15.921 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+15:39:15.921 [lab] shots seeded
+15:39:17.750 [hang] main thread unresponsive for 2.1 s
+15:39:21.461 [scene] B15D418C connects (portrait)
+15:39:21.462 [scene] B15D418C will enter foreground (portrait)
+15:39:21.768 [app] first screen 7892 ms after process start
+15:39:21.768 [app] root view appeared (1 in this run, splash off)
+15:39:22.372 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+15:39:22.584 [scene] B15D418C active (portrait)
+15:39:22.610 [app] active
+15:39:22.904 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 528 ms
+15:39:23.125 [layout] grid for 402 pt: 3 columns, 3 entries, 362×215 pt
+15:39:23.126 [layout] Lab Show at (125, 0, 112, 215)
+15:39:23.126 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+15:39:23.126 [layout] Weekend picks at (250, 0, 112, 215)
+15:39:23.126 [image] tile Lab Show appeared (loader #3, picture none yet)
+15:39:23.127 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+15:39:23.127 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+15:39:23.127 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+15:39:23.128 [image] folder tile Weekend picks appeared
+15:39:23.129 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+15:39:23.129 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+15:39:23.129 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+15:39:23.133 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+15:39:23.134 [zoom] source 0|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+15:39:23.147 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+15:39:23.268 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 138 ms
+15:39:23.270 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 142 ms
+15:39:23.273 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 145 ms
+15:39:29.619 [layout] grid for 750 pt: 5 columns, 3 entries, 694×239 pt
+15:39:29.620 [layout] Lab Show at (141, 0, 129, 239)
+15:39:29.620 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+15:39:29.621 [layout] Weekend picks at (283, 0, 128, 239)
+15:39:33.814 [layout] grid for 402 pt: 3 columns, 3 entries, 362×389 pt
+15:39:33.814 [layout] Lab Show at (125, 0, 112, 215)
+15:39:33.814 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+15:39:33.814 [layout] Weekend picks at (250, 0, 112, 215)
+15:39:33.839 [layout] grid for 402 pt: 3 columns, 3 entries, 362×215 pt
+15:39:40.874 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.86 GB
+15:39:41.153 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+15:39:41.153 [lab] shots seeded
+15:39:43.166 [hang] main thread unresponsive for 2.3 s
+15:39:46.839 [scene] B15D418C connects (portrait)
+15:39:46.840 [scene] B15D418C will enter foreground (portrait)
+15:39:47.127 [app] first screen 8035 ms after process start
+15:39:47.127 [app] root view appeared (1 in this run, splash off)
+15:39:47.789 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+15:39:47.989 [scene] B15D418C active (portrait)
+15:39:48.015 [app] active
+15:39:48.277 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 488 ms
+15:39:48.603 [layout] grid for 402 pt: 3 columns, 8 entries, 362×680 pt
+15:39:48.604 [layout] Lab Show at (0, 464, 112, 216)
+15:39:48.604 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2005) at (125, 0, 112, 215)
+15:39:48.605 [layout] Weekend picks at (125, 464, 112, 216)
+15:39:48.605 [layout] Bright Movie (2024) at (125, 232, 112, 215)
+15:39:48.606 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2002) at (0, 0, 112, 215)
+15:39:48.606 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2011) at (0, 232, 112, 215)
+15:39:48.607 [layout] Extra Film at (250, 232, 112, 215)
+15:39:48.612 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2008) at (250, 0, 112, 215)
+15:39:48.612 [image] tile Lab Show appeared (loader #8, picture none yet)
+15:39:48.613 [image] loader #8 Lab Show S01E01.mp4|poster|504: not in memory, loading
+15:39:48.613 [image] tile A Film With A Very Long Name That Keeps Going Well Past The Tile (2005) appeared (loader #3, picture none yet)
+15:39:48.613 [image] loader #3 A Film With A Very Long Name That Keeps Going Well Past The : not in memory, loading
+15:39:48.613 [image] folder tile Weekend picks appeared
+15:39:48.614 [image] loader #9 Another Film 2019.mp4|poster|300: not in memory, loading
+15:39:48.617 [image] loader #10 Bright Movie 2024.mp4|poster|300: not in memory, loading
+15:39:48.618 [image] loader #11 Lab Show S01E04.mp4|poster|300: not in memory, loading
+15:39:48.618 [image] tile Bright Movie (2024) appeared (loader #6, picture none yet)
+15:39:48.618 [image] loader #6 Bright Movie 2024.mp4|poster|504: not in memory, loading
+15:39:48.618 [image] tile A Film With A Very Long Name That Keeps Going Well Past The Tile (2002) appeared (loader #2, picture none yet)
+15:39:48.618 [image] loader #2 A Film With A Very Long Name That Keeps Going Well Past The : not in memory, loading
+15:39:48.618 [image] tile A Film With A Very Long Name That Keeps Going Well Past The Tile (2011) appeared (loader #5, picture none yet)
+15:39:48.619 [image] loader #5 A Film With A Very Long Name That Keeps Going Well Past The : not in memory, loading
+15:39:48.620 [image] tile Extra Film appeared (loader #7, picture none yet)
+15:39:48.620 [image] loader #7 Extra Film 1 2001.mp4|poster|504: not in memory, loading
+15:39:48.620 [image] tile A Film With A Very Long Name That Keeps Going Well Past The Tile (2008) appeared (loader #4, picture none yet)
+15:39:48.620 [image] loader #4 A Film With A Very Long Name That Keeps Going Well Past The : not in memory, loading
+15:39:48.640 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/A Film With A Very Long Name That Keeps Going Well Past The Tile 2002.mp4 added at (20.0, 458.0, 112.0, 167.0)
+15:39:48.642 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/A Film With A Very Long Name That Keeps Going Well Past The Tile 2005.mp4 added at (145.0, 458.0, 112.0, 167.0)
+15:39:48.643 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/A Film With A Very Long Name That Keeps Going Well Past The Tile 2008.mp4 added at (270.0, 458.0, 112.0, 167.0)
+15:39:48.645 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/A Film With A Very Long Name That Keeps Going Well Past The Tile 2011.mp4 added at (20.0, 690.0, 112.0, 168.0)
+15:39:48.646 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Bright Movie 2024.mp4 added at (145.0, 690.0, 112.0, 168.0)
+15:39:48.648 [zoom] source 0|s|extra film added at (270.0, 690.0, 112.0, 168.0)
+15:39:48.650 [zoom] source 0|s|lab show added at (20.0, 922.0, 112.0, 168.0)
+15:39:48.652 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Weekend picks added at (145.0, 922.0, 112.0, 168.0)
+15:39:48.799 [image] loader #8 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 186 ms
+15:39:48.806 [image] loader #10 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 191 ms
+15:39:48.806 [image] loader #6 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 188 ms
+15:39:56.876 [layout] grid for 750 pt: 5 columns, 8 entries, 694×496 pt
+15:39:56.877 [layout] Lab Show at (141, 256, 129, 240)
+15:39:56.877 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2005) at (141, 0, 129, 239)
+15:39:56.877 [layout] Weekend picks at (283, 256, 128, 240)
+15:39:56.909 [layout] Bright Movie (2024) at (566, 0, 128, 239)
+15:39:56.909 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2002) at (0, 0, 128, 239)
+15:39:56.910 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2011) at (424, 0, 129, 239)
+15:39:56.910 [layout] Extra Film at (0, 256, 128, 240)
+15:39:56.910 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2008) at (283, 0, 128, 239)
+15:40:03.044 [layout] grid for 402 pt: 3 columns, 8 entries, 362×1201 pt
+15:40:03.044 [layout] Lab Show at (8, 256, 104, 205)
+15:40:03.045 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2005) at (125, 0, 112, 215)
+15:40:03.045 [layout] Weekend picks at (126, 256, 104, 205)
+15:40:03.106 [layout] Bright Movie (2024) at (125, 232, 112, 215)
+15:40:03.106 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2002) at (0, 0, 112, 215)
+15:40:03.107 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2011) at (0, 232, 112, 215)
+15:40:03.107 [layout] Extra Film at (250, 232, 112, 215)
+15:40:03.108 [layout] A Film With A Very Long Name That Keeps Going Well Past The Tile (2008) at (250, 0, 112, 215)
+15:40:03.144 [layout] grid for 402 pt: 3 columns, 8 entries, 362×680 pt
+15:40:11.453 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.87 GB
+15:40:11.705 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+15:40:11.705 [lab] shots seeded
+15:40:13.732 [hang] main thread unresponsive for 2.3 s
+15:40:17.202 [scene] B15D418C connects (portrait)
+15:40:17.203 [scene] B15D418C will enter foreground (portrait)
+15:40:17.523 [app] first screen 7735 ms after process start
+15:40:17.524 [app] root view appeared (1 in this run, splash off)
+15:40:18.125 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+15:40:18.420 [scene] B15D418C active (portrait)
+15:40:18.429 [app] active
+15:40:18.558 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 431 ms
+15:40:18.881 [layout] grid for 402 pt: 3 columns, 4 entries, 362×598 pt
+15:40:18.881 [layout] Bright Movie (2024) at (0, 0, 112, 290)
+15:40:18.881 [layout] Weekend picks at (0, 307, 112, 291)
+15:40:18.882 [layout] Lab Show at (250, 0, 112, 290)
+15:40:18.882 [layout] Extra Film at (125, 0, 112, 290)
+15:40:18.882 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+15:40:18.882 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+15:40:18.882 [image] folder tile Weekend picks appeared
+15:40:18.882 [image] loader #5 Another Film 2019.mp4|poster|300: not in memory, loading
+15:40:18.891 [image] loader #6 Bright Movie 2024.mp4|poster|300: not in memory, loading
+15:40:18.892 [image] loader #7 Lab Show S01E04.mp4|poster|300: not in memory, loading
+15:40:18.893 [image] tile Lab Show appeared (loader #4, picture none yet)
+15:40:18.893 [image] loader #4 Lab Show S01E01.mp4|poster|504: not in memory, loading
+15:40:18.893 [image] tile Extra Film appeared (loader #3, picture none yet)
+15:40:18.894 [image] loader #3 Extra Film 1 2001.mp4|poster|504: not in memory, loading
+15:40:18.902 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 838.0, 112.0, 167.0)
+15:40:18.904 [zoom] source 0|s|extra film added at (145.0, 838.0, 112.0, 167.0)
+15:40:18.905 [zoom] source 0|s|lab show added at (270.0, 838.0, 112.0, 167.0)
+15:40:18.906 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Weekend picks added at (20.0, 1145.0, 112.0, 168.0)
+15:40:19.029 [image] loader #6 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 146 ms
+15:40:19.030 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 147 ms
+15:40:19.030 [image] loader #4 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 137 ms
+15:40:25.596 [layout] grid for 750 pt: 5 columns, 4 entries, 694×315 pt
+15:40:25.597 [layout] Bright Movie (2024) at (0, 0, 128, 315)
+15:40:25.597 [layout] Weekend picks at (424, 0, 129, 315)
+15:40:25.597 [layout] Lab Show at (283, 0, 128, 315)
+15:40:25.597 [layout] Extra Film at (141, 0, 129, 315)
+15:40:29.638 [layout] grid for 402 pt: 3 columns, 4 entries, 362×946 pt
+15:40:29.639 [layout] Bright Movie (2024) at (0, 0, 112, 290)
+15:40:29.640 [layout] Weekend picks at (0, 307, 112, 291)
+15:40:29.640 [layout] Lab Show at (250, 0, 112, 290)
+15:40:29.640 [layout] Extra Film at (125, 0, 112, 290)
+15:40:29.678 [layout] grid for 402 pt: 3 columns, 4 entries, 362×598 pt
+15:40:42.077 [zoom] home layout grid → details (zoom ids now 1|…)
+15:40:42.080 [image] tile Bright Movie (2024) disappeared (loader #2)
+15:40:42.080 [image] folder tile Weekend picks disappeared
+15:40:42.081 [image] tile Lab Show disappeared (loader #4)
+15:40:42.081 [image] tile Extra Film disappeared (loader #3)
+15:40:42.212 [image] row Extra Film (details) appeared (loader #9, picture none yet)
+15:40:42.213 [image] loader #9 Extra Film 1 2001.mp4|poster|288: not in memory, loading
+15:40:42.221 [zoom] source 1|s|extra film added at (20.0, 729.0, 362.0, 232.0)
+15:40:42.226 [image] row Bright Movie 2024.mp4 (details) appeared (loader #8, picture none yet)
+15:40:42.226 [image] loader #8 Bright Movie 2024.mp4|poster|288: not in memory, loading
+15:40:42.227 [zoom] source 1|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 486.0, 362.0, 232.0)
+15:40:42.283 [image] loader #8 Bright Movie 2024.mp4|poster|288: picture (poster tt9000003) after 56 ms
+15:40:47.021 [image] loader #12 Bright Movie 2024.mp4|wide|300: not in memory, loading
+15:40:47.128 [image] loader #11 Another Film 2019.mp4|wide|300: not in memory, loading
+15:40:47.129 [image] loader #13 Lab Show S01E04.mp4|wide|300: not in memory, loading
+15:40:47.130 [zoom] source 1|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/B1353414-E3E0-4392-99DC-861F6EAFC35B/Documents/Media/Weekend picks added at (90.0, 885.0, 694.0, 130.0)
+15:40:47.134 [image] row Lab Show (details) appeared (loader #10, picture none yet)
+15:40:47.135 [image] loader #10 Lab Show S01E01.mp4|poster|288: not in memory, loading
+15:40:47.136 [zoom] source 1|s|lab show added at (90.0, 744.0, 694.0, 130.0)
+15:40:47.264 [image] loader #10 Lab Show S01E01.mp4|poster|288: picture (poster tt9000002) after 129 ms
+15:40:47.266 [image] loader #12 Bright Movie 2024.mp4|wide|300: picture (artwork disk or network) after 244 ms
+15:40:47.671 [image] loader #11 Another Film 2019.mp4|wide|300: picture (frame from the file) after 649 ms
+15:40:47.673 [image] loader #13 Lab Show S01E04.mp4|wide|300: picture (frame from the file) after 543 ms
+15:40:48.657 [energy] cpu 3% (main 2%) mem 75 MB (0 MB left) thermal=nominal playing=no
+15:40:51.536 [image] row Lab Show (details) disappeared (loader #10)
+15:41:01.274 [zoom] home layout details → grid (zoom ids now 2|…)
+15:41:01.279 [image] row Extra Film (details) disappeared (loader #9)
+15:41:01.280 [image] row Bright Movie 2024.mp4 (details) disappeared (loader #8)
+15:41:01.359 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+15:41:01.359 [image] folder tile Weekend picks appeared
+15:41:01.359 [image] tile Lab Show appeared (loader #4, picture shown)
+15:41:01.360 [image] tile Extra Film appeared (loader #3, picture none yet)

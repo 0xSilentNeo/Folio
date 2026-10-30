@@ -1,0 +1,643 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0 -derivedDataPath build "-only-testing:GlassPlayerUITests/HomeGridUITests"
+
+2026-10-30 15:36:33.780876+0000 GlassPlayerUITests-Runner[12786:42538] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-30 15:36:46.866.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-30 15:36:46.870.
+Test Suite 'HomeGridUITests' started at 2026-10-30 15:36:46.871.
+Test Case '-[GlassPlayerUITests.HomeGridUITests test1FourEntriesTurned]' started.
+    t =     0.05s Start Test at 2026-10-30 15:36:46.924
+    t =     0.18s Set Up
+    t =     0.24s Open dev.silentneo.glassplayer
+    t =     0.25s     Launch dev.silentneo.glassplayer
+2026-10-30 15:36:48.196 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 15:36:48.196 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: no debugger version
+objc[12786]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.W9NeLX/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x108608398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.W9NeLX/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x10949c310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =     6.00s         Setting up automation session
+    t =    13.57s         Wait for dev.silentneo.glassplayer to idle
+    t =    18.16s Setting device orientation to Portrait
+    t =    18.19s     Device orientation changed to Portrait
+    t =    18.27s     Wait for dev.silentneo.glassplayer to idle
+    t =    22.29s Find the Window (First Match)
+    t =    22.34s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    22.64s Checking existence of `Any (Element at index 0)`
+    t =    22.77s Find the Any (Element at index 0)
+    t =    22.89s Find the "home:Bright Movie (2024)" Button
+    t =    23.06s Checking existence of `Any (Element at index 1)`
+    t =    23.46s Find the Any (Element at index 1)
+    t =    23.69s Find the "home:Extra Film" Button
+    t =    23.82s Checking existence of `Any (Element at index 2)`
+    t =    23.93s Find the Any (Element at index 2)
+    t =    24.08s Find the "home:Lab Show" Button
+    t =    24.18s Checking existence of `Any (Element at index 3)`
+    t =    24.26s Find the Any (Element at index 3)
+    t =    24.38s Find the "home:Weekend picks" Button
+LAB 6.16 4 entries, Thumbnails, portrait: window 402×874, 4 entries on screen — Bright Movie (2024) (20, 458, 111, 214); Extra Film (145, 458, 111, 214); Lab Show (270, 458, 111, 214); Weekend picks (20, 690, 111, 214)
+    t =    24.45s Setting device orientation to Landscape Left
+    t =    24.46s     Device orientation changed to Landscape Left
+    t =    24.71s     Interface orientation changed to Landscape Right
+    t =    24.72s     Wait for dev.silentneo.glassplayer to idle
+    t =    28.03s Find the Window (First Match)
+    t =    28.06s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    28.31s Checking existence of `Any (Element at index 0)`
+    t =    28.42s Find the Any (Element at index 0)
+    t =    28.52s Find the "home:Bright Movie (2024)" Button
+    t =    28.60s Checking existence of `Any (Element at index 1)`
+    t =    28.68s Find the Any (Element at index 1)
+    t =    28.78s Find the "home:Extra Film" Button
+    t =    28.90s Checking existence of `Any (Element at index 2)`
+    t =    29.00s Find the Any (Element at index 2)
+    t =    29.13s Find the "home:Lab Show" Button
+    t =    29.23s Checking existence of `Any (Element at index 3)`
+    t =    29.33s Find the Any (Element at index 3)
+    t =    29.46s Find the "home:Weekend picks" Button
+LAB 11.25 4 entries, Thumbnails, landscape: window 874×402, 4 entries on screen — Bright Movie (2024) (90, 397, 127, 238); Extra Film (231, 397, 127, 238); Lab Show (373, 397, 127, 238); Weekend picks (514, 397, 127, 238)
+    t =    29.53s Setting device orientation to Portrait
+    t =    29.53s     Device orientation changed to Portrait
+    t =    29.66s     Interface orientation changed to Portrait
+    t =    29.67s     Wait for dev.silentneo.glassplayer to idle
+    t =    32.88s Find the Window (First Match)
+    t =    32.90s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    32.98s Checking existence of `Any (Element at index 0)`
+    t =    33.09s Find the Any (Element at index 0)
+    t =    33.24s Find the "home:Bright Movie (2024)" Button
+    t =    33.30s Checking existence of `Any (Element at index 1)`
+    t =    33.41s Find the Any (Element at index 1)
+    t =    33.48s Find the "home:Extra Film" Button
+    t =    33.54s Checking existence of `Any (Element at index 2)`
+    t =    33.61s Find the Any (Element at index 2)
+    t =    33.72s Find the "home:Lab Show" Button
+    t =    33.79s Checking existence of `Any (Element at index 3)`
+    t =    33.86s Find the Any (Element at index 3)
+    t =    33.95s Find the "home:Weekend picks" Button
+LAB 15.73 4 entries, Thumbnails, back to portrait: window 402×874, 4 entries on screen — Bright Movie (2024) (20, 458, 111, 214); Extra Film (145, 458, 111, 214); Lab Show (270, 458, 111, 214); Weekend picks (20, 690, 122, 214)
+    t =    34.01s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    35.04s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    35.05s         Checking existence of `"viewModeMenu" Button`
+    t =    35.28s Tap "viewModeMenu" Button
+    t =    35.28s     Wait for dev.silentneo.glassplayer to idle
+    t =    35.29s     Find the "viewModeMenu" Button
+    t =    35.48s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    35.56s     Synthesize event
+    t =    36.16s     Wait for dev.silentneo.glassplayer to idle
+    t =    38.99s Waiting 3.0s for "List" Button to exist
+    t =    40.04s     Checking `Expect predicate `existsNoRetry == 1` for object "List" Button`
+    t =    40.05s         Checking existence of `"List" Button`
+    t =    40.15s Tap "List" Button
+    t =    40.15s     Wait for dev.silentneo.glassplayer to idle
+    t =    40.15s     Find the "List" Button
+    t =    40.25s     Check for interrupting elements affecting "List" Button
+    t =    40.36s     Synthesize event
+    t =    40.72s     Wait for dev.silentneo.glassplayer to idle
+    t =    44.51s Find the Window (First Match)
+    t =    44.53s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    44.64s Checking existence of `Any (Element at index 0)`
+    t =    44.71s Find the Any (Element at index 0)
+    t =    44.87s Find the "home:Bright Movie (2024)" Button
+    t =    44.95s Checking existence of `Any (Element at index 1)`
+    t =    45.05s Find the Any (Element at index 1)
+    t =    45.16s Find the "home:Extra Film" Button
+    t =    45.23s Checking existence of `Any (Element at index 2)`
+    t =    45.31s Find the Any (Element at index 2)
+    t =    45.42s Find the "home:Lab Show" Button
+    t =    45.49s Checking existence of `Any (Element at index 3)`
+    t =    45.64s Find the Any (Element at index 3)
+    t =    45.77s Find the "home:Weekend picks" Button
+LAB 27.57 4 entries, List, portrait: window 402×874, 4 entries on screen — Bright Movie (2024) (0, 457, 402, 64); Extra Film (0, 521, 402, 64); Lab Show (0, 585, 402, 64); Weekend picks (0, 649, 402, 60)
+    t =    45.85s Setting device orientation to Landscape Left
+    t =    45.85s     Device orientation changed to Landscape Left
+    t =    46.03s     Interface orientation changed to Landscape Right
+    t =    46.03s     Wait for dev.silentneo.glassplayer to idle
+    t =    49.19s Find the Window (First Match)
+    t =    49.24s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    49.34s Checking existence of `Any (Element at index 0)`
+    t =    49.45s Find the Any (Element at index 0)
+    t =    49.54s Find the "home:Bright Movie (2024)" Button
+    t =    49.63s Checking existence of `Any (Element at index 1)`
+    t =    49.72s Find the Any (Element at index 1)
+    t =    49.83s Checking existence of `Any (Element at index 2)`
+    t =    49.92s Find the Any (Element at index 2)
+    t =    50.01s Checking existence of `Any (Element at index 3)`
+    t =    50.11s Find the Any (Element at index 3)
+LAB 31.94 4 entries, List, landscape: window 874×402, 1 entries on screen — Bright Movie (2024) (0, 396, 874, 64)
+    t =    50.21s Setting device orientation to Portrait
+    t =    50.22s     Device orientation changed to Portrait
+    t =    50.37s     Interface orientation changed to Portrait
+    t =    50.37s     Wait for dev.silentneo.glassplayer to idle
+    t =    53.58s Find the Window (First Match)
+    t =    53.64s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    53.79s Checking existence of `Any (Element at index 0)`
+    t =    53.87s Find the Any (Element at index 0)
+    t =    54.07s Find the "home:Bright Movie (2024)" Button
+    t =    54.19s Checking existence of `Any (Element at index 1)`
+    t =    54.27s Find the Any (Element at index 1)
+    t =    54.40s Find the "home:Extra Film" Button
+    t =    54.49s Checking existence of `Any (Element at index 2)`
+    t =    54.64s Find the Any (Element at index 2)
+    t =    54.77s Find the "home:Lab Show" Button
+    t =    54.88s Checking existence of `Any (Element at index 3)`
+    t =    55.02s Find the Any (Element at index 3)
+    t =    55.15s Find the "home:Weekend picks" Button
+LAB 36.97 4 entries, List, back to portrait: window 402×874, 4 entries on screen — Bright Movie (2024) (0, 457, 402, 64); Extra Film (0, 521, 402, 64); Lab Show (0, 585, 402, 64); Weekend picks (0, 649, 402, 60)
+    t =    55.24s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    56.25s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    56.25s         Checking existence of `"viewModeMenu" Button`
+    t =    56.50s Tap "viewModeMenu" Button
+    t =    56.50s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.51s     Find the "viewModeMenu" Button
+    t =    56.86s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    56.95s     Synthesize event
+    t =    57.29s     Wait for dev.silentneo.glassplayer to idle
+    t =    59.63s Waiting 3.0s for "Details" Button to exist
+    t =    60.66s     Checking `Expect predicate `existsNoRetry == 1` for object "Details" Button`
+    t =    60.66s         Checking existence of `"Details" Button`
+    t =    60.75s Tap "Details" Button
+    t =    60.75s     Wait for dev.silentneo.glassplayer to idle
+    t =    60.75s     Find the "Details" Button
+    t =    60.83s     Check for interrupting elements affecting "Details" Button
+    t =    60.94s     Synthesize event
+    t =    61.25s     Wait for dev.silentneo.glassplayer to idle
+    t =    64.86s Find the Window (First Match)
+    t =    64.88s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    64.96s Checking existence of `Any (Element at index 0)`
+    t =    65.07s Find the Any (Element at index 0)
+    t =    65.22s Find the "home:Bright Movie (2024)" Button
+    t =    65.30s Checking existence of `Any (Element at index 1)`
+    t =    65.37s Find the Any (Element at index 1)
+    t =    65.46s Find the "home:Extra Film" Button
+    t =    65.55s Checking existence of `Any (Element at index 2)`
+    t =    65.63s Find the Any (Element at index 2)
+    t =    65.76s Find the "home:Lab Show" Button
+    t =    65.83s Checking existence of `Any (Element at index 3)`
+    t =    65.91s Find the Any (Element at index 3)
+    t =    66.00s Find the "home:Weekend picks" Button
+LAB 47.81 4 entries, Details, portrait: window 402×874, 4 entries on screen — Bright Movie (2024) (0, 458, 402, 124); Extra Film (0, 582, 402, 124); Lab Show (0, 706, 402, 124); Weekend picks (0, 830, 402, 112)
+    t =    66.08s Setting device orientation to Landscape Left
+    t =    66.09s     Device orientation changed to Landscape Left
+    t =    66.25s     Interface orientation changed to Landscape Right
+    t =    66.25s     Wait for dev.silentneo.glassplayer to idle
+    t =    69.47s Find the Window (First Match)
+    t =    69.51s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    69.61s Checking existence of `Any (Element at index 0)`
+    t =    69.69s Find the Any (Element at index 0)
+    t =    69.82s Find the "home:Bright Movie (2024)" Button
+    t =    69.90s Checking existence of `Any (Element at index 1)`
+    t =    70.00s Find the Any (Element at index 1)
+    t =    70.13s Checking existence of `Any (Element at index 2)`
+    t =    70.26s Find the Any (Element at index 2)
+    t =    70.36s Checking existence of `Any (Element at index 3)`
+    t =    70.45s Find the Any (Element at index 3)
+LAB 52.33 4 entries, Details, landscape: window 874×402, 1 entries on screen — Bright Movie (2024) (0, 397, 874, 124)
+    t =    70.61s Setting device orientation to Portrait
+    t =    70.62s     Device orientation changed to Portrait
+    t =    70.65s     Interface orientation changed to Portrait
+    t =    70.75s     Wait for dev.silentneo.glassplayer to idle
+    t =    73.89s Find the Window (First Match)
+    t =    73.93s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    74.08s Checking existence of `Any (Element at index 0)`
+    t =    74.25s Find the Any (Element at index 0)
+    t =    74.42s Find the "home:Bright Movie (2024)" Button
+    t =    74.58s Checking existence of `Any (Element at index 1)`
+    t =    74.71s Find the Any (Element at index 1)
+    t =    74.84s Find the "home:Extra Film" Button
+    t =    74.93s Checking existence of `Any (Element at index 2)`
+    t =    75.04s Find the Any (Element at index 2)
+    t =    75.20s Find the "home:Lab Show" Button
+    t =    75.31s Checking existence of `Any (Element at index 3)`
+    t =    75.43s Find the Any (Element at index 3)
+    t =    75.60s Find the "home:Weekend picks" Button
+LAB 57.43 4 entries, Details, back to portrait: window 402×874, 4 entries on screen — Bright Movie (2024) (0, 458, 402, 124); Extra Film (0, 582, 402, 124); Lab Show (0, 706, 402, 124); Weekend picks (0, 830, 402, 112)
+    t =    75.70s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    76.73s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    76.73s         Checking existence of `"viewModeMenu" Button`
+    t =    77.11s Tap "viewModeMenu" Button
+    t =    77.11s     Wait for dev.silentneo.glassplayer to idle
+    t =    77.12s     Find the "viewModeMenu" Button
+    t =    77.52s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    77.64s     Synthesize event
+    t =    77.97s     Wait for dev.silentneo.glassplayer to idle
+    t =    80.29s Waiting 3.0s for "Thumbnails" Button to exist
+    t =    81.31s     Checking `Expect predicate `existsNoRetry == 1` for object "Thumbnails" Button`
+    t =    81.31s         Checking existence of `"Thumbnails" Button`
+    t =    81.52s Tap "Thumbnails" Button
+    t =    81.52s     Wait for dev.silentneo.glassplayer to idle
+    t =    81.53s     Find the "Thumbnails" Button
+    t =    81.69s     Check for interrupting elements affecting "Thumbnails" Button
+    t =    81.82s     Synthesize event
+    t =    82.15s     Wait for dev.silentneo.glassplayer to idle
+    t =    85.72s Find the Window (First Match)
+    t =    85.78s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    85.90s Checking existence of `Any (Element at index 0)`
+    t =    86.01s Find the Any (Element at index 0)
+    t =    86.14s Find the "home:Bright Movie (2024)" Button
+    t =    86.26s Checking existence of `Any (Element at index 1)`
+    t =    86.36s Find the Any (Element at index 1)
+    t =    86.59s Find the "home:Extra Film" Button
+    t =    86.66s Checking existence of `Any (Element at index 2)`
+    t =    86.75s Find the Any (Element at index 2)
+    t =    86.85s Find the "home:Lab Show" Button
+    t =    86.91s Checking existence of `Any (Element at index 3)`
+    t =    87.01s Find the Any (Element at index 3)
+    t =    87.12s Find the "home:Weekend picks" Button
+LAB 68.93 4 entries, Thumbnails again, portrait: window 402×874, 4 entries on screen — Bright Movie (2024) (20, 458, 111, 214); Extra Film (145, 458, 111, 214); Lab Show (270, 458, 111, 214); Weekend picks (20, 690, 122, 214)
+    t =    87.20s Setting device orientation to Landscape Left
+    t =    87.21s     Device orientation changed to Landscape Left
+    t =    87.44s     Interface orientation changed to Landscape Right
+    t =    87.44s     Wait for dev.silentneo.glassplayer to idle
+    t =    90.89s Find the Window (First Match)
+    t =    90.92s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    91.04s Checking existence of `Any (Element at index 0)`
+    t =    91.11s Find the Any (Element at index 0)
+    t =    91.28s Find the "home:Bright Movie (2024)" Button
+    t =    91.37s Checking existence of `Any (Element at index 1)`
+    t =    91.50s Find the Any (Element at index 1)
+    t =    91.68s Find the "home:Extra Film" Button
+    t =    91.88s Checking existence of `Any (Element at index 2)`
+    t =    92.11s Find the Any (Element at index 2)
+    t =    92.27s Find the "home:Lab Show" Button
+    t =    92.37s Checking existence of `Any (Element at index 3)`
+    t =    92.57s Find the Any (Element at index 3)
+    t =    92.71s Find the "home:Weekend picks" Button
+LAB 74.51 4 entries, Thumbnails again, landscape: window 874×402, 4 entries on screen — Bright Movie (2024) (90, 397, 127, 238); Extra Film (231, 397, 127, 238); Lab Show (373, 397, 127, 238); Weekend picks (514, 397, 127, 238)
+    t =    92.78s Setting device orientation to Portrait
+    t =    92.79s     Device orientation changed to Portrait
+    t =    92.92s     Interface orientation changed to Portrait
+    t =    92.92s     Wait for dev.silentneo.glassplayer to idle
+    t =    96.11s Find the Window (First Match)
+    t =    96.14s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    96.20s Checking existence of `Any (Element at index 0)`
+    t =    96.27s Find the Any (Element at index 0)
+    t =    96.36s Find the "home:Bright Movie (2024)" Button
+    t =    96.44s Checking existence of `Any (Element at index 1)`
+    t =    96.50s Find the Any (Element at index 1)
+    t =    96.62s Find the "home:Extra Film" Button
+    t =    96.68s Checking existence of `Any (Element at index 2)`
+    t =    96.76s Find the Any (Element at index 2)
+    t =    96.86s Find the "home:Lab Show" Button
+    t =    96.94s Checking existence of `Any (Element at index 3)`
+    t =    97.00s Find the Any (Element at index 3)
+    t =    97.09s Find the "home:Weekend picks" Button
+LAB 78.89 4 entries, Thumbnails again, back to portrait: window 402×874, 4 entries on screen — Bright Movie (2024) (20, 458, 111, 214); Extra Film (145, 458, 111, 214); Lab Show (270, 458, 111, 214); Weekend picks (20, 690, 122, 214)
+    t =    97.19s Tear Down
+Test Case '-[GlassPlayerUITests.HomeGridUITests test1FourEntriesTurned]' passed (97.628 seconds).
+Test Case '-[GlassPlayerUITests.HomeGridUITests test2Counts]' started.
+    t =     0.00s Start Test at 2026-10-30 15:38:24.552
+    t =     0.04s Set Up
+    t =     0.04s Open dev.silentneo.glassplayer
+    t =     0.04s     Launch dev.silentneo.glassplayer
+    t =     0.04s         Terminate dev.silentneo.glassplayer:13440
+2026-10-30 15:38:25.658 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 15:38:25.658 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.96s         Setting up automation session
+    t =    10.38s         Wait for dev.silentneo.glassplayer to idle
+    t =    13.15s Setting device orientation to Portrait
+    t =    13.16s     Wait for dev.silentneo.glassplayer to idle
+    t =    17.17s Find the Window (First Match)
+    t =    17.23s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+LAB 4.31 0 entries, Thumbnails, portrait: window 402×874, 0 entries on screen — 
+    t =    17.47s Setting device orientation to Landscape Left
+    t =    17.48s     Device orientation changed to Landscape Left
+    t =    17.61s     Interface orientation changed to Landscape Right
+    t =    17.70s     Wait for dev.silentneo.glassplayer to idle
+    t =    20.91s Find the Window (First Match)
+    t =    20.93s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+LAB 7.85 0 entries, Thumbnails, landscape: window 874×402, 0 entries on screen — 
+    t =    21.01s Setting device orientation to Portrait
+    t =    21.02s     Device orientation changed to Portrait
+    t =    21.04s     Interface orientation changed to Portrait
+    t =    21.13s     Wait for dev.silentneo.glassplayer to idle
+    t =    24.22s Find the Window (First Match)
+    t =    24.24s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+LAB 11.12 0 entries, Thumbnails, back to portrait: window 402×874, 0 entries on screen — 
+    t =    24.28s Terminate dev.silentneo.glassplayer:16074
+    t =    25.30s Open dev.silentneo.glassplayer
+    t =    25.30s     Launch dev.silentneo.glassplayer
+2026-10-30 15:38:49.875 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 15:38:49.875 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    26.10s         Setting up automation session
+    t =    33.08s         Wait for dev.silentneo.glassplayer to idle
+    t =    36.10s Setting device orientation to Portrait
+    t =    36.11s     Wait for dev.silentneo.glassplayer to idle
+    t =    40.13s Find the Window (First Match)
+    t =    40.18s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    40.40s Checking existence of `Any (Element at index 0)`
+    t =    40.50s Find the Any (Element at index 0)
+    t =    40.62s Find the "home:Lab Show" Button
+LAB 4.58 1 entries, Thumbnails, portrait: window 402×874, 1 entries on screen — Lab Show (0, 458, 402, 215)
+    t =    40.70s Setting device orientation to Landscape Left
+    t =    40.70s     Device orientation changed to Landscape Left
+    t =    40.83s     Interface orientation changed to Landscape Right
+    t =    40.83s     Wait for dev.silentneo.glassplayer to idle
+    t =    44.04s Find the Window (First Match)
+    t =    44.08s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    44.18s Checking existence of `Any (Element at index 0)`
+    t =    44.26s Find the Any (Element at index 0)
+    t =    44.34s Find the "home:Lab Show" Button
+LAB 8.28 1 entries, Thumbnails, landscape: window 874×402, 1 entries on screen — Lab Show (0, 397, 874, 239)
+    t =    44.40s Setting device orientation to Portrait
+    t =    44.40s     Device orientation changed to Portrait
+    t =    44.57s     Interface orientation changed to Portrait
+    t =    44.57s     Wait for dev.silentneo.glassplayer to idle
+    t =    47.69s Find the Window (First Match)
+    t =    47.72s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    47.81s Checking existence of `Any (Element at index 0)`
+    t =    47.89s Find the Any (Element at index 0)
+    t =    47.99s Find the "home:Lab Show" Button
+LAB 11.95 1 entries, Thumbnails, back to portrait: window 402×874, 1 entries on screen — Lab Show (0, 458, 402, 215)
+    t =    48.07s Terminate dev.silentneo.glassplayer:16210
+    t =    49.15s Open dev.silentneo.glassplayer
+    t =    49.15s     Launch dev.silentneo.glassplayer
+2026-10-30 15:39:13.710 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 15:39:13.710 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    49.71s         Setting up automation session
+    t =    56.76s         Wait for dev.silentneo.glassplayer to idle
+    t =    59.74s Setting device orientation to Portrait
+    t =    59.75s     Wait for dev.silentneo.glassplayer to idle
+    t =    63.77s Find the Window (First Match)
+    t =    63.81s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    64.04s Checking existence of `Any (Element at index 0)`
+    t =    64.15s Find the Any (Element at index 0)
+    t =    64.30s Find the "home:Bright Movie (2024)" Button
+    t =    64.39s Checking existence of `Any (Element at index 1)`
+    t =    64.46s Find the Any (Element at index 1)
+    t =    64.56s Find the "home:Lab Show" Button
+    t =    64.62s Checking existence of `Any (Element at index 2)`
+    t =    64.68s Find the Any (Element at index 2)
+    t =    64.77s Find the "home:Weekend picks" Button
+LAB 5.07 3 entries, Thumbnails, portrait: window 402×874, 3 entries on screen — Bright Movie (2024) (20, 458, 111, 214); Lab Show (145, 458, 111, 214); Weekend picks (270, 458, 111, 214)
+    t =    64.83s Setting device orientation to Landscape Left
+    t =    64.83s     Device orientation changed to Landscape Left
+    t =    64.96s     Interface orientation changed to Landscape Right
+    t =    64.96s     Wait for dev.silentneo.glassplayer to idle
+    t =    68.12s Find the Window (First Match)
+    t =    68.18s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    68.32s Checking existence of `Any (Element at index 0)`
+    t =    68.40s Find the Any (Element at index 0)
+    t =    68.51s Find the "home:Bright Movie (2024)" Button
+    t =    68.58s Checking existence of `Any (Element at index 1)`
+    t =    68.67s Find the Any (Element at index 1)
+    t =    68.76s Find the "home:Lab Show" Button
+    t =    68.82s Checking existence of `Any (Element at index 2)`
+    t =    68.90s Find the Any (Element at index 2)
+    t =    69.01s Find the "home:Weekend picks" Button
+LAB 9.30 3 entries, Thumbnails, landscape: window 874×402, 3 entries on screen — Bright Movie (2024) (90, 397, 127, 238); Lab Show (231, 397, 127, 238); Weekend picks (373, 397, 127, 238)
+    t =    69.06s Setting device orientation to Portrait
+    t =    69.06s     Device orientation changed to Portrait
+    t =    69.19s     Interface orientation changed to Portrait
+    t =    69.19s     Wait for dev.silentneo.glassplayer to idle
+    t =    72.32s Find the Window (First Match)
+    t =    72.34s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    72.44s Checking existence of `Any (Element at index 0)`
+    t =    72.52s Find the Any (Element at index 0)
+    t =    72.64s Find the "home:Bright Movie (2024)" Button
+    t =    72.69s Checking existence of `Any (Element at index 1)`
+    t =    72.76s Find the Any (Element at index 1)
+    t =    72.86s Find the "home:Lab Show" Button
+    t =    72.95s Checking existence of `Any (Element at index 2)`
+    t =    73.04s Find the Any (Element at index 2)
+    t =    73.14s Find the "home:Weekend picks" Button
+LAB 13.47 3 entries, Thumbnails, back to portrait: window 402×874, 3 entries on screen — Bright Movie (2024) (20, 458, 111, 214); Lab Show (145, 458, 111, 214); Weekend picks (270, 458, 111, 214)
+    t =    73.23s Terminate dev.silentneo.glassplayer:16261
+    t =    74.25s Open dev.silentneo.glassplayer
+    t =    74.25s     Launch dev.silentneo.glassplayer
+2026-10-30 15:39:38.861 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 15:39:38.861 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    74.96s         Setting up automation session
+    t =    82.15s         Wait for dev.silentneo.glassplayer to idle
+    t =    85.28s Setting device orientation to Portrait
+    t =    85.29s     Wait for dev.silentneo.glassplayer to idle
+    t =    89.30s Find the Window (First Match)
+    t =    89.34s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    89.63s Checking existence of `Any (Element at index 0)`
+    t =    89.77s Find the Any (Element at index 0)
+    t =    89.90s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2002)" Button
+    t =    89.99s Checking existence of `Any (Element at index 1)`
+    t =    90.10s Find the Any (Element at index 1)
+    t =    90.23s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2005)" Button
+    t =    90.32s Checking existence of `Any (Element at index 2)`
+    t =    90.42s Find the Any (Element at index 2)
+    t =    90.52s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2008)" Button
+    t =    90.61s Checking existence of `Any (Element at index 3)`
+    t =    90.70s Find the Any (Element at index 3)
+    t =    90.85s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2011)" Button
+    t =    90.93s Checking existence of `Any (Element at index 4)`
+    t =    91.02s Find the Any (Element at index 4)
+    t =    91.14s Find the "home:Bright Movie (2024)" Button
+    t =    91.24s Checking existence of `Any (Element at index 5)`
+    t =    91.33s Find the Any (Element at index 5)
+    t =    91.45s Find the "home:Extra Film" Button
+    t =    91.55s Checking existence of `Any (Element at index 6)`
+    t =    91.68s Find the Any (Element at index 6)
+    t =    91.79s Checking existence of `Any (Element at index 7)`
+    t =    91.89s Find the Any (Element at index 7)
+LAB 6.71 15 entries, Thumbnails, portrait: window 402×874, 6 entries on screen — A Film With A Very Long Name That Keeps Going Well Past The Tile (2002) (20, 458, 111, 214); A Film With A Very Long Name That Keeps Going Well Past The Tile (2005) (145, 458, 111, 214); A Film With A Very Long Name That Keeps Going Well Past The Tile (2008) (270, 458, 111, 214); A Film With A Very Long Name That Keeps Going Well Past The Tile (2011) (20, 690, 111, 214); Bright Movie (2024) (145, 690, 111, 214); Extra Film (270, 690, 111, 214)
+    t =    92.00s Setting device orientation to Landscape Left
+    t =    92.01s     Device orientation changed to Landscape Left
+    t =    92.14s     Interface orientation changed to Landscape Right
+    t =    92.14s     Wait for dev.silentneo.glassplayer to idle
+    t =    95.44s Find the Window (First Match)
+    t =    95.51s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    95.64s Checking existence of `Any (Element at index 0)`
+    t =    95.77s Find the Any (Element at index 0)
+    t =    95.90s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2002)" Button
+    t =    96.00s Checking existence of `Any (Element at index 1)`
+    t =    96.10s Find the Any (Element at index 1)
+    t =    96.28s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2005)" Button
+    t =    96.37s Checking existence of `Any (Element at index 2)`
+    t =    96.50s Find the Any (Element at index 2)
+    t =    96.67s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2008)" Button
+    t =    96.77s Checking existence of `Any (Element at index 3)`
+    t =    96.88s Find the Any (Element at index 3)
+    t =    97.00s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2011)" Button
+    t =    97.10s Checking existence of `Any (Element at index 4)`
+    t =    97.23s Find the Any (Element at index 4)
+    t =    97.39s Find the "home:Bright Movie (2024)" Button
+    t =    97.53s Checking existence of `Any (Element at index 5)`
+    t =    97.65s Find the Any (Element at index 5)
+    t =    97.78s Checking existence of `Any (Element at index 6)`
+    t =    97.90s Find the Any (Element at index 6)
+    t =    97.99s Checking existence of `Any (Element at index 7)`
+    t =    98.08s Find the Any (Element at index 7)
+LAB 12.92 15 entries, Thumbnails, landscape: window 874×402, 5 entries on screen — A Film With A Very Long Name That Keeps Going Well Past The Tile (2002) (90, 397, 127, 238); A Film With A Very Long Name That Keeps Going Well Past The Tile (2005) (231, 397, 127, 238); A Film With A Very Long Name That Keeps Going Well Past The Tile (2008) (373, 397, 127, 238); A Film With A Very Long Name That Keeps Going Well Past The Tile (2011) (514, 397, 127, 238); Bright Movie (2024) (656, 397, 127, 238)
+    t =    98.21s Setting device orientation to Portrait
+    t =    98.21s     Device orientation changed to Portrait
+    t =    98.42s     Interface orientation changed to Portrait
+    t =    98.43s     Wait for dev.silentneo.glassplayer to idle
+    t =   101.63s Find the Window (First Match)
+    t =   101.66s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =   101.79s Checking existence of `Any (Element at index 0)`
+    t =   101.89s Find the Any (Element at index 0)
+    t =   102.02s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2002)" Button
+    t =   102.17s Checking existence of `Any (Element at index 1)`
+    t =   102.34s Find the Any (Element at index 1)
+    t =   102.50s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2005)" Button
+    t =   102.68s Checking existence of `Any (Element at index 2)`
+    t =   102.81s Find the Any (Element at index 2)
+    t =   102.93s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2008)" Button
+    t =   103.01s Checking existence of `Any (Element at index 3)`
+    t =   103.08s Find the Any (Element at index 3)
+    t =   103.15s Find the "home:A Film With A Very Long Name That Keeps Going Well Past The Tile (2011)" Button
+    t =   103.24s Checking existence of `Any (Element at index 4)`
+    t =   103.30s Find the Any (Element at index 4)
+    t =   103.40s Find the "home:Bright Movie (2024)" Button
+    t =   103.47s Checking existence of `Any (Element at index 5)`
+    t =   103.56s Find the Any (Element at index 5)
+    t =   103.68s Find the "home:Extra Film" Button
+LAB 18.48 15 entries, Thumbnails, back to portrait: window 402×874, 6 entries on screen — A Film With A Very Long Name That Keeps Going Well Past The Tile (2002) (20, 458, 111, 214); A Film With A Very Long Name That Keeps Going Well Past The Tile (2005) (145, 458, 111, 214); A Film With A Very Long Name That Keeps Going Well Past The Tile (2008) (270, 458, 111, 214); A Film With A Very Long Name That Keeps Going Well Past The Tile (2011) (20, 690, 111, 214); Bright Movie (2024) (145, 690, 111, 214); Extra Film (270, 690, 111, 214)
+    t =   103.77s Terminate dev.silentneo.glassplayer:16477
+    t =   104.84s Tear Down
+Test Case '-[GlassPlayerUITests.HomeGridUITests test2Counts]' passed (104.999 seconds).
+Test Case '-[GlassPlayerUITests.HomeGridUITests test3LargestText]' started.
+    t =     0.00s Start Test at 2026-10-30 15:40:09.551
+    t =     0.04s Set Up
+    t =     0.04s Open dev.silentneo.glassplayer
+    t =     0.04s     Launch dev.silentneo.glassplayer
+2026-10-30 15:40:09.606 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 15:40:09.606 xcodebuild[11950:39229] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     0.84s         Setting up automation session
+    t =     7.46s         Wait for dev.silentneo.glassplayer to idle
+    t =    10.51s Setting device orientation to Portrait
+    t =    10.52s     Wait for dev.silentneo.glassplayer to idle
+    t =    14.52s Find the Window (First Match)
+    t =    14.56s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    14.83s Checking existence of `Any (Element at index 0)`
+    t =    14.99s Find the Any (Element at index 0)
+    t =    15.09s Find the "home:Bright Movie (2024)" Button
+    t =    15.17s Checking existence of `Any (Element at index 1)`
+    t =    15.24s Find the Any (Element at index 1)
+    t =    15.34s Find the "home:Extra Film" Button
+    t =    15.40s Checking existence of `Any (Element at index 2)`
+    t =    15.50s Find the Any (Element at index 2)
+    t =    15.58s Find the "home:Lab Show" Button
+    t =    15.64s Checking existence of `Any (Element at index 3)`
+    t =    15.71s Find the Any (Element at index 3)
+LAB 5.25 4 entries, largest text, Thumbnails, portrait: window 402×874, 3 entries on screen — Bright Movie (2024) (20, 838, 111, 289); Extra Film (145, 838, 111, 289); Lab Show (270, 838, 111, 289)
+    t =    15.77s Setting device orientation to Landscape Left
+    t =    15.77s     Device orientation changed to Landscape Left
+    t =    15.88s     Wait for dev.silentneo.glassplayer to idle
+    t =    15.91s         Interface orientation changed to Landscape Right
+    t =    19.12s Find the Window (First Match)
+    t =    19.14s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    19.23s Checking existence of `Any (Element at index 0)`
+    t =    19.31s Find the Any (Element at index 0)
+    t =    19.41s Checking existence of `Any (Element at index 1)`
+    t =    19.47s Find the Any (Element at index 1)
+    t =    19.55s Checking existence of `Any (Element at index 2)`
+    t =    19.65s Find the Any (Element at index 2)
+    t =    19.72s Checking existence of `Any (Element at index 3)`
+    t =    19.81s Find the Any (Element at index 3)
+LAB 9.35 4 entries, largest text, Thumbnails, landscape: window 874×402, 0 entries on screen — 
+    t =    19.88s Setting device orientation to Portrait
+    t =    19.88s     Device orientation changed to Portrait
+    t =    19.99s     Interface orientation changed to Portrait
+    t =    19.99s     Wait for dev.silentneo.glassplayer to idle
+    t =    23.12s Find the Window (First Match)
+    t =    23.14s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    23.22s Checking existence of `Any (Element at index 0)`
+    t =    23.28s Find the Any (Element at index 0)
+    t =    23.36s Find the "home:Bright Movie (2024)" Button
+    t =    23.43s Checking existence of `Any (Element at index 1)`
+    t =    23.49s Find the Any (Element at index 1)
+    t =    23.56s Find the "home:Extra Film" Button
+    t =    23.63s Checking existence of `Any (Element at index 2)`
+    t =    23.71s Find the Any (Element at index 2)
+    t =    23.82s Find the "home:Lab Show" Button
+    t =    23.89s Checking existence of `Any (Element at index 3)`
+    t =    23.97s Find the Any (Element at index 3)
+LAB 13.57 4 entries, largest text, Thumbnails, back to portrait: window 402×874, 3 entries on screen — Bright Movie (2024) (20, 838, 111, 289); Extra Film (145, 838, 111, 289); Lab Show (270, 838, 111, 289)
+    t =    24.09s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    25.12s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    25.12s         Checking existence of `"viewModeMenu" Button`
+    t =    25.35s Tap "viewModeMenu" Button
+    t =    25.35s     Wait for dev.silentneo.glassplayer to idle
+    t =    25.35s     Find the "viewModeMenu" Button
+    t =    25.56s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    25.73s     Synthesize event
+    t =    25.88s         Scroll element to visible
+    t =    25.90s         Find the "viewModeMenu" Button
+    t =    26.33s         Computed hit point {365, 450.16666666666674} after scrolling to visible
+    t =    26.63s     Wait for dev.silentneo.glassplayer to idle
+    t =    29.84s Waiting 3.0s for "Details" Button to exist
+    t =    30.94s     Checking `Expect predicate `existsNoRetry == 1` for object "Details" Button`
+    t =    31.37s         Checking existence of `"Details" Button`
+    t =    31.85s Tap "Details" Button
+    t =    31.85s     Wait for dev.silentneo.glassplayer to idle
+    t =    31.86s     Find the "Details" Button
+    t =    32.03s     Check for interrupting elements affecting "Details" Button
+    t =    32.18s     Synthesize event
+    t =    32.57s     Wait for dev.silentneo.glassplayer to idle
+    t =    36.31s Find the Window (First Match)
+    t =    36.35s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    36.44s Checking existence of `Any (Element at index 0)`
+    t =    36.56s Find the Any (Element at index 0)
+    t =    36.70s Find the "home:Bright Movie (2024)" Button
+    t =    36.82s Checking existence of `Any (Element at index 1)`
+    t =    36.91s Find the Any (Element at index 1)
+    t =    37.07s Find the "home:Extra Film" Button
+LAB 26.66 4 entries, largest text, Details, portrait: window 402×874, 2 entries on screen — Bright Movie (2024) (0, 480, 402, 243); Extra Film (0, 723, 402, 243)
+    t =    37.19s Setting device orientation to Landscape Left
+    t =    37.19s     Device orientation changed to Landscape Left
+    t =    37.39s     Interface orientation changed to Landscape Right
+    t =    37.39s     Wait for dev.silentneo.glassplayer to idle
+    t =    40.74s Find the Window (First Match)
+    t =    40.77s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    40.86s Checking existence of `Any (Element at index 0)`
+    t =    40.95s Find the Any (Element at index 0)
+    t =    41.14s Find the "home:Bright Movie (2024)" Button
+    t =    41.23s Checking existence of `Any (Element at index 1)`
+    t =    41.33s Find the Any (Element at index 1)
+    t =    41.43s Checking existence of `Any (Element at index 2)`
+    t =    41.50s Find the Any (Element at index 2)
+    t =    41.59s Checking existence of `Any (Element at index 3)`
+    t =    41.66s Find the Any (Element at index 3)
+LAB 31.23 4 entries, largest text, Details, landscape: window 874×402, 1 entries on screen — Bright Movie (2024) (0, 354, 874, 243)
+    t =    41.76s Setting device orientation to Portrait
+    t =    41.76s     Device orientation changed to Portrait
+    t =    41.88s     Interface orientation changed to Portrait
+    t =    41.88s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.12s Find the Window (First Match)
+    t =    45.14s Get all elements bound by index for: Elements matching predicate 'identifier BEGINSWITH "home:"'
+    t =    45.23s Checking existence of `Any (Element at index 0)`
+    t =    45.34s Find the Any (Element at index 0)
+    t =    45.42s Find the "home:Bright Movie (2024)" Button
+    t =    45.49s Checking existence of `Any (Element at index 1)`
+    t =    45.54s Find the Any (Element at index 1)
+    t =    45.63s Find the "home:Extra Film" Button
+LAB 35.16 4 entries, largest text, Details, back to portrait: window 402×874, 2 entries on screen — Bright Movie (2024) (0, 480, 402, 243); Extra Film (0, 723, 402, 243)
+    t =    45.69s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    46.74s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    46.74s         Checking existence of `"viewModeMenu" Button`
+    t =    47.05s Tap "viewModeMenu" Button
+    t =    47.05s     Wait for dev.silentneo.glassplayer to idle
+    t =    47.05s     Find the "viewModeMenu" Button
+    t =    47.34s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    47.45s     Synthesize event
+    t =    47.77s     Wait for dev.silentneo.glassplayer to idle
+    t =    50.23s Waiting 3.0s for "Thumbnails" Button to exist
+    t =    51.26s     Checking `Expect predicate `existsNoRetry == 1` for object "Thumbnails" Button`
+    t =    51.26s         Checking existence of `"Thumbnails" Button`
+    t =    51.34s Tap "Thumbnails" Button
+    t =    51.34s     Wait for dev.silentneo.glassplayer to idle
+    t =    51.35s     Find the "Thumbnails" Button
+    t =    51.44s     Check for interrupting elements affecting "Thumbnails" Button
+    t =    51.54s     Synthesize event
+    t =    51.87s     Wait for dev.silentneo.glassplayer to idle
+    t =    55.44s Tear Down
+Test Case '-[GlassPlayerUITests.HomeGridUITests test3LargestText]' passed (55.754 seconds).
+Test Suite 'HomeGridUITests' passed at 2026-10-30 15:41:05.306.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 258.381 (258.435) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-30 15:41:05.313.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 258.381 (258.443) seconds
+Test Suite 'Selected tests' passed at 2026-10-30 15:41:05.313.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 258.381 (258.447) seconds
+2026-10-30 15:41:06.319 xcodebuild[11950:39229] [MT] IDETestOperationsObserverDebug: 282.121 elapsed -- Testing started completed.
+2026-10-30 15:41:06.320 xcodebuild[11950:39229] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-30 15:41:06.320 xcodebuild[11950:39229] [MT] IDETestOperationsObserverDebug: 282.121 sec, +282.121 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/Folio/Folio/build/Logs/Test/Test-GlassPlayer-2026.10.30_15-36-23-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
