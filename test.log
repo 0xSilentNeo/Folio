@@ -1,0 +1,515 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=C6440860-3DBD-43F1-85B3-E0E2DBC9F273 -derivedDataPath build "-only-testing:GlassPlayerUITests/RoundLabUITests/test5ProviderHeaders" "-only-testing:GlassPlayerUITests/RoundLabUITests/test7ProviderHeadersLargestText"
+
+2026-10-30 10:59:07.285732+0000 GlassPlayerUITests-Runner[36569:95081] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-30 10:59:17.190.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-30 10:59:17.196.
+Test Suite 'RoundLabUITests' started at 2026-10-30 10:59:17.196.
+2026-10-30 10:59:19.887 xcodebuild[35794:92913] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 10:59:19.888 xcodebuild[35794:92913] [MT] IDELaunchParametersSnapshot: no debugger version
+Test Case '-[GlassPlayerUITests.RoundLabUITests test5ProviderHeaders]' started.
+    t =     0.01s Start Test at 2026-10-30 10:59:17.203
+    t =     0.08s Set Up
+    t =     0.09s Open dev.silentneo.glassplayer
+    t =     0.09s     Launch dev.silentneo.glassplayer
+objc[36569]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.AFJbHv/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x10827c398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.AFJbHv/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x109028310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =     6.94s         Setting up automation session
+    t =    11.60s         Wait for dev.silentneo.glassplayer to idle
+    t =    14.84s Setting device orientation to Portrait
+    t =    14.87s     Device orientation changed to Portrait
+    t =    14.92s     Wait for dev.silentneo.glassplayer to idle
+    t =    14.92s Checking existence of `"Discover" Button`
+    t =    15.30s Waiting 20.0s for "Discover" Button to exist
+    t =    16.36s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    16.36s         Checking existence of `"Discover" Button`
+    t =    16.40s Tap "Discover" Button
+    t =    16.40s     Wait for dev.silentneo.glassplayer to idle
+    t =    16.40s     Find the "Discover" Button
+    t =    16.44s     Check for interrupting elements affecting "sparkles.tv" Button
+    t =    16.48s     Synthesize event
+    t =    17.01s     Wait for dev.silentneo.glassplayer to idle
+    t =    22.62s Find the "Netflix" StaticText
+    t =    23.64s Waiting 3.0s for "Netflix" StaticText to exist
+    t =    24.68s     Checking `Expect predicate `existsNoRetry == 1` for object "Netflix" StaticText`
+    t =    24.68s         Checking existence of `"Netflix" StaticText`
+    t =    26.42s Tap "Netflix" StaticText
+    t =    26.43s     Wait for dev.silentneo.glassplayer to idle
+    t =    26.44s     Find the "Netflix" StaticText
+    t =    27.02s     Check for interrupting elements affecting "Netflix" StaticText
+    t =    27.12s     Synthesize event
+    t =    27.43s     Wait for dev.silentneo.glassplayer to idle
+    t =    29.72s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    30.13s Checking existence of `"platformBadge" Any`
+    t =    30.24s Find the "platformBadge" Any
+    t =    30.36s Find the "platformBadge" StaticText
+    t =    30.46s Find the Button (First Match)
+LAB 15.68 Netflix: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    30.54s Find the "BackButton" Button
+    t =    30.59s Tap "BackButton" Button
+    t =    30.59s     Wait for dev.silentneo.glassplayer to idle
+    t =    30.60s     Find the "BackButton" Button
+    t =    30.67s     Check for interrupting elements affecting "BackButton" Button
+    t =    30.76s     Synthesize event
+    t =    31.08s     Wait for dev.silentneo.glassplayer to idle
+    t =    32.55s Find the "Prime Video" StaticText
+    t =    32.74s Waiting 3.0s for "Prime Video" StaticText to exist
+    t =    33.78s     Checking `Expect predicate `existsNoRetry == 1` for object "Prime Video" StaticText`
+    t =    33.78s         Checking existence of `"Prime Video" StaticText`
+    t =    33.93s Tap "Prime Video" StaticText
+    t =    33.93s     Wait for dev.silentneo.glassplayer to idle
+    t =    33.93s     Find the "Prime Video" StaticText
+    t =    34.08s     Check for interrupting elements affecting "Prime Video" StaticText
+    t =    34.12s     Synthesize event
+    t =    34.42s     Wait for dev.silentneo.glassplayer to idle
+    t =    36.81s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    36.90s Checking existence of `"platformBadge" Any`
+    t =    36.98s Find the "platformBadge" Any
+    t =    37.09s Find the "platformBadge" StaticText
+    t =    37.17s Find the Button (First Match)
+LAB 22.38 Prime Video: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    37.23s Find the "BackButton" Button
+    t =    37.28s Tap "BackButton" Button
+    t =    37.28s     Wait for dev.silentneo.glassplayer to idle
+    t =    37.29s     Find the "BackButton" Button
+    t =    37.33s     Check for interrupting elements affecting "BackButton" Button
+    t =    37.41s     Synthesize event
+    t =    37.72s     Wait for dev.silentneo.glassplayer to idle
+    t =    39.10s Find the "HBO Max" StaticText
+    t =    39.29s Waiting 3.0s for "HBO Max" StaticText to exist
+    t =    40.33s     Checking `Expect predicate `existsNoRetry == 1` for object "HBO Max" StaticText`
+    t =    40.33s         Checking existence of `"HBO Max" StaticText`
+    t =    40.51s Tap "HBO Max" StaticText
+    t =    40.51s     Wait for dev.silentneo.glassplayer to idle
+    t =    40.51s     Find the "HBO Max" StaticText
+    t =    40.70s     Check for interrupting elements affecting "HBO Max" StaticText
+    t =    40.77s     Synthesize event
+    t =    41.09s     Wait for dev.silentneo.glassplayer to idle
+    t =    43.44s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    43.57s Checking existence of `"platformBadge" Any`
+    t =    43.66s Find the "platformBadge" Any
+    t =    43.76s Find the "platformBadge" StaticText
+    t =    43.85s Find the Button (First Match)
+LAB 29.06 HBO Max: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    43.92s Find the "BackButton" Button
+    t =    44.01s Tap "BackButton" Button
+    t =    44.01s     Wait for dev.silentneo.glassplayer to idle
+    t =    44.01s     Find the "BackButton" Button
+    t =    44.08s     Check for interrupting elements affecting "BackButton" Button
+    t =    44.18s     Synthesize event
+    t =    44.49s     Wait for dev.silentneo.glassplayer to idle
+    t =    45.90s Find the "Disney+" StaticText
+    t =    46.40s Waiting 3.0s for "Disney+" StaticText to exist
+    t =    47.46s     Checking `Expect predicate `existsNoRetry == 1` for object "Disney+" StaticText`
+    t =    47.46s         Checking existence of `"Disney+" StaticText`
+    t =    47.65s Tap "Disney+" StaticText
+    t =    47.65s     Wait for dev.silentneo.glassplayer to idle
+    t =    47.65s     Find the "Disney+" StaticText
+    t =    47.83s     Check for interrupting elements affecting "Disney+" StaticText
+    t =    47.88s     Synthesize event
+    t =    48.20s     Wait for dev.silentneo.glassplayer to idle
+    t =    50.56s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    50.65s Checking existence of `"platformBadge" Any`
+    t =    50.73s Find the "platformBadge" Any
+    t =    50.84s Find the "platformBadge" StaticText
+    t =    50.95s Find the Button (First Match)
+LAB 36.16 Disney+: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    51.01s Find the "BackButton" Button
+    t =    51.07s Tap "BackButton" Button
+    t =    51.07s     Wait for dev.silentneo.glassplayer to idle
+    t =    51.08s     Find the "BackButton" Button
+    t =    51.12s     Check for interrupting elements affecting "BackButton" Button
+    t =    51.19s     Synthesize event
+    t =    51.50s     Wait for dev.silentneo.glassplayer to idle
+    t =    52.89s Find the "Apple TV+" StaticText
+    t =    53.03s Waiting 3.0s for "Apple TV+" StaticText to exist
+    t =    54.06s     Checking `Expect predicate `existsNoRetry == 1` for object "Apple TV+" StaticText`
+    t =    54.07s         Checking existence of `"Apple TV+" StaticText`
+    t =    54.27s Tap "Apple TV+" StaticText
+    t =    54.27s     Wait for dev.silentneo.glassplayer to idle
+    t =    54.28s     Find the "Apple TV+" StaticText
+    t =    54.63s     Check for interrupting elements affecting "Apple TV+" StaticText
+    t =    54.73s     Synthesize event
+    t =    55.07s     Wait for dev.silentneo.glassplayer to idle
+    t =    57.47s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    57.58s Checking existence of `"platformBadge" Any`
+    t =    57.67s Find the "platformBadge" Any
+    t =    57.79s Find the "platformBadge" StaticText
+    t =    57.91s Find the Button (First Match)
+LAB 43.12 Apple TV+: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    57.97s Find the "BackButton" Button
+    t =    58.04s Tap "BackButton" Button
+    t =    58.04s     Wait for dev.silentneo.glassplayer to idle
+    t =    58.05s     Find the "BackButton" Button
+    t =    58.10s     Check for interrupting elements affecting "BackButton" Button
+    t =    58.19s     Synthesize event
+    t =    58.50s     Wait for dev.silentneo.glassplayer to idle
+    t =    59.91s Find the "Paramount+" StaticText
+    t =    60.12s Waiting 3.0s for "Paramount+" StaticText to exist
+    t =    61.14s     Checking `Expect predicate `existsNoRetry == 1` for object "Paramount+" StaticText`
+    t =    61.14s         Checking existence of `"Paramount+" StaticText`
+    t =    61.29s Tap "Paramount+" StaticText
+    t =    61.29s     Wait for dev.silentneo.glassplayer to idle
+    t =    61.30s     Find the "Paramount+" StaticText
+    t =    61.48s     Check for interrupting elements affecting "Paramount+" StaticText
+    t =    61.53s     Synthesize event
+    t =    61.83s     Wait for dev.silentneo.glassplayer to idle
+    t =    64.18s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    64.37s Checking existence of `"platformBadge" Any`
+    t =    64.49s Find the "platformBadge" Any
+    t =    64.66s Find the "platformBadge" StaticText
+    t =    64.77s Find the Button (First Match)
+LAB 49.98 Paramount+: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    64.83s Find the "BackButton" Button
+    t =    64.96s Tap "BackButton" Button
+    t =    64.96s     Wait for dev.silentneo.glassplayer to idle
+    t =    64.97s     Find the "BackButton" Button
+    t =    65.05s     Check for interrupting elements affecting "BackButton" Button
+    t =    65.17s     Synthesize event
+    t =    65.49s     Wait for dev.silentneo.glassplayer to idle
+    t =    66.98s Find the "Hulu" StaticText
+    t =    67.43s Swipe left ScrollView (First Match)
+    t =    67.43s     Wait for dev.silentneo.glassplayer to idle
+    t =    67.44s     Find the ScrollView (First Match)
+    t =    67.62s     Check for interrupting elements affecting ScrollView
+    t =    67.74s     Synthesize event
+    t =    68.34s     Wait for dev.silentneo.glassplayer to idle
+    t =    68.34s Waiting 3.0s for "Hulu" StaticText to exist
+    t =    69.38s     Checking `Expect predicate `existsNoRetry == 1` for object "Hulu" StaticText`
+    t =    69.38s         Checking existence of `"Hulu" StaticText`
+    t =    69.58s Tap "Hulu" StaticText
+    t =    69.58s     Wait for dev.silentneo.glassplayer to idle
+    t =    69.58s     Find the "Hulu" StaticText
+    t =    69.82s     Check for interrupting elements affecting "Hulu" StaticText
+    t =    69.88s     Synthesize event
+    t =    69.92s         Scroll element to visible
+    t =    69.93s         Find the "Hulu" StaticText
+    t =    70.15s         Computed hit point {222, 212.66666666666666} after scrolling to visible
+    t =    70.43s     Wait for dev.silentneo.glassplayer to idle
+    t =    72.83s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    73.08s Checking existence of `"platformBadge" Any`
+    t =    73.23s Find the "platformBadge" Any
+    t =    73.36s Find the "platformBadge" StaticText
+    t =    73.52s Find the Button (First Match)
+<unknown>:0: warning: -[GlassPlayerUITests.RoundLabUITests test5ProviderHeaders] : [Internal] Thread running at User-interactive quality-of-service class waiting on a thread without a QoS class specified (base priority 33). Investigate ways to avoid priority inversions
+LAB 59.24 Hulu: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    74.31s Find the "BackButton" Button
+    t =    75.18s Tap "BackButton" Button
+    t =    75.18s     Wait for dev.silentneo.glassplayer to idle
+    t =    75.21s     Find the "BackButton" Button
+    t =    75.46s     Check for interrupting elements affecting "BackButton" Button
+    t =    75.57s     Synthesize event
+    t =    75.95s     Wait for dev.silentneo.glassplayer to idle
+    t =    77.86s Find the "Peacock" StaticText
+    t =    80.23s Waiting 3.0s for "Peacock" StaticText to exist
+    t =    81.27s     Checking `Expect predicate `existsNoRetry == 1` for object "Peacock" StaticText`
+    t =    81.27s         Checking existence of `"Peacock" StaticText`
+    t =    82.85s Tap "Peacock" StaticText
+    t =    82.85s     Wait for dev.silentneo.glassplayer to idle
+    t =    82.86s     Find the "Peacock" StaticText
+    t =    83.57s     Check for interrupting elements affecting "Peacock" StaticText
+    t =    83.79s     Synthesize event
+    t =    84.12s     Wait for dev.silentneo.glassplayer to idle
+    t =    86.62s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    86.72s Checking existence of `"platformBadge" Any`
+    t =    86.81s Find the "platformBadge" Any
+    t =    86.92s Find the "platformBadge" StaticText
+    t =    87.02s Find the Button (First Match)
+LAB 72.23 Peacock: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    87.08s Find the "BackButton" Button
+    t =    87.14s Tap "BackButton" Button
+    t =    87.14s     Wait for dev.silentneo.glassplayer to idle
+    t =    87.14s     Find the "BackButton" Button
+    t =    87.23s     Check for interrupting elements affecting "BackButton" Button
+    t =    87.31s     Synthesize event
+    t =    87.62s     Wait for dev.silentneo.glassplayer to idle
+    t =    89.02s Find the "Crunchyroll" StaticText
+    t =    89.63s Waiting 3.0s for "Crunchyroll" StaticText to exist
+    t =    90.68s     Checking `Expect predicate `existsNoRetry == 1` for object "Crunchyroll" StaticText`
+    t =    90.68s         Checking existence of `"Crunchyroll" StaticText`
+    t =    91.41s Tap "Crunchyroll" StaticText
+    t =    91.41s     Wait for dev.silentneo.glassplayer to idle
+    t =    91.42s     Find the "Crunchyroll" StaticText
+    t =    92.54s     Check for interrupting elements affecting "Crunchyroll" StaticText
+    t =    92.68s     Synthesize event
+    t =    93.00s     Wait for dev.silentneo.glassplayer to idle
+    t =    95.41s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    95.71s Checking existence of `"platformBadge" Any`
+    t =    95.89s Find the "platformBadge" Any
+    t =    96.13s Find the "platformBadge" StaticText
+    t =    96.29s Find the Button (First Match)
+LAB 81.53 Crunchyroll: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 132.0, 54.0, 54.0)
+    t =    96.39s Find the "BackButton" Button
+    t =    96.52s Tap "BackButton" Button
+    t =    96.52s     Wait for dev.silentneo.glassplayer to idle
+    t =    96.53s     Find the "BackButton" Button
+    t =    96.61s     Check for interrupting elements affecting "BackButton" Button
+    t =    96.77s     Synthesize event
+    t =    97.09s     Wait for dev.silentneo.glassplayer to idle
+    t =    98.61s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test5ProviderHeaders]' passed (99.261 seconds).
+Test Case '-[GlassPlayerUITests.RoundLabUITests test7ProviderHeadersLargestText]' started.
+    t =     0.00s Start Test at 2026-10-30 11:00:56.464
+    t =     0.05s Set Up
+    t =     0.05s Open dev.silentneo.glassplayer
+    t =     0.05s     Launch dev.silentneo.glassplayer
+    t =     0.05s         Terminate dev.silentneo.glassplayer:37128
+2026-10-30 11:00:57.628 xcodebuild[35794:92913] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 11:00:57.628 xcodebuild[35794:92913] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.11s         Setting up automation session
+    t =     9.87s         Wait for dev.silentneo.glassplayer to idle
+    t =    12.96s Setting device orientation to Portrait
+    t =    12.98s     Wait for dev.silentneo.glassplayer to idle
+    t =    12.98s Checking existence of `"Discover" Button`
+    t =    13.60s Waiting 20.0s for "Discover" Button to exist
+    t =    14.66s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    14.66s         Checking existence of `"Discover" Button`
+    t =    14.80s Tap "Discover" Button
+    t =    14.80s     Wait for dev.silentneo.glassplayer to idle
+    t =    14.80s     Find the "Discover" Button
+    t =    14.95s     Check for interrupting elements affecting "Discover" Button
+    t =    15.28s     Synthesize event
+    t =    15.77s     Wait for dev.silentneo.glassplayer to idle
+    t =    21.62s Find the "Netflix" StaticText
+    t =    23.07s Waiting 3.0s for "Netflix" StaticText to exist
+    t =    24.09s     Checking `Expect predicate `existsNoRetry == 1` for object "Netflix" StaticText`
+    t =    24.09s         Checking existence of `"Netflix" StaticText`
+    t =    25.02s Tap "Netflix" StaticText
+    t =    25.02s     Wait for dev.silentneo.glassplayer to idle
+    t =    25.03s     Find the "Netflix" StaticText
+    t =    25.58s     Check for interrupting elements affecting "Netflix" StaticText
+    t =    25.84s     Synthesize event
+    t =    26.20s     Wait for dev.silentneo.glassplayer to idle
+    t =    28.33s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    28.56s Checking existence of `"platformBadge" Any`
+    t =    28.69s Find the "platformBadge" Any
+    t =    28.92s Find the "platformBadge" StaticText
+    t =    29.11s Find the Button (First Match)
+LAB 16.24 Netflix: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =    29.23s Find the "BackButton" Button
+    t =    29.35s Tap "BackButton" Button
+    t =    29.35s     Wait for dev.silentneo.glassplayer to idle
+    t =    29.35s     Find the "BackButton" Button
+    t =    29.44s     Check for interrupting elements affecting "BackButton" Button
+    t =    29.60s     Synthesize event
+    t =    29.92s     Wait for dev.silentneo.glassplayer to idle
+    t =    31.42s Find the "Prime Video" StaticText
+    t =    32.10s Waiting 3.0s for "Prime Video" StaticText to exist
+    t =    33.15s     Checking `Expect predicate `existsNoRetry == 1` for object "Prime Video" StaticText`
+    t =    33.15s         Checking existence of `"Prime Video" StaticText`
+    t =    33.93s Tap "Prime Video" StaticText
+    t =    33.93s     Wait for dev.silentneo.glassplayer to idle
+    t =    33.93s     Find the "Prime Video" StaticText
+    t =    35.37s     Check for interrupting elements affecting "Prime Video" StaticText
+    t =    35.64s     Synthesize event
+    t =    36.01s     Wait for dev.silentneo.glassplayer to idle
+    t =    38.52s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    38.68s Checking existence of `"platformBadge" Any`
+    t =    38.84s Find the "platformBadge" Any
+    t =    39.09s Find the "platformBadge" StaticText
+    t =    39.23s Find the Button (First Match)
+LAB 26.37 Prime Video: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 176.0, 54.0, 54.0)
+    t =    39.36s Find the "BackButton" Button
+    t =    39.56s Tap "BackButton" Button
+    t =    39.56s     Wait for dev.silentneo.glassplayer to idle
+    t =    39.57s     Find the "BackButton" Button
+    t =    39.71s     Check for interrupting elements affecting "BackButton" Button
+    t =    39.81s     Synthesize event
+    t =    40.13s     Wait for dev.silentneo.glassplayer to idle
+    t =    41.66s Find the "HBO Max" StaticText
+    t =    42.45s Waiting 3.0s for "HBO Max" StaticText to exist
+    t =    43.49s     Checking `Expect predicate `existsNoRetry == 1` for object "HBO Max" StaticText`
+    t =    43.49s         Checking existence of `"HBO Max" StaticText`
+    t =    44.10s Tap "HBO Max" StaticText
+    t =    44.10s     Wait for dev.silentneo.glassplayer to idle
+    t =    44.11s     Find the "HBO Max" StaticText
+    t =    44.83s     Check for interrupting elements affecting "HBO Max" StaticText
+    t =    44.98s     Synthesize event
+    t =    45.31s     Wait for dev.silentneo.glassplayer to idle
+    t =    47.72s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    47.93s Checking existence of `"platformBadge" Any`
+    t =    48.12s Find the "platformBadge" Any
+    t =    48.32s Find the "platformBadge" StaticText
+    t =    48.47s Find the Button (First Match)
+LAB 35.69 HBO Max: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =    48.69s Find the "BackButton" Button
+    t =    49.01s Tap "BackButton" Button
+    t =    49.01s     Wait for dev.silentneo.glassplayer to idle
+    t =    49.05s     Find the "BackButton" Button
+    t =    49.42s     Check for interrupting elements affecting "BackButton" Button
+    t =    49.54s     Synthesize event
+    t =    49.87s     Wait for dev.silentneo.glassplayer to idle
+    t =    51.41s Find the "Disney+" StaticText
+    t =    52.38s Waiting 3.0s for "Disney+" StaticText to exist
+    t =    53.40s     Checking `Expect predicate `existsNoRetry == 1` for object "Disney+" StaticText`
+    t =    53.40s         Checking existence of `"Disney+" StaticText`
+    t =    53.71s Tap "Disney+" StaticText
+    t =    53.71s     Wait for dev.silentneo.glassplayer to idle
+    t =    53.72s     Find the "Disney+" StaticText
+    t =    54.13s     Check for interrupting elements affecting "Disney+" StaticText
+    t =    54.22s     Synthesize event
+    t =    54.54s     Wait for dev.silentneo.glassplayer to idle
+    t =    56.95s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    57.10s Checking existence of `"platformBadge" Any`
+    t =    57.25s Find the "platformBadge" Any
+    t =    57.37s Find the "platformBadge" StaticText
+    t =    57.48s Find the Button (First Match)
+LAB 44.58 Disney+: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =    57.54s Find the "BackButton" Button
+    t =    57.60s Tap "BackButton" Button
+    t =    57.60s     Wait for dev.silentneo.glassplayer to idle
+    t =    57.61s     Find the "BackButton" Button
+    t =    57.66s     Check for interrupting elements affecting "BackButton" Button
+    t =    57.76s     Synthesize event
+    t =    58.09s     Wait for dev.silentneo.glassplayer to idle
+    t =    59.65s Find the "Apple TV+" StaticText
+    t =    60.13s Waiting 3.0s for "Apple TV+" StaticText to exist
+    t =    61.17s     Checking `Expect predicate `existsNoRetry == 1` for object "Apple TV+" StaticText`
+    t =    61.17s         Checking existence of `"Apple TV+" StaticText`
+    t =    61.56s Tap "Apple TV+" StaticText
+    t =    61.56s     Wait for dev.silentneo.glassplayer to idle
+    t =    61.56s     Find the "Apple TV+" StaticText
+    t =    61.96s     Check for interrupting elements affecting "Apple TV+" StaticText
+    t =    62.07s     Synthesize event
+    t =    62.39s     Wait for dev.silentneo.glassplayer to idle
+    t =    64.80s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    64.96s Checking existence of `"platformBadge" Any`
+    t =    65.04s Find the "platformBadge" Any
+    t =    65.16s Find the "platformBadge" StaticText
+    t =    65.26s Find the Button (First Match)
+LAB 52.49 Apple TV+: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =    65.46s Find the "BackButton" Button
+    t =    65.54s Tap "BackButton" Button
+    t =    65.54s     Wait for dev.silentneo.glassplayer to idle
+    t =    65.55s     Find the "BackButton" Button
+    t =    65.61s     Check for interrupting elements affecting "BackButton" Button
+    t =    65.71s     Synthesize event
+    t =    66.02s     Wait for dev.silentneo.glassplayer to idle
+    t =    67.46s Find the "Paramount+" StaticText
+    t =    67.95s Swipe left ScrollView (First Match)
+    t =    67.95s     Wait for dev.silentneo.glassplayer to idle
+    t =    67.96s     Find the ScrollView (First Match)
+    t =    68.06s     Check for interrupting elements affecting ScrollView
+    t =    68.20s     Synthesize event
+    t =    68.74s     Wait for dev.silentneo.glassplayer to idle
+    t =    68.74s Waiting 3.0s for "Paramount+" StaticText to exist
+    t =    69.76s     Checking `Expect predicate `existsNoRetry == 1` for object "Paramount+" StaticText`
+    t =    69.76s         Checking existence of `"Paramount+" StaticText`
+    t =    70.21s Tap "Paramount+" StaticText
+    t =    70.21s     Wait for dev.silentneo.glassplayer to idle
+    t =    70.22s     Find the "Paramount+" StaticText
+    t =    70.59s     Check for interrupting elements affecting "Paramount+" StaticText
+    t =    70.72s     Synthesize event
+    t =    70.77s         Scroll element to visible
+    t =    70.77s         Find the "Paramount+" StaticText
+    t =    71.26s         Computed hit point {296, 230} after scrolling to visible
+    t =    71.56s     Wait for dev.silentneo.glassplayer to idle
+    t =    73.98s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    74.13s Checking existence of `"platformBadge" Any`
+    t =    74.22s Find the "platformBadge" Any
+    t =    74.37s Find the "platformBadge" StaticText
+    t =    74.47s Find the Button (First Match)
+LAB 61.62 Paramount+: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 138.66666666666666, 54.0, 54.0)
+    t =    74.58s Find the "BackButton" Button
+    t =    74.68s Tap "BackButton" Button
+    t =    74.68s     Wait for dev.silentneo.glassplayer to idle
+    t =    74.68s     Find the "BackButton" Button
+    t =    74.72s     Check for interrupting elements affecting "BackButton" Button
+    t =    74.80s     Synthesize event
+    t =    75.16s     Wait for dev.silentneo.glassplayer to idle
+    t =    76.71s Find the "Hulu" StaticText
+    t =    77.35s Waiting 3.0s for "Hulu" StaticText to exist
+    t =    78.40s     Checking `Expect predicate `existsNoRetry == 1` for object "Hulu" StaticText`
+    t =    78.40s         Checking existence of `"Hulu" StaticText`
+    t =    78.73s Tap "Hulu" StaticText
+    t =    78.73s     Wait for dev.silentneo.glassplayer to idle
+    t =    78.73s     Find the "Hulu" StaticText
+    t =    79.15s     Check for interrupting elements affecting "Hulu" StaticText
+    t =    79.25s     Synthesize event
+    t =    79.57s     Wait for dev.silentneo.glassplayer to idle
+    t =    81.98s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    82.07s Checking existence of `"platformBadge" Any`
+    t =    82.14s Find the "platformBadge" Any
+    t =    82.30s Find the "platformBadge" StaticText
+    t =    82.39s Find the Button (First Match)
+LAB 69.53 Hulu: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =    82.50s Find the "BackButton" Button
+    t =    82.55s Tap "BackButton" Button
+    t =    82.55s     Wait for dev.silentneo.glassplayer to idle
+    t =    82.56s     Find the "BackButton" Button
+    t =    82.63s     Check for interrupting elements affecting "BackButton" Button
+    t =    82.70s     Synthesize event
+    t =    83.04s     Wait for dev.silentneo.glassplayer to idle
+    t =    84.50s Find the "Peacock" StaticText
+    t =    84.96s Waiting 3.0s for "Peacock" StaticText to exist
+    t =    86.01s     Checking `Expect predicate `existsNoRetry == 1` for object "Peacock" StaticText`
+    t =    86.01s         Checking existence of `"Peacock" StaticText`
+    t =    86.45s Tap "Peacock" StaticText
+    t =    86.45s     Wait for dev.silentneo.glassplayer to idle
+    t =    86.46s     Find the "Peacock" StaticText
+    t =    86.75s     Check for interrupting elements affecting "Peacock" StaticText
+    t =    87.18s     Synthesize event
+    t =    87.81s     Wait for dev.silentneo.glassplayer to idle
+    t =    90.29s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =    90.50s Checking existence of `"platformBadge" Any`
+    t =    90.60s Find the "platformBadge" Any
+    t =    90.75s Find the "platformBadge" StaticText
+    t =    90.84s Find the Button (First Match)
+LAB 77.93 Peacock: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 140.8333282470703, 54.0, 54.0)
+    t =    90.91s Find the "BackButton" Button
+    t =    91.00s Tap "BackButton" Button
+    t =    91.00s     Wait for dev.silentneo.glassplayer to idle
+    t =    91.00s     Find the "BackButton" Button
+    t =    91.06s     Check for interrupting elements affecting "BackButton" Button
+    t =    91.14s     Synthesize event
+    t =    91.45s     Wait for dev.silentneo.glassplayer to idle
+    t =    93.01s Find the "Crunchyroll" StaticText
+    t =    94.50s Swipe left ScrollView (First Match)
+    t =    94.50s     Wait for dev.silentneo.glassplayer to idle
+    t =    94.51s     Find the ScrollView (First Match)
+    t =    94.65s     Check for interrupting elements affecting ScrollView
+    t =    94.73s     Synthesize event
+    t =    95.25s     Wait for dev.silentneo.glassplayer to idle
+    t =    95.26s Waiting 3.0s for "Crunchyroll" StaticText to exist
+    t =    96.27s     Checking `Expect predicate `existsNoRetry == 1` for object "Crunchyroll" StaticText`
+    t =    96.27s         Checking existence of `"Crunchyroll" StaticText`
+    t =    97.43s Tap "Crunchyroll" StaticText
+    t =    97.43s     Wait for dev.silentneo.glassplayer to idle
+    t =    97.46s     Find the "Crunchyroll" StaticText
+    t =    98.22s     Check for interrupting elements affecting "Crunchyroll" StaticText
+    t =    98.31s     Synthesize event
+    t =    98.35s         Scroll element to visible
+    t =    98.35s         Find the "Crunchyroll" StaticText
+    t =    98.86s         Computed hit point {386.00000000000006, 230} after scrolling to visible
+    t =    99.20s     Wait for dev.silentneo.glassplayer to idle
+    t =   101.60s Get all elements bound by index for: Elements matching predicate '"platformBadge" IN identifiers'
+    t =   104.05s Checking existence of `"platformBadge" Any`
+    t =   105.19s Find the "platformBadge" Any
+    t =   106.06s Find the "platformBadge" StaticText
+    t =   107.11s Find the Button (First Match)
+LAB 94.35 Crunchyroll: back button (20.0, 62.0, 44.0, 44.0), badge (20.0, 176.0, 54.0, 54.0)
+    t =   107.35s Find the "BackButton" Button
+    t =   107.68s Tap "BackButton" Button
+    t =   107.68s     Wait for dev.silentneo.glassplayer to idle
+    t =   107.68s     Find the "BackButton" Button
+    t =   107.78s     Check for interrupting elements affecting "BackButton" Button
+    t =   107.88s     Synthesize event
+    t =   108.22s     Wait for dev.silentneo.glassplayer to idle
+    t =   109.85s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test7ProviderHeadersLargestText]' passed (110.489 seconds).
+Test Suite 'RoundLabUITests' passed at 2026-10-30 11:02:46.954.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 209.750 (209.757) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-30 11:02:46.955.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 209.750 (209.759) seconds
+Test Suite 'Selected tests' passed at 2026-10-30 11:02:46.956.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 209.750 (209.766) seconds
+2026-10-30 11:04:05.992 xcodebuild[35794:92913] [MT] IDETestOperationsObserverDebug: 308.001 elapsed -- Testing started completed.
+2026-10-30 11:04:05.993 xcodebuild[35794:92913] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-30 11:04:05.993 xcodebuild[35794:92913] [MT] IDETestOperationsObserverDebug: 308.001 sec, +308.001 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.30_10-58-57-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

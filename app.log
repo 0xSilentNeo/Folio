@@ -1,0 +1,1471 @@
+10:59:25.293 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.04 GB
+10:59:25.316 [imdb] warm-up skipped (Discover not used recently or Low Power Mode)
+10:59:26.774 [hang] main thread unresponsive for 1.5 s
+10:59:29.115 [scene] 878A0B9D connects (portrait)
+10:59:29.116 [scene] 878A0B9D will enter foreground (portrait)
+10:59:29.774 [app] first screen 6124 ms after process start
+10:59:29.774 [app] root view appeared (1 in this run, splash off)
+10:59:30.841 [scene] 878A0B9D active (portrait)
+10:59:30.843 [app] active
+10:59:38.844 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+10:59:38.846 [imdb] webkit load /chart/moviemeter
+10:59:44.471 [discover] Netflix series: load starts (grid shows 0)
+10:59:44.962 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+10:59:45.572 [discover] catalog US|series|nfx: 98 title(s) after 802 ms
+10:59:45.574 [discover] Netflix series: 98 title(s)
+10:59:45.675 [zoom] source tt8594324 added at (28.0, 305.0, 109.0, 162.0)
+10:59:45.676 [zoom] source tt2531336 added at (166.0, 305.0, 108.0, 162.0)
+10:59:45.677 [zoom] source tt11379026 added at (303.0, 305.0, 109.0, 162.0)
+10:59:45.677 [zoom] source tt26933824 added at (28.0, 522.0, 109.0, 163.0)
+10:59:45.678 [zoom] source tt17491088 added at (166.0, 522.0, 108.0, 163.0)
+10:59:45.678 [zoom] source tt7587890 added at (303.0, 522.0, 109.0, 163.0)
+10:59:45.678 [zoom] source tt4934214 added at (28.0, 740.0, 109.0, 163.0)
+10:59:45.679 [zoom] source tt13210838 added at (166.0, 740.0, 108.0, 163.0)
+10:59:45.765 [zoom] source tt21097264 added at (303.0, 740.0, 109.0, 163.0)
+10:59:45.773 [zoom] source tt0203259 added at (28.0, 958.0, 109.0, 162.0)
+10:59:45.783 [zoom] source tt27995113 added at (166.0, 958.0, 108.0, 162.0)
+10:59:45.784 [zoom] source tt44941753 added at (303.0, 958.0, 109.0, 162.0)
+10:59:45.785 [zoom] source tt42220724 added at (28.0, 1175.0, 109.0, 163.0)
+10:59:45.786 [zoom] source tt35934755 added at (166.0, 1175.0, 108.0, 163.0)
+10:59:45.788 [zoom] source tt0472954 added at (303.0, 1175.0, 109.0, 163.0)
+10:59:45.789 [zoom] source tt0168366 added at (28.0, 1393.0, 109.0, 163.0)
+10:59:45.790 [zoom] source tt1196946 added at (166.0, 1393.0, 108.0, 163.0)
+10:59:45.978 [zoom] source tt39751377 added at (303.0, 1393.0, 109.0, 163.0)
+10:59:46.038 [zoom] source tt4236770 added at (28.0, 1611.0, 109.0, 162.0)
+10:59:46.039 [zoom] source tt0386676 added at (166.0, 1611.0, 108.0, 162.0)
+10:59:46.059 [zoom] source tt0903747 added at (303.0, 1611.0, 109.0, 162.0)
+10:59:46.060 [zoom] source tt2861424 added at (28.0, 1828.0, 109.0, 163.0)
+10:59:46.061 [zoom] source tt1839578 added at (166.0, 1828.0, 108.0, 163.0)
+10:59:46.090 [zoom] source tt4574334 added at (303.0, 1828.0, 109.0, 163.0)
+10:59:48.354 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+10:59:48.674 [zoom] source tt8594324 removed from the window
+10:59:48.675 [zoom] source tt2531336 removed from the window
+10:59:48.675 [zoom] source tt11379026 removed from the window
+10:59:48.675 [zoom] source tt26933824 removed from the window
+10:59:48.675 [zoom] source tt17491088 removed from the window
+10:59:48.676 [zoom] source tt7587890 removed from the window
+10:59:48.676 [zoom] source tt4934214 removed from the window
+10:59:48.676 [zoom] source tt13210838 removed from the window
+10:59:48.676 [zoom] source tt21097264 removed from the window
+10:59:48.694 [zoom] source tt0203259 removed from the window
+10:59:48.695 [zoom] source tt27995113 removed from the window
+10:59:48.695 [zoom] source tt44941753 removed from the window
+10:59:48.695 [zoom] source tt42220724 removed from the window
+10:59:48.695 [zoom] source tt35934755 removed from the window
+10:59:48.695 [zoom] source tt0472954 removed from the window
+10:59:48.695 [zoom] source tt0168366 removed from the window
+10:59:48.695 [zoom] source tt1196946 removed from the window
+10:59:48.695 [zoom] source tt39751377 removed from the window
+10:59:48.695 [zoom] source tt4236770 removed from the window
+10:59:48.697 [zoom] source tt0386676 removed from the window
+10:59:48.698 [zoom] source tt0903747 removed from the window
+10:59:48.698 [zoom] source tt2861424 removed from the window
+10:59:48.698 [zoom] source tt1839578 removed from the window
+10:59:48.698 [zoom] source tt4574334 removed from the window
+10:59:51.438 [discover] Prime Video series: load starts (grid shows 0)
+10:59:52.468 [discover] catalog US|series|amp: 100 title(s) after 971 ms
+10:59:52.468 [discover] Prime Video series: 100 title(s)
+10:59:52.518 [zoom] source tt11743610 added at (28.0, 305.0, 109.0, 162.0)
+10:59:52.519 [zoom] source tt5875444 added at (166.0, 305.0, 108.0, 162.0)
+10:59:52.519 [zoom] source tt11540908 added at (303.0, 305.0, 109.0, 162.0)
+10:59:52.520 [zoom] source tt19231492 added at (28.0, 522.0, 109.0, 163.0)
+10:59:52.520 [zoom] source tt3718778 added at (166.0, 522.0, 108.0, 163.0)
+10:59:52.521 [zoom] source tt1844624 added at (303.0, 522.0, 109.0, 163.0)
+10:59:52.521 [zoom] source tt33270224 added at (28.0, 740.0, 109.0, 163.0)
+10:59:52.521 [zoom] source tt6151526 added at (166.0, 740.0, 108.0, 163.0)
+10:59:52.525 [zoom] source tt10946316 added at (303.0, 740.0, 109.0, 163.0)
+10:59:52.525 [zoom] source tt0111987 added at (28.0, 958.0, 109.0, 162.0)
+10:59:52.526 [zoom] source tt33043892 added at (166.0, 958.0, 108.0, 162.0)
+10:59:52.526 [zoom] source tt13138834 added at (303.0, 958.0, 109.0, 162.0)
+10:59:52.526 [zoom] source tt33078239 added at (28.0, 1175.0, 109.0, 163.0)
+10:59:52.527 [zoom] source tt9288030 added at (166.0, 1175.0, 108.0, 163.0)
+10:59:52.527 [zoom] source tt33539520 added at (303.0, 1175.0, 109.0, 163.0)
+10:59:52.528 [zoom] source tt10691770 added at (28.0, 1393.0, 109.0, 163.0)
+10:59:52.528 [zoom] source tt1399664 added at (166.0, 1393.0, 108.0, 163.0)
+10:59:52.536 [zoom] source tt3230854 added at (303.0, 1393.0, 109.0, 163.0)
+10:59:52.537 [zoom] source tt0460681 added at (28.0, 1611.0, 109.0, 162.0)
+10:59:52.547 [zoom] source tt0086742 added at (166.0, 1611.0, 108.0, 162.0)
+10:59:52.548 [zoom] source tt0096708 added at (303.0, 1611.0, 109.0, 162.0)
+10:59:52.548 [zoom] source tt0924651 added at (28.0, 1828.0, 109.0, 163.0)
+10:59:52.552 [zoom] source tt0238784 added at (166.0, 1828.0, 108.0, 163.0)
+10:59:52.553 [zoom] source tt2044056 added at (303.0, 1828.0, 109.0, 163.0)
+10:59:54.928 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+10:59:55.257 [zoom] source tt11743610 removed from the window
+10:59:55.258 [zoom] source tt5875444 removed from the window
+10:59:55.258 [zoom] source tt11540908 removed from the window
+10:59:55.258 [zoom] source tt19231492 removed from the window
+10:59:55.258 [zoom] source tt3718778 removed from the window
+10:59:55.258 [zoom] source tt1844624 removed from the window
+10:59:55.258 [zoom] source tt33270224 removed from the window
+10:59:55.258 [zoom] source tt6151526 removed from the window
+10:59:55.259 [zoom] source tt10946316 removed from the window
+10:59:55.259 [zoom] source tt0111987 removed from the window
+10:59:55.259 [zoom] source tt33043892 removed from the window
+10:59:55.259 [zoom] source tt13138834 removed from the window
+10:59:55.260 [zoom] source tt33078239 removed from the window
+10:59:55.260 [zoom] source tt9288030 removed from the window
+10:59:55.260 [zoom] source tt33539520 removed from the window
+10:59:55.260 [zoom] source tt10691770 removed from the window
+10:59:55.260 [zoom] source tt1399664 removed from the window
+10:59:55.260 [zoom] source tt3230854 removed from the window
+10:59:55.260 [zoom] source tt0460681 removed from the window
+10:59:55.260 [zoom] source tt0086742 removed from the window
+10:59:55.261 [zoom] source tt0096708 removed from the window
+10:59:55.261 [zoom] source tt0924651 removed from the window
+10:59:55.261 [zoom] source tt0238784 removed from the window
+10:59:55.261 [zoom] source tt2044056 removed from the window
+10:59:58.084 [discover] HBO Max series: load starts (grid shows 0)
+10:59:58.889 [discover] catalog US|series|hbm: 100 title(s) after 756 ms
+10:59:58.889 [discover] HBO Max series: 100 title(s)
+10:59:58.946 [zoom] source tt2699128 added at (28.0, 305.0, 109.0, 162.0)
+10:59:58.947 [zoom] source tt2356777 added at (166.0, 305.0, 108.0, 162.0)
+10:59:58.948 [zoom] source tt2861424 added at (303.0, 305.0, 109.0, 162.0)
+10:59:58.948 [zoom] source tt0460681 added at (28.0, 522.0, 109.0, 163.0)
+10:59:58.948 [zoom] source tt1196946 added at (166.0, 522.0, 108.0, 163.0)
+10:59:58.949 [zoom] source tt0141842 added at (303.0, 522.0, 109.0, 163.0)
+10:59:58.949 [zoom] source tt2017109 added at (28.0, 740.0, 109.0, 163.0)
+10:59:58.950 [zoom] source tt3718778 added at (166.0, 740.0, 108.0, 163.0)
+10:59:58.952 [zoom] source tt0306414 added at (303.0, 740.0, 109.0, 163.0)
+10:59:58.953 [zoom] source tt1839578 added at (28.0, 958.0, 109.0, 162.0)
+10:59:58.954 [zoom] source tt8772296 added at (166.0, 958.0, 108.0, 162.0)
+10:59:58.954 [zoom] source tt0108778 added at (303.0, 958.0, 109.0, 162.0)
+10:59:58.954 [zoom] source tt11815682 added at (28.0, 1175.0, 109.0, 163.0)
+10:59:58.955 [zoom] source tt0185906 added at (166.0, 1175.0, 108.0, 163.0)
+10:59:58.955 [zoom] source tt13406094 added at (303.0, 1175.0, 109.0, 163.0)
+10:59:58.956 [zoom] source tt1442464 added at (28.0, 1393.0, 109.0, 163.0)
+10:59:58.956 [zoom] source tt6520930 added at (166.0, 1393.0, 108.0, 163.0)
+10:59:58.970 [zoom] source tt0264235 added at (303.0, 1393.0, 109.0, 163.0)
+10:59:58.971 [zoom] source tt2401256 added at (28.0, 1611.0, 109.0, 162.0)
+10:59:58.971 [zoom] source tt6905686 added at (166.0, 1611.0, 108.0, 162.0)
+10:59:58.979 [zoom] source tt10155688 added at (303.0, 1611.0, 109.0, 162.0)
+10:59:58.981 [zoom] source tt0369179 added at (28.0, 1828.0, 109.0, 163.0)
+10:59:58.992 [zoom] source tt0898266 added at (166.0, 1828.0, 108.0, 163.0)
+10:59:58.994 [zoom] source tt1586680 added at (303.0, 1828.0, 109.0, 163.0)
+11:00:01.013 [energy] cpu 53% (main 45%, other 8%) mem 66 MB (0 MB left) thermal=nominal playing=no
+11:00:01.740 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+11:00:02.041 [zoom] source tt2699128 removed from the window
+11:00:02.041 [zoom] source tt2356777 removed from the window
+11:00:02.041 [zoom] source tt2861424 removed from the window
+11:00:02.041 [zoom] source tt0460681 removed from the window
+11:00:02.041 [zoom] source tt1196946 removed from the window
+11:00:02.042 [zoom] source tt0141842 removed from the window
+11:00:02.042 [zoom] source tt2017109 removed from the window
+11:00:02.042 [zoom] source tt3718778 removed from the window
+11:00:02.042 [zoom] source tt0306414 removed from the window
+11:00:02.043 [zoom] source tt1839578 removed from the window
+11:00:02.043 [zoom] source tt8772296 removed from the window
+11:00:02.044 [zoom] source tt0108778 removed from the window
+11:00:02.044 [zoom] source tt11815682 removed from the window
+11:00:02.044 [zoom] source tt0185906 removed from the window
+11:00:02.044 [zoom] source tt13406094 removed from the window
+11:00:02.044 [zoom] source tt1442464 removed from the window
+11:00:02.044 [zoom] source tt6520930 removed from the window
+11:00:02.044 [zoom] source tt0264235 removed from the window
+11:00:02.044 [zoom] source tt2401256 removed from the window
+11:00:02.049 [zoom] source tt6905686 removed from the window
+11:00:02.050 [zoom] source tt10155688 removed from the window
+11:00:02.050 [zoom] source tt0369179 removed from the window
+11:00:02.050 [zoom] source tt0898266 removed from the window
+11:00:02.050 [zoom] source tt1586680 removed from the window
+11:00:03.993 [imdb/error] webkit timeout for /chart/moviemeter
+11:00:03.994 [imdb] webkit load /chart/moviemeter
+11:00:03.997 [perf] imdb /chart/moviemeter/ via web view 25552 ms
+11:00:03.997 [perf] imdb chart /chart/moviemeter/ in 29320 ms
+11:00:04.328 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+11:00:05.199 [discover] Disney+ series: load starts (grid shows 0)
+11:00:06.404 [discover] catalog US|series|dnp: 100 title(s) after 1161 ms
+11:00:06.404 [discover] Disney+ series: 100 title(s)
+11:00:06.471 [zoom] source tt23112594 added at (28.0, 305.0, 109.0, 162.0)
+11:00:06.472 [zoom] source tt11379026 added at (166.0, 305.0, 108.0, 162.0)
+11:00:06.472 [zoom] source tt7587890 added at (303.0, 305.0, 109.0, 162.0)
+11:00:06.473 [zoom] source tt4934214 added at (28.0, 522.0, 109.0, 163.0)
+11:00:06.473 [zoom] source tt1844624 added at (166.0, 522.0, 108.0, 163.0)
+11:00:06.473 [zoom] source tt21952924 added at (303.0, 522.0, 109.0, 163.0)
+11:00:06.474 [zoom] source tt0203259 added at (28.0, 740.0, 109.0, 163.0)
+11:00:06.474 [zoom] source tt7235466 added at (166.0, 740.0, 108.0, 163.0)
+11:00:06.476 [zoom] source tt0096697 added at (303.0, 740.0, 109.0, 163.0)
+11:00:06.476 [zoom] source tt0106179 added at (28.0, 958.0, 109.0, 162.0)
+11:00:06.477 [zoom] source tt2149175 added at (166.0, 958.0, 108.0, 162.0)
+11:00:06.477 [zoom] source tt0413573 added at (303.0, 958.0, 109.0, 162.0)
+11:00:06.478 [zoom] source tt40197357 added at (28.0, 1175.0, 109.0, 163.0)
+11:00:06.479 [zoom] source tt0168366 added at (166.0, 1175.0, 108.0, 163.0)
+11:00:06.480 [zoom] source tt37063558 added at (303.0, 1175.0, 109.0, 163.0)
+11:00:06.480 [zoom] source tt0804503 added at (28.0, 1393.0, 109.0, 163.0)
+11:00:06.481 [zoom] source tt10166622 added at (166.0, 1393.0, 108.0, 163.0)
+11:00:06.481 [zoom] source tt14452776 added at (303.0, 1393.0, 109.0, 163.0)
+11:00:06.482 [zoom] source tt7472896 added at (28.0, 1611.0, 109.0, 162.0)
+11:00:06.482 [zoom] source tt36303968 added at (166.0, 1611.0, 108.0, 162.0)
+11:00:06.482 [zoom] source tt0386676 added at (303.0, 1611.0, 109.0, 162.0)
+11:00:06.483 [zoom] source tt1327801 added at (28.0, 1828.0, 109.0, 163.0)
+11:00:06.483 [zoom] source tt14218830 added at (166.0, 1828.0, 108.0, 163.0)
+11:00:06.484 [zoom] source tt0437005 added at (303.0, 1828.0, 109.0, 163.0)
+11:00:08.705 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+11:00:09.040 [zoom] source tt23112594 removed from the window
+11:00:09.040 [zoom] source tt11379026 removed from the window
+11:00:09.040 [zoom] source tt7587890 removed from the window
+11:00:09.041 [zoom] source tt4934214 removed from the window
+11:00:09.041 [zoom] source tt1844624 removed from the window
+11:00:09.041 [zoom] source tt21952924 removed from the window
+11:00:09.041 [zoom] source tt0203259 removed from the window
+11:00:09.041 [zoom] source tt7235466 removed from the window
+11:00:09.041 [zoom] source tt0096697 removed from the window
+11:00:09.042 [zoom] source tt0106179 removed from the window
+11:00:09.042 [zoom] source tt2149175 removed from the window
+11:00:09.042 [zoom] source tt0413573 removed from the window
+11:00:09.042 [zoom] source tt40197357 removed from the window
+11:00:09.042 [zoom] source tt0168366 removed from the window
+11:00:09.042 [zoom] source tt37063558 removed from the window
+11:00:09.043 [zoom] source tt0804503 removed from the window
+11:00:09.043 [zoom] source tt10166622 removed from the window
+11:00:09.043 [zoom] source tt14452776 removed from the window
+11:00:09.044 [zoom] source tt7472896 removed from the window
+11:00:09.045 [zoom] source tt36303968 removed from the window
+11:00:09.046 [zoom] source tt0386676 removed from the window
+11:00:09.046 [zoom] source tt1327801 removed from the window
+11:00:09.046 [zoom] source tt14218830 removed from the window
+11:00:09.046 [zoom] source tt0437005 removed from the window
+11:00:12.086 [discover] Apple TV+ series: load starts (grid shows 0)
+11:00:12.832 [discover] catalog US|series|atp: 99 title(s) after 681 ms
+11:00:12.832 [discover] Apple TV+ series: 99 title(s)
+11:00:12.886 [zoom] source tt5875444 added at (28.0, 305.0, 109.0, 162.0)
+11:00:12.886 [zoom] source tt26598805 added at (166.0, 305.0, 108.0, 162.0)
+11:00:12.887 [zoom] source tt10986410 added at (303.0, 305.0, 109.0, 162.0)
+11:00:12.887 [zoom] source tt33332385 added at (28.0, 522.0, 109.0, 163.0)
+11:00:12.888 [zoom] source tt19231492 added at (166.0, 522.0, 108.0, 163.0)
+11:00:12.888 [zoom] source tt14688458 added at (303.0, 522.0, 109.0, 163.0)
+11:00:12.888 [zoom] source tt6037988 added at (28.0, 740.0, 109.0, 163.0)
+11:00:12.889 [zoom] source tt34675596 added at (166.0, 740.0, 108.0, 163.0)
+11:00:12.890 [zoom] source tt10982034 added at (303.0, 740.0, 109.0, 163.0)
+11:00:12.890 [zoom] source tt7772588 added at (28.0, 958.0, 109.0, 162.0)
+11:00:12.891 [zoom] source tt29011445 added at (166.0, 958.0, 108.0, 162.0)
+11:00:12.891 [zoom] source tt15677150 added at (303.0, 958.0, 109.0, 162.0)
+11:00:12.892 [zoom] source tt6773088 added at (28.0, 1175.0, 109.0, 163.0)
+11:00:12.892 [zoom] source tt11280740 added at (166.0, 1175.0, 108.0, 163.0)
+11:00:12.892 [zoom] source tt34866681 added at (303.0, 1175.0, 109.0, 163.0)
+11:00:12.893 [zoom] source tt22202452 added at (28.0, 1393.0, 109.0, 163.0)
+11:00:12.893 [zoom] source tt19854762 added at (166.0, 1393.0, 108.0, 163.0)
+11:00:12.894 [zoom] source tt30459041 added at (303.0, 1393.0, 109.0, 163.0)
+11:00:12.894 [zoom] source tt32140872 added at (28.0, 1611.0, 109.0, 162.0)
+11:00:12.895 [zoom] source tt17220216 added at (166.0, 1611.0, 108.0, 162.0)
+11:00:12.895 [zoom] source tt7203552 added at (303.0, 1611.0, 109.0, 162.0)
+11:00:12.896 [zoom] source tt23649128 added at (28.0, 1828.0, 109.0, 163.0)
+11:00:12.897 [zoom] source tt4301160 added at (166.0, 1828.0, 108.0, 163.0)
+11:00:12.897 [zoom] source tt17677860 added at (303.0, 1828.0, 109.0, 163.0)
+11:00:15.714 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+11:00:16.042 [zoom] source tt5875444 removed from the window
+11:00:16.042 [zoom] source tt26598805 removed from the window
+11:00:16.042 [zoom] source tt10986410 removed from the window
+11:00:16.042 [zoom] source tt33332385 removed from the window
+11:00:16.042 [zoom] source tt19231492 removed from the window
+11:00:16.042 [zoom] source tt14688458 removed from the window
+11:00:16.042 [zoom] source tt6037988 removed from the window
+11:00:16.042 [zoom] source tt34675596 removed from the window
+11:00:16.043 [zoom] source tt10982034 removed from the window
+11:00:16.044 [zoom] source tt7772588 removed from the window
+11:00:16.045 [zoom] source tt29011445 removed from the window
+11:00:16.045 [zoom] source tt15677150 removed from the window
+11:00:16.045 [zoom] source tt6773088 removed from the window
+11:00:16.045 [zoom] source tt11280740 removed from the window
+11:00:16.045 [zoom] source tt34866681 removed from the window
+11:00:16.046 [zoom] source tt22202452 removed from the window
+11:00:16.046 [zoom] source tt19854762 removed from the window
+11:00:16.046 [zoom] source tt30459041 removed from the window
+11:00:16.046 [zoom] source tt32140872 removed from the window
+11:00:16.048 [zoom] source tt17220216 removed from the window
+11:00:16.048 [zoom] source tt7203552 removed from the window
+11:00:16.048 [zoom] source tt23649128 removed from the window
+11:00:16.048 [zoom] source tt4301160 removed from the window
+11:00:16.048 [zoom] source tt17677860 removed from the window
+11:00:18.832 [discover] Paramount+ series: load starts (grid shows 0)
+11:00:20.074 [discover] catalog US|series|pmp: 100 title(s) after 1200 ms
+11:00:20.074 [discover] Paramount+ series: 100 title(s)
+11:00:20.124 [zoom] source tt31510819 added at (28.0, 305.0, 109.0, 162.0)
+11:00:20.125 [zoom] source tt2297757 added at (166.0, 305.0, 108.0, 162.0)
+11:00:20.125 [zoom] source tt0092455 added at (303.0, 305.0, 109.0, 162.0)
+11:00:20.126 [zoom] source tt33270224 added at (28.0, 522.0, 109.0, 163.0)
+11:00:20.126 [zoom] source tt0121955 added at (166.0, 522.0, 108.0, 163.0)
+11:00:20.127 [zoom] source tt13875494 added at (303.0, 522.0, 109.0, 163.0)
+11:00:20.127 [zoom] source tt46269844 added at (28.0, 740.0, 109.0, 163.0)
+11:00:20.127 [zoom] source tt16358384 added at (166.0, 740.0, 108.0, 163.0)
+11:00:20.130 [zoom] source tt0052520 added at (303.0, 740.0, 109.0, 163.0)
+11:00:20.131 [zoom] source tt35854736 added at (28.0, 958.0, 109.0, 162.0)
+11:00:20.131 [zoom] source tt13111078 added at (166.0, 958.0, 108.0, 162.0)
+11:00:20.132 [zoom] source tt33078239 added at (303.0, 958.0, 109.0, 162.0)
+11:00:20.132 [zoom] source tt0364845 added at (28.0, 1175.0, 109.0, 163.0)
+11:00:20.133 [zoom] source tt36849871 added at (166.0, 1175.0, 108.0, 163.0)
+11:00:20.134 [zoom] source tt31589662 added at (303.0, 1175.0, 109.0, 163.0)
+11:00:20.134 [zoom] source tt0239195 added at (28.0, 1393.0, 109.0, 163.0)
+11:00:20.134 [zoom] source tt0098936 added at (166.0, 1393.0, 108.0, 163.0)
+11:00:20.135 [zoom] source tt7491982 added at (303.0, 1393.0, 109.0, 163.0)
+11:00:20.137 [zoom] source tt26591110 added at (28.0, 1611.0, 109.0, 162.0)
+11:00:20.139 [zoom] source tt35515227 added at (166.0, 1611.0, 108.0, 162.0)
+11:00:20.139 [zoom] source tt0285335 added at (303.0, 1611.0, 109.0, 162.0)
+11:00:20.141 [zoom] source tt11379026 added at (28.0, 1828.0, 109.0, 163.0)
+11:00:20.143 [zoom] source tt0407362 added at (166.0, 1828.0, 108.0, 163.0)
+11:00:20.144 [zoom] source tt16098700 added at (303.0, 1828.0, 109.0, 163.0)
+11:00:22.822 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+11:00:23.109 [zoom] source tt31510819 removed from the window
+11:00:23.109 [zoom] source tt2297757 removed from the window
+11:00:23.109 [zoom] source tt0092455 removed from the window
+11:00:23.109 [zoom] source tt33270224 removed from the window
+11:00:23.110 [zoom] source tt0121955 removed from the window
+11:00:23.110 [zoom] source tt13875494 removed from the window
+11:00:23.110 [zoom] source tt46269844 removed from the window
+11:00:23.110 [zoom] source tt16358384 removed from the window
+11:00:23.110 [zoom] source tt0052520 removed from the window
+11:00:23.115 [zoom] source tt35854736 removed from the window
+11:00:23.115 [zoom] source tt13111078 removed from the window
+11:00:23.115 [zoom] source tt33078239 removed from the window
+11:00:23.116 [zoom] source tt0364845 removed from the window
+11:00:23.116 [zoom] source tt36849871 removed from the window
+11:00:23.116 [zoom] source tt31589662 removed from the window
+11:00:23.116 [zoom] source tt0239195 removed from the window
+11:00:23.116 [zoom] source tt0098936 removed from the window
+11:00:23.116 [zoom] source tt7491982 removed from the window
+11:00:23.117 [zoom] source tt26591110 removed from the window
+11:00:23.120 [zoom] source tt35515227 removed from the window
+11:00:23.120 [zoom] source tt0285335 removed from the window
+11:00:23.121 [zoom] source tt11379026 removed from the window
+11:00:23.121 [zoom] source tt0407362 removed from the window
+11:00:23.121 [zoom] source tt16098700 removed from the window
+11:00:27.458 [discover] Hulu series: load starts (grid shows 0)
+11:00:28.675 [discover] catalog US|series|hlu: 98 title(s) after 1156 ms
+11:00:28.675 [discover] Hulu series: 98 title(s)
+11:00:28.728 [zoom] source tt21952924 added at (28.0, 305.0, 109.0, 162.0)
+11:00:28.729 [zoom] source tt10166622 added at (166.0, 305.0, 108.0, 162.0)
+11:00:28.730 [zoom] source tt3718778 added at (303.0, 305.0, 109.0, 162.0)
+11:00:28.731 [zoom] source tt1844624 added at (28.0, 522.0, 109.0, 163.0)
+11:00:28.732 [zoom] source tt14218830 added at (166.0, 522.0, 108.0, 163.0)
+11:00:28.732 [zoom] source tt13875494 added at (303.0, 522.0, 109.0, 163.0)
+11:00:28.733 [zoom] source tt36885662 added at (28.0, 740.0, 109.0, 163.0)
+11:00:28.734 [zoom] source tt0096697 added at (166.0, 740.0, 108.0, 163.0)
+11:00:28.734 [zoom] source tt2149175 added at (303.0, 740.0, 109.0, 163.0)
+11:00:28.735 [zoom] source tt0364845 added at (28.0, 958.0, 109.0, 162.0)
+11:00:28.735 [zoom] source tt40197357 added at (166.0, 958.0, 108.0, 162.0)
+11:00:28.736 [zoom] source tt31289994 added at (303.0, 958.0, 109.0, 162.0)
+11:00:28.736 [zoom] source tt37063558 added at (28.0, 1175.0, 109.0, 163.0)
+11:00:28.736 [zoom] source tt0239195 added at (166.0, 1175.0, 108.0, 163.0)
+11:00:28.752 [zoom] source tt0413573 added at (303.0, 1175.0, 109.0, 163.0)
+11:00:28.754 [zoom] source tt36303968 added at (28.0, 1393.0, 109.0, 163.0)
+11:00:28.755 [zoom] source tt48356732 added at (166.0, 1393.0, 108.0, 163.0)
+11:00:28.761 [zoom] source tt0203259 added at (303.0, 1393.0, 109.0, 163.0)
+11:00:28.762 [zoom] source tt21376524 added at (28.0, 1611.0, 109.0, 162.0)
+11:00:28.763 [zoom] source tt0285335 added at (166.0, 1611.0, 108.0, 162.0)
+11:00:28.764 [zoom] source tt26748321 added at (303.0, 1611.0, 109.0, 162.0)
+11:00:28.764 [zoom] source tt7587890 added at (28.0, 1828.0, 109.0, 163.0)
+11:00:28.767 [zoom] source tt4934214 added at (166.0, 1828.0, 108.0, 163.0)
+11:00:28.768 [zoom] source tt0238784 added at (303.0, 1828.0, 109.0, 163.0)
+11:00:29.014 [imdb/error] webkit timeout for /chart/moviemeter
+11:00:29.019 [imdb] webkit load /chart/moviemeter
+11:00:29.027 [perf] imdb /chart/moviemeter/ via web view 40823 ms
+11:00:29.028 [perf] imdb chart /chart/moviemeter/ in 40832 ms
+11:00:31.001 [imdb] webkit ok after 1 nav(s): next=1179354 ld=1
+11:00:31.001 [imdb] webkit load /chart/moviemeter
+11:00:31.105 [perf] imdb /chart/moviemeter/ via web view 36317 ms
+11:00:31.107 [energy] cpu 54% (main 50%, other 3%, Log work queue 1%) mem 73 MB (0 MB left) thermal=nominal playing=no
+11:00:31.165 [imdb] chart /chart/moviemeter/ → 100
+11:00:31.220 [perf] imdb chart /chart/moviemeter/ in 36433 ms
+11:00:33.217 [zoom] source tt45368240 added at (20.0, 307.0, 126.0, 189.0)
+11:00:33.219 [zoom] source tt34890576 added at (157.0, 307.0, 126.0, 189.0)
+11:00:33.255 [zoom] source tt2056785 added at (294.0, 307.0, 126.0, 189.0)
+11:00:33.257 [zoom] source tt27419420 added at (20.0, 553.0, 126.0, 189.0)
+11:00:33.258 [zoom] source tt31049299 added at (157.0, 553.0, 126.0, 189.0)
+11:00:33.259 [zoom] source tt29611136 added at (294.0, 553.0, 126.0, 189.0)
+11:00:33.259 [zoom] source tt35538033 added at (20.0, 799.0, 126.0, 188.0)
+11:00:33.260 [zoom] source tt14173636 added at (157.0, 799.0, 126.0, 188.0)
+11:00:33.261 [zoom] source tt6262770 added at (294.0, 799.0, 126.0, 188.0)
+11:00:33.262 [zoom] source tt37287335 added at (20.0, 1044.0, 126.0, 189.0)
+11:00:33.263 [zoom] source tt34384900 added at (157.0, 1044.0, 126.0, 189.0)
+11:00:33.355 [zoom] source tt32358390 added at (294.0, 1044.0, 126.0, 189.0)
+11:00:33.357 [zoom] source tt37281055 added at (20.0, 1290.0, 126.0, 189.0)
+11:00:33.359 [zoom] source tt31450459 added at (157.0, 1290.0, 126.0, 189.0)
+11:00:33.360 [zoom] source tt28535715 added at (294.0, 1290.0, 126.0, 189.0)
+11:00:33.362 [zoom] source tt22084616 added at (20.0, 1536.0, 126.0, 188.0)
+11:00:33.364 [zoom] source tt7526136 added at (157.0, 1536.0, 126.0, 188.0)
+11:00:33.366 [zoom] source tt13609648 added at (294.0, 1536.0, 126.0, 188.0)
+11:00:33.821 [zoom] source tt21952924 removed from the window
+11:00:33.822 [zoom] source tt10166622 removed from the window
+11:00:33.822 [zoom] source tt3718778 removed from the window
+11:00:33.823 [zoom] source tt1844624 removed from the window
+11:00:33.823 [zoom] source tt14218830 removed from the window
+11:00:33.833 [zoom] source tt13875494 removed from the window
+11:00:33.833 [zoom] source tt36885662 removed from the window
+11:00:33.834 [zoom] source tt0096697 removed from the window
+11:00:33.834 [zoom] source tt2149175 removed from the window
+11:00:33.834 [zoom] source tt0364845 removed from the window
+11:00:33.834 [zoom] source tt40197357 removed from the window
+11:00:33.838 [zoom] source tt31289994 removed from the window
+11:00:33.839 [zoom] source tt37063558 removed from the window
+11:00:33.839 [zoom] source tt0239195 removed from the window
+11:00:33.839 [zoom] source tt0413573 removed from the window
+11:00:33.839 [zoom] source tt36303968 removed from the window
+11:00:33.839 [zoom] source tt48356732 removed from the window
+11:00:33.840 [zoom] source tt0203259 removed from the window
+11:00:33.840 [zoom] source tt21376524 removed from the window
+11:00:33.840 [zoom] source tt0285335 removed from the window
+11:00:33.852 [zoom] source tt26748321 removed from the window
+11:00:33.852 [zoom] source tt7587890 removed from the window
+11:00:33.852 [zoom] source tt4934214 removed from the window
+11:00:33.852 [zoom] source tt0238784 removed from the window
+11:00:36.883 [hang] main thread unresponsive for 2.1 s
+11:00:39.983 [imdb] webkit ok after 1 nav(s): next=1179788 ld=1
+11:00:39.984 [imdb] webkit load /chart/moviemeter
+11:00:39.987 [perf] imdb /chart/moviemeter/ via web view 38392 ms
+11:00:40.041 [imdb] chart /chart/moviemeter/ → 100
+11:00:40.042 [perf] imdb chart /chart/moviemeter/ in 38461 ms
+11:00:40.838 [imdb] webkit ok after 1 nav(s): next=1179928 ld=1
+11:00:40.838 [imdb] webkit load /chart/moviemeter
+11:00:40.840 [perf] imdb /chart/moviemeter/ via web view 32275 ms
+11:00:40.890 [imdb] chart /chart/moviemeter/ → 100
+11:00:40.892 [perf] imdb chart /chart/moviemeter/ in 32329 ms
+11:00:41.117 [discover] Peacock series: load starts (grid shows 0)
+11:00:41.137 [zoom] source tt45368240 removed from the window
+11:00:41.137 [zoom] source tt34890576 removed from the window
+11:00:41.137 [zoom] source tt2056785 removed from the window
+11:00:41.137 [zoom] source tt27419420 removed from the window
+11:00:41.138 [zoom] source tt31049299 removed from the window
+11:00:41.138 [zoom] source tt29611136 removed from the window
+11:00:41.138 [zoom] source tt35538033 removed from the window
+11:00:41.138 [zoom] source tt14173636 removed from the window
+11:00:41.138 [zoom] source tt6262770 removed from the window
+11:00:41.138 [zoom] source tt37287335 removed from the window
+11:00:41.138 [zoom] source tt34384900 removed from the window
+11:00:41.138 [zoom] source tt32358390 removed from the window
+11:00:41.138 [zoom] source tt37281055 removed from the window
+11:00:41.138 [zoom] source tt31450459 removed from the window
+11:00:41.139 [zoom] source tt28535715 removed from the window
+11:00:41.139 [zoom] source tt22084616 removed from the window
+11:00:41.139 [zoom] source tt7526136 removed from the window
+11:00:41.139 [zoom] source tt13609648 removed from the window
+11:00:41.141 [zoom] source tt45368240 added at (20.0, 307.0, 126.0, 189.0)
+11:00:41.142 [zoom] source tt34890576 added at (157.0, 307.0, 126.0, 189.0)
+11:00:41.142 [zoom] source tt2056785 added at (294.0, 307.0, 126.0, 189.0)
+11:00:41.142 [zoom] source tt27419420 added at (20.0, 553.0, 126.0, 189.0)
+11:00:41.142 [zoom] source tt31049299 added at (157.0, 553.0, 126.0, 189.0)
+11:00:41.142 [zoom] source tt29611136 added at (294.0, 553.0, 126.0, 189.0)
+11:00:41.142 [zoom] source tt35538033 added at (20.0, 799.0, 126.0, 188.0)
+11:00:41.142 [zoom] source tt14173636 added at (157.0, 799.0, 126.0, 188.0)
+11:00:41.143 [zoom] source tt6262770 added at (294.0, 799.0, 126.0, 188.0)
+11:00:41.143 [zoom] source tt37287335 added at (20.0, 1044.0, 126.0, 189.0)
+11:00:41.143 [zoom] source tt34384900 added at (157.0, 1044.0, 126.0, 189.0)
+11:00:41.144 [zoom] source tt32358390 added at (294.0, 1044.0, 126.0, 189.0)
+11:00:41.144 [zoom] source tt37281055 added at (20.0, 1290.0, 126.0, 189.0)
+11:00:41.144 [zoom] source tt31450459 added at (157.0, 1290.0, 126.0, 189.0)
+11:00:41.144 [zoom] source tt28535715 added at (294.0, 1290.0, 126.0, 189.0)
+11:00:41.144 [zoom] source tt22084616 added at (20.0, 1536.0, 126.0, 188.0)
+11:00:41.144 [zoom] source tt7526136 added at (157.0, 1536.0, 126.0, 188.0)
+11:00:41.144 [zoom] source tt13609648 added at (294.0, 1536.0, 126.0, 188.0)
+11:00:41.664 [imdb] webkit ok after 1 nav(s): next=1179928 ld=1
+11:00:41.664 [imdb] webkit load /chart/moviemeter
+11:00:41.668 [perf] imdb /chart/moviemeter/ via web view 26097 ms
+11:00:41.685 [zoom] source tt45368240 removed from the window
+11:00:41.685 [zoom] source tt34890576 removed from the window
+11:00:41.685 [zoom] source tt2056785 removed from the window
+11:00:41.686 [zoom] source tt27419420 removed from the window
+11:00:41.686 [zoom] source tt31049299 removed from the window
+11:00:41.686 [zoom] source tt29611136 removed from the window
+11:00:41.686 [zoom] source tt35538033 removed from the window
+11:00:41.686 [zoom] source tt14173636 removed from the window
+11:00:41.687 [zoom] source tt6262770 removed from the window
+11:00:41.760 [imdb] chart /chart/moviemeter/ → 100
+11:00:41.763 [perf] imdb chart /chart/moviemeter/ in 26194 ms
+11:00:41.776 [zoom] source tt37287335 removed from the window
+11:00:41.777 [zoom] source tt34384900 removed from the window
+11:00:41.777 [zoom] source tt32358390 removed from the window
+11:00:41.777 [zoom] source tt37281055 removed from the window
+11:00:41.777 [zoom] source tt31450459 removed from the window
+11:00:41.778 [zoom] source tt28535715 removed from the window
+11:00:41.778 [zoom] source tt22084616 removed from the window
+11:00:41.778 [zoom] source tt7526136 removed from the window
+11:00:41.778 [zoom] source tt13609648 removed from the window
+11:00:41.916 [discover] catalog US|series|pcp: 100 title(s) after 735 ms
+11:00:41.917 [discover] Peacock series: 100 title(s)
+11:00:41.962 [zoom] source tt23148340 added at (28.0, 305.0, 109.0, 162.0)
+11:00:41.962 [zoom] source tt6151526 added at (166.0, 305.0, 108.0, 162.0)
+11:00:41.963 [zoom] source tt15557874 added at (303.0, 305.0, 109.0, 162.0)
+11:00:41.963 [zoom] source tt0203259 added at (28.0, 522.0, 109.0, 163.0)
+11:00:41.964 [zoom] source tt0386676 added at (166.0, 522.0, 108.0, 163.0)
+11:00:41.964 [zoom] source tt0460681 added at (303.0, 522.0, 109.0, 163.0)
+11:00:41.964 [zoom] source tt1266020 added at (28.0, 740.0, 109.0, 163.0)
+11:00:41.965 [zoom] source tt4236770 added at (166.0, 740.0, 108.0, 163.0)
+11:00:41.983 [zoom] source tt2261391 added at (303.0, 740.0, 109.0, 163.0)
+11:00:41.984 [zoom] source tt42576767 added at (28.0, 958.0, 109.0, 162.0)
+11:00:41.985 [zoom] source tt1839578 added at (166.0, 958.0, 108.0, 162.0)
+11:00:41.985 [zoom] source tt0098844 added at (303.0, 958.0, 109.0, 162.0)
+11:00:42.000 [zoom] source tt1442437 added at (28.0, 1175.0, 109.0, 163.0)
+11:00:42.001 [zoom] source tt2805096 added at (166.0, 1175.0, 108.0, 163.0)
+11:00:42.002 [zoom] source tt0437005 added at (303.0, 1175.0, 109.0, 163.0)
+11:00:42.002 [zoom] source tt4655480 added at (28.0, 1393.0, 109.0, 163.0)
+11:00:42.013 [zoom] source tt29666911 added at (166.0, 1393.0, 108.0, 163.0)
+11:00:42.014 [zoom] source tt2467372 added at (303.0, 1393.0, 109.0, 163.0)
+11:00:42.018 [zoom] source tt4955642 added at (28.0, 1611.0, 109.0, 162.0)
+11:00:42.019 [zoom] source tt31106862 added at (166.0, 1611.0, 108.0, 162.0)
+11:00:42.019 [zoom] source tt0081871 added at (303.0, 1611.0, 109.0, 162.0)
+11:00:42.023 [zoom] source tt0096639 added at (28.0, 1828.0, 109.0, 163.0)
+11:00:42.025 [zoom] source tt1405406 added at (166.0, 1828.0, 108.0, 163.0)
+11:00:42.025 [zoom] source tt0496424 added at (303.0, 1828.0, 109.0, 163.0)
+11:00:42.725 [imdb] webkit ok after 1 nav(s): next=1179927 ld=1
+11:00:42.727 [perf] imdb /chart/moviemeter/ via web view 20087 ms
+11:00:42.783 [imdb] chart /chart/moviemeter/ → 100
+11:00:42.785 [perf] imdb chart /chart/moviemeter/ in 20148 ms
+11:00:44.617 [zoom] source tt45368240 added at (-112.0, 307.0, 126.0, 189.0)
+11:00:44.618 [zoom] source tt34890576 added at (25.0, 307.0, 126.0, 189.0)
+11:00:44.618 [zoom] source tt2056785 added at (162.0, 307.0, 126.0, 189.0)
+11:00:44.618 [zoom] source tt27419420 added at (-112.0, 553.0, 126.0, 189.0)
+11:00:44.618 [zoom] source tt31049299 added at (25.0, 553.0, 126.0, 189.0)
+11:00:44.618 [zoom] source tt29611136 added at (162.0, 553.0, 126.0, 189.0)
+11:00:44.619 [zoom] source tt35538033 added at (-112.0, 799.0, 126.0, 188.0)
+11:00:44.619 [zoom] source tt14173636 added at (25.0, 799.0, 126.0, 188.0)
+11:00:44.623 [zoom] source tt6262770 added at (162.0, 799.0, 126.0, 188.0)
+11:00:44.623 [zoom] source tt37287335 added at (-112.0, 1044.0, 126.0, 189.0)
+11:00:44.624 [zoom] source tt34384900 added at (25.0, 1044.0, 126.0, 189.0)
+11:00:44.624 [zoom] source tt32358390 added at (162.0, 1044.0, 126.0, 189.0)
+11:00:44.624 [zoom] source tt37281055 added at (-112.0, 1290.0, 126.0, 189.0)
+11:00:44.624 [zoom] source tt31450459 added at (25.0, 1290.0, 126.0, 189.0)
+11:00:44.624 [zoom] source tt28535715 added at (162.0, 1290.0, 126.0, 189.0)
+11:00:44.625 [zoom] source tt22084616 added at (-112.0, 1536.0, 126.0, 188.0)
+11:00:44.625 [zoom] source tt7526136 added at (25.0, 1536.0, 126.0, 188.0)
+11:00:44.625 [zoom] source tt13609648 added at (162.0, 1536.0, 126.0, 188.0)
+11:00:45.167 [zoom] source tt23148340 removed from the window
+11:00:45.167 [zoom] source tt6151526 removed from the window
+11:00:45.167 [zoom] source tt15557874 removed from the window
+11:00:45.167 [zoom] source tt0203259 removed from the window
+11:00:45.168 [zoom] source tt0386676 removed from the window
+11:00:45.168 [zoom] source tt0460681 removed from the window
+11:00:45.168 [zoom] source tt1266020 removed from the window
+11:00:45.168 [zoom] source tt4236770 removed from the window
+11:00:45.168 [zoom] source tt2261391 removed from the window
+11:00:45.174 [zoom] source tt42576767 removed from the window
+11:00:45.174 [zoom] source tt1839578 removed from the window
+11:00:45.174 [zoom] source tt0098844 removed from the window
+11:00:45.174 [zoom] source tt1442437 removed from the window
+11:00:45.175 [zoom] source tt2805096 removed from the window
+11:00:45.175 [zoom] source tt0437005 removed from the window
+11:00:45.175 [zoom] source tt4655480 removed from the window
+11:00:45.175 [zoom] source tt29666911 removed from the window
+11:00:45.175 [zoom] source tt2467372 removed from the window
+11:00:45.175 [zoom] source tt4955642 removed from the window
+11:00:45.176 [zoom] source tt31106862 removed from the window
+11:00:45.176 [zoom] source tt0081871 removed from the window
+11:00:45.176 [zoom] source tt0096639 removed from the window
+11:00:45.176 [zoom] source tt1405406 removed from the window
+11:00:45.176 [zoom] source tt0496424 removed from the window
+11:00:50.003 [discover] Crunchyroll series: load starts (grid shows 0)
+11:00:50.019 [zoom] source tt45368240 removed from the window
+11:00:50.020 [zoom] source tt34890576 removed from the window
+11:00:50.020 [zoom] source tt2056785 removed from the window
+11:00:50.020 [zoom] source tt27419420 removed from the window
+11:00:50.020 [zoom] source tt31049299 removed from the window
+11:00:50.020 [zoom] source tt29611136 removed from the window
+11:00:50.020 [zoom] source tt35538033 removed from the window
+11:00:50.020 [zoom] source tt14173636 removed from the window
+11:00:50.020 [zoom] source tt6262770 removed from the window
+11:00:50.021 [zoom] source tt37287335 removed from the window
+11:00:50.021 [zoom] source tt34384900 removed from the window
+11:00:50.021 [zoom] source tt32358390 removed from the window
+11:00:50.021 [zoom] source tt37281055 removed from the window
+11:00:50.021 [zoom] source tt31450459 removed from the window
+11:00:50.021 [zoom] source tt28535715 removed from the window
+11:00:50.021 [zoom] source tt22084616 removed from the window
+11:00:50.022 [zoom] source tt7526136 removed from the window
+11:00:50.022 [zoom] source tt13609648 removed from the window
+11:00:50.025 [zoom] source tt45368240 added at (20.0, 307.0, 126.0, 189.0)
+11:00:50.027 [zoom] source tt34890576 added at (157.0, 307.0, 126.0, 189.0)
+11:00:50.027 [zoom] source tt2056785 added at (294.0, 307.0, 126.0, 189.0)
+11:00:50.027 [zoom] source tt27419420 added at (20.0, 553.0, 126.0, 189.0)
+11:00:50.027 [zoom] source tt31049299 added at (157.0, 553.0, 126.0, 189.0)
+11:00:50.028 [zoom] source tt29611136 added at (294.0, 553.0, 126.0, 189.0)
+11:00:50.028 [zoom] source tt35538033 added at (20.0, 799.0, 126.0, 188.0)
+11:00:50.028 [zoom] source tt14173636 added at (157.0, 799.0, 126.0, 188.0)
+11:00:50.028 [zoom] source tt6262770 added at (294.0, 799.0, 126.0, 188.0)
+11:00:50.033 [zoom] source tt37287335 added at (20.0, 1044.0, 126.0, 189.0)
+11:00:50.033 [zoom] source tt34384900 added at (157.0, 1044.0, 126.0, 189.0)
+11:00:50.033 [zoom] source tt32358390 added at (294.0, 1044.0, 126.0, 189.0)
+11:00:50.033 [zoom] source tt37281055 added at (20.0, 1290.0, 126.0, 189.0)
+11:00:50.034 [zoom] source tt31450459 added at (157.0, 1290.0, 126.0, 189.0)
+11:00:50.034 [zoom] source tt28535715 added at (294.0, 1290.0, 126.0, 189.0)
+11:00:50.034 [zoom] source tt22084616 added at (20.0, 1536.0, 126.0, 188.0)
+11:00:50.034 [zoom] source tt7526136 added at (157.0, 1536.0, 126.0, 188.0)
+11:00:50.034 [zoom] source tt13609648 added at (294.0, 1536.0, 126.0, 188.0)
+11:00:50.550 [zoom] source tt45368240 removed from the window
+11:00:50.551 [zoom] source tt34890576 removed from the window
+11:00:50.551 [zoom] source tt2056785 removed from the window
+11:00:50.551 [zoom] source tt27419420 removed from the window
+11:00:50.551 [zoom] source tt31049299 removed from the window
+11:00:50.552 [zoom] source tt29611136 removed from the window
+11:00:50.552 [zoom] source tt35538033 removed from the window
+11:00:50.552 [zoom] source tt14173636 removed from the window
+11:00:50.552 [zoom] source tt6262770 removed from the window
+11:00:50.558 [zoom] source tt37287335 removed from the window
+11:00:50.558 [zoom] source tt34384900 removed from the window
+11:00:50.558 [zoom] source tt32358390 removed from the window
+11:00:50.559 [zoom] source tt37281055 removed from the window
+11:00:50.559 [zoom] source tt31450459 removed from the window
+11:00:50.559 [zoom] source tt28535715 removed from the window
+11:00:50.559 [zoom] source tt22084616 removed from the window
+11:00:50.559 [zoom] source tt7526136 removed from the window
+11:00:50.559 [zoom] source tt13609648 removed from the window
+11:00:50.685 [discover] catalog US|series|cru: 91 title(s) after 616 ms
+11:00:50.685 [discover] Crunchyroll series: 91 title(s)
+11:00:50.801 [zoom] source tt26743760 added at (28.0, 305.0, 109.0, 162.0)
+11:00:50.802 [zoom] source tt22248376 added at (166.0, 305.0, 108.0, 162.0)
+11:00:50.803 [zoom] source tt12343534 added at (303.0, 305.0, 109.0, 162.0)
+11:00:50.804 [zoom] source tt39395275 added at (28.0, 522.0, 109.0, 163.0)
+11:00:50.804 [zoom] source tt0388629 added at (166.0, 522.0, 108.0, 163.0)
+11:00:50.805 [zoom] source tt7441658 added at (303.0, 522.0, 109.0, 163.0)
+11:00:50.806 [zoom] source tt2560140 added at (28.0, 740.0, 109.0, 163.0)
+11:00:50.808 [zoom] source tt0213338 added at (166.0, 740.0, 108.0, 163.0)
+11:00:50.816 [zoom] source tt21209876 added at (303.0, 740.0, 109.0, 163.0)
+11:00:50.818 [zoom] source tt0088509 added at (28.0, 958.0, 109.0, 162.0)
+11:00:50.818 [zoom] source tt0988824 added at (166.0, 958.0, 108.0, 162.0)
+11:00:50.819 [zoom] source tt5626028 added at (303.0, 958.0, 109.0, 162.0)
+11:00:50.820 [zoom] source tt0409591 added at (28.0, 1175.0, 109.0, 163.0)
+11:00:50.821 [zoom] source tt4644488 added at (166.0, 1175.0, 108.0, 163.0)
+11:00:50.821 [zoom] source tt9335498 added at (303.0, 1175.0, 109.0, 163.0)
+11:00:50.822 [zoom] source tt0214341 added at (28.0, 1393.0, 109.0, 163.0)
+11:00:50.823 [zoom] source tt5607616 added at (166.0, 1393.0, 108.0, 163.0)
+11:00:50.890 [zoom] source tt29742160 added at (303.0, 1393.0, 109.0, 163.0)
+11:00:50.891 [zoom] source tt6112556 added at (28.0, 1611.0, 109.0, 162.0)
+11:00:50.897 [zoom] source tt10233448 added at (166.0, 1611.0, 108.0, 162.0)
+11:00:50.897 [zoom] source tt39394153 added at (303.0, 1611.0, 109.0, 162.0)
+11:00:50.898 [zoom] source tt1690397 added at (28.0, 1828.0, 109.0, 163.0)
+11:00:50.898 [zoom] source tt2098220 added at (166.0, 1828.0, 108.0, 163.0)
+11:00:50.900 [zoom] source tt37532356 added at (303.0, 1828.0, 109.0, 163.0)
+11:00:54.105 [zoom] source tt45368240 added at (-112.0, 307.0, 126.0, 189.0)
+11:00:54.106 [zoom] source tt34890576 added at (25.0, 307.0, 126.0, 189.0)
+11:00:54.107 [zoom] source tt2056785 added at (162.0, 307.0, 126.0, 189.0)
+11:00:54.108 [zoom] source tt27419420 added at (-112.0, 553.0, 126.0, 189.0)
+11:00:54.108 [zoom] source tt31049299 added at (25.0, 553.0, 126.0, 189.0)
+11:00:54.109 [zoom] source tt29611136 added at (162.0, 553.0, 126.0, 189.0)
+11:00:54.109 [zoom] source tt35538033 added at (-112.0, 799.0, 126.0, 188.0)
+11:00:54.110 [zoom] source tt14173636 added at (25.0, 799.0, 126.0, 188.0)
+11:00:54.122 [zoom] source tt6262770 added at (162.0, 799.0, 126.0, 188.0)
+11:00:54.123 [zoom] source tt37287335 added at (-112.0, 1044.0, 126.0, 189.0)
+11:00:54.123 [zoom] source tt34384900 added at (25.0, 1044.0, 126.0, 189.0)
+11:00:54.123 [zoom] source tt32358390 added at (162.0, 1044.0, 126.0, 189.0)
+11:00:54.123 [zoom] source tt37281055 added at (-112.0, 1290.0, 126.0, 189.0)
+11:00:54.124 [zoom] source tt31450459 added at (25.0, 1290.0, 126.0, 189.0)
+11:00:54.124 [zoom] source tt28535715 added at (162.0, 1290.0, 126.0, 189.0)
+11:00:54.125 [zoom] source tt22084616 added at (-112.0, 1536.0, 126.0, 188.0)
+11:00:54.125 [zoom] source tt7526136 added at (25.0, 1536.0, 126.0, 188.0)
+11:00:54.126 [zoom] source tt13609648 added at (162.0, 1536.0, 126.0, 188.0)
+11:00:54.727 [zoom] source tt26743760 removed from the window
+11:00:54.727 [zoom] source tt22248376 removed from the window
+11:00:54.728 [zoom] source tt12343534 removed from the window
+11:00:54.728 [zoom] source tt39395275 removed from the window
+11:00:54.728 [zoom] source tt0388629 removed from the window
+11:00:54.728 [zoom] source tt7441658 removed from the window
+11:00:54.728 [zoom] source tt2560140 removed from the window
+11:00:54.728 [zoom] source tt0213338 removed from the window
+11:00:54.728 [zoom] source tt21209876 removed from the window
+11:00:54.735 [zoom] source tt0088509 removed from the window
+11:00:54.735 [zoom] source tt0988824 removed from the window
+11:00:54.736 [zoom] source tt5626028 removed from the window
+11:00:54.736 [zoom] source tt0409591 removed from the window
+11:00:54.736 [zoom] source tt4644488 removed from the window
+11:00:54.737 [zoom] source tt9335498 removed from the window
+11:00:54.737 [zoom] source tt0214341 removed from the window
+11:00:54.737 [zoom] source tt5607616 removed from the window
+11:00:54.737 [zoom] source tt29742160 removed from the window
+11:00:54.737 [zoom] source tt6112556 removed from the window
+11:00:54.743 [zoom] source tt10233448 removed from the window
+11:00:54.743 [zoom] source tt39394153 removed from the window
+11:00:54.744 [zoom] source tt1690397 removed from the window
+11:00:54.744 [zoom] source tt2098220 removed from the window
+11:00:54.744 [zoom] source tt37532356 removed from the window
+11:00:59.512 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=31.87 GB
+11:01:01.679 [hang] main thread unresponsive for 2.2 s
+11:01:06.665 [scene] 878A0B9D connects (portrait)
+11:01:06.667 [scene] 878A0B9D will enter foreground (portrait)
+11:01:07.155 [app] first screen 9324 ms after process start
+11:01:07.155 [app] root view appeared (1 in this run, splash off)
+11:01:08.144 [scene] 878A0B9D active (portrait)
+11:01:08.158 [app] active
+11:01:10.141 [perf] imdb /chart/moviemeter/ plain HTTP 1668 ms (1797 KB)
+11:01:10.142 [perf] imdb warm-up done in 10574 ms
+11:01:13.252 [zoom] source tt45368240 added at (20.0, 537.0, 126.0, 188.0)
+11:01:13.272 [zoom] source tt34890576 added at (157.0, 537.0, 126.0, 188.0)
+11:01:13.273 [zoom] source tt2056785 added at (294.0, 537.0, 126.0, 188.0)
+11:01:13.274 [zoom] source tt27419420 added at (20.0, 854.0, 126.0, 189.0)
+11:01:13.276 [zoom] source tt31049299 added at (157.0, 854.0, 126.0, 189.0)
+11:01:13.277 [zoom] source tt29611136 added at (294.0, 854.0, 126.0, 189.0)
+11:01:13.303 [zoom] source tt35538033 added at (20.0, 1171.0, 126.0, 189.0)
+11:01:13.305 [zoom] source tt14173636 added at (157.0, 1171.0, 126.0, 189.0)
+11:01:13.308 [zoom] source tt6262770 added at (294.0, 1171.0, 126.0, 189.0)
+11:01:13.309 [zoom] source tt37287335 added at (20.0, 1489.0, 126.0, 188.0)
+11:01:13.310 [zoom] source tt34384900 added at (157.0, 1489.0, 126.0, 188.0)
+11:01:13.312 [zoom] source tt32358390 added at (294.0, 1489.0, 126.0, 188.0)
+11:01:22.513 [discover] Netflix series: load starts (grid shows 0)
+11:01:22.655 [zoom] source tt45368240 removed from the window
+11:01:22.656 [zoom] source tt34890576 removed from the window
+11:01:22.656 [zoom] source tt2056785 removed from the window
+11:01:22.656 [zoom] source tt27419420 removed from the window
+11:01:22.656 [zoom] source tt31049299 removed from the window
+11:01:22.656 [zoom] source tt29611136 removed from the window
+11:01:22.656 [zoom] source tt35538033 removed from the window
+11:01:22.656 [zoom] source tt14173636 removed from the window
+11:01:22.656 [zoom] source tt6262770 removed from the window
+11:01:22.659 [zoom] source tt37287335 removed from the window
+11:01:22.659 [zoom] source tt34384900 removed from the window
+11:01:22.659 [zoom] source tt32358390 removed from the window
+11:01:22.668 [zoom] source tt45368240 added at (20.0, 537.0, 126.0, 188.0)
+11:01:22.669 [zoom] source tt34890576 added at (157.0, 537.0, 126.0, 188.0)
+11:01:22.673 [zoom] source tt2056785 added at (294.0, 537.0, 126.0, 188.0)
+11:01:22.674 [zoom] source tt27419420 added at (20.0, 854.0, 126.0, 189.0)
+11:01:22.674 [zoom] source tt31049299 added at (157.0, 854.0, 126.0, 189.0)
+11:01:22.675 [zoom] source tt29611136 added at (294.0, 854.0, 126.0, 189.0)
+11:01:22.675 [zoom] source tt35538033 added at (20.0, 1171.0, 126.0, 189.0)
+11:01:22.675 [zoom] source tt14173636 added at (157.0, 1171.0, 126.0, 189.0)
+11:01:22.675 [zoom] source tt6262770 added at (294.0, 1171.0, 126.0, 189.0)
+11:01:22.675 [zoom] source tt37287335 added at (20.0, 1489.0, 126.0, 188.0)
+11:01:22.676 [zoom] source tt34384900 added at (157.0, 1489.0, 126.0, 188.0)
+11:01:22.677 [zoom] source tt32358390 added at (294.0, 1489.0, 126.0, 188.0)
+11:01:22.801 [discover] catalog US|series|nfx: 98 title(s) after 32 ms
+11:01:22.801 [discover] Netflix series: 98 title(s)
+11:01:22.926 [zoom] source tt8594324 added at (28.0, 322.0, 109.0, 163.0)
+11:01:22.927 [zoom] source tt2531336 added at (166.0, 322.0, 108.0, 163.0)
+11:01:22.929 [zoom] source tt11379026 added at (303.0, 322.0, 109.0, 163.0)
+11:01:22.929 [zoom] source tt26933824 added at (21.0, 612.0, 109.0, 162.0)
+11:01:22.931 [zoom] source tt17491088 added at (166.0, 612.0, 108.0, 162.0)
+11:01:22.933 [zoom] source tt7587890 added at (303.0, 612.0, 109.0, 162.0)
+11:01:22.944 [zoom] source tt4934214 added at (28.0, 901.0, 109.0, 163.0)
+11:01:22.947 [zoom] source tt13210838 added at (158.0, 901.0, 109.0, 163.0)
+11:01:22.949 [zoom] source tt21097264 added at (296.0, 901.0, 108.0, 163.0)
+11:01:22.952 [zoom] source tt0203259 added at (21.0, 1190.0, 109.0, 163.0)
+11:01:22.958 [zoom] source tt27995113 added at (158.0, 1190.0, 108.0, 163.0)
+11:01:22.961 [zoom] source tt44941753 added at (296.0, 1190.0, 108.0, 163.0)
+11:01:22.963 [zoom] source tt42220724 added at (21.0, 1480.0, 109.0, 162.0)
+11:01:22.967 [zoom] source tt35934755 added at (166.0, 1480.0, 108.0, 162.0)
+11:01:22.973 [zoom] source tt0472954 added at (303.0, 1480.0, 109.0, 162.0)
+11:01:22.975 [zoom] source tt0168366 added at (28.0, 1769.0, 109.0, 163.0)
+11:01:22.985 [zoom] source tt1196946 added at (166.0, 1769.0, 108.0, 163.0)
+11:01:22.987 [zoom] source tt39751377 added at (303.0, 1769.0, 109.0, 163.0)
+11:01:23.244 [zoom] source tt45368240 removed from the window
+11:01:23.244 [zoom] source tt34890576 removed from the window
+11:01:23.244 [zoom] source tt2056785 removed from the window
+11:01:23.244 [zoom] source tt27419420 removed from the window
+11:01:23.245 [zoom] source tt31049299 removed from the window
+11:01:23.245 [zoom] source tt29611136 removed from the window
+11:01:23.245 [zoom] source tt35538033 removed from the window
+11:01:23.245 [zoom] source tt14173636 removed from the window
+11:01:23.246 [zoom] source tt6262770 removed from the window
+11:01:23.246 [zoom] source tt37287335 removed from the window
+11:01:23.246 [zoom] source tt34384900 removed from the window
+11:01:23.246 [zoom] source tt32358390 removed from the window
+11:01:26.218 [zoom] source tt45368240 added at (-112.0, 537.0, 126.0, 188.0)
+11:01:26.219 [zoom] source tt34890576 added at (25.0, 537.0, 126.0, 188.0)
+11:01:26.220 [zoom] source tt2056785 added at (162.0, 537.0, 126.0, 188.0)
+11:01:26.221 [zoom] source tt27419420 added at (-112.0, 854.0, 126.0, 189.0)
+11:01:26.222 [zoom] source tt31049299 added at (25.0, 854.0, 126.0, 189.0)
+11:01:26.222 [zoom] source tt29611136 added at (162.0, 854.0, 126.0, 189.0)
+11:01:26.222 [zoom] source tt35538033 added at (-112.0, 1171.0, 126.0, 189.0)
+11:01:26.222 [zoom] source tt14173636 added at (25.0, 1171.0, 126.0, 189.0)
+11:01:26.222 [zoom] source tt6262770 added at (162.0, 1171.0, 126.0, 189.0)
+11:01:26.224 [zoom] source tt37287335 added at (-112.0, 1489.0, 126.0, 188.0)
+11:01:26.225 [zoom] source tt34384900 added at (25.0, 1489.0, 126.0, 188.0)
+11:01:26.226 [zoom] source tt32358390 added at (162.0, 1489.0, 126.0, 188.0)
+11:01:26.811 [zoom] source tt8594324 removed from the window
+11:01:26.811 [zoom] source tt2531336 removed from the window
+11:01:26.812 [zoom] source tt11379026 removed from the window
+11:01:26.812 [zoom] source tt26933824 removed from the window
+11:01:26.813 [zoom] source tt17491088 removed from the window
+11:01:26.813 [zoom] source tt7587890 removed from the window
+11:01:26.813 [zoom] source tt4934214 removed from the window
+11:01:26.813 [zoom] source tt13210838 removed from the window
+11:01:26.813 [zoom] source tt21097264 removed from the window
+11:01:26.814 [zoom] source tt0203259 removed from the window
+11:01:26.814 [zoom] source tt27995113 removed from the window
+11:01:26.814 [zoom] source tt44941753 removed from the window
+11:01:26.814 [zoom] source tt42220724 removed from the window
+11:01:26.814 [zoom] source tt35934755 removed from the window
+11:01:26.815 [zoom] source tt0472954 removed from the window
+11:01:26.815 [zoom] source tt0168366 removed from the window
+11:01:26.815 [zoom] source tt1196946 removed from the window
+11:01:26.815 [zoom] source tt39751377 removed from the window
+11:01:32.283 [discover] Prime Video series: load starts (grid shows 0)
+11:01:32.322 [zoom] source tt45368240 removed from the window
+11:01:32.322 [zoom] source tt34890576 removed from the window
+11:01:32.323 [zoom] source tt2056785 removed from the window
+11:01:32.323 [zoom] source tt27419420 removed from the window
+11:01:32.323 [zoom] source tt31049299 removed from the window
+11:01:32.342 [zoom] source tt29611136 removed from the window
+11:01:32.343 [zoom] source tt35538033 removed from the window
+11:01:32.343 [zoom] source tt14173636 removed from the window
+11:01:32.343 [zoom] source tt6262770 removed from the window
+11:01:32.343 [zoom] source tt37287335 removed from the window
+11:01:32.343 [zoom] source tt34384900 removed from the window
+11:01:32.343 [zoom] source tt32358390 removed from the window
+11:01:32.346 [zoom] source tt45368240 added at (20.0, 537.0, 126.0, 188.0)
+11:01:32.346 [zoom] source tt34890576 added at (157.0, 537.0, 126.0, 188.0)
+11:01:32.347 [zoom] source tt2056785 added at (294.0, 537.0, 126.0, 188.0)
+11:01:32.348 [zoom] source tt27419420 added at (20.0, 854.0, 126.0, 189.0)
+11:01:32.348 [zoom] source tt31049299 added at (157.0, 854.0, 126.0, 189.0)
+11:01:32.348 [zoom] source tt29611136 added at (294.0, 854.0, 126.0, 189.0)
+11:01:32.349 [zoom] source tt35538033 added at (20.0, 1171.0, 126.0, 189.0)
+11:01:32.349 [zoom] source tt14173636 added at (157.0, 1171.0, 126.0, 189.0)
+11:01:32.349 [zoom] source tt6262770 added at (294.0, 1171.0, 126.0, 189.0)
+11:01:32.350 [zoom] source tt37287335 added at (20.0, 1489.0, 126.0, 188.0)
+11:01:32.350 [zoom] source tt34384900 added at (157.0, 1489.0, 126.0, 188.0)
+11:01:32.351 [zoom] source tt32358390 added at (294.0, 1489.0, 126.0, 188.0)
+11:01:32.432 [discover] catalog US|series|amp: 100 title(s) after 13 ms
+11:01:32.432 [discover] Prime Video series: 100 title(s)
+11:01:32.540 [zoom] source tt11743610 added at (28.0, 392.0, 109.0, 163.0)
+11:01:32.542 [zoom] source tt5875444 added at (166.0, 392.0, 108.0, 163.0)
+11:01:32.586 [zoom] source tt11540908 added at (303.0, 392.0, 109.0, 163.0)
+11:01:32.588 [zoom] source tt19231492 added at (28.0, 682.0, 109.0, 162.0)
+11:01:32.592 [zoom] source tt3718778 added at (166.0, 682.0, 108.0, 162.0)
+11:01:32.709 [zoom] source tt1844624 added at (303.0, 682.0, 109.0, 162.0)
+11:01:32.711 [zoom] source tt33270224 added at (21.0, 971.0, 109.0, 163.0)
+11:01:32.712 [zoom] source tt6151526 added at (161.0, 971.0, 108.0, 163.0)
+11:01:32.753 [zoom] source tt10946316 added at (303.0, 971.0, 109.0, 163.0)
+11:01:32.754 [zoom] source tt0111987 added at (28.0, 1260.0, 109.0, 163.0)
+11:01:32.756 [zoom] source tt33043892 added at (166.0, 1260.0, 108.0, 163.0)
+11:01:32.770 [zoom] source tt13138834 added at (296.0, 1260.0, 108.0, 163.0)
+11:01:32.771 [zoom] source tt33078239 added at (21.0, 1550.0, 109.0, 162.0)
+11:01:32.779 [zoom] source tt9288030 added at (166.0, 1550.0, 108.0, 162.0)
+11:01:32.781 [zoom] source tt33539520 added at (296.0, 1550.0, 108.0, 162.0)
+11:01:32.889 [zoom] source tt45368240 removed from the window
+11:01:32.889 [zoom] source tt34890576 removed from the window
+11:01:32.889 [zoom] source tt2056785 removed from the window
+11:01:32.889 [zoom] source tt27419420 removed from the window
+11:01:32.889 [zoom] source tt31049299 removed from the window
+11:01:32.889 [zoom] source tt29611136 removed from the window
+11:01:32.890 [zoom] source tt35538033 removed from the window
+11:01:32.890 [zoom] source tt14173636 removed from the window
+11:01:32.890 [zoom] source tt6262770 removed from the window
+11:01:32.927 [zoom] source tt37287335 removed from the window
+11:01:32.928 [zoom] source tt34384900 removed from the window
+11:01:32.928 [zoom] source tt32358390 removed from the window
+11:01:36.425 [zoom] source tt45368240 added at (-112.0, 537.0, 126.0, 188.0)
+11:01:36.427 [zoom] source tt34890576 added at (25.0, 537.0, 126.0, 188.0)
+11:01:36.428 [zoom] source tt2056785 added at (162.0, 537.0, 126.0, 188.0)
+11:01:36.429 [zoom] source tt27419420 added at (-112.0, 854.0, 126.0, 189.0)
+11:01:36.431 [zoom] source tt31049299 added at (25.0, 854.0, 126.0, 189.0)
+11:01:36.432 [zoom] source tt29611136 added at (162.0, 854.0, 126.0, 189.0)
+11:01:36.433 [zoom] source tt35538033 added at (-112.0, 1171.0, 126.0, 189.0)
+11:01:36.433 [zoom] source tt14173636 added at (25.0, 1171.0, 126.0, 189.0)
+11:01:36.447 [zoom] source tt6262770 added at (162.0, 1171.0, 126.0, 189.0)
+11:01:36.447 [zoom] source tt37287335 added at (-112.0, 1489.0, 126.0, 188.0)
+11:01:36.448 [zoom] source tt34384900 added at (25.0, 1489.0, 126.0, 188.0)
+11:01:36.449 [zoom] source tt32358390 added at (162.0, 1489.0, 126.0, 188.0)
+11:01:37.045 [zoom] source tt11743610 removed from the window
+11:01:37.045 [zoom] source tt5875444 removed from the window
+11:01:37.046 [zoom] source tt11540908 removed from the window
+11:01:37.046 [zoom] source tt19231492 removed from the window
+11:01:37.046 [zoom] source tt3718778 removed from the window
+11:01:37.046 [zoom] source tt1844624 removed from the window
+11:01:37.046 [zoom] source tt33270224 removed from the window
+11:01:37.046 [zoom] source tt6151526 removed from the window
+11:01:37.047 [zoom] source tt10946316 removed from the window
+11:01:37.060 [zoom] source tt0111987 removed from the window
+11:01:37.061 [zoom] source tt33043892 removed from the window
+11:01:37.061 [zoom] source tt13138834 removed from the window
+11:01:37.061 [zoom] source tt33078239 removed from the window
+11:01:37.061 [zoom] source tt9288030 removed from the window
+11:01:37.061 [zoom] source tt33539520 removed from the window
+11:01:38.849 [energy] cpu 31% (main 31%) mem 55 MB (0 MB left) thermal=nominal playing=no
+11:01:41.572 [discover] HBO Max series: load starts (grid shows 0)
+11:01:41.604 [zoom] source tt45368240 removed from the window
+11:01:41.604 [zoom] source tt34890576 removed from the window
+11:01:41.604 [zoom] source tt2056785 removed from the window
+11:01:41.604 [zoom] source tt27419420 removed from the window
+11:01:41.604 [zoom] source tt31049299 removed from the window
+11:01:41.604 [zoom] source tt29611136 removed from the window
+11:01:41.604 [zoom] source tt35538033 removed from the window
+11:01:41.604 [zoom] source tt14173636 removed from the window
+11:01:41.604 [zoom] source tt6262770 removed from the window
+11:01:41.605 [zoom] source tt37287335 removed from the window
+11:01:41.605 [zoom] source tt34384900 removed from the window
+11:01:41.605 [zoom] source tt32358390 removed from the window
+11:01:41.607 [zoom] source tt45368240 added at (20.0, 537.0, 126.0, 188.0)
+11:01:41.607 [zoom] source tt34890576 added at (157.0, 537.0, 126.0, 188.0)
+11:01:41.607 [zoom] source tt2056785 added at (294.0, 537.0, 126.0, 188.0)
+11:01:41.608 [zoom] source tt27419420 added at (20.0, 854.0, 126.0, 189.0)
+11:01:41.608 [zoom] source tt31049299 added at (157.0, 854.0, 126.0, 189.0)
+11:01:41.608 [zoom] source tt29611136 added at (294.0, 854.0, 126.0, 189.0)
+11:01:41.609 [zoom] source tt35538033 added at (20.0, 1171.0, 126.0, 189.0)
+11:01:41.609 [zoom] source tt14173636 added at (157.0, 1171.0, 126.0, 189.0)
+11:01:41.613 [zoom] source tt6262770 added at (294.0, 1171.0, 126.0, 189.0)
+11:01:41.613 [zoom] source tt37287335 added at (20.0, 1489.0, 126.0, 188.0)
+11:01:41.614 [zoom] source tt34384900 added at (157.0, 1489.0, 126.0, 188.0)
+11:01:41.614 [zoom] source tt32358390 added at (294.0, 1489.0, 126.0, 188.0)
+11:01:41.665 [discover] catalog US|series|hbm: 100 title(s) after 13 ms
+11:01:41.666 [discover] HBO Max series: 100 title(s)
+11:01:41.763 [zoom] source tt2699128 added at (28.0, 322.0, 109.0, 163.0)
+11:01:41.764 [zoom] source tt2356777 added at (166.0, 322.0, 108.0, 163.0)
+11:01:41.790 [zoom] source tt2861424 added at (303.0, 322.0, 109.0, 163.0)
+11:01:41.793 [zoom] source tt0460681 added at (28.0, 612.0, 109.0, 162.0)
+11:01:41.796 [zoom] source tt1196946 added at (166.0, 612.0, 108.0, 162.0)
+11:01:41.837 [zoom] source tt0141842 added at (303.0, 612.0, 109.0, 162.0)
+11:01:41.840 [zoom] source tt2017109 added at (28.0, 901.0, 109.0, 163.0)
+11:01:41.842 [zoom] source tt3718778 added at (166.0, 901.0, 108.0, 163.0)
+11:01:41.844 [zoom] source tt0306414 added at (303.0, 901.0, 109.0, 163.0)
+11:01:41.847 [zoom] source tt1839578 added at (28.0, 1190.0, 109.0, 163.0)
+11:01:41.869 [zoom] source tt8772296 added at (158.0, 1190.0, 109.0, 163.0)
+11:01:41.871 [zoom] source tt0108778 added at (303.0, 1190.0, 109.0, 163.0)
+11:01:41.875 [zoom] source tt11815682 added at (28.0, 1480.0, 109.0, 162.0)
+11:01:41.918 [zoom] source tt0185906 added at (166.0, 1480.0, 108.0, 162.0)
+11:01:41.921 [zoom] source tt13406094 added at (303.0, 1480.0, 109.0, 162.0)
+11:01:41.922 [zoom] source tt1442464 added at (21.0, 1769.0, 109.0, 163.0)
+11:01:41.922 [zoom] source tt6520930 added at (166.0, 1769.0, 108.0, 163.0)
+11:01:41.928 [zoom] source tt0264235 added at (303.0, 1769.0, 109.0, 163.0)
+11:01:42.128 [zoom] source tt45368240 removed from the window
+11:01:42.128 [zoom] source tt34890576 removed from the window
+11:01:42.128 [zoom] source tt2056785 removed from the window
+11:01:42.129 [zoom] source tt27419420 removed from the window
+11:01:42.129 [zoom] source tt31049299 removed from the window
+11:01:42.129 [zoom] source tt29611136 removed from the window
+11:01:42.129 [zoom] source tt35538033 removed from the window
+11:01:42.129 [zoom] source tt14173636 removed from the window
+11:01:42.129 [zoom] source tt6262770 removed from the window
+11:01:42.134 [zoom] source tt37287335 removed from the window
+11:01:42.135 [zoom] source tt34384900 removed from the window
+11:01:42.136 [zoom] source tt32358390 removed from the window
+11:01:46.246 [zoom] source tt45368240 added at (-112.0, 537.0, 126.0, 188.0)
+11:01:46.246 [zoom] source tt34890576 added at (25.0, 537.0, 126.0, 188.0)
+11:01:46.247 [zoom] source tt2056785 added at (162.0, 537.0, 126.0, 188.0)
+11:01:46.247 [zoom] source tt27419420 added at (-112.0, 854.0, 126.0, 189.0)
+11:01:46.248 [zoom] source tt31049299 added at (25.0, 854.0, 126.0, 189.0)
+11:01:46.248 [zoom] source tt29611136 added at (162.0, 854.0, 126.0, 189.0)
+11:01:46.248 [zoom] source tt35538033 added at (-112.0, 1171.0, 126.0, 189.0)
+11:01:46.248 [zoom] source tt14173636 added at (25.0, 1171.0, 126.0, 189.0)
+11:01:46.257 [zoom] source tt6262770 added at (162.0, 1171.0, 126.0, 189.0)
+11:01:46.257 [zoom] source tt37287335 added at (-112.0, 1489.0, 126.0, 188.0)
+11:01:46.257 [zoom] source tt34384900 added at (25.0, 1489.0, 126.0, 188.0)
+11:01:46.258 [zoom] source tt32358390 added at (162.0, 1489.0, 126.0, 188.0)
+11:01:46.816 [zoom] source tt2699128 removed from the window
+11:01:46.816 [zoom] source tt2356777 removed from the window
+11:01:46.817 [zoom] source tt2861424 removed from the window
+11:01:46.817 [zoom] source tt0460681 removed from the window
+11:01:46.817 [zoom] source tt1196946 removed from the window
+11:01:46.817 [zoom] source tt0141842 removed from the window
+11:01:46.817 [zoom] source tt2017109 removed from the window
+11:01:46.818 [zoom] source tt3718778 removed from the window
+11:01:46.818 [zoom] source tt0306414 removed from the window
+11:01:46.829 [zoom] source tt1839578 removed from the window
+11:01:46.829 [zoom] source tt8772296 removed from the window
+11:01:46.830 [zoom] source tt0108778 removed from the window
+11:01:46.830 [zoom] source tt11815682 removed from the window
+11:01:46.830 [zoom] source tt0185906 removed from the window
+11:01:46.830 [zoom] source tt13406094 removed from the window
+11:01:46.831 [zoom] source tt1442464 removed from the window
+11:01:46.831 [zoom] source tt6520930 removed from the window
+11:01:46.831 [zoom] source tt0264235 removed from the window
+11:01:50.810 [discover] Disney+ series: load starts (grid shows 0)
+11:01:50.839 [zoom] source tt45368240 removed from the window
+11:01:50.839 [zoom] source tt34890576 removed from the window
+11:01:50.839 [zoom] source tt2056785 removed from the window
+11:01:50.839 [zoom] source tt27419420 removed from the window
+11:01:50.839 [zoom] source tt31049299 removed from the window
+11:01:50.839 [zoom] source tt29611136 removed from the window
+11:01:50.840 [zoom] source tt35538033 removed from the window
+11:01:50.840 [zoom] source tt14173636 removed from the window
+11:01:50.840 [zoom] source tt6262770 removed from the window
+11:01:50.846 [zoom] source tt37287335 removed from the window
+11:01:50.846 [zoom] source tt34384900 removed from the window
+11:01:50.846 [zoom] source tt32358390 removed from the window
+11:01:50.848 [zoom] source tt45368240 added at (20.0, 537.0, 126.0, 188.0)
+11:01:50.849 [zoom] source tt34890576 added at (157.0, 537.0, 126.0, 188.0)
+11:01:50.849 [zoom] source tt2056785 added at (294.0, 537.0, 126.0, 188.0)
+11:01:50.849 [zoom] source tt27419420 added at (20.0, 854.0, 126.0, 189.0)
+11:01:50.849 [zoom] source tt31049299 added at (157.0, 854.0, 126.0, 189.0)
+11:01:50.850 [zoom] source tt29611136 added at (294.0, 854.0, 126.0, 189.0)
+11:01:50.850 [zoom] source tt35538033 added at (20.0, 1171.0, 126.0, 189.0)
+11:01:50.850 [zoom] source tt14173636 added at (157.0, 1171.0, 126.0, 189.0)
+11:01:50.850 [zoom] source tt6262770 added at (294.0, 1171.0, 126.0, 189.0)
+11:01:50.850 [zoom] source tt37287335 added at (20.0, 1489.0, 126.0, 188.0)
+11:01:50.850 [zoom] source tt34384900 added at (157.0, 1489.0, 126.0, 188.0)
+11:01:50.851 [zoom] source tt32358390 added at (294.0, 1489.0, 126.0, 188.0)
+11:01:50.888 [discover] catalog US|series|dnp: 100 title(s) after 9 ms
+11:01:50.889 [discover] Disney+ series: 100 title(s)
+11:01:51.018 [zoom] source tt23112594 added at (21.0, 322.0, 109.0, 163.0)
+11:01:51.019 [zoom] source tt11379026 added at (166.0, 322.0, 108.0, 163.0)
+11:01:51.019 [zoom] source tt7587890 added at (303.0, 322.0, 109.0, 163.0)
+11:01:51.020 [zoom] source tt4934214 added at (28.0, 612.0, 109.0, 162.0)
+11:01:51.020 [zoom] source tt1844624 added at (166.0, 612.0, 108.0, 162.0)
+11:01:51.030 [zoom] source tt21952924 added at (296.0, 612.0, 108.0, 162.0)
+11:01:51.038 [zoom] source tt0203259 added at (21.0, 901.0, 109.0, 163.0)
+11:01:51.040 [zoom] source tt7235466 added at (166.0, 901.0, 108.0, 163.0)
+11:01:51.043 [zoom] source tt0096697 added at (303.0, 901.0, 109.0, 163.0)
+11:01:51.065 [zoom] source tt0106179 added at (28.0, 1190.0, 109.0, 163.0)
+11:01:51.068 [zoom] source tt2149175 added at (166.0, 1190.0, 108.0, 163.0)
+11:01:51.069 [zoom] source tt0413573 added at (303.0, 1190.0, 109.0, 163.0)
+11:01:51.088 [zoom] source tt40197357 added at (28.0, 1480.0, 109.0, 162.0)
+11:01:51.090 [zoom] source tt0168366 added at (166.0, 1480.0, 108.0, 162.0)
+11:01:51.099 [zoom] source tt37063558 added at (298.0, 1480.0, 109.0, 162.0)
+11:01:51.104 [zoom] source tt0804503 added at (28.0, 1769.0, 109.0, 163.0)
+11:01:51.106 [zoom] source tt10166622 added at (166.0, 1769.0, 108.0, 163.0)
+11:01:51.108 [zoom] source tt14452776 added at (303.0, 1769.0, 109.0, 163.0)
+11:01:51.366 [zoom] source tt45368240 removed from the window
+11:01:51.367 [zoom] source tt34890576 removed from the window
+11:01:51.368 [zoom] source tt2056785 removed from the window
+11:01:51.368 [zoom] source tt27419420 removed from the window
+11:01:51.368 [zoom] source tt31049299 removed from the window
+11:01:51.368 [zoom] source tt29611136 removed from the window
+11:01:51.368 [zoom] source tt35538033 removed from the window
+11:01:51.368 [zoom] source tt14173636 removed from the window
+11:01:51.369 [zoom] source tt6262770 removed from the window
+11:01:51.373 [zoom] source tt37287335 removed from the window
+11:01:51.373 [zoom] source tt34384900 removed from the window
+11:01:51.374 [zoom] source tt32358390 removed from the window
+11:01:54.386 [zoom] source tt45368240 added at (-112.0, 537.0, 126.0, 188.0)
+11:01:54.387 [zoom] source tt34890576 added at (25.0, 537.0, 126.0, 188.0)
+11:01:54.388 [zoom] source tt2056785 added at (162.0, 537.0, 126.0, 188.0)
+11:01:54.389 [zoom] source tt27419420 added at (-112.0, 854.0, 126.0, 189.0)
+11:01:54.389 [zoom] source tt31049299 added at (25.0, 854.0, 126.0, 189.0)
+11:01:54.390 [zoom] source tt29611136 added at (162.0, 854.0, 126.0, 189.0)
+11:01:54.390 [zoom] source tt35538033 added at (-112.0, 1171.0, 126.0, 189.0)
+11:01:54.391 [zoom] source tt14173636 added at (25.0, 1171.0, 126.0, 189.0)
+11:01:54.420 [zoom] source tt6262770 added at (162.0, 1171.0, 126.0, 189.0)
+11:01:54.421 [zoom] source tt37287335 added at (-112.0, 1489.0, 126.0, 188.0)
+11:01:54.422 [zoom] source tt34384900 added at (25.0, 1489.0, 126.0, 188.0)
+11:01:54.423 [zoom] source tt32358390 added at (162.0, 1489.0, 126.0, 188.0)
+11:01:55.069 [zoom] source tt23112594 removed from the window
+11:01:55.069 [zoom] source tt11379026 removed from the window
+11:01:55.070 [zoom] source tt7587890 removed from the window
+11:01:55.070 [zoom] source tt4934214 removed from the window
+11:01:55.070 [zoom] source tt1844624 removed from the window
+11:01:55.070 [zoom] source tt21952924 removed from the window
+11:01:55.071 [zoom] source tt0203259 removed from the window
+11:01:55.071 [zoom] source tt7235466 removed from the window
+11:01:55.071 [zoom] source tt0096697 removed from the window
+11:01:55.071 [zoom] source tt0106179 removed from the window
+11:01:55.071 [zoom] source tt2149175 removed from the window
+11:01:55.071 [zoom] source tt0413573 removed from the window
+11:01:55.074 [zoom] source tt40197357 removed from the window
+11:01:55.074 [zoom] source tt0168366 removed from the window
+11:01:55.075 [zoom] source tt37063558 removed from the window
+11:01:55.075 [zoom] source tt0804503 removed from the window
+11:01:55.075 [zoom] source tt10166622 removed from the window
+11:01:55.075 [zoom] source tt14452776 removed from the window
+11:01:58.667 [discover] Apple TV+ series: load starts (grid shows 0)
+11:01:58.688 [zoom] source tt45368240 removed from the window
+11:01:58.688 [zoom] source tt34890576 removed from the window
+11:01:58.688 [zoom] source tt2056785 removed from the window
+11:01:58.688 [zoom] source tt27419420 removed from the window
+11:01:58.688 [zoom] source tt31049299 removed from the window
+11:01:58.688 [zoom] source tt29611136 removed from the window
+11:01:58.688 [zoom] source tt35538033 removed from the window
+11:01:58.688 [zoom] source tt14173636 removed from the window
+11:01:58.688 [zoom] source tt6262770 removed from the window
+11:01:58.689 [zoom] source tt37287335 removed from the window
+11:01:58.689 [zoom] source tt34384900 removed from the window
+11:01:58.689 [zoom] source tt32358390 removed from the window
+11:01:58.691 [zoom] source tt45368240 added at (20.0, 537.0, 126.0, 188.0)
+11:01:58.691 [zoom] source tt34890576 added at (157.0, 537.0, 126.0, 188.0)
+11:01:58.692 [zoom] source tt2056785 added at (294.0, 537.0, 126.0, 188.0)
+11:01:58.692 [zoom] source tt27419420 added at (20.0, 854.0, 126.0, 189.0)
+11:01:58.692 [zoom] source tt31049299 added at (157.0, 854.0, 126.0, 189.0)
+11:01:58.692 [zoom] source tt29611136 added at (294.0, 854.0, 126.0, 189.0)
+11:01:58.692 [zoom] source tt35538033 added at (20.0, 1171.0, 126.0, 189.0)
+11:01:58.692 [zoom] source tt14173636 added at (157.0, 1171.0, 126.0, 189.0)
+11:01:58.693 [zoom] source tt6262770 added at (294.0, 1171.0, 126.0, 189.0)
+11:01:58.693 [zoom] source tt37287335 added at (20.0, 1489.0, 126.0, 188.0)
+11:01:58.693 [zoom] source tt34384900 added at (157.0, 1489.0, 126.0, 188.0)
+11:01:58.693 [zoom] source tt32358390 added at (294.0, 1489.0, 126.0, 188.0)
+11:01:58.740 [discover] catalog US|series|atp: 99 title(s) after 9 ms
+11:01:58.741 [discover] Apple TV+ series: 99 title(s)
+11:01:58.844 [zoom] source tt5875444 added at (28.0, 322.0, 109.0, 163.0)
+11:01:58.846 [zoom] source tt26598805 added at (161.0, 322.0, 109.0, 163.0)
+11:01:58.848 [zoom] source tt10986410 added at (303.0, 322.0, 109.0, 163.0)
+11:01:58.873 [zoom] source tt33332385 added at (21.0, 612.0, 109.0, 162.0)
+11:01:58.876 [zoom] source tt19231492 added at (166.0, 612.0, 108.0, 162.0)
+11:01:58.878 [zoom] source tt14688458 added at (296.0, 612.0, 108.0, 162.0)
+11:01:58.881 [zoom] source tt6037988 added at (21.0, 901.0, 109.0, 163.0)
+11:01:58.904 [zoom] source tt34675596 added at (166.0, 901.0, 108.0, 163.0)
+11:01:58.905 [zoom] source tt10982034 added at (303.0, 901.0, 109.0, 163.0)
+11:01:58.908 [zoom] source tt7772588 added at (21.0, 1190.0, 109.0, 163.0)
+11:01:58.946 [zoom] source tt29011445 added at (166.0, 1190.0, 108.0, 163.0)
+11:01:58.950 [zoom] source tt15677150 added at (303.0, 1190.0, 109.0, 163.0)
+11:01:58.961 [zoom] source tt6773088 added at (28.0, 1480.0, 109.0, 162.0)
+11:01:58.962 [zoom] source tt11280740 added at (166.0, 1480.0, 108.0, 162.0)
+11:01:58.963 [zoom] source tt34866681 added at (303.0, 1480.0, 109.0, 162.0)
+11:01:58.970 [zoom] source tt22202452 added at (28.0, 1769.0, 109.0, 163.0)
+11:01:58.971 [zoom] source tt19854762 added at (157.0, 1769.0, 109.0, 163.0)
+11:01:58.971 [zoom] source tt30459041 added at (303.0, 1769.0, 109.0, 163.0)
+11:01:59.211 [zoom] source tt45368240 removed from the window
+11:01:59.212 [zoom] source tt34890576 removed from the window
+11:01:59.212 [zoom] source tt2056785 removed from the window
+11:01:59.212 [zoom] source tt27419420 removed from the window
+11:01:59.212 [zoom] source tt31049299 removed from the window
+11:01:59.212 [zoom] source tt29611136 removed from the window
+11:01:59.212 [zoom] source tt35538033 removed from the window
+11:01:59.212 [zoom] source tt14173636 removed from the window
+11:01:59.213 [zoom] source tt6262770 removed from the window
+11:01:59.213 [zoom] source tt37287335 removed from the window
+11:01:59.213 [zoom] source tt34384900 removed from the window
+11:01:59.213 [zoom] source tt32358390 removed from the window
+11:02:02.287 [zoom] source tt45368240 added at (-112.0, 537.0, 126.0, 188.0)
+11:02:02.287 [zoom] source tt34890576 added at (25.0, 537.0, 126.0, 188.0)
+11:02:02.288 [zoom] source tt2056785 added at (162.0, 537.0, 126.0, 188.0)
+11:02:02.288 [zoom] source tt27419420 added at (-112.0, 854.0, 126.0, 189.0)
+11:02:02.289 [zoom] source tt31049299 added at (25.0, 854.0, 126.0, 189.0)
+11:02:02.289 [zoom] source tt29611136 added at (162.0, 854.0, 126.0, 189.0)
+11:02:02.290 [zoom] source tt35538033 added at (-112.0, 1171.0, 126.0, 189.0)
+11:02:02.290 [zoom] source tt14173636 added at (25.0, 1171.0, 126.0, 189.0)
+11:02:02.294 [zoom] source tt6262770 added at (162.0, 1171.0, 126.0, 189.0)
+11:02:02.295 [zoom] source tt37287335 added at (-112.0, 1489.0, 126.0, 188.0)
+11:02:02.295 [zoom] source tt34384900 added at (25.0, 1489.0, 126.0, 188.0)
+11:02:02.295 [zoom] source tt32358390 added at (162.0, 1489.0, 126.0, 188.0)
+11:02:02.878 [zoom] source tt5875444 removed from the window
+11:02:02.879 [zoom] source tt26598805 removed from the window
+11:02:02.879 [zoom] source tt10986410 removed from the window
+11:02:02.879 [zoom] source tt33332385 removed from the window
+11:02:02.879 [zoom] source tt19231492 removed from the window
+11:02:02.879 [zoom] source tt14688458 removed from the window
+11:02:02.880 [zoom] source tt6037988 removed from the window
+11:02:02.880 [zoom] source tt34675596 removed from the window
+11:02:02.880 [zoom] source tt10982034 removed from the window
+11:02:02.881 [zoom] source tt7772588 removed from the window
+11:02:02.881 [zoom] source tt29011445 removed from the window
+11:02:02.881 [zoom] source tt15677150 removed from the window
+11:02:02.881 [zoom] source tt6773088 removed from the window
+11:02:02.881 [zoom] source tt11280740 removed from the window
+11:02:02.881 [zoom] source tt34866681 removed from the window
+11:02:02.881 [zoom] source tt22202452 removed from the window
+11:02:02.882 [zoom] source tt19854762 removed from the window
+11:02:02.882 [zoom] source tt30459041 removed from the window
+11:02:07.827 [discover] Paramount+ series: load starts (grid shows 0)
+11:02:07.859 [zoom] source tt45368240 removed from the window
+11:02:07.859 [zoom] source tt34890576 removed from the window
+11:02:07.859 [zoom] source tt2056785 removed from the window
+11:02:07.859 [zoom] source tt27419420 removed from the window
+11:02:07.859 [zoom] source tt31049299 removed from the window
+11:02:07.860 [zoom] source tt29611136 removed from the window
+11:02:07.860 [zoom] source tt35538033 removed from the window
+11:02:07.860 [zoom] source tt14173636 removed from the window
+11:02:07.860 [zoom] source tt6262770 removed from the window
+11:02:07.861 [zoom] source tt37287335 removed from the window
+11:02:07.861 [zoom] source tt34384900 removed from the window
+11:02:07.861 [zoom] source tt32358390 removed from the window
+11:02:07.864 [zoom] source tt45368240 added at (20.0, 537.0, 126.0, 188.0)
+11:02:07.865 [zoom] source tt34890576 added at (157.0, 537.0, 126.0, 188.0)
+11:02:07.865 [zoom] source tt2056785 added at (294.0, 537.0, 126.0, 188.0)
+11:02:07.866 [zoom] source tt27419420 added at (20.0, 854.0, 126.0, 189.0)
+11:02:07.866 [zoom] source tt31049299 added at (157.0, 854.0, 126.0, 189.0)
+11:02:07.866 [zoom] source tt29611136 added at (294.0, 854.0, 126.0, 189.0)
+11:02:07.866 [zoom] source tt35538033 added at (20.0, 1171.0, 126.0, 189.0)
+11:02:07.866 [zoom] source tt14173636 added at (157.0, 1171.0, 126.0, 189.0)
+11:02:07.866 [zoom] source tt6262770 added at (294.0, 1171.0, 126.0, 189.0)
+11:02:07.867 [zoom] source tt37287335 added at (20.0, 1489.0, 126.0, 188.0)
+11:02:07.867 [zoom] source tt34384900 added at (157.0, 1489.0, 126.0, 188.0)
+11:02:07.867 [zoom] source tt32358390 added at (294.0, 1489.0, 126.0, 188.0)
+11:02:07.926 [discover] catalog US|series|pmp: 100 title(s) after 9 ms
+11:02:07.928 [discover] Paramount+ series: 100 title(s)
+11:02:08.050 [zoom] source tt31510819 added at (28.0, 318.0, 109.0, 162.0)
+11:02:08.052 [zoom] source tt2297757 added at (166.0, 318.0, 108.0, 162.0)
+11:02:08.053 [zoom] source tt0092455 added at (303.0, 318.0, 109.0, 162.0)
+11:02:08.054 [zoom] source tt33270224 added at (21.0, 607.0, 109.0, 163.0)
+11:02:08.055 [zoom] source tt0121955 added at (166.0, 607.0, 108.0, 163.0)
+11:02:08.057 [zoom] source tt13875494 added at (295.0, 607.0, 109.0, 163.0)
+11:02:08.059 [zoom] source tt46269844 added at (24.0, 896.0, 109.0, 163.0)
+11:02:08.060 [zoom] source tt16358384 added at (166.0, 896.0, 108.0, 163.0)
+11:02:08.061 [zoom] source tt0052520 added at (303.0, 896.0, 109.0, 163.0)
+11:02:08.075 [zoom] source tt35854736 added at (21.0, 1186.0, 109.0, 162.0)
+11:02:08.077 [zoom] source tt13111078 added at (166.0, 1186.0, 108.0, 162.0)
+11:02:08.077 [zoom] source tt33078239 added at (296.0, 1186.0, 108.0, 162.0)
+11:02:08.079 [zoom] source tt0364845 added at (28.0, 1475.0, 109.0, 163.0)
+11:02:08.081 [zoom] source tt36849871 added at (158.0, 1475.0, 108.0, 163.0)
+11:02:08.088 [zoom] source tt31589662 added at (298.0, 1475.0, 109.0, 163.0)
+11:02:08.089 [zoom] source tt0239195 added at (28.0, 1764.0, 109.0, 163.0)
+11:02:08.090 [zoom] source tt0098936 added at (166.0, 1764.0, 108.0, 163.0)
+11:02:08.092 [zoom] source tt7491982 added at (298.0, 1764.0, 109.0, 163.0)
+11:02:08.180 [energy] cpu 95% (main 65%, other 27%, com.apple.SwiftUI. 2%, com.apple.UIKit.in 1%) mem 62 MB (0 MB left) thermal=nominal playing=no
+11:02:08.395 [zoom] source tt45368240 removed from the window
+11:02:08.395 [zoom] source tt34890576 removed from the window
+11:02:08.395 [zoom] source tt2056785 removed from the window
+11:02:08.396 [zoom] source tt27419420 removed from the window
+11:02:08.396 [zoom] source tt31049299 removed from the window
+11:02:08.396 [zoom] source tt29611136 removed from the window
+11:02:08.396 [zoom] source tt35538033 removed from the window
+11:02:08.396 [zoom] source tt14173636 removed from the window
+11:02:08.396 [zoom] source tt6262770 removed from the window
+11:02:08.397 [zoom] source tt37287335 removed from the window
+11:02:08.398 [zoom] source tt34384900 removed from the window
+11:02:08.398 [zoom] source tt32358390 removed from the window
+11:02:11.423 [zoom] source tt45368240 added at (-112.0, 537.0, 126.0, 188.0)
+11:02:11.424 [zoom] source tt34890576 added at (25.0, 537.0, 126.0, 188.0)
+11:02:11.425 [zoom] source tt2056785 added at (162.0, 537.0, 126.0, 188.0)
+11:02:11.426 [zoom] source tt27419420 added at (-112.0, 854.0, 126.0, 189.0)
+11:02:11.426 [zoom] source tt31049299 added at (25.0, 854.0, 126.0, 189.0)
+11:02:11.428 [zoom] source tt29611136 added at (162.0, 854.0, 126.0, 189.0)
+11:02:11.429 [zoom] source tt35538033 added at (-112.0, 1171.0, 126.0, 189.0)
+11:02:11.430 [zoom] source tt14173636 added at (25.0, 1171.0, 126.0, 189.0)
+11:02:11.432 [zoom] source tt6262770 added at (162.0, 1171.0, 126.0, 189.0)
+11:02:11.432 [zoom] source tt37287335 added at (-112.0, 1489.0, 126.0, 188.0)
+11:02:11.433 [zoom] source tt34384900 added at (25.0, 1489.0, 126.0, 188.0)
+11:02:11.434 [zoom] source tt32358390 added at (162.0, 1489.0, 126.0, 188.0)
+11:02:12.105 [zoom] source tt31510819 removed from the window
+11:02:12.105 [zoom] source tt2297757 removed from the window
+11:02:12.105 [zoom] source tt0092455 removed from the window
+11:02:12.105 [zoom] source tt33270224 removed from the window
+11:02:12.106 [zoom] source tt0121955 removed from the window
+11:02:12.106 [zoom] source tt13875494 removed from the window
+11:02:12.107 [zoom] source tt46269844 removed from the window
+11:02:12.107 [zoom] source tt16358384 removed from the window
+11:02:12.107 [zoom] source tt0052520 removed from the window
+11:02:12.108 [zoom] source tt35854736 removed from the window
+11:02:12.109 [zoom] source tt13111078 removed from the window
+11:02:12.109 [zoom] source tt33078239 removed from the window
+11:02:12.109 [zoom] source tt0364845 removed from the window
+11:02:12.113 [zoom] source tt36849871 removed from the window
+11:02:12.114 [zoom] source tt31589662 removed from the window
+11:02:12.114 [zoom] source tt0239195 removed from the window
+11:02:12.115 [zoom] source tt0098936 removed from the window
+11:02:12.115 [zoom] source tt7491982 removed from the window
+11:02:15.839 [discover] Hulu series: load starts (grid shows 0)
+11:02:15.867 [zoom] source tt45368240 removed from the window
+11:02:15.867 [zoom] source tt34890576 removed from the window
+11:02:15.867 [zoom] source tt2056785 removed from the window
+11:02:15.868 [zoom] source tt27419420 removed from the window
+11:02:15.868 [zoom] source tt31049299 removed from the window
+11:02:15.868 [zoom] source tt29611136 removed from the window
+11:02:15.868 [zoom] source tt35538033 removed from the window
+11:02:15.868 [zoom] source tt14173636 removed from the window
+11:02:15.869 [zoom] source tt6262770 removed from the window
+11:02:15.869 [zoom] source tt37287335 removed from the window
+11:02:15.869 [zoom] source tt34384900 removed from the window
+11:02:15.869 [zoom] source tt32358390 removed from the window
+11:02:15.871 [zoom] source tt45368240 added at (20.0, 537.0, 126.0, 188.0)
+11:02:15.872 [zoom] source tt34890576 added at (157.0, 537.0, 126.0, 188.0)
+11:02:15.872 [zoom] source tt2056785 added at (294.0, 537.0, 126.0, 188.0)
+11:02:15.873 [zoom] source tt27419420 added at (20.0, 854.0, 126.0, 189.0)
+11:02:15.873 [zoom] source tt31049299 added at (157.0, 854.0, 126.0, 189.0)
+11:02:15.873 [zoom] source tt29611136 added at (294.0, 854.0, 126.0, 189.0)
+11:02:15.873 [zoom] source tt35538033 added at (20.0, 1171.0, 126.0, 189.0)
+11:02:15.873 [zoom] source tt14173636 added at (157.0, 1171.0, 126.0, 189.0)
+11:02:15.874 [zoom] source tt6262770 added at (294.0, 1171.0, 126.0, 189.0)
+11:02:15.874 [zoom] source tt37287335 added at (20.0, 1489.0, 126.0, 188.0)
+11:02:15.874 [zoom] source tt34384900 added at (157.0, 1489.0, 126.0, 188.0)
+11:02:15.874 [zoom] source tt32358390 added at (294.0, 1489.0, 126.0, 188.0)
+11:02:15.936 [discover] catalog US|series|hlu: 98 title(s) after 20 ms
+11:02:15.937 [discover] Hulu series: 98 title(s)
+11:02:16.077 [zoom] source tt21952924 added at (21.0, 322.0, 109.0, 163.0)
+11:02:16.079 [zoom] source tt10166622 added at (166.0, 322.0, 108.0, 163.0)
+11:02:16.080 [zoom] source tt3718778 added at (303.0, 322.0, 109.0, 163.0)
+11:02:16.082 [zoom] source tt1844624 added at (28.0, 612.0, 109.0, 162.0)
+11:02:16.084 [zoom] source tt14218830 added at (166.0, 612.0, 108.0, 162.0)
+11:02:16.085 [zoom] source tt13875494 added at (295.0, 612.0, 109.0, 162.0)
+11:02:16.087 [zoom] source tt36885662 added at (28.0, 901.0, 109.0, 163.0)
+11:02:16.089 [zoom] source tt0096697 added at (166.0, 901.0, 108.0, 163.0)
+11:02:16.108 [zoom] source tt2149175 added at (303.0, 901.0, 109.0, 163.0)
+11:02:16.111 [zoom] source tt0364845 added at (28.0, 1190.0, 109.0, 163.0)
+11:02:16.114 [zoom] source tt40197357 added at (166.0, 1190.0, 108.0, 163.0)
+11:02:16.121 [zoom] source tt31289994 added at (294.0, 1190.0, 109.0, 163.0)
+11:02:16.125 [zoom] source tt37063558 added at (23.0, 1480.0, 109.0, 162.0)
+11:02:16.129 [zoom] source tt0239195 added at (166.0, 1480.0, 108.0, 162.0)
+11:02:16.131 [zoom] source tt0413573 added at (303.0, 1480.0, 109.0, 162.0)
+11:02:16.144 [zoom] source tt36303968 added at (21.0, 1769.0, 109.0, 163.0)
+11:02:16.148 [zoom] source tt48356732 added at (161.0, 1769.0, 109.0, 163.0)
+11:02:16.155 [zoom] source tt0203259 added at (296.0, 1769.0, 108.0, 163.0)
+11:02:16.390 [zoom] source tt45368240 removed from the window
+11:02:16.390 [zoom] source tt34890576 removed from the window
+11:02:16.390 [zoom] source tt2056785 removed from the window
+11:02:16.390 [zoom] source tt27419420 removed from the window
+11:02:16.391 [zoom] source tt31049299 removed from the window
+11:02:16.391 [zoom] source tt29611136 removed from the window
+11:02:16.391 [zoom] source tt35538033 removed from the window
+11:02:16.391 [zoom] source tt14173636 removed from the window
+11:02:16.391 [zoom] source tt6262770 removed from the window
+11:02:16.392 [zoom] source tt37287335 removed from the window
+11:02:16.392 [zoom] source tt34384900 removed from the window
+11:02:16.392 [zoom] source tt32358390 removed from the window
+11:02:19.312 [zoom] source tt45368240 added at (-112.0, 537.0, 126.0, 188.0)
+11:02:19.313 [zoom] source tt34890576 added at (25.0, 537.0, 126.0, 188.0)
+11:02:19.313 [zoom] source tt2056785 added at (162.0, 537.0, 126.0, 188.0)
+11:02:19.313 [zoom] source tt27419420 added at (-112.0, 854.0, 126.0, 189.0)
+11:02:19.313 [zoom] source tt31049299 added at (25.0, 854.0, 126.0, 189.0)
+11:02:19.313 [zoom] source tt29611136 added at (162.0, 854.0, 126.0, 189.0)
+11:02:19.313 [zoom] source tt35538033 added at (-112.0, 1171.0, 126.0, 189.0)
+11:02:19.314 [zoom] source tt14173636 added at (25.0, 1171.0, 126.0, 189.0)
+11:02:19.314 [zoom] source tt6262770 added at (162.0, 1171.0, 126.0, 189.0)
+11:02:19.315 [zoom] source tt37287335 added at (-112.0, 1489.0, 126.0, 188.0)
+11:02:19.315 [zoom] source tt34384900 added at (25.0, 1489.0, 126.0, 188.0)
+11:02:19.315 [zoom] source tt32358390 added at (162.0, 1489.0, 126.0, 188.0)
+11:02:19.884 [zoom] source tt21952924 removed from the window
+11:02:19.885 [zoom] source tt10166622 removed from the window
+11:02:19.885 [zoom] source tt3718778 removed from the window
+11:02:19.885 [zoom] source tt1844624 removed from the window
+11:02:19.885 [zoom] source tt14218830 removed from the window
+11:02:19.885 [zoom] source tt13875494 removed from the window
+11:02:19.885 [zoom] source tt36885662 removed from the window
+11:02:19.885 [zoom] source tt0096697 removed from the window
+11:02:19.885 [zoom] source tt2149175 removed from the window
+11:02:19.886 [zoom] source tt0364845 removed from the window
+11:02:19.886 [zoom] source tt40197357 removed from the window
+11:02:19.886 [zoom] source tt31289994 removed from the window
+11:02:19.886 [zoom] source tt37063558 removed from the window
+11:02:19.886 [zoom] source tt0239195 removed from the window
+11:02:19.886 [zoom] source tt0413573 removed from the window
+11:02:19.887 [zoom] source tt36303968 removed from the window
+11:02:19.887 [zoom] source tt48356732 removed from the window
+11:02:19.887 [zoom] source tt0203259 removed from the window
+11:02:24.085 [discover] Peacock series: load starts (grid shows 0)
+11:02:24.120 [zoom] source tt45368240 removed from the window
+11:02:24.120 [zoom] source tt34890576 removed from the window
+11:02:24.120 [zoom] source tt2056785 removed from the window
+11:02:24.121 [zoom] source tt27419420 removed from the window
+11:02:24.121 [zoom] source tt31049299 removed from the window
+11:02:24.121 [zoom] source tt29611136 removed from the window
+11:02:24.157 [zoom] source tt35538033 removed from the window
+11:02:24.157 [zoom] source tt14173636 removed from the window
+11:02:24.158 [zoom] source tt6262770 removed from the window
+11:02:24.158 [zoom] source tt37287335 removed from the window
+11:02:24.158 [zoom] source tt34384900 removed from the window
+11:02:24.158 [zoom] source tt32358390 removed from the window
+11:02:24.162 [zoom] source tt45368240 added at (20.0, 537.0, 126.0, 188.0)
+11:02:24.163 [zoom] source tt34890576 added at (157.0, 537.0, 126.0, 188.0)
+11:02:24.163 [zoom] source tt2056785 added at (294.0, 537.0, 126.0, 188.0)
+11:02:24.165 [zoom] source tt27419420 added at (20.0, 854.0, 126.0, 189.0)
+11:02:24.165 [zoom] source tt31049299 added at (157.0, 854.0, 126.0, 189.0)
+11:02:24.166 [zoom] source tt29611136 added at (294.0, 854.0, 126.0, 189.0)
+11:02:24.166 [zoom] source tt35538033 added at (20.0, 1171.0, 126.0, 189.0)
+11:02:24.166 [zoom] source tt14173636 added at (157.0, 1171.0, 126.0, 189.0)
+11:02:24.166 [zoom] source tt6262770 added at (294.0, 1171.0, 126.0, 189.0)
+11:02:24.167 [zoom] source tt37287335 added at (20.0, 1489.0, 126.0, 188.0)
+11:02:24.167 [zoom] source tt34384900 added at (157.0, 1489.0, 126.0, 188.0)
+11:02:24.167 [zoom] source tt32358390 added at (294.0, 1489.0, 126.0, 188.0)
+11:02:24.216 [discover] catalog US|series|pcp: 100 title(s) after 8 ms
+11:02:24.216 [discover] Peacock series: 100 title(s)
+11:02:24.357 [zoom] source tt23148340 added at (28.0, 322.0, 109.0, 163.0)
+11:02:24.359 [zoom] source tt6151526 added at (161.0, 322.0, 108.0, 163.0)
+11:02:24.361 [zoom] source tt15557874 added at (296.0, 322.0, 108.0, 163.0)
+11:02:24.362 [zoom] source tt0203259 added at (21.0, 612.0, 109.0, 162.0)
+11:02:24.364 [zoom] source tt0386676 added at (166.0, 612.0, 108.0, 162.0)
+11:02:24.366 [zoom] source tt0460681 added at (303.0, 612.0, 109.0, 162.0)
+11:02:24.367 [zoom] source tt1266020 added at (28.0, 901.0, 109.0, 163.0)
+11:02:24.387 [zoom] source tt4236770 added at (166.0, 901.0, 108.0, 163.0)
+11:02:24.390 [zoom] source tt2261391 added at (303.0, 901.0, 109.0, 163.0)
+11:02:24.391 [zoom] source tt42576767 added at (28.0, 1190.0, 109.0, 163.0)
+11:02:24.394 [zoom] source tt1839578 added at (166.0, 1190.0, 108.0, 163.0)
+11:02:24.410 [zoom] source tt0098844 added at (303.0, 1190.0, 109.0, 163.0)
+11:02:24.413 [zoom] source tt1442437 added at (28.0, 1480.0, 109.0, 162.0)
+11:02:24.414 [zoom] source tt2805096 added at (158.0, 1480.0, 109.0, 162.0)
+11:02:24.424 [zoom] source tt0437005 added at (295.0, 1480.0, 109.0, 162.0)
+11:02:24.426 [zoom] source tt4655480 added at (28.0, 1769.0, 109.0, 163.0)
+11:02:24.428 [zoom] source tt29666911 added at (158.0, 1769.0, 109.0, 163.0)
+11:02:24.434 [zoom] source tt2467372 added at (303.0, 1769.0, 109.0, 163.0)
+11:02:24.696 [zoom] source tt45368240 removed from the window
+11:02:24.696 [zoom] source tt34890576 removed from the window
+11:02:24.697 [zoom] source tt2056785 removed from the window
+11:02:24.697 [zoom] source tt27419420 removed from the window
+11:02:24.697 [zoom] source tt31049299 removed from the window
+11:02:24.698 [zoom] source tt29611136 removed from the window
+11:02:24.698 [zoom] source tt35538033 removed from the window
+11:02:24.698 [zoom] source tt14173636 removed from the window
+11:02:24.698 [zoom] source tt6262770 removed from the window
+11:02:24.699 [zoom] source tt37287335 removed from the window
+11:02:24.699 [zoom] source tt34384900 removed from the window
+11:02:24.699 [zoom] source tt32358390 removed from the window
+11:02:27.741 [zoom] source tt45368240 added at (-112.0, 537.0, 126.0, 188.0)
+11:02:27.743 [zoom] source tt34890576 added at (25.0, 537.0, 126.0, 188.0)
+11:02:27.744 [zoom] source tt2056785 added at (162.0, 537.0, 126.0, 188.0)
+11:02:27.744 [zoom] source tt27419420 added at (-112.0, 854.0, 126.0, 189.0)
+11:02:27.745 [zoom] source tt31049299 added at (25.0, 854.0, 126.0, 189.0)
+11:02:27.747 [zoom] source tt29611136 added at (162.0, 854.0, 126.0, 189.0)
+11:02:27.747 [zoom] source tt35538033 added at (-112.0, 1171.0, 126.0, 189.0)
+11:02:27.748 [zoom] source tt14173636 added at (25.0, 1171.0, 126.0, 189.0)
+11:02:27.814 [zoom] source tt6262770 added at (162.0, 1171.0, 126.0, 189.0)
+11:02:27.819 [zoom] source tt37287335 added at (-112.0, 1489.0, 126.0, 188.0)
+11:02:27.819 [zoom] source tt34384900 added at (25.0, 1489.0, 126.0, 188.0)
+11:02:27.820 [zoom] source tt32358390 added at (162.0, 1489.0, 126.0, 188.0)
+11:02:28.424 [zoom] source tt23148340 removed from the window
+11:02:28.425 [zoom] source tt6151526 removed from the window
+11:02:28.425 [zoom] source tt15557874 removed from the window
+11:02:28.425 [zoom] source tt0203259 removed from the window
+11:02:28.425 [zoom] source tt0386676 removed from the window
+11:02:28.425 [zoom] source tt0460681 removed from the window
+11:02:28.425 [zoom] source tt1266020 removed from the window
+11:02:28.425 [zoom] source tt4236770 removed from the window
+11:02:28.425 [zoom] source tt2261391 removed from the window
+11:02:28.426 [zoom] source tt42576767 removed from the window
+11:02:28.427 [zoom] source tt1839578 removed from the window
+11:02:28.427 [zoom] source tt0098844 removed from the window
+11:02:28.427 [zoom] source tt1442437 removed from the window
+11:02:28.427 [zoom] source tt2805096 removed from the window
+11:02:28.427 [zoom] source tt0437005 removed from the window
+11:02:28.428 [zoom] source tt4655480 removed from the window
+11:02:28.428 [zoom] source tt29666911 removed from the window
+11:02:28.429 [zoom] source tt2467372 removed from the window
+11:02:35.446 [discover] Crunchyroll series: load starts (grid shows 0)
+11:02:35.485 [zoom] source tt45368240 removed from the window
+11:02:35.485 [zoom] source tt34890576 removed from the window
+11:02:35.485 [zoom] source tt2056785 removed from the window
+11:02:35.485 [zoom] source tt27419420 removed from the window
+11:02:35.485 [zoom] source tt31049299 removed from the window
+11:02:35.486 [zoom] source tt29611136 removed from the window
+11:02:35.486 [zoom] source tt35538033 removed from the window
+11:02:35.486 [zoom] source tt14173636 removed from the window
+11:02:35.486 [zoom] source tt6262770 removed from the window
+11:02:35.486 [zoom] source tt37287335 removed from the window
+11:02:35.486 [zoom] source tt34384900 removed from the window
+11:02:35.486 [zoom] source tt32358390 removed from the window
+11:02:35.489 [zoom] source tt45368240 added at (20.0, 537.0, 126.0, 188.0)
+11:02:35.489 [zoom] source tt34890576 added at (157.0, 537.0, 126.0, 188.0)
+11:02:35.489 [zoom] source tt2056785 added at (294.0, 537.0, 126.0, 188.0)
+11:02:35.490 [zoom] source tt27419420 added at (20.0, 854.0, 126.0, 189.0)
+11:02:35.490 [zoom] source tt31049299 added at (157.0, 854.0, 126.0, 189.0)
+11:02:35.490 [zoom] source tt29611136 added at (294.0, 854.0, 126.0, 189.0)
+11:02:35.490 [zoom] source tt35538033 added at (20.0, 1171.0, 126.0, 189.0)
+11:02:35.490 [zoom] source tt14173636 added at (157.0, 1171.0, 126.0, 189.0)
+11:02:35.491 [zoom] source tt6262770 added at (294.0, 1171.0, 126.0, 189.0)
+11:02:35.491 [zoom] source tt37287335 added at (20.0, 1489.0, 126.0, 188.0)
+11:02:35.491 [zoom] source tt34384900 added at (157.0, 1489.0, 126.0, 188.0)
+11:02:35.491 [zoom] source tt32358390 added at (294.0, 1489.0, 126.0, 188.0)
+11:02:35.553 [discover] catalog US|series|cru: 91 title(s) after 7 ms
+11:02:35.553 [discover] Crunchyroll series: 91 title(s)
+11:02:35.657 [zoom] source tt26743760 added at (28.0, 392.0, 109.0, 163.0)
+11:02:35.660 [zoom] source tt22248376 added at (166.0, 392.0, 108.0, 163.0)
+11:02:35.661 [zoom] source tt12343534 added at (303.0, 392.0, 109.0, 163.0)
+11:02:35.662 [zoom] source tt39395275 added at (21.0, 682.0, 109.0, 162.0)
+11:02:35.662 [zoom] source tt0388629 added at (166.0, 682.0, 108.0, 162.0)
+11:02:35.677 [zoom] source tt7441658 added at (303.0, 682.0, 109.0, 162.0)
+11:02:35.679 [zoom] source tt2560140 added at (21.0, 971.0, 108.0, 163.0)
+11:02:35.680 [zoom] source tt0213338 added at (166.0, 971.0, 108.0, 163.0)
+11:02:35.681 [zoom] source tt21209876 added at (303.0, 971.0, 109.0, 163.0)
+11:02:35.694 [zoom] source tt0088509 added at (28.0, 1260.0, 109.0, 163.0)
+11:02:35.696 [zoom] source tt0988824 added at (166.0, 1260.0, 108.0, 163.0)
+11:02:35.698 [zoom] source tt5626028 added at (303.0, 1260.0, 109.0, 163.0)
+11:02:35.709 [zoom] source tt0409591 added at (28.0, 1550.0, 109.0, 162.0)
+11:02:35.711 [zoom] source tt4644488 added at (166.0, 1550.0, 108.0, 162.0)
+11:02:35.713 [zoom] source tt9335498 added at (303.0, 1550.0, 109.0, 162.0)
+11:02:36.027 [zoom] source tt45368240 removed from the window
+11:02:36.027 [zoom] source tt34890576 removed from the window
+11:02:36.027 [zoom] source tt2056785 removed from the window
+11:02:36.027 [zoom] source tt27419420 removed from the window
+11:02:36.028 [zoom] source tt31049299 removed from the window
+11:02:36.028 [zoom] source tt29611136 removed from the window
+11:02:36.028 [zoom] source tt35538033 removed from the window
+11:02:36.028 [zoom] source tt14173636 removed from the window
+11:02:36.028 [zoom] source tt6262770 removed from the window
+11:02:36.029 [zoom] source tt37287335 removed from the window
+11:02:36.029 [zoom] source tt34384900 removed from the window
+11:02:36.029 [zoom] source tt32358390 removed from the window
+11:02:38.258 [energy] cpu 1% (main 1%, other 0%) mem 72 MB (0 MB left) thermal=nominal playing=no
+11:02:44.520 [zoom] source tt45368240 added at (-112.0, 537.0, 126.0, 188.0)
+11:02:44.522 [zoom] source tt34890576 added at (25.0, 537.0, 126.0, 188.0)
+11:02:44.522 [zoom] source tt2056785 added at (162.0, 537.0, 126.0, 188.0)
+11:02:44.523 [zoom] source tt27419420 added at (-112.0, 854.0, 126.0, 189.0)
+11:02:44.526 [zoom] source tt31049299 added at (25.0, 854.0, 126.0, 189.0)
+11:02:44.599 [zoom] source tt29611136 added at (162.0, 854.0, 126.0, 189.0)
+11:02:44.600 [zoom] source tt35538033 added at (-112.0, 1171.0, 126.0, 189.0)
+11:02:44.600 [zoom] source tt14173636 added at (25.0, 1171.0, 126.0, 189.0)
+11:02:44.601 [zoom] source tt6262770 added at (162.0, 1171.0, 126.0, 189.0)
+11:02:44.601 [zoom] source tt37287335 added at (-112.0, 1489.0, 126.0, 188.0)
+11:02:44.602 [zoom] source tt34384900 added at (25.0, 1489.0, 126.0, 188.0)
+11:02:44.603 [zoom] source tt32358390 added at (162.0, 1489.0, 126.0, 188.0)
+11:02:45.166 [zoom] source tt26743760 removed from the window
+11:02:45.167 [zoom] source tt22248376 removed from the window
+11:02:45.168 [zoom] source tt12343534 removed from the window
+11:02:45.168 [zoom] source tt39395275 removed from the window
+11:02:45.169 [zoom] source tt0388629 removed from the window
+11:02:45.170 [zoom] source tt7441658 removed from the window
+11:02:45.170 [zoom] source tt2560140 removed from the window
+11:02:45.170 [zoom] source tt0213338 removed from the window
+11:02:45.171 [zoom] source tt21209876 removed from the window
+11:02:45.181 [zoom] source tt0088509 removed from the window
+11:02:45.181 [zoom] source tt0988824 removed from the window
+11:02:45.182 [zoom] source tt5626028 removed from the window
+11:02:45.182 [zoom] source tt0409591 removed from the window
+11:02:45.183 [zoom] source tt4644488 removed from the window
+11:02:45.183 [zoom] source tt9335498 removed from the window
