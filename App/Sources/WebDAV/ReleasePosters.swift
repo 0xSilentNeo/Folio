@@ -123,11 +123,17 @@ enum ReleaseMatch {
 /// Looks releases up (at most 4 at once) and keeps what was found, on disk
 /// in Application Support/ReleaseMatches.json: a release is looked up once,
 /// a release with no confident match again after 3 days.
+///
+/// A lookup still waiting for its turn when every row that asked for it has
+/// scrolled away is skipped, so a fast scroll through a long library never
+/// makes the rows you stop on wait behind the ones you passed.
 actor ReleaseMatcher {
     static let shared = ReleaseMatcher()
 
     private var cache: [String: ReleaseMatch.Result] = [:]
     private var inflight: [String: Task<ReleaseMatch.Result?, Never>] = [:]
+    /// Who is still waiting for each lookup (a row's task, until it's cancelled).
+    private var waiters: [String: Set<UUID>] = [:]
     private var running = 0
     private var waiting: [CheckedContinuation<Void, Never>] = []
     private let file: URL
@@ -153,15 +159,19 @@ actor ReleaseMatcher {
             let retry = !hit.confident && (Date().timeIntervalSince(hit.date) > 3 * 86400 || hit.source != preferred)
             if !retry { return hit }
         }
-        if let t = inflight[key] { return await t.value }
+        let me = UUID()
+        waiters[key, default: []].insert(me)
+        defer { stopWaiting(key, me) }
+        if let t = inflight[key] { return await wait(for: t, key, me) }
         let t = Task<ReleaseMatch.Result?, Never> {
             await acquire()
-            let result = await Self.lookUp(r)
-            release()
-            return result
+            defer { release() }
+            // Every row that asked has scrolled away: skip it, nothing is kept.
+            guard !(waiters[key] ?? []).isEmpty else { return nil }
+            return await Self.lookUp(r)
         }
         inflight[key] = t
-        let result = await t.value
+        let result = await wait(for: t, key, me)
         inflight[key] = nil
         if let result {
             cache[key] = result
@@ -171,6 +181,21 @@ actor ReleaseMatcher {
                                      : "no confident match — \(result.why); placeholder"))
         }
         return result
+    }
+
+    /// Waits for a lookup; a caller cancelled meanwhile (its row scrolled
+    /// away) stops counting as waiting at once.
+    private func wait(for t: Task<ReleaseMatch.Result?, Never>, _ key: String, _ me: UUID) async -> ReleaseMatch.Result? {
+        await withTaskCancellationHandler {
+            await t.value
+        } onCancel: {
+            Task { await self.stopWaiting(key, me) }
+        }
+    }
+
+    private func stopWaiting(_ key: String, _ me: UUID) {
+        waiters[key]?.remove(me)
+        if waiters[key]?.isEmpty == true { waiters[key] = nil }
     }
 
     private func acquire() async {
@@ -227,7 +252,11 @@ actor ReleaseMatcher {
 struct ReleasePoster: View {
     let release: ReleaseName
     var width: CGFloat? = 44
-    @State private var image: UIImage?
+    /// The poster and the release it's for: a view kept while its release
+    /// changes (a collage cell when a new release arrives) never shows the
+    /// one before.
+    @State private var shown: (raw: String, image: UIImage)?
+    private var image: UIImage? { shown?.raw == release.raw ? shown?.image : nil }
 
     var body: some View {
         ZStack {
@@ -243,14 +272,16 @@ struct ReleasePoster: View {
         .clipShape(RoundedRectangle(cornerRadius: width == nil ? 0 : 8, style: .continuous))
         .clipped()
         .accessibilityHidden(true)
-        // Only rows on screen look up (a row that scrolls away cancels its lookup).
+        // Only rows on screen look up (a row that scrolls away before its
+        // turn drops its lookup: ReleaseMatcher).
         .task(id: release.raw) {
             guard UserDefaults.standard.bool(forKey: SettingsKey.metadataFetching) else { return }
+            let raw = release.raw
             let px = (width.map { $0 * 1.5 } ?? 110) * UIScreen.main.scale
             guard let m = await ReleaseMatcher.shared.match(release), m.confident, let poster = m.poster, let url = URL(string: poster) else { return }
             let img = await ImageCache.shared.poster(id: m.imdbID ?? poster, url: url, maxPixel: px)
             guard !Task.isCancelled, let img else { return }
-            withAnimation(.easeOut(duration: 0.2)) { image = img }
+            withAnimation(.easeOut(duration: 0.2)) { shown = (raw, img) }
         }
     }
 
