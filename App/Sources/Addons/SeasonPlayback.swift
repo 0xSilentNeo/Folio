@@ -144,14 +144,7 @@ enum AddonPlayback {
         return makeItem(c, stream: s, addon: addon, extraSubtitles: subs)
     }
 
-    /// How long playback waits for subtitle addons.
-    static let subtitleWait: UInt64 = 3_000_000_000
-
-    /// Subtitles from subtitle addons, preferred languages first — what
-    /// arrived within 3 s. Playback waited for every subtitle addon until
-    /// 1.19.0: your 30 Oct log has two stream taps that waited the full 20 s
-    /// request timeout for "…/subtitles/series/tt37532356:1:24.json" ("request
-    /// sent, no answer"; then "request never sent") before the player opened.
+    /// Subtitles from subtitle addons, preferred languages first.
     @MainActor
     static func subtitles(type: String, videoId: String) async -> [ExternalSubtitle] {
         let addons = AddonStore.shared.subtitleAddons(type: type, id: videoId)
@@ -159,20 +152,10 @@ enum AddonPlayback {
         let prefs = (UserDefaults.standard.string(forKey: SettingsKey.subLangs) ?? "")
             .split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
         var out: [ExternalSubtitle] = []
-        let t0 = Date()
-        var answered = 0
-        await withTaskGroup(of: [AddonSubtitle]?.self) { tg in
+        await withTaskGroup(of: [AddonSubtitle].self) { tg in
             for a in addons { tg.addTask { (try? await AddonAPI.subtitles(a, type: type, id: videoId)) ?? [] } }
-            tg.addTask { try? await Task.sleep(nanoseconds: subtitleWait); return nil }      // the deadline
-            for await list in tg {
-                guard let list else { tg.cancelAll(); break }
-                answered += 1
-                out += list.map { ExternalSubtitle(url: $0.url, lang: $0.lang, title: $0.lang) }
-                if answered == addons.count { tg.cancelAll(); break }
-            }
+            for await list in tg { out += list.map { ExternalSubtitle(url: $0.url, lang: $0.lang, title: $0.lang) } }
         }
-        dlog("player", "subtitles: \(out.count) from \(answered) of \(addons.count) subtitle addon(s) in \(Int(Date().timeIntervalSince(t0) * 1000)) ms"
-             + (answered < addons.count ? "; the rest didn't answer within 3 s, playing without them" : ""))
         if !prefs.isEmpty {
             out.sort { a, b in
                 (prefs.firstIndex(of: (a.lang ?? "").lowercased()) ?? 99) < (prefs.firstIndex(of: (b.lang ?? "").lowercased()) ?? 99)
