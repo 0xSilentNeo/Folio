@@ -95,6 +95,39 @@ final class ImageCache: @unchecked Sendable {
         return UIImage(cgImage: cg)
     }
 
+    /// A title's poster, kept on disk under the title's id (an IMDb id when
+    /// there is one), not its address: Home's library and the Real-Debrid
+    /// library show the same picture for the same title, whichever source
+    /// (IMDb, TMDB) brought it first.
+    func poster(id: String, url: URL, maxPixel: CGFloat) async -> UIImage? {
+        let px = Int(maxPixel)
+        let key = "poster|\(id)|\(px)"
+        if let m = picture(forKey: key) { return m }
+        lock.lock()
+        if let t = inflight[key] { lock.unlock(); return await t.value }
+        let file = dir.appendingPathComponent("poster-" + SHA256.hash(data: Data(id.utf8)).prefix(16).map { String(format: "%02x", $0) }.joined())
+        let task = Task.detached(priority: .userInitiated) { [session] () -> UIImage? in
+            var data = try? Data(contentsOf: file)
+            if data == nil {
+                guard let (d, resp) = try? await session.data(from: url),
+                      (resp as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true, !d.isEmpty else { return nil }
+                try? d.write(to: file, options: .atomic)
+                data = d
+            }
+            guard let data else { return nil }
+            return Self.downsample(data, maxPixel: maxPixel)
+        }
+        inflight[key] = task
+        lock.unlock()
+        let img = await task.value
+        lock.lock(); inflight[key] = nil; lock.unlock()
+        if let img { remember(img, forKey: key) }
+        return img
+    }
+
+    /// Already in memory (safe while building a view).
+    func cachedPoster(id: String, maxPixel: CGFloat) -> UIImage? { picture(forKey: "poster|\(id)|\(Int(maxPixel))") }
+
     /// Size in bytes of the artwork cache on disk.
     func diskSize() -> Int64 {
         let files = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey])) ?? []
