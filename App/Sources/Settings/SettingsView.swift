@@ -865,6 +865,7 @@ struct DiagnosticsView: View {
             } footer: {
                 Text("Records in the app log how pictures load (from memory, disk or the network), where each title's tile is while a page opens and closes, Discover's provider pages and their requests, and which row the player's lists open on. Turn it on, reproduce the problem, then share a report.")
             }
+            HistoryLinkSection()
             Section {
                 if let report {
                     ShareLink(item: report) { Label("Share report (.zip)", systemImage: "square.and.arrow.up") }
@@ -1194,4 +1195,35 @@ private struct TopEdgeNoBounce: UIViewRepresentable {
     }
     func makeUIView(context: Context) -> Probe { let p = Probe(); p.isUserInteractionEnabled = false; return p }
     func updateUIView(_ uiView: Probe, context: Context) {}
+}
+
+/// Settings → Help & Diagnostics → Diagnostics: the watch history linking
+/// check (HistoryLinkCheck), read only.
+private struct HistoryLinkSection: View {
+    @State private var result: String?
+    @State private var running = false
+
+    var body: some View {
+        Section {
+            Button {
+                running = true
+                Task {
+                    result = await HistoryLinkCheck.run().summary
+                    running = false
+                }
+            } label: {
+                HStack {
+                    Text("Check watch history linking")
+                    Spacer()
+                    if running { ProgressView() }
+                }
+            }
+            .disabled(running)
+            if let result {
+                Text(result).font(.footnote).foregroundStyle(.secondary).textSelection(.enabled)
+            }
+        } footer: {
+            Text("Counts how many of your watch history entries could be linked across Real-Debrid, your library and addons, using only what's already saved on this phone. It changes nothing. The result is also in the app log.")
+        }
+    }
 }
