@@ -233,6 +233,19 @@ enum LibraryRoute: Hashable {
     case webdavFolder(String, String, String)
     case settings
 
+    /// How the log names a route: a WebDAV folder by its name only, never its
+    /// address (an address typed with user:password@ would carry them).
+    var logName: String {
+        switch self {
+        case .group(let id): return "group(\(id))"
+        case .file(let path): return "file(\((path as NSString).lastPathComponent))"
+        case .folder(let path): return "folder(\((path as NSString).lastPathComponent))"
+        case .webdav: return "webdav library"
+        case .webdavFolder(_, _, let name): return "webdav folder(\(name))"
+        case .settings: return "settings"
+        }
+    }
+
     /// The id the page zooms out of on Home, before the layout generation
     /// (HomeView.zoomID); nil for pages that don't zoom from Home.
     var zoomID: String? {
