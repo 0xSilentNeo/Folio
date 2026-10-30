@@ -219,7 +219,7 @@ struct LibraryIndexer: Sendable {
 
 /// Owns every server's library index for the whole app: loads it from disk,
 /// keeps it in memory across screens, refreshes it in the background and
-/// saves it. Search Library and Home's Real-Debrid entry read it.
+/// saves it. Search Library and Home's Real-Debrid section read it.
 @MainActor
 final class LibraryIndexStore: ObservableObject {
     static let shared = LibraryIndexStore()
@@ -243,6 +243,10 @@ final class LibraryIndexStore: ObservableObject {
 
     @Published private(set) var states: [UUID: State] = [:]
     private var loading: [UUID: Task<Void, Never>] = [:]
+    /// Servers whose saved index was read (or found missing) this launch:
+    /// a refresh right after the first load doesn't read the disk again
+    /// (1.19.0 logged "no saved index, building one" twice in a row).
+    private var readFromDisk: Set<UUID> = []
     private var refreshes: [UUID: Task<Void, Never>] = [:]
 
     typealias Summary = IndexSummaries.Summary
@@ -262,12 +266,13 @@ final class LibraryIndexStore: ObservableObject {
 
     /// Loads the saved index (off the main thread) if it isn't in memory yet.
     func load(_ server: WebDAVServer) async {
-        if states[server.id]?.index != nil { return }
+        if states[server.id]?.index != nil || readFromDisk.contains(server.id) { return }
         if let t = loading[server.id] { await t.value; return }
         let id = server.id, account = LibraryIndex.account(server)
         let t = Task {
             let read = await Task.detached(priority: .userInitiated) { Self.read(Self.file(id), account: account) }.value
             guard !Task.isCancelled else { return }        // cleared while reading (account changed)
+            readFromDisk.insert(id)
             if let note = read.note { dlog("index", "\(server.name): \(note)") }
             if let index = read.index, states[id]?.index == nil { apply(index, to: id) }
         }
@@ -341,9 +346,25 @@ final class LibraryIndexStore: ObservableObject {
         refreshes[id]?.cancel()
         refreshes[id] = nil
         states[id] = nil
+        readFromDisk.remove(id)
         summaries.set(nil, for: id)
         try? FileManager.default.removeItem(at: Self.file(id))
         dlog("index", "index cleared for server \(id.uuidString.prefix(8))")
+    }
+
+    /// The newest release folders in the start folder, one per title (two
+    /// releases of the same show or film count once: the newest). 1.19.0's
+    /// collage took the four newest folders anywhere in the index, so the
+    /// same title could show twice (31 Oct screenshot: Daemons of the Shadow
+    /// Realm twice, The Gentlemen twice), and folders inside a release too.
+    static func newestReleases(_ index: LibraryIndex, limit: Int) -> [Summary.Release] {
+        var seen = Set<String>()
+        return (index.folders[index.root]?.subfolders ?? [])
+            .compactMap { key in index.folders[key].flatMap { f in ReleaseName.folder(f.name).map { (key, f, $0) } } }
+            .sorted { ($0.1.added ?? $0.1.modified ?? .distantPast) > ($1.1.added ?? $1.1.modified ?? .distantPast) }
+            .filter { seen.insert(ReleaseMatcher.key($0.2)).inserted }
+            .prefix(limit)
+            .map { Summary.Release(name: $0.1.name, url: $0.0, added: $0.1.added ?? $0.1.modified) }
     }
 
     private func apply(_ index: LibraryIndex, to id: UUID) {
@@ -353,13 +374,10 @@ final class LibraryIndexStore: ObservableObject {
             Searchable(file: f, haystack: (f.name + " " + TitleParser.clean(f.name)).lowercased())
         }
         states[id] = s
-        let recent = index.folders.values
-            .filter { ReleaseName.folder($0.name) != nil }
-            .sorted { ($0.added ?? $0.modified ?? .distantPast) > ($1.added ?? $1.modified ?? .distantPast) }
-            .prefix(4).map(\.name)
         let summary = Summary(files: s.searchable.count, bytes: s.searchable.reduce(0) { $0 + ($1.file.size ?? 0) },
                               refreshed: index.refreshed, unauthorized: index.lastCheck?.unauthorized == true,
-                              offline: index.lastCheck.map { !$0.ok && !$0.unauthorized } ?? false, recent: Array(recent))
+                              offline: index.lastCheck.map { !$0.ok && !$0.unauthorized } ?? false,
+                              releases: Self.newestReleases(index, limit: RealDebrid.rowLimit))
         summaries.set(summary, for: id)
     }
 
@@ -399,7 +417,7 @@ final class LibraryIndexStore: ObservableObject {
 }
 
 /// A few numbers about each server's index, kept in UserDefaults so Home can
-/// show its Real-Debrid entry on its very first frame, before the index
+/// show its Real-Debrid section on its very first frame, before the index
 /// itself is read from disk (no pop-in, nothing added to launch). Its own
 /// object, so Home redraws when these change, not at each step of a refresh.
 @MainActor
@@ -414,8 +432,18 @@ final class IndexSummaries: ObservableObject {
         var unauthorized: Bool
         /// The last check couldn't reach the server.
         var offline: Bool
-        /// The newest release folders' names (Home's collage).
-        var recent: [String]
+        /// The newest releases, one per title (Home's Real-Debrid row).
+        /// Optional: summaries saved by 1.19.0 don't have it.
+        var releases: [Release]?
+
+        struct Release: Codable, Equatable, Identifiable {
+            /// The folder's name, as the server has it.
+            var name: String
+            /// The folder's address (LibraryIndex.key).
+            var url: String
+            var added: Date?
+            var id: String { url }
+        }
     }
 
     @Published private(set) var all: [UUID: Summary] = [:]

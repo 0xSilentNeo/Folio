@@ -154,6 +154,7 @@ struct TitleHeroView: View {
         .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .onAppear {
             dlog("nav", "title page appear \(file.lastPathComponent)")
+            LibTrace.title.event("appeared", "library title page appeared")
             thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true, hero: HeroMetrics.pixels)
         }
         .onChange(of: file) { _, f in
@@ -529,25 +530,26 @@ struct LibraryRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             thumbnail
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    if fixedTitle == nil, let tag = episodeTag { Text(tag).font(.caption2.weight(.bold)).foregroundStyle(Theme.accent) }
+            if fixedTitle == nil, let tag = episodeTag {
+                episodeText(tag)
+            } else {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(headline).font(.subheadline.weight(.semibold)).lineLimit(1)
+                    Text(secondary).font(.caption).foregroundStyle(.secondary).lineLimit(detail ? 3 : 1)
                 }
-                Text(secondary).font(.caption).foregroundStyle(.secondary).lineLimit(detail ? 3 : 1)
-            }
-            Spacer(minLength: 0)
-            if let size {
-                VStack(alignment: .trailing, spacing: 0) {
+                Spacer(minLength: 0)
+                if let size {
+                    VStack(alignment: .trailing, spacing: 0) {
+                        marks.padding(.top, 4)
+                        Spacer(minLength: 4)
+                        Text(size.byteString)
+                            .font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.secondary)
+                            .lineLimit(1).fixedSize()
+                    }
+                    .frame(height: thumbH)
+                } else if highlighted || watched {
                     marks.padding(.top, 4)
-                    Spacer(minLength: 4)
-                    Text(size.byteString)
-                        .font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.secondary)
-                        .lineLimit(1).fixedSize()
                 }
-                .frame(height: thumbH)
-            } else if highlighted || watched {
-                marks.padding(.top, 4)
             }
         }
         .padding(detail ? 8 : 6)
@@ -558,6 +560,30 @@ struct LibraryRow: View {
             thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide, points: max(thumbW, thumbH))
         }
         .onDisappear { LibTrace.image.log("row \(fixedTitle ?? file.lastPathComponent) (\(mode.rawValue)) disappeared (loader #\(thumb.serial))") }
+    }
+
+    /// An episode: its number and size on a line of their own, then the title
+    /// across the whole row (two lines in Details), then the synopsis
+    /// (Details). Until 1.20.0 the title shared its one line with the number
+    /// and the row with a size column, and was cut early ("The Crossroa…",
+    /// "Beggars Ba…", 30 Oct screenshot).
+    private func episodeText(_ tag: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Text(tag).font(.caption2.weight(.bold)).foregroundStyle(Theme.accent)
+                if let size {
+                    Text(size.byteString).font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                marks
+            }
+            .lineLimit(1)
+            Text(headline).font(.subheadline.weight(.semibold)).lineLimit(detail ? 2 : 1)
+            if detail {
+                Text(secondary).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Top right: the eye when watched, the play mark on the highlighted row.

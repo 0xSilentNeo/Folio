@@ -144,24 +144,106 @@ enum AddonPlayback {
         return makeItem(c, stream: s, addon: addon, extraSubtitles: subs)
     }
 
-    /// Subtitles from subtitle addons, preferred languages first.
+    /// How long a stream start waits for subtitle addons (1.20.0). Until
+    /// then playback waited for every one: 20.3 s twice in the 30 Oct log
+    /// (an addon's subtitles request timing out, then "play requested").
+    /// Subtitles that come later are added to the playing file.
+    static let subtitleWait: Duration = .seconds(3)
+
+    /// Posted (main thread) when subtitle addons answer after
+    /// `subtitleWait`: userInfo "videoId" (String), "subtitles" ([ExternalSubtitle]).
+    static let lateSubtitlesArrived = Notification.Name("AddonPlayback.lateSubtitlesArrived")
+
+    /// Late answers, kept for 10 minutes by video id, for a player that
+    /// isn't there yet when they come, or an episode that plays later
+    /// (PlayerModel.onFileLoaded adds them).
+    @MainActor private static var late: [String: (at: Date, subtitles: [ExternalSubtitle])] = [:]
+
+    @MainActor static func lateSubtitles(for videoId: String) -> [ExternalSubtitle] {
+        guard let l = late[videoId], Date().timeIntervalSince(l.at) < 600 else { return [] }
+        return l.subtitles
+    }
+
+    /// Subtitles from subtitle addons, preferred languages first: what has
+    /// come within `subtitleWait`; the rest goes to the player as it comes
+    /// (`lateSubtitlesArrived`).
     @MainActor
     static func subtitles(type: String, videoId: String) async -> [ExternalSubtitle] {
-        let addons = AddonStore.shared.subtitleAddons(type: type, id: videoId)
-        guard !addons.isEmpty else { return [] }
-        let prefs = (UserDefaults.standard.string(forKey: SettingsKey.subLangs) ?? "")
-            .split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
-        var out: [ExternalSubtitle] = []
-        await withTaskGroup(of: [AddonSubtitle].self) { tg in
-            for a in addons { tg.addTask { (try? await AddonAPI.subtitles(a, type: type, id: videoId)) ?? [] } }
-            for await list in tg { out += list.map { ExternalSubtitle(url: $0.url, lang: $0.lang, title: $0.lang) } }
+        let sources = AddonStore.shared.subtitleAddons(type: type, id: videoId).map { a in
+            SubtitleSource(name: a.manifest.name) { try await AddonAPI.subtitles(a, type: type, id: videoId) }
         }
-        if !prefs.isEmpty {
-            out.sort { a, b in
-                (prefs.firstIndex(of: (a.lang ?? "").lowercased()) ?? 99) < (prefs.firstIndex(of: (b.lang ?? "").lowercased()) ?? 99)
+        return await subtitles(videoId: videoId, from: sources)
+    }
+
+    /// A subtitle addon: its name (for the log, never its address: it holds
+    /// your key) and its request.
+    struct SubtitleSource {
+        let name: String
+        let fetch: () async throws -> [AddonSubtitle]
+    }
+
+    @MainActor
+    static func subtitles(videoId: String, from sources: [SubtitleSource], waitingAtMost limit: Duration = subtitleWait) async -> [ExternalSubtitle] {
+        guard !sources.isEmpty else { return [] }
+        let wait = SubtitleWait(left: sources.count)
+        let t0 = Date()
+        for a in sources {
+            Task { @MainActor in
+                let list = ((try? await a.fetch()) ?? [])
+                    .map { ExternalSubtitle(url: $0.url, lang: $0.lang, title: $0.lang) }
+                wait.left -= 1
+                if wait.open {
+                    wait.arrived += list
+                    if wait.left == 0 { wait.finish() }
+                    return
+                }
+                let ms = Int(Date().timeIntervalSince(t0) * 1000)
+                dlog("player", "subtitle addon \(a.name) answered after \(ms) ms with \(list.count) subtitle(s)")
+                guard !list.isEmpty else { return }
+                let sorted = preferredFirst(list)
+                let had = lateSubtitles(for: videoId)
+                late = late.filter { Date().timeIntervalSince($0.value.at) < 600 }
+                late[videoId] = (Date(), had + sorted)
+                NotificationCenter.default.post(name: lateSubtitlesArrived, object: nil, userInfo: ["videoId": videoId, "subtitles": sorted])
             }
         }
-        return out
+        let timer = Task { @MainActor in
+            try? await Task.sleep(for: limit)
+            guard wait.open else { return }
+            dlog("player", "subtitle addons: \(wait.left) of \(sources.count) still out after \(Int(Date().timeIntervalSince(t0) * 1000)) ms; starting without them")
+            wait.finish()
+        }
+        await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
+            if wait.open { wait.continuation = c } else { c.resume() }
+        }
+        timer.cancel()
+        if wait.left == 0 { dlog("player", "subtitle addons: all \(sources.count) answered in \(Int(Date().timeIntervalSince(t0) * 1000)) ms") }
+        return preferredFirst(wait.arrived)
+    }
+
+    @MainActor
+    private static func preferredFirst(_ list: [ExternalSubtitle]) -> [ExternalSubtitle] {
+        let prefs = (UserDefaults.standard.string(forKey: SettingsKey.subLangs) ?? "")
+            .split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+        guard !prefs.isEmpty else { return list }
+        return list.sorted { a, b in
+            (prefs.firstIndex(of: (a.lang ?? "").lowercased()) ?? 99) < (prefs.firstIndex(of: (b.lang ?? "").lowercased()) ?? 99)
+        }
+    }
+
+    /// One wait for subtitle addons (main actor only).
+    @MainActor
+    private final class SubtitleWait {
+        var arrived: [ExternalSubtitle] = []
+        var left: Int
+        var open = true
+        var continuation: CheckedContinuation<Void, Never>?
+        init(left: Int) { self.left = left }
+        func finish() {
+            open = false
+            continuation?.resume()
+            continuation = nil
+        }
     }
 }
 

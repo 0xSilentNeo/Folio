@@ -3,8 +3,9 @@ import MediaPlayer
 import AVFoundation
 import UIKit
 
-/// Hosts the PiP sample-buffer layer (behind) and the mpv GL view (front),
-/// plus all touch gestures.
+/// Hosts the video — with the OpenGL renderer, PiP's sample-buffer layer
+/// itself; with Metal, the Metal view in front of it — plus all touch
+/// gestures.
 struct VideoSurface: UIViewRepresentable {
     let model: PlayerModel
     let ui: PlayerUIState
@@ -15,7 +16,7 @@ struct VideoSurface: UIViewRepresentable {
         let v = ContainerView()
         v.backgroundColor = .black
         v.install(model.pip.view)
-        v.install(model.videoView)
+        if model.videoView !== model.pip.view { v.install(model.videoView) }
         model.videoContainer = v
         context.coordinator.attach(to: v)
         return v

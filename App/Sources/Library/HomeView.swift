@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var showOpenURL = false
     @State private var addServer = false
     @State private var showAddFiles = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var path: [LibraryRoute] = []
 
@@ -29,6 +30,12 @@ struct HomeView: View {
                     }
                     .homeRow()
                     if hasLibrary { libraryRows(width: geo.size.width, margin: margin) }
+                    if let rd = realDebridSummary {
+                        RealDebridSection(summary: rd, margin: margin, seeAllAction: { openRealDebrid(nil) }, open: { openRealDebrid($0) })
+                            .padding(.top, 30)
+                            .homeRow()
+                            .transition(reduceMotion ? AnyTransition.opacity : AnyTransition.opacity.combined(with: .move(edge: .bottom)))
+                    }
                     Color.clear.frame(height: 28).homeRow()
                 }
                 .listStyle(.plain)
@@ -46,8 +53,9 @@ struct HomeView: View {
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
             .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
-            // The Real-Debrid entry's library, checked again in the background
-            // (again when the account is added or changed).
+            .onAppear { LaunchTiming.homeAppeared() }
+            // The Real-Debrid section's library, checked again in the
+            // background (again when the account is added or changed).
             .task(id: realDebrid.map(LibraryIndex.account)) { if let rd = realDebrid { LibraryIndexStore.shared.refreshIfNeeded(rd) } }
             .onChange(of: libraryView) { old, new in
                 layoutGeneration += 1
@@ -77,15 +85,16 @@ struct HomeView: View {
     ///   the old page for the new title: your 19:23 recording opens Classroom
     ///   with MobLand's title on it, and its page never ran onAppear.
     private func open(_ route: LibraryRoute) {
+        LibTrace.title.event("open", "home opens \(route.logName)")
         if path.isEmpty { path.append(route); return }
         pending.route = route                     // the latest tap wins
         guard !pending.waiting else { return }
         pending.waiting = true
-        dlog("nav", "home: \(route) opens when the page going back is gone (path \(path.count))")
+        dlog("nav", "home: \(route.logName) opens when the page going back is gone (path \(path.count))")
         BackWatch.whenGone { gone in
             guard gone else {
                 // The swipe back was let go: that page stays, and it's what you see.
-                dlog("nav", "home: the page stayed; \(pending.route.map { "\($0)" } ?? "nothing") not opened")
+                dlog("nav", "home: the page stayed; \(pending.route.map(\.logName) ?? "nothing") not opened")
                 pending.route = nil
                 pending.waiting = false
                 return
@@ -100,7 +109,7 @@ struct HomeView: View {
         guard let r = pending.route else { return }
         pending.route = nil
         pending.waiting = false
-        if let why { dlog("nav", "home: opening \(r) (\(why))") }
+        if let why { dlog("nav", "home: opening \(r.logName) (\(why))") }
         path.append(r)
     }
 
@@ -118,11 +127,11 @@ struct HomeView: View {
                 .frame(width: 0, height: 0)
                 .accessibilityHidden(true)
                 .onChange(of: path) { old, new in
-                    dlog("nav", "home path \(old.count) → \(new.count): \(new)")
+                    dlog("nav", "home path \(old.count) → \(new.count): \(new.map(\.logName))")
                     // Trace: where each zoom source of the page is, as it opens
                     // and for 2.5 s after it went back.
-                    if new.count > old.count, let r = new.last, let id = r.zoomID { ZoomProbe.dump(HomeView.zoomID(id, layout), "opening \(r)") }
-                    if new.count < old.count, let r = old.last, let id = r.zoomID { ZoomProbe.timeline(HomeView.zoomID(id, layout), "back from \(r)") }
+                    if new.count > old.count, let r = new.last, let id = r.zoomID { ZoomProbe.dump(HomeView.zoomID(id, layout), "opening \(r.logName)") }
+                    if new.count < old.count, let r = old.last, let id = r.zoomID { ZoomProbe.timeline(HomeView.zoomID(id, layout), "back from \(r.logName)") }
                     if new.isEmpty, pending.route != nil { DispatchQueue.main.async { openPending() } }
                 }
         }
@@ -268,6 +277,7 @@ struct HomeView: View {
                             .frame(width: cardW)
                             .onTapGesture { ContinueQueue.play(e.item) }
                             .contextMenu { historyMenu(e) }
+                            .accessibilityIdentifier("continue:" + e.item.title)
                     }
                 }
                 .scrollTargetLayout()
@@ -298,18 +308,23 @@ struct HomeView: View {
     /// The Real-Debrid account, when one is added with a user name.
     private var realDebrid: WebDAVServer? { servers.servers.first(where: RealDebrid.isRealDebrid) }
 
-    /// Home's Real-Debrid entry (RealDebridEntry.swift): shown when the last
-    /// check of the library worked; kept while offline; gone on a refused login.
+    /// Home's Real-Debrid section (RealDebridSection.swift): shown when the
+    /// last check of the library worked; kept while offline; gone on a
+    /// refused login.
     private var realDebridSummary: LibraryIndexStore.Summary? {
         guard let rd = realDebrid, let s = indexSummaries.all[rd.id], s.refreshed != nil, !s.unauthorized else { return nil }
         return s
     }
 
-    private var hasLibrary: Bool { !local.files.isEmpty || realDebridSummary != nil }
+    /// Library is your own files only (1.20.0); Real-Debrid has its own
+    /// section below it.
+    private var hasLibrary: Bool { !local.files.isEmpty }
 
-    private func realDebridLink<L: View>(@ViewBuilder label: () -> L) -> some View {
-        Button { if !TouchTracker.wasSwipe("home: Real-Debrid"), let rd = realDebrid { open(.webdav(rd.id.uuidString)) } } label: { label() }
-            .buttonStyle(PressStyle(scale: 0.97))
+    /// A release (its folder, as the Real-Debrid library opens it), or See
+    /// all (nil: the library).
+    private func openRealDebrid(_ release: LibraryIndexStore.Summary.Release?) {
+        guard !TouchTracker.wasSwipe("home: Real-Debrid"), let rd = realDebrid else { return }
+        open(release.map { LibraryRoute.webdavFolder(rd.id.uuidString, $0.url, $0.name) } ?? LibraryRoute.webdav(rd.id.uuidString))
     }
 
     @AppStorage("libraryView") private var libraryView = LibraryViewMode.grid.rawValue
@@ -366,13 +381,6 @@ struct HomeView: View {
         } else {
             let posters = tileArtwork == "poster"
             let style = ListTransition.current
-            if let rd = realDebridSummary {
-                realDebridLink { RealDebridRow(summary: rd, detail: mode == .details) }
-                    .padding(.horizontal, margin)
-                    .padding(.vertical, mode == .details ? 6 : 2)
-                    .homeRow()
-                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
-            }
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
@@ -388,6 +396,7 @@ struct HomeView: View {
                         }
                     }
                 })
+                .accessibilityIdentifier("home:" + g.title)
                 .padding(.horizontal, margin)
                 .padding(.vertical, mode == .details ? 6 : 2)
                 .homeRow()
@@ -401,10 +410,6 @@ struct HomeView: View {
         let cols = posters ? max(3, Int((width - margin * 2 + 14) / 124)) : max(2, Int((width - margin * 2 + 14) / 184))
         let groups = self.groups
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
-            if let rd = realDebridSummary {
-                realDebridLink { RealDebridTile(summary: rd, poster: posters) }
-                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
-            }
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
@@ -420,7 +425,13 @@ struct HomeView: View {
                         }
                     }
                 })
+                .modifier(GridProbe(name: g.title))
+                .accessibilityIdentifier("home:" + g.title)
             }
+        }
+        .coordinateSpace(.named(GridProbe.space))
+        .onGeometryChange(for: CGSize.self, of: { $0.size }) { size in
+            LibTrace.layout.log("grid for \(Int(width)) pt: \(cols) columns, \(groups.count) entries, \(Int(size.width))×\(Int(size.height)) pt")
         }
         .padding(.horizontal, margin)
     }
@@ -940,7 +951,7 @@ struct FolderTile: View {
         VStack(alignment: .leading, spacing: 8) {
             Color.clear
                 .aspectRatio(poster ? 2.0 / 3.0 : 16.0 / 9.0, contentMode: .fit)
-                .overlay { FolderCollage(files: Array(group.files.prefix(4)), poster: poster, gap: poster ? 4 : 6, cell: poster ? 7 : 9) .padding(poster ? 5 : 7) }
+                .overlay { FolderCollage(files: group.collageFiles, poster: poster, gap: poster ? 4 : 6, cell: poster ? 7 : 9, probe: group.title) .padding(poster ? 5 : 7) }
                 .overlay(alignment: .bottomTrailing) { SizeBadge(size: group.size).padding(poster ? 8 : 11) }
                 .background(Theme.fill, in: RoundedRectangle(cornerRadius: poster ? 12 : 18, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: poster ? 12 : 18, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 0.5))
@@ -962,7 +973,7 @@ struct FolderRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            FolderCollage(files: Array(group.files.prefix(4)), poster: false, gap: 3, cell: 5)
+            FolderCollage(files: group.collageFiles, poster: false, gap: 3, cell: 5)
                 .padding(4)
                 .frame(width: detail ? 150 : 78, height: detail ? 84 : 44)
                 .background(Theme.fill, in: RoundedRectangle(cornerRadius: detail ? 12 : 8, style: .continuous))
@@ -980,26 +991,45 @@ struct FolderRow: View {
     }
 }
 
+/// A folder's four pictures in a 2 × 2 grid, sized from the space it's
+/// given. A `Grid` with fixed cells, not a `LazyVGrid`: Apple's LazyVGrid
+/// page says to use a lazy grid for "a large, vertically scrollable
+/// collection" and "only … if profiling your app shows that a Grid view
+/// performs poorly". Until 1.20.0 it was a LazyVGrid, and after a trip to
+/// landscape and back it kept its landscape width: the grid runs found the
+/// folder tile 122 pt wide in a 111 pt column (the landscape collage, 117
+/// pt, plus its 5 pt inset), drawing past the tile.
 struct FolderCollage: View {
     let files: [URL]
     let poster: Bool
     let gap: CGFloat
     let cell: CGFloat
+    /// Trace: the folder's name, to log where the collage's grid is drawn
+    /// against the space it was given (LibTrace.layout).
+    var probe: String? = nil
 
     var body: some View {
-        let cols = [GridItem(.flexible(), spacing: gap), GridItem(.flexible(), spacing: gap)]
         GeometryReader { geo in
-            let h = (geo.size.height - gap) / 2
-            LazyVGrid(columns: cols, spacing: gap) {
-                ForEach(0..<4, id: \.self) { i in
-                    Group {
-                        if i < files.count { FolderThumb(file: files[i], poster: poster) } else { Theme.fill }
+            let w = max(0, (geo.size.width - gap) / 2), h = max(0, (geo.size.height - gap) / 2)
+            Grid(horizontalSpacing: gap, verticalSpacing: gap) {
+                ForEach(0..<2, id: \.self) { row in
+                    GridRow {
+                        ForEach(0..<2, id: \.self) { column in
+                            picture(row * 2 + column)
+                                .frame(width: w, height: h)
+                                .clipShape(RoundedRectangle(cornerRadius: cell, style: .continuous))
+                        }
                     }
-                    .frame(height: max(0, h))
-                    .clipShape(RoundedRectangle(cornerRadius: cell, style: .continuous))
                 }
             }
+            .modifier(GridProbe(name: "collage grid of \(probe ?? "?")"))
         }
+        .modifier(GridProbe(name: "collage space of \(probe ?? "?")"))
+    }
+
+    @ViewBuilder
+    private func picture(_ i: Int) -> some View {
+        if i < files.count { FolderThumb(file: files[i], poster: poster) } else { Theme.fill }
     }
 }
 

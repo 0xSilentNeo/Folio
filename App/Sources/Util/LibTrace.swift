@@ -40,6 +40,15 @@ enum LibTrace {
         func end(_ interval: StaticString, _ state: OSSignpostIntervalState?) {
             if let state { signposter.endInterval(interval, state) }
         }
+
+        /// A point on the signpost lane (and the line in the log).
+        func event(_ name: StaticString, _ message: @autoclosure () -> String) {
+            guard LibTrace.on else { return }
+            let line = message()
+            signposter.emitEvent(name, "\(line, privacy: .public)")
+            logger.info("\(line, privacy: .public)")
+            dlog(self.name, line)
+        }
     }
 
     /// Zoom transitions between Home and title pages: every zoom source, where
@@ -53,6 +62,12 @@ enum LibTrace {
     static let panel = Channel("panel")
     /// The WebDAV library index: each folder listed or kept, and why.
     static let index = Channel("index")
+    /// Home's layout: the grid's width, columns and size, and where each
+    /// entry sits in it.
+    static let layout = Channel("layout")
+    /// Title pages: opening one (an event), its data loading (an interval),
+    /// and the page appearing (an event), for Instruments' os_signpost lane.
+    static let title = Channel("title")
 
     /// Milliseconds since `start`, for "… after N ms".
     static func ms(since start: CFTimeInterval) -> Int { Int((CACurrentMediaTime() - start) * 1000) }
@@ -124,4 +139,24 @@ struct ZoomProbe: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: Probe, context: Context) { uiView.id = id }
+}
+
+/// Trace (library and images): where an entry sits in Home's grid (the
+/// grid's own coordinate space, so scrolling doesn't log), each time that
+/// changes.
+struct GridProbe: ViewModifier {
+    let name: String
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if LibTrace.on {
+            content.onGeometryChange(for: CGRect.self, of: { $0.frame(in: .named(GridProbe.space)).integral }) { r in
+                LibTrace.layout.log("\(name) at (\(Int(r.minX)), \(Int(r.minY)), \(Int(r.width)), \(Int(r.height)))")
+            }
+        } else {
+            content
+        }
+    }
+
+    static let space = "homeGrid"
 }

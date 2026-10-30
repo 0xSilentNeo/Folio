@@ -51,6 +51,42 @@ enum IMDbSource {
         var comps = URLComponents(string: "https://www.imdb.com" + path)!
         if !query.isEmpty { comps.queryItems = query.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) } }
         guard let url = comps.url else { return nil }
+        return await Inflight.shared.page(url.absoluteString, label: path) { await fetch(url, path) }
+    }
+
+    /// Pages already being downloaded, by address: a second request for the
+    /// same page waits for that download instead of starting another. Your
+    /// 30 Oct log: /title/tt5607616/ fetched twice 201 ms apart (1758 KB
+    /// each), its /episodes/ twice (1779 and 4032 ms) — the title page's
+    /// lookups run side by side and asked for the same pages. The download
+    /// stops only when everyone waiting for it has gone (a page closed).
+    private actor Inflight {
+        static let shared = Inflight()
+        private var pages: [String: (task: Task<String?, Never>, waiting: Int)] = [:]
+
+        func page(_ key: String, label: String, load: @escaping @Sendable () async -> String?) async -> String? {
+            let task: Task<String?, Never>
+            if let out = pages[key] {
+                task = out.task
+                pages[key]?.waiting += 1
+                dlog("imdb", "\(label): joined the same request already out")
+            } else {
+                task = Task { await load() }
+                pages[key] = (task, 1)
+            }
+            let page = await withTaskCancellationHandler { await task.value } onCancel: { Task { await self.leave(key, task) } }
+            if pages[key]?.task == task { pages[key] = nil }
+            return page
+        }
+
+        private func leave(_ key: String, _ task: Task<String?, Never>) {
+            guard var out = pages[key], out.task == task else { return }
+            out.waiting -= 1
+            if out.waiting <= 0 { task.cancel(); pages[key] = nil } else { pages[key] = out }
+        }
+    }
+
+    private static func fetch(_ url: URL, _ path: String) async -> String? {
         await IMDbPageLoader.shared.ensureUserAgent()
         var req = URLRequest(url: url)
         req.setValue(language + ",en;q=0.8", forHTTPHeaderField: "Accept-Language")
@@ -101,7 +137,10 @@ enum IMDbSource {
         try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
         return d
     }
-    private static let cacheVersion = "v2|"   // bump when parsed shapes change
+    /// Bump when parsed shapes change. v3 (1.20.0): entries saved before
+    /// 1.19.0 hold undecoded HTML references ("O&#39;Hara"), and cached text
+    /// is no longer decoded on the way back — each title downloads once more.
+    private static let cacheVersion = "v3|"
     private static func cacheFile(_ key: String) -> URL {
         let h = SHA256.hash(data: Data((cacheVersion + key).utf8)).compactMap { String(format: "%02x", $0) }.joined().prefix(32)
         return dir.appendingPathComponent(String(h) + ".json")

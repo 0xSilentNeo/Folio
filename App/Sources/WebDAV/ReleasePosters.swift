@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 /// Which film or series a release folder is, for its poster in the
-/// Real-Debrid library (and the collage of Home's Real-Debrid entry).
+/// Real-Debrid library (and the row of Home's Real-Debrid section).
 ///
 /// The scoring is the WebDAV browser script's (webdav-browser-posters.lua,
 /// PS.pick, lines 5519-5554): an exact name (or original name) scores 3, a
@@ -245,16 +245,16 @@ actor ReleaseMatcher {
     }
 }
 
-/// A release folder's poster in a list row: the matched title's poster
-/// (stored by IMDb id, shared with Home), else a placeholder with the
-/// title's initials — never a wrong poster, never a blank box. `width` nil:
-/// fills the space it's given (a collage cell).
+/// A release folder's poster (a list row, Home's Real-Debrid row): the
+/// matched title's poster (stored by IMDb id, shared with Home's library),
+/// else a placeholder with the title's initials — never a wrong poster, never
+/// a blank box.
 struct ReleasePoster: View {
     let release: ReleaseName
-    var width: CGFloat? = 44
+    var width: CGFloat = 44
+    var cornerRadius: CGFloat = 8
     /// The poster and the release it's for: a view kept while its release
-    /// changes (a collage cell when a new release arrives) never shows the
-    /// one before.
+    /// changes (a reused row) never shows the one before.
     @State private var shown: (raw: String, image: UIImage)?
     private var image: UIImage? { shown?.raw == release.raw ? shown?.image : nil }
 
@@ -264,20 +264,19 @@ struct ReleasePoster: View {
                 Image(uiImage: image).resizable().scaledToFill()
             } else {
                 Rectangle().fill(Theme.accentSoft)
-                Text(initials).font(.system(size: (width ?? 44) * 0.34, weight: .bold, design: .rounded)).foregroundStyle(Theme.accent)
+                Text(initials).font(.system(size: width * 0.34, weight: .bold, design: .rounded)).foregroundStyle(Theme.accent)
                     .minimumScaleFactor(0.5).padding(4)
             }
         }
-        .frame(width: width, height: width.map { $0 * 1.5 })
-        .clipShape(RoundedRectangle(cornerRadius: width == nil ? 0 : 8, style: .continuous))
-        .clipped()
+        .frame(width: width, height: width * 1.5)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .accessibilityHidden(true)
         // Only rows on screen look up (a row that scrolls away before its
         // turn drops its lookup: ReleaseMatcher).
         .task(id: release.raw) {
             guard UserDefaults.standard.bool(forKey: SettingsKey.metadataFetching) else { return }
             let raw = release.raw
-            let px = (width.map { $0 * 1.5 } ?? 110) * UIScreen.main.scale
+            let px = width * 1.5 * UIScreen.main.scale
             guard let m = await ReleaseMatcher.shared.match(release), m.confident, let poster = m.poster, let url = URL(string: poster) else { return }
             let img = await ImageCache.shared.poster(id: m.imdbID ?? poster, url: url, maxPixel: px)
             guard !Task.isCancelled, let img else { return }

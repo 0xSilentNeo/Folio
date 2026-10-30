@@ -54,6 +54,18 @@ struct LibraryGroup: Identifiable, Hashable {
     var folder: URL? = nil
 
     var count: Int { files.count }
+
+    /// A folder tile's four pictures: one per title in the folder (three
+    /// episodes of a show are one picture), in the folder's order. Until
+    /// 1.20.0 the first four files, so a show's episodes filled the collage.
+    var collageFiles: [URL] {
+        var seen = Set<String>(), out: [URL] = []
+        for f in files where seen.insert(LibraryOrganizer.titleKey(f)).inserted {
+            out.append(f)
+            if out.count == 4 { break }
+        }
+        return out
+    }
     var seasons: [Int] { Array(Set(files.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted() }
 
     /// The file a tap should land on (see `nextUp(in:)`).
@@ -124,7 +136,8 @@ enum LibraryOrganizer {
         return a.lastPathComponent.localizedStandardCompare(b.lastPathComponent) == .orderedAscending
     }
 
-    private static func key(_ f: URL) -> String {
+    /// Which title a file is: a show's episodes are one title, each film its own.
+    static func titleKey(_ f: URL) -> String {
         let p = TitleParser.parse(f.lastPathComponent)
         return p.episode != nil ? "s|" + p.title.lowercased() : "f|" + f.path
     }
@@ -152,7 +165,7 @@ enum LibraryOrganizer {
         }
         var folderGroups: [LibraryGroup] = []
         var inFolders = Set<URL>()
-        for (dir, list) in byFolder where list.count > 1 && Set(list.map(key)).count > 1 {
+        for (dir, list) in byFolder where list.count > 1 && Set(list.map(titleKey)).count > 1 {
             let sortedList = list.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
             let infos = sortedList.map(info)
             let u = URL(fileURLWithPath: dir, isDirectory: true)
@@ -214,8 +227,24 @@ enum LibraryRoute: Hashable {
     case group(String)        // LibraryGroup.id
     case file(String)         // file path
     case folder(String)       // folder path
-    case webdav(String)       // a WebDAV server's id: its library (Home's Real-Debrid entry)
+    case webdav(String)       // a WebDAV server's id: its library (See all on Home's Real-Debrid section)
+    /// A folder on a WebDAV server: the server's id, the folder's address and
+    /// its name as the server has it (a release in Home's Real-Debrid row).
+    case webdavFolder(String, String, String)
     case settings
+
+    /// How the log names a route: a WebDAV folder by its name only, never its
+    /// address (an address typed with user:password@ would carry them).
+    var logName: String {
+        switch self {
+        case .group(let id): return "group(\(id))"
+        case .file(let path): return "file(\((path as NSString).lastPathComponent))"
+        case .folder(let path): return "folder(\((path as NSString).lastPathComponent))"
+        case .webdav: return "webdav library"
+        case .webdavFolder(_, _, let name): return "webdav folder(\(name))"
+        case .settings: return "settings"
+        }
+    }
 
     /// The id the page zooms out of on Home, before the layout generation
     /// (HomeView.zoomID); nil for pages that don't zoom from Home.
@@ -223,7 +252,7 @@ enum LibraryRoute: Hashable {
         switch self {
         case .group(let id): return id
         case .folder(let path): return "d|" + path
-        case .settings, .file, .webdav: return nil
+        case .settings, .file, .webdav, .webdavFolder: return nil
         }
     }
 
@@ -244,6 +273,15 @@ enum LibraryRoute: Hashable {
         case .webdav(let id):
             if let s = UUID(uuidString: id).flatMap({ ServerStore.shared.server(id: $0) }), let url = WebDAVClient(server: s).url(forPath: s.rootPath) {
                 WebDAVBrowserView(server: s, url: url, title: s.name)
+            } else {
+                ContentUnavailableView("This server isn't added any more", systemImage: "externaldrive.badge.xmark")
+            }
+        case .webdavFolder(let id, let address, let name):
+            // The page the Real-Debrid library opens for the folder, with the
+            // same title (WebDAVBrowserView's folder rows).
+            if let s = UUID(uuidString: id).flatMap({ ServerStore.shared.server(id: $0) }), let url = URL(string: address) {
+                let clean = UserDefaults.standard.object(forKey: SettingsKey.cleanTitles) as? Bool ?? true
+                WebDAVBrowserView(server: s, url: url, title: clean ? ReleaseName.folder(name)?.title ?? name : name)
             } else {
                 ContentUnavailableView("This server isn't added any more", systemImage: "externaldrive.badge.xmark")
             }

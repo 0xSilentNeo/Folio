@@ -10,9 +10,6 @@ private extension KeyedDecodingContainer {
         if let d = try? decodeIfPresent(Double.self, forKey: key) { return String(d) }
         return nil
     }
-    /// Text shown to you (names, titles, descriptions): HTML character
-    /// references decoded, for addon answers and IMDb data read back from disk.
-    func flexText(_ key: Key) -> String? { flexString(key)?.decodingHTMLEntities }
     func flexInt(_ key: Key) -> Int? {
         if let i = try? decodeIfPresent(Int.self, forKey: key) { return i }
         if let s = try? decodeIfPresent(String.self, forKey: key) { return Int(s) }
@@ -185,15 +182,15 @@ struct MetaVideo: Codable, Hashable, Identifiable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
-        title = c.flexText(.title) ?? c.flexText(.name)
+        title = c.flexString(.title) ?? c.flexString(.name)
         season = c.flexInt(.season)
         episode = c.flexInt(.episode) ?? c.flexInt(.number)
         released = c.flexString(.released)
         thumbnail = c.flexString(.thumbnail)
-        overview = c.flexText(.overview) ?? c.flexText(.description)
+        overview = c.flexString(.overview) ?? c.flexString(.description)
         rating = c.flexString(.rating)
         imdbId = c.flexString(.imdbId)
-        originalTitle = c.flexText(.originalTitle)
+        originalTitle = c.flexString(.originalTitle)
     }
 
     enum CodingKeys: String, CodingKey { case id, title, name, season, episode, number, released, thumbnail, overview, description, rating, imdbId, originalTitle }
@@ -225,6 +222,33 @@ struct CastMember: Codable, Hashable, Identifiable {
     var character: String?
     var photo: String?
     var imdbURL: URL? { URL(string: "https://www.imdb.com/name/\(id)/") }
+}
+
+extension MetaItem {
+    /// The item with HTML character references decoded in the text shown to
+    /// you (name, description, original name, its episodes'). Done once, where
+    /// an addon's answer arrives (AddonAPI.CatalogResponse / MetaResponse);
+    /// IMDb's text is decoded as its pages are parsed (IMDbSource.unescape).
+    /// Never again on the way back from a cache, so text that still holds a
+    /// reference after one decode stays as it is.
+    var htmlDecoded: MetaItem {
+        var m = self
+        m.name = name.decodingHTMLEntities
+        m.description = description?.decodingHTMLEntities
+        m.originalName = originalName?.decodingHTMLEntities
+        m.videos = videos?.map(\.htmlDecoded)
+        return m
+    }
+}
+
+extension MetaVideo {
+    var htmlDecoded: MetaVideo {
+        var v = self
+        v.title = title?.decodingHTMLEntities
+        v.overview = overview?.decodingHTMLEntities
+        v.originalTitle = originalTitle?.decodingHTMLEntities
+        return v
+    }
 }
 
 struct MetaItem: Codable, Hashable, Identifiable {
@@ -264,12 +288,12 @@ struct MetaItem: Codable, Hashable, Identifiable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         type = (try? c.decode(String.self, forKey: .type)) ?? "movie"
-        name = c.flexText(.name) ?? id
+        name = c.flexString(.name) ?? id
         poster = c.flexString(.poster)
         posterShape = c.flexString(.posterShape)
         background = c.flexString(.background)
         logo = c.flexString(.logo)
-        description = c.flexText(.description)
+        description = c.flexString(.description)
         releaseInfo = c.flexString(.releaseInfo) ?? c.flexString(.year)
         imdbRating = c.flexString(.imdbRating)
         runtime = c.flexString(.runtime)
@@ -277,7 +301,7 @@ struct MetaItem: Codable, Hashable, Identifiable {
         videos = try? c.decodeIfPresent([MetaVideo].self, forKey: .videos)
         rank = c.flexInt(.rank)
         cast = c.flexStrings(.cast)
-        originalName = c.flexText(.originalName)
+        originalName = c.flexString(.originalName)
         director = c.flexStrings(.director)
         contentRating = c.flexString(.contentRating)
         countries = c.flexStrings(.countries)
