@@ -137,8 +137,8 @@ struct ReleaseName: Hashable, Sendable {
             title = (title as NSString).substring(to: m.start).trimmingCharacters(in: .whitespaces)
         }
         if title.isEmpty && label == nil { return nil }
-        let episodeTitle = epFrom.flatMap { $0 <= ns.length ? episodeTitle(ns.substring(from: $0)) : nil }
-        return ReleaseName(title: title, label: label, year: year, episodeTitle: episodeTitle, group: fileGroup(base), alt: nil,
+        let epTitle: String? = epFrom.flatMap { $0 <= ns.length ? Self.episodeTitle(ns.substring(from: $0)) : nil }
+        return ReleaseName(title: title, label: label, year: year, episodeTitle: epTitle, group: fileGroup(base), alt: nil,
                            attributes: attributes(techTail(lower, from: cut ?? 0)), raw: name)
     }
 
