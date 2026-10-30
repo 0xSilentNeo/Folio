@@ -1,0 +1,226 @@
+17:29:09.359 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.24 GB
+17:29:09.703 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+17:29:09.705 [lab] shots seeded
+17:29:11.713 [hang] main thread unresponsive for 2.4 s
+17:29:14.756 [scene] F039046A connects (portrait)
+17:29:14.757 [scene] F039046A will enter foreground (portrait)
+17:29:15.530 [app] first screen 8747 ms after process start
+17:29:15.530 [app] root view appeared (1 in this run, splash off)
+17:29:16.624 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+17:29:16.835 [meta] saved library metadata with its text decoded (once)
+17:29:16.876 [scene] F039046A active (portrait)
+17:29:16.881 [app] active
+17:29:17.424 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
+17:29:17.424 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+17:29:17.424 [layout] Lab Show at (250, 0, 112, 215)
+17:29:17.424 [layout] Extra Film at (125, 0, 112, 215)
+17:29:17.425 [layout] Weekend picks at (0, 232, 112, 215)
+17:29:17.425 [layout] collage space of Weekend picks at (5, 237, 102, 158)
+17:29:17.425 [layout] collage grid of Weekend picks at (5, 237, 102, 158)
+17:29:17.425 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+17:29:17.426 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+17:29:17.433 [image] tile Lab Show appeared (loader #4, picture none yet)
+17:29:17.434 [image] loader #4 Lab Show S01E01.mp4|poster|504: not in memory, loading
+17:29:17.434 [image] tile Extra Film appeared (loader #3, picture none yet)
+17:29:17.434 [image] loader #3 Extra Film 1 2001.mp4|poster|504: not in memory, loading
+17:29:17.434 [image] folder tile Weekend picks appeared
+17:29:17.435 [image] loader #7 Lab Show S01E04.mp4|poster|300: not in memory, loading
+17:29:17.435 [image] loader #6 Bright Movie 2024.mp4|poster|300: not in memory, loading
+17:29:17.435 [image] loader #5 Another Film 2019.mp4|poster|300: not in memory, loading
+17:29:17.458 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/94E582E9-3250-419A-8185-FAD38F4C5E83/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:29:17.460 [zoom] source 0|s|extra film added at (145.0, 458.0, 112.0, 167.0)
+17:29:17.461 [zoom] source 0|s|lab show added at (270.0, 458.0, 112.0, 167.0)
+17:29:17.461 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/94E582E9-3250-419A-8185-FAD38F4C5E83/Documents/Media/Weekend picks added at (20.0, 690.0, 112.0, 168.0)
+17:29:17.512 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 888 ms
+17:29:17.540 [app] Home: appeared 449 ms after the root view, next frame at 1981 ms, main thread free at 2009 ms
+17:29:17.593 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 167 ms
+17:29:17.597 [image] loader #6 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 162 ms
+17:29:17.599 [image] loader #4 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 164 ms
+17:29:28.619 [player] continue: 3 item(s) in queue, starting at 1 (built in 7 ms)
+17:29:28.620 [player] play requested: 3 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/94E582E9-3250-419A-8185-FAD38F4C5E83/Documents/Media/Lab Show S01E01.mp4
+17:29:29.928 [player] start renderer=metal
+17:29:29.928 [lab] engine not started (lab)
+17:29:30.218 [layout] grid for 340 pt: 3 columns, 4 entries, 300×447 pt
+17:29:30.218 [layout] Bright Movie (2024) at (-1, 0, 92, 184)
+17:29:30.218 [layout] Lab Show at (209, 0, 91, 184)
+17:29:30.218 [layout] Extra Film at (104, 0, 92, 184)
+17:29:30.218 [layout] Weekend picks at (-1, 201, 92, 184)
+17:29:30.219 [layout] collage space of Weekend picks at (5, 206, 81, 127)
+17:29:30.219 [layout] collage grid of Weekend picks at (5, 206, 81, 127)
+17:29:30.221 [layout] grid for 340 pt: 3 columns, 4 entries, 300×385 pt
+17:29:30.276 [layout] grid for 750 pt: 5 columns, 4 entries, 694×116 pt
+17:29:30.331 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+17:29:30.430 [layout] Lab Show at (283, 0, 128, 239)
+17:29:30.431 [layout] Extra Film at (141, 0, 129, 239)
+17:29:30.431 [layout] Weekend picks at (424, 0, 129, 239)
+17:29:30.432 [layout] collage space of Weekend picks at (429, 5, 119, 182)
+17:29:30.432 [layout] collage grid of Weekend picks at (429, 5, 119, 182)
+17:29:30.435 [layout] grid for 750 pt: 5 columns, 4 entries, 694×239 pt
+17:29:31.720 [perf] panel tracks prebuilt in 71 ms
+17:29:32.543 [perf] panel settings prebuilt in 589 ms
+17:29:32.615 [perf] panel nowPlaying prebuilt in 64 ms
+17:29:32.639 [panel] now playing opens on q0 (tab 0, item 1 of 3, chapter -1)
+17:29:32.640 [image] loader #10 Lab Show S01E03.mp4|wide|192: not in memory, loading
+17:29:32.640 [image] loader #9 Lab Show S01E02.mp4|wide|192: not in memory, loading
+17:29:32.640 [image] loader #8 Lab Show S01E01.mp4|wide|192: not in memory, loading
+17:29:32.654 [image] loader #8 Lab Show S01E01.mp4|wide|192: picture (artwork disk or network) after 13 ms
+17:29:32.655 [image] loader #9 Lab Show S01E02.mp4|wide|192: picture (artwork disk or network) after 14 ms
+17:29:32.656 [image] loader #10 Lab Show S01E03.mp4|wide|192: picture (artwork disk or network) after 15 ms
+17:29:32.821 [perf] panel tracks prebuilt in 0 ms
+17:29:33.135 [perf] panel settings prebuilt in 0 ms
+17:29:33.440 [perf] panel nowPlaying prebuilt in 0 ms
+17:29:38.607 [player] close at 0:00
+17:29:38.610 [energy] cpu 34% (other 24%, main 10%) mem 78 MB (0 MB left) thermal=nominal playing=no · player closing
+17:29:39.040 [player] player model freed
+17:29:39.041 [player] player screen state freed
+17:29:40.525 [nav] after player closed: scene orientation=3 device=3 bounds=(874.0, 402.0)
+17:29:40.537 [nav]   window UIWindow level=0.0 hidden=false alpha=1.0 key=•••• touch=true frame=(0.0, 0.0, 874.0, 402.0) root=UIHostingController<ModifiedContent<LazyView<ModifiedContent<RootView, _EnvironmentKeyWritingModifier<Optional<AnyShapeStyle>>>>, RootModifier>> presented=nil
+17:29:43.270 [layout] grid for 402 pt: 3 columns, 4 entries, 362×795 pt
+17:29:43.270 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+17:29:43.271 [layout] Lab Show at (250, 0, 112, 215)
+17:29:43.271 [layout] Extra Film at (125, 0, 112, 215)
+17:29:43.271 [layout] Weekend picks at (0, 232, 112, 215)
+17:29:43.271 [layout] collage space of Weekend picks at (5, 237, 102, 158)
+17:29:43.272 [layout] collage grid of Weekend picks at (5, 237, 102, 158)
+17:29:43.335 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
+17:29:46.952 [energy] cpu 51% (main 38%, other 13%) mem 75 MB (0 MB left) thermal=nominal playing=no
+17:29:50.335 [nav] home: open Lab Show
+17:29:50.336 [title] home opens group(s|lab show)
+17:29:50.338 [image] loader #11 Lab Show S01E01.mp4|wide|552: not in memory, loading
+17:29:50.339 [image] loader #12 Lab Show S01E02.mp4|wide|552: not in memory, loading
+17:29:50.339 [image] loader #13 Lab Show S01E03.mp4|wide|552: not in memory, loading
+17:29:50.341 [nav] home path 0 → 1: ["group(s|lab show)"]
+17:29:50.342 [zoom] opening group(s|lab show): 1 source(s) for 0|s|lab show: (270.0, 458.0, 112.0, 167.0) visible
+17:29:50.622 [nav] title page appear Lab Show S01E01.mp4
+17:29:50.623 [title] library title page appeared
+17:29:50.623 [image] loader #14 Lab Show S01E01.mp4|wide|2400: not in memory, loading
+17:29:50.623 [image] tile S1 · E5 appeared (loader #19, picture none yet)
+17:29:50.623 [image] loader #19 Lab Show S01E05.mp4|wide|552: not in memory, loading
+17:29:50.624 [image] tile S1 · E3 appeared (loader #17, picture none yet)
+17:29:50.624 [image] loader #17 Lab Show S01E03.mp4|wide|552: not in memory, loading
+17:29:50.624 [image] tile S1 · E1 appeared (loader #15, picture none yet)
+17:29:50.624 [image] loader #15 Lab Show S01E01.mp4|wide|552: not in memory, loading
+17:29:50.624 [image] tile S1 · E4 appeared (loader #18, picture none yet)
+17:29:50.625 [image] loader #18 Lab Show S01E04.mp4|wide|552: not in memory, loading
+17:29:50.625 [image] tile S1 · E2 appeared (loader #16, picture none yet)
+17:29:50.625 [image] loader #16 Lab Show S01E02.mp4|wide|552: not in memory, loading
+17:29:50.639 [nav] page opening: its move started
+17:29:50.734 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+17:29:50.886 [image] tile S1 · E5 disappeared (loader #19)
+17:29:51.035 [image] loader #13 Lab Show S01E03.mp4|wide|552: picture (artwork disk or network) after 695 ms
+17:29:51.035 [image] loader #12 Lab Show S01E02.mp4|wide|552: picture (artwork disk or network) after 696 ms
+17:29:51.036 [image] loader #11 Lab Show S01E01.mp4|wide|552: picture (artwork disk or network) after 697 ms
+17:29:51.037 [image] loader #14 Lab Show S01E01.mp4|wide|2400: picture (artwork disk or network) after 413 ms
+17:29:51.108 [image] loader #17 Lab Show S01E03.mp4|wide|552: picture (artwork memory) after 483 ms
+17:29:51.109 [image] loader #15 Lab Show S01E01.mp4|wide|552: picture (artwork memory) after 484 ms
+17:29:51.222 [image] loader #16 Lab Show S01E02.mp4|wide|552: picture (artwork memory) after 484 ms
+17:29:51.228 [nav] title page move: animated
+17:29:51.752 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/94E582E9-3250-419A-8185-FAD38F4C5E83/Documents/Media/Bright Movie 2024.mp4 removed from the window
+17:29:51.752 [zoom] source 0|s|extra film removed from the window
+17:29:51.752 [zoom] source 0|s|lab show removed from the window
+17:29:51.752 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/94E582E9-3250-419A-8185-FAD38F4C5E83/Documents/Media/Weekend picks removed from the window
+17:29:51.850 [nav] page opening: its move ended after 1210 ms
+17:29:51.919 [image] tile Bright Movie (2024) disappeared (loader #2)
+17:29:51.920 [image] tile Lab Show disappeared (loader #4)
+17:29:51.920 [image] tile Extra Film disappeared (loader #3)
+17:29:51.921 [image] folder tile Weekend picks disappeared
+17:29:52.549 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+17:29:52.560 [image] loader #19 Lab Show S01E05.mp4|wide|552: picture (frame from the file) after 1931 ms
+17:29:52.564 [image] loader #18 Lab Show S01E04.mp4|wide|552: picture (frame from the file) after 1937 ms
+17:29:53.711 [nav] title page: Play → play Lab Show S01E01.mp4
+17:29:53.711 [player] play requested: 5 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/94E582E9-3250-419A-8185-FAD38F4C5E83/Documents/Media/Lab Show S01E01.mp4
+17:29:53.714 [nav] title page move log paused while the player is up
+17:29:53.789 [player] start renderer=metal
+17:29:53.789 [lab] engine not started (lab)
+17:29:53.934 [image] tile S1 · E4 disappeared (loader #18)
+17:29:53.935 [image] tile S1 · E3 disappeared (loader #17)
+17:29:53.941 [image] tile S1 · E5 appeared (loader #19, picture shown)
+17:29:53.942 [image] tile S1 · E3 appeared (loader #17, picture shown)
+17:29:53.943 [image] tile S1 · E4 appeared (loader #18, picture shown)
+17:29:53.991 [image] tile S1 · E2 disappeared (loader #16)
+17:29:53.994 [image] tile S1 · E4 disappeared (loader #18)
+17:29:53.995 [image] tile S1 · E1 disappeared (loader #15)
+17:29:53.996 [image] tile S1 · E3 disappeared (loader #17)
+17:29:53.996 [image] tile S1 · E5 disappeared (loader #19)
+17:29:55.839 [perf] panel tracks prebuilt in 5 ms
+17:29:56.224 [perf] panel settings prebuilt in 88 ms
+17:29:56.302 [perf] panel tracks prebuilt in 0 ms
+17:29:56.449 [perf] panel nowPlaying prebuilt in 12 ms
+17:29:56.452 [panel] now playing opens on q0 (tab 0, item 1 of 5, chapter -1)
+17:29:56.453 [image] loader #24 Lab Show S01E05.mp4|wide|192: not in memory, loading
+17:29:56.453 [image] loader #23 Lab Show S01E04.mp4|wide|192: not in memory, loading
+17:29:56.453 [image] loader #22 Lab Show S01E03.mp4|wide|192: from memory at once
+17:29:56.453 [image] loader #21 Lab Show S01E02.mp4|wide|192: from memory at once
+17:29:56.454 [image] loader #20 Lab Show S01E01.mp4|wide|192: from memory at once
+17:29:56.457 [image] loader #22 Lab Show S01E03.mp4|wide|192: picture (artwork memory) after 3 ms, replacing one already shown
+17:29:56.458 [image] loader #21 Lab Show S01E02.mp4|wide|192: picture (artwork memory) after 4 ms, replacing one already shown
+17:29:56.458 [image] loader #20 Lab Show S01E01.mp4|wide|192: picture (artwork memory) after 4 ms, replacing one already shown
+17:29:56.469 [image] loader #23 Lab Show S01E04.mp4|wide|192: picture (frame from the file) after 16 ms
+17:29:56.469 [image] loader #24 Lab Show S01E05.mp4|wide|192: picture (frame from the file) after 16 ms
+17:29:56.603 [perf] panel settings prebuilt in 0 ms
+17:29:56.930 [perf] panel nowPlaying prebuilt in 0 ms
+17:30:02.253 [player] close at 0:00
+17:30:02.256 [energy] cpu 14% (main 11%, other 3%) mem 91 MB (0 MB left) thermal=nominal playing=no · player closing
+17:30:03.806 [player] player model freed
+17:30:03.806 [player] player screen state freed
+17:30:05.241 [nav] after player closed: scene orientation=3 device=3 bounds=(874.0, 402.0)
+17:30:05.241 [nav]   window UIWindow level=0.0 hidden=false alpha=1.0 key=•••• touch=true frame=(0.0, 0.0, 874.0, 402.0) root=UIHostingController<ModifiedContent<LazyView<ModifiedContent<RootView, _EnvironmentKeyWritingModifier<Optional<AnyShapeStyle>>>>, RootModifier>> presented=nil
+17:30:08.387 [nav] title page: Back
+17:30:08.394 [nav] page leaving: taps off
+17:30:08.413 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/94E582E9-3250-419A-8185-FAD38F4C5E83/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+17:30:08.414 [zoom] source 0|s|extra film added at (145.0, 458.0, 112.0, 167.0)
+17:30:08.415 [zoom] source 0|s|lab show added at (270.0, 458.0, 112.0, 167.0)
+17:30:08.416 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/94E582E9-3250-419A-8185-FAD38F4C5E83/Documents/Media/Weekend picks added at (20.0, 690.0, 112.0, 168.0)
+17:30:08.496 [layout] grid for 750 pt: 5 columns, 4 entries, 694×135 pt
+17:30:08.497 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+17:30:08.497 [layout] Lab Show at (283, 0, 128, 239)
+17:30:08.497 [layout] Extra Film at (141, 0, 129, 239)
+17:30:08.497 [layout] Weekend picks at (424, 0, 129, 239)
+17:30:08.498 [layout] collage space of Weekend picks at (429, 5, 119, 182)
+17:30:08.498 [layout] collage grid of Weekend picks at (429, 5, 119, 182)
+17:30:08.498 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+17:30:08.498 [image] tile Lab Show appeared (loader #4, picture shown)
+17:30:08.499 [image] tile Extra Film appeared (loader #3, picture none yet)
+17:30:08.499 [image] folder tile Weekend picks appeared
+17:30:08.501 [layout] grid for 750 pt: 5 columns, 4 entries, 694×239 pt
+17:30:08.508 [image] loader #1 Lab Show S01E01.mp4|wide|960: from memory at once
+17:30:08.532 [nav] home path 1 → 0: []
+17:30:08.550 [zoom] back from group(s|lab show) +17 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:08.551 [nav] title page move: animated
+17:30:08.592 [image] loader #1 Lab Show S01E01.mp4|wide|960: picture (artwork disk or network) after 83 ms, replacing one already shown
+17:30:08.637 [zoom] back from group(s|lab show) +104 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:08.739 [zoom] back from group(s|lab show) +206 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:08.841 [zoom] back from group(s|lab show) +308 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:08.940 [zoom] back from group(s|lab show) +408 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:09.041 [zoom] back from group(s|lab show) +508 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:09.141 [zoom] back from group(s|lab show) +608 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:09.240 [zoom] back from group(s|lab show) +707 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:09.341 [zoom] back from group(s|lab show) +808 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:09.381 [nav] page gone 986 ms after it started going back
+17:30:09.420 [nav] title page disappear Lab Show S01E01.mp4
+17:30:09.500 [zoom] back from group(s|lab show) +968 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:09.539 [zoom] back from group(s|lab show) +1006 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:09.635 [zoom] back from group(s|lab show) +1102 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:09.746 [zoom] back from group(s|lab show) +1213 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:09.835 [zoom] back from group(s|lab show) +1302 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:09.938 [zoom] back from group(s|lab show) +1406 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:10.041 [zoom] back from group(s|lab show) +1509 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:10.138 [zoom] back from group(s|lab show) +1606 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:10.242 [zoom] back from group(s|lab show) +1709 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:10.338 [zoom] back from group(s|lab show) +1806 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:10.438 [zoom] back from group(s|lab show) +1906 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:10.538 [zoom] back from group(s|lab show) +2006 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:10.638 [zoom] back from group(s|lab show) +2106 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:10.738 [zoom] back from group(s|lab show) +2206 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:10.834 [zoom] back from group(s|lab show) +2302 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:10.938 [zoom] back from group(s|lab show) +2406 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:11.041 [zoom] back from group(s|lab show) +2508 ms: 1 source(s) for 0|s|lab show: (373.0, 397.0, 128.0, 192.0) visible
+17:30:12.666 [layout] grid for 402 pt: 3 columns, 4 entries, 362×795 pt
+17:30:12.667 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+17:30:12.667 [layout] Lab Show at (250, 0, 112, 215)
+17:30:12.667 [layout] Extra Film at (125, 0, 112, 215)
+17:30:12.668 [layout] Weekend picks at (0, 232, 112, 215)
+17:30:12.687 [layout] collage space of Weekend picks at (5, 237, 102, 158)
+17:30:12.687 [layout] collage grid of Weekend picks at (5, 237, 102, 158)
+17:30:12.727 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
+17:30:16.944 [energy] cpu 60% (main 46%, other 14%) mem 85 MB (0 MB left) thermal=nominal playing=no
