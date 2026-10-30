@@ -154,6 +154,7 @@ struct TitleHeroView: View {
         .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .onAppear {
             dlog("nav", "title page appear \(file.lastPathComponent)")
+            LibTrace.title.event("appeared", "library title page appeared")
             thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true, hero: HeroMetrics.pixels)
         }
         .onChange(of: file) { _, f in

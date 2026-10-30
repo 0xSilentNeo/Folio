@@ -40,6 +40,15 @@ enum LibTrace {
         func end(_ interval: StaticString, _ state: OSSignpostIntervalState?) {
             if let state { signposter.endInterval(interval, state) }
         }
+
+        /// A point on the signpost lane (and the line in the log).
+        func event(_ name: StaticString, _ message: @autoclosure () -> String) {
+            guard LibTrace.on else { return }
+            let line = message()
+            signposter.emitEvent(name, "\(line, privacy: .public)")
+            logger.info("\(line, privacy: .public)")
+            dlog(self.name, line)
+        }
     }
 
     /// Zoom transitions between Home and title pages: every zoom source, where
@@ -56,6 +65,9 @@ enum LibTrace {
     /// Home's layout: the grid's width, columns and size, and where each
     /// entry sits in it.
     static let layout = Channel("layout")
+    /// Title pages: opening one (an event), its data loading (an interval),
+    /// and the page appearing (an event), for Instruments' os_signpost lane.
+    static let title = Channel("title")
 
     /// Milliseconds since `start`, for "… after N ms".
     static func ms(since start: CFTimeInterval) -> Int { Int((CACurrentMediaTime() - start) * 1000) }

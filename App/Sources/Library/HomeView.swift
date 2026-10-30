@@ -84,6 +84,7 @@ struct HomeView: View {
     ///   the old page for the new title: your 19:23 recording opens Classroom
     ///   with MobLand's title on it, and its page never ran onAppear.
     private func open(_ route: LibraryRoute) {
+        LibTrace.title.event("open", "home opens \(route)")
         if path.isEmpty { path.append(route); return }
         pending.route = route                     // the latest tap wins
         guard !pending.waiting else { return }
