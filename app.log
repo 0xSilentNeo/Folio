@@ -1,0 +1,116 @@
+16:29:03.595 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.24 GB
+16:29:03.868 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+16:29:03.874 [lab] shots seeded
+16:29:05.844 [hang] main thread unresponsive for 2.3 s
+16:29:10.754 [scene] AD3AD1BA connects (portrait)
+16:29:10.756 [scene] AD3AD1BA will enter foreground (portrait)
+16:29:11.660 [app] first screen 12157 ms after process start
+16:29:11.660 [app] root view appeared (1 in this run, splash off)
+16:29:13.131 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+16:29:13.583 [meta] saved library metadata with its text decoded (once)
+16:29:13.667 [scene] AD3AD1BA active (portrait)
+16:29:13.705 [app] active
+16:29:14.331 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
+16:29:14.331 [layout] Weekend picks at (0, 232, 112, 215)
+16:29:14.331 [layout] collage space of Weekend picks at (5, 237, 102, 158)
+16:29:14.332 [layout] collage grid of Weekend picks at (5, 237, 102, 158)
+16:29:14.332 [layout] Extra Film at (125, 0, 112, 215)
+16:29:14.332 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+16:29:14.332 [layout] Lab Show at (250, 0, 112, 215)
+16:29:14.332 [image] folder tile Weekend picks appeared
+16:29:14.333 [image] loader #5 Another Film 2019.mp4|poster|300: not in memory, loading
+16:29:14.364 [image] loader #6 Bright Movie 2024.mp4|poster|300: not in memory, loading
+16:29:14.365 [image] loader #7 Lab Show S01E04.mp4|poster|300: not in memory, loading
+16:29:14.365 [image] tile Extra Film appeared (loader #3, picture none yet)
+16:29:14.366 [image] loader #3 Extra Film 1 2001.mp4|poster|504: not in memory, loading
+16:29:14.366 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+16:29:14.367 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+16:29:14.367 [image] tile Lab Show appeared (loader #4, picture none yet)
+16:29:14.368 [image] loader #4 Lab Show S01E01.mp4|poster|504: not in memory, loading
+16:29:14.427 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/DA121FAA-74E0-4609-AE47-77B01416E549/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+16:29:14.430 [zoom] source 0|s|extra film added at (145.0, 458.0, 112.0, 167.0)
+16:29:14.432 [zoom] source 0|s|lab show added at (270.0, 458.0, 112.0, 167.0)
+16:29:14.433 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/DA121FAA-74E0-4609-AE47-77B01416E549/Documents/Media/Weekend picks added at (20.0, 690.0, 112.0, 168.0)
+16:29:14.519 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 1388 ms
+16:29:14.560 [app] Home: appeared 553 ms after the root view, next frame at 2874 ms, main thread free at 2900 ms
+16:29:14.600 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 233 ms
+16:29:14.601 [image] loader #4 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 233 ms
+16:29:14.604 [image] loader #6 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 271 ms
+16:29:22.421 [layout] grid for 750 pt: 5 columns, 4 entries, 694×239 pt
+16:29:22.422 [layout] Weekend picks at (424, 0, 129, 239)
+16:29:22.423 [layout] collage space of Weekend picks at (429, 5, 119, 182)
+16:29:22.423 [layout] collage grid of Weekend picks at (429, 5, 119, 182)
+16:29:22.566 [layout] Extra Film at (141, 0, 129, 239)
+16:29:22.566 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+16:29:22.566 [layout] Lab Show at (283, 0, 128, 239)
+16:29:27.673 [layout] grid for 402 pt: 3 columns, 4 entries, 362×795 pt
+16:29:27.674 [layout] Weekend picks at (0, 232, 112, 215)
+16:29:27.675 [layout] collage space of Weekend picks at (5, 237, 102, 158)
+16:29:27.676 [layout] collage grid of Weekend picks at (5, 237, 102, 158)
+16:29:28.087 [layout] Extra Film at (125, 0, 112, 215)
+16:29:28.088 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+16:29:28.090 [layout] Lab Show at (250, 0, 112, 215)
+16:29:28.150 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
+16:29:41.720 [zoom] home layout grid → list (zoom ids now 1|…)
+16:29:41.732 [image] folder tile Weekend picks disappeared
+16:29:41.733 [image] tile Extra Film disappeared (loader #3)
+16:29:41.733 [image] tile Bright Movie (2024) disappeared (loader #2)
+16:29:41.733 [image] tile Lab Show disappeared (loader #4)
+16:29:41.870 [layout] collage space of ? at (30, 661, 70, 37)
+16:29:41.984 [layout] collage grid of ? at (30, 661, 70, 37)
+16:29:41.987 [image] loader #11 Another Film 2019.mp4|wide|300: not in memory, loading
+16:29:41.988 [image] loader #12 Bright Movie 2024.mp4|wide|300: not in memory, loading
+16:29:41.989 [image] loader #13 Lab Show S01E04.mp4|wide|300: not in memory, loading
+16:29:42.008 [zoom] source 1|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/DA121FAA-74E0-4609-AE47-77B01416E549/Documents/Media/Weekend picks added at (20.0, 651.0, 362.0, 57.0)
+16:29:42.013 [image] row Lab Show (list) appeared (loader #10, picture none yet)
+16:29:42.341 [image] loader #10 Lab Show S01E01.mp4|poster|144: not in memory, loading
+16:29:42.342 [zoom] source 1|s|lab show added at (20.0, 587.0, 362.0, 61.0)
+16:29:42.347 [image] row Extra Film (list) appeared (loader #9, picture none yet)
+16:29:42.347 [image] loader #9 Extra Film 1 2001.mp4|poster|144: not in memory, loading
+16:29:42.348 [zoom] source 1|s|extra film added at (20.0, 523.0, 362.0, 61.0)
+16:29:42.354 [image] row Bright Movie 2024.mp4 (list) appeared (loader #8, picture none yet)
+16:29:42.355 [image] loader #8 Bright Movie 2024.mp4|poster|144: not in memory, loading
+16:29:42.356 [zoom] source 1|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/DA121FAA-74E0-4609-AE47-77B01416E549/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 459.0, 362.0, 61.0)
+16:29:42.437 [image] loader #8 Bright Movie 2024.mp4|poster|144: picture (poster tt9000003) after 82 ms
+16:29:42.440 [image] loader #10 Lab Show S01E01.mp4|poster|144: picture (poster tt9000002) after 426 ms
+16:29:42.452 [image] loader #12 Bright Movie 2024.mp4|wide|300: picture (artwork disk or network) after 464 ms
+16:29:43.512 [image] loader #11 Another Film 2019.mp4|wide|300: picture (frame from the file) after 1526 ms
+16:29:43.513 [image] loader #13 Lab Show S01E04.mp4|wide|300: picture (frame from the file) after 1523 ms
+16:29:44.298 [energy] cpu 31% (other 23%, main 7%, com.apple.UIKit.in 1%) mem 62 MB (0 MB left) thermal=nominal playing=no
+16:29:48.137 [layout] collage space of ? at (100, 600, 70, 37)
+16:29:48.138 [layout] collage grid of ? at (100, 600, 70, 37)
+16:29:52.992 [layout] collage space of ? at (30, 661, 70, 37)
+16:29:52.993 [layout] collage grid of ? at (30, 661, 70, 37)
+16:30:04.574 [zoom] home layout list → details (zoom ids now 2|…)
+16:30:04.662 [layout] collage space of ? at (32, 641, 142, 77)
+16:30:04.663 [layout] collage grid of ? at (32, 641, 142, 37)
+16:30:04.664 [layout] collage space of ? at (32, 848, 142, 76)
+16:30:04.664 [layout] collage grid of ? at (32, 848, 142, 76)
+16:30:10.008 [layout] collage space of ? at (102, 787, 142, 76)
+16:30:10.009 [layout] collage grid of ? at (102, 787, 142, 76)
+16:30:13.785 [energy] cpu 69% (main 57%, other 12%) mem 72 MB (0 MB left) thermal=nominal playing=no
+16:30:14.586 [layout] collage space of ? at (32, 848, 142, 76)
+16:30:14.588 [layout] collage grid of ? at (32, 848, 142, 76)
+16:30:24.636 [zoom] home layout details → grid (zoom ids now 3|…)
+16:30:24.639 [image] row Extra Film (details) disappeared (loader #9)
+16:30:24.639 [image] row Lab Show (details) disappeared (loader #10)
+16:30:24.639 [image] row Bright Movie 2024.mp4 (details) disappeared (loader #8)
+16:30:24.683 [image] folder tile Weekend picks appeared
+16:30:24.684 [image] tile Extra Film appeared (loader #3, picture none yet)
+16:30:24.685 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+16:30:24.685 [image] tile Lab Show appeared (loader #4, picture shown)
+16:30:29.844 [layout] grid for 750 pt: 5 columns, 4 entries, 694×239 pt
+16:30:29.845 [layout] Weekend picks at (424, 0, 129, 239)
+16:30:29.845 [layout] collage space of Weekend picks at (429, 5, 119, 182)
+16:30:29.845 [layout] collage grid of Weekend picks at (429, 5, 119, 182)
+16:30:29.904 [layout] Extra Film at (141, 0, 129, 239)
+16:30:29.905 [layout] Bright Movie (2024) at (0, 0, 128, 239)
+16:30:29.905 [layout] Lab Show at (283, 0, 128, 239)
+16:30:34.679 [layout] grid for 402 pt: 3 columns, 4 entries, 362×795 pt
+16:30:34.680 [layout] Weekend picks at (0, 232, 112, 215)
+16:30:34.680 [layout] collage space of Weekend picks at (5, 237, 102, 158)
+16:30:34.680 [layout] collage grid of Weekend picks at (5, 237, 102, 158)
+16:30:34.780 [layout] Extra Film at (125, 0, 112, 215)
+16:30:34.781 [layout] Bright Movie (2024) at (0, 0, 112, 215)
+16:30:34.781 [layout] Lab Show at (250, 0, 112, 215)
+16:30:34.868 [layout] grid for 402 pt: 3 columns, 4 entries, 362×447 pt
