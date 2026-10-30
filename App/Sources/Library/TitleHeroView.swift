@@ -284,17 +284,10 @@ struct TitleHeroView: View {
         Menu {
             Button { play(file) } label: { Label("Play", systemImage: "play") }
             if siblings.count > 1 {
-                if history.isWatched(file) {
-                    Button { history.setWatched([file], false) } label: { Label("Mark this episode as unwatched", systemImage: "eye.slash") }
-                } else {
-                    Button { history.setWatched([file], true) } label: { Label("Mark this episode as watched", systemImage: "eye") }
-                }
-                Button { history.setWatched(siblings, true) } label: { Label("Mark all as watched", systemImage: "eye") }
-                Button { history.setWatched(siblings, false) } label: { Label("Mark all as unwatched", systemImage: "eye.slash") }
-            } else if history.isWatched(file) {
-                Button { history.setWatched([file], false) } label: { Label("Mark as unwatched", systemImage: "eye.slash") }
+                WatchedMenuItems(files: [file], scope: .thisEpisode)
+                WatchedMenuItems(files: siblings, scope: .all)
             } else {
-                Button { history.setWatched([file], true) } label: { Label("Mark as watched", systemImage: "eye") }
+                WatchedMenuItems(files: [file])
             }
             Button(role: .destructive) { confirmDelete = true } label: { Label("Delete file", systemImage: "trash") }
         } label: {
@@ -461,11 +454,7 @@ struct LibraryList: View {
         .accessibilityIdentifier("ep:" + f.lastPathComponent)
         .contextMenu {
             Button { play(f) } label: { Label("Play", systemImage: "play") }
-            if history.isWatched(f) {
-                Button { history.setWatched([f], false) } label: { Label("Mark as unwatched", systemImage: "eye.slash") }
-            } else {
-                Button { history.setWatched([f], true) } label: { Label("Mark as watched", systemImage: "eye") }
-            }
+            WatchedMenuItems(files: [f])
             Button(role: .destructive) {
                 if let pendingDelete { pendingDelete.wrappedValue = f } else { LocalMediaStore.shared.delete(f) }
             } label: { Label("Delete", systemImage: "trash") }

@@ -283,8 +283,6 @@ struct HomeView: View {
     @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
 
     @State private var pendingDelete: LibraryGroup?
-    /// Thumbnails: the tile whose swipe actions are showing.
-    @State private var openTile: String?
 
     /// The delete question, attached to the title's own tile or row so it
     /// points at it (iOS shows confirmation dialogs as a popover from the view
@@ -295,18 +293,6 @@ struct HomeView: View {
                              titleVisibility: .visible) {
             Button("Delete", role: .destructive) { local.delete(g.folder.map { [$0] } ?? g.files) }
         }
-    }
-
-    /// Swipe actions of a Thumbnails tile: Delete (asks first) and, for a
-    /// title, Watched / Unwatched.
-    private func swipeActions(_ g: LibraryGroup) -> [SwipeAction] {
-        var a = [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = g }]
-        if g.folder == nil {
-            a.append(allWatched(g)
-                     ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched(g.files, false) }
-                     : SwipeAction(title: "Watched", icon: "eye", tint: Theme.swipeTint) { history.setWatched(g.files, true) })
-        }
-        return a
     }
 
     private func deleteQuestion(_ g: LibraryGroup) -> String {
@@ -427,11 +413,7 @@ struct HomeView: View {
         }
         .contextMenu {
             Button { playLocal(g.nextUp) } label: { Label(g.isSeries ? "Play next episode" : "Play", systemImage: "play") }
-            if allWatched(g) {
-                Button { history.setWatched(g.files, false) } label: { Label(g.isSeries ? "Mark all as unwatched" : "Mark as unwatched", systemImage: "eye.slash") }
-            } else {
-                Button { history.setWatched(g.files, true) } label: { Label(g.isSeries ? "Mark all as watched" : "Mark as watched", systemImage: "eye") }
-            }
+            WatchedMenuItems(files: g.files, scope: g.isSeries ? .all : .one)
             Button(role: .destructive) { pendingDelete = g } label: { Label(g.isSeries ? "Delete all episodes" : "Delete", systemImage: "trash") }
         }
     }
