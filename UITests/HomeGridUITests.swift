@@ -129,7 +129,14 @@ final class HomeGridUITests: XCTestCase {
 
     private func playTurnAndClose(_ app: XCUIApplication, _ label: String) {
         let close = app.buttons["Close player"].firstMatch
-        guard close.waitForExistence(timeout: 15) else { XCTFail("\(label): the player didn't open"); return }
+        // The controls hide by themselves after a few seconds (no -uiTest
+        // here): a tap on the video brings them back (run 41088647870: the
+        // player opened, "play requested" in app.log, but its controls had
+        // already hidden).
+        if !close.waitForExistence(timeout: 6) {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45)).tap()
+        }
+        guard close.waitForExistence(timeout: 9) else { XCTFail("\(label): the player didn't open"); return }
         mark("\(label): playing")
         turn(app, .landscapeLeft)
         if !close.isHittable { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap(); sleep(1) }
