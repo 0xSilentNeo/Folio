@@ -176,11 +176,16 @@ final class PlayerModel: ObservableObject {
     var hasPrevious: Bool { queueIndex > 0 }
 
     // MARK: Rendering
+    /// `.metal`: mpv's gpu-next on a Metal layer; PiP swaps mpv's video
+    /// output to a CPU renderer and back. `.gl`: Outplayer's way — mpv's
+    /// OpenGL renderer draws every frame into PiP's own sample-buffer layer,
+    /// which is also the picture in the player (SampleBufferRenderer); PiP
+    /// changes nothing but the size frames are drawn at.
     enum Renderer { case metal, gl }
     let renderer: Renderer
     let videoView: UIView
     private let metalView: MetalVideoView?
-    private let glView: MPVRenderView?
+    private let glRenderer: SampleBufferRenderer?
     let pip = PiPManager()
     nonisolated let pipState = PiPStateBox()
     private lazy var sw = MPVSoftwareRenderer(output: pip.makeSink())
@@ -204,10 +209,12 @@ final class PlayerModel: ObservableObject {
         guard PiPTrace.on else { return }
         PiPTrace.mark(what)
         if let c = client {
-            let s = PiPTrace.Sampler(client: c, label: what, base: CACurrentMediaTime())
+            let base = CACurrentMediaTime()
+            let s = PiPTrace.Sampler(client: c, label: what, base: base)
             traceSampler = s
             s.start(seconds: seconds) { [weak self] text in
-                PiPTrace.event(text)
+                // With the OpenGL renderer the layer is the picture: its frames too.
+                PiPTrace.event(text + (self?.renderer == .gl ? self?.pip.frameGaps(since: base) ?? "" : ""))
                 if self?.traceSampler === s { self?.traceSampler = nil }
             }
         }
@@ -240,16 +247,16 @@ final class PlayerModel: ObservableObject {
         guard !queue.isEmpty else { return nil }
         self.queue = queue
         self.queueIndex = min(max(0, startIndex), queue.count - 1)
-        if UserDefaults.standard.string(forKey: SettingsKey.renderer) == "gl", let gl = MPVRenderView.make() {
+        if UserDefaults.standard.string(forKey: SettingsKey.renderer) == "gl", let gl = SampleBufferRenderer.make(output: pip.makeSink()) {
             renderer = .gl
-            glView = gl
+            glRenderer = gl
             metalView = nil
-            videoView = gl
+            videoView = pip.view
         } else {
             let mv = MetalVideoView()
             renderer = .metal
             metalView = mv
-            glView = nil
+            glRenderer = nil
             videoView = mv
         }
     }
@@ -279,10 +286,17 @@ final class PlayerModel: ObservableObject {
         client = c
         observe(c)
 
-        if let glView {
-            do { try glView.attach(to: c) } catch {
+        if let glRenderer {
+            do { try glRenderer.attach(to: c) } catch {
                 errorMessage = "Video output failed: \(error.localizedDescription)"
             }
+            pip.view.onLayout = { [weak glRenderer] pixels in glRenderer?.setViewSize(pixels) }
+            let b = pip.view.bounds.size, n = pip.view.layouts
+            Task { @MainActor in PiPTrace.event("OpenGL renderer listening for the view's size: \(Int(b.width))×\(Int(b.height)) pt after \(n) layout(s)") }
+            // start() runs in viewDidAppear, after the view's layout: its size
+            // now, not at the next layout (which may not come until the phone
+            // turns).
+            pip.view.reportSize()
         }
         metalView?.onResize = { [weak self] in self?.nudgeRedraw() }
         mode = .main
@@ -290,6 +304,7 @@ final class PlayerModel: ObservableObject {
         if defaults.bool(forKey: SettingsKey.pipEnabled), PiPManager.isSupported {
             pip.delegate = self
             pip.onPossibleChanged = { [weak self] in self?.isPiPPossible = $0 }
+            pip.onRenderSize = { [weak self] size in DispatchQueue.main.async { self?.pipWindowSized(size) } }
             pip.setUp(autoStart: defaults.bool(forKey: SettingsKey.pipAuto))
             startPiPFeed()
         }
@@ -319,9 +334,11 @@ final class PlayerModel: ObservableObject {
         stopPiPFeed()
         snapshotQueue.sync {}
         captureThumbnail()
+        // The OpenGL renderer first: it enqueues into PiP's layer from its own
+        // queue, and the layer is flushed below (independent review, 1.20.0).
+        glRenderer?.detach()
         pip.tearDown()
         if mode == .sw { sw.detach() }
-        glView?.detach()
         mode = .none
         let scoped = scopedURL
         scopedURL = nil
@@ -1372,7 +1389,7 @@ final class PlayerModel: ObservableObject {
         guard defaults.bool(forKey: SettingsKey.pipEnabled), PiPManager.isSupported else { return }
         switch renderer {
         case .gl:
-            glView?.setPiPFeed(pip.makeSink())
+            break                       // every frame already goes into PiP's layer
         case .metal:
             // A readback of the full frame is not free; refresh the PiP
             // layer rarely (it only needs *some* current-ish picture to be
@@ -1387,10 +1404,32 @@ final class PlayerModel: ObservableObject {
         }
     }
 
+    /// OpenGL: PiP's window has a new size. As Outplayer does, frames follow
+    /// it 0.5 s after it settles (never during PiP's opening animation), at a
+    /// quarter, half or all of the video's own size — the first that covers
+    /// the window — or the video's size if the window is larger.
+    private var pipSizeWork: DispatchWorkItem?
+    /// Between PiP's willStop and didStop (OpenGL renderer).
+    private var pipStopping = false
+
+    private func pipWindowSized(_ size: CMVideoDimensions) {
+        guard renderer == .gl, isPiPActive, !pipStopping else { return }
+        PiPTrace.event("PiP window renders at \(size.width)×\(size.height)")
+        pipSizeWork?.cancel()
+        let w = DispatchWorkItem { [weak self] in
+            guard let self, self.isPiPActive, !self.pipStopping, self.pendingW > 0, self.pendingH > 0 else { return }
+            let base = (self.pendingW, self.pendingH)
+            let pick = [4, 2, 1].map { ((base.0 / $0) & ~1, (base.1 / $0) & ~1) }
+                .first { $0.0 >= Int(size.width) && $0.1 >= Int(size.height) } ?? base
+            self.glRenderer?.setPiPSize(pick)
+        }
+        pipSizeWork = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: w)
+    }
+
     private func stopPiPFeed() {
         snapshotTimer?.invalidate()
         snapshotTimer = nil
-        glView?.setPiPFeed(nil)
     }
 
     /// Saves the current frame as the Continue Watching thumbnail.
@@ -1525,23 +1564,23 @@ final class PlayerModel: ObservableObject {
     /// on, and a re-selected track makes the demuxer drop its buffer and read
     /// it again (demux.c, initiate_refresh_seek) — the buffer lost on entering
     /// and leaving PiP (26 Oct report).
-    /// OpenGL: freeing the GL render context takes the track down anyway
-    /// (vo_libmpv.c: mpv_render_context_free → kill_video_async), and only one
-    /// render context can exist, so that path still re-selects the track.
+    /// OpenGL (1.20.0, SampleBufferRenderer): nothing to switch.
     private func switchToSoftware() {
         guard mode == .main, let c = client else { return }
+        if renderer == .gl {
+            // Nothing to switch: the frames already go into PiP's layer. Only
+            // GPU work, if it was stopped for the background a moment before.
+            if let vid = c.string("vid"), vid != "no" { vidSaved = vid }
+            glRenderer?.setRenderingAllowed(true, why: "PiP up")
+            return
+        }
         outputOffForAway = false            // PiP takes over the output from here
         awayToken += 1
         defer { traceAV("renderer → PiP") }
         if let vid = c.string("vid"), vid != "no" { vidSaved = vid }
         stopPiPFeed()
         snapshotQueue.sync {}
-        switch renderer {
-        case .gl:
-            glView?.detach()
-        case .metal:
-            settleBeforeMetalThreadEnds()   // the output swap below ends mpv's Metal thread
-        }
+        settleBeforeMetalThreadEnds()   // the output swap below ends mpv's Metal thread
         do {
             sw.setVideoSize(width: Int(videoSize.width), height: Int(videoSize.height))
             try sw.attach(to: c)
@@ -1550,13 +1589,8 @@ final class PlayerModel: ObservableObject {
             mode = .none
             showToast("PiP renderer failed")
         }
-        if renderer == .metal {
-            swapOutput(c, to: "libmpv", label: "PiP: video output → CPU")
-            if c.string("vid") == "no" { c.set("vid", vidSaved ?? "auto") }
-        } else {
-            c.set("vid", "no")
-            c.set("vid", vidSaved ?? "auto")
-        }
+        swapOutput(c, to: "libmpv", label: "PiP: video output → CPU")
+        if c.string("vid") == "no" { c.set("vid", vidSaved ?? "auto") }
     }
 
     /// PiP ended: back to the main renderer. Metal: the same output swap the
@@ -1585,12 +1619,7 @@ final class PlayerModel: ObservableObject {
             reattachMetalView()
             c.set("vo", "gpu-next")
         case .gl:
-            do { try glView?.attach(to: c) } catch {
-                mode = .none
-                errorMessage = "Video output failed: \(error.localizedDescription)"
-                return
-            }
-            glView?.setRenderingAllowed(true)
+            glRenderer?.setRenderingAllowed(true, why: "back on screen")
         }
         mode = .main
         pendingMain = false
@@ -1805,7 +1834,7 @@ final class PlayerModel: ObservableObject {
     /// goes into the layer first; the switch to PiP's renderer waits for it
     /// (switchToSoftware: snapshotQueue.sync).
     private func aboutToLeave() {
-        guard isPiPPossible, defaults.bool(forKey: SettingsKey.pipAuto), !isPiPActive else { return }
+        guard renderer == .metal, isPiPPossible, defaults.bool(forKey: SettingsKey.pipAuto), !isPiPActive else { return }
         PiPTrace.event("app about to leave: the PiP layer gets the current frame (its last one came \(pip.lastFrameAge.map { "\(Int($0 * 1000)) ms ago" } ?? "never"))")
         takeSnapshot(leaving: true)
     }
@@ -1843,7 +1872,7 @@ final class PlayerModel: ObservableObject {
             outputOffForBackground(c)
             return
         }
-        glView?.setRenderingAllowed(false)
+        glRenderer?.setRenderingAllowed(false, why: "app in the background without PiP")
         if keepPlaying {
             if paused {
                 parkedPaused = true
@@ -1993,7 +2022,7 @@ final class PlayerModel: ObservableObject {
         }
         if pendingMain { switchToMain(); setPiPLayerOnTop(false); return }
         guard mode == .main else { return }
-        if renderer == .gl { glView?.setRenderingAllowed(true) }
+        if renderer == .gl { glRenderer?.setRenderingAllowed(true, why: "app active") }
         if outputOffForAway, let c = client {
             outputBackAfterAway(c)
         } else if videoOffForBackground, let c = client {
@@ -2221,10 +2250,10 @@ extension PlayerModel: MPVClientDelegate {
     private func applyVideoSize() {
         let size = CGSize(width: pendingW, height: pendingH)
         if size != videoSize { videoSize = size }
-        if pendingW > 0, pendingH > 0 {
-            glView?.setVideoAspect(Double(pendingW) / Double(pendingH))
+        if pendingW > 0, pendingH > 0, renderer == .metal {
             sw.setVideoSize(width: pendingW, height: pendingH)
         }
+        if pendingW > 0, pendingH > 0 { glRenderer?.setVideoSize(pendingW, pendingH) }
     }
 
     private func handleEOF() {
@@ -2267,7 +2296,17 @@ extension PlayerModel: PiPManagerDelegate {
     nonisolated func pipWillStop() {
         onMain { [weak self] in
             PiPTrace.event("PiP will stop")
-            self?.setPiPLayerOnTop(true)
+            guard let self else { return }
+            if self.renderer == .gl {
+                // Full-size frames again as the window grows back (Outplayer:
+                // at willStop). A size change PiP reports while it closes is
+                // ignored (pipWindowSized), so none lands after this.
+                self.pipStopping = true
+                self.pipSizeWork?.cancel()
+                self.glRenderer?.setPiPSize(nil)
+            } else {
+                self.setPiPLayerOnTop(true)
+            }
         }
     }
 
@@ -2276,6 +2315,7 @@ extension PlayerModel: PiPManagerDelegate {
             guard let self else { return }
             PiPTrace.event("PiP did stop")
             self.isPiPActive = false
+            self.pipStopping = false
             self.returnFromPiP = false
             let state = UIApplication.shared.applicationState
             dlog("player", "pip stopped (app \(state == .active ? "active" : state == .inactive ? "inactive" : "background"), restoring=\(self.pipRestoring))")
@@ -2285,12 +2325,13 @@ extension PlayerModel: PiPManagerDelegate {
             // because the "became active" event that un-parks had already fired.
             if state == .background && !self.pipRestoring {
                 if self.mode == .sw { self.sw.detach() }
+                self.glRenderer?.setRenderingAllowed(false, why: "PiP closed with the app in the background")
                 self.mode = .none
                 self.pendingMain = true
                 self.client?.set("vid", "no")
                 self.setPaused(true)
                 self.scheduleParkedCheck()
-            } else {
+            } else if self.renderer == .metal {
                 self.waitForMetalFrame()
                 self.switchToMain()
             }
@@ -2303,6 +2344,7 @@ extension PlayerModel: PiPManagerDelegate {
         onMain { [weak self] in
             guard let self else { return }
             self.isPiPActive = false
+            self.pipStopping = false
             self.showToast("PiP failed: \(message)")
             self.setPiPLayerOnTop(false)
             if self.mode == .sw { self.switchToMain() }

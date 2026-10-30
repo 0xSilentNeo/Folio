@@ -76,7 +76,7 @@ enum SettingsKey {
     static let activeShaders = "activeShaders"
     static let scriptCommands = "scriptCommands"
     static let flipVideo = "flipVideo"
-    static let renderer = "renderer"            // "metal" | "gl"
+    static let renderer = "renderer"            // "metal" (default) | "gl"
     static let hdrOutput = "hdrOutput"
     static let surroundAudio = "surroundAudio"
     static let anime4kMode = "anime4kMode"
