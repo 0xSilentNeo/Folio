@@ -245,6 +245,11 @@ final class LibraryIndexStore: ObservableObject {
     private var loading: [UUID: Task<Void, Never>] = [:]
     private var refreshes: [UUID: Task<Void, Never>] = [:]
 
+    typealias Summary = IndexSummaries.Summary
+    private var summaries: IndexSummaries { IndexSummaries.shared }
+    /// Refresh progress reaches the screen at most 4 times a second.
+    private var lastProgress: [UUID: Date] = [:]
+
     /// The WebDAV browser script's listing cache lasts 10 minutes (cache_ttl).
     static let freshFor: TimeInterval = 600
 
@@ -299,7 +304,9 @@ final class LibraryIndexStore: ObservableObject {
             let indexer = LibraryIndexer(list: { try await client.list($0) })
             let (fresh, report) = await indexer.refresh(old, rootURL: rootURL, full: full) { done, total in
                 Task { @MainActor in
-                    guard var s = self.states[id], s.refreshing else { return }
+                    guard var s = self.states[id], s.refreshing,
+                          Date().timeIntervalSince(self.lastProgress[id] ?? .distantPast) > 0.25 || done >= total else { return }
+                    self.lastProgress[id] = Date()
                     s.done = done; s.total = max(total, done); self.states[id] = s
                 }
             }
@@ -331,6 +338,7 @@ final class LibraryIndexStore: ObservableObject {
         refreshes[id]?.cancel()
         refreshes[id] = nil
         states[id] = nil
+        summaries.set(nil, for: id)
         try? FileManager.default.removeItem(at: Self.file(id))
         dlog("index", "index cleared for server \(id.uuidString.prefix(8))")
     }
@@ -342,6 +350,14 @@ final class LibraryIndexStore: ObservableObject {
             Searchable(file: f, haystack: (f.name + " " + TitleParser.clean(f.name)).lowercased())
         }
         states[id] = s
+        let recent = index.folders.values
+            .filter { ReleaseName.folder($0.name) != nil }
+            .sorted { ($0.added ?? $0.modified ?? .distantPast) > ($1.added ?? $1.modified ?? .distantPast) }
+            .prefix(4).map(\.name)
+        let summary = Summary(files: s.searchable.count, bytes: s.searchable.reduce(0) { $0 + ($1.file.size ?? 0) },
+                              refreshed: index.refreshed, unauthorized: index.lastCheck?.unauthorized == true,
+                              offline: index.lastCheck.map { !$0.ok && !$0.unauthorized } ?? false, recent: Array(recent))
+        summaries.set(summary, for: id)
     }
 
     // MARK: Disk
@@ -376,5 +392,42 @@ final class LibraryIndexStore: ObservableObject {
         } catch {
             dlog("index", "saving the index failed: \(error.localizedDescription)")
         }
+    }
+}
+
+/// A few numbers about each server's index, kept in UserDefaults so Home can
+/// show its Real-Debrid entry on its very first frame, before the index
+/// itself is read from disk (no pop-in, nothing added to launch). Its own
+/// object, so Home redraws when these change, not at each step of a refresh.
+@MainActor
+final class IndexSummaries: ObservableObject {
+    static let shared = IndexSummaries()
+
+    struct Summary: Codable, Equatable {
+        var files: Int
+        var bytes: Int64
+        /// The last refresh that worked (nil: never).
+        var refreshed: Date?
+        var unauthorized: Bool
+        /// The last check couldn't reach the server.
+        var offline: Bool
+        /// The newest release folders' names (Home's collage).
+        var recent: [String]
+    }
+
+    @Published private(set) var all: [UUID: Summary] = [:]
+    private static let key = "libraryIndexSummaries"
+
+    private init() {
+        if let d = UserDefaults.standard.data(forKey: Self.key), let s = try? JSONDecoder().decode([String: Summary].self, from: d) {
+            all = Dictionary(uniqueKeysWithValues: s.compactMap { k, v in UUID(uuidString: k).map { ($0, v) } })
+        }
+    }
+
+    func set(_ summary: Summary?, for id: UUID) {
+        guard all[id] != summary else { return }
+        all[id] = summary
+        let s = Dictionary(uniqueKeysWithValues: all.map { ($0.key.uuidString, $0.value) })
+        UserDefaults.standard.set(try? JSONEncoder().encode(s), forKey: Self.key)
     }
 }

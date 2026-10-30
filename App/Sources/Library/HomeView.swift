@@ -4,6 +4,8 @@ import UniformTypeIdentifiers
 struct HomeView: View {
     @ObservedObject private var history = HistoryStore.shared
     @ObservedObject private var local = LocalMediaStore.shared
+    @ObservedObject private var servers = ServerStore.shared
+    @ObservedObject private var indexSummaries = IndexSummaries.shared
     @State private var showOpenURL = false
     @State private var addServer = false
     @State private var showAddFiles = false
@@ -22,17 +24,18 @@ struct HomeView: View {
                     Group {
                         header(margin).padding(.top, 6)
                         if !history.continueWatching.isEmpty { continueWatching(width: geo.size.width, wide: wide, margin: margin).padding(.top, 30) }
-                        if !local.files.isEmpty { libraryHeader(margin).padding(.top, 30) }
+                        if hasLibrary { libraryHeader(margin).padding(.top, 30) }
                         else { howToAdd(margin).padding(.top, history.continueWatching.isEmpty ? 70 : 40) }
                     }
                     .homeRow()
-                    if !local.files.isEmpty { libraryRows(width: geo.size.width, margin: margin) }
+                    if hasLibrary { libraryRows(width: geo.size.width, margin: margin) }
                     Color.clear.frame(height: 28).homeRow()
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .scrollIndicators(.hidden)
                 .environment(\.defaultMinListRowHeight, 0)
+                .animation(.smooth(duration: 0.35), value: realDebridSummary != nil)
             }
             .background(HomeBackdrop().ignoresSafeArea())
             .background(TouchTracker.Host().frame(width: 0, height: 0).accessibilityHidden(true))
@@ -43,6 +46,8 @@ struct HomeView: View {
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
             .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
+            // The Real-Debrid entry's library, checked again in the background.
+            .task { if let rd = realDebrid { LibraryIndexStore.shared.refreshIfNeeded(rd) } }
             .onChange(of: libraryView) { old, new in
                 layoutGeneration += 1
                 LibTrace.zoom.log("home layout \(old) → \(new) (zoom ids now \(layoutGeneration)|…)")
@@ -289,6 +294,23 @@ struct HomeView: View {
 
     // MARK: Library
 
+    /// The Real-Debrid account, when one is added with a user name.
+    private var realDebrid: WebDAVServer? { servers.servers.first(where: RealDebrid.isRealDebrid) }
+
+    /// Home's Real-Debrid entry (RealDebridEntry.swift): shown when the last
+    /// check of the library worked; kept while offline; gone on a refused login.
+    private var realDebridSummary: LibraryIndexStore.Summary? {
+        guard let rd = realDebrid, let s = indexSummaries.all[rd.id], s.refreshed != nil, !s.unauthorized else { return nil }
+        return s
+    }
+
+    private var hasLibrary: Bool { !local.files.isEmpty || realDebridSummary != nil }
+
+    private func realDebridLink<L: View>(@ViewBuilder label: () -> L) -> some View {
+        Button { if !TouchTracker.wasSwipe("home: Real-Debrid"), let rd = realDebrid { open(.webdav(rd.id.uuidString)) } } label: { label() }
+            .buttonStyle(PressStyle(scale: 0.97))
+    }
+
     @AppStorage("libraryView") private var libraryView = LibraryViewMode.grid.rawValue
     @AppStorage("librarySort") private var librarySort: LibrarySort = .name
     @AppStorage("librarySortAsc") private var librarySortAsc = true
@@ -343,6 +365,13 @@ struct HomeView: View {
         } else {
             let posters = tileArtwork == "poster"
             let style = ListTransition.current
+            if let rd = realDebridSummary {
+                realDebridLink { RealDebridRow(summary: rd, detail: mode == .details) }
+                    .padding(.horizontal, margin)
+                    .padding(.vertical, mode == .details ? 6 : 2)
+                    .homeRow()
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+            }
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
@@ -371,6 +400,10 @@ struct HomeView: View {
         let cols = posters ? max(3, Int((width - margin * 2 + 14) / 124)) : max(2, Int((width - margin * 2 + 14) / 184))
         let groups = self.groups
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
+            if let rd = realDebridSummary {
+                realDebridLink { RealDebridTile(summary: rd, poster: posters) }
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+            }
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {

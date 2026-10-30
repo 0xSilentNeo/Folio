@@ -214,6 +214,7 @@ enum LibraryRoute: Hashable {
     case group(String)        // LibraryGroup.id
     case file(String)         // file path
     case folder(String)       // folder path
+    case webdav(String)       // a WebDAV server's id: its library (Home's Real-Debrid entry)
     case settings
 
     /// The id the page zooms out of on Home, before the layout generation
@@ -222,7 +223,7 @@ enum LibraryRoute: Hashable {
         switch self {
         case .group(let id): return id
         case .folder(let path): return "d|" + path
-        case .settings, .file: return nil
+        case .settings, .file, .webdav: return nil
         }
     }
 
@@ -240,6 +241,12 @@ enum LibraryRoute: Hashable {
         case .folder(let path):
             let u = URL(fileURLWithPath: path)
             LocalFolderView(url: u, title: u.lastPathComponent)
+        case .webdav(let id):
+            if let s = UUID(uuidString: id).flatMap({ ServerStore.shared.server(id: $0) }), let url = WebDAVClient(server: s).url(forPath: s.rootPath) {
+                WebDAVBrowserView(server: s, url: url, title: s.name)
+            } else {
+                ContentUnavailableView("This server isn't added any more", systemImage: "externaldrive.badge.xmark")
+            }
         case .settings:
             SettingsView()
         }

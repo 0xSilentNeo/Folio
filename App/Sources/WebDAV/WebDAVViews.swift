@@ -192,6 +192,7 @@ struct WebDAVBrowserView: View {
     @State private var attributeLines: [URL: [String]] = [:]
     @State private var loading = true
     @State private var error: String?
+    @State private var offline = false
     @State private var filter = ""
     @State private var sort: LibrarySort = .name
     @State private var ascending = true
@@ -206,7 +207,7 @@ struct WebDAVBrowserView: View {
         List {
             if let error {
                 Section {
-                    Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
+                    Label(error, systemImage: offline ? "wifi.slash" : "exclamationmark.triangle").foregroundStyle(.orange)
                     Button("Retry") { Task { await load() } }
                 }
             }
@@ -331,7 +332,10 @@ struct WebDAVBrowserView: View {
             rekey()
             error = nil
         } catch {
-            self.error = error.localizedDescription
+            // Offline: said plainly (Home's Real-Debrid entry stays while offline and opens here).
+            let codes: [URLError.Code] = [.notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed]
+            offline = (error as? URLError).map { codes.contains($0.code) } ?? false
+            self.error = offline ? "You're offline, or \(server.name) can't be reached right now." : error.localizedDescription
         }
     }
 
