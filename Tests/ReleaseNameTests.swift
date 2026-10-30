@@ -162,3 +162,25 @@ final class ReleaseNameTests: XCTestCase {
         XCTAssertNotEqual(shown[0], shown[1])
     }
 }
+
+/// Metadata text arrives with HTML character references (IMDb plots,
+/// some addons): decoded once where it enters the app.
+final class HTMLTextTests: XCTestCase {
+    func testReferencesFromTheScreenshots() {
+        XCTAssertEqual("In the Cotswolds, O&#39;Hara points out".decodingHTMLEntities, "In the Cotswolds, O'Hara points out")
+        XCTAssertEqual("Tattersall gets Alice&#39;s tootsies".decodingHTMLEntities, "Tattersall gets Alice's tootsies")
+    }
+
+    func testNumericNamedAndUnknown() {
+        XCTAssertEqual("Tom &amp; Jerry &#x27;s &quot;x&quot; &eacute;t&eacute; &rsquo;".decodingHTMLEntities, "Tom & Jerry 's \"x\" été ’")
+        XCTAssertEqual("A &bogus; one & a lone ampersand".decodingHTMLEntities, "A &bogus; one & a lone ampersand")
+        XCTAssertEqual("No references".decodingHTMLEntities, "No references")
+    }
+
+    func testAddonModelsDecodeOnRead() throws {
+        let json = #"{"id":"tt1:1:1","title":"O&#39;Hara","overview":"Alice&#39;s day"}"#
+        let v = try JSONDecoder().decode(MetaVideo.self, from: Data(json.utf8))
+        XCTAssertEqual(v.title, "O'Hara")
+        XCTAssertEqual(v.overview, "Alice's day")
+    }
+}

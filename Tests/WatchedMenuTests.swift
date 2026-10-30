@@ -30,3 +30,42 @@ final class WatchedMenuTests: XCTestCase {
         XCTAssertTrue(WatchedMenuItems.offers(watched: count(), total: keys.count) == (true, false), "all unwatched right after the change")
     }
 }
+
+/// Continue Watching's line under the title: one format for every source,
+/// never a raw release name (30 Oct screenshots: "[AnoZu]…",
+/// "S1 · E24 — …", "Hell is other people.").
+@MainActor
+final class ContinueLineTests: XCTestCase {
+    func testAddonEpisode() {
+        var m = MediaItem(url: "", title: "Daemons of the Shadow Realm", subtitle: "S1 · E24 — Higashi Village and Nishino Village", source: .url)
+        m.addonRef = "series|tt37532356|tt37532356:1:24"
+        XCTAssertEqual(HeroCard.line(m, meta: nil), "S1 · E24 · Higashi Village and Nishino Village")
+    }
+
+    /// Kitsu and MAL video ids have no season ("kitsu:<id>:<episode>"):
+    /// never read the anime's id as a season.
+    func testAnimeAddonIDs() {
+        var m = MediaItem(url: "", title: "Frieren", subtitle: "Episode title", source: .url)
+        m.addonRef = "series|kitsu:46474|kitsu:46474:5"
+        XCTAssertEqual(HeroCard.line(m, meta: nil), "E5 · Episode title")
+        m.subtitle = "kitsu:46474:5"
+        XCTAssertEqual(HeroCard.line(m, meta: nil), "E5", "the label is only the video id: no title")
+        m.subtitle = "S1 · E5 — Episode title"
+        XCTAssertEqual(HeroCard.line(m, meta: nil), "S1 · E5 · Episode title", "the addon's label wins")
+        m.addonRef = "series|mal:52991|mal:52991:12"
+        m.subtitle = nil
+        XCTAssertEqual(HeroCard.line(m, meta: nil), "E12")
+    }
+
+    func testWebDAVFileNeverShowsTheFolderName() {
+        let m = MediaItem(url: "https://dav.example.invalid/torrents/x/Daemons.of.the.Shadow.Realm.2026.S01E24.1080p.CR.WEB.DL.DUAL.DDP2.0.H.264-AnoZu.mkv",
+                          title: "Daemons of the Shadow Realm · S01E24", subtitle: "[AnoZu] Daemons of the Shadow Realm S01 1080p CR WEB.DL", source: .url)
+        XCTAssertEqual(HeroCard.line(m, meta: nil), "S1 · E24")
+    }
+
+    func testLibraryFileGetsItsNumbers() {
+        let m = MediaItem(url: "/x/Documents/Media/Classroom.of.the.Elite.S01E05.Hell.is.other.people.1080p.FLAC.2.0.AVC.REMUX-FraMeSToR.mkv",
+                          title: "Classroom of the Elite", source: .local)
+        XCTAssertEqual(HeroCard.line(m, meta: nil), "S1 · E5 · Hell is other people")
+    }
+}
