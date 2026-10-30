@@ -41,6 +41,9 @@ struct DAVItem: Identifiable, Hashable {
     /// `creationdate` (RFC 4918 §15.1), when the server sends it.
     var created: Date? = nil
     let contentType: String?
+    /// `getetag` (RFC 4918 §15.6), when the server sends it: changes when the
+    /// item changes, so the library index can skip folders that didn't.
+    var etag: String? = nil
 
     /// When the item came to the server, for "Recently Added": its creation
     /// date when the server sends one, else its last change (`getlastmodified`,
@@ -64,16 +67,31 @@ enum WebDAVError: LocalizedError {
     }
 }
 
-final class WebDAVClient {
+/// Immutable (a server and its shared session): safe to use from any task.
+final class WebDAVClient: @unchecked Sendable {
     let server: WebDAVServer
     private let session: URLSession
 
     init(server: WebDAVServer) {
         self.server = server
+        session = Self.session(for: server.id)
+    }
+
+    /// One session per server, shared by every client: its connections (and
+    /// their TLS handshakes) are reused from one folder to the next. Until
+    /// 1.19.0 each client made its own session, and the browser made a new
+    /// client each time it listed a folder.
+    private static let sessionsLock = NSLock()
+    nonisolated(unsafe) private static var sessions: [UUID: URLSession] = [:]
+    private static func session(for id: UUID) -> URLSession {
+        sessionsLock.lock(); defer { sessionsLock.unlock() }
+        if let s = sessions[id] { return s }
         let c = URLSessionConfiguration.default
         c.timeoutIntervalForRequest = 30
         c.httpMaximumConnectionsPerHost = 4
-        session = URLSession(configuration: c)
+        let s = URLSession(configuration: c)
+        sessions[id] = s
+        return s
     }
 
     func url(forPath path: String) -> URL? {
@@ -97,13 +115,14 @@ final class WebDAVClient {
         if let auth = server.authHeader { req.setValue(auth, forHTTPHeaderField: "Authorization") }
         req.httpBody = """
         <?xml version="1.0" encoding="utf-8"?>
-        <d:propfind xmlns:d="DAV:"><d:prop><d:displayname/><d:resourcetype/><d:getcontentlength/><d:getlastmodified/><d:creationdate/><d:getcontenttype/></d:prop></d:propfind>
+        <d:propfind xmlns:d="DAV:"><d:prop><d:displayname/><d:resourcetype/><d:getcontentlength/><d:getlastmodified/><d:creationdate/><d:getcontenttype/><d:getetag/></d:prop></d:propfind>
         """.data(using: .utf8)
         let (data, resp) = try await session.data(for: req)
         guard let http = resp as? HTTPURLResponse else { throw WebDAVError.parse }
         if http.statusCode == 401 || http.statusCode == 403 { throw WebDAVError.unauthorized }
         guard (200..<300).contains(http.statusCode) || http.statusCode == 207 else { throw WebDAVError.http(http.statusCode) }
 
+        Self.logRawAnswer(host: url.host ?? "?", data)
         let parser = PropfindParser(base: url)
         guard parser.parse(data) else { throw WebDAVError.parse }
         let selfPath = url.standardized.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
@@ -128,7 +147,26 @@ final class WebDAVClient {
         func count(_ list: [DAVItem], _ has: (DAVItem) -> Bool) -> String { "\(list.filter(has).count)/\(list.count)" }
         dlog("webdav", "properties from \(host): getlastmodified folders \(count(dirs) { $0.modified != nil }), files \(count(files) { $0.modified != nil }); "
              + "creationdate folders \(count(dirs) { $0.created != nil }), files \(count(files) { $0.created != nil }); "
+             + "getetag folders \(count(dirs) { $0.etag != nil }), files \(count(files) { $0.etag != nil }); "
              + "getcontentlength folders \(count(dirs) { $0.size != nil }), files \(count(files) { $0.size != nil })")
+    }
+
+    /// Trace (library and images): the first three entries of the first
+    /// folder listing per server per launch, as the server sent them, so a
+    /// report shows which properties it sends for folders and how.
+    nonisolated(unsafe) private static var rawLogged: Set<String> = []
+    static func logRawAnswer(host: String, _ data: Data) {
+        guard LibTrace.on else { return }
+        loggedLock.lock()
+        let first = rawLogged.insert(host).inserted
+        loggedLock.unlock()
+        guard first, let text = String(data: data, encoding: .utf8) else { return }
+        // Up to the end of the fourth entry: the folder itself and three of its items.
+        let ns = text as NSString
+        let ends = (try? NSRegularExpression(pattern: "</[A-Za-z]*:?response>", options: .caseInsensitive))?
+            .matches(in: text, range: NSRange(location: 0, length: ns.length)) ?? []
+        let responses = ends.count >= 4 ? ns.substring(to: NSMaxRange(ends[3].range)) : text
+        LibTrace.index.log("raw PROPFIND answer from \(host) (first entries):\n\(responses.prefix(4000))")
     }
 
     /// Playable URL + headers for mpv.
@@ -158,6 +196,7 @@ final class PropfindParser: NSObject, XMLParserDelegate {
     private var modified = ""
     private var created = ""
     private var contentType = ""
+    private var etag = ""
     private var text = ""
     private var inResponse = false
     private var statusOK = true
@@ -195,7 +234,7 @@ final class PropfindParser: NSObject, XMLParserDelegate {
         switch elementName.lowercased() {
         case "response":
             inResponse = true
-            href = ""; displayName = ""; isCollection = false; length = ""; modified = ""; created = ""; contentType = ""
+            href = ""; displayName = ""; isCollection = false; length = ""; modified = ""; created = ""; contentType = ""; etag = ""
         case "collection":
             if inResponse { isCollection = true }
         case "propstat":
@@ -215,6 +254,7 @@ final class PropfindParser: NSObject, XMLParserDelegate {
         case "getlastmodified": if propstatOK { modified = value }
         case "creationdate": if propstatOK { created = value }
         case "getcontenttype": if propstatOK { contentType = value }
+        case "getetag": if propstatOK { etag = value }
         case "status": if value.contains(" 404") { propstatOK = false }
         case "response":
             inResponse = false
@@ -226,6 +266,7 @@ final class PropfindParser: NSObject, XMLParserDelegate {
                                size: Int64(length), modified: Self.dateFormatter.date(from: modified),
                                contentType: contentType.isEmpty ? nil : contentType)
             item.created = Self.isoDate(created)
+            item.etag = etag.isEmpty ? nil : etag
             items.append(item)
         default: break
         }

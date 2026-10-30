@@ -51,6 +51,8 @@ enum LibTrace {
     static let discover = Channel("discover")
     /// Player panels: which row they open on.
     static let panel = Channel("panel")
+    /// The WebDAV library index: each folder listed or kept, and why.
+    static let index = Channel("index")
 
     /// Milliseconds since `start`, for "… after N ms".
     static func ms(since start: CFTimeInterval) -> Int { Int((CACurrentMediaTime() - start) * 1000) }

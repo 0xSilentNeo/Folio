@@ -17,12 +17,19 @@ final class ServerStore: ObservableObject {
     }
 
     func upsert(_ s: WebDAVServer) {
-        if let i = servers.firstIndex(where: { $0.id == s.id }) { servers[i] = s } else { servers.append(s) }
+        if let i = servers.firstIndex(where: { $0.id == s.id }) {
+            // Another address, user name or start folder: another library.
+            if LibraryIndex.account(servers[i]) != LibraryIndex.account(s) { LibraryIndexStore.shared.clear(s.id) }
+            servers[i] = s
+        } else {
+            servers.append(s)
+        }
     }
 
     func remove(_ s: WebDAVServer) {
         s.password = nil
         servers.removeAll { $0.id == s.id }
+        LibraryIndexStore.shared.clear(s.id)
     }
 
     func server(id: UUID) -> WebDAVServer? { servers.first { $0.id == id } }
@@ -475,38 +482,37 @@ struct DAVRow: View {
     }
 }
 
-/// Crawls the library in the background and searches every file name.
+/// Searches every media file of the server's library, from the saved index
+/// (LibraryIndexStore): results at once, a quiet refresh in the background
+/// when the index is older than 10 minutes, pull to refresh for a full one.
+/// Opened from a folder, it searches that folder and everything under it.
 struct LibrarySearchView: View {
     let server: WebDAVServer
     let root: URL
 
+    @ObservedObject private var store = LibraryIndexStore.shared
     @State private var query = ""
-    @State private var index: [DAVItem] = []
-    @State private var folders = 0
-    @State private var crawling = false
-    @State private var crawlTask: Task<Void, Never>?
     @AppStorage(SettingsKey.cleanTitles) private var cleanTitles = true
+
+    private var state: LibraryIndexStore.State { store.state(server.id) }
+    private var scope: String { LibraryIndex.key(root) }
 
     var body: some View {
         List {
-            Section {
-                HStack {
-                    if crawling { ProgressView().padding(.trailing, 6) }
-                    Text(crawling ? "Indexing… \(folders) folders, \(index.count) files" : "Indexed \(folders) folders, \(index.count) files")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-            }
-            ForEach(results) { item in
+            Section { status }
+            ForEach(results, id: \.url) { file in
+                let item = DAVItem(url: file.url, name: file.name, isDirectory: false, size: file.size, modified: file.added, contentType: nil)
                 Button {
                     ContinueQueue.play(WebDAVClient(server: server).mediaItem(for: item, cleanTitles: cleanTitles))   // with its folder as the queue
                 } label: {
                     VStack(alignment: .leading, spacing: 2) {
-                        DAVRow(item: item, clean: cleanTitles, entry: HistoryStore.shared.entry(forURL: item.url.absoluteString))
-                        Text(item.url.deletingLastPathComponent().path.removingPercentEncoding ?? "")
+                        DAVRow(item: item, clean: cleanTitles, entry: HistoryStore.shared.entry(forURL: file.url.absoluteString))
+                        Text(file.url.deletingLastPathComponent().path.removingPercentEncoding ?? "")
                             .font(.caption2).foregroundStyle(.tertiary).lineLimit(1)
                     }
                 }
                 .buttonStyle(.plain)
+                .contextMenu { Text(file.name) }
             }
         }
         .listStyle(.plain)
@@ -514,48 +520,44 @@ struct LibrarySearchView: View {
         .brandListBackground()
         .navigationTitle("Search Library")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { if crawlTask == nil { startCrawl() } }
-        .onDisappear { crawlTask?.cancel() }
+        .refreshable { await store.refresh(server, full: true) }
+        .onAppear { store.refreshIfNeeded(server) }
     }
 
-    private var results: [DAVItem] {
-        guard query.count >= 2 else { return [] }
-        let words = query.lowercased().split(separator: " ")
-        return index.filter { item in
-            let hay = (item.name + " " + TitleParser.clean(item.name)).lowercased()
-            return words.allSatisfy { hay.contains($0) }
-        }
-        .prefix(300).map { $0 }
-    }
-
-    private func startCrawl() {
-        crawling = true
-        let client = WebDAVClient(server: server)
-        crawlTask = Task {
-            var queue: [(URL, Int)] = [(root, 0)]
-            var seen = Set<String>()
-            while !queue.isEmpty, !Task.isCancelled, folders < 3000 {
-                let batch = Array(queue.prefix(4))
-                queue.removeFirst(batch.count)
-                let results = await withTaskGroup(of: [DAVItem].self) { group -> [[DAVItem]] in
-                    for (u, _) in batch { group.addTask { (try? await client.list(u)) ?? [] } }
-                    var out: [[DAVItem]] = []
-                    for await r in group { out.append(r) }
-                    return out
-                }
-                let depth = (batch.first?.1 ?? 0) + 1
-                for list in results {
-                    folders += 1
-                    for item in list {
-                        if item.isDirectory {
-                            if depth < 6, seen.insert(item.url.absoluteString).inserted { queue.append((item.url, depth)) }
-                        } else if item.isMedia {
-                            index.append(item)
-                        }
+    /// One quiet line: what's indexed and when, or how far a refresh is.
+    private var status: some View {
+        HStack(spacing: 8) {
+            if state.refreshing { ProgressView().controlSize(.mini) }
+            Group {
+                if state.refreshing {
+                    Text(state.full ? "Indexing… \(state.done) of \(state.total) folders" : "Checking for changes… \(state.done) of \(state.total) folders")
+                } else if let index = state.index {
+                    let files = state.searchable.count
+                    if let r = index.refreshed {
+                        Text("\(index.folders.count) folders, \(files) files · updated \(r.formatted(.relative(presentation: .named)))")
+                    } else {
+                        Text("\(index.folders.count) folders, \(files) files · not updated yet")
                     }
+                } else {
+                    Text("Not indexed yet")
                 }
             }
-            crawling = false
+            .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+            if let c = state.index?.lastCheck, !c.ok, !state.refreshing {
+                Spacer(minLength: 0)
+                Label(c.unauthorized ? "Login refused" : "Offline", systemImage: c.unauthorized ? "lock" : "wifi.slash")
+                    .font(.caption).foregroundStyle(.orange)
+            }
         }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var results: [LibraryIndex.File] {
+        guard query.count >= 2 else { return [] }
+        let words = query.lowercased().split(separator: " ")
+        let scope = self.scope
+        return state.searchable.lazy
+            .filter { s in s.file.url.absoluteString.hasPrefix(scope) && words.allSatisfy { s.haystack.contains($0) } }
+            .prefix(300).map(\.file)
     }
 }
