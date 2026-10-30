@@ -5,11 +5,21 @@ import UIKit
 import QuartzCore
 
 /// View hosting the AVSampleBufferDisplayLayer that Picture in Picture shows.
-/// It sits *behind* the opaque GL view, so it is in the window with a real
-/// size (PiP requires that) without ever being visible.
+/// OpenGL renderer (1.20.0): it is the player's picture too. Metal: it sits
+/// behind the Metal view, in the window with a real size (PiP requires
+/// that), and comes to the front only while PiP hands back.
 final class SampleBufferView: UIView {
     override class var layerClass: AnyClass { AVSampleBufferDisplayLayer.self }
     var displayLayer: AVSampleBufferDisplayLayer { layer as! AVSampleBufferDisplayLayer }
+
+    /// The view's size in pixels, after each layout (the OpenGL renderer draws at it).
+    var onLayout: ((CGSize) -> Void)?
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let scale = window?.screen.scale ?? UIScreen.main.scale
+        onLayout?(CGSize(width: bounds.width * scale, height: bounds.height * scale))
+    }
 }
 
 protocol PiPManagerDelegate: AnyObject {
@@ -39,6 +49,8 @@ final class PiPManager: NSObject {
     private var lastDims: (Int32, Int32) = (0, 0)
 
     var onPossibleChanged: ((Bool) -> Void)?
+    /// The size PiP draws its window at, in pixels, as it changes.
+    var onRenderSize: ((CMVideoDimensions) -> Void)?
     private(set) var isActive = false
 
     /// When the last frame went into the PiP layer, and how many so far
@@ -50,6 +62,19 @@ final class PiPManager: NSObject {
         return lastEnqueue > 0 ? CACurrentMediaTime() - lastEnqueue : nil
     }
     var framesEnqueued: Int { enqueueLock.lock(); defer { enqueueLock.unlock() }; return enqueued }
+
+    /// PiP trace: when each of the last frames went into the layer.
+    private var frameTimes: [CFTimeInterval] = []
+
+    /// PiP trace: the frames that went into the layer since `start`, and the
+    /// longest gaps between them (what the picture did through a transition).
+    func frameGaps(since start: CFTimeInterval) -> String {
+        enqueueLock.lock(); let times = frameTimes.filter { $0 >= start }; enqueueLock.unlock()
+        guard times.count > 1 else { return "; layer frames: \(times.count)" }
+        let gaps = zip(times.dropFirst(), times).map { ($0 - $1, $1 - start) }.sorted { $0.0 > $1.0 }.prefix(3)
+        return "; layer frames: \(times.count) in \(Int((times.last! - times.first!) * 1000)) ms, longest gaps "
+            + gaps.map { "\(Int($0.0 * 1000)) ms from +\(Int($0.1 * 1000))" }.joined(separator: ", ")
+    }
 
     override init() {
         let v = SampleBufferView()
@@ -139,6 +164,10 @@ final class PiPManager: NSObject {
         displayLayer.enqueue(sb)
         lastEnqueue = CACurrentMediaTime()
         enqueued += 1
+        if UserDefaults.standard.bool(forKey: SettingsKey.pipTrace) {   // PiPTrace.on, off the main thread
+            frameTimes.append(lastEnqueue)
+            if frameTimes.count > 600 { frameTimes.removeFirst(frameTimes.count - 600) }
+        }
     }
 
     /// Frame sink for the renderers (built outside any actor context).
@@ -186,7 +215,9 @@ extension PiPManager: AVPictureInPictureSampleBufferPlaybackDelegate {
         delegate?.pipIsPaused ?? true
     }
 
-    func pictureInPictureController(_ c: AVPictureInPictureController, didTransitionToRenderSize newRenderSize: CMVideoDimensions) {}
+    func pictureInPictureController(_ c: AVPictureInPictureController, didTransitionToRenderSize newRenderSize: CMVideoDimensions) {
+        onRenderSize?(newRenderSize)
+    }
 
     func pictureInPictureController(_ c: AVPictureInPictureController, skipByInterval skipInterval: CMTime, completion completionHandler: @escaping () -> Void) {
         delegate?.pipSkip(by: skipInterval.seconds)

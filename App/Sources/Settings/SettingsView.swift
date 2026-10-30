@@ -326,7 +326,7 @@ struct Explained<Content: View>: View {
 /// Everything mpv in one place (1.17.0): the video engine, scripts, shaders,
 /// config files and logs.
 struct MPVSettings: View {
-    @AppStorage(SettingsKey.renderer) private var renderer = "metal"
+    @AppStorage(SettingsKey.renderer) private var renderer = "gl"
     @AppStorage(SettingsKey.hdrOutput) private var hdr = true
     @AppStorage(SettingsKey.hwdec) private var hwdec = "auto"
     @AppStorage(SettingsKey.cacheMB) private var cacheMB = 150
@@ -336,8 +336,8 @@ struct MPVSettings: View {
 
     private var rendererText: String {
         renderer == "gl"
-            ? "OpenGL ES: the fallback for a device where video doesn't show correctly with Metal. No HDR, no compute shaders."
-            : "Metal (recommended): the fastest, with HDR, Dolby Vision and every shader."
+            ? "OpenGL (recommended): every frame goes straight into the picture Picture in Picture shows, as in Outplayer, so PiP starts and ends without a pause. HDR and Dolby Vision show at normal brightness (SDR); no compute shaders."
+            : "Metal: mpv's newer renderer, with HDR, Dolby Vision and every shader. Picture in Picture switches renderer as it starts and ends, with a short pause in picture and sound."
     }
     private var pictureText: String {
         switch picture {
@@ -359,8 +359,8 @@ struct MPVSettings: View {
             Section {
                 Explained(rendererText) {
                     Picker("Renderer", selection: $renderer) {
+                        Text("OpenGL").tag("gl")
                         Text("Metal").tag("metal")
-                        Text("OpenGL ES").tag("gl")
                     }
                 }
                 Explained(pictureText) {
@@ -628,7 +628,7 @@ struct ShadersView: View {
                     Button("Turn all off", role: .destructive) { active = []; MPVFiles.activeShaderNames = [] }
                 }
             } header: { Text("Installed — tap to toggle, order = apply order") } footer: {
-                Text("Active shaders apply to every video and can be switched per video from the player's Shaders menu. Compute shaders need the Metal renderer (default).")
+                Text("Active shaders apply to every video and can be switched per video from the player's Shaders menu. Compute shaders need the Metal renderer.")
             }
 
             Section("Download") {

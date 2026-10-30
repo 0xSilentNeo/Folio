@@ -76,7 +76,7 @@ enum SettingsKey {
     static let activeShaders = "activeShaders"
     static let scriptCommands = "scriptCommands"
     static let flipVideo = "flipVideo"
-    static let renderer = "renderer"            // "metal" | "gl"
+    static let renderer = "renderer"            // "gl" (default since 1.20.0) | "metal"
     static let hdrOutput = "hdrOutput"
     static let surroundAudio = "surroundAudio"
     static let anime4kMode = "anime4kMode"
@@ -152,7 +152,7 @@ enum SettingsKey {
             skipInjectChapters: true,
             skipOATLength: 90,
             flipVideo: false,
-            renderer: "metal",
+            renderer: "gl",
             hdrOutput: true,
             surroundAudio: true,
             anime4kMode: "off",
