@@ -1,5 +1,6 @@
 import Foundation
 import os
+import SwiftUI
 import UIKit
 
 /// Library, artwork and Discover trace: Settings → Help & Diagnostics →
