@@ -332,7 +332,7 @@ struct WebDAVBrowserView: View {
             rekey()
             error = nil
         } catch {
-            // Offline: said plainly (Home's Real-Debrid entry stays while offline and opens here).
+            // Offline: said plainly (Home's Real-Debrid section stays while offline and opens here).
             let codes: [URLError.Code] = [.notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed]
             offline = (error as? URLError).map { codes.contains($0.code) } ?? false
             self.error = offline ? "You're offline, or \(server.name) can't be reached right now." : error.localizedDescription
