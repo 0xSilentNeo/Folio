@@ -1,0 +1,98 @@
+16:40:42.117 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.06 GB
+16:40:44.334 [hang] main thread unresponsive for 2.2 s
+16:40:45.660 [scene] F2A22177 connects (portrait)
+16:40:45.660 [pip] +622399 ms scene connects (portrait)
+16:40:45.661 [scene] F2A22177 will enter foreground (portrait)
+16:40:45.661 [pip] +622400 ms scene will enter foreground (portrait)
+16:40:45.663 [pip] +622402 ms coming forward: SplashBoard has 4 file(s): Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/63689A6C-497F-4AEF-AAA4-DA12EFD57E12@3x.ktx 1206×2622 portrait 9569 B 16:40:38 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/7AC5640B-DB1D-476F-B0CB-A84C83596767@3x.ktx 2622×1206 landscape 10174 B 16:40:39 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/80E10E8C-CC94-4541-AD1E-07D4E9CD22A2@3x.ktx 2622×1206 landscape 9757 B 16:40:39 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/ED31B7EA-5EE2-4615-8A84-7B9AE28D59BD@3x.ktx 1206×2622 portrait 9926 B 16:40:38
+16:40:46.192 [app] first screen 6900 ms after process start
+16:40:46.192 [app] root view appeared (1 in this run, splash off)
+16:40:47.018 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/382F6679-6C0C-4C89-B602-20C46F9E318E/GlassPlayer.app/lab/lab.mp4
+16:40:47.456 [scene] F2A22177 active (portrait)
+16:40:47.457 [pip] +624196 ms scene active (portrait)
+16:40:47.465 [app] active
+16:40:48.311 [player] start renderer=gl
+16:40:48.317 [player] mpv options applied renderer=gl hwdec=auto anime4k=off/fast picture=efficient
+16:40:48.425 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/382F6679-6C0C-4C89-B602-20C46F9E318E/GlassPlayer.app/lab/lab.mp4 source=local opts=[] -> 0
+16:40:48.455 [app] Home: appeared 258 ms after the root view, next frame at 1351 ms, main thread free at 2263 ms
+16:40:48.499 [player] decoder: software
+16:40:48.499 [pip] +625239 ms no frame: the player view has no size yet
+16:40:48.499 [pip] +625239 ms OpenGL renderer listening for the view's size: 402×874 pt after 1 layout(s)
+16:40:48.500 [pip] +625239 ms view size now 1206×2622 px
+16:40:48.500 [pip] +625239 ms no frame: no texture for the pixel buffer (-6683)
+16:40:48.510 [player] file loaded in 92 ms
+16:40:48.898 [pip] +625637 ms view size now 2622×1206 px
+16:40:49.549 [pip] +626288 ms mpv: video reconfig
+16:40:49.549 [player] decoder: software
+16:40:49.558 [pip] +626298 ms mpv: video reconfig
+16:40:49.751 [pip] +626490 ms mpv: playback restart (first frame after the seek)
+16:40:49.938 [perf] panel tracks prebuilt in 101 ms
+16:40:51.145 [perf] panel settings prebuilt in 369 ms
+16:40:51.210 [perf] panel nowPlaying prebuilt in 56 ms
+16:40:52.861 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+16:40:52.861 [imdb] webkit load /title/tt35511966
+16:41:03.845 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+16:41:15.029 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.01 GB
+16:41:17.063 [hang] main thread unresponsive for 2.0 s
+16:41:18.304 [scene] F2A22177 connects (portrait)
+16:41:18.304 [pip] +655043 ms scene connects (portrait)
+16:41:18.305 [scene] F2A22177 will enter foreground (portrait)
+16:41:18.305 [pip] +655044 ms scene will enter foreground (portrait)
+16:41:18.307 [pip] +655046 ms coming forward: SplashBoard has 4 file(s): Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/63689A6C-497F-4AEF-AAA4-DA12EFD57E12@3x.ktx 1206×2622 portrait 9569 B 16:40:38 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/7AC5640B-DB1D-476F-B0CB-A84C83596767@3x.ktx 2622×1206 landscape 10174 B 16:40:39 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/80E10E8C-CC94-4541-AD1E-07D4E9CD22A2@3x.ktx 2622×1206 landscape 9757 B 16:40:39 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/ED31B7EA-5EE2-4615-8A84-7B9AE28D59BD@3x.ktx 1206×2622 portrait 9926 B 16:40:38
+16:41:18.522 [app] first screen 5372 ms after process start
+16:41:18.522 [app] root view appeared (1 in this run, splash off)
+16:41:18.934 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/382F6679-6C0C-4C89-B602-20C46F9E318E/GlassPlayer.app/lab/lab.mp4
+16:41:19.431 [scene] F2A22177 active (portrait)
+16:41:19.431 [pip] +656170 ms scene active (portrait)
+16:41:19.448 [app] active
+16:41:19.814 [player] start renderer=gl
+16:41:19.816 [player] mpv options applied renderer=gl hwdec=auto anime4k=off/fast picture=efficient
+16:41:19.860 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/382F6679-6C0C-4C89-B602-20C46F9E318E/GlassPlayer.app/lab/lab.mp4 source=local opts=[] -> 0
+16:41:19.868 [app] Home: appeared 127 ms after the root view, next frame at 1158 ms, main thread free at 1346 ms
+16:41:19.882 [player] decoder: software
+16:41:19.882 [pip] +656622 ms OpenGL renderer listening for the view's size: 402×874 pt after 1 layout(s)
+16:41:19.882 [pip] +656622 ms no frame: the player view has no size yet
+16:41:19.883 [pip] +656622 ms view size now 1206×2622 px
+16:41:19.883 [pip] +656622 ms no frame: no texture for the pixel buffer (-6683)
+16:41:20.289 [player] file loaded in 436 ms
+16:41:20.294 [pip] +657034 ms view size now 2622×1206 px
+16:41:20.296 [pip] +657035 ms mpv: video reconfig
+16:41:20.296 [player] decoder: software
+16:41:20.304 [pip] +657043 ms mpv: video reconfig
+16:41:20.444 [pip] +657183 ms mpv: playback restart (first frame after the seek)
+16:41:20.916 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+16:41:21.086 [imdb] webkit load /title/tt35511966
+16:41:21.426 [perf] panel tracks prebuilt in 63 ms
+16:41:21.946 [perf] panel settings prebuilt in 283 ms
+16:41:22.128 [perf] panel nowPlaying prebuilt in 43 ms
+16:41:28.154 [scene] F2A22177 will deactivate (landscape)
+16:41:28.155 [pip] +664894 ms scene will deactivate (landscape)
+16:41:28.157 [app] resign active
+16:41:28.159 [energy] cpu 11% (other 10%, main 1%) mem 68 MB (0 MB left) thermal=nominal playing=yes renderer=gl picture=efficient decoder=no · going to background
+16:41:29.071 [scene] F2A22177 in background (landscape)
+16:41:29.071 [pip] +665811 ms scene in background (landscape)
+16:41:29.072 [pip] +665811 ms entered background: scene background, orientation landscape, 3 window(s)
+16:41:29.079 [pip] +665818 ms   window 0 UIWindow level 0.0 hidden true alpha 1.00 key false 874×402 root UIHostingController<ModifiedContent<LazyView<ModifiedContent<RootView, _EnvironmentKeyWritingModifier<Optional<AnyShapeStyle>>>>, RootModifier>>
+16:41:29.079 [pip] +665818 ms   window 1 PlayerWindowMarker level 1.0 hidden false alpha 1.00 key true 874×402 root PlayerViewController
+16:41:29.079 [pip] +665819 ms   window 2 UITextEffectsWindow level 10.0 hidden false alpha 1.00 key false 874×402 root UITrackingElementWindowController
+16:41:29.375 [pip] +666114 ms   drew PlayerWindowMarker + UITextEffectsWindow into pip-ui-1793378489-entered-background.jpg
+16:41:29.385 [player] away: the player stays landscape until the phone is turned
+16:41:29.386 [pip] +666125 ms app in background (PiP not up)
+16:41:29.535 [player] background playback: video off (15 s away)
+16:41:29.892 [pip] +666631 ms rendering off (app in the background without PiP)
+16:41:29.893 [pip] +666632 ms mpv: video reconfig
+16:41:29.893 [pip] +666632 ms mpv: video reconfig
+16:41:29.894 [player] decoder: software
+16:41:31.399 [pip] +668138 ms 2 s in the background: SplashBoard has 6 file(s): Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/63689A6C-497F-4AEF-AAA4-DA12EFD57E12@3x.ktx 1206×2622 portrait 9569 B 16:40:38 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/7AC5640B-DB1D-476F-B0CB-A84C83596767@3x.ktx 2622×1206 landscape 10174 B 16:40:39 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/80E10E8C-CC94-4541-AD1E-07D4E9CD22A2@3x.ktx 2622×1206 landscape 9757 B 16:40:39 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/ED31B7EA-5EE2-4615-8A84-7B9AE28D59BD@3x.ktx 1206×2622 portrait 9926 B 16:40:38 | Snapshots/sceneID:dev.silentneo.glassplayer-default/5AC6ED3A-53E8-4C38-AED0-8BE77398D16F@3x.ktx 2622×1206 landscape 16644 B 16:41:29 | Snapshots/sceneID:dev.silentneo.glassplayer-default/EBF88E1D-2C6B-40FD-8432-8486CFB29733@3x.ktx 2622×1206 landscape 16644 B 16:41:29
+16:41:33.044 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+16:41:33.395 [scene] F2A22177 will enter foreground (landscape)
+16:41:33.395 [pip] +670135 ms scene will enter foreground (landscape)
+16:41:33.505 [pip] +670136 ms coming forward: SplashBoard has 6 file(s): Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/63689A6C-497F-4AEF-AAA4-DA12EFD57E12@3x.ktx 1206×2622 portrait 9569 B 16:40:38 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/7AC5640B-DB1D-476F-B0CB-A84C83596767@3x.ktx 2622×1206 landscape 10174 B 16:40:39 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/80E10E8C-CC94-4541-AD1E-07D4E9CD22A2@3x.ktx 2622×1206 landscape 9757 B 16:40:39 | Snapshots/dev.silentneo.glassplayer - {DEFAULT GROUP}/ED31B7EA-5EE2-4615-8A84-7B9AE28D59BD@3x.ktx 1206×2622 portrait 9926 B 16:40:38 | Snapshots/sceneID:dev.silentneo.glassplayer-default/5AC6ED3A-53E8-4C38-AED0-8BE77398D16F@3x.ktx 2622×1206 landscape 16644 B 16:41:29 | Snapshots/sceneID:dev.silentneo.glassplayer-default/EBF88E1D-2C6B-40FD-8432-8486CFB29733@3x.ktx 2622×1206 landscape 16644 B 16:41:29
+16:41:33.762 [scene] F2A22177 active (landscape)
+16:41:33.762 [pip] +670501 ms scene active (landscape)
+16:41:33.768 [app] active
+16:41:33.777 [pip] +670515 ms app active (PiP not up, renderer mode main)
+16:41:33.970 [pip] +670709 ms rendering on (app active)
+16:41:34.436 [pip] +671175 ms mpv: video reconfig
+16:41:34.436 [player] decoder: software
+16:41:34.436 [pip] +671175 ms mpv: video reconfig
