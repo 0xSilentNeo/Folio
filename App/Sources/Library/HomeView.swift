@@ -991,6 +991,14 @@ struct FolderRow: View {
     }
 }
 
+/// A folder's four pictures in a 2 × 2 grid, sized from the space it's
+/// given. A `Grid` with fixed cells, not a `LazyVGrid`: Apple's LazyVGrid
+/// page says to use a lazy grid for "a large, vertically scrollable
+/// collection" and "only … if profiling your app shows that a Grid view
+/// performs poorly". Until 1.20.0 it was a LazyVGrid, and after a trip to
+/// landscape and back it kept its landscape width: the grid runs found the
+/// folder tile 122 pt wide in a 111 pt column (the landscape collage, 117
+/// pt, plus its 5 pt inset), drawing past the tile.
 struct FolderCollage: View {
     let files: [URL]
     let poster: Bool
@@ -1001,21 +1009,27 @@ struct FolderCollage: View {
     var probe: String? = nil
 
     var body: some View {
-        let cols = [GridItem(.flexible(), spacing: gap), GridItem(.flexible(), spacing: gap)]
         GeometryReader { geo in
-            let h = (geo.size.height - gap) / 2
-            LazyVGrid(columns: cols, spacing: gap) {
-                ForEach(0..<4, id: \.self) { i in
-                    Group {
-                        if i < files.count { FolderThumb(file: files[i], poster: poster) } else { Theme.fill }
+            let w = max(0, (geo.size.width - gap) / 2), h = max(0, (geo.size.height - gap) / 2)
+            Grid(horizontalSpacing: gap, verticalSpacing: gap) {
+                ForEach(0..<2, id: \.self) { row in
+                    GridRow {
+                        ForEach(0..<2, id: \.self) { column in
+                            picture(row * 2 + column)
+                                .frame(width: w, height: h)
+                                .clipShape(RoundedRectangle(cornerRadius: cell, style: .continuous))
+                        }
                     }
-                    .frame(height: max(0, h))
-                    .clipShape(RoundedRectangle(cornerRadius: cell, style: .continuous))
                 }
             }
             .modifier(GridProbe(name: "collage grid of \(probe ?? "?")"))
         }
         .modifier(GridProbe(name: "collage space of \(probe ?? "?")"))
+    }
+
+    @ViewBuilder
+    private func picture(_ i: Int) -> some View {
+        if i < files.count { FolderThumb(file: files[i], poster: poster) } else { Theme.fill }
     }
 }
 
