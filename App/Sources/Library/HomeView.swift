@@ -268,6 +268,7 @@ struct HomeView: View {
                             .frame(width: cardW)
                             .onTapGesture { ContinueQueue.play(e.item) }
                             .contextMenu { historyMenu(e) }
+                            .accessibilityIdentifier("continue:" + e.item.title)
                     }
                 }
                 .scrollTargetLayout()

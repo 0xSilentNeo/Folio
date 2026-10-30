@@ -97,6 +97,47 @@ final class HomeGridUITests: XCTestCase {
         }
     }
 
+    /// The 31 Oct screenshot came after the player was closed in landscape
+    /// (that day's log: closed at 01:39:34, screenshot at 01:44): Home was
+    /// turned while the player covered it. Played from Continue Watching
+    /// (Home right under the player) and from a title page (Home under that).
+    func test4PlayerClosedInLandscape() {
+        let app = launch(4, ["-labNoEngine"])
+        check(app, "before playing, portrait")
+        let card = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'continue:'")).firstMatch
+        guard card.waitForExistence(timeout: 5) else { XCTFail("no Continue Watching card"); return }
+        card.tap()
+        playTurnAndClose(app, "from Continue Watching")
+        check(app, "from Continue Watching, closed in landscape")
+        turn(app, .portrait)
+        check(app, "from Continue Watching, back to portrait")
+
+        let tile = app.descendants(matching: .any)["home:Lab Show"].firstMatch
+        guard tile.waitForExistence(timeout: 5) else { XCTFail("no Lab Show tile"); return }
+        tile.tap()
+        let play = app.descendants(matching: .any)["heroPlay"].firstMatch
+        guard play.waitForExistence(timeout: 8) else { XCTFail("no Play on the title page"); return }
+        play.tap()
+        playTurnAndClose(app, "from a title page")
+        let back = app.buttons["Back"].firstMatch
+        if back.waitForExistence(timeout: 5) { back.tap() } else { app.navigationBars.buttons.firstMatch.tap() }
+        sleep(2)
+        check(app, "from a title page, closed in landscape, back on Home")
+        turn(app, .portrait)
+        check(app, "from a title page, back to portrait")
+    }
+
+    private func playTurnAndClose(_ app: XCUIApplication, _ label: String) {
+        let close = app.buttons["Close player"].firstMatch
+        guard close.waitForExistence(timeout: 15) else { XCTFail("\(label): the player didn't open"); return }
+        mark("\(label): playing")
+        turn(app, .landscapeLeft)
+        if !close.isHittable { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap(); sleep(1) }
+        close.tap()
+        sleep(3)
+        mark("\(label): player closed in landscape")
+    }
+
     /// The largest text size, four entries, turned.
     func test3LargestText() {
         let app = launch(4, ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
