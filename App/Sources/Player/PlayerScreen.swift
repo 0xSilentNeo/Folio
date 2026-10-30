@@ -718,16 +718,26 @@ struct GlassIcon: View {
 /// The lock button, and the "Locked" pill it becomes: the pills' glass,
 /// height (UITune.pillHeight), capsule shape, caption type and padding.
 ///
-/// iOS 26: one Liquid Glass shape morphs between the two — both in one
-/// GlassEffectContainer with the same glassEffectID, toggled in an
-/// animation (Apple: "Applying Liquid Glass to custom views", glassEffectID
-/// and GlassEffectContainer). Reduce Motion: a fade. Earlier systems: a fade
-/// between the glass button and the pill.
+/// One button on one glass capsule that changes size: 44 pt wide and high
+/// (a capsule that size is the round button), then the pill's width and
+/// height, with the words fading in. It grows to the left, so PiP beside it
+/// stays put; a tap mid-way turns it round from where it is (SwiftUI's
+/// animations carry on from the current value: "Animations are
+/// interruptible", WWDC23 "Explore SwiftUI animation").
+///
+/// 1.20.0's first take put the round button and the pill in one
+/// GlassEffectContainer with the same glassEffectID (Apple, "Applying
+/// Liquid Glass to custom views"). The lab recording (run 41080455561, 30
+/// Oct) has no morph: the round button at +0.127 s, the whole pill at
+/// +0.153 s, while the close button beside it faded over 0.4 s in the same
+/// animation.
+///
+/// Reduce Motion, and systems before iOS 26: the round button and the pill
+/// fade into each other.
 struct LockControl: View {
     let locked: Bool
     let onLock: () -> Void
     let onUnlock: () -> Void
-    @Namespace private var ns
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject private var tune = UITune.shared
 
@@ -735,26 +745,22 @@ struct LockControl: View {
         Group {
             #if compiler(>=6.2)
             if #available(iOS 26.0, *) {
-                GlassEffectContainer {
-                    if locked {
-                        Button(action: onUnlock) {
-                            pill.glassEffect(.regular.interactive(), in: .capsule).contentShape(Capsule()).morph("lock", ns, reduceMotion)
-                        }
-                        .buttonStyle(PressStyle())
-                        .modifier(PillAccessibility())
-                    } else {
-                        Button(action: onLock) {
-                            round.glassEffect(.regular.interactive(), in: .circle).contentShape(Circle()).morph("lock", ns, reduceMotion)
-                        }
-                        .buttonStyle(PressStyle())
-                        .accessibilityLabel("Lock controls")
+                if reduceMotion {
+                    fade
+                } else {
+                    Button(action: locked ? onUnlock : onLock) {
+                        face(pill: locked)
+                            .glassEffect(.regular.interactive(), in: .capsule)
+                            .contentShape(Capsule())
                     }
+                    .buttonStyle(PressStyle())
+                    .modifier(LockAccessibility(locked: locked))
                 }
             } else {
-                fallback
+                fade
             }
             #else
-            fallback
+            fade
             #endif
         }
         // The pill is a little taller than the round buttons: the row keeps
@@ -763,66 +769,50 @@ struct LockControl: View {
         .foregroundStyle(.white)
     }
 
-    private var round: some View {
-        Image(systemName: "lock").font(.system(size: 16, weight: .semibold))
-            .frame(width: 44, height: 44)
-            .contentShape(Circle())
-    }
-
-    private var pill: some View {
+    /// The round button (pill: false) or the pill.
+    private func face(pill: Bool) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: "lock.fill").font(.system(size: 15, weight: .semibold))
-            Text("Locked").font(.caption.weight(.semibold))
-            Text("Tap to unlock").font(.caption).foregroundStyle(.white.opacity(0.65))
+            Image(systemName: pill ? "lock.fill" : "lock")
+                .font(.system(size: pill ? 15 : 16, weight: .semibold))
+                .contentTransition(.symbolEffect(.replace))
+            if pill {
+                Text("Locked").font(.caption.weight(.semibold))
+                Text("Tap to unlock").font(.caption).foregroundStyle(.white.opacity(0.65))
+            }
         }
         .lineLimit(1)
         .minimumScaleFactor(0.7)
-        .padding(.horizontal, 16)
-        .frame(height: tune.pillHeight)
-        .contentShape(Capsule())
+        .padding(.horizontal, pill ? 16 : 0)
+        .frame(minWidth: 44)
+        .frame(height: pill ? tune.pillHeight : 44)
     }
 
     @ViewBuilder
-    private var fallback: some View {
+    private var fade: some View {
         if locked {
-            Button(action: onUnlock) { pill.glass(cornerRadius: tune.pillHeight / 2, interactive: true) }
+            Button(action: onUnlock) { face(pill: true).glass(cornerRadius: tune.pillHeight / 2, interactive: true) }
                 .buttonStyle(PressStyle())
-                .modifier(PillAccessibility())
+                .modifier(LockAccessibility(locked: true))
                 .transition(.opacity)
         } else {
-            Button(action: onLock) { round.glassCircle() }
+            Button(action: onLock) { face(pill: false).glassCircle() }
                 .buttonStyle(PressStyle())
-                .accessibilityLabel("Lock controls")
+                .modifier(LockAccessibility(locked: false))
                 .transition(.opacity)
         }
     }
 
-    private struct PillAccessibility: ViewModifier {
+    private struct LockAccessibility: ViewModifier {
+        let locked: Bool
         func body(content: Content) -> some View {
             content.accessibilityElement(children: .ignore)
-                .accessibilityLabel("Controls locked")
-                .accessibilityHint("Double-tap to unlock")
+                .accessibilityLabel(locked ? "Controls locked" : "Lock controls")
+                .accessibilityHint(locked ? "Double-tap to unlock" : "")
                 .accessibilityAddTraits(.isButton)
-                .accessibilityIdentifier("lockPill")
+                .accessibilityIdentifier(locked ? "lockPill" : "lockButton")
         }
     }
 }
-
-#if compiler(>=6.2)
-@available(iOS 26.0, *)
-private extension View {
-    /// The documented morph: the same glassEffectID in one container. With
-    /// Reduce Motion the glass doesn't morph; the view fades.
-    @ViewBuilder
-    func morph(_ id: String, _ ns: Namespace.ID, _ reduceMotion: Bool) -> some View {
-        if reduceMotion {
-            glassEffectTransition(.identity).transition(.opacity)
-        } else {
-            glassEffectID(id, in: ns)
-        }
-    }
-}
-#endif
 
 /// A row of buttons on one glass capsule.
 struct GlassGroup<Content: View>: View {
