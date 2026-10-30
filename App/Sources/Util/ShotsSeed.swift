@@ -79,7 +79,8 @@ enum ShotsSeed {
         if homeEntries >= 3 {
             let mixed = dir.appendingPathComponent("Weekend picks", isDirectory: true)
             try? FileManager.default.createDirectory(at: mixed, withIntermediateDirectories: true)
-            for n in ["Lab Show S01E04.mp4", "Bright Movie 2024.mp4", "Another Film 2019.mp4"] {
+            // Two episodes of one show: its collage shows it once (1.20.0).
+            for n in ["Lab Show S01E04.mp4", "Lab Show S01E05.mp4", "Bright Movie 2024.mp4", "Another Film 2019.mp4"] {
                 let d = mixed.appendingPathComponent(n)
                 if !FileManager.default.fileExists(atPath: d.path) { try? FileManager.default.copyItem(at: src, to: d) }
             }

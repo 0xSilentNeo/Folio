@@ -54,6 +54,18 @@ struct LibraryGroup: Identifiable, Hashable {
     var folder: URL? = nil
 
     var count: Int { files.count }
+
+    /// A folder tile's four pictures: one per title in the folder (three
+    /// episodes of a show are one picture), in the folder's order. Until
+    /// 1.20.0 the first four files, so a show's episodes filled the collage.
+    var collageFiles: [URL] {
+        var seen = Set<String>(), out: [URL] = []
+        for f in files where seen.insert(LibraryOrganizer.titleKey(f)).inserted {
+            out.append(f)
+            if out.count == 4 { break }
+        }
+        return out
+    }
     var seasons: [Int] { Array(Set(files.compactMap { TitleParser.parse($0.lastPathComponent).season })).sorted() }
 
     /// The file a tap should land on (see `nextUp(in:)`).
@@ -124,7 +136,8 @@ enum LibraryOrganizer {
         return a.lastPathComponent.localizedStandardCompare(b.lastPathComponent) == .orderedAscending
     }
 
-    private static func key(_ f: URL) -> String {
+    /// Which title a file is: a show's episodes are one title, each film its own.
+    static func titleKey(_ f: URL) -> String {
         let p = TitleParser.parse(f.lastPathComponent)
         return p.episode != nil ? "s|" + p.title.lowercased() : "f|" + f.path
     }
@@ -152,7 +165,7 @@ enum LibraryOrganizer {
         }
         var folderGroups: [LibraryGroup] = []
         var inFolders = Set<URL>()
-        for (dir, list) in byFolder where list.count > 1 && Set(list.map(key)).count > 1 {
+        for (dir, list) in byFolder where list.count > 1 && Set(list.map(titleKey)).count > 1 {
             let sortedList = list.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
             let infos = sortedList.map(info)
             let u = URL(fileURLWithPath: dir, isDirectory: true)
