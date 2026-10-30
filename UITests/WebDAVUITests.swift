@@ -53,7 +53,7 @@ final class WebDAVUITests: XCTestCase {
     /// The sort menu's items: label (title and the order under the checked one), selected.
     private func sortItems(_ app: XCUIApplication, _ when: String) {
         let items = app.collectionViews.descendants(matching: .any).allElementsBoundByIndex
-            .filter { $0.exists && ["Recently Added", "Name", "Size"].contains(where: { t in $0.label.hasPrefix(t) }) }
+            .filter { e in e.exists && ["Recently Added", "Name", "Size"].contains(where: { e.label.hasPrefix($0) }) }
         print("DAVSORT \(when): " + items.map { "\($0.label)\($0.isSelected || "\($0.value ?? "")" == "1" ? " [checked]" : "") enabled=\($0.isEnabled)" }.joined(separator: " | "))
     }
 
