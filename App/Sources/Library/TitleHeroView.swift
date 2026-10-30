@@ -393,6 +393,8 @@ struct ViewModeMenu: View {
                 .font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
         }
         .foregroundStyle(.primary)
+        .accessibilityLabel("View, \((LibraryViewMode(rawValue: mode) ?? .grid).title)")
+        .accessibilityIdentifier("viewModeMenu")
     }
 }
 
@@ -562,7 +564,11 @@ struct LibraryRow: View {
         .padding(detail ? 8 : 6)
         .background(rowBackground)
         .zoomSource(zoomWholeRow ? zoom : nil, cornerRadius: detail ? 16 : 12)
-        .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide) }
+        .onAppear {
+            LibTrace.image.log("row \(fixedTitle ?? file.lastPathComponent) (\(mode.rawValue)) appeared (loader #\(thumb.serial), picture \(thumb.image == nil ? "none yet" : "shown"))")
+            thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide)
+        }
+        .onDisappear { LibTrace.image.log("row \(fixedTitle ?? file.lastPathComponent) (\(mode.rawValue)) disappeared (loader #\(thumb.serial))") }
     }
 
     /// Top right: the eye when watched, the play mark on the highlighted row.

@@ -234,6 +234,7 @@ extension View {
     func zoomSource(_ z: ZoomSource?, cornerRadius: CGFloat = 12) -> some View {
         if #available(iOS 18.0, *), let z {
             matchedTransitionSource(id: z.id, in: z.ns) { $0.clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)) }
+                .background { if LibTrace.on { ZoomProbe(id: z.id) } }
         } else {
             self
         }

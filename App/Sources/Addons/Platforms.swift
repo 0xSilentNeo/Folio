@@ -53,9 +53,18 @@ enum PlatformCatalogs {
     static func catalog(type: String, id: String) async -> [MetaItem] {
         let key = "\(region)|\(type)|\(id)"
         lock.lock()
-        if let hit = cache[key], Date().timeIntervalSince(hit.0) < 1800 { lock.unlock(); return hit.1 }
+        if let hit = cache[key], Date().timeIntervalSince(hit.0) < 1800 {
+            lock.unlock()
+            LibTrace.discover.log("catalog \(key): \(hit.1.count) title(s) from memory (\(Int(Date().timeIntervalSince(hit.0))) s old)")
+            return hit.1
+        }
         lock.unlock()
-        let metas = (try? await AddonAPI.get(AddonAPI.CatalogResponse.self, "\(base)/catalog/\(type)/\(id).json").metas) ?? []
+        let t0 = Date()
+        var failure: Error?
+        let metas: [MetaItem]
+        do { metas = try await AddonAPI.get(AddonAPI.CatalogResponse.self, "\(base)/catalog/\(type)/\(id).json").metas ?? [] }
+        catch { failure = error; metas = [] }
+        LibTrace.discover.log("catalog \(key): \(failure.map { "failed (\(($0 as NSError).domain) \(($0 as NSError).code))" } ?? "\(metas.count) title(s)") after \(Int(Date().timeIntervalSince(t0) * 1000)) ms, task \(Task.isCancelled ? "cancelled" : "running"); kept for 30 min")
         lock.lock(); cache[key] = (Date(), metas); lock.unlock()
         return metas
     }
@@ -366,9 +375,12 @@ struct PlatformDetailView: View {
         .ignoresSafeArea(edges: .top)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: type) {
+            let asked = type
+            LibTrace.discover.log("\(platform.name) \(asked): load starts (grid shows \(metas.count))")
             loading = true
             metas = await PlatformCatalogs.catalog(type: type, id: platform.id)
             loading = false
+            LibTrace.discover.log("\(platform.name) \(asked): grid set to \(metas.count) title(s)\(Task.isCancelled ? " by a load that was cancelled (tab now \(type))" : "")")
         }
     }
 }

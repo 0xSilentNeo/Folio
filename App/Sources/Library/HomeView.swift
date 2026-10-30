@@ -43,6 +43,7 @@ struct HomeView: View {
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
             .background(PathWatch(path: $path, pending: pending) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
+            .onChange(of: libraryView) { old, new in LibTrace.zoom.log("home layout \(old) → \(new)") }
         }
     }
 
@@ -108,6 +109,10 @@ struct HomeView: View {
                 .accessibilityHidden(true)
                 .onChange(of: path) { old, new in
                     dlog("nav", "home path \(old.count) → \(new.count): \(new)")
+                    // Trace: where each zoom source of the page is, as it opens
+                    // and for 2.5 s after it went back.
+                    if new.count > old.count, let r = new.last, let id = r.zoomID { ZoomProbe.dump(id, "opening \(r)") }
+                    if new.count < old.count, let r = old.last, let id = r.zoomID { ZoomProbe.timeline(id, "back from \(r)") }
                     if new.isEmpty, pending.route != nil { DispatchQueue.main.async { openPending() } }
                 }
         }
@@ -647,7 +652,11 @@ struct MediaTile: View {
             }
             .font(.caption2.weight(.medium)).foregroundStyle(.secondary)
         }
-        .onAppear { thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName, art: poster ? .poster : .wide) }
+        .onAppear {
+            LibTrace.image.log("tile \(title) appeared (loader #\(thumb.serial), picture \(thumb.image == nil ? "none yet" : "shown"))")
+            thumb.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName, art: poster ? .poster : .wide)
+        }
+        .onDisappear { LibTrace.image.log("tile \(title) disappeared (loader #\(thumb.serial))") }
     }
 }
 
@@ -840,6 +849,8 @@ struct FolderTile: View {
             Text(group.title).font(.subheadline.weight(.semibold)).lineLimit(1)
             Text("\(group.count) item\(group.count == 1 ? "" : "s")").font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
         }
+        .onAppear { LibTrace.image.log("folder tile \(group.title) appeared") }
+        .onDisappear { LibTrace.image.log("folder tile \(group.title) disappeared") }
     }
 }
 
