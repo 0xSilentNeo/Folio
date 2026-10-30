@@ -1,0 +1,411 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release -destination id=B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0 -derivedDataPath build "-only-testing:GlassPlayerUITests/RoundLabUITests/test2ZoomBackAfterLayoutSwitch" "-only-testing:GlassPlayerUITests/RoundLabUITests/test3PlaylistOpensOnPlayingEpisode"
+
+2026-10-30 11:08:52.519956+0000 GlassPlayerUITests-Runner[18686:271014] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-30 11:09:07.870.
+Test Suite 'GlassPlayerUITests.xctest' started at 2026-10-30 11:09:07.876.
+Test Suite 'RoundLabUITests' started at 2026-10-30 11:09:07.876.
+Test Case '-[GlassPlayerUITests.RoundLabUITests test2ZoomBackAfterLayoutSwitch]' started.
+    t =     0.07s Start Test at 2026-10-30 11:09:07.941
+    t =     0.15s Set Up
+2026-10-30 11:09:11.725 xcodebuild[17635:266340] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 11:09:11.726 xcodebuild[17635:266340] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     0.17s Open dev.silentneo.glassplayer
+    t =     0.17s     Launch dev.silentneo.glassplayer
+objc[18686]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.0Q3S1B/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x10851c398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.0Q3S1B/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x108654310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =     9.21s         Setting up automation session
+    t =    16.82s         Wait for dev.silentneo.glassplayer to idle
+    t =    21.21s Setting device orientation to Portrait
+    t =    21.25s     Device orientation changed to Portrait
+    t =    21.31s     Wait for dev.silentneo.glassplayer to idle
+    t =    21.33s Waiting 20.0s for "Library" StaticText to exist
+    t =    22.35s     Checking `Expect predicate `existsNoRetry == 1` for object "Library" StaticText`
+    t =    22.35s         Checking existence of `"Library" StaticText`
+    t =    25.70s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    26.74s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    26.74s         Checking existence of `"viewModeMenu" Button`
+    t =    26.96s Tap "viewModeMenu" Button
+    t =    26.96s     Wait for dev.silentneo.glassplayer to idle
+    t =    26.97s     Find the "viewModeMenu" Button
+    t =    27.15s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    27.25s     Synthesize event
+    t =    27.87s     Wait for dev.silentneo.glassplayer to idle
+    t =    30.68s Waiting 3.0s for "Details" Button to exist
+    t =    31.74s     Checking `Expect predicate `existsNoRetry == 1` for object "Details" Button`
+    t =    31.74s         Checking existence of `"Details" Button`
+LAB 10.54 layout → Details
+    t =    31.88s Tap "Details" Button
+    t =    31.88s     Wait for dev.silentneo.glassplayer to idle
+    t =    31.89s     Find the "Details" Button
+    t =    32.01s     Check for interrupting elements affecting "Details" Button
+    t =    32.15s     Synthesize event
+    t =    32.50s     Wait for dev.silentneo.glassplayer to idle
+    t =    36.27s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    37.30s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    37.30s         Checking existence of `"viewModeMenu" Button`
+    t =    37.86s Tap "viewModeMenu" Button
+    t =    37.86s     Wait for dev.silentneo.glassplayer to idle
+    t =    37.86s     Find the "viewModeMenu" Button
+    t =    38.20s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    38.29s     Synthesize event
+    t =    38.61s     Wait for dev.silentneo.glassplayer to idle
+    t =    40.95s Waiting 3.0s for "Thumbnails" Button to exist
+    t =    42.00s     Checking `Expect predicate `existsNoRetry == 1` for object "Thumbnails" Button`
+    t =    42.00s         Checking existence of `"Thumbnails" Button`
+LAB 20.74 layout → Thumbnails
+    t =    42.07s Tap "Thumbnails" Button
+    t =    42.07s     Wait for dev.silentneo.glassplayer to idle
+    t =    42.07s     Find the "Thumbnails" Button
+    t =    42.14s     Check for interrupting elements affecting "Thumbnails" Button
+    t =    42.29s     Synthesize event
+    t =    42.61s     Wait for dev.silentneo.glassplayer to idle
+    t =    46.23s Waiting 5.0s for Button (First Match) to exist
+    t =    47.25s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =    47.25s         Checking existence of `Button (First Match)`
+LAB 26.30 thumbnails after details: open
+    t =    47.62s Tap Button (First Match)
+    t =    47.62s     Wait for dev.silentneo.glassplayer to idle
+    t =    47.63s     Find the Button (First Match)
+    t =    47.81s     Check for interrupting elements affecting "Lab Show, 3 episodes, 83 KB" Button
+    t =    47.90s     Synthesize event
+    t =    48.20s     Wait for dev.silentneo.glassplayer to idle
+    t =    51.71s Waiting 5.0s for "Back" Button to exist
+    t =    52.74s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    52.74s         Checking existence of `"Back" Button`
+LAB 31.54 thumbnails after details: back
+    t =    52.87s Tap "Back" Button
+    t =    52.87s     Wait for dev.silentneo.glassplayer to idle
+    t =    52.88s     Find the "Back" Button
+    t =    53.01s     Check for interrupting elements affecting "chevron.left" Button
+    t =    53.12s     Synthesize event
+    t =    53.44s     Wait for dev.silentneo.glassplayer to idle
+LAB 36.95 thumbnails after details: settled
+    t =    58.28s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    59.31s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    59.31s         Checking existence of `"viewModeMenu" Button`
+    t =    59.65s Tap "viewModeMenu" Button
+    t =    59.65s     Wait for dev.silentneo.glassplayer to idle
+    t =    59.66s     Find the "viewModeMenu" Button
+    t =    59.85s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    60.00s     Synthesize event
+    t =    60.33s     Wait for dev.silentneo.glassplayer to idle
+    t =    62.66s Waiting 3.0s for "Details" Button to exist
+    t =    63.73s     Checking `Expect predicate `existsNoRetry == 1` for object "Details" Button`
+    t =    63.74s         Checking existence of `"Details" Button`
+LAB 42.49 layout → Details
+    t =    63.82s Tap "Details" Button
+    t =    63.82s     Wait for dev.silentneo.glassplayer to idle
+    t =    63.82s     Find the "Details" Button
+    t =    63.90s     Check for interrupting elements affecting "Details" Button
+    t =    63.99s     Synthesize event
+    t =    64.31s     Wait for dev.silentneo.glassplayer to idle
+    t =    67.89s Waiting 5.0s for Button (First Match) to exist
+    t =    68.93s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =    68.93s         Checking existence of `Button (First Match)`
+LAB 47.92 details: open
+    t =    69.24s Tap Button (First Match)
+    t =    69.24s     Wait for dev.silentneo.glassplayer to idle
+    t =    69.25s     Find the Button (First Match)
+    t =    69.54s     Check for interrupting elements affecting "Lab Show, 3 episodes — Students compare their test results while the points arrive late. Students compare their test results while the points arrive late. Students compare their test results while the points arrive late. Students compare their test results while the points arrive late. , 83 KB" Button
+    t =    69.65s     Synthesize event
+    t =    69.98s     Wait for dev.silentneo.glassplayer to idle
+    t =    73.96s Waiting 5.0s for "Back" Button to exist
+    t =    75.00s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    75.00s         Checking existence of `"Back" Button`
+LAB 53.94 details: back
+    t =    75.26s Tap "Back" Button
+    t =    75.26s     Wait for dev.silentneo.glassplayer to idle
+    t =    75.28s     Find the "Back" Button
+    t =    75.89s     Check for interrupting elements affecting "chevron.left" Button
+    t =    76.06s     Synthesize event
+    t =    76.41s     Wait for dev.silentneo.glassplayer to idle
+LAB 59.87 details: settled
+    t =    81.20s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =    82.23s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =    82.23s         Checking existence of `"viewModeMenu" Button`
+    t =    82.54s Tap "viewModeMenu" Button
+    t =    82.54s     Wait for dev.silentneo.glassplayer to idle
+    t =    82.54s     Find the "viewModeMenu" Button
+    t =    82.78s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =    82.86s     Synthesize event
+    t =    83.17s     Wait for dev.silentneo.glassplayer to idle
+    t =    85.46s Waiting 3.0s for "List" Button to exist
+    t =    86.50s     Checking `Expect predicate `existsNoRetry == 1` for object "List" Button`
+    t =    86.50s         Checking existence of `"List" Button`
+LAB 65.28 layout → List
+    t =    86.60s Tap "List" Button
+    t =    86.60s     Wait for dev.silentneo.glassplayer to idle
+    t =    86.61s     Find the "List" Button
+    t =    86.72s     Check for interrupting elements affecting "List" Button
+    t =    86.81s     Synthesize event
+    t =    87.12s     Wait for dev.silentneo.glassplayer to idle
+    t =    90.66s Waiting 5.0s for Button (First Match) to exist
+    t =    91.68s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =    91.68s         Checking existence of `Button (First Match)`
+LAB 70.63 list: open
+    t =    91.96s Tap Button (First Match)
+    t =    91.96s     Wait for dev.silentneo.glassplayer to idle
+    t =    91.96s     Find the Button (First Match)
+    t =    92.30s     Check for interrupting elements affecting "Lab Show, 3 episodes, 83 KB" Button
+    t =    92.41s     Synthesize event
+    t =    92.74s     Wait for dev.silentneo.glassplayer to idle
+    t =    96.69s Waiting 5.0s for "Back" Button to exist
+    t =    97.70s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =    97.70s         Checking existence of `"Back" Button`
+LAB 76.59 list: back
+    t =    97.92s Tap "Back" Button
+    t =    97.92s     Wait for dev.silentneo.glassplayer to idle
+    t =    97.97s     Find the "Back" Button
+    t =    98.18s     Check for interrupting elements affecting "chevron.left" Button
+    t =    98.40s     Synthesize event
+    t =    98.79s     Wait for dev.silentneo.glassplayer to idle
+LAB 82.29 list: settled
+    t =   103.61s Waiting 5.0s for "viewModeMenu" Button to exist
+    t =   104.63s     Checking `Expect predicate `existsNoRetry == 1` for object "viewModeMenu" Button`
+    t =   104.64s         Checking existence of `"viewModeMenu" Button`
+    t =   105.34s Tap "viewModeMenu" Button
+    t =   105.34s     Wait for dev.silentneo.glassplayer to idle
+    t =   105.36s     Find the "viewModeMenu" Button
+    t =   106.06s     Check for interrupting elements affecting "viewModeMenu" Button
+    t =   106.17s     Synthesize event
+    t =   106.49s     Wait for dev.silentneo.glassplayer to idle
+    t =   108.78s Waiting 3.0s for "Thumbnails" Button to exist
+    t =   109.83s     Checking `Expect predicate `existsNoRetry == 1` for object "Thumbnails" Button`
+    t =   109.83s         Checking existence of `"Thumbnails" Button`
+LAB 88.56 layout → Thumbnails
+    t =   109.88s Tap "Thumbnails" Button
+    t =   109.88s     Wait for dev.silentneo.glassplayer to idle
+    t =   109.89s     Find the "Thumbnails" Button
+    t =   109.98s     Check for interrupting elements affecting "Thumbnails" Button
+    t =   110.08s     Synthesize event
+    t =   110.40s     Wait for dev.silentneo.glassplayer to idle
+    t =   113.96s Waiting 5.0s for Button (First Match) to exist
+    t =   115.00s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =   115.00s         Checking existence of `Button (First Match)`
+LAB 93.88 thumbnails again: open
+    t =   115.21s Tap Button (First Match)
+    t =   115.21s     Wait for dev.silentneo.glassplayer to idle
+    t =   115.21s     Find the Button (First Match)
+    t =   115.41s     Check for interrupting elements affecting "Lab Show, 3 episodes, 83 KB" Button
+    t =   115.49s     Synthesize event
+    t =   115.85s     Wait for dev.silentneo.glassplayer to idle
+    t =   119.70s Waiting 5.0s for "Back" Button to exist
+    t =   120.73s     Checking `Expect predicate `existsNoRetry == 1` for object "Back" Button`
+    t =   120.74s         Checking existence of `"Back" Button`
+LAB 99.60 thumbnails again: back
+    t =   120.93s Tap "Back" Button
+    t =   120.93s     Wait for dev.silentneo.glassplayer to idle
+    t =   120.93s     Find the "Back" Button
+    t =   121.10s     Check for interrupting elements affecting "chevron.left" Button
+    t =   121.29s     Synthesize event
+    t =   121.66s     Wait for dev.silentneo.glassplayer to idle
+LAB 105.13 thumbnails again: settled
+    t =   126.45s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test2ZoomBackAfterLayoutSwitch]' passed (126.877 seconds).
+Test Case '-[GlassPlayerUITests.RoundLabUITests test3PlaylistOpensOnPlayingEpisode]' started.
+    t =     0.00s Start Test at 2026-10-30 11:11:14.818
+    t =     0.07s Set Up
+    t =     0.08s Open dev.silentneo.glassplayer
+    t =     0.08s     Launch dev.silentneo.glassplayer
+    t =     0.08s         Terminate dev.silentneo.glassplayer:20024
+2026-10-30 11:11:19.930 xcodebuild[17635:266340] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 11:11:19.931 xcodebuild[17635:266340] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     5.71s         Setting up automation session
+    t =    13.65s         Wait for dev.silentneo.glassplayer to idle
+<unknown>:0: warning: -[GlassPlayerUITests.RoundLabUITests test3PlaylistOpensOnPlayingEpisode] :     AVAudioSession_iOS.mm:978   This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    17.32s             Interface orientation changed to Landscape Right
+    t =    20.55s Setting device orientation to Landscape Left
+    t =    20.56s     Device orientation changed to Landscape Left
+    t =    20.60s     Wait for dev.silentneo.glassplayer to idle
+    t =    20.60s Waiting 20.0s for "Now Playing" Button to exist
+    t =    21.66s     Checking `Expect predicate `existsNoRetry == 1` for object "Now Playing" Button`
+    t =    21.66s         Checking existence of `"Now Playing" Button`
+LAB 4.29 playing E1: open Now Playing
+    t =    24.84s Tap "Now Playing" Button
+    t =    24.84s     Wait for dev.silentneo.glassplayer to idle
+    t =    24.85s     Find the "Now Playing" Button
+    t =    24.91s     Check for interrupting elements affecting "Now Playing" Button
+    t =    24.95s     Synthesize event
+    t =    25.29s     Wait for dev.silentneo.glassplayer to idle
+    t =    28.46s Checking existence of `"q0" Button`
+    t =    28.75s Find the "q0" Button
+    t =    29.05s Checking existence of `"q1" Button`
+    t =    29.30s Find the "q1" Button
+    t =    29.60s Checking existence of `"q2" Button`
+    t =    29.83s Find the "q2" Button
+    t =    30.08s Checking existence of `"q3" Button`
+    t =    30.27s Find the "q3" Button
+    t =    30.45s Checking existence of `"q4" Button`
+    t =    30.59s Find the "q4" Button
+    t =    30.78s Checking existence of `"q5" Button`
+    t =    30.93s Find the "q5" Button
+    t =    31.13s Checking existence of `"q6" Button`
+    t =    31.31s Find the "q6" Button
+    t =    31.48s Checking existence of `"q7" Button`
+    t =    31.62s Find the "q7" Button
+    t =    31.81s Checking existence of `"q8" Button`
+    t =    31.97s Find the "q8" Button
+    t =    32.24s Checking existence of `"q9" Button`
+    t =    32.41s Find the "q9" Button
+    t =    32.61s Find the "q0" Button
+    t =    32.74s Find the "q0" Button
+    t =    32.86s Find the "q0" Button
+    t =    33.01s Find the "q1" Button
+    t =    33.17s Find the "q1" Button
+    t =    33.30s Find the "q1" Button
+LAB 12.91 playing E1: rows on screen ["q0 (playing)@199", "q1@259"]
+    t =    33.46s Checking existence of `"q0" Button`
+    t =    33.59s Find the "q0" Button
+    t =    33.81s Find the "q0" Button
+    t =    34.05s Tap Target Application 'dev.silentneo.glassplayer'[0.20, 0.50]
+    t =    34.05s     Wait for dev.silentneo.glassplayer to idle
+    t =    34.06s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.10s     Check for interrupting elements affecting "Folio" Application
+    t =    34.18s     Synthesize event
+    t =    34.19s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.22s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.29s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    34.66s     Wait for dev.silentneo.glassplayer to idle
+    t =    36.93s Open dev.silentneo.glassplayer
+    t =    36.93s     Launch dev.silentneo.glassplayer
+    t =    36.93s         Terminate dev.silentneo.glassplayer:24464
+    t =    37.18s             Interface orientation changed to Portrait
+2026-10-30 11:11:52.832 xcodebuild[17635:266340] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 11:11:52.832 xcodebuild[17635:266340] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    38.58s         Interface orientation changed to Landscape Right
+    t =    39.46s         Setting up automation session
+    t =    46.53s         Wait for dev.silentneo.glassplayer to idle
+    t =    50.25s Setting device orientation to Landscape Left
+    t =    50.27s     Wait for dev.silentneo.glassplayer to idle
+    t =    50.28s Waiting 20.0s for "Now Playing" Button to exist
+    t =    51.33s     Checking `Expect predicate `existsNoRetry == 1` for object "Now Playing" Button`
+    t =    51.33s         Checking existence of `"Now Playing" Button`
+LAB 4.19 playing E6: open Now Playing
+    t =    54.44s Tap "Now Playing" Button
+    t =    54.44s     Wait for dev.silentneo.glassplayer to idle
+    t =    54.45s     Find the "Now Playing" Button
+    t =    54.58s     Check for interrupting elements affecting "Now Playing" Button
+    t =    54.77s     Synthesize event
+    t =    55.20s     Wait for dev.silentneo.glassplayer to idle
+    t =    58.32s Checking existence of `"q0" Button`
+    t =    58.56s Find the "q0" Button
+    t =    58.75s Checking existence of `"q1" Button`
+    t =    58.96s Find the "q1" Button
+    t =    59.24s Checking existence of `"q2" Button`
+    t =    59.44s Find the "q2" Button
+    t =    59.80s Checking existence of `"q3" Button`
+    t =    60.06s Find the "q3" Button
+    t =    60.42s Checking existence of `"q4" Button`
+    t =    60.66s Find the "q4" Button
+    t =    60.95s Checking existence of `"q5" Button`
+    t =    61.19s Find the "q5" Button
+    t =    61.52s Checking existence of `"q6" Button`
+    t =    61.86s Find the "q6" Button
+    t =    62.44s Checking existence of `"q7" Button`
+    t =    62.80s Find the "q7" Button
+    t =    63.25s Checking existence of `"q8" Button`
+    t =    63.60s Find the "q8" Button
+    t =    63.97s Checking existence of `"q9" Button`
+    t =    64.41s Find the "q9" Button
+    t =    64.93s Find the "q4" Button
+    t =    65.20s Find the "q4" Button
+    t =    65.39s Find the "q4" Button
+    t =    65.51s Find the "q5" Button
+    t =    65.74s Find the "q5" Button
+    t =    65.93s Find the "q5" Button
+    t =    66.16s Find the "q6" Button
+    t =    66.32s Find the "q6" Button
+    t =    66.47s Find the "q6" Button
+LAB 16.40 playing E6: rows on screen ["q4@162", "q5 (playing)@222", "q6@282"]
+    t =    66.65s Checking existence of `"q5" Button`
+    t =    66.81s Find the "q5" Button
+    t =    67.00s Find the "q5" Button
+    t =    67.17s Tap Target Application 'dev.silentneo.glassplayer'[0.20, 0.50]
+    t =    67.17s     Wait for dev.silentneo.glassplayer to idle
+    t =    67.17s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.22s     Check for interrupting elements affecting "Folio" Application
+    t =    67.55s     Synthesize event
+    t =    67.55s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.59s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    67.63s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =    68.12s     Wait for dev.silentneo.glassplayer to idle
+    t =    70.17s Open dev.silentneo.glassplayer
+    t =    70.17s     Launch dev.silentneo.glassplayer
+    t =    70.17s         Terminate dev.silentneo.glassplayer:25242
+    t =    71.74s             Interface orientation changed to Portrait
+2026-10-30 11:12:31.591 xcodebuild[17635:266340] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-10-30 11:12:31.592 xcodebuild[17635:266340] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    80.04s         Interface orientation changed to Landscape Right
+    t =    82.14s         Setting up automation session
+    t =    89.32s         Wait for dev.silentneo.glassplayer to idle
+    t =    94.00s Setting device orientation to Landscape Left
+    t =    94.02s     Wait for dev.silentneo.glassplayer to idle
+    t =    94.28s Waiting 20.0s for "Now Playing" Button to exist
+    t =    95.33s     Checking `Expect predicate `existsNoRetry == 1` for object "Now Playing" Button`
+    t =    95.33s         Checking existence of `"Now Playing" Button`
+LAB 6.87 playing E10: open Now Playing
+    t =   100.87s Tap "Now Playing" Button
+    t =   100.87s     Wait for dev.silentneo.glassplayer to idle
+    t =   100.87s     Find the "Now Playing" Button
+    t =   101.63s     Check for interrupting elements affecting "Now Playing" Button
+    t =   102.37s     Synthesize event
+    t =   102.90s     Wait for dev.silentneo.glassplayer to idle
+    t =   106.01s Checking existence of `"q0" Button`
+    t =   115.23s Find the "q0" Button
+    t =   146.26s     Find the "q0" Button (retry 1)
+    t =   152.18s Checking existence of `"q1" Button`
+    t =   154.54s Find the "q1" Button
+    t =   155.94s Checking existence of `"q2" Button`
+    t =   156.55s Find the "q2" Button
+    t =   157.58s Checking existence of `"q3" Button`
+    t =   158.39s Find the "q3" Button
+    t =   159.11s Checking existence of `"q4" Button`
+    t =   160.38s Find the "q4" Button
+    t =   161.44s Checking existence of `"q5" Button`
+    t =   162.47s Find the "q5" Button
+    t =   163.81s Checking existence of `"q6" Button`
+    t =   164.88s Find the "q6" Button
+    t =   165.90s Checking existence of `"q7" Button`
+    t =   166.40s Find the "q7" Button
+    t =   166.96s Checking existence of `"q8" Button`
+    t =   167.46s Find the "q8" Button
+    t =   167.97s Checking existence of `"q9" Button`
+    t =   168.70s Find the "q9" Button
+    t =   169.49s Find the "q8" Button
+    t =   170.41s Find the "q8" Button
+    t =   171.00s Find the "q8" Button
+    t =   171.37s Find the "q9" Button
+    t =   171.70s Find the "q9" Button
+    t =   172.03s Find the "q9" Button
+LAB 78.28 playing E10: rows on screen ["q8@184", "q9 (playing)@244"]
+    t =   172.28s Checking existence of `"q9" Button`
+    t =   172.59s Find the "q9" Button
+    t =   172.90s Find the "q9" Button
+    t =   173.18s Tap Target Application 'dev.silentneo.glassplayer'[0.20, 0.50]
+    t =   173.18s     Wait for dev.silentneo.glassplayer to idle
+    t =   173.18s     Find the Target Application 'dev.silentneo.glassplayer'
+    t =   173.24s     Check for interrupting elements affecting "Folio" Application
+    t =   173.30s     Synthesize event
+    t =   173.31s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   173.35s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   173.40s         Find the Target Application 'dev.silentneo.glassplayer'
+    t =   173.78s     Wait for dev.silentneo.glassplayer to idle
+    t =   175.91s Tear Down
+Test Case '-[GlassPlayerUITests.RoundLabUITests test3PlaylistOpensOnPlayingEpisode]' passed (176.239 seconds).
+Test Suite 'RoundLabUITests' passed at 2026-10-30 11:14:11.058.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 303.116 (303.182) seconds
+Test Suite 'GlassPlayerUITests.xctest' passed at 2026-10-30 11:14:11.059.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 303.116 (303.183) seconds
+Test Suite 'Selected tests' passed at 2026-10-30 11:14:11.060.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 303.116 (303.190) seconds
+2026-10-30 11:15:10.357 xcodebuild[17635:266340] [MT] IDETestOperationsObserverDebug: 402.071 elapsed -- Testing started completed.
+2026-10-30 11:15:10.360 xcodebuild[17635:266340] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-30 11:15:10.360 xcodebuild[17635:266340] [MT] IDETestOperationsObserverDebug: 402.071 sec, +402.071 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/GlassPlayer/GlassPlayer/build/Logs/Test/Test-GlassPlayer-2026.10.30_11-08-27-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

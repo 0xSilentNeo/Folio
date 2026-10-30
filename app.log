@@ -1,0 +1,579 @@
+11:09:19.210 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.02 GB
+11:09:19.504 [lab] IMDb cache seeded (Lab Movie, Lab Series)
+11:09:19.504 [lab] shots seeded
+11:09:21.499 [hang] main thread unresponsive for 2.3 s
+11:09:25.000 [scene] 2520C8D4 connects (portrait)
+11:09:25.001 [scene] 2520C8D4 will enter foreground (portrait)
+11:09:25.740 [app] first screen 10399 ms after process start
+11:09:25.740 [app] root view appeared (1 in this run, splash off)
+11:09:26.978 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+11:09:27.304 [scene] 2520C8D4 active (portrait)
+11:09:27.308 [app] active
+11:09:27.888 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+11:09:27.889 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+11:09:27.889 [image] folder tile Weekend picks appeared
+11:09:27.890 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+11:09:27.890 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+11:09:27.890 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+11:09:27.891 [image] tile Lab Show appeared (loader #3, picture none yet)
+11:09:27.891 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+11:09:27.898 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+11:09:27.899 [zoom] source 0|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+11:09:27.900 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+11:09:27.973 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 970 ms
+11:09:28.086 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 194 ms
+11:09:28.092 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 201 ms
+11:09:28.092 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 203 ms
+11:09:40.306 [zoom] home layout grid → details (zoom ids now 1|…)
+11:09:40.309 [image] tile Bright Movie (2024) disappeared (loader #2)
+11:09:40.310 [image] folder tile Weekend picks disappeared
+11:09:40.311 [image] tile Lab Show disappeared (loader #3)
+11:09:40.463 [image] loader #9 Another Film 2019.mp4|wide|300: not in memory, loading
+11:09:40.464 [image] loader #10 Bright Movie 2024.mp4|wide|300: not in memory, loading
+11:09:40.464 [image] loader #11 Lab Show S01E04.mp4|wide|300: not in memory, loading
+11:09:40.470 [zoom] source 1|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (20.0, 712.0, 362.0, 100.0)
+11:09:40.476 [image] row Lab Show (details) appeared (loader #8, picture none yet)
+11:09:40.476 [image] loader #8 Lab Show S01E01.mp4|poster|288: not in memory, loading
+11:09:40.481 [zoom] source 1|s|lab show added at (20.0, 588.0, 362.0, 112.0)
+11:09:40.484 [image] row Bright Movie 2024.mp4 (details) appeared (loader #7, picture none yet)
+11:09:40.485 [image] loader #7 Bright Movie 2024.mp4|poster|288: not in memory, loading
+11:09:40.486 [zoom] source 1|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 464.0, 362.0, 112.0)
+11:09:40.551 [image] loader #7 Bright Movie 2024.mp4|poster|288: picture (poster tt9000003) after 66 ms
+11:09:40.692 [image] loader #8 Lab Show S01E01.mp4|poster|288: picture (poster tt9000002) after 75 ms
+11:09:40.703 [image] loader #10 Bright Movie 2024.mp4|wide|300: picture (artwork disk or network) after 239 ms
+11:09:41.213 [image] loader #9 Another Film 2019.mp4|wide|300: picture (frame from the file) after 750 ms
+11:09:41.214 [image] loader #11 Lab Show S01E04.mp4|wide|300: picture (frame from the file) after 750 ms
+11:09:50.360 [zoom] home layout details → grid (zoom ids now 2|…)
+11:09:50.366 [image] row Lab Show (details) disappeared (loader #8)
+11:09:50.367 [image] row Bright Movie 2024.mp4 (details) disappeared (loader #7)
+11:09:50.443 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+11:09:50.444 [image] folder tile Weekend picks appeared
+11:09:50.445 [image] tile Lab Show appeared (loader #3, picture shown)
+11:09:55.895 [nav] home: open Lab Show
+11:09:55.901 [image] loader #12 Lab Show S01E01.mp4|wide|552: not in memory, loading
+11:09:55.902 [image] loader #13 Lab Show S01E02.mp4|wide|552: not in memory, loading
+11:09:55.902 [image] loader #14 Lab Show S01E03.mp4|wide|552: not in memory, loading
+11:09:55.920 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+11:09:55.921 [zoom] opening group("s|lab show"): 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:09:56.297 [nav] title page appear Lab Show S01E01.mp4
+11:09:56.299 [image] loader #15 Lab Show S01E01.mp4|wide|2400: not in memory, loading
+11:09:56.299 [image] tile S1 · E1 appeared (loader #16, picture none yet)
+11:09:56.299 [image] loader #16 Lab Show S01E01.mp4|wide|552: not in memory, loading
+11:09:56.300 [image] tile S1 · E4 appeared (loader #19, picture none yet)
+11:09:56.300 [image] loader #19 Lab Show S01E04.mp4|wide|552: not in memory, loading
+11:09:56.300 [image] tile S1 · E2 appeared (loader #17, picture none yet)
+11:09:56.300 [image] loader #17 Lab Show S01E02.mp4|wide|552: not in memory, loading
+11:09:56.300 [image] tile S1 · E3 appeared (loader #18, picture none yet)
+11:09:56.301 [image] loader #18 Lab Show S01E03.mp4|wide|552: not in memory, loading
+11:09:56.315 [nav] page opening: its move started
+11:09:56.377 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+11:09:56.554 [nav] title page move: animated
+11:09:56.555 [image] loader #15 Lab Show S01E01.mp4|wide|2400: picture (artwork disk or network) after 256 ms
+11:09:56.555 [image] loader #14 Lab Show S01E03.mp4|wide|552: picture (artwork disk or network) after 653 ms
+11:09:56.564 [image] loader #18 Lab Show S01E03.mp4|wide|552: picture (artwork disk or network) after 262 ms
+11:09:56.565 [image] loader #17 Lab Show S01E02.mp4|wide|552: picture (artwork disk or network) after 264 ms
+11:09:56.565 [image] loader #13 Lab Show S01E02.mp4|wide|552: picture (artwork disk or network) after 663 ms
+11:09:56.580 [image] loader #16 Lab Show S01E01.mp4|wide|552: picture (artwork disk or network) after 266 ms
+11:09:56.581 [image] loader #12 Lab Show S01E01.mp4|wide|552: picture (artwork disk or network) after 679 ms
+11:09:56.582 [image] loader #19 Lab Show S01E04.mp4|wide|552: picture (frame from the file) after 282 ms
+11:09:57.239 [zoom] source 1|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 removed from the window
+11:09:57.240 [zoom] source 1|s|lab show removed from the window
+11:09:57.240 [zoom] source 1|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks removed from the window
+11:09:57.240 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 removed from the window
+11:09:57.241 [zoom] source 2|s|lab show removed from the window
+11:09:57.241 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks removed from the window
+11:09:57.259 [nav] page opening: its move ended after 943 ms
+11:09:57.336 [image] tile Bright Movie (2024) disappeared (loader #2)
+11:09:57.336 [image] folder tile Weekend picks disappeared
+11:09:57.337 [image] tile Lab Show disappeared (loader #3)
+11:09:57.358 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+11:09:57.359 [energy] cpu 77% (other 38%, main 35%, com.apple.UIKit.in 3%, com.apple.SwiftUI. 1%) mem 72 MB (0 MB left) thermal=nominal playing=no
+11:10:01.114 [nav] title page: Back
+11:10:01.118 [nav] page leaving: taps off
+11:10:01.128 [zoom] source 1|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 464.0, 362.0, 112.0)
+11:10:01.130 [zoom] source 1|s|lab show added at (20.0, 588.0, 363.0, 112.0)
+11:10:01.132 [zoom] source 1|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (20.0, 712.0, 362.0, 100.0)
+11:10:01.133 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+11:10:01.134 [zoom] source 2|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+11:10:01.135 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+11:10:01.167 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+11:10:01.167 [image] folder tile Weekend picks appeared
+11:10:01.168 [image] tile Lab Show appeared (loader #3, picture shown)
+11:10:01.195 [nav] home path 1 → 0: []
+11:10:01.216 [zoom] back from group("s|lab show") +19 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:01.219 [nav] title page move: animated
+11:10:01.302 [zoom] back from group("s|lab show") +106 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:01.403 [zoom] back from group("s|lab show") +206 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:01.506 [zoom] back from group("s|lab show") +309 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:01.612 [zoom] back from group("s|lab show") +416 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:01.713 [zoom] back from group("s|lab show") +517 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:01.817 [zoom] back from group("s|lab show") +621 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:01.928 [zoom] back from group("s|lab show") +732 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:02.031 [zoom] back from group("s|lab show") +835 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:02.049 [nav] page gone 930 ms after it started going back
+11:10:02.090 [nav] title page disappear Lab Show S01E01.mp4
+11:10:02.091 [image] tile S1 · E1 disappeared (loader #16)
+11:10:02.092 [image] tile S1 · E4 disappeared (loader #19)
+11:10:02.092 [image] tile S1 · E2 disappeared (loader #17)
+11:10:02.092 [image] tile S1 · E3 disappeared (loader #18)
+11:10:02.123 [zoom] back from group("s|lab show") +927 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:02.213 [zoom] back from group("s|lab show") +1015 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:02.345 [zoom] back from group("s|lab show") +1148 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:02.452 [zoom] back from group("s|lab show") +1256 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:02.545 [zoom] back from group("s|lab show") +1348 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:02.608 [zoom] back from group("s|lab show") +1412 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:02.744 [zoom] back from group("s|lab show") +1548 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:02.845 [zoom] back from group("s|lab show") +1648 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:02.978 [zoom] back from group("s|lab show") +1782 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:03.078 [zoom] back from group("s|lab show") +1882 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:03.145 [zoom] back from group("s|lab show") +1948 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:03.282 [zoom] back from group("s|lab show") +2085 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:03.346 [zoom] back from group("s|lab show") +2149 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:03.499 [zoom] back from group("s|lab show") +2302 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:03.501 [zoom] back from group("s|lab show") +2305 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:03.711 [zoom] back from group("s|lab show") +2515 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:03.711 [zoom] back from group("s|lab show") +2516 ms: 1 source(s) for 2|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:10:12.061 [zoom] home layout grid → details (zoom ids now 3|…)
+11:10:12.067 [image] tile Bright Movie (2024) disappeared (loader #2)
+11:10:12.067 [image] folder tile Weekend picks disappeared
+11:10:12.068 [image] tile Lab Show disappeared (loader #3)
+11:10:12.138 [image] row Lab Show (details) appeared (loader #8, picture shown)
+11:10:12.141 [image] row Bright Movie 2024.mp4 (details) appeared (loader #7, picture shown)
+11:10:17.647 [nav] home: open Lab Show
+11:10:17.657 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+11:10:17.659 [zoom] opening group("s|lab show"): 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:17.740 [nav] title page appear Lab Show S01E01.mp4
+11:10:17.745 [image] loader #20 Lab Show S01E01.mp4|wide|2400: from memory at once
+11:10:17.746 [image] tile S1 · E1 appeared (loader #21, picture none yet)
+11:10:17.746 [image] loader #21 Lab Show S01E01.mp4|wide|552: from memory at once
+11:10:17.747 [image] tile S1 · E2 appeared (loader #22, picture none yet)
+11:10:17.747 [image] loader #22 Lab Show S01E02.mp4|wide|552: from memory at once
+11:10:17.747 [image] tile S1 · E3 appeared (loader #23, picture none yet)
+11:10:17.747 [image] loader #23 Lab Show S01E03.mp4|wide|552: from memory at once
+11:10:17.748 [image] tile S1 · E4 appeared (loader #24, picture none yet)
+11:10:17.748 [image] loader #24 Lab Show S01E04.mp4|wide|552: from memory at once
+11:10:17.761 [nav] page opening: its move started
+11:10:17.805 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+11:10:17.891 [image] loader #20 Lab Show S01E01.mp4|wide|2400: picture (artwork memory) after 150 ms, replacing one already shown
+11:10:17.893 [image] loader #21 Lab Show S01E01.mp4|wide|552: picture (artwork memory) after 146 ms, replacing one already shown
+11:10:17.893 [image] loader #22 Lab Show S01E02.mp4|wide|552: picture (artwork memory) after 146 ms, replacing one already shown
+11:10:17.894 [image] loader #23 Lab Show S01E03.mp4|wide|552: picture (artwork memory) after 146 ms, replacing one already shown
+11:10:17.906 [nav] title page move: animated
+11:10:18.730 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 removed from the window
+11:10:18.730 [zoom] source 2|s|lab show removed from the window
+11:10:18.731 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks removed from the window
+11:10:18.731 [zoom] source 3|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 removed from the window
+11:10:18.734 [zoom] source 3|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks removed from the window
+11:10:18.736 [zoom] source 3|s|lab show removed from the window
+11:10:18.758 [nav] page opening: its move ended after 996 ms
+11:10:18.806 [image] row Bright Movie 2024.mp4 (details) disappeared (loader #7)
+11:10:18.807 [image] row Lab Show (details) disappeared (loader #8)
+11:10:18.821 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+11:10:24.097 [nav] title page: Back
+11:10:24.104 [nav] page leaving: taps off
+11:10:24.113 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+11:10:24.114 [zoom] source 2|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+11:10:24.115 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+11:10:24.122 [zoom] source 3|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 464.0, 362.0, 112.0)
+11:10:24.124 [zoom] source 3|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (20.0, 712.0, 362.0, 100.0)
+11:10:24.126 [zoom] source 3|s|lab show added at (20.0, 588.0, 363.0, 112.0)
+11:10:24.152 [image] row Lab Show (details) appeared (loader #8, picture shown)
+11:10:24.155 [image] row Bright Movie 2024.mp4 (details) appeared (loader #7, picture shown)
+11:10:24.189 [nav] home path 1 → 0: []
+11:10:24.207 [zoom] back from group("s|lab show") +17 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:24.212 [nav] title page move: animated
+11:10:24.328 [zoom] back from group("s|lab show") +138 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:24.398 [zoom] back from group("s|lab show") +207 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:24.498 [zoom] back from group("s|lab show") +308 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:24.607 [zoom] back from group("s|lab show") +416 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:24.707 [zoom] back from group("s|lab show") +517 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:24.807 [zoom] back from group("s|lab show") +617 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:24.907 [zoom] back from group("s|lab show") +717 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:25.007 [zoom] back from group("s|lab show") +817 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:25.026 [nav] page gone 922 ms after it started going back
+11:10:25.037 [nav] title page disappear Lab Show S01E01.mp4
+11:10:25.038 [image] tile S1 · E1 disappeared (loader #21)
+11:10:25.039 [image] tile S1 · E2 disappeared (loader #22)
+11:10:25.039 [image] tile S1 · E3 disappeared (loader #23)
+11:10:25.039 [image] tile S1 · E4 disappeared (loader #24)
+11:10:25.129 [zoom] back from group("s|lab show") +939 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:25.211 [zoom] back from group("s|lab show") +1020 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:25.311 [zoom] back from group("s|lab show") +1120 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:25.448 [zoom] back from group("s|lab show") +1257 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:25.544 [zoom] back from group("s|lab show") +1354 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:25.611 [zoom] back from group("s|lab show") +1420 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:25.744 [zoom] back from group("s|lab show") +1554 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:25.811 [zoom] back from group("s|lab show") +1620 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:25.965 [zoom] back from group("s|lab show") +1774 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:26.078 [zoom] back from group("s|lab show") +1887 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:26.145 [zoom] back from group("s|lab show") +1954 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:26.288 [zoom] back from group("s|lab show") +2097 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:26.344 [zoom] back from group("s|lab show") +2154 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:26.498 [zoom] back from group("s|lab show") +2308 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:26.499 [zoom] back from group("s|lab show") +2308 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:26.709 [zoom] back from group("s|lab show") +2519 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:26.709 [zoom] back from group("s|lab show") +2519 ms: 1 source(s) for 3|s|lab show: (20.0, 588.0, 363.0, 112.0) visible
+11:10:27.411 [energy] cpu 1% (main 1%) mem 76 MB (0 MB left) thermal=nominal playing=no
+11:10:34.868 [zoom] home layout details → list (zoom ids now 4|…)
+11:10:40.412 [nav] home: open Lab Show
+11:10:40.416 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+11:10:40.417 [zoom] opening group("s|lab show"): 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:40.480 [nav] title page appear Lab Show S01E01.mp4
+11:10:40.486 [image] loader #25 Lab Show S01E01.mp4|wide|2400: from memory at once
+11:10:40.486 [image] tile S1 · E4 appeared (loader #29, picture none yet)
+11:10:40.486 [image] loader #29 Lab Show S01E04.mp4|wide|552: from memory at once
+11:10:40.487 [image] tile S1 · E3 appeared (loader #28, picture none yet)
+11:10:40.487 [image] loader #28 Lab Show S01E03.mp4|wide|552: from memory at once
+11:10:40.487 [image] tile S1 · E2 appeared (loader #27, picture none yet)
+11:10:40.487 [image] loader #27 Lab Show S01E02.mp4|wide|552: from memory at once
+11:10:40.487 [image] tile S1 · E1 appeared (loader #26, picture none yet)
+11:10:40.488 [image] loader #26 Lab Show S01E01.mp4|wide|552: from memory at once
+11:10:40.497 [nav] page opening: its move started
+11:10:40.537 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+11:10:40.624 [image] loader #25 Lab Show S01E01.mp4|wide|2400: picture (artwork memory) after 143 ms, replacing one already shown
+11:10:40.624 [image] loader #28 Lab Show S01E03.mp4|wide|552: picture (artwork memory) after 137 ms, replacing one already shown
+11:10:40.625 [image] loader #27 Lab Show S01E02.mp4|wide|552: picture (artwork memory) after 137 ms, replacing one already shown
+11:10:40.640 [image] loader #26 Lab Show S01E01.mp4|wide|552: picture (artwork memory) after 138 ms, replacing one already shown
+11:10:40.657 [nav] title page move: animated
+11:10:41.468 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 removed from the window
+11:10:41.469 [zoom] source 2|s|lab show removed from the window
+11:10:41.470 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks removed from the window
+11:10:41.470 [zoom] source 4|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 removed from the window
+11:10:41.476 [zoom] source 4|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks removed from the window
+11:10:41.477 [zoom] source 4|s|lab show removed from the window
+11:10:41.496 [nav] page opening: its move ended after 998 ms
+11:10:41.536 [image] row Bright Movie 2024.mp4 (list) disappeared (loader #7)
+11:10:41.537 [image] row Lab Show (list) disappeared (loader #8)
+11:10:41.585 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+11:10:46.464 [nav] title page: Back
+11:10:46.469 [nav] page leaving: taps off
+11:10:46.480 [zoom] source 2|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+11:10:46.481 [zoom] source 2|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+11:10:46.482 [zoom] source 2|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+11:10:46.498 [zoom] source 4|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 459.0, 362.0, 61.0)
+11:10:46.500 [zoom] source 4|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (20.0, 587.0, 362.0, 57.0)
+11:10:46.503 [zoom] source 4|s|lab show added at (20.0, 523.0, 362.0, 61.0)
+11:10:46.529 [image] row Lab Show (list) appeared (loader #8, picture shown)
+11:10:46.530 [image] loader #8 Lab Show S01E01.mp4|poster|144: from memory at once
+11:10:46.539 [image] row Bright Movie 2024.mp4 (list) appeared (loader #7, picture shown)
+11:10:46.540 [image] loader #7 Bright Movie 2024.mp4|poster|144: from memory at once
+11:10:46.573 [nav] home path 1 → 0: []
+11:10:46.592 [zoom] back from group("s|lab show") +18 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:46.595 [nav] title page move: animated
+11:10:46.605 [image] loader #7 Bright Movie 2024.mp4|poster|144: picture (poster tt9000003) after 65 ms, replacing one already shown
+11:10:46.606 [image] loader #8 Lab Show S01E01.mp4|poster|144: picture (poster tt9000002) after 75 ms, replacing one already shown
+11:10:46.684 [zoom] back from group("s|lab show") +110 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:46.811 [zoom] back from group("s|lab show") +236 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:46.913 [zoom] back from group("s|lab show") +338 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:46.981 [zoom] back from group("s|lab show") +407 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:47.081 [zoom] back from group("s|lab show") +507 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:47.179 [zoom] back from group("s|lab show") +605 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:47.281 [zoom] back from group("s|lab show") +706 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:47.414 [zoom] back from group("s|lab show") +839 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:47.427 [nav] page gone 958 ms after it started going back
+11:10:47.445 [nav] title page disappear Lab Show S01E01.mp4
+11:10:47.446 [image] tile S1 · E4 disappeared (loader #29)
+11:10:47.446 [image] tile S1 · E3 disappeared (loader #28)
+11:10:47.447 [image] tile S1 · E2 disappeared (loader #27)
+11:10:47.447 [image] tile S1 · E1 disappeared (loader #26)
+11:10:47.511 [zoom] back from group("s|lab show") +937 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:47.621 [zoom] back from group("s|lab show") +1046 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:47.711 [zoom] back from group("s|lab show") +1137 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:47.811 [zoom] back from group("s|lab show") +1237 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:47.932 [zoom] back from group("s|lab show") +1357 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.031 [zoom] back from group("s|lab show") +1457 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.148 [zoom] back from group("s|lab show") +1574 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.244 [zoom] back from group("s|lab show") +1670 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.345 [zoom] back from group("s|lab show") +1770 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.411 [zoom] back from group("s|lab show") +1837 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.565 [zoom] back from group("s|lab show") +1990 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.669 [zoom] back from group("s|lab show") +2095 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.778 [zoom] back from group("s|lab show") +2203 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.778 [zoom] back from group("s|lab show") +2204 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.979 [zoom] back from group("s|lab show") +2405 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:48.979 [zoom] back from group("s|lab show") +2405 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:49.178 [zoom] back from group("s|lab show") +2603 ms: 1 source(s) for 4|s|lab show: (20.0, 523.0, 362.0, 61.0) visible
+11:10:57.411 [energy] cpu 1% (main 1%) mem 76 MB (0 MB left) thermal=nominal playing=no
+11:10:58.152 [zoom] home layout list → grid (zoom ids now 5|…)
+11:10:58.157 [image] row Lab Show (list) disappeared (loader #8)
+11:10:58.158 [image] row Bright Movie 2024.mp4 (list) disappeared (loader #7)
+11:10:58.203 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+11:10:58.204 [image] folder tile Weekend picks appeared
+11:10:58.205 [image] tile Lab Show appeared (loader #3, picture shown)
+11:11:03.513 [nav] home: open Lab Show
+11:11:03.516 [nav] home path 0 → 1: [GlassPlayer.LibraryRoute.group("s|lab show")]
+11:11:03.517 [zoom] opening group("s|lab show"): 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:03.571 [nav] title page appear Lab Show S01E01.mp4
+11:11:03.577 [image] loader #30 Lab Show S01E01.mp4|wide|2400: from memory at once
+11:11:03.577 [image] tile S1 · E2 appeared (loader #32, picture none yet)
+11:11:03.578 [image] loader #32 Lab Show S01E02.mp4|wide|552: from memory at once
+11:11:03.578 [image] tile S1 · E4 appeared (loader #34, picture none yet)
+11:11:03.578 [image] loader #34 Lab Show S01E04.mp4|wide|552: from memory at once
+11:11:03.578 [image] tile S1 · E3 appeared (loader #33, picture none yet)
+11:11:03.578 [image] loader #33 Lab Show S01E03.mp4|wide|552: from memory at once
+11:11:03.579 [image] tile S1 · E1 appeared (loader #31, picture none yet)
+11:11:03.580 [image] loader #31 Lab Show S01E01.mp4|wide|552: from memory at once
+11:11:03.591 [nav] page opening: its move started
+11:11:03.640 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=true
+11:11:03.744 [image] loader #30 Lab Show S01E01.mp4|wide|2400: picture (artwork memory) after 171 ms, replacing one already shown
+11:11:03.745 [image] loader #32 Lab Show S01E02.mp4|wide|552: picture (artwork memory) after 166 ms, replacing one already shown
+11:11:03.745 [image] loader #33 Lab Show S01E03.mp4|wide|552: picture (artwork memory) after 166 ms, replacing one already shown
+11:11:03.746 [image] loader #31 Lab Show S01E01.mp4|wide|552: picture (artwork memory) after 167 ms, replacing one already shown
+11:11:03.760 [nav] title page move: animated
+11:11:04.508 [zoom] source 4|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 removed from the window
+11:11:04.509 [zoom] source 4|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks removed from the window
+11:11:04.510 [zoom] source 4|s|lab show removed from the window
+11:11:04.511 [zoom] source 5|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 removed from the window
+11:11:04.512 [zoom] source 5|s|lab show removed from the window
+11:11:04.512 [zoom] source 5|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks removed from the window
+11:11:04.522 [nav] page opening: its move ended after 930 ms
+11:11:04.554 [image] tile Bright Movie (2024) disappeared (loader #2)
+11:11:04.554 [image] folder tile Weekend picks disappeared
+11:11:04.554 [image] tile Lab Show disappeared (loader #3)
+11:11:04.577 [nav] title page move: none (navigation bar hidden, alpha 1.00, height 54)
+11:11:09.332 [nav] title page: Back
+11:11:09.338 [nav] page leaving: taps off
+11:11:09.346 [zoom] source 4|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 459.0, 362.0, 61.0)
+11:11:09.348 [zoom] source 4|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (20.0, 587.0, 362.0, 57.0)
+11:11:09.351 [zoom] source 4|s|lab show added at (20.0, 523.0, 362.0, 61.0)
+11:11:09.372 [zoom] source 5|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+11:11:09.374 [zoom] source 5|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+11:11:09.375 [zoom] source 5|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+11:11:09.396 [image] tile Bright Movie (2024) appeared (loader #2, picture shown)
+11:11:09.398 [image] folder tile Weekend picks appeared
+11:11:09.399 [image] tile Lab Show appeared (loader #3, picture shown)
+11:11:09.436 [nav] home path 1 → 0: []
+11:11:09.457 [zoom] back from group("s|lab show") +20 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:09.459 [nav] title page move: animated
+11:11:09.549 [zoom] back from group("s|lab show") +112 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:09.648 [zoom] back from group("s|lab show") +210 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:09.777 [zoom] back from group("s|lab show") +340 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:09.867 [zoom] back from group("s|lab show") +430 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:09.948 [zoom] back from group("s|lab show") +510 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:10.065 [zoom] back from group("s|lab show") +627 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:10.142 [zoom] back from group("s|lab show") +704 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:10.240 [zoom] back from group("s|lab show") +802 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:10.277 [nav] page gone 939 ms after it started going back
+11:11:10.291 [nav] title page disappear Lab Show S01E01.mp4
+11:11:10.292 [image] tile S1 · E2 disappeared (loader #32)
+11:11:10.292 [image] tile S1 · E4 disappeared (loader #34)
+11:11:10.292 [image] tile S1 · E3 disappeared (loader #33)
+11:11:10.293 [image] tile S1 · E1 disappeared (loader #31)
+11:11:10.363 [zoom] back from group("s|lab show") +925 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:10.478 [zoom] back from group("s|lab show") +1040 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:10.582 [zoom] back from group("s|lab show") +1144 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:10.696 [zoom] back from group("s|lab show") +1259 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:10.778 [zoom] back from group("s|lab show") +1340 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:10.878 [zoom] back from group("s|lab show") +1440 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.011 [zoom] back from group("s|lab show") +1574 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.111 [zoom] back from group("s|lab show") +1674 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.211 [zoom] back from group("s|lab show") +1774 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.311 [zoom] back from group("s|lab show") +1874 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.411 [zoom] back from group("s|lab show") +1974 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.511 [zoom] back from group("s|lab show") +2074 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.611 [zoom] back from group("s|lab show") +2174 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.745 [zoom] back from group("s|lab show") +2307 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.745 [zoom] back from group("s|lab show") +2308 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.948 [zoom] back from group("s|lab show") +2511 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:11.948 [zoom] back from group("s|lab show") +2511 ms: 1 source(s) for 5|s|lab show: (145.0, 458.0, 112.0, 167.0) visible
+11:11:22.260 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=31.9 GB
+11:11:24.354 [hang] main thread unresponsive for 2.1 s
+11:11:28.573 [scene] 2520C8D4 connects (portrait)
+11:11:28.574 [scene] 2520C8D4 will enter foreground (portrait)
+11:11:28.930 [app] first screen 8584 ms after process start
+11:11:28.930 [app] root view appeared (1 in this run, splash on)
+11:11:28.930 [app] launch splash shown
+11:11:29.520 [image] loader #1 Lab Show S01E01.mp4|wide|954: not in memory, loading
+11:11:29.672 [player] play requested: 10 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/311DEEBC-6C81-498E-AB8C-08D22DED0EBF/GlassPlayer.app/lab/lab.mp4
+11:11:30.532 [scene] 2520C8D4 active (portrait)
+11:11:30.550 [app] active
+11:11:31.308 [player] start renderer=metal
+11:11:31.308 [lab] engine not started (lab)
+11:11:31.449 [image] loader #1 Lab Show S01E01.mp4|wide|954: picture (artwork disk or network) after 1929 ms
+11:11:31.849 [image] tile Lab Show appeared (loader #3, picture none yet)
+11:11:31.850 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+11:11:31.852 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+11:11:31.854 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+11:11:31.854 [image] folder tile Weekend picks appeared
+11:11:31.854 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+11:11:31.855 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+11:11:31.855 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+11:11:31.890 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (20.0, 458.0, 112.0, 167.0)
+11:11:31.891 [zoom] source 0|s|lab show added at (145.0, 458.0, 112.0, 167.0)
+11:11:31.892 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (270.0, 458.0, 112.0, 167.0)
+11:11:32.904 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 1044 ms
+11:11:32.905 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 1050 ms
+11:11:32.905 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 1055 ms
+11:11:33.171 [perf] panel tracks prebuilt in 130 ms
+11:11:34.000 [perf] panel settings prebuilt in 723 ms
+11:11:34.122 [perf] panel nowPlaying prebuilt in 105 ms
+11:11:34.265 [panel] now playing opens on q0 (tab 0, item 1 of 10, chapter -1)
+11:11:34.265 [panel] tab 0 list at y 0 of 588, 93 pt showing
+11:11:34.266 [image] loader #16 lab-10|wide|192: not in memory, loading
+11:11:34.266 [image] loader #15 lab-9|wide|192: not in memory, loading
+11:11:34.266 [image] loader #14 lab-8|wide|192: not in memory, loading
+11:11:34.266 [image] loader #13 lab-7|wide|192: not in memory, loading
+11:11:34.267 [image] loader #12 lab-6|wide|192: not in memory, loading
+11:11:34.267 [image] loader #11 lab-5|wide|192: not in memory, loading
+11:11:34.301 [image] loader #10 lab-4|wide|192: not in memory, loading
+11:11:34.301 [image] loader #9 lab-3|wide|192: not in memory, loading
+11:11:34.302 [image] loader #8 lab-2|wide|192: not in memory, loading
+11:11:34.303 [image] loader #7 lab-1|wide|192: not in memory, loading
+11:11:34.350 [image] loader #16 lab-10|wide|192: picture (artwork disk or network) after 83 ms
+11:11:34.351 [image] loader #15 lab-9|wide|192: picture (artwork disk or network) after 85 ms
+11:11:34.352 [image] loader #14 lab-8|wide|192: picture (artwork disk or network) after 85 ms
+11:11:34.352 [image] loader #13 lab-7|wide|192: picture (artwork disk or network) after 85 ms
+11:11:34.353 [image] loader #12 lab-6|wide|192: picture (artwork disk or network) after 85 ms
+11:11:34.390 [image] loader #11 lab-5|wide|192: picture (artwork disk or network) after 86 ms
+11:11:34.391 [image] loader #10 lab-4|wide|192: picture (artwork disk or network) after 123 ms
+11:11:34.391 [image] loader #9 lab-3|wide|192: picture (artwork disk or network) after 89 ms
+11:11:34.391 [image] loader #8 lab-2|wide|192: picture (artwork disk or network) after 89 ms
+11:11:34.391 [image] loader #7 lab-1|wide|192: picture (artwork disk or network) after 88 ms
+11:11:36.436 [perf] panel tracks prebuilt in 0 ms
+11:11:36.746 [perf] panel settings prebuilt in 0 ms
+11:11:37.066 [perf] panel nowPlaying prebuilt in 0 ms
+11:11:39.918 [ui] panel nowPlaying
+11:11:39.924 [ui] present panel nowPlaying from bar item 340×≤252
+11:11:39.924 [ui] panel: want nowPlaying (shown=none idle)
+11:11:39.936 [ui] panel: open nowPlaying
+11:11:40.067 [ui] present panel nowPlaying from bar item 340×≤252
+11:11:41.259 [ui] panel: opened nowPlaying
+11:11:41.260 [perf] panel open nowPlaying: 51 frames in 1324 ms, worst 405 ms, 3 late (frame 16.7 ms) · built in 12 ms, 12 ms after the tap
+11:11:49.295 [ui] panel: tap outside
+11:11:49.335 [ui] panel: close nowPlaying
+11:11:50.666 [ui] panel: closed nowPlaying
+11:11:50.667 [perf] panel close nowPlaying: 68 frames in 1331 ms, worst 52 ms, 2 late (frame 16.7 ms)
+11:11:55.679 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=31.81 GB
+11:11:58.101 [hang] main thread unresponsive for 2.4 s
+11:12:01.512 [scene] 2520C8D4 connects (landscape)
+11:12:01.513 [scene] 2520C8D4 will enter foreground (landscape)
+11:12:01.852 [app] first screen 8675 ms after process start
+11:12:01.852 [app] root view appeared (1 in this run, splash on)
+11:12:01.852 [app] launch splash shown
+11:12:02.386 [image] loader #1 Lab Show S01E01.mp4|wide|960: not in memory, loading
+11:12:02.499 [player] play requested: 10 item(s), index 5, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/311DEEBC-6C81-498E-AB8C-08D22DED0EBF/GlassPlayer.app/lab/lab.mp4
+11:12:03.127 [scene] 2520C8D4 active (landscape)
+11:12:03.147 [app] active
+11:12:03.344 [image] loader #1 Lab Show S01E01.mp4|wide|960: picture (artwork disk or network) after 958 ms
+11:12:03.662 [image] tile Lab Show appeared (loader #3, picture none yet)
+11:12:03.662 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+11:12:03.663 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+11:12:03.663 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+11:12:03.663 [image] folder tile Weekend picks appeared
+11:12:03.663 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+11:12:03.663 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+11:12:03.663 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+11:12:03.673 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (90.0, 397.0, 128.0, 192.0)
+11:12:03.675 [zoom] source 0|s|lab show added at (231.0, 397.0, 129.0, 192.0)
+11:12:03.676 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (373.0, 397.0, 128.0, 192.0)
+11:12:03.928 [player] start renderer=metal
+11:12:03.928 [lab] engine not started (lab)
+11:12:04.012 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 349 ms
+11:12:04.015 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 351 ms
+11:12:04.030 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 367 ms
+11:12:05.085 [perf] panel tracks prebuilt in 75 ms
+11:12:05.686 [perf] panel settings prebuilt in 378 ms
+11:12:05.771 [perf] panel nowPlaying prebuilt in 80 ms
+11:12:05.810 [panel] now playing opens on q5 (tab 0, item 6 of 10, chapter -1)
+11:12:05.810 [panel] tab 0 list at y 0 of 588, 93 pt showing
+11:12:05.811 [image] loader #16 lab-10|wide|192: not in memory, loading
+11:12:05.811 [image] loader #15 lab-9|wide|192: not in memory, loading
+11:12:05.811 [image] loader #14 lab-8|wide|192: not in memory, loading
+11:12:05.811 [image] loader #13 lab-7|wide|192: not in memory, loading
+11:12:05.811 [image] loader #12 lab-6|wide|192: not in memory, loading
+11:12:05.812 [image] loader #11 lab-5|wide|192: not in memory, loading
+11:12:05.814 [image] loader #10 lab-4|wide|192: not in memory, loading
+11:12:05.815 [image] loader #9 lab-3|wide|192: not in memory, loading
+11:12:05.816 [image] loader #8 lab-2|wide|192: not in memory, loading
+11:12:05.816 [image] loader #7 lab-1|wide|192: not in memory, loading
+11:12:05.829 [image] loader #15 lab-9|wide|192: picture (artwork disk or network) after 18 ms
+11:12:05.830 [image] loader #16 lab-10|wide|192: picture (artwork disk or network) after 19 ms
+11:12:05.830 [image] loader #7 lab-1|wide|192: picture (artwork disk or network) after 14 ms
+11:12:05.830 [image] loader #8 lab-2|wide|192: picture (artwork disk or network) after 14 ms
+11:12:05.833 [image] loader #9 lab-3|wide|192: picture (artwork disk or network) after 15 ms
+11:12:05.834 [image] loader #10 lab-4|wide|192: picture (artwork disk or network) after 22 ms
+11:12:05.835 [image] loader #11 lab-5|wide|192: picture (artwork disk or network) after 23 ms
+11:12:05.835 [image] loader #12 lab-6|wide|192: picture (artwork disk or network) after 23 ms
+11:12:05.835 [image] loader #13 lab-7|wide|192: picture (artwork disk or network) after 23 ms
+11:12:05.841 [image] loader #14 lab-8|wide|192: picture (artwork disk or network) after 29 ms
+11:12:09.775 [ui] panel nowPlaying
+11:12:09.781 [ui] present panel nowPlaying from bar item 340×≤252
+11:12:09.782 [ui] panel: want nowPlaying (shown=none idle)
+11:12:09.784 [ui] panel: open nowPlaying
+11:12:09.883 [ui] present panel nowPlaying from bar item 340×≤252
+11:12:11.111 [ui] panel: opened nowPlaying
+11:12:11.112 [perf] panel open nowPlaying: 47 frames in 1328 ms, worst 420 ms, 4 late (frame 16.7 ms) · built in 2 ms, 3 ms after the tap
+11:12:22.611 [ui] panel: tap outside
+11:12:22.647 [ui] panel: close nowPlaying
+11:12:23.933 [ui] panel: closed nowPlaying
+11:12:23.933 [perf] panel close nowPlaying: 68 frames in 1286 ms, worst 40 ms, 2 late (frame 16.7 ms)
+11:12:38.822 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=31.78 GB
+11:12:41.169 [hang] main thread unresponsive for 2.4 s
+11:12:44.073 [scene] 2520C8D4 connects (landscape)
+11:12:44.075 [scene] 2520C8D4 will enter foreground (landscape)
+11:12:44.572 [app] first screen 9973 ms after process start
+11:12:44.572 [app] root view appeared (1 in this run, splash on)
+11:12:44.572 [app] launch splash shown
+11:12:45.228 [image] loader #1 Lab Show S01E01.mp4|wide|960: not in memory, loading
+11:12:45.404 [player] play requested: 10 item(s), index 9, first=/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Bundle/Application/311DEEBC-6C81-498E-AB8C-08D22DED0EBF/GlassPlayer.app/lab/lab.mp4
+11:12:45.997 [scene] 2520C8D4 active (landscape)
+11:12:46.000 [app] active
+11:12:46.601 [player] start renderer=metal
+11:12:46.601 [lab] engine not started (lab)
+11:12:46.625 [image] loader #1 Lab Show S01E01.mp4|wide|960: picture (artwork disk or network) after 1396 ms
+11:12:46.943 [image] folder tile Weekend picks appeared
+11:12:46.944 [image] loader #6 Lab Show S01E04.mp4|poster|300: not in memory, loading
+11:12:46.944 [image] loader #5 Bright Movie 2024.mp4|poster|300: not in memory, loading
+11:12:46.945 [image] loader #4 Another Film 2019.mp4|poster|300: not in memory, loading
+11:12:46.945 [image] tile Lab Show appeared (loader #3, picture none yet)
+11:12:46.945 [image] loader #3 Lab Show S01E01.mp4|poster|504: not in memory, loading
+11:12:46.946 [image] tile Bright Movie (2024) appeared (loader #2, picture none yet)
+11:12:46.946 [image] loader #2 Bright Movie 2024.mp4|poster|504: not in memory, loading
+11:12:47.683 [zoom] source 0|f|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Bright Movie 2024.mp4 added at (90.0, 397.0, 128.0, 192.0)
+11:12:47.687 [zoom] source 0|s|lab show added at (231.0, 397.0, 129.0, 192.0)
+11:12:47.689 [zoom] source 0|d|/Users/runner/Library/Developer/CoreSimulator/Devices/B6BCFC3D-3ADD-42C8-BB29-33FF8FE7E0B0/data/Containers/Data/Application/73E8AEA0-59E4-4923-9957-5FA15D76B264/Documents/Media/Weekend picks added at (373.0, 397.0, 128.0, 192.0)
+11:12:48.423 [image] loader #5 Bright Movie 2024.mp4|poster|300: picture (poster tt9000003) after 851 ms
+11:12:48.431 [image] loader #2 Bright Movie 2024.mp4|poster|504: picture (poster tt9000003) after 1485 ms
+11:12:48.432 [image] loader #3 Lab Show S01E01.mp4|poster|504: picture (poster tt9000002) after 1486 ms
+11:12:48.747 [perf] panel tracks prebuilt in 60 ms
+11:12:49.089 [perf] panel settings prebuilt in 328 ms
+11:12:49.157 [perf] panel nowPlaying prebuilt in 50 ms
+11:12:49.172 [panel] now playing opens on q9 (tab 0, item 10 of 10, chapter -1)
+11:12:49.173 [panel] tab 0 list at y 0 of 588, 93 pt showing
+11:12:49.173 [image] loader #16 lab-10|wide|192: not in memory, loading
+11:12:49.174 [image] loader #15 lab-9|wide|192: not in memory, loading
+11:12:49.174 [image] loader #14 lab-8|wide|192: not in memory, loading
+11:12:49.175 [image] loader #13 lab-7|wide|192: not in memory, loading
+11:12:49.175 [image] loader #12 lab-6|wide|192: not in memory, loading
+11:12:49.293 [image] loader #11 lab-5|wide|192: not in memory, loading
+11:12:49.294 [image] loader #10 lab-4|wide|192: not in memory, loading
+11:12:49.295 [image] loader #9 lab-3|wide|192: not in memory, loading
+11:12:49.295 [image] loader #8 lab-2|wide|192: not in memory, loading
+11:12:49.295 [image] loader #7 lab-1|wide|192: not in memory, loading
+11:12:49.309 [image] loader #7 lab-1|wide|192: picture (artwork disk or network) after 13 ms
+11:12:49.310 [image] loader #8 lab-2|wide|192: picture (artwork disk or network) after 14 ms
+11:12:49.310 [image] loader #9 lab-3|wide|192: picture (artwork disk or network) after 15 ms
+11:12:49.624 [image] loader #10 lab-4|wide|192: picture (artwork disk or network) after 16 ms
+11:12:49.626 [image] loader #11 lab-5|wide|192: picture (artwork disk or network) after 450 ms
+11:12:49.626 [image] loader #12 lab-6|wide|192: picture (artwork disk or network) after 451 ms
+11:12:49.626 [image] loader #13 lab-7|wide|192: picture (artwork disk or network) after 451 ms
+11:12:49.626 [image] loader #14 lab-8|wide|192: picture (artwork disk or network) after 452 ms
+11:12:49.627 [image] loader #15 lab-9|wide|192: picture (artwork disk or network) after 453 ms
+11:12:49.634 [image] loader #16 lab-10|wide|192: picture (artwork disk or network) after 460 ms
+11:12:57.521 [ui] panel nowPlaying
+11:12:57.523 [ui] present panel nowPlaying from bar item 340×≤252
+11:12:57.523 [ui] panel: want nowPlaying (shown=none idle)
+11:12:57.524 [ui] panel: open nowPlaying
+11:12:57.610 [ui] present panel nowPlaying from bar item 340×≤252
+11:12:58.790 [ui] panel: opened nowPlaying
+11:12:58.795 [perf] panel open nowPlaying: 49 frames in 1266 ms, worst 328 ms, 4 late (frame 16.7 ms) · built in 1 ms, 1 ms after the tap
+11:13:02.783 [hang] main thread unresponsive for 2.4 s
+11:13:13.096 [hang] main thread unresponsive for 3.2 s
+11:13:44.628 [energy] cpu 8% (other 5%, main 3%) mem 57 MB (0 MB left) thermal=nominal playing=no
+11:13:46.450 [hang] main thread unresponsive for 1.8 s
+11:13:46.766 [energy] cpu 15% (other 10%, main 5%) mem 57 MB (0 MB left) thermal=nominal playing=no
+11:13:48.715 [hang] main thread unresponsive for 1.8 s
+11:14:08.361 [ui] panel: tap outside
+11:14:08.391 [ui] panel: close nowPlaying
+11:14:09.682 [ui] panel: closed nowPlaying
+11:14:09.683 [perf] panel close nowPlaying: 71 frames in 1292 ms, worst 17 ms, 0 late (frame 16.7 ms)
