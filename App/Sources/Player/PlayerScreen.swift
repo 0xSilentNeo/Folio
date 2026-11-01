@@ -40,10 +40,8 @@ struct PlayerScreen: View {
                     .allowsHitTesting(false)
                 }
 
-                if (model.buffering || model.isLoading) && model.errorMessage == nil {
-                    ProgressView().controlSize(.large).tint(.white).allowsHitTesting(false)
-                        .offset(y: ui.controlsVisible && !ui.locked ? -10 : 0)
-                }
+                BusySpinner(busy: (model.buffering || model.isLoading) && model.errorMessage == nil)
+                    .offset(y: ui.controlsVisible && !ui.locked ? -10 : 0)
 
                 // iOS 26: while a panel is open, a tap anywhere outside it closes
                 // it. Under the controls (the panel is part of them), whose other
@@ -867,6 +865,27 @@ struct PillIcon: View {
 /// Level indicator in the style of the system volume HUD: a horizontal
 /// capsule at the top centre, dark track, white fill, the icon inside the
 /// leading end. No text. Scales in and out.
+/// The loading spinner, shown once loading has lasted 0.35 s and gone at once
+/// when it's over. Seeks served from the buffer are over sooner, and a
+/// spinner that flashes for a few frames reads as a hiccup (2 Nov report;
+/// the 1 Nov log has ten seeks in one second while the phone turned).
+struct BusySpinner: View {
+    let busy: Bool
+    @State private var shown = false
+
+    var body: some View {
+        ZStack {
+            if shown { ProgressView().controlSize(.large).tint(.white) }
+        }
+        .allowsHitTesting(false)
+        .task(id: busy) {
+            guard busy else { shown = false; return }
+            try? await Task.sleep(for: .milliseconds(350))
+            if !Task.isCancelled { shown = true }
+        }
+    }
+}
+
 struct LevelHUD: View {
     let hud: PlayerUIState.GestureHUD
     let top: CGFloat

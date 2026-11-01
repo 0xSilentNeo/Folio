@@ -1651,6 +1651,7 @@ final class PlayerModel: ObservableObject {
         let buffer = c.double("audio-buffer") ?? 0.2
         let rate = paused ? 0 : (c.double("speed") ?? speed)
         let t0 = CACurrentMediaTime()
+        swapSeekQuietUntil = t0 + 2
         let span = PiPTrace.begin("output swap")
         PiPTrace.event("output swap to \(vo) starts")
         c.set("vo", vo)
@@ -1666,6 +1667,13 @@ final class PlayerModel: ObservableObject {
         dlog("player", String(format: "%@ in %.0f ms; picture at %.2f, sound at %.2f, audio buffer %.2f s → continue at %.2f (track and buffer kept)",
                               label, took * 1000, video0 ?? -1, audio0 ?? -1, buffer, target))
     }
+
+    /// The seek after an output swap (above) is mpv rebuilding its picture
+    /// from the buffer, not a wait for the network, so it shows no spinner:
+    /// 2 Nov report, a spinner flashed each time Notification Centre was
+    /// pulled down and on each PiP start and return. A real stall still
+    /// shows one (paused-for-cache). Cleared by the seek's playback-restart.
+    private var swapSeekQuietUntil: CFTimeInterval = 0
 
     /// Frees the CPU renderer once mpv's output is no longer the libmpv one
     /// (checked every 50 ms, for up to 3 s).
@@ -2013,6 +2021,10 @@ final class PlayerModel: ObservableObject {
     /// back into the player and the picture stays up until the player's own
     /// first frame is drawn, so there is no black flash or jump.
     private func willEnterForeground() {
+        if !isPiPActive, mode == .main, outputOffForAway, let c = client {
+            outputBackEarly(c)
+            return
+        }
         if isPiPActive { traceTransition("coming back to the app while PiP plays (return to player: \(defaults.bool(forKey: SettingsKey.pipReturnOnOpen)))") }
         guard isPiPActive, defaults.bool(forKey: SettingsKey.pipReturnOnOpen) else { return }
         PiPTrace.event("stop request 1 (app state \(UIApplication.shared.applicationState == .active ? "active" : UIApplication.shared.applicationState == .inactive ? "inactive" : "background"))")
@@ -2020,6 +2032,37 @@ final class PlayerModel: ObservableObject {
         pipRestoring = true
         returnFromPiP = true
         stopPiP()
+    }
+
+    /// Coming back from Notification Centre or the Home Screen (no PiP): the
+    /// video output comes back as the app comes forward, not once it's active.
+    /// 1 Nov log, Notification Centre at 20:12: "will enter foreground" at
+    /// 10.966, active at 11.814, and only then the output swap; the picture
+    /// moved again at 12.034, a second after the app started coming back.
+    /// Between those, Notification Centre slid up over a still picture, and
+    /// the swap's seek came after it was gone (2 Nov report: a stutter and a
+    /// spinner each time). Now the swap and its seek run while it slides up.
+    /// The app is in the foreground then (inactive, as under Control Centre,
+    /// where the Metal view draws on), so the GPU may be used.
+    /// If the decoder comes back in software (iOS hadn't let go of its
+    /// hardware decoder yet), it's built again once the app is active.
+    private var outputBackWhileComing = false
+    private func outputBackEarly(_ c: MPVClient) {
+        PiPTrace.event("coming forward: video output back now, before the app is active")
+        outputBackWhileComing = true
+        outputBackAfterAway(c)
+    }
+
+    private func checkDecoderAfterEarlyReturn() {
+        guard outputBackWhileComing else { return }
+        outputBackWhileComing = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+            guard let self, self.mode == .main, self.fileLoaded,
+                  self.defaults.string(forKey: SettingsKey.hwdec) != "no",
+                  self.hwdecCurrent.isEmpty || self.hwdecCurrent == "no" else { return }
+            dlog("player/warn", "back early: the decoder came back in software; building it again")
+            self.renewHardwareDecoder()
+        }
     }
 
     /// "Back to the player when you open the app": the stop asked for as the
@@ -2058,6 +2101,7 @@ final class PlayerModel: ObservableObject {
         if pendingMain { switchToMain(); setPiPLayerOnTop(false); return }
         guard mode == .main else { return }
         if renderer == .gl { glRenderer?.setRenderingAllowed(true, why: "app active") }
+        checkDecoderAfterEarlyReturn()
         if outputOffForAway, let c = client {
             outputBackAfterAway(c)
         } else if videoOffForBackground, let c = client {
@@ -2190,6 +2234,7 @@ extension PlayerModel: MPVClientDelegate {
             }
         case .playbackRestart:
             buffering = false
+            swapSeekQuietUntil = 0
             metalWaitRestarted = true
             PiPTrace.event("mpv: playback restart (first frame after the seek)")
             if renderer == .metal { scheduleSnapshot(after: 0.8) }
@@ -2230,7 +2275,7 @@ extension PlayerModel: MPVClientDelegate {
         case "paused-for-cache":
             buffering = value.bool ?? false
         case "seeking":
-            if value.bool == true { buffering = true }
+            if value.bool == true, CACurrentMediaTime() > swapSeekQuietUntil { buffering = true }
         case "eof-reached":
             if value.bool == true { handleEOF() }
         case "speed":
