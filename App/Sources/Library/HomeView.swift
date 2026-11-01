@@ -377,7 +377,7 @@ struct HomeView: View {
     private func libraryRows(width: CGFloat, margin: CGFloat) -> some View {
         let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
         if mode == .grid {
-            library(width: width, margin: margin).homeRow()
+            library(width: width, margin: margin)
         } else {
             let posters = tileArtwork == "poster"
             let style = ListTransition.current
@@ -404,36 +404,60 @@ struct HomeView: View {
         }
     }
 
-    /// Thumbnails view: the grid of tiles.
+    /// Thumbnails view: the tiles in rows, each row a list row of its own.
+    ///
+    /// Until 1.20.1 one list row held a LazyVGrid with every tile: a lazy
+    /// grid inside Home's List, itself a lazy collection view that sizes
+    /// each row as a whole. The 31 Oct and 2 Nov reports show "Mixed", the
+    /// fourth tile, drawn in the first row over Classroom of the Elite and
+    /// past the screen's edge, smaller than the other tiles, after the
+    /// player was closed in landscape, where the grid has 6 columns (3
+    /// upright on that phone). The lab never reproduced it, so the exact
+    /// path inside SwiftUI is unproven; the lazy grid was the one part of
+    /// Home that kept a layout of its own across a change of columns. Now a
+    /// row of tiles is a plain HStack of equal columns, each in its own list
+    /// row, and a different column count makes new rows.
+    @ViewBuilder
     private func library(width: CGFloat, margin: CGFloat) -> some View {
         let posters = tileArtwork == "poster"
         let cols = posters ? max(3, Int((width - margin * 2 + 14) / 124)) : max(2, Int((width - margin * 2 + 14) / 184))
-        let groups = self.groups
-        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: cols), spacing: 18) {
-            ForEach(groups) { g in
-                askToDelete(g, Group {
-                    if let folder = g.folder {
-                        folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(zoomID(g.id), zoomNS)) }
-                    } else {
-                        groupLink(g) {
-                            MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
-                                      key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
-                                      progress: history.entry(forURL: g.nextUp.path)?.progress,
-                                      fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
-                                      poster: posters, zoom: opensPage(g) ? ZoomSource(zoomID(g.id), zoomNS) : nil,
-                                      watched: allWatched(g), sizeBadge: g.size)
-                        }
-                    }
-                })
-                .modifier(GridProbe(name: g.title))
-                .accessibilityIdentifier("home:" + g.title)
+        ForEach(TileRow.rows(groups, columns: cols)) { row in
+            HStack(alignment: .top, spacing: 14) {
+                ForEach(row.groups) { g in
+                    gridTile(g, posters: posters)
+                        .frame(maxWidth: .infinity)
+                        .modifier(GridProbe(name: g.title))
+                        .accessibilityIdentifier("home:" + g.title)
+                }
+                // The last row's empty columns keep its tiles as wide as the rest.
+                ForEach(row.groups.count..<cols, id: \.self) { _ in
+                    Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
+                }
             }
+            .coordinateSpace(.named(GridProbe.space))
+            .modifier(GridProbe(name: "row \(row.index) of \(cols) columns for \(Int(width)) pt", inWindow: true))
+            .padding(.horizontal, margin)
+            .padding(.bottom, row.isLast ? 0 : 18)
+            .homeRow()
         }
-        .coordinateSpace(.named(GridProbe.space))
-        .onGeometryChange(for: CGSize.self, of: { $0.size }) { size in
-            LibTrace.layout.log("grid for \(Int(width)) pt: \(cols) columns, \(groups.count) entries, \(Int(size.width))×\(Int(size.height)) pt")
-        }
-        .padding(.horizontal, margin)
+    }
+
+    @ViewBuilder
+    private func gridTile(_ g: LibraryGroup, posters: Bool) -> some View {
+        askToDelete(g, Group {
+            if let folder = g.folder {
+                folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(zoomID(g.id), zoomNS)) }
+            } else {
+                groupLink(g) {
+                    MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
+                              key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
+                              progress: history.entry(forURL: g.nextUp.path)?.progress,
+                              fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
+                              poster: posters, zoom: opensPage(g) ? ZoomSource(zoomID(g.id), zoomNS) : nil,
+                              watched: allWatched(g), sizeBadge: g.size)
+                }
+            }
+        })
     }
 
     // Pushed through the path, not NavigationLink: inside a List a
@@ -937,6 +961,25 @@ struct OpenURLSheet: View {
     }
 }
 
+
+/// One row of Home's Thumbnails grid (HomeView.library). Its id holds the
+/// column count, so turning the phone to a layout with another count makes
+/// new rows rather than refilling the old ones.
+struct TileRow: Identifiable {
+    let id: String
+    let index: Int
+    let groups: [LibraryGroup]
+    let isLast: Bool
+
+    static func rows(_ groups: [LibraryGroup], columns: Int) -> [TileRow] {
+        let n = max(1, columns)
+        return stride(from: 0, to: groups.count, by: n).enumerated().map { i, start in
+            let slice = Array(groups[start..<min(start + n, groups.count)])
+            return TileRow(id: "\(n)|" + slice.map(\.id).joined(separator: "|"), index: i,
+                           groups: slice, isLast: start + n >= groups.count)
+        }
+    }
+}
 
 /// A folder of different titles (1.15.0, #10/#11): four of its own pictures in
 /// a 2 × 2 grid on a see-through card, the folder's total size at the bottom
