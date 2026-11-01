@@ -146,11 +146,13 @@ struct ZoomProbe: UIViewRepresentable {
 /// changes.
 struct GridProbe: ViewModifier {
     let name: String
+    /// Where the view is in the window, not in its grid row (a whole row).
+    var inWindow = false
 
     @ViewBuilder
     func body(content: Content) -> some View {
         if LibTrace.on {
-            content.onGeometryChange(for: CGRect.self, of: { $0.frame(in: .named(GridProbe.space)).integral }) { r in
+            content.onGeometryChange(for: CGRect.self, of: { $0.frame(in: inWindow ? .global : .named(GridProbe.space)).integral }) { r in
                 LibTrace.layout.log("\(name) at (\(Int(r.minX)), \(Int(r.minY)), \(Int(r.width)), \(Int(r.height)))")
             }
         } else {
