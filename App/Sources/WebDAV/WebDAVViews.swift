@@ -7,7 +7,7 @@ final class ServerStore: ObservableObject {
 
     private init() {
         if let data = UserDefaults.standard.data(forKey: "webdavServers"),
-           let list = try? JSONDecoder().decode([WebDAVServer].self, from: data) {
+           let list = JSONDecoder().decodeLossy(WebDAVServer.self, from: data) {
             servers = list
         }
     }
@@ -30,6 +30,8 @@ final class ServerStore: ObservableObject {
         s.password = nil
         servers.removeAll { $0.id == s.id }
         LibraryIndexStore.shared.clear(s.id)
+        // Its unfinished downloads went on retrying with no login.
+        DownloadManager.shared.cancelUnfinished(server: s.id)
     }
 
     func server(id: UUID) -> WebDAVServer? { servers.first { $0.id == id } }
@@ -113,8 +115,8 @@ struct ServerEditView: View {
     private func test() async {
         testing = true
         defer { testing = false }
-        server.password = password
-        let client = WebDAVClient(server: server)
+        // The typed password, for this test only: it's saved with Save.
+        let client = WebDAVClient(server: server, password: password)
         guard let url = client.url(forPath: server.rootPath) else { testResult = "Invalid URL"; return }
         do {
             let items = try await client.list(url)
@@ -125,7 +127,7 @@ struct ServerEditView: View {
     }
 }
 
-struct FolderSortPref: Codable { var sort: LibrarySort; var ascending: Bool }
+struct FolderSortPref: Codable, Equatable { var sort: LibrarySort; var ascending: Bool }
 
 /// The browser's order, worked out once per listing (not at every redraw).
 ///
@@ -202,6 +204,8 @@ struct WebDAVBrowserView: View {
 
     private var client: WebDAVClient { WebDAVClient(server: server) }
     private var sortKey: String { "\(server.id.uuidString)|\(url.path)" }
+    /// Downloads from here go into this package (and Media folder).
+    private var package: String { DownloadManager.packageName(folder: url, title: title) }
 
     var body: some View {
         List {
@@ -232,7 +236,7 @@ struct WebDAVBrowserView: View {
                         }
                         .buttonStyle(.plain)
                         if item.isMedia {
-                            DownloadButton(item: item, server: server, package: title, siblings: items)
+                            DownloadButton(item: item, server: server, package: package, siblings: items)
                         }
                     }
                     .accessibilityIdentifier("dav:" + item.name)
@@ -279,7 +283,7 @@ struct WebDAVBrowserView: View {
                     if !media.isEmpty {
                         Divider()
                         Button {
-                            DownloadManager.shared.enqueue(media + items.filter(\.isSubtitle), server: server, package: title)
+                            DownloadManager.shared.enqueue(media + items.filter(\.isSubtitle), server: server, package: package)
                         } label: { Label("Download all \(media.count) videos", systemImage: "arrow.down.circle") }
                     }
                 } label: { ToolbarGlyph("ellipsis.circle") }
@@ -350,8 +354,7 @@ struct WebDAVBrowserView: View {
         let subs = items.filter(\.isSubtitle)
         let queue: [MediaItem] = media.map { m in
             var mi = client.mediaItem(for: m, cleanTitles: cleanTitles)
-            let base = (m.name as NSString).deletingPathExtension.lowercased()
-            mi.subtitles = subs.filter { $0.name.lowercased().hasPrefix(base) }.map {
+            mi.subtitles = subs.filter { SubtitleMatch.belongs($0.name, to: m.name) }.map {
                 ExternalSubtitle(url: $0.url.absoluteString, lang: nil, title: $0.name)
             }
             return mi
@@ -367,12 +370,21 @@ struct WebDAVBrowserView: View {
         let own = (UserDefaults.standard.dictionary(forKey: SettingsKey.folderSorts)?[sortKey] as? Data)
             ?? UserDefaults.standard.data(forKey: SettingsKey.folderSortLast)
         guard let data = own, let pref = try? JSONDecoder().decode(FolderSortPref.self, from: data) else { return }
+        shownPref = pref
         sort = pref.sort
         ascending = pref.ascending
     }
 
+    /// The order the folder opened with. Only a different one is saved as the
+    /// folder's own: until 1.20.3 opening a folder saved the inherited order
+    /// for it, so every folder visited kept an entry and later changes made
+    /// elsewhere no longer reached it (review, 2 Nov).
+    @State private var shownPref: FolderSortPref?
+
     private func saveSortPref() {
-        guard prefLoaded, let data = try? JSONEncoder().encode(FolderSortPref(sort: sort, ascending: ascending)) else { return }
+        let pref = FolderSortPref(sort: sort, ascending: ascending)
+        guard prefLoaded, pref != shownPref, let data = try? JSONEncoder().encode(pref) else { return }
+        shownPref = pref
         var dict = UserDefaults.standard.dictionary(forKey: SettingsKey.folderSorts) ?? [:]
         dict[sortKey] = data
         UserDefaults.standard.set(dict, forKey: SettingsKey.folderSorts)

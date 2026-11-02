@@ -62,22 +62,30 @@ final class ImageCache: @unchecked Sendable {
         lock.lock()
         if let t = inflight[key] { lock.unlock(); return await t.value }
         let file = dir.appendingPathComponent(fileKey(url))
-        let task = Task.detached(priority: .userInitiated) { [session] () -> UIImage? in
-            var data = try? Data(contentsOf: file)
-            if data == nil {
-                guard let (d, resp) = try? await session.data(from: url),
-                      (resp as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true, !d.isEmpty else { return nil }
-                try? d.write(to: file, options: .atomic)
-                data = d
-            }
-            guard let data else { return nil }
-            return Self.downsample(data, maxPixel: maxPixel)
+        let task = Task.detached(priority: .userInitiated) { [session] in
+            await Self.load(url, file: file, maxPixel: maxPixel, session: session)
         }
         inflight[key] = task
         lock.unlock()
         let img = await task.value
         lock.lock(); inflight[key] = nil; lock.unlock()
         if let img { memory.setObject(img, forKey: mk, cost: Self.cost(img)) }
+        return img
+    }
+
+    /// The stored file, else a download. Only data that decodes is kept on
+    /// disk: an error page or a cut-off download used to be saved and then
+    /// fail on every launch. A stored file that no longer decodes is dropped
+    /// and fetched again.
+    private static func load(_ url: URL, file: URL, maxPixel: CGFloat, session: URLSession) async -> UIImage? {
+        if let data = try? Data(contentsOf: file) {
+            if let img = downsample(data, maxPixel: maxPixel) { return img }
+            try? FileManager.default.removeItem(at: file)
+        }
+        guard let (d, resp) = try? await session.data(from: url),
+              (resp as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true, !d.isEmpty,
+              let img = downsample(d, maxPixel: maxPixel) else { return nil }
+        try? d.write(to: file, options: .atomic)
         return img
     }
 
@@ -108,16 +116,8 @@ final class ImageCache: @unchecked Sendable {
         lock.lock()
         if let t = inflight[key] { lock.unlock(); return await t.value }
         let file = dir.appendingPathComponent("poster-" + SHA256.hash(data: Data(id.utf8)).prefix(16).map { String(format: "%02x", $0) }.joined())
-        let task = Task.detached(priority: .userInitiated) { [session] () -> UIImage? in
-            var data = try? Data(contentsOf: file)
-            if data == nil {
-                guard let (d, resp) = try? await session.data(from: url),
-                      (resp as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true, !d.isEmpty else { return nil }
-                try? d.write(to: file, options: .atomic)
-                data = d
-            }
-            guard let data else { return nil }
-            return Self.downsample(data, maxPixel: maxPixel)
+        let task = Task.detached(priority: .userInitiated) { [session] in
+            await Self.load(url, file: file, maxPixel: maxPixel, session: session)
         }
         inflight[key] = task
         lock.unlock()
@@ -149,17 +149,25 @@ struct CachedImage<Content: View, Placeholder: View>: View {
     var maxPixel: CGFloat = 900
     @ViewBuilder var content: (Image) -> Content
     @ViewBuilder var placeholder: () -> Placeholder
-    @State private var image: UIImage?
+    /// Kept with its address: a view given a new address (a reused row) shows
+    /// the placeholder, not the last title's picture, until the new one loads.
+    @State private var loaded: (url: URL, image: UIImage)?
+
+    private var shown: UIImage? {
+        guard let url else { return nil }
+        if let loaded, loaded.url == url { return loaded.image }
+        return ImageCache.shared.cached(url, maxPixel: maxPixel)
+    }
 
     var body: some View {
         Group {
-            if let img = image ?? url.flatMap({ ImageCache.shared.cached($0, maxPixel: maxPixel) }) { content(Image(uiImage: img)) } else { placeholder() }
+            if let img = shown { content(Image(uiImage: img)) } else { placeholder() }
         }
         .task(id: url) {
-            guard let url else { image = nil; return }
-            if let c = ImageCache.shared.cached(url, maxPixel: maxPixel) { image = c; return }
-            let img = await ImageCache.shared.image(url, maxPixel: maxPixel)
-            withAnimation(.easeOut(duration: 0.2)) { image = img }
+            guard let url else { loaded = nil; return }
+            if let c = ImageCache.shared.cached(url, maxPixel: maxPixel) { loaded = (url, c); return }
+            guard let img = await ImageCache.shared.image(url, maxPixel: maxPixel) else { return }
+            withAnimation(.easeOut(duration: 0.2)) { loaded = (url, img) }
         }
     }
 }

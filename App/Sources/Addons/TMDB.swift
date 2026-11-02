@@ -74,16 +74,57 @@ enum TMDB {
         }
         guard let results = obj?["results"] as? [[String: Any]] else { return [] }
         return results.enumerated().compactMap { i, r in
-            guard let id = r["id"] as? Int else { return nil }
-            let name = (r["title"] as? String) ?? (r["name"] as? String) ?? "–"
-            let date = (r["release_date"] as? String) ?? (r["first_air_date"] as? String) ?? ""
-            let rating = (r["vote_average"] as? Double).map { String(format: "%.1f", $0) }
-            var m = MetaItem(id: "tmdb:\(id)", type: type, name: name,
-                             poster: (r["poster_path"] as? String).map { image + "w342" + $0 },
-                             description: r["overview"] as? String, releaseInfo: String(date.prefix(4)), imdbRating: rating, genres: nil,
-                             rank: sort == .topRated && genre == nil ? (page - 1) * 20 + i + 1 : nil)
-            m.background = (r["backdrop_path"] as? String).map { image + "w780" + $0 }
-            return m
+            meta(r, type: type, rank: sort == .topRated && genre == nil ? (page - 1) * 20 + i + 1 : nil)
+        }
+    }
+
+    /// A film or series of a TMDB list as a tile ("tmdb:ID", resolved to its
+    /// IMDb id when opened).
+    private static func meta(_ r: [String: Any], type: String, rank: Int? = nil) -> MetaItem? {
+        guard let id = r["id"] as? Int else { return nil }
+        let name = (r["title"] as? String) ?? (r["name"] as? String) ?? "–"
+        let date = (r["release_date"] as? String) ?? (r["first_air_date"] as? String) ?? ""
+        let rating = (r["vote_average"] as? Double).map { String(format: "%.1f", $0) }
+        var m = MetaItem(id: "tmdb:\(id)", type: type, name: name,
+                         poster: (r["poster_path"] as? String).map { image + "w342" + $0 },
+                         description: r["overview"] as? String, releaseInfo: String(date.prefix(4)), imdbRating: rating, genres: nil,
+                         rank: rank)
+        m.background = (r["backdrop_path"] as? String).map { image + "w780" + $0 }
+        return m
+    }
+
+    // MARK: - Recommendations (Discover's For you row)
+
+    /// The TMDB film or series with this IMDb id (/find). `type` ("movie" or
+    /// "series") picks one when TMDB has both; nil takes whichever there is.
+    static func find(imdb id: String, type: String?) async -> (id: Int, isMovie: Bool)? {
+        guard enabled, let obj = await get("/find/\(id)", ["external_source": "imdb_id"]) else { return nil }
+        let movie = ((obj["movie_results"] as? [[String: Any]]) ?? []).first?["id"] as? Int
+        let show = ((obj["tv_results"] as? [[String: Any]]) ?? []).first?["id"] as? Int
+        if type == "series", let show { return (show, false) }
+        if let movie { return (movie, true) }
+        if let show { return (show, false) }
+        return nil
+    }
+
+    /// One of TMDB's recommendations for a title, and how many TMDB users rated it.
+    struct Recommendation: Sendable {
+        let meta: MetaItem
+        let votes: Int
+    }
+
+    /// TMDB's recommendations for a film or series, in TMDB's order (its
+    /// first page, 20 titles); nil when the request failed.
+    static func recommendations(tmdb id: Int, isMovie: Bool) async -> [Recommendation]? {
+        guard enabled, let obj = await get("/\(isMovie ? "movie" : "tv")/\(id)/recommendations"),
+              let results = obj["results"] as? [[String: Any]] else { return nil }
+        return results.compactMap { r in
+            // Recommendations of a film can be series and back: the result says which.
+            let kind = (r["media_type"] as? String).map { $0 == "tv" ? "series" : "movie" } ?? (isMovie ? "movie" : "series")
+            guard var m = meta(r, type: kind) else { return nil }
+            m.originalName = (r["original_title"] as? String) ?? (r["original_name"] as? String)
+            if m.originalName == m.name { m.originalName = nil }
+            return Recommendation(meta: m, votes: (r["vote_count"] as? Int) ?? 0)
         }
     }
 

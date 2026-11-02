@@ -92,7 +92,11 @@ struct SwipeRow<Content: View>: View {
         offset = x
     }
 
-    private func ended(_ t: CGFloat, _ velocity: CGFloat) {
+    private func ended(_ t: CGFloat, _ velocity: CGFloat, _ finished: Bool) {
+        // A swipe the system cancelled (a call, the app leaving, a scroll
+        // taking over) springs back. Until 1.20.3 it counted as let go, and a
+        // long one ran the first action: Cancel on a download (review, 2 Nov).
+        guard finished else { close(); return }
         if width > 0, -offset >= width * 0.6, let first = actions.first {
             close()
             first.action()
@@ -168,8 +172,9 @@ struct SwipeTile<Content: View>: View {
         drag = isOpen ? 0 : max(-24, min(0, t * 0.3))
     }
 
-    private func ended(_ t: CGFloat, _ velocity: CGFloat) {
-        dlog("ui", "swipe tile \(id): ended at \(Int(t)) pt, \(Int(velocity)) pt/s (\(isOpen ? "open" : "closed"))")
+    private func ended(_ t: CGFloat, _ velocity: CGFloat, _ finished: Bool) {
+        dlog("ui", "swipe tile \(id): \(finished ? "ended" : "cancelled") at \(Int(t)) pt, \(Int(velocity)) pt/s (\(isOpen ? "open" : "closed"))")
+        guard finished else { withAnimation(.snappy(duration: 0.25)) { drag = 0 }; return }
         withAnimation(.snappy(duration: 0.25)) {
             drag = 0
             if isOpen {
@@ -189,7 +194,8 @@ struct SwipeTile<Content: View>: View {
 private struct LeftSwipeRecognizer: UIGestureRecognizerRepresentable {
     var isOpen: Bool
     var onChanged: (CGFloat) -> Void
-    var onEnded: (CGFloat, CGFloat) -> Void
+    /// Translation, velocity, and whether the finger was lifted (false: cancelled).
+    var onEnded: (CGFloat, CGFloat, Bool) -> Void
 
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {
         var isOpen = false
@@ -218,7 +224,8 @@ private struct LeftSwipeRecognizer: UIGestureRecognizerRepresentable {
         let t = g.translation(in: nil).x
         switch g.state {
         case .changed: onChanged(t)
-        case .ended, .cancelled, .failed: onEnded(t, g.velocity(in: nil).x)
+        case .ended: onEnded(t, g.velocity(in: nil).x, true)
+        case .cancelled, .failed: onEnded(t, g.velocity(in: nil).x, false)
         default: break
         }
     }

@@ -21,6 +21,9 @@ struct MediaTrack: Identifiable, Hashable {
     let dvProfile: Int?
     let width: Int?
     let height: Int?
+    /// mpv's track flags (subtitles): forced lines only; for the hearing impaired.
+    var forced = false
+    var hearingImpaired = false
 
     var languageName: String? {
         guard let lang, !lang.isEmpty else { return nil }
@@ -48,6 +51,8 @@ struct MediaTrack: Identifiable, Hashable {
             if let w = width, let h = height, w > 0 { parts.append("\(w)×\(h)") }
         default:
             if let codec { parts.append(AudioFormat.subtitleName(codec)) }
+            if forced { parts.append("Forced") }
+            if hearingImpaired { parts.append("SDH") }
         }
         if external { parts.append("External") }
         if isDefault { parts.append("Default") }
@@ -231,6 +236,12 @@ final class PlayerModel: ObservableObject {
     private var lastPiPSync = Date.distantPast
     private var autoSkipped: Set<String> = []
     private var segmentsRequested = false
+    /// The loaded file's chapter list has been read (refreshChapters). Skip
+    /// segments wait for it as well as for the length: until 1.20.3 they were
+    /// decided as soon as the length was known, often before the chapters
+    /// came, and never again, so a file's own chapters lost to the online
+    /// lookup (review, 2 Nov).
+    private var chaptersRead = false
     private var fileLoaded = false
     private var observers: [NSObjectProtocol] = []
     private var toastWork: DispatchWorkItem?
@@ -247,8 +258,9 @@ final class PlayerModel: ObservableObject {
 
     private let defaults = UserDefaults.standard
 
-    init?(queue: [MediaItem], startIndex: Int = 0) {
+    init?(queue: [MediaItem], startIndex: Int = 0, fromStart: Bool = false) {
         guard !queue.isEmpty else { return nil }
+        startFirstAtZero = fromStart
         self.queue = queue
         self.queueIndex = min(max(0, startIndex), queue.count - 1)
         if UserDefaults.standard.string(forKey: SettingsKey.renderer) == "gl", let gl = SampleBufferRenderer.make(output: pip.makeSink()) {
@@ -289,6 +301,7 @@ final class PlayerModel: ObservableObject {
         c.delegate = self
         client = c
         observe(c)
+        probeAudioFilters(c)
 
         if let glRenderer {
             do { try glRenderer.attach(to: c) } catch {
@@ -332,6 +345,8 @@ final class PlayerModel: ObservableObject {
         dlog("player", "close at \(Self.format(position))")
         saveHistory(force: true)
         HistoryStore.shared.flush()
+        ShowMemoryStore.shared.flush()
+        closeSubtitleSearch()
         observers.forEach { NotificationCenter.default.removeObserver($0) }
         observers = []
         tearDownRemoteCommands()
@@ -400,6 +415,9 @@ final class PlayerModel: ObservableObject {
         c.setOption("terminal", "no")
         c.setOption("idle", "yes")
         c.setOption("keep-open", "yes")
+        // A saved Loop mode: until 1.20.3 it was set only when changed, so a
+        // new session ignored it (review, 2 Nov).
+        c.setOption("loop-file", playbackMode == "loop" ? "inf" : "no")
         c.setOption("log-file", MPVFiles.logFile.path)
         c.setOption("screenshot-directory", MPVFiles.screenshotsDir.path)
         c.setOption("watch-later-dir", MPVFiles.watchLaterDir.path)
@@ -428,13 +446,11 @@ final class PlayerModel: ObservableObject {
         c.setOption("sub-fonts-dir", MPVFiles.fontsDir.path)
         if let s = defaults.string(forKey: SettingsKey.subLangs), !s.isEmpty { c.setOption("slang", s) }
         if let s = defaults.string(forKey: SettingsKey.audioLangs), !s.isEmpty { c.setOption("alang", s) }
-        c.setOption("sub-scale", String(defaults.double(forKey: SettingsKey.subScale)))
-        c.setOption("sub-bold", defaults.bool(forKey: SettingsKey.subBold) ? "yes" : "no")
-        if defaults.bool(forKey: SettingsKey.subBox) {
-            c.setOption("sub-border-style", "background-box")
-            c.setOption("sub-back-color", "0.0/0.0/0.0/0.6")
-        }
-        c.setOption("sub-pos", String(defaults.integer(forKey: SettingsKey.subPos)))
+        // The subtitle style preset over your size, position, bold and box
+        // (1.20.3, 2 Nov). Set before mpv reads mpv.conf, which still wins.
+        for (k, v) in SubtitleStyle.savedOptions(defaults) { c.setOption(k, v) }
+        // Night mode's Dolby range compression (AudioFilters).
+        if nightMode { c.setOption("ad-lavc-ac3drc", AudioFilters.ac3drc(night: true)) }
         c.setOption("speed", String(defaults.double(forKey: SettingsKey.defaultSpeed)))
         let shaders = Anime4K.currentShaderList()
         if !shaders.isEmpty { c.setOption("glsl-shaders", shaders) }
@@ -454,8 +470,40 @@ final class PlayerModel: ObservableObject {
             dlog("player", "picture mode \(pictureMode.rawValue)")
         }
     }
+    /// Chosen here, it's also the mode for titles with none remembered (as
+    /// before 1.20.3); applied from a show's memory, it's that show's only.
     @Published var anime4kMode: Anime4KMode = Anime4K.mode {
-        didSet { Anime4K.mode = anime4kMode; applyShaderList() }
+        didSet {
+            if !applyingMemory {
+                Anime4K.mode = anime4kMode
+                remember { $0.anime4k = self.anime4kMode.rawValue }
+            }
+            applyShaderList()
+        }
+    }
+    /// Night mode and dialogue boost (AudioFilters): Settings → Audio &
+    /// Subtitles gives what a player starts with; the player's menu changes
+    /// them for this player session.
+    @Published var nightMode: Bool = UserDefaults.standard.bool(forKey: SettingsKey.nightMode) {
+        didSet {
+            guard nightMode != oldValue else { return }
+            client?.set("ad-lavc-ac3drc", AudioFilters.ac3drc(night: nightMode))
+            updateAudioFilters(because: nightMode ? "night mode on" : "night mode off")
+        }
+    }
+    @Published var dialogueBoost: Bool = UserDefaults.standard.bool(forKey: SettingsKey.dialogueBoost) {
+        didSet {
+            guard dialogueBoost != oldValue else { return }
+            updateAudioFilters(because: dialogueBoost ? "dialogue boost on" : "dialogue boost off")
+        }
+    }
+    /// What the audio filters do now, for the menu ("Compressor", "Centre channel louder").
+    @Published private(set) var audioFilterPlan: AudioFilters.Plan?
+    @Published var subtitleStyle: SubtitleStyle = SubtitleStyle.current {
+        didSet {
+            SubtitleStyle.current = subtitleStyle
+            applySubtitleStyle()
+        }
     }
     @Published var anime4kQuality: Anime4KQuality = Anime4K.quality {
         didSet { Anime4K.quality = anime4kQuality; applyShaderList() }
@@ -488,8 +536,10 @@ final class PlayerModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08, execute: w)
     }
 
+    /// The player's own Anime4K mode (a show's remembered one may differ
+    /// from the saved default), then your shaders.
     private func applyShaderList() {
-        client?.set("glsl-shaders", Anime4K.currentShaderList())
+        client?.set("glsl-shaders", (Anime4K.paths(mode: anime4kMode, quality: anime4kQuality) + MPVFiles.activeShaderPaths).joined(separator: ":"))
     }
 
     private func observe(_ c: MPVClient) {
@@ -514,6 +564,7 @@ final class PlayerModel: ObservableObject {
         c.observe("hwdec-current", .string)
         c.observe("video-params/gamma", .string)
         c.observe("audio-out-params/channels", .string)
+        c.observe("audio-params/channels", .string)        // the track's own channels (AudioFilters)
         c.observe("demuxer-cache-duration", .double)
         c.observe("panscan", .double)
     }
@@ -553,7 +604,13 @@ final class PlayerModel: ObservableObject {
         upNextDismissed = false
         postCredits = false
         segmentsRequested = false
+        chaptersRead = false
         fileLoaded = false
+        memoryApplied = false
+        pendingSubtitle = nil
+        resolveShowKey(for: item)
+        dropLayoutFilter(c)
+        subtitleSearch?.cancel(); subtitleSearch = nil
         isLoading = true
         position = 0
         clock.position = 0
@@ -602,7 +659,13 @@ final class PlayerModel: ObservableObject {
         updateNowPlaying()
     }
 
+    /// Start over (TitleHeroView): the first file opens at 0. Until 1.20.3 its
+    /// history was deleted before the player opened, so a file that failed to
+    /// open, or a quick close, lost its resume point and watched mark.
+    private var startFirstAtZero = false
+
     private func startOptions(for item: MediaItem, toast: Bool) -> [String] {
+        if startFirstAtZero { startFirstAtZero = false; return ["start=0"] }
         guard defaults.bool(forKey: SettingsKey.resumePlayback),
               let entry = HistoryStore.shared.entry(for: item.id), entry.canResume else { return [] }
         if toast { showToast("Resuming from \(Self.format(entry.position))") }
@@ -941,6 +1004,8 @@ final class PlayerModel: ObservableObject {
         maybeRequestSegments()
         updateNowPlaying()
         startScreener()
+        applyMemoryIfReady()
+        readAudioLayoutLater()
     }
 
     /// The file's length: the time bar, skip segments (looked up only once
@@ -1001,9 +1066,14 @@ final class PlayerModel: ObservableObject {
     // MARK: Tracks / chapters
 
     private var tracksRefreshPending = false
+    /// Asked for while one was running: run once more after it, so the list
+    /// read is never one from before the change (the file loading, a
+    /// subtitle added), which show memory reads the tracks from.
+    private var tracksRefreshAgain = false
 
     func refreshTracks() {
-        guard let c = client, !tracksRefreshPending else { return }
+        guard let c = client else { return }
+        guard !tracksRefreshPending else { tracksRefreshAgain = true; return }
         tracksRefreshPending = true
         c.query({ c -> ([MediaTrack], String) in
             var list: [MediaTrack] = []
@@ -1020,7 +1090,9 @@ final class PlayerModel: ObservableObject {
                     channelCount: type == "audio" ? c.int(p + "demux-channel-count").map(Int.init) : nil,
                     dvProfile: type == "video" ? c.int(p + "dolby-vision-profile").map(Int.init) : nil,
                     width: type == "video" ? c.int(p + "demux-w").map(Int.init) : nil,
-                    height: type == "video" ? c.int(p + "demux-h").map(Int.init) : nil
+                    height: type == "video" ? c.int(p + "demux-h").map(Int.init) : nil,
+                    forced: type == "sub" ? c.flag(p + "forced") ?? false : false,
+                    hearingImpaired: type == "sub" ? c.flag(p + "hearing-impaired") ?? false : false
                 ))
             }
             return (list, c.string("video-params/gamma") ?? "")
@@ -1029,11 +1101,20 @@ final class PlayerModel: ObservableObject {
             self.tracksRefreshPending = false
             if result.0 != self.tracks { self.tracks = result.0 }
             self.updateVideoFormat(gamma: result.1)
+            if self.tracksRefreshAgain {
+                self.tracksRefreshAgain = false
+                self.refreshTracks()
+                return
+            }
+            self.applyMemoryIfReady()
+            self.retryPendingSubtitle()
+            self.updateAudioFilters(because: "tracks read")
         }
     }
 
     func refreshChapters() {
         guard let c = client else { chapters = []; return }
+        let started = loadStarted, afterLoad = fileLoaded
         c.query({ c -> [MediaChapter] in
             let n = c.int("chapter-list/count") ?? 0
             var list: [MediaChapter] = []
@@ -1044,16 +1125,34 @@ final class PlayerModel: ObservableObject {
             }
             return list
         }) { [weak self] list in
-            guard let self else { return }
+            guard let self, started == self.loadStarted else { return }
             if list != self.chapters { self.chapters = list }
+            if afterLoad, !self.chaptersRead {
+                self.chaptersRead = true
+                self.maybeRequestSegments()
+            }
         }
     }
 
     func tracks(_ type: String) -> [MediaTrack] { tracks.filter { $0.type == type } }
 
+    /// A track picked in the Tracks menu: remembered for the show.
     func selectTrack(_ type: String, id: Int?) {
         let prop = type == "audio" ? "aid" : type == "sub" ? "sid" : "vid"
         client?.set(prop, id.map(String.init) ?? "no")
+        switch type {
+        case "audio":
+            guard let t = tracks.first(where: { $0.type == "audio" && $0.id == id }) else { return }
+            remember { $0.audio = AudioChoice(t) }
+        case "sub":
+            pendingSubtitle = nil
+            if let id, let t = tracks.first(where: { $0.type == "sub" && $0.id == id }) {
+                remember { $0.subtitle = SubtitleChoice(t) }
+            } else if id == nil {
+                remember { $0.subtitle = .turnedOff }
+            }
+        default: break
+        }
     }
 
     func addSubtitle(url: URL) {
@@ -1063,6 +1162,39 @@ final class PlayerModel: ObservableObject {
         try? FileManager.default.copyItem(at: url, to: dest)
         if scoped { url.stopAccessingSecurityScopedResource() }
         client?.command(["sub-add", dest.path, "select"])
+    }
+
+    // MARK: Subtitle search (SubtitleSearch)
+
+    /// "Search subtitles…" in the Tracks menu: the card over the player.
+    @Published var subtitleSearch: SubtitleSearch?
+
+    func searchSubtitles() {
+        subtitleSearch?.cancel()
+        let s = SubtitleSearch(item: playingItem ?? item)
+        subtitleSearch = s
+        s.start()
+    }
+
+    func closeSubtitleSearch() {
+        subtitleSearch?.cancel()
+        subtitleSearch = nil
+    }
+
+    /// A search result tapped: added to the file and shown ("cached": one
+    /// added before, by the addon at the start or an earlier tap, is
+    /// selected instead of loaded twice), and remembered for the show.
+    func addSearchedSubtitle(_ r: SubtitleSearch.Result) {
+        guard let c = client else { return }
+        let lang = r.lang ?? ""
+        let title = "\(SubtitleSearch.languageName(TrackMatch.language(r.lang) ?? "")) · \(r.label)"
+        addedSubtitles.insert(r.url)
+        pendingSubtitle = nil
+        c.commandAsync(["sub-add", r.url, "cached", title, lang])
+        dlog("subs", "search: added \(r.label) (\(lang.isEmpty ? "no language" : lang))")
+        remember { $0.subtitle = SubtitleChoice(lang: r.lang, title: title, external: true) }
+        closeSubtitleSearch()
+        showToast("Subtitle added")
     }
 
     private var lastGamma = ""
@@ -1147,13 +1279,36 @@ final class PlayerModel: ObservableObject {
 
     func setVolume(_ v: Double) { client?.set("volume", min(150, max(0, v))) }
     var volume: Double { client?.double("volume") ?? 100 }
-    func setSubDelay(_ v: Double) { client?.set("sub-delay", v) }
-    func setAudioDelay(_ v: Double) { client?.set("audio-delay", v) }
-    func setSubScale(_ v: Double) { client?.set("sub-scale", v) }
+    /// Delays set in the menus: remembered for the show, and the subtitle
+    /// delay for this file too (a file's own delay wins over the show's).
+    func setSubDelay(_ v: Double) {
+        let v = (v * 1000).rounded() / 1000
+        client?.set("sub-delay", v)
+        delaysTouched = true
+        guard rememberOn, let key = memoryKey(for: memoryItem) else { return }
+        ShowMemoryStore.shared.setSubDelay(v, file: memoryItem.id, for: key)
+        rememberedShow = key.name
+    }
+    func setAudioDelay(_ v: Double) {
+        let v = (v * 1000).rounded() / 1000
+        client?.set("audio-delay", v)
+        delaysTouched = true
+        remember { $0.audioDelay = v }
+    }
+    /// Your size times the style preset's (Large is a third larger).
+    func setSubScale(_ v: Double) { client?.set("sub-scale", v * subtitleStyle.scaleFactor) }
+
+    /// The style preset with your size, position, bold and box, live.
+    func applySubtitleStyle() {
+        guard let c = client else { return }
+        for (k, v) in SubtitleStyle.savedOptions(defaults) { c.set(k, v) }
+    }
 
     func toggleZoom() {
-        client?.set("panscan", zoomToFill ? 0.0 : 1.0)
-        showToast(zoomToFill ? "Fit" : "Fill")
+        let fill = !zoomToFill
+        client?.set("panscan", fill ? 1.0 : 0.0)
+        showToast(fill ? "Fill" : "Fit")
+        remember { $0.panscan = fill ? 1 : 0 }
     }
 
     func setAspect(_ value: String) {
@@ -1249,10 +1404,225 @@ final class PlayerModel: ObservableObject {
         HistoryStore.shared.record(stored, position: position, duration: duration)
     }
 
+    // MARK: Show memory (ShowMemory.swift)
+
+    private var rememberOn: Bool { defaults.bool(forKey: SettingsKey.rememberPerShow) }
+    /// The file mpv has open (see playingItem): what's remembered is for its show.
+    private var memoryItem: MediaItem { playingItem ?? item }
+    /// The open file's show, once known.
+    private var showKey: (itemID: String, key: ShowKey)?
+    private var memoryApplied = false
+    /// While a show's settings are applied: they aren't a choice to remember.
+    private var applyingMemory = false
+    /// A remembered subtitle the file didn't have when its tracks were first
+    /// read: an addon's subtitles are added after the file opens.
+    private var pendingSubtitle: (choice: SubtitleChoice, until: Date)?
+    /// The show's name when something is remembered for it (the menu's Forget row).
+    @Published private(set) var rememberedShow: String?
+
+    private func memoryKey(for item: MediaItem) -> ShowKey? {
+        guard let k = showKey, k.itemID == item.id else { return nil }
+        return k.key
+    }
+
+    /// The show of the file being opened: an addon item's IMDb id at once; a
+    /// file's from its saved release match (TitleIdentity, no network), with
+    /// its name as the other key.
+    private func resolveShowKey(for item: MediaItem) {
+        showKey = nil
+        rememberedShow = nil
+        let id = item.id
+        func showID(_ identity: String?) -> String? { identity.map { String($0.prefix { $0 != ":" }) } }
+        if case .addon = item.source {
+            setShowKey(ShowKey.make(item: item, imdb: showID(TitleIdentity.fromAddonKey(item.historyKey ?? ""))), for: id)
+            return
+        }
+        let name = item.fileName
+        var folder: String?
+        if case .webdav = item.source, let u = URL(string: item.url) {
+            let f = u.deletingLastPathComponent().lastPathComponent
+            folder = f.removingPercentEncoding ?? f
+        }
+        Task { [weak self] in
+            let identity = await TitleIdentity.forFile(name: name, folder: folder) { release in
+                guard let m = await ReleaseMatcher.shared.saved(release), m.confident else { return nil }
+                return m.imdbID
+            }
+            self?.setShowKey(ShowKey.make(item: item, imdb: showID(identity)), for: id)
+        }
+    }
+
+    private func setShowKey(_ key: ShowKey?, for id: String) {
+        guard memoryItem.id == id else { return }
+        guard let key else { dlog("memory", "no show to remember settings for (\(memoryItem.fileName))"); return }
+        showKey = (id, key)
+        rememberedShow = ShowMemoryStore.shared.entry(for: key.keys) != nil ? key.name : nil
+        applyMemoryIfReady()
+    }
+
+    /// A delay was changed in this player (by you or a show's memory): a
+    /// show with none remembered goes back to 0. Until then a delay is left
+    /// as it is, so one from mpv.conf (a Bluetooth headset's) still applies.
+    private var delaysTouched = false
+
+    /// Once per file, when it's open, its tracks are known and its show is:
+    /// what's remembered for the show. Delays are the show's own: with none
+    /// remembered, one set for another show in this player doesn't carry
+    /// over to this one. The Anime4K mode likewise goes back to your default.
+    private func applyMemoryIfReady() {
+        guard rememberOn, fileLoaded, !memoryApplied, let c = client, let key = memoryKey(for: memoryItem),
+              tracks.contains(where: { $0.type == "audio" || $0.type == "video" }) else { return }
+        memoryApplied = true
+        let entry = ShowMemoryStore.shared.entry(for: key.keys)
+        let s = entry?.settings ?? ShowSettings()
+        var done: [String] = []
+        applyingMemory = true
+        defer { applyingMemory = false }
+        let sub = entry?.subDelay(file: memoryItem.id) ?? s.subDelay ?? (delaysTouched ? 0 : subDelay)
+        if abs(sub - subDelay) > 0.0005 { c.set("sub-delay", sub); delaysTouched = true; done.append(String(format: "subtitle delay %+.2f s", sub)) }
+        let audio = s.audioDelay ?? (delaysTouched ? 0 : audioDelay)
+        if abs(audio - audioDelay) > 0.0005 { c.set("audio-delay", audio); delaysTouched = true; done.append(String(format: "audio delay %+.0f ms", audio * 1000)) }
+        if let p = s.panscan, (p > 0.5) != zoomToFill { c.set("panscan", p); done.append(p > 0.5 ? "Fill" : "Fit") }
+        let mode = s.anime4k.flatMap(Anime4KMode.init(rawValue:)) ?? Anime4K.mode
+        if mode != anime4kMode { anime4kMode = mode; done.append("Anime4K \(mode.title)") }
+        if let a = s.audio {
+            if let t = TrackMatch.audio(a, among: tracks) {
+                if !t.selected { c.set("aid", String(t.id)); done.append("audio \(t.id) \(t.label) \(t.detail)") }
+            } else {
+                done.append("no \(a.lang ?? "untagged") audio like the remembered one")
+            }
+        }
+        if let sc = s.subtitle { applySubtitle(sc, c, &done) }
+        dlog("memory", "\(key.name) [\(key.keys.joined(separator: ", "))]: "
+             + (entry == nil ? "nothing remembered yet" + (done.isEmpty ? "" : "; " + done.joined(separator: ", "))
+                : done.isEmpty ? "already as remembered" : done.joined(separator: ", ")))
+    }
+
+    private func applySubtitle(_ choice: SubtitleChoice, _ c: MPVClient, _ done: inout [String]) {
+        if choice.off {
+            if tracks.contains(where: { $0.type == "sub" && $0.selected }) { c.set("sid", "no"); done.append("subtitles off") }
+            return
+        }
+        if let t = TrackMatch.subtitle(choice, among: tracks) {
+            if !t.selected { c.set("sid", String(t.id)); done.append("subtitles \(t.id) \(t.label) \(t.detail)") }
+            // An addon's file was remembered: one of those may still come.
+            if choice.external && !t.external { pendingSubtitle = (choice, Date().addingTimeInterval(20)) }
+        } else {
+            pendingSubtitle = (choice, Date().addingTimeInterval(20))
+            done.append("subtitles in \(choice.lang ?? "no language") not here yet")
+        }
+    }
+
+    /// The tracks changed (a subtitle added): the remembered subtitle, if it
+    /// wasn't there before, for 20 s after the file opened and until you
+    /// pick one yourself.
+    private func retryPendingSubtitle() {
+        guard let p = pendingSubtitle, let c = client else { return }
+        guard Date() < p.until, fileLoaded else { pendingSubtitle = nil; return }
+        guard let t = TrackMatch.subtitle(p.choice, among: tracks), !(p.choice.external && !t.external) else { return }
+        pendingSubtitle = nil
+        guard !t.selected else { return }
+        c.set("sid", String(t.id))
+        dlog("memory", "subtitles \(t.id) \(t.label) \(t.detail), added after the file opened")
+    }
+
+    /// A choice of yours, for the show of the open file.
+    private func remember(_ change: (inout ShowSettings) -> Void) {
+        guard rememberOn, !applyingMemory, let key = memoryKey(for: memoryItem) else { return }
+        ShowMemoryStore.shared.update(key) { change(&$0.settings) }
+        rememberedShow = key.name
+    }
+
+    /// The player menu's "Forget settings for …".
+    func forgetShow() {
+        guard let key = memoryKey(for: memoryItem), let e = ShowMemoryStore.shared.entry(for: key.keys) else { return }
+        ShowMemoryStore.shared.forget(e.id)
+        rememberedShow = nil
+        dlog("memory", "\(key.name): forgotten")
+        showToast("Forgot settings for \(key.name)")
+    }
+
+    // MARK: Audio filters (AudioFilters.swift)
+
+    /// The playing track's channels as decoded (audio-params), nil while unknown.
+    private var audioLayout: String?
+    /// The graph in mpv's af list now.
+    private var appliedAudioGraph: String?
+    private var appliedLayoutSpecific = false
+
+    /// Which optional filters the engine has (once per app run), then the
+    /// filters if they start on.
+    private func probeAudioFilters(_ c: MPVClient) {
+        if AudioFilters.available == nil {
+            let probe = "@\(AudioFilters.label)-probe"
+            let found = AudioFilters.probe { name in
+                let ok = c.command(["af", "add", "\(probe):\(name)"]) >= 0
+                if ok { c.command(["af", "remove", probe]) }
+                return ok
+            }
+            AudioFilters.available = found
+            dlog("audio", "optional audio filters in this engine: \(found.isEmpty ? "none" : found.sorted().joined(separator: ", ")) (asked for \(AudioFilters.optional.joined(separator: ", ")))")
+        }
+        if nightMode { dlog("audio", "night mode on at start: Dolby range compression \(AudioFilters.ac3drc(night: true))") }
+    }
+
+    /// Puts the graph for night mode and dialogue boost in mpv's af list
+    /// (or takes it out), for the playing track's channels: the decoder's
+    /// layout, or before it's known, the track's as the file gives it. Only
+    /// a changed graph touches mpv (each change rebuilds its audio filters).
+    private func updateAudioFilters(because why: String) {
+        guard let c = client else { return }
+        let on = nightMode || dialogueBoost
+        let layout = audioLayout ?? tracks.first { $0.type == "audio" && $0.selected }?.channels
+        if on && layout == nil { return }          // applied when the channels are known
+        let plan = AudioFilters.plan(night: nightMode, dialogue: dialogueBoost, layout: layout, available: AudioFilters.available ?? [])
+        if plan != audioFilterPlan { audioFilterPlan = plan }
+        guard plan?.graph != appliedAudioGraph else { return }
+        if appliedAudioGraph != nil {
+            let r = c.command(["af", "remove", "@" + AudioFilters.label])
+            if r < 0 { dlog("audio/error", "af remove @\(AudioFilters.label) -> \(String(cString: mpv_error_string(r)))") }
+            appliedAudioGraph = nil
+            appliedLayoutSpecific = false
+        }
+        guard let plan else { dlog("audio", "\(why): audio filters off"); return }
+        let r = c.command(["af", "add", plan.entry])
+        if r >= 0 {
+            appliedAudioGraph = plan.graph
+            appliedLayoutSpecific = plan.layoutSpecific
+            dlog("audio", "\(why): \(layout ?? "?") → \(plan.entry)")
+        } else {
+            dlog("audio/error", "\(why): mpv refused \(plan.entry): \(String(cString: mpv_error_string(r)))")
+        }
+    }
+
+    /// A new file: a graph made for the last track's channels comes out
+    /// first (pan names its channels and fails on others).
+    private func dropLayoutFilter(_ c: MPVClient) {
+        audioLayout = nil
+        guard appliedLayoutSpecific, appliedAudioGraph != nil else { return }
+        c.command(["af", "remove", "@" + AudioFilters.label])
+        appliedAudioGraph = nil
+        appliedLayoutSpecific = false
+    }
+
+    /// mpv sends an observed value only when it changes: the next file's
+    /// channels may be the last one's. Read once if none came.
+    private func readAudioLayoutLater() {
+        let id = memoryItem.id
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self, let c = self.client, self.memoryItem.id == id, self.audioLayout == nil else { return }
+            c.query({ $0.string("audio-params/channels") }) { [weak self] l in
+                guard let self, let l, self.audioLayout == nil, self.memoryItem.id == id else { return }
+                self.audioLayout = l
+                self.updateAudioFilters(because: "channels read")
+            }
+        }
+    }
+
     // MARK: Skip segments
 
     private func maybeRequestSegments() {
-        guard fileLoaded, !segmentsRequested, duration > 0 else { return }
+        guard fileLoaded, chaptersRead, !segmentsRequested, duration > 0 else { return }
         segmentsRequested = true
         // Looked up even with the Skip button off: Up Next uses the credits time.
         if defaults.bool(forKey: SettingsKey.skipUseChapters) {
@@ -2347,6 +2717,11 @@ extension PlayerModel: MPVClientDelegate {
             updateVideoFormat(gamma: value.string ?? "")
         case "audio-out-params/channels":
             audioOut = value.string ?? ""
+        case "audio-params/channels":
+            let l = value.string
+            guard l != audioLayout else { break }
+            audioLayout = l
+            if let l { updateAudioFilters(because: "audio decoded as \(l)") }
         case "demuxer-cache-duration":
             let v = value.double ?? 0
             if abs(v - clock.cacheAhead) > 1 { clock.cacheAhead = v }

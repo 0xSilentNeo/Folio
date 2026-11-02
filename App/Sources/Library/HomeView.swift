@@ -352,9 +352,27 @@ struct HomeView: View {
     }
 
     private func deleteQuestion(_ g: LibraryGroup) -> String {
-        if g.folder != nil { return "Delete the folder \(g.title) and its \(g.count) item\(g.count == 1 ? "" : "s") (\(g.size.byteString))?" }
+        if let folder = g.folder {
+            // Everything in it is deleted, so everything is counted (it used to
+            // count only the videos). Listed only when the question is asked.
+            guard pendingDelete?.id == g.id else { return "" }
+            let c = Self.contents(of: folder)
+            return "Delete the folder \(g.title) and the \(c.count) file\(c.count == 1 ? "" : "s") in it (\(c.size.byteString))?"
+        }
         if g.count > 1 { return "Delete all \(g.count) episodes of \(g.title) (\(g.size.byteString))?" }
         return "Delete \(g.title) (\(g.size.byteString))?"
+    }
+
+    private static func contents(of folder: URL) -> (count: Int, size: Int64) {
+        var count = 0, size: Int64 = 0
+        let keys: [URLResourceKey] = [.isRegularFileKey, .fileSizeKey]
+        let files = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: keys)
+        while let f = files?.nextObject() as? URL {
+            guard let v = try? f.resourceValues(forKeys: Set(keys)), v.isRegularFile == true else { continue }
+            count += 1
+            size += Int64(v.fileSize ?? 0)
+        }
+        return (count, size)
     }
 
     private func libraryHeader(_ margin: CGFloat) -> some View {
@@ -797,7 +815,9 @@ struct MediaTile: View {
 struct GeneratedArt: View {
     let seed: String
     var body: some View {
-        let h = Double(abs(seed.hashValue % 360)) / 360
+        // A fixed hash (FNV-1a): `hashValue` is seeded per launch, so a
+        // title's placeholder colour changed every time the app opened.
+        let h = Double(seed.utf8.reduce(UInt32(2_166_136_261)) { ($0 ^ UInt32($1)) &* 16_777_619 } % 360) / 360
         ZStack {
             LinearGradient(colors: [Color(hue: h, saturation: 0.5, brightness: 0.42),
                                     Color(hue: (h + 0.12).truncatingRemainder(dividingBy: 1), saturation: 0.6, brightness: 0.16)],

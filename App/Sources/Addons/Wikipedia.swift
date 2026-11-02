@@ -16,7 +16,10 @@ enum Wikipedia {
         return c.url!
     }
 
-    /// The article URL, resolved through the search API (best match), or nil.
+    /// The article URL, resolved through the search API, or nil. Only a hit
+    /// whose title matches the name counts (and is cached): an unmatched first
+    /// result is often an actor or a different film, so the button opens the
+    /// search page instead.
     static func article(name: String, year: String?, type: String) async -> URL? {
         let key = [name.lowercased(), year ?? "", type].joined(separator: "|")
         lock.lock(); let hit = table[key]; lock.unlock()
@@ -33,12 +36,12 @@ enum Wikipedia {
               let hits = (root["query"] as? [String: Any])?["search"] as? [[String: Any]] else { return nil }
         let norm = { (s: String) in s.lowercased().filter { $0.isLetter || $0.isNumber } }
         let want = norm(name)
-        // Prefer a hit whose title starts with the name (not a "List of…" or an actor page).
+        // A hit whose title starts with the name (not a "List of…" or an actor page).
         let best = hits.first { t in
             guard let title = t["title"] as? String else { return false }
             let n = norm(title)
-            return n.hasPrefix(want) || want.hasPrefix(n)
-        } ?? hits.first
+            return !n.isEmpty && (n.hasPrefix(want) || want.hasPrefix(n))
+        }
         guard let title = best?["title"] as? String,
               let url = URL(string: "https://en.wikipedia.org/wiki/" + (title.replacingOccurrences(of: " ", with: "_")
                 .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? title)) else { return nil }

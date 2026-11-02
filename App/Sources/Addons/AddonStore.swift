@@ -66,7 +66,7 @@ enum AddonAPI {
     struct CatalogResponse: Decodable {
         var metas: [MetaItem]?
         init(from decoder: Decoder) throws {
-            metas = try decoder.container(keyedBy: CodingKeys.self).decodeIfPresent([MetaItem].self, forKey: .metas)?.map(\.htmlDecoded)
+            metas = try decoder.container(keyedBy: CodingKeys.self).lossy(MetaItem.self, .metas)?.map(\.htmlDecoded)
         }
         enum CodingKeys: String, CodingKey { case metas }
     }
@@ -77,8 +77,20 @@ enum AddonAPI {
         }
         enum CodingKeys: String, CodingKey { case meta }
     }
-    struct StreamsResponse: Decodable { var streams: [AddonStream]? }
-    struct SubtitlesResponse: Decodable { var subtitles: [AddonSubtitle]? }
+    struct StreamsResponse: Decodable {
+        var streams: [AddonStream]?
+        init(from decoder: Decoder) throws {
+            streams = try decoder.container(keyedBy: CodingKeys.self).lossy(AddonStream.self, .streams)
+        }
+        enum CodingKeys: String, CodingKey { case streams }
+    }
+    struct SubtitlesResponse: Decodable {
+        var subtitles: [AddonSubtitle]?
+        init(from decoder: Decoder) throws {
+            subtitles = try decoder.container(keyedBy: CodingKeys.self).lossy(AddonSubtitle.self, .subtitles)
+        }
+        enum CodingKeys: String, CodingKey { case subtitles }
+    }
 
     static func catalog(_ addon: InstalledAddon, _ cat: AddonManifest.Catalog, extra: [String: String] = [:]) async throws -> [MetaItem] {
         var path = "\(addon.baseURL)/catalog/\(enc(cat.type))/\(enc(cat.id))"
@@ -134,7 +146,11 @@ final class AddonStore: ObservableObject {
         defer { installing = false }
         let manifest = try await AddonAPI.manifest(url)
         let addon = InstalledAddon(transportURL: url, manifest: manifest)
-        if let i = addons.firstIndex(where: { $0.transportURL == url || $0.manifest.id == manifest.id && $0.transportURL == url }) {
+        // The same addon from the same server with a new configuration (a
+        // different key or options in its link) replaces the old copy; it
+        // used to be added as a second one. Another server's copy stays apart.
+        let host = URL(string: url)?.host
+        if let i = addons.firstIndex(where: { $0.transportURL == url || ($0.manifest.id == manifest.id && URL(string: $0.transportURL)?.host == host) }) {
             addons[i] = addon
         } else {
             addons.append(addon)

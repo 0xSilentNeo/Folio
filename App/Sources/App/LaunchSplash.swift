@@ -50,7 +50,10 @@ struct LaunchSplash: View {
             .scaleEffect(phase == 3 ? 1.06 : 1)
             .opacity(phase == 3 ? 0 : 1)
         }
-        .allowsHitTesting(false)
+        // Touches stop here until it starts fading: they used to reach Home's
+        // hidden tiles underneath and open a title nobody saw.
+        .contentShape(Rectangle())
+        .allowsHitTesting(phase < 3)
         .task {
             dlog("app", "launch splash shown")
             await run()

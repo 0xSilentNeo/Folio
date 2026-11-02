@@ -16,11 +16,44 @@ struct AnimeHint: Codable, Hashable {
     var anidbId: Int?
 }
 
+/// Saved in history, so a new case here must still read old entries.
+/// SMB, Jellyfin and Plex items are `.url` with a `remote` reference (1.20.3,
+/// 2 Nov): a new case would need every switch over sources to learn it
+/// (Continue Watching, Home's icons) in the same change.
 enum MediaSource: Codable, Hashable {
     case local
     case url
     case webdav(serverID: UUID)
     case addon(name: String)
+}
+
+/// Where an item lives on an SMB share, a Jellyfin server or a Plex server
+/// (1.20.3, 2 Nov). The login stays in the Keychain: preparedForPlayback adds
+/// it back, and it is left out whenever the item is saved (history).
+struct ServerItemRef: Codable, Hashable {
+    /// Also MediaServer.Kind.
+    enum Kind: String, Codable, CaseIterable { case smb, jellyfin, plex }
+    var kind: Kind
+    var serverID: UUID
+    /// The item on its server: a Jellyfin item id, a Plex rating key, or an
+    /// SMB path from the share ("/Media/Films/Dune.mkv").
+    var id: String
+    /// Plex: the file to play ("/library/parts/…"). It changes when the file
+    /// is replaced, so it isn't the history key.
+    var part: String?
+    /// Where the item's siblings are listed (its season or folder), so
+    /// Continue Watching can play on with the rest of them.
+    var parent: String?
+
+    /// Headers that carry a server's login.
+    static let secretHeaders: Set<String> = ["authorization", "x-emby-token", "x-mediabrowser-token", "x-plex-token"]
+
+    /// `address` without a password (SMB plays from smb://user:pass@host/…).
+    static func withoutPassword(_ address: String) -> String {
+        guard var c = URLComponents(string: address), c.password != nil else { return address }
+        c.password = nil
+        return c.string ?? address
+    }
 }
 
 struct MediaItem: Codable, Hashable, Identifiable {
@@ -44,6 +77,9 @@ struct MediaItem: Codable, Hashable, Identifiable {
     var durationHint: Double?
     /// Play Season: an episode whose stream is resolved when its turn comes.
     var streamPick: StreamPick?
+    /// An SMB, Jellyfin or Plex item (1.20.3). Optional, so history saved
+    /// before it still reads.
+    var remote: ServerItemRef?
 
     init(url: String, title: String, subtitle: String? = nil, source: MediaSource = .url) {
         self.url = url
@@ -89,7 +125,42 @@ struct MediaItem: Codable, Hashable, Identifiable {
         if case .webdav(let id) = source, let server = ServerStore.shared.server(id: id), let auth = server.authHeader {
             m.headers["Authorization"] = auth
         }
+        if let remote { m = ServerPlayback.prepared(m, remote) }
         return m
+    }
+
+    /// The item as it may be written down: a server item without its token
+    /// headers or the password in its address and subtitle addresses.
+    var withoutServerLogin: MediaItem {
+        guard remote != nil else { return self }
+        var m = self
+        m.headers = m.headers.filter { !ServerItemRef.secretHeaders.contains($0.key.lowercased()) }
+        m.url = ServerItemRef.withoutPassword(m.url)
+        m.subtitles = m.subtitles.map { var s = $0; s.url = ServerItemRef.withoutPassword(s.url); return s }
+        return m
+    }
+
+    /// Written by hand only to leave a server item's login out
+    /// (`withoutServerLogin`): history is a plain file, and the player saves
+    /// the item it plays, login included. Reading stays synthesized. Every
+    /// stored property must be written here (MediaItemCodingTests checks).
+    func encode(to encoder: Encoder) throws {
+        let m = withoutServerLogin
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(m.url, forKey: .url)
+        try c.encode(m.title, forKey: .title)
+        try c.encodeIfPresent(m.subtitle, forKey: .subtitle)
+        try c.encodeIfPresent(m.artwork, forKey: .artwork)
+        try c.encode(m.headers, forKey: .headers)
+        try c.encode(m.subtitles, forKey: .subtitles)
+        try c.encode(m.source, forKey: .source)
+        try c.encodeIfPresent(m.anime, forKey: .anime)
+        try c.encodeIfPresent(m.bookmark, forKey: .bookmark)
+        try c.encodeIfPresent(m.historyKey, forKey: .historyKey)
+        try c.encodeIfPresent(m.addonRef, forKey: .addonRef)
+        try c.encodeIfPresent(m.durationHint, forKey: .durationHint)
+        try c.encodeIfPresent(m.streamPick, forKey: .streamPick)
+        try c.encodeIfPresent(m.remote, forKey: .remote)
     }
 
     var displayTitle: String { title.isEmpty ? (resolvedURL?.lastPathComponent ?? url) : title }

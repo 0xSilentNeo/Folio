@@ -40,10 +40,25 @@ final class WebDAVUITests: XCTestCase {
         return names
     }
 
+    /// Everything in the open menus, read in one snapshot. Reading the
+    /// elements one by one raced the menu's animation and failed the test
+    /// now and then ("No matches found for Element at index 114").
+    private func menuElements(_ app: XCUIApplication) -> [XCUIElementSnapshot] {
+        guard let root = try? app.snapshot() else { return [] }
+        var out: [XCUIElementSnapshot] = []
+        func walk(_ n: XCUIElementSnapshot, inMenu: Bool) {
+            let inside = inMenu || n.elementType == .collectionView
+            if inside, n.elementType != .collectionView { out.append(n) }
+            n.children.forEach { walk($0, inMenu: inside) }
+        }
+        walk(root, inMenu: false)
+        return out
+    }
+
     /// Every element of an open menu: type, label, enabled, value.
     private func dumpMenu(_ app: XCUIApplication, _ label: String) {
-        let items = app.collectionViews.descendants(matching: .any).allElementsBoundByIndex
-            .filter { $0.exists && !$0.label.isEmpty && ($0.elementType == .button || $0.elementType == .switch || $0.elementType == .cell) }
+        let items = menuElements(app)
+            .filter { !$0.label.isEmpty && ($0.elementType == .button || $0.elementType == .switch || $0.elementType == .cell) }
         for e in items {
             print("DAVMENU \(label): type=\(e.elementType.rawValue) label='\(e.label)' enabled=\(e.isEnabled) selected=\(e.isSelected) value='\(e.value.map { "\($0)" } ?? "")'")
         }
@@ -52,8 +67,8 @@ final class WebDAVUITests: XCTestCase {
 
     /// The sort menu's items: label (title and the order under the checked one), selected.
     private func sortItems(_ app: XCUIApplication, _ when: String) {
-        let items = app.collectionViews.descendants(matching: .any).allElementsBoundByIndex
-            .filter { e in e.exists && ["Recently Added", "Name", "Size"].contains(where: { e.label.hasPrefix($0) }) }
+        let items = menuElements(app)
+            .filter { e in ["Recently Added", "Name", "Size"].contains(where: { e.label.hasPrefix($0) }) }
         print("DAVSORT \(when): " + items.map { "\($0.label)\($0.isSelected || "\($0.value ?? "")" == "1" ? " [checked]" : "") enabled=\($0.isEnabled)" }.joined(separator: " | "))
     }
 

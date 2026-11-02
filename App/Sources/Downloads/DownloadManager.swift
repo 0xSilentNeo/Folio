@@ -28,9 +28,40 @@ struct DownloadItem: Codable, Identifiable, Hashable {
     var destination: URL
     /// Request headers an addon asked for (1.17.0: downloads from addon streams).
     var headers: [String: String]?
+    /// A retry waits until then (1.20.3). Until then the wait was only a
+    /// delayed queue run, and any other run (another file finishing) started
+    /// it at once.
+    var notBefore: Date?
 
     var progress: Double { expected > 0 ? min(1, Double(received) / Double(expected)) : 0 }
     var isMedia: Bool { TitleParser.isMedia(fileName) }
+}
+
+extension DownloadItem {
+    /// Only the address, name and destination are required: a field with a
+    /// default may be missing or of another type (a list saved by another
+    /// version) and the item is still read. One unreadable field used to
+    /// lose the whole download list.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = (try? c.decodeIfPresent(UUID.self, forKey: .id)) ?? UUID()
+        url = try c.decode(URL.self, forKey: .url)
+        serverID = try? c.decodeIfPresent(UUID.self, forKey: .serverID)
+        fileName = try c.decode(String.self, forKey: .fileName)
+        package = (try? c.decodeIfPresent(String.self, forKey: .package)) ?? fileName
+        expected = (try? c.decodeIfPresent(Int64.self, forKey: .expected)) ?? 0
+        received = (try? c.decodeIfPresent(Int64.self, forKey: .received)) ?? 0
+        state = (try? c.decodeIfPresent(State.self, forKey: .state)) ?? .paused
+        error = try? c.decodeIfPresent(String.self, forKey: .error)
+        resumeFile = try? c.decodeIfPresent(String.self, forKey: .resumeFile)
+        retries = (try? c.decodeIfPresent(Int.self, forKey: .retries)) ?? 0
+        added = (try? c.decodeIfPresent(Date.self, forKey: .added)) ?? Date()
+        finished = try? c.decodeIfPresent(Date.self, forKey: .finished)
+        held = (try? c.decodeIfPresent(Bool.self, forKey: .held)) ?? false
+        destination = try c.decode(URL.self, forKey: .destination)
+        headers = try? c.decodeIfPresent([String: String].self, forKey: .headers)
+        notBefore = try? c.decodeIfPresent(Date.self, forKey: .notBefore)
+    }
 }
 
 /// Downloads from WebDAV servers into Media (1.15.0, #13).
@@ -62,7 +93,7 @@ final class DownloadManager: ObservableObject {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         file = dir.appendingPathComponent("downloads.json")
-        if let d = try? Data(contentsOf: file), let list = try? JSONDecoder().decode([DownloadItem].self, from: d) { items = list }
+        if let d = try? Data(contentsOf: file), let list = JSONDecoder().decodeLossy(DownloadItem.self, from: d) { items = list }
 
         engine.onProgress = { [weak self] id, got, total in self?.progress(id, got, total) }
         engine.onFinished = { [weak self] id, tmp in self?.finished(id, tmp) }
@@ -82,11 +113,37 @@ final class DownloadManager: ObservableObject {
 
     /// Where a file from `package` is saved (Settings → Downloads → Save to).
     static func destination(fileName: String, package: String) -> URL {
+        let fileName = safeName(fileName)
         let root = MPVFiles.mediaDir
         let perFolder = (UserDefaults.standard.string(forKey: SettingsKey.downloadSaveTo) ?? "folder") == "folder"
         let clean = package.replacingOccurrences(of: "/", with: "-").trimmingCharacters(in: .whitespacesAndNewlines)
         let dir = perFolder && !clean.isEmpty ? root.appendingPathComponent(clean, isDirectory: true) : root
         return dir.appendingPathComponent(fileName)
+    }
+
+    /// A file or folder name from a server, made safe as one path component:
+    /// no "/" or ":", no leading dots (so "../" can't climb out of Media),
+    /// not empty. Until 1.20.3 a server's name went in as it was (review, 2 Nov).
+    nonisolated static func safeName(_ name: String) -> String {
+        var s = name.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+        while s.hasPrefix(".") { s.removeFirst() }
+        s = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        return s.isEmpty ? "download" : s
+    }
+
+    /// The package (and Media folder) for files from a server folder: its
+    /// title, or, for a sub-folder with no title of its own ("Season 1",
+    /// "Extras"), the release folder above it plus that name. Until 1.20.3
+    /// two shows' "Season 1" folders became one package and one Media
+    /// folder, and same-named episodes replaced each other (review, 2 Nov).
+    nonisolated static func packageName(folder url: URL, title: String) -> String {
+        let own = url.lastPathComponent
+        let subFolder = #"(?i)^((season|series|s)[\s._-]*\d{1,2}|specials?|extras?|featurettes?|bonus|subs?|subtitles|disc[\s._-]*\d+|cd[\s._-]*\d+)$"#
+        guard own.range(of: subFolder, options: .regularExpression) != nil else { return title }
+        let parent = url.deletingLastPathComponent()
+        guard parent.path.count > 1 else { return title }
+        let name = parent.lastPathComponent
+        return "\(ReleaseName.folder(name)?.title ?? name) – \(title)"
     }
 
     /// Queues files from a server folder. Matching subtitle files (same name
@@ -95,6 +152,7 @@ final class DownloadManager: ObservableObject {
         let skip = UserDefaults.standard.bool(forKey: SettingsKey.downloadSkipExisting)
         var added = 0
         for f in files where !f.isDirectory {
+            items.removeAll { $0.url == f.url && Self.isGone($0) }
             if items.contains(where: { $0.url == f.url && $0.state != .failed }) { continue }
             items.removeAll { $0.url == f.url && $0.state == .failed }
             let dest = Self.destination(fileName: f.name, package: package)
@@ -135,7 +193,21 @@ final class DownloadManager: ObservableObject {
         return true
     }
 
-    func item(for url: URL) -> DownloadItem? { items.last { $0.url == url } }
+    func item(for url: URL) -> DownloadItem? { items.last { $0.url == url && !Self.isGone($0) } }
+
+    /// A finished download whose file was deleted since (from the library or
+    /// in Files). Until 1.20.3 it still showed as downloaded, with nothing to
+    /// play, and the file couldn't be downloaded again (review, 2 Nov).
+    private static func isGone(_ it: DownloadItem) -> Bool {
+        it.state == .done && !FileManager.default.fileExists(atPath: it.destination.path)
+    }
+
+    /// Forgets finished downloads whose files are gone (LocalMediaStore.delete).
+    func forgetDeleted() {
+        let before = items.count
+        items.removeAll(where: Self.isGone)
+        if items.count != before { dlog("downloads", "forgot \(before - items.count) finished download(s) whose files were deleted"); save() }
+    }
 
     // MARK: Controls
 
@@ -184,6 +256,10 @@ final class DownloadManager: ObservableObject {
     /// failed), deleting what was downloaded of them.
     func cancelUnfinished(package: String? = nil) {
         for it in items where it.state != .done && (package == nil || it.package == package) { remove(it.id) }
+    }
+    /// A removed server's unfinished downloads (finished files stay).
+    func cancelUnfinished(server: UUID) {
+        for it in items where it.state != .done && it.serverID == server { remove(it.id) }
     }
     /// Finished downloads: off the list (deleteFiles: their files too).
     func removeFinished(package: String, deleteFiles: Bool) {
@@ -234,7 +310,8 @@ final class DownloadManager: ObservableObject {
             return
         }
         var running = items.filter { $0.state == .running }.count
-        for i in items.indices where running < maxConcurrent && items[i].state == .queued {
+        let now = Date()
+        for i in items.indices where running < maxConcurrent && items[i].state == .queued && (items[i].notBefore ?? now) <= now {
             start(i)
             running += 1
         }
@@ -253,6 +330,7 @@ final class DownloadManager: ObservableObject {
         item.state = .running
         item.held = false
         item.error = nil
+        item.notBefore = nil
         items[i] = item
         lastBytes[item.id] = item.received
         let cellular = UserDefaults.standard.bool(forKey: SettingsKey.downloadCellular)
@@ -262,6 +340,10 @@ final class DownloadManager: ObservableObject {
     }
 
     private func conditionsChanged() { pump() }
+
+    /// Settings → Downloads changed (limit, Low Power, charging): run the
+    /// queue now. Until 1.20.3 a change waited for the next battery event.
+    func settingsChanged() { pump() }
 
     /// Transfers survive an app relaunch inside the background session.
     private func reattach() async {
@@ -274,6 +356,19 @@ final class DownloadManager: ObservableObject {
         pump()
     }
 
+    /// `url`, or "name 2.ext", "name 3.ext"… when a file is already there.
+    nonisolated static func freeName(for url: URL) -> URL {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: url.path) else { return url }
+        let dir = url.deletingLastPathComponent(), ext = url.pathExtension
+        let stem = url.deletingPathExtension().lastPathComponent
+        for n in 2...999 {
+            let candidate = dir.appendingPathComponent(ext.isEmpty ? "\(stem) \(n)" : "\(stem) \(n).\(ext)")
+            if !fm.fileExists(atPath: candidate.path) { return candidate }
+        }
+        return url
+    }
+
     // MARK: Engine callbacks
 
     private func progress(_ id: UUID, _ got: Int64, _ total: Int64?) {
@@ -284,11 +379,15 @@ final class DownloadManager: ObservableObject {
 
     private func finished(_ id: UUID, _ tmp: URL) {
         guard let i = index(id) else { try? FileManager.default.removeItem(at: tmp); return }
-        let dest = items[i].destination
+        var dest = items[i].destination
         let fm = FileManager.default
         do {
             try fm.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
-            if fm.fileExists(atPath: dest.path) { try fm.removeItem(at: dest) }
+            // A different file already there keeps its place: this one gets
+            // " 2", " 3"… Until 1.20.3 it was deleted first, so same-named
+            // files from two folders replaced each other in "Media" mode.
+            dest = Self.freeName(for: dest)
+            items[i].destination = dest
             try fm.moveItem(at: tmp, to: dest)
             items[i].state = .done
             items[i].received = max(items[i].received, items[i].expected)
@@ -308,14 +407,23 @@ final class DownloadManager: ObservableObject {
 
     private func failed(_ id: UUID, _ message: String, _ resume: String?) {
         guard let i = index(id) else { return }
-        if let resume { items[i].resumeFile = resume }
+        if let resume {
+            items[i].resumeFile = resume
+        } else if let old = items[i].resumeFile {
+            // It failed without new resume data: the saved data may be what
+            // fails (a changed login, an expired link), so the next try starts
+            // afresh. Until 1.20.3 a bad resume failed every Retry for good.
+            try? FileManager.default.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(old))
+            items[i].resumeFile = nil
+        }
         let limit = UserDefaults.standard.integer(forKey: SettingsKey.downloadRetries)
-        if items[i].retries < limit {
+        if items[i].retries < limit, !Self.isPermanent(message) {
             items[i].retries += 1
             items[i].state = .queued
             items[i].held = true
             dlog("dl", "retry \(items[i].retries)/\(limit) \(items[i].fileName): \(message)")
             let delay = Double(min(30, 2 << min(items[i].retries, 4)))
+            items[i].notBefore = Date().addingTimeInterval(delay)
             save()
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in self?.pump() }
             return
@@ -324,6 +432,15 @@ final class DownloadManager: ObservableObject {
         items[i].error = message
         dlog("dl/error", "failed \(items[i].fileName): \(message)")
         save(); pump()
+    }
+
+    /// An answer that another try won't change: a refused login, a forbidden
+    /// or missing file (HTTP 401, 403, 404, 410). Until 1.20.3 these went
+    /// through every retry first.
+    nonisolated static func isPermanent(_ message: String) -> Bool {
+        guard let r = message.range(of: #"HTTP (\d{3})"#, options: .regularExpression),
+              let code = Int(message[r].dropFirst(5)) else { return false }
+        return [401, 403, 404, 410].contains(code)
     }
 
     private func setResume(_ id: UUID, _ name: String) {

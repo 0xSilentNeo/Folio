@@ -1,4 +1,5 @@
 import SwiftUI
+import CryptoKit
 
 /// Look of the player's progress bar (changed from the player's
 /// ••• → Progress bar menu or Settings → Playback).
@@ -78,10 +79,21 @@ enum ThumbnailStore {
         return d
     }
 
+    /// Named by a hash of the key. The name used to be the key's last 120
+    /// base64 characters, so two long paths ending alike (the same episode
+    /// name in two shows' folders) shared one picture. A picture saved under
+    /// the old name is moved to the new one the first time it's asked for.
     static func url(for key: String) -> URL {
-        let safe = key.data(using: .utf8)!.base64EncodedString()
-            .replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "+", with: "-")
-        return dir.appendingPathComponent(String(safe.suffix(120)) + ".jpg")
+        let d = dir
+        let hashed = d.appendingPathComponent(SHA256.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined() + ".jpg")
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: hashed.path) {
+            let safe = Data(key.utf8).base64EncodedString()
+                .replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "+", with: "-")
+            let legacy = d.appendingPathComponent(String(safe.suffix(120)) + ".jpg")
+            if fm.fileExists(atPath: legacy.path) { try? fm.moveItem(at: legacy, to: hashed) }
+        }
+        return hashed
     }
 
     static func image(for key: String) -> UIImage? {

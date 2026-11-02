@@ -17,8 +17,7 @@ struct DownloadButton: View {
         Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             guard let d else {
-                let base = (item.name as NSString).deletingPathExtension.lowercased()
-                let subs = siblings.filter { $0.isSubtitle && $0.name.lowercased().hasPrefix(base) }
+                let subs = siblings.filter { $0.isSubtitle && SubtitleMatch.belongs($0.name, to: item.name) }
                 dm.enqueue([item] + subs, server: server, package: package)
                 return
             }
@@ -595,5 +594,8 @@ struct DownloadSettingsView: View {
         .brandListBackground()
         .navigationTitle("Downloads")
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: concurrent) { _, _ in DownloadManager.shared.settingsChanged() }
+        .onChange(of: lowPower) { _, _ in DownloadManager.shared.settingsChanged() }
+        .onChange(of: charging) { _, _ in DownloadManager.shared.settingsChanged() }
     }
 }

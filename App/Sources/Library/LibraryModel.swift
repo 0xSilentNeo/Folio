@@ -193,27 +193,39 @@ enum LibraryOrganizer {
         }
         out += folderGroups
         out.sort { a, b in
-            let less: Bool
+            var order: ComparisonResult
             switch sort {
-            case .name: less = a.title.localizedStandardCompare(b.title) == .orderedAscending
-            case .recent: less = a.date < b.date
-            case .size: less = a.size < b.size
+            case .name: order = a.title.localizedStandardCompare(b.title)
+            case .recent: order = compare(a.date, b.date)
+            case .size: order = compare(a.size, b.size)
             }
-            return ascending ? less : !less
+            if order == .orderedSame { order = a.title.localizedStandardCompare(b.title) }
+            if order == .orderedSame { return a.id < b.id }
+            return (order == .orderedAscending) == ascending
         }
         return out
     }
 
     static func sorted(_ files: [URL], sort: LibrarySort = .current, ascending: Bool = LibrarySort.ascending) -> [URL] {
         files.sorted { a, b in
-            let less: Bool
+            var order: ComparisonResult
             switch sort {
-            case .name: less = a.lastPathComponent.localizedStandardCompare(b.lastPathComponent) == .orderedAscending
-            case .recent: less = info(a).date < info(b).date
-            case .size: less = info(a).size < info(b).size
+            case .name: order = a.lastPathComponent.localizedStandardCompare(b.lastPathComponent)
+            case .recent: order = compare(info(a).date, info(b).date)
+            case .size: order = compare(info(a).size, info(b).size)
             }
-            return ascending ? less : !less
+            if order == .orderedSame { order = a.lastPathComponent.localizedStandardCompare(b.lastPathComponent) }
+            if order == .orderedSame { return a.path < b.path }
+            return (order == .orderedAscending) == ascending
         }
+    }
+
+    /// Sorting used `ascending ? less : !less`, which called two equal items
+    /// "less" both ways (not a valid order) and left ties wherever they
+    /// landed, so same-date tiles swapped places between refreshes. Ties now
+    /// fall back to the name, then the path, in either direction.
+    private static func compare<T: Comparable>(_ x: T, _ y: T) -> ComparisonResult {
+        x == y ? .orderedSame : x < y ? .orderedAscending : .orderedDescending
     }
 }
 

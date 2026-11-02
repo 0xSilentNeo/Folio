@@ -34,6 +34,7 @@ enum SettingsKey {
     static let titlePageStyle = "titlePageStyle"        // full | files (title, then its files only)
     static let listTransition = "listTransition"        // thumb | row | push: how a page opens from a Home list row
     static let prepareNext = "prepareNext"              // addon seasons: find and load the next episode before it's needed
+    static let rememberPerShow = "rememberPerShow"      // 1.20.3: tracks, delays, Fill, Anime4K per show (ShowMemory)
 
     // Downloads (WebDAV)
     static let downloadConcurrent = "downloadConcurrent"
@@ -61,6 +62,9 @@ enum SettingsKey {
     static let subBold = "subBold"
     static let subBox = "subBox"
     static let subPos = "subPos"
+    static let subStyle = "subStyle"                    // default | large | yellow | boxed (SubtitleStyle)
+    static let nightMode = "nightMode"                  // 1.20.3: audio range compression (AudioFilters)
+    static let dialogueBoost = "dialogueBoost"          // 1.20.3: centre channel / voice band up (AudioFilters)
 
     // Skip
     static let skipEnabled = "skipEnabled"
@@ -125,6 +129,7 @@ enum SettingsKey {
             playlistNames: "episode",
             titlePageStyle: "full",
             prepareNext: true,
+            rememberPerShow: true,
             downloadConcurrent: 2,
             downloadAutoStart: true,
             downloadSaveTo: "folder",
@@ -143,6 +148,9 @@ enum SettingsKey {
             subBold: true,
             subBox: false,
             subPos: 100,
+            subStyle: "default",
+            nightMode: false,
+            dialogueBoost: false,
             skipEnabled: true,
             skipAutoIntro: false,
             skipAutoOutro: false,

@@ -42,7 +42,7 @@ actor MetadataService {
 
     private struct Entry: Codable { var meta: MediaMeta?; var date: Date }
     private var cache: [String: Entry] = [:]
-    private var inflight: [String: Task<MediaMeta?, Never>] = [:]
+    private var inflight: [String: Task<Resolved, Never>] = [:]
     private let file: URL
     private var dirty = false
 
@@ -100,17 +100,28 @@ actor MetadataService {
             }
             return e.meta
         }
-        if let t = inflight[key] { return await t.value }
-        let task = Task<MediaMeta?, Never> { await resolve(p) }
+        if let t = inflight[key] { return await t.value.meta }
+        let task = Task<Resolved, Never> { await resolve(p) }
         inflight[key] = task
-        let meta = await task.value
+        let found = await task.value
         inflight[key] = nil
-        cache[key] = Entry(meta: meta, date: Date())
+        // IMDb out of reach (offline, a timeout) isn't "no such title": until
+        // 1.20.3 that was kept for 3 days, so a library browsed offline lost
+        // its posters and names for days after (review, 2 Nov).
+        if found.unreachable && found.meta == nil {
+            dlog("meta", "IMDb not reachable for \(p.title); not remembered")
+            return cache[key]?.meta
+        }
+        cache[key] = Entry(meta: found.meta, date: Date())
         save()
-        return meta
+        return found.meta
     }
 
-    private func resolve(_ p: TitleParser.Parsed) async -> MediaMeta? {
+    /// A lookup's result, and whether IMDb couldn't be reached on the way.
+    private struct Resolved: Sendable { var meta: MediaMeta?; var unreachable = false }
+    private enum Searched { case found(MetaItem), noMatch, unreachable }
+
+    private func resolve(_ p: TitleParser.Parsed) async -> Resolved {
         let wantsSeries = p.episode != nil && p.extra != "Movie"
         // A film of a series: its own title first ("Show Name Subtitle"), then
         // the series (art only). An OAD / OVA: the show it belongs to, but
@@ -124,8 +135,14 @@ actor MetadataService {
             let t = TitleParser.baseTitle(p)
             attempts = (wantsSeries ? ["series", "movie"] : ["movie", "series"]).map { (t, $0) }
         }
+        var unreachable = false
         for (title, type) in attempts {
-            guard let item = await search(title: title, year: p.year, type: type) else { continue }
+            let item: MetaItem
+            switch await search(title: title, year: p.year, type: type) {
+            case .found(let m): item = m
+            case .noMatch: continue
+            case .unreachable: unreachable = true; continue
+            }
             var meta = MediaMeta(id: item.id, type: item.type, name: item.name, poster: item.poster, background: item.background,
                                  logo: item.logo, description: item.description, year: item.releaseInfo, rating: item.imdbRating, genres: item.genres)
             meta.originalName = item.originalName
@@ -140,14 +157,18 @@ actor MetadataService {
                 meta.episodeSeason = video.season
                 meta.episodeNumber = video.episode
             }
-            return meta
+            return Resolved(meta: meta)
         }
-        return nil
+        return Resolved(meta: nil, unreachable: unreachable)
     }
 
-    private func search(title: String, year: Int?, type: String) async -> MetaItem? {
-        let metas = await IMDbSource.search(title).filter { $0.type == type }
-        guard !metas.isEmpty else { return nil }
+    private func search(title: String, year: Int?, type: String) async -> Searched {
+        let metas: [MetaItem]
+        do { metas = try await IMDbSource.suggest(title).filter { $0.type == type } } catch {
+            if !IMDbSource.isCancellation(error) { dlog("imdb/error", "suggestion failed for \(title): \(error.localizedDescription)") }
+            return .unreachable
+        }
+        guard !metas.isEmpty else { return .noMatch }
         let norm = { (s: String) in s.lowercased().filter { $0.isLetter || $0.isNumber } }
         let want = norm(title)
         func score(_ m: MetaItem) -> Int {
@@ -158,7 +179,7 @@ actor MetadataService {
             return s
         }
         let best = metas.max { score($0) < score($1) }
-        guard var best, score(best) >= 30 else { return nil }
+        guard var best, score(best) >= 30 else { return .noMatch }
         // Suggestion results carry no synopsis or rating; the title page does.
         if let full = await IMDbSource.details(id: best.id, type: type) {
             best.description = full.description
@@ -170,7 +191,7 @@ actor MetadataService {
             best.credits = full.credits
             best.contentRating = full.contentRating
         }
-        return best
+        return .found(best)
     }
 
     /// The episode; with no season in the file name and a number past the
@@ -208,7 +229,7 @@ actor MetadataService {
     private func refresh(key: String, parsed: TitleParser.Parsed) {
         guard refreshing.count < 2, refreshing.insert(key).inserted else { return }
         Task {
-            if let fresh = await resolve(parsed) {
+            if let fresh = await resolve(parsed).meta {
                 cache[key] = Entry(meta: fresh, date: Date())
                 save()
                 dlog("meta", "refreshed \(fresh.name)\(fresh.episodeTitle.map { " · " + $0 } ?? "") (original: \(fresh.originalName ?? "-"), cast \(fresh.credits?.count ?? 0))")
@@ -254,26 +275,42 @@ enum BrandIcon {
         UIImage(contentsOfFile: dir.appendingPathComponent(domain(for: host) + ".png").path)
     }
 
+    /// Names only a home network knows (a NAS, a router, a tailnet). They
+    /// have no public logo, and asking the icon services for one would send
+    /// the name to them.
+    static func isPrivate(_ d: String) -> Bool {
+        if d.range(of: #"^\d+\.\d+\.\d+\.\d+$"#, options: .regularExpression) != nil || d.contains(":") || !d.contains(".") { return true }
+        let suffixes = [".local", ".lan", ".home", ".home.arpa", ".internal", ".intranet", ".localdomain", ".localhost",
+                        ".corp", ".private", ".test", ".ts.net", ".box", ".router", ".fritz.box"]
+        return suffixes.contains { d.hasSuffix($0) }
+    }
+
     static func fetch(_ host: String) async -> UIImage? {
         if let c = cached(host) { return c }
         let d = domain(for: host)
-        // Private hosts / IPs have no public logo.
-        if d.range(of: #"^\d+\.\d+\.\d+\.\d+$"#, options: .regularExpression) != nil || d.hasSuffix(".local") || !d.contains(".") { return nil }
+        if isPrivate(d) { return nil }
+        // A host with no logo is asked again after a week, not once per row.
+        let miss = dir.appendingPathComponent(d + ".miss")
+        if let at = (try? miss.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
+           Date().timeIntervalSince(at) < 7 * 86400 { return nil }
         let candidates = [
             "https://\(d)/apple-touch-icon.png",
             "https://www.\(d)/apple-touch-icon.png",
             "https://icons.duckduckgo.com/ip3/\(d).ico",
             "https://www.google.com/s2/favicons?domain=\(d)&sz=128",
         ]
+        var answered = false
         for c in candidates {
             guard let url = URL(string: c) else { continue }
             var req = URLRequest(url: url); req.timeoutInterval = 8
-            guard let r = try? await URLSession.shared.data(for: req),
-                  (r.1 as? HTTPURLResponse)?.statusCode == 200,
+            guard let r = try? await URLSession.shared.data(for: req) else { continue }
+            answered = true
+            guard (r.1 as? HTTPURLResponse)?.statusCode == 200,
                   let img = UIImage(data: r.0), img.size.width >= 32 else { continue }
             if let png = img.pngData() { try? png.write(to: dir.appendingPathComponent(d + ".png")) }
             return img
         }
+        if answered { try? Data().write(to: miss) }     // offline isn't "no logo"
         return nil
     }
 }

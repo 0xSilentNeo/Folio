@@ -348,13 +348,15 @@ enum PlayerPresenter {
 
     static func play(_ item: MediaItem) { play(queue: [item], index: 0) }
 
-    static func play(queue: [MediaItem], index: Int) {
+    /// `fromStart`: the first file starts at 0 whatever its history says
+    /// (Start over); its history is updated by playing, not erased first.
+    static func play(queue: [MediaItem], index: Int, fromStart: Bool = false) {
         dlog("player", "play requested: \(queue.count) item(s), index \(index), first=\(queue.first?.mpvPath ?? "")")
         if let existing = current {
             dlog("player", "closing previous player first")
             existing.closePlayer(animated: false)
         }
-        guard let model = PlayerModel(queue: queue.map { $0.preparedForPlayback() }, startIndex: index) else {
+        guard let model = PlayerModel(queue: queue.map { $0.preparedForPlayback() }, startIndex: index, fromStart: fromStart) else {
             dlog("player/error", "could not create PlayerModel")
             return
         }
