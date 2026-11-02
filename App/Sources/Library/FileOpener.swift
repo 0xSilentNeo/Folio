@@ -202,6 +202,7 @@ final class LocalMediaStore: ObservableObject {
             if left.isEmpty { try? fm.removeItem(at: dir) }
         }
         dlog("library", "deleted \(urls.count) item(s)")
+        DownloadManager.shared.forgetDeleted()
         refresh()
     }
 }

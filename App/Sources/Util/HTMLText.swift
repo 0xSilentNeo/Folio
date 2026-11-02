@@ -36,12 +36,16 @@ enum HTMLText {
 
     /// The character a reference's body ("#39", "#x27", "amp") stands for, or nil.
     fileprivate static func character(_ body: String) -> String? {
-        if body.hasPrefix("#x") || body.hasPrefix("#X") {
-            return UInt32(body.dropFirst(2), radix: 16).flatMap(Unicode.Scalar.init).map { String(Character($0)) }
-        }
-        if body.hasPrefix("#") {
-            return UInt32(body.dropFirst()).flatMap(Unicode.Scalar.init).map { String(Character($0)) }
-        }
-        return named[body]
+        let code: UInt32?
+        if body.hasPrefix("#x") || body.hasPrefix("#X") { code = UInt32(body.dropFirst(2), radix: 16) }
+        else if body.hasPrefix("#") { code = UInt32(body.dropFirst()) }
+        else { return named[body] }
+        guard let code, let scalar = Unicode.Scalar(code) else { return nil }
+        // Control characters and U+FFFD aren't text: a line break becomes a
+        // space, and "&#0;" or "&#65533;" is dropped instead of putting an
+        // invisible character or a "�" in a title.
+        if scalar.properties.generalCategory == .control { return [9, 10, 13].contains(code) ? " " : "" }
+        if scalar == "\u{FFFD}" { return "" }
+        return String(Character(scalar))
     }
 }

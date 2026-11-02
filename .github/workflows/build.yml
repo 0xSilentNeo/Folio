@@ -75,6 +75,23 @@ jobs:
             }
           grep -c "warning:" build.log || true
 
+      # The build is unsigned, so the binaries carry no entitlements, and
+      # sideloading tools grant only what a binary asks for: without this the
+      # App Group (shared with the widget) is never registered. An ad-hoc
+      # signature with the entitlements, the widget first, then the app; the
+      # tool re-signs both with its own certificate.
+      - name: Add entitlements (ad-hoc signature)
+        run: |
+          brew list ldid >/dev/null 2>&1 || brew install ldid
+          APP=$(find build/Build/Products -type d -name "Folio.app" -path "*iphoneos*" | head -1)
+          test -n "$APP"
+          APPEX="$APP/PlugIns/FolioWidget.appex"
+          test -f "$APPEX/FolioWidget"
+          ldid -S"App/Widget/FolioWidget.entitlements" "$APPEX/FolioWidget"
+          ldid -S"App/Folio.entitlements" "$APP/Folio"
+          ldid -e "$APPEX/FolioWidget"
+          ldid -e "$APP/Folio"
+
       - name: Package unsigned IPA
         run: |
           APP=$(find build/Build/Products -type d -name "Folio.app" -path "*iphoneos*" | head -1)

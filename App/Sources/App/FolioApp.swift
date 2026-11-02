@@ -143,18 +143,28 @@ struct RootView: View {
             FileOpener.open([url])
             return
         }
-        // folio://play?url=<encoded>  or  folio://addon?url=<manifest>
-        guard url.scheme?.lowercased() == "folio", let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              let target = comps.queryItems?.first(where: { $0.name == "url" })?.value else { return }
+        // folio://play?url=<encoded>, folio://addon?url=<manifest>, folio://continue?id=<history id>
+        guard url.scheme?.lowercased() == "folio", let comps = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return }
+        let target = comps.queryItems?.first(where: { $0.name == "url" })?.value
         switch url.host?.lowercased() {
         case "addon":
+            guard let target else { return }
             linkAddon = target
         case "play":
-            guard let s = URL(string: target)?.scheme?.lowercased(), Self.playableSchemes.contains(s) else {
-                dlog("open", "folio://play with a link Folio doesn't play: \(URL(string: target)?.scheme ?? "no scheme")")
+            guard let target, let s = URL(string: target)?.scheme?.lowercased(), Self.playableSchemes.contains(s) else {
+                dlog("open", "folio://play with a link Folio doesn't play: \(target.flatMap { URL(string: $0)?.scheme } ?? "no scheme")")
                 return
             }
             PlayerPresenter.play(MediaItem(url: target, title: "", source: .url))
+        case "continue":
+            // The Continue Watching widget (1.20.3): plays the entry as Home's
+            // card does. The widget's copy can be a moment behind; an entry
+            // removed since then is only logged.
+            guard let id = ContinueLink.id(from: url), let entry = HistoryStore.shared.entry(for: id) else {
+                dlog("open", "folio://continue for an entry that's no longer in the history")
+                return
+            }
+            ContinueQueue.play(entry.item)
         default:
             dlog("open", "folio:// link with an unknown action: \(url.host ?? "none")")
         }

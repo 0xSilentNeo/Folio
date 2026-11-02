@@ -85,12 +85,19 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
     @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
     @AppStorage(SettingsKey.gestureControl) private var gestures = true
+    @AppStorage(SettingsKey.rememberPerShow) private var rememberPerShow = true
 
     var body: some View {
         Form {
             Section {
                 Explained("Every video starts where you stopped it last time.") {
                     Toggle("Resume where I left off", isOn: $resume)
+                }
+                Explained("The audio and subtitle tracks, subtitle and audio delay, Fill and Anime4K you choose in the player are used again for the next episode of that show (or the next time you watch that film). Tracks are found by language and name, so it works when episodes number their tracks differently.") {
+                    Toggle("Remember per show", isOn: $rememberPerShow)
+                }
+                if rememberPerShow {
+                    NavigationLink { RememberedShowsView() } label: { Text("Remembered shows") }
                 }
                 Explained("When an episode ends, or the Up Next countdown runs out, the next one in the list starts.") {
                     Toggle("Play next file automatically", isOn: $autoplayNext)
@@ -205,6 +212,9 @@ struct SubtitleAudioSettings: View {
     @AppStorage(SettingsKey.subtitlesDefault) private var subtitlesDefault = "on"
     @AppStorage(SettingsKey.downmixNormalize) private var downmixNormalize = false
     @AppStorage(SettingsKey.lfeInDownmix) private var lfe = false
+    @AppStorage(SettingsKey.nightMode) private var nightMode = false
+    @AppStorage(SettingsKey.dialogueBoost) private var dialogueBoost = false
+    @AppStorage(SettingsKey.subStyle) private var subStyle = SubtitleStyle.standard.rawValue
 
     var body: some View {
         Form {
@@ -229,7 +239,13 @@ struct SubtitleAudioSettings: View {
                 Explained("Mixes the subwoofer channel into stereo, for more bass when surround sound plays on headphones or two speakers.") {
                     Toggle("LFE in stereo downmix", isOn: $lfe)
                 }
-            } header: { Text("Audio") }
+                Explained("Softens loud scenes for late-night listening: less bass and LFE, where most of a film's loudness is, and Dolby Digital (Plus) tracks use their own range compression. Also in the player's Settings menu.") {
+                    Toggle("Night mode", isOn: $nightMode)
+                }
+                Explained("Makes voices easier to follow: on 5.1 and 7.1 the centre channel, where the dialogue is, gets louder and the rest quieter; on stereo the voice frequencies are raised. Also in the player's Settings menu.") {
+                    Toggle("Dialogue boost", isOn: $dialogueBoost)
+                }
+            } header: { Text("Audio") } footer: { Text("Night mode and dialogue boost: what every video starts with; the player's menu changes them while you watch.") }
             Section {
                 Explained("Whether a subtitle track is turned on when a video starts. You can always switch in the player's Tracks menu.") {
                     Picker("Show subtitles", selection: $subtitlesDefault) {
@@ -246,6 +262,11 @@ struct SubtitleAudioSettings: View {
                 .disabled(subtitlesDefault == "off")
             } header: { Text("Subtitles") }
             Section("Subtitle style") {
+                Explained("\(SubtitleStyle(rawValue: subStyle)?.hint ?? ""). Plain-text subtitles (SRT, WebVTT) take the style; styled ASS subtitles keep their own look. Large makes your size a third bigger; Background box adds the box to any style.") {
+                    Picker("Style", selection: $subStyle) {
+                        ForEach(SubtitleStyle.allCases) { Text($0.title).tag($0.rawValue) }
+                    }
+                }
                 LabeledContent("Size") {
                     Slider(value: $subScale, in: 0.5...2.5, step: 0.05).frame(maxWidth: 180)
                     Text("\(Int(subScale * 100))%").monospacedDigit().frame(width: 48, alignment: .trailing)
@@ -262,6 +283,61 @@ struct SubtitleAudioSettings: View {
         .brandListBackground()
         .navigationTitle("Audio & Subtitles")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// Settings → Playback → Remembered shows (1.20.3): what the player
+/// remembers per show (ShowMemory), to forget one or all.
+struct RememberedShowsView: View {
+    @ObservedObject private var store = ShowMemoryStore.shared
+    @State private var confirmAll = false
+
+    private var shows: [ShowMemoryStore.Entry] { store.entries.sorted { $0.updated > $1.updated } }
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(shows) { e in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(e.name)
+                        Text(Self.summary(e)).font(.caption).foregroundStyle(.secondary)
+                    }
+                    .swipeActions {
+                        Button("Forget", role: .destructive) { store.forget(e.id) }
+                    }
+                }
+                if shows.isEmpty { Text("Nothing remembered yet.").foregroundStyle(.secondary) }
+            } footer: {
+                Text("Swipe a show to forget its settings; it then plays with your defaults again. Up to 500 shows are kept; the ones not watched for longest go first.")
+            }
+            if !shows.isEmpty {
+                Section {
+                    Button("Forget all", role: .destructive) { confirmAll = true }
+                        .confirmationDialog("Forget the settings of every show?", isPresented: $confirmAll, titleVisibility: .visible) {
+                            Button("Forget all", role: .destructive) { store.forgetAll() }
+                        }
+                }
+            }
+        }
+        .brandListBackground()
+        .navigationTitle("Remembered shows")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    static func summary(_ e: ShowMemoryStore.Entry) -> String {
+        let s = e.settings
+        var parts: [String] = []
+        func lang(_ code: String?) -> String {
+            guard let n = TrackMatch.language(code) else { return "untagged" }
+            return SubtitleSearch.languageName(n)
+        }
+        if let a = s.audio { parts.append("Audio \(lang(a.lang))") }
+        if let t = s.subtitle { parts.append(t.off ? "Subtitles off" : "Subtitles \(lang(t.lang))\(t.forced ? " (forced)" : t.sdh ? " (SDH)" : "")") }
+        if let d = s.subDelay, abs(d) > 0.0005 { parts.append(String(format: "subtitle delay %+.1f s", d)) }
+        if let d = s.audioDelay, abs(d) > 0.0005 { parts.append(String(format: "audio delay %+.0f ms", d * 1000)) }
+        if let p = s.panscan { parts.append(p > 0.5 ? "Fill" : "Fit") }
+        if let m = s.anime4k.flatMap(Anime4KMode.init(rawValue:)) { parts.append("Anime4K \(m.title)") }
+        return parts.isEmpty ? "Nothing changed yet" : parts.joined(separator: " · ")
     }
 }
 
@@ -773,8 +849,15 @@ struct ConfigEditorView: View {
     let title: String
     var monospaced = true
     @State private var text = ""
-    @State private var saved = true
+    /// The file as last read or saved: Save, and the save on leaving, only
+    /// when the text differs. Until 1.20.3 setting the text on appear counted
+    /// as an edit, so every visit rewrote the file.
+    @State private var original = ""
+    /// The file isn't UTF-8 text: shown read-only, never saved over.
+    @State private var unreadable = false
     @Environment(\.dismiss) private var dismiss
+
+    private var changed: Bool { !unreadable && text != original }
 
     var body: some View {
         TextEditor(text: $text)
@@ -784,18 +867,25 @@ struct ConfigEditorView: View {
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .brandListBackground()
+            .disabled(unreadable)
+            .overlay {
+                if unreadable {
+                    ContentUnavailableView("Can't edit this file here", systemImage: "doc.badge.ellipsis",
+                                           description: Text("It isn't plain UTF-8 text, and saving it here would damage it. Edit it in another app from Files → Folio → mpv."))
+                }
+            }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear { text = MPVFiles.readText(url) }
-            .onChange(of: text) { _, _ in saved = false }
-            .toolbar {
-                Button(saved ? "Saved" : "Save") {
-                    try? MPVFiles.writeText(text, to: url)
-                    saved = true
-                }
-                .disabled(saved)
+            .onAppear {
+                if let t = MPVFiles.readEditableText(url) { text = t; original = t } else { unreadable = true }
             }
-            .onDisappear { if !saved { try? MPVFiles.writeText(text, to: url) } }
+            .toolbar {
+                Button(changed ? "Save" : "Saved") {
+                    if (try? MPVFiles.writeText(text, to: url)) != nil { original = text }
+                }
+                .disabled(!changed)
+            }
+            .onDisappear { if changed { try? MPVFiles.writeText(text, to: url) } }
     }
 }
 
@@ -890,7 +980,7 @@ struct DiagnosticsView: View {
                     }
                 }
             } footer: {
-                Text("The report bundles the app log, the last mpv log, crash and hang records and your settings. Passwords, tokens and WebDAV links are removed before anything is written.")
+                Text("The report bundles the app log, the last mpv log, crash and hang records and your settings. Passwords, keys and tokens are removed; server addresses stay. With Trace Picture in Picture on, it also includes screenshots of the player and app-switcher pictures.")
             }
             Section("Recent app log") {
                 Text(tail.isEmpty ? "No entries yet." : tail)
@@ -899,9 +989,10 @@ struct DiagnosticsView: View {
             }
             Section {
                 Button("Clear logs", role: .destructive) {
-                    for f in [Diagnostics.shared.appLog, Diagnostics.shared.crashLog, Diagnostics.shared.hangLog, Diagnostics.shared.metricLog] {
-                        try? FileManager.default.removeItem(at: f)
-                    }
+                    // Through the logger itself, which closes its open file
+                    // first: deleting app.log under it left later lines going
+                    // to a file that was gone (1.20.3, 2 Nov).
+                    Diagnostics.shared.clearLogs()
                     tail = ""
                 }
             }

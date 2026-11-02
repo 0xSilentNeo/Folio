@@ -83,6 +83,8 @@ final class HistoryStore: ObservableObject {
            let decoded = try? JSONDecoder().decode([HistoryEntry].self, from: data) {
             entries = decoded
         }
+        // The widget's copy of Continue Watching follows these entries (1.20.3, FolioIntents.swift).
+        ContinueSnapshotWriter.watch(self)
     }
 
     /// One card per show: the most recently watched resumable episode of each.

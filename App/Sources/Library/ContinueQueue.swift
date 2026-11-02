@@ -6,6 +6,7 @@ import Foundation
 ///   - WebDAV: the media files in the same folder, in name order
 ///   - Discover (addon) episodes: the rest of that season, each stream found
 ///     just before it plays, from the same addon and release group
+///   - SMB, Jellyfin and Plex: the rest of the folder or season (ServerQueue)
 /// Anything else (a pasted link) plays on its own.
 enum ContinueQueue {
     @MainActor
@@ -22,21 +23,32 @@ enum ContinueQueue {
     static func build(_ item: MediaItem) async -> ([MediaItem], Int) {
         switch item.source {
         case .local:
-            return local(item) ?? ([item], 0)
+            return local(item, files: await libraryFiles()) ?? ([item], 0)
         case .webdav(let serverID):
             return await webdav(item, serverID: serverID) ?? ([item], 0)
         case .addon:
             return await addon(item) ?? ([item], 0)
         case .url:
             if item.streamPick != nil { return await addon(item) ?? ([item], 0) }
+            if item.remote != nil { return await ServerQueue.build(item) ?? ([item], 0) }
             return ([item], 0)
         }
     }
 
+    /// The library's files. Opened from the widget or Siri as Folio starts,
+    /// LocalMediaStore may not have listed them yet (it lists them off the
+    /// main thread): listed here then, or a show's other episodes would be
+    /// missing from the queue (1.20.3).
     @MainActor
-    private static func local(_ item: MediaItem) -> ([MediaItem], Int)? {
-        let path = (item.resolvedURL ?? URL(fileURLWithPath: item.historyKey ?? item.url)).standardizedFileURL.path
+    static func libraryFiles() async -> [URL] {
         let files = LocalMediaStore.shared.files
+        if !files.isEmpty { return files }
+        return await Task.detached(priority: .userInitiated) { LocalMediaStore.scan() }.value
+    }
+
+    @MainActor
+    private static func local(_ item: MediaItem, files: [URL]) -> ([MediaItem], Int)? {
+        let path = (item.resolvedURL ?? URL(fileURLWithPath: item.historyKey ?? item.url)).standardizedFileURL.path
         guard let file = files.first(where: { $0.standardizedFileURL.path == path }),
               let group = LibraryOrganizer.groups(files).first(where: { $0.files.contains(file) }), group.isSeries, group.files.count > 1 else { return nil }
         let list = group.files.sorted(by: LibraryOrganizer.episodeOrder)

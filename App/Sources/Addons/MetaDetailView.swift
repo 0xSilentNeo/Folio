@@ -228,15 +228,29 @@ struct MetaDetailView: View {
                 if full.type == "movie" && preview.type == "series" { full.type = "series" }
                 meta = full
             } else {
+                // Left before the details came (Find streams tapped early): the
+                // load was cancelled, not empty. Keep `meta` unset so coming back
+                // loads it again; until 1.20.3 the bare preview stayed for good,
+                // with no cast, plot or runtime (review, 2 Nov).
+                guard !Task.isCancelled else { return }
                 var p = preview; p.id = id; meta = p
             }
             if m.type != "movie" {
                 seasons = await (seasonsTask ?? Task { await IMDbSource.seasons(id: id) }).value
-                if let first = seasons.first {
+                // The season picker's task loads a season's episodes; here only
+                // the first season, when the picker already shows it. Until
+                // 1.20.3 this always loaded the first season, and when it came
+                // after a season you'd tapped meanwhile, it replaced that
+                // season's episodes: the list went empty and the button stuck
+                // on "loading episodes…" (review, 2 Nov).
+                if let first = seasons.first, season != first {
                     season = first
-                    episodes = await IMDbSource.episodes(id: id, season: first)
+                } else if let first = seasons.first {
+                    let eps = await IMDbSource.episodes(id: id, season: first)
+                    if season == first { episodes = eps; loadingEpisodes = false }
+                } else {
+                    loadingEpisodes = false
                 }
-                loadingEpisodes = false
             }
             dlog("perf", String(format: "title page %@ ready in %.0f ms", id, (CACurrentMediaTime() - t0) * 1000))
         } else {

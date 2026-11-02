@@ -55,7 +55,11 @@ actor SkipService {
 
     private var oatCache: [String: Any]?
     private var oatFetched: Date?
-    private var idCache: [String: AnimeHint] = [:]
+    private var oatFailed: Date?
+    private var idCache: [String: (hint: AnimeHint, at: Date)] = [:]
+    /// An empty answer may just mean a service was offline: it is asked
+    /// again after this long. Real answers are kept for the session.
+    private let missTTL: TimeInterval = 600
     private let session: URLSession = {
         let c = URLSessionConfiguration.default
         c.timeoutIntervalForRequest = 15
@@ -154,7 +158,7 @@ actor SkipService {
 
     // MARK: TV & films (IntroDB, TheIntroDB)
 
-    private var tvCache: [String: SkipLookup] = [:]
+    private var tvCache: [String: (lookup: SkipLookup, at: Date)] = [:]
 
     /// Both services are asked at once. They used to be asked one after the
     /// other, and IntroDB running into its 15 s timeout held the Skip button
@@ -163,7 +167,9 @@ actor SkipService {
     /// preferred: its answer wins when it comes within 2 s of TheIntroDB's.
     func lookupTV(imdbId: String, season: Int?, episode: Int?, duration: Double) async -> SkipLookup {
         let key = "\(imdbId)|\(season ?? -1)|\(episode ?? -1)"
-        if let c = tvCache[key] { return c }
+        if let c = tvCache[key], !c.lookup.segments.isEmpty || c.lookup.postCredits || Date().timeIntervalSince(c.at) < missTTL {
+            return c.lookup
+        }
         enum Answer { case introDB(SkipLookup), theIntroDB(SkipLookup), graceOver }
         let r: SkipLookup = await withTaskGroup(of: Answer.self) { g in
             g.addTask { .introDB(await self.introDB(imdbId: imdbId, season: season, episode: episode, duration: duration)) }
@@ -192,7 +198,7 @@ actor SkipService {
             out.postCredits = postCredits
             return out
         }
-        tvCache[key] = r
+        tvCache[key] = (r, Date())
         return r
     }
 
@@ -277,7 +283,9 @@ actor SkipService {
         var h = hint
         if h.malId != nil && h.anidbId != nil { return h }
         let key = "\(h.anilistId ?? 0)|\(h.kitsuId ?? 0)|\(h.malId ?? 0)|\(h.title ?? "")"
-        if let cached = idCache[key] { return cached }
+        if let c = idCache[key], c.hint.malId != nil || c.hint.anidbId != nil || Date().timeIntervalSince(c.at) < missTTL {
+            return c.hint
+        }
 
         if h.anilistId == nil && h.kitsuId == nil && h.malId == nil, let title = h.title, !title.isEmpty {
             if let found = await aniListSearch(title) {
@@ -296,7 +304,7 @@ actor SkipService {
             if h.malId == nil { h.malId = obj["myanimelist"] as? Int }
             if h.anilistId == nil { h.anilistId = obj["anilist"] as? Int }
         }
-        idCache[key] = h
+        idCache[key] = (h, Date())
         return h
     }
 
@@ -317,11 +325,14 @@ actor SkipService {
               let id = media["id"] as? Int else { return nil }
         if let n = requireSeason {
             let titles = ((media["title"] as? [String: Any]) ?? [:]).values.compactMap { ($0 as? String)?.lowercased() }
-            let ordinals = ["", "", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"]
             let roman = ["", "", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix"]
-            let marks = ["season \(n)", "\(n)nd season", "\(n)rd season", "\(n)th season", n < ordinals.count ? ordinals[n] : "\(n)th",
-                         n < roman.count ? " \(roman[n])" : "", " \(n)"].filter { !$0.isEmpty }
-            guard titles.contains(where: { t in marks.contains { t.contains($0) } }) else {
+            let ordinal = "\(n)" + ((11...13).contains(n % 100) ? "th" : ["th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th"][n % 10])
+            let marks = ["season \(n)", "\(ordinal) season", ordinal, n < roman.count ? roman[n] : "", "\(n)"].filter { !$0.isEmpty }
+            // Whole words only: "ii" is not "iii", "season 2" is not "season 20".
+            func has(_ t: String, _ mark: String) -> Bool {
+                t.range(of: "(?<![a-z0-9])" + NSRegularExpression.escapedPattern(for: mark) + "(?![a-z0-9])", options: .regularExpression) != nil
+            }
+            guard titles.contains(where: { t in marks.contains { has(t, $0) } }) else {
                 dlog("skip", "AniList: no confident match for \(title)")
                 return nil
             }
@@ -362,10 +373,19 @@ actor SkipService {
 
     private func oat(anidbId: Int, episode: Int, duration: Double, length: Double) async -> [SkipSegment] {
         if oatCache == nil || (oatFetched.map { Date().timeIntervalSince($0) > 86400 } ?? true) {
-            guard let url = URL(string: "https://raw.githubusercontent.com/jonbarrow/open-anime-timestamps/master/timestamps.json"),
-                  let obj = await json(url, timeout: 60) as? [String: Any] else { return [] }
-            oatCache = obj
-            oatFetched = Date()
+            // The file is large: after a failed download it's tried again in
+            // 10 minutes, not for every episode (an older copy is still used).
+            if let failed = oatFailed, Date().timeIntervalSince(failed) < missTTL {
+                if oatCache == nil { return [] }
+            } else if let url = URL(string: "https://raw.githubusercontent.com/jonbarrow/open-anime-timestamps/master/timestamps.json"),
+                      let obj = await json(url, timeout: 60) as? [String: Any] {
+                oatCache = obj
+                oatFetched = Date()
+                oatFailed = nil
+            } else {
+                oatFailed = Date()
+                if oatCache == nil { return [] }
+            }
         }
         guard let entries = oatCache?[String(anidbId)] as? [[String: Any]] else { return [] }
         // Merge all sources for this episode, first valid value wins.

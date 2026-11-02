@@ -264,6 +264,13 @@ struct SettingsPanelContent: View {
             PanelRow(icon: "speaker.wave.3", title: "Boost") {
                 ValueMenu(options: [(0, "Off"), (50, "+50%"), (100, "+100%")], selection: $model.audioBoost)
             }
+            // 1.20.3: for this player session (the defaults are in Settings → Audio & Subtitles).
+            PanelRow(icon: "moon.zzz", title: "Night mode", subtitle: model.nightMode ? model.audioFilterPlan?.night ?? "On" : "Loud scenes softer") {
+                Toggle("", isOn: $model.nightMode).labelsHidden()
+            }
+            PanelRow(icon: "quote.bubble", title: "Dialogue boost", subtitle: model.dialogueBoost ? model.audioFilterPlan?.dialogue ?? "On" : "Voices clearer") {
+                Toggle("", isOn: $model.dialogueBoost).labelsHidden()
+            }
             PanelRow(icon: "timer", title: "Audio delay") {
                 Stepper3(text: String(format: "%+.0f ms", model.audioDelay * 1000),
                          minus: { model.setAudioDelay(model.audioDelay - 0.05) }, plus: { model.setAudioDelay(model.audioDelay + 0.05) })
@@ -286,6 +293,9 @@ struct SettingsPanelContent: View {
             }
 
             PanelHeader(title: "Subtitles")
+            PanelRow(icon: "paintpalette", title: "Style", subtitle: model.subtitleStyle.hint) {
+                ValueMenu(options: SubtitleStyle.allCases.map { ($0, $0.title) }, selection: $model.subtitleStyle)
+            }
             PanelRow(icon: "textformat.size", title: "Size") {
                 HStack(spacing: 10) {
                     Slider(value: Binding(get: { subScale }, set: { subScale = $0; model.setSubScale($0) }), in: 0.6...1.6)
@@ -304,6 +314,15 @@ struct SettingsPanelContent: View {
             }
 
             PanelHeader(title: "More")
+            if let show = model.rememberedShow {
+                // What's remembered for this show (Settings → Playback → Remember per show).
+                Button { model.forgetShow() } label: {
+                    PanelRow(icon: "arrow.uturn.backward.circle", title: "Forget this show's settings", subtitle: show) { EmptyView() }
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PressStyle(scale: 0.98))
+                .foregroundStyle(.white)
+            }
             PanelLink(icon: "info.circle", title: "Media info") {
                 ui.closePanel()
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.84)) { ui.showInfo = true }
@@ -360,6 +379,14 @@ struct TracksPanelContent: View {
             }
             .buttonStyle(.plain)
             .padding(.top, 8)
+            // 1.20.3: the installed subtitle addons, asked for the title playing (SubtitleSearch).
+            Button { model.searchSubtitles() } label: {
+                Label("Search subtitles…", systemImage: "magnifyingglass").font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity).frame(height: 40)
+                    .background(.white.opacity(0.12), in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("searchSubtitles")
         }
     }
 

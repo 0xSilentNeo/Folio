@@ -21,6 +21,33 @@ private extension KeyedDecodingContainer {
         if let s = try? decodeIfPresent(String.self, forKey: key) { return [s] }
         return nil
     }
+    func flexBool(_ key: Key) -> Bool? { (try? decodeIfPresent(FlexBool.self, forKey: key))?.value }
+    func flexDouble(_ key: Key) -> Double? {
+        if let d = try? decodeIfPresent(Double.self, forKey: key) { return d }
+        if let s = try? decodeIfPresent(String.self, forKey: key) { return Double(s) }
+        return nil
+    }
+}
+
+extension KeyedDecodingContainer {
+    /// An array whose bad elements are skipped, so one odd entry from an addon
+    /// doesn't drop the whole list. Nil when the key is missing or isn't an array.
+    func lossy<T: Decodable>(_ type: T.Type, _ key: Key) -> [T]? {
+        (try? decodeIfPresent([LossyElement<T>].self, forKey: key))?.compactMap(\.value)
+    }
+}
+
+struct LossyElement<T: Decodable>: Decodable {
+    var value: T?
+    init(from decoder: Decoder) throws { value = try? T(from: decoder) }
+}
+
+extension JSONDecoder {
+    /// A saved list read one entry at a time: an entry this version can't
+    /// read is skipped instead of losing the whole list.
+    func decodeLossy<T: Decodable>(_ type: T.Type, from data: Data) -> [T]? {
+        (try? decode([LossyElement<T>].self, from: data))?.compactMap(\.value)
+    }
 }
 
 struct AddonManifest: Codable, Hashable {
@@ -45,6 +72,13 @@ struct AddonManifest: Codable, Hashable {
         var name: String
         var isRequired: Bool?
         var options: [String]?
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            name = try c.decode(String.self, forKey: .name)
+            isRequired = c.flexBool(.isRequired)
+            options = c.flexStrings(.options)
+        }
     }
 
     struct Catalog: Codable, Hashable {
@@ -60,7 +94,7 @@ struct AddonManifest: Codable, Hashable {
             type = try c.decode(String.self, forKey: .type)
             id = try c.decode(String.self, forKey: .id)
             name = c.flexString(.name)
-            extra = try? c.decodeIfPresent([Extra].self, forKey: .extra)
+            extra = c.lossy(Extra.self, .extra)
             extraRequired = c.flexStrings(.extraRequired)
             extraSupported = c.flexStrings(.extraSupported)
         }
@@ -118,8 +152,8 @@ struct AddonManifest: Codable, Hashable {
         description = c.flexString(.description)
         logo = c.flexString(.logo)
         types = c.flexStrings(.types) ?? []
-        catalogs = (try? c.decodeIfPresent([Catalog].self, forKey: .catalogs)) ?? []
-        resources = (try? c.decodeIfPresent([Resource].self, forKey: .resources)) ?? []
+        catalogs = c.lossy(Catalog.self, .catalogs) ?? []
+        resources = c.lossy(Resource.self, .resources) ?? []
         idPrefixes = c.flexStrings(.idPrefixes)
     }
 
@@ -298,14 +332,14 @@ struct MetaItem: Codable, Hashable, Identifiable {
         imdbRating = c.flexString(.imdbRating)
         runtime = c.flexString(.runtime)
         genres = c.flexStrings(.genres) ?? c.flexStrings(.genre)
-        videos = try? c.decodeIfPresent([MetaVideo].self, forKey: .videos)
+        videos = c.lossy(MetaVideo.self, .videos)
         rank = c.flexInt(.rank)
         cast = c.flexStrings(.cast)
         originalName = c.flexString(.originalName)
         director = c.flexStrings(.director)
         contentRating = c.flexString(.contentRating)
         countries = c.flexStrings(.countries)
-        credits = try? c.decodeIfPresent([CastMember].self, forKey: .credits)
+        credits = c.lossy(CastMember.self, .credits)
         wikipedia = c.flexString(.wikipedia)
     }
 
@@ -363,11 +397,30 @@ struct AddonStream: Codable, Hashable, Identifiable {
         var filename: String?
         var videoSize: Double?
         var proxyHeaders: ProxyHeaders?
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            notWebReady = c.flexBool(.notWebReady)
+            bingeGroup = c.flexString(.bingeGroup)
+            filename = c.flexString(.filename)
+            videoSize = c.flexDouble(.videoSize)
+            proxyHeaders = try? c.decodeIfPresent(ProxyHeaders.self, forKey: .proxyHeaders)
+        }
     }
     struct Sub: Codable, Hashable {
         var id: String?
         var url: String
         var lang: String?
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            guard let url = c.flexString(.url) else {
+                throw DecodingError.keyNotFound(CodingKeys.url, .init(codingPath: c.codingPath, debugDescription: "no url"))
+            }
+            self.url = url
+            id = c.flexString(.id)
+            lang = c.flexString(.lang)
+        }
     }
 
     var id: String { (url ?? infoHash ?? externalUrl ?? "") + (name ?? "") + (title ?? "") }
@@ -397,7 +450,7 @@ struct AddonStream: Codable, Hashable, Identifiable {
         title = c.flexString(.title)
         description = c.flexString(.description)
         behaviorHints = try? c.decodeIfPresent(Hints.self, forKey: .behaviorHints)
-        subtitles = try? c.decodeIfPresent([Sub].self, forKey: .subtitles)
+        subtitles = c.lossy(Sub.self, .subtitles)
     }
 
     var isPlayable: Bool { url != nil }
@@ -409,4 +462,16 @@ struct AddonSubtitle: Codable, Hashable {
     var id: String?
     var url: String
     var lang: String?
+
+    init(id: String?, url: String, lang: String?) { self.id = id; self.url = url; self.lang = lang }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        guard let url = c.flexString(.url) else {
+            throw DecodingError.keyNotFound(CodingKeys.url, .init(codingPath: c.codingPath, debugDescription: "no url"))
+        }
+        self.url = url
+        id = c.flexString(.id)
+        lang = c.flexString(.lang)
+    }
 }

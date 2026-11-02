@@ -34,6 +34,7 @@ struct TitleHeroView: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var confirmDelete = false
+    @State private var confirmDeleteAll = false
     /// An episode whose Delete was swiped: asks first.
     @State private var pendingDelete: URL?
     @State private var season: Int?
@@ -50,6 +51,8 @@ struct TitleHeroView: View {
     }
 
     private var parsed: TitleParser.Parsed { TitleParser.parse(file.lastPathComponent) }
+    /// The episode the page shows, as its Delete names it: "S1 · E3", else the file name.
+    private var deleteLabel: String { TitleParser.tag(parsed) ?? file.lastPathComponent }
     private var meta: MediaMeta? { thumb.meta }
     private var title: String { meta?.name ?? group.title }
     private var entry: HistoryEntry? { history.entry(forURL: file.path) }
@@ -158,12 +161,21 @@ struct TitleHeroView: View {
             thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true, hero: HeroMetrics.pixels)
         }
         .onChange(of: file) { _, f in
-            // Came back from the player on a later episode: show that one.
+            // Came back from the player on a later episode: show that one,
+            // and its season (1.20.3: after a season finale the chips stayed
+            // on the old season, hiding the highlighted episode).
             thumb.load(key: f.path, fileURL: f, artwork: nil, lookupName: f.lastPathComponent, preferMeta: true, hero: HeroMetrics.pixels)
+            if let s = TitleParser.parse(f.lastPathComponent).season, seasons.contains(s) { season = s }
         }
         .onDisappear { dlog("nav", "title page disappear \(file.lastPathComponent)") }
-        .confirmationDialog("Delete this file from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
+        // Each question names what goes. Until 1.20.3 a series page's "Delete
+        // file" deleted the next-up episode without saying which (review, 2 Nov).
+        .confirmationDialog("Delete \(deleteLabel) (\(LibraryOrganizer.info(file).size.byteString))?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { local.delete(file); dismiss() }
+        }
+        .confirmationDialog("Delete all \(siblings.count) episodes of \(title) (\(siblings.reduce(Int64(0)) { $0 + LibraryOrganizer.info($1).size }.byteString))?",
+                            isPresented: $confirmDeleteAll, titleVisibility: .visible) {
+            Button("Delete All", role: .destructive) { local.delete(siblings); dismiss() }
         }
     }
 
@@ -297,7 +309,12 @@ struct TitleHeroView: View {
             } else {
                 WatchedMenuItems(files: [file])
             }
-            Button(role: .destructive) { confirmDelete = true } label: { Label("Delete file", systemImage: "trash") }
+            if siblings.count > 1 {
+                Button(role: .destructive) { confirmDelete = true } label: { Label("Delete \(deleteLabel)", systemImage: "trash") }
+                Button(role: .destructive) { confirmDeleteAll = true } label: { Label("Delete All \(siblings.count) Episodes", systemImage: "trash") }
+            } else {
+                Button(role: .destructive) { confirmDelete = true } label: { Label("Delete File", systemImage: "trash") }
+            }
         } label: {
             PageButtonLabel(systemName: "ellipsis", width: 56)
         }
@@ -337,7 +354,7 @@ struct TitleHeroView: View {
         play(f)
     }
 
-    private func play(_ f: URL) {
+    private func play(_ f: URL, fromStart: Bool = false) {
         let list = siblings.count > 1 ? siblings : LibraryOrganizer.sorted(local.files)
         let queue = list.map { u -> MediaItem in
             var m = MediaItem(url: u.path, title: TitleParser.clean(u.lastPathComponent), source: .local)
@@ -346,12 +363,11 @@ struct TitleHeroView: View {
             if p.episode != nil { m.anime = AnimeHint(title: p.title, episode: p.episode) }
             return m
         }
-        PlayerPresenter.play(queue: queue, index: list.firstIndex(of: f) ?? 0)
+        PlayerPresenter.play(queue: queue, index: list.firstIndex(of: f) ?? 0, fromStart: fromStart)
     }
 
     private func restart() {
-        if let e = entry { history.remove(e) }
-        play(file)
+        play(file, fromStart: true)
     }
 }
 
@@ -407,6 +423,11 @@ struct LibraryList: View {
     @ObservedObject private var history = HistoryStore.shared
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
     @State private var openRow: String?
+    /// Without a question from the caller, the list asks its own. Until 1.20.3
+    /// Delete then removed the file at once (a folder's List and Details).
+    @State private var ownPending: URL?
+    private var pending: Binding<URL?> { pendingDelete ?? $ownPending }
+    private var deleteFile: (URL) -> Void { delete ?? { LocalMediaStore.shared.delete($0) } }
 
     var body: some View {
         if mode == .grid {
@@ -421,7 +442,7 @@ struct LibraryList: View {
                             item(f) { tile(f) }
                         }
                     }
-                    .modifier(DeleteQuestion(file: f, pending: pendingDelete, delete: delete))
+                    .modifier(DeleteQuestion(file: f, pending: pending, delete: deleteFile))
                 }
             }
         } else {
@@ -434,7 +455,7 @@ struct LibraryList: View {
                             item(f) { row(f) }
                         }
                     }
-                    .modifier(DeleteQuestion(file: f, pending: pendingDelete, delete: delete))
+                    .modifier(DeleteQuestion(file: f, pending: pending, delete: deleteFile))
                 }
             }
         }
@@ -455,7 +476,7 @@ struct LibraryList: View {
             Button { play(f) } label: { Label("Play", systemImage: "play") }
             WatchedMenuItems(files: [f])
             Button(role: .destructive) {
-                if let pendingDelete { pendingDelete.wrappedValue = f } else { LocalMediaStore.shared.delete(f) }
+                pending.wrappedValue = f
             } label: { Label("Delete", systemImage: "trash") }
         }
     }

@@ -146,8 +146,13 @@ struct PlayerScreen: View {
                 // still closing behind it.
                 // .id: a new request is a new picker (its stream list loads for that episode).
                 if let r = model.pickRequest { pickerCard(r, geo).id(r.id).transition(.opacity.combined(with: .scale(scale: 0.96))) }
+                // "Search subtitles…" (Tracks menu): drawn in the player like the picker.
+                if let s = model.subtitleSearch, model.pickRequest == nil {
+                    subtitleSearchCard(s, geo).id(s.id).transition(.opacity.combined(with: .scale(scale: 0.96)))
+                }
             }
             .animation(.spring(response: 0.36, dampingFraction: 0.86), value: model.pickRequest)
+            .animation(.spring(response: 0.36, dampingFraction: 0.86), value: model.subtitleSearch?.id)
             .animation(.easeOut(duration: 0.18), value: ui.controlsVisible)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD != nil)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD?.kind)
@@ -188,6 +193,7 @@ struct PlayerScreen: View {
         // An episode with no stream of the release being watched: the picker
         // is drawn in the player (see pickerCard), and an open menu closes.
         .onChange(of: model.pickRequest) { _, r in if r != nil, ui.panel != nil { ui.closePanel() } }
+        .onChange(of: model.subtitleSearch?.id) { _, s in if s != nil, ui.panel != nil { ui.closePanel() } }
         .fileImporter(isPresented: $showSubtitlePicker, allowedContentTypes: [.item]) { result in
             if case .success(let url) = result { model.addSubtitle(url: url) }
         }
@@ -209,6 +215,19 @@ struct PlayerScreen: View {
                 .environment(\.colorScheme, .dark)
                 .frame(maxWidth: min(560, geo.size.width - 32), maxHeight: geo.size.height * 0.86)
                 .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                .shadow(color: .black.opacity(0.5), radius: 24, y: 8)
+        }
+    }
+
+    private func subtitleSearchCard(_ s: SubtitleSearch, _ geo: GeometryProxy) -> some View {
+        ZStack {
+            Color.black.opacity(0.45).ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { model.closeSubtitleSearch() }
+            SubtitleSearchCard(search: s, onPick: { model.addSearchedSubtitle($0) }, onClose: { model.closeSubtitleSearch() })
+                .frame(maxWidth: min(520, geo.size.width - 32))
+                .frame(maxHeight: geo.size.height * 0.8)
+                .fixedSize(horizontal: false, vertical: true)
                 .shadow(color: .black.opacity(0.5), radius: 24, y: 8)
         }
     }

@@ -2,9 +2,13 @@ import SwiftUI
 
 struct NetworkView: View {
     @ObservedObject private var store = ServerStore.shared
+    @ObservedObject private var mediaServers = MediaServerStore.shared
     @ObservedObject private var downloads = DownloadManager.shared
     @State private var editing: WebDAVServer?
     @State private var adding = false
+    /// SMB, Jellyfin and Plex (1.20.3): their own list and form.
+    @State private var addingServer: MediaServer.Kind?
+    @State private var editingServer: MediaServer?
 
     var body: some View {
         NavigationStack {
@@ -32,6 +36,24 @@ struct NetworkView: View {
                     Text("Real-Debrid, TorBox, Premiumize, Nextcloud, Synology, rclone serve webdav… Passwords are stored in the iOS Keychain.")
                 }
                 Section {
+                    ForEach(mediaServers.servers) { s in
+                        NavigationLink { MediaServerBrowser(server: s) } label: { MediaServerRow(server: s) }
+                        .swipeActions {
+                            Button(role: .destructive) { mediaServers.remove(s) } label: { Label("Delete", systemImage: "trash") }
+                            Button { editingServer = s } label: { Label("Edit", systemImage: "pencil") }.tint(.gray)
+                        }
+                        .contextMenu {
+                            Button { editingServer = s } label: { Label("Edit", systemImage: "pencil") }
+                            Button(role: .destructive) { mediaServers.remove(s) } label: { Label("Delete", systemImage: "trash") }
+                        }
+                    }
+                    Menu { addServerButtons(webDAV: false) } label: {
+                        Label("Add SMB, Jellyfin or Plex", systemImage: "plus.circle.fill")
+                    }
+                } header: { Text("Shares and media servers") } footer: {
+                    Text("SMB shares on a NAS or computer, Jellyfin and Plex servers. Passwords and tokens are stored in the iOS Keychain.")
+                }
+                Section {
                     NavigationLink { DownloadsView() } label: {
                         HStack {
                             Label("Downloads", systemImage: "arrow.down.circle")
@@ -43,9 +65,28 @@ struct NetworkView: View {
             }
             .brandListBackground()
             .navigationTitle("Network")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu { addServerButtons(webDAV: true) } label: { ToolbarGlyph("plus") }
+                        .accessibilityLabel("Add server")
+                        .accessibilityIdentifier("addServerMenu")
+                }
+            }
             .sheet(isPresented: $adding) { ServerEditView(server: nil) }
             .sheet(item: $editing) { s in ServerEditView(server: s) }
+            .sheet(item: $addingServer) { k in MediaServerEditView(kind: k, server: nil) }
+            .sheet(item: $editingServer) { s in MediaServerEditView(kind: s.kind, server: s) }
             .navigationDestination(for: LibraryRoute.self) { LibraryRoute.destination($0) }
+        }
+    }
+
+    /// The "+" menu's servers.
+    @ViewBuilder private func addServerButtons(webDAV: Bool) -> some View {
+        if webDAV {
+            Button { adding = true } label: { Label("WebDAV server", systemImage: "externaldrive.connected.to.line.below") }
+        }
+        ForEach(MediaServer.Kind.allCases) { k in
+            Button { addingServer = k } label: { Label(k.title, systemImage: k.icon) }
         }
     }
 }
@@ -90,12 +131,13 @@ struct LocalFolderView: View {
                                 .buttonStyle(PressStyle(scale: 0.97))
                                 .contextMenu {
                                     Button { play(f) } label: { Label("Play", systemImage: "play") }
-                                    Button(role: .destructive) { try? FileManager.default.removeItem(at: f); reload() } label: { Label("Delete", systemImage: "trash") }
+                                    Button(role: .destructive) { pendingDelete = f } label: { Label("Delete", systemImage: "trash") }
                                 }
+                                .modifier(DeleteQuestion(file: f, pending: $pendingDelete, delete: deleteFile))
                             }
                         }
                     } else {
-                        LibraryList(files: media, mode: mode) { play($0) }
+                        LibraryList(files: media, mode: mode, pendingDelete: $pendingDelete, delete: deleteFile) { play($0) }
                     }
                     if items.isEmpty {
                         Text("Empty. Add files from Home, or copy them with the Files app (On My iPhone → Folio → \(title)).")
@@ -114,6 +156,14 @@ struct LocalFolderView: View {
         .onAppear(perform: reload)
         .refreshable { reload() }
         .onReceive(LocalMediaStore.shared.$files) { _ in reload() }
+    }
+
+    /// Delete asks first, then goes through the library (its picture too, and
+    /// Home is told). Until 1.20.3 the grid removed the file at once.
+    @State private var pendingDelete: URL?
+    private func deleteFile(_ f: URL) {
+        LocalMediaStore.shared.delete(f)
+        reload()
     }
 
     private func play(_ u: URL) {

@@ -155,6 +155,7 @@ struct DiscoverView: View {
     @ObservedObject private var store = AddonStore.shared
     @Namespace private var zoomNS
     @StateObject private var browse = BrowseModel()
+    @StateObject private var forYou = ForYouModel()
     @State private var showPlatformSettings = false
 
     var body: some View {
@@ -165,6 +166,7 @@ struct DiscoverView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 24) {
                         header(margin)
+                        forYouRow(margin)
                         platformStrip(margin)
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(alignment: .firstTextBaseline) {
@@ -209,8 +211,9 @@ struct DiscoverView: View {
             .task {
                 UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "discoverLastUsed")
                 if browse.metas.isEmpty { browse.reload() }
+                forYou.load()
             }
-            .refreshable { browse.reload() }
+            .refreshable { browse.reload(); forYou.load(force: true) }
             .sheet(isPresented: $showPlatformSettings) { PlatformSettingsView() }
         }
     }
@@ -242,6 +245,46 @@ struct DiscoverView: View {
         }
         .padding(.horizontal, margin)
         .padding(.top, 8)
+    }
+
+    /// Titles like the ones you've watched (ForYou), only when the history
+    /// has one to start from. Placeholders keep its place while the first
+    /// row loads, so the page below doesn't jump when it arrives. Its tiles
+    /// zoom by their own ids: the same title can be in the grid too.
+    @ViewBuilder
+    private func forYouRow(_ margin: CGFloat) -> some View {
+        if forYou.hasSeeds && (!forYou.metas.isEmpty || forYou.loading) {
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("For you").font(.title3.weight(.bold))
+                    Text(TMDB.enabled ? "Like what you've watched, from IMDb and TMDB" : "Like what you've watched, from IMDb")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, margin)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(alignment: .top, spacing: 12) {
+                        if forYou.metas.isEmpty {
+                            ForEach(0..<6, id: \.self) { _ in
+                                VStack(alignment: .leading, spacing: 6) {
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.card).frame(width: 118, height: 177)
+                                    Capsule().fill(Theme.card).frame(width: 84, height: 10)
+                                }
+                            }
+                            .accessibilityHidden(true)
+                        }
+                        ForEach(forYou.metas) { m in
+                            NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination("fy|" + m.id, in: zoomNS) } label: {
+                                PosterCard(meta: m, width: 118, zoom: ZoomSource("fy|" + m.id, zoomNS))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, margin)
+                }
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("forYouRow")
+        }
     }
 
     private func platformStrip(_ margin: CGFloat) -> some View {

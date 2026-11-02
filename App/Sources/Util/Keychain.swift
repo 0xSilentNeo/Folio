@@ -10,12 +10,22 @@ enum Keychain {
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
         ]
-        SecItemDelete(base as CFDictionary)
-        guard let value, let data = value.data(using: .utf8) else { return }
-        var add = base
-        add[kSecValueData as String] = data
-        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-        SecItemAdd(add as CFDictionary, nil)
+        guard let value, let data = value.data(using: .utf8) else {
+            let status = SecItemDelete(base as CFDictionary)
+            if status != errSecSuccess, status != errSecItemNotFound { dlog("app", "keychain: couldn't remove \(account) (OSStatus \(status))") }
+            return
+        }
+        // Changed in place. It used to be deleted and added again, so an add
+        // that failed (the phone locked during a background save) lost the
+        // saved password with nothing in the log.
+        var status = SecItemUpdate(base as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+        if status == errSecItemNotFound {
+            var add = base
+            add[kSecValueData as String] = data
+            add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+            status = SecItemAdd(add as CFDictionary, nil)
+        }
+        if status != errSecSuccess { dlog("app", "keychain: couldn't save \(account) (OSStatus \(status))") }
     }
 
     static func get(_ account: String) -> String? {

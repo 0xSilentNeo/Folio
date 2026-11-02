@@ -69,19 +69,51 @@ final class Diagnostics: NSObject {
 
     // MARK: Logging
 
+    /// Filtering (redact) runs on the log's own queue, not the caller's thread
+    /// (usually main). Writes use the throwing API: the old `write(_:)` raised an
+    /// Objective-C exception on a full disk and ended the app (review, 2 Nov).
+    /// The log moves to app.previous.log once it passes `maxBytes` within a
+    /// session too, not only at launch.
     func log(_ tag: String, _ message: String) {
-        let line = "\(Self.fmt.string(from: Date())) [\(tag)] \(Self.redact(message))\n"
+        let stamp = Self.fmt.string(from: Date())
         queue.async { [self] in
+            let line = "\(stamp) [\(tag)] \(Self.redact(message))\n"
             if handle == nil {
                 if !FileManager.default.fileExists(atPath: appLog.path) { FileManager.default.createFile(atPath: appLog.path, contents: nil) }
                 handle = try? FileHandle(forWritingTo: appLog)
-                try? handle?.seekToEnd()
+                written = Int((try? handle?.seekToEnd()) ?? 0)
             }
-            handle?.write(line.data(using: .utf8) ?? Data())
+            let data = Data(line.utf8)
+            try? handle?.write(contentsOf: data)
+            written += data.count
+            if written > maxBytes {
+                try? handle?.close()
+                handle = nil
+                rotateIfNeeded()
+            }
+            #if DEBUG
+            print(line, terminator: "")
+            #endif
         }
-        #if DEBUG
-        print(line, terminator: "")
-        #endif
+    }
+    private var written = 0
+
+    /// Settings → Diagnostics → Clear logs. Until 1.20.3 the button deleted
+    /// app.log while this kept writing to the deleted file through its open
+    /// handle, so the session had no log until the next launch, and the older
+    /// logs and PiP pictures still went into the next report (review, 2 Nov).
+    func clearLogs() {
+        queue.sync {
+            try? handle?.close()
+            handle = nil
+            written = 0
+            let fm = FileManager.default
+            for f in [appLog, hangLog, metricLog, crashLog, dir.appendingPathComponent("app.previous.log")] { try? fm.removeItem(at: f) }
+            for f in (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? [] where f.lastPathComponent.hasPrefix("pip-ui-") {
+                try? fm.removeItem(at: f)
+            }
+        }
+        log("app", "logs cleared")
     }
 
     func error(_ tag: String, _ message: String) { log(tag + "/error", message) }
@@ -213,7 +245,7 @@ final class Diagnostics: NSObject {
                 if stalled > 1.5 && !reported {
                     self.log("hang", String(format: "main thread unresponsive for %.1f s", stalled))
                     let text = "\(Date()) main thread stalled \(String(format: "%.1f", stalled)) s\n\n"
-                    if let h = try? FileHandle(forWritingTo: self.hangLog) { try? h.seekToEnd(); h.write(text.data(using: .utf8)!); try? h.close() }
+                    if let h = try? FileHandle(forWritingTo: self.hangLog) { _ = try? h.seekToEnd(); try? h.write(contentsOf: Data(text.utf8)); try? h.close() }
                     else { try? text.write(to: self.hangLog, atomically: true, encoding: .utf8) }
                 }
             }
@@ -226,6 +258,14 @@ final class Diagnostics: NSObject {
 
     // MARK: Report
 
+    /// A log as text even when a line in it isn't valid UTF-8 (mpv prints
+    /// file and track names as they are). A strict read gave nil, and the
+    /// whole log was left out of the report.
+    private static func lenientText(_ url: URL) -> String? {
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return String(decoding: data, as: UTF8.self)
+    }
+
     /// Zips app log, crash/hang logs, mpv log and settings into one file.
     func makeReport() -> URL? {
         queue.sync { try? handle?.synchronize() }
@@ -233,7 +273,7 @@ final class Diagnostics: NSObject {
         try? FileManager.default.removeItem(at: tmp)
         try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         for f in [appLog, crashLog, hangLog, metricLog, dir.appendingPathComponent("app.previous.log")] where FileManager.default.fileExists(atPath: f.path) {
-            if let s = try? String(contentsOf: f, encoding: .utf8) {
+            if let s = Self.lenientText(f) {
                 try? Self.redact(s).write(to: tmp.appendingPathComponent(f.lastPathComponent), atomically: true, encoding: .utf8)
             }
         }
@@ -258,7 +298,7 @@ final class Diagnostics: NSObject {
                 try? fm.copyItem(at: u, to: out.appendingPathComponent("\(i)-" + u.lastPathComponent))
             }
         }
-        if let mpv = try? String(contentsOf: MPVFiles.logFile, encoding: .utf8) {
+        if let mpv = Self.lenientText(MPVFiles.logFile) {
             try? Self.redact(String(mpv.suffix(600_000))).write(to: tmp.appendingPathComponent("mpv.log"), atomically: true, encoding: .utf8)
         }
         // Settings go through the same filter, and a setting named like a
@@ -302,7 +342,7 @@ extension Diagnostics: MXMetricManagerSubscriber {
             for h in p.hangDiagnostics ?? [] { text += "HANG \(h.hangDuration)\n\(String(decoding: h.callStackTree.jsonRepresentation(), as: UTF8.self))\n\n" }
         }
         guard !text.isEmpty else { return }
-        if let h = try? FileHandle(forWritingTo: metricLog) { try? h.seekToEnd(); h.write(text.data(using: .utf8)!); try? h.close() }
+        if let h = try? FileHandle(forWritingTo: metricLog) { _ = try? h.seekToEnd(); try? h.write(contentsOf: Data(text.utf8)); try? h.close() }
         else { try? text.write(to: metricLog, atomically: true, encoding: .utf8) }
         log("metrickit", "received \(payloads.count) diagnostic payload(s)")
     }

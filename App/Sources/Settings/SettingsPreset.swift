@@ -40,6 +40,7 @@ enum SettingsPreset {
         "libraryView": .string, "librarySort": .string, "librarySortAsc": .bool, "heroView": .string,
         "screenshotSubs": .bool, "discoverRegion": .string, "discoverPlatforms": .strings,
         "seekMarkerStyle": .string, "seekMarkerColor": .string, "seekShowChapterTitle": .bool, "seekShowSkip": .bool,
+        "rememberPerShow": .bool, "subStyle": .string, "nightMode": .bool, "dialogueBoost": .bool,
     ]
     /// Never exported: app bookkeeping, not choices.
     private static let skip: Set<String> = ["enhancedQuality"]
@@ -220,10 +221,22 @@ enum SettingsPreset {
         case .data: return (v as? String).flatMap { Data(base64Encoded: $0) }
         case .dictionary:
             guard let dict = v as? [String: Any] else { return nil }
-            return dict.mapValues { x -> Any in
+            return dict.compactMapValues { x -> Any? in
                 if let b = x as? [String: Any], let s = b["base64"] as? String, b.count == 1, let data = Data(base64Encoded: s) { return data }
-                return x
+                return propertyList(x)
             }
+        }
+    }
+
+    /// A JSON value as UserDefaults can keep it. A null anywhere inside a
+    /// dictionary setting (an edited file) made `set` throw and the import
+    /// crash; nulls are now left out, however deep.
+    private static func propertyList(_ x: Any) -> Any? {
+        switch x {
+        case is NSNull: return nil
+        case let dict as [String: Any]: return dict.compactMapValues(propertyList)
+        case let list as [Any]: return list.compactMap(propertyList)
+        default: return x
         }
     }
 

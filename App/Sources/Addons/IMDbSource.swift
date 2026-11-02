@@ -185,6 +185,9 @@ enum IMDbSource {
         store("chart|/chart/tvmeter/|\(lang)", [show, film])
         store("title4|\(film.id)|\(lang)", film)
         store("title4|\(show.id)|\(lang)", show)
+        // "More like this": each one recommends the other (For you, with a lab title in the history).
+        store(relatedKey(film.id), [Related(meta: show, votes: 1200)])
+        store(relatedKey(show.id), [Related(meta: film, votes: 3400)])
         store("seasons|\(show.id)", SeasonList(seasons: [1, 2]))
         for season in [1, 2] {
             let eps = (1...6).map { e -> MetaVideo in
@@ -328,8 +331,7 @@ enum IMDbSource {
         guard !q.isEmpty else { return [] }
         let key = "suggest|\(q)"
         if let hit = cached(key, ttl: 86400, as: [MetaItem].self) { return hit }
-        let path = q.replacingOccurrences(of: " ", with: "_").addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? q
-        guard let url = URL(string: "https://v3.sg.media-imdb.com/suggestion/x/\(path).json") else { throw URLError(.badURL) }
+        guard let path = suggestionPath(q), let url = URL(string: "https://v3.sg.media-imdb.com/suggestion/x/\(path).json") else { throw URLError(.badURL) }
         var req = URLRequest(url: url)
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         let (data, response) = try await session.data(for: req)
@@ -354,6 +356,16 @@ enum IMDbSource {
         return items
     }
 
+    /// The query as the suggestion API's file name: spaces as "_", every
+    /// other character outside the set IMDb's own site leaves as it is
+    /// (encodeURIComponent's) percent-escaped. 1.20.3 (2 Nov): until then
+    /// `.urlPathAllowed` kept "/" as it was, so "Fate/Zero" and "AC/DC" asked
+    /// for a file in a folder (".../x/fate/zero.json") and found nothing.
+    static func suggestionPath(_ query: String) -> String? {
+        query.replacingOccurrences(of: " ", with: "_").addingPercentEncoding(withAllowedCharacters: suggestionAllowed)
+    }
+    private static let suggestionAllowed = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.!~*'()")
+
     /// A request ended because its task was cancelled (a newer query took over).
     static func isCancellation(_ error: Error) -> Bool {
         error is CancellationError || (error as? URLError)?.code == .cancelled
@@ -369,7 +381,67 @@ enum IMDbSource {
         guard let page = await html("/title/\(id)/") else { return nil }
         let m = parseDetails(page: page, id: id, hint: hint)
         if let m { store(key, m); dlog("imdb", "details \(id): \(m.name) rating=\(m.imdbRating ?? "-") cast=\(m.credits?.count ?? 0)\((m.credits?.first?.photo != nil) ? " with photos" : "")") } else { dlog("imdb/error", "details \(id): nothing parsed (\(page.count) chars)") }
+        // The same page has "More like this": kept now, so the For you row
+        // never downloads a title page you've already opened.
+        storeRelated(page: page, id: id, hint: hint)
         return m
+    }
+
+    // MARK: - More like this
+
+    /// A title from a title page's "More like this", with how many IMDb users
+    /// rated it (Discover's For you row ranks by it).
+    struct Related: Codable, Hashable {
+        var meta: MetaItem
+        var votes: Int?
+    }
+
+    private static func relatedKey(_ id: String) -> String { "related1|\(id)|\(language)" }
+
+    /// IMDb's "More like this" for a title, in IMDb's order; nil when the
+    /// page couldn't be loaded. Kept 7 days, as the title's details; a page
+    /// fetched here also fills the details cache when it has to.
+    static func related(id: String, type hint: String) async -> [Related]? {
+        if let hit = cached(relatedKey(id), ttl: 7 * 86400, as: [Related].self) { return hit }
+        guard let page = await html("/title/\(id)/") else { return nil }
+        let detailsKey = "title4|\(id)|\(language)"
+        if cached(detailsKey, ttl: 7 * 86400, as: MetaItem.self) == nil, let m = parseDetails(page: page, id: id, hint: hint) { store(detailsKey, m) }
+        return storeRelated(page: page, id: id, hint: hint)
+    }
+
+    /// Only a list with titles is kept: a page whose data had none (a
+    /// layout change, a cut-down page) is read again next time.
+    @discardableResult
+    private static func storeRelated(page: String, id: String, hint: String) -> [Related] {
+        let list = moreLikeThis(page: page, id: id, hint: hint)
+        dlog("imdb", "more like this \(id): \(list.count) title(s)")
+        if !list.isEmpty { store(relatedKey(id), list) }
+        return list
+    }
+
+    /// The page data's `moreLikeThisTitles` (edges of title nodes, the same
+    /// shape as a chart's). Only that list: any other title on the page (the
+    /// cast's other work, episodes) is not a recommendation.
+    static func moreLikeThis(page: String, id: String, hint: String) -> [Related] {
+        guard let root = nextData(page) else { return [] }
+        var out: [Related] = []
+        var seen: Set<String> = [id]
+        walk(root) { d in
+            guard out.isEmpty else { return false }
+            guard let list = d["moreLikeThisTitles"] else { return true }
+            let edges = ((list as? [String: Any])?["edges"] as? [[String: Any]]) ?? (list as? [[String: Any]]) ?? []
+            for e in edges {
+                let node = (e["node"] as? [String: Any]) ?? e
+                guard var m = titleItem(node, type: hint), m.type != "episode", seen.insert(m.id).inserted else { continue }
+                m.rank = nil          // a chart position, not one here
+                // For matching TMDB's titles, whose names are in the phone's language.
+                if let o = text(node["originalTitleText"]).map(unescape), o != m.name { m.originalName = o }
+                let votes = int((node["ratingsSummary"] as? [String: Any])?["voteCount"]) ?? int((node["ratingSummary"] as? [String: Any])?["voteCount"])
+                out.append(Related(meta: m, votes: votes))
+            }
+            return out.isEmpty
+        }
+        return out
     }
 
     /// The title page → a title (separate from the fetch so the lab can feed
@@ -407,15 +479,17 @@ enum IMDbSource {
                 // which is the main title object — and the cast with photos
                 // lives inside it, so only the photo-less "Stars" were found.
                 var mains: [(score: Int, d: [String: Any])] = []
+                var owns: [(score: Int, d: [String: Any])] = []
                 var castLists: [(path: String, members: [CastMember])] = []
                 walkPaths(next, path: "") { d, path in
                     // The show's original title: from the object that IS this
                     // title (it carries year/rating/genres), not one that merely
                     // references it (an episode's "series" link carried the
                     // episode's own original title into the show in 1.13.0).
-                    if (d["id"] as? String) == id, d["titleText"] != nil || d["originalTitleText"] != nil {
+                    if (d["id"] as? String) == id {
                         let score = ["titleText", "releaseYear", "ratingsSummary", "titleType", "genres", "plot", "runtimeSeconds", "releaseDate"].filter { d[$0] != nil }.count
-                        mains.append((score, d))
+                        owns.append((score, d))
+                        if d["titleText"] != nil || d["originalTitleText"] != nil { mains.append((score, d)) }
                     }
                     for (key, value) in d {
                         guard let arr = value as? [[String: Any]], arr.count >= 2 else { continue }
@@ -423,16 +497,27 @@ enum IMDbSource {
                         let list = castMembers(nodes)
                         if list.count >= 2 { castLists.append((path + "." + key, list)) }
                     }
-                    if let c = d["countriesOfOrigin"] as? [String: Any], let list = c["countries"] as? [[String: Any]] {
-                        m2!.countries = list.compactMap { $0["id"] as? String }
-                    }
-                    if m2!.description == nil, let plot = d["plot"] as? [String: Any], let pt = plot["plotText"] as? [String: Any], let s = pt["plainText"] as? String {
-                        m2!.description = unescape(s) as String
-                    }
-                    if m2!.releaseInfo == nil, let ry = d["releaseYear"] as? [String: Any], let y = ry["year"] as? Int { m2!.releaseInfo = String(y) }
-                    if m2!.background == nil, let img = d["primaryVideos"] as? [String: Any], let edges = img["edges"] as? [[String: Any]],
-                       let node = edges.first?["node"] as? [String: Any], let thumb = (node["thumbnail"] as? [String: Any])?["url"] as? String {
-                        m2!.background = sized(thumb, width: 1280)
+                }
+                // Countries, plot, year and the trailer's picture from this
+                // title's own objects, the fullest first, then the rest of the
+                // page; never from inside another title. 1.20.3 (2 Nov): until
+                // then any object on the page would do, so a "More like this"
+                // title's plot, year or countries could end up on this one
+                // (countries went to whichever object the walk met last).
+                for root in owns.sorted(by: { $0.score > $1.score }).map(\.d) + [next] {
+                    walkOwn(root, id: id) { d in
+                        if m2!.countries == nil, let c = d["countriesOfOrigin"] as? [String: Any], let list = c["countries"] as? [[String: Any]] {
+                            let ids = list.compactMap { $0["id"] as? String }
+                            if !ids.isEmpty { m2!.countries = ids }
+                        }
+                        if m2!.description == nil, let plot = d["plot"] as? [String: Any], let pt = plot["plotText"] as? [String: Any], let s = pt["plainText"] as? String {
+                            m2!.description = unescape(s) as String
+                        }
+                        if m2!.releaseInfo == nil, let ry = d["releaseYear"] as? [String: Any], let y = ry["year"] as? Int { m2!.releaseInfo = String(y) }
+                        if m2!.background == nil, let img = d["primaryVideos"] as? [String: Any], let edges = img["edges"] as? [[String: Any]],
+                           let node = edges.first?["node"] as? [String: Any], let thumb = (node["thumbnail"] as? [String: Any])?["url"] as? String {
+                            m2!.background = sized(thumb, width: 1280)
+                        }
                     }
                 }
                 // Name and original title from the object that IS this title.
@@ -592,27 +677,35 @@ enum IMDbSource {
         var out: [MetaItem] = []
         var seen = Set<String>()
         walk(root) { d in
-            guard let id = (d["titleId"] as? String) ?? (d["id"] as? String), id.hasPrefix("tt"), id.count >= 9,
-                  let name = text(d["titleText"]) ?? text(d["originalTitleText"]) ?? text(d["titleNameText"]) else { return true }
+            guard let m = titleItem(d, type: type) else { return true }
             // Episodes / people lists are not titles for the grid.
             if d["episode"] != nil || d["seasonNumber"] != nil { return true }
-            guard seen.insert(id).inserted else { return false }
-            let tt = typeID(d["titleType"])
-            var itemType = type
-            if let tt { itemType = tt.contains("Series") ? "series" : (tt == "tvEpisode" ? "episode" : "movie") }
-            if itemType == "episode" { return false }
-            let rating = (d["ratingSummary"] as? [String: Any])?["aggregateRating"] ?? (d["ratingsSummary"] as? [String: Any])?["aggregateRating"] ?? d["aggregateRating"]
-            var m = MetaItem(id: id, type: itemType, name: unescape(name),
-                             poster: sized(imageURL(d["primaryImage"]) ?? imageURL(d["image"]) ?? imageURL(d["poster"]), width: 240),
-                             description: unescape((d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String),
-                             releaseInfo: (int(d["releaseYear"]) ?? int((d["releaseYear"] as? [String: Any])?["year"])).map(String.init),
-                             imdbRating: Self.rating(rating),
-                             genres: genreList(d), rank: int(d["currentRank"]) ?? int(d["rank"]))
-            m.runtime = (int(d["runtime"]) ?? int((d["runtime"] as? [String: Any])?["seconds"])).flatMap { $0 > 0 ? "\($0 / 60) min" : nil }
+            guard seen.insert(m.id).inserted else { return false }
+            if m.type == "episode" { return false }
             out.append(m)
             return false
         }
         return out
+    }
+
+    /// One title node of the page data (a chart entry, a search result, a
+    /// "More like this" entry); nil for anything else. `type` is "movie" or
+    /// "series" when the node doesn't say; an episode comes back as "episode".
+    static func titleItem(_ d: [String: Any], type: String) -> MetaItem? {
+        guard let id = (d["titleId"] as? String) ?? (d["id"] as? String), id.hasPrefix("tt"), id.count >= 9,
+              let name = text(d["titleText"]) ?? text(d["originalTitleText"]) ?? text(d["titleNameText"]) else { return nil }
+        let tt = typeID(d["titleType"])
+        var itemType = type
+        if let tt { itemType = tt.contains("Series") ? "series" : (tt == "tvEpisode" ? "episode" : "movie") }
+        let rating = (d["ratingSummary"] as? [String: Any])?["aggregateRating"] ?? (d["ratingsSummary"] as? [String: Any])?["aggregateRating"] ?? d["aggregateRating"]
+        var m = MetaItem(id: id, type: itemType, name: unescape(name),
+                         poster: sized(imageURL(d["primaryImage"]) ?? imageURL(d["image"]) ?? imageURL(d["poster"]), width: 240),
+                         description: unescape((d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String),
+                         releaseInfo: (int(d["releaseYear"]) ?? int((d["releaseYear"] as? [String: Any])?["year"])).map(String.init),
+                         imdbRating: Self.rating(rating),
+                         genres: genreList(d), rank: int(d["currentRank"]) ?? int(d["rank"]))
+        m.runtime = (int(d["runtime"]) ?? int((d["runtime"] as? [String: Any])?["seconds"])).flatMap { $0 > 0 ? "\($0 / 60) min" : nil }
+        return m
     }
 
     /// Depth-first visit of every dictionary; return false from the visitor to skip its children.
@@ -622,6 +715,16 @@ enum IMDbSource {
             for v in d.values { walk(v, visit) }
         } else if let a = node as? [Any] {
             for v in a { walk(v, visit) }
+        }
+    }
+
+    /// Like `walk`, over what belongs to title `id` only: the walk never goes
+    /// into another title (a "More like this" entry, an episode, a series link).
+    static func walkOwn(_ node: Any, id: String, _ visit: ([String: Any]) -> Void) {
+        walk(node) { d in
+            if let other = (d["id"] as? String) ?? (d["titleId"] as? String), other.hasPrefix("tt"), other != id { return false }
+            visit(d)
+            return true
         }
     }
 

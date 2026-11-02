@@ -106,8 +106,13 @@ enum MPVFiles {
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             throw URLError(.badServerResponse)
         }
-        let name = filename ?? url.lastPathComponent
+        // Only the last part of the name, whatever the link decodes to: a
+        // "..%2F" in it used to step outside the folder.
+        let raw = (filename ?? url.lastPathComponent).replacingOccurrences(of: "\\", with: "/")
+        let name = raw.split(separator: "/").last.map(String.init)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !name.isEmpty, name != ".", name != "..", !name.hasPrefix(".") else { throw URLError(.cannotCreateFile) }
         let dest = dir.appendingPathComponent(name)
+        guard dest.standardizedFileURL.deletingLastPathComponent().path == dir.standardizedFileURL.path else { throw URLError(.cannotCreateFile) }
         try data.write(to: dest, options: .atomic)
         return dest
     }
@@ -139,6 +144,14 @@ enum MPVFiles {
 
     static func readText(_ url: URL) -> String {
         (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+    }
+
+    /// For the editor: "" for a file that isn't there yet, nil for one that
+    /// exists but isn't UTF-8 text. readText gives "" for both, and the editor
+    /// then saved that "" over a Latin-1 input.conf or .lua (review, 2 Nov).
+    static func readEditableText(_ url: URL) -> String? {
+        guard FileManager.default.fileExists(atPath: url.path) else { return "" }
+        return try? String(contentsOf: url, encoding: .utf8)
     }
 
     static func writeText(_ text: String, to url: URL) throws {

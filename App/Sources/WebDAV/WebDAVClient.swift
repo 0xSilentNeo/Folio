@@ -12,7 +12,9 @@ struct WebDAVServer: Codable, Identifiable, Hashable {
         nonmutating set { Keychain.set(newValue, for: "webdav-\(id.uuidString)") }
     }
 
-    var authHeader: String? {
+    var authHeader: String? { authHeader(password: password) }
+
+    func authHeader(password: String?) -> String? {
         guard !username.isEmpty else { return nil }
         let token = "\(username):\(password ?? "")".data(using: .utf8)!.base64EncodedString()
         return "Basic \(token)"
@@ -67,14 +69,36 @@ enum WebDAVError: LocalizedError {
     }
 }
 
+/// Whether a subtitle file belongs to a video in the same folder: the same
+/// name, or the video's name then a language or tag ("Show S01E01.en.srt",
+/// "Show S01E01 - English.ass"). Until 1.20.3 a plain prefix test also gave
+/// "Ep 1.mkv" the subtitles of "Ep 10.srt" (review, 2 Nov).
+enum SubtitleMatch {
+    static func belongs(_ subtitle: String, to video: String) -> Bool {
+        let base = (video as NSString).deletingPathExtension.lowercased()
+        let sub = (subtitle as NSString).deletingPathExtension.lowercased()
+        guard !base.isEmpty, sub.hasPrefix(base) else { return false }
+        guard let next = sub.dropFirst(base.count).first else { return true }
+        return ".-_ [(".contains(next)
+    }
+}
+
 /// Immutable (a server and its shared session): safe to use from any task.
 final class WebDAVClient: @unchecked Sendable {
     let server: WebDAVServer
     private let session: URLSession
+    /// The login, read from the Keychain once per client rather than once
+    /// per request and per file.
+    private let auth: String?
 
-    init(server: WebDAVServer) {
+    /// `password`: one typed in the server form and not saved yet (Test
+    /// connection). Until 1.20.3 Test wrote it to the Keychain first, so a
+    /// wrong password tested and then cancelled replaced the saved one
+    /// (review, 2 Nov).
+    init(server: WebDAVServer, password: String? = nil) {
         self.server = server
         session = Self.session(for: server.id)
+        auth = password.map { server.authHeader(password: $0) } ?? server.authHeader
     }
 
     /// One session per server, shared by every client: its connections (and
@@ -112,7 +136,7 @@ final class WebDAVClient: @unchecked Sendable {
         req.httpMethod = "PROPFIND"
         req.setValue("1", forHTTPHeaderField: "Depth")
         req.setValue("application/xml; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        if let auth = server.authHeader { req.setValue(auth, forHTTPHeaderField: "Authorization") }
+        if let auth { req.setValue(auth, forHTTPHeaderField: "Authorization") }
         req.httpBody = """
         <?xml version="1.0" encoding="utf-8"?>
         <d:propfind xmlns:d="DAV:"><d:prop><d:displayname/><d:resourcetype/><d:getcontentlength/><d:getlastmodified/><d:creationdate/><d:getcontenttype/><d:getetag/></d:prop></d:propfind>
@@ -175,7 +199,7 @@ final class WebDAVClient: @unchecked Sendable {
                           title: cleanTitles ? TitleParser.clean(item.name) : (item.name as NSString).deletingPathExtension,
                           subtitle: item.url.deletingLastPathComponent().lastPathComponent.removingPercentEncoding,
                           source: .webdav(serverID: server.id))
-        if let auth = server.authHeader { m.headers["Authorization"] = auth }
+        if let auth { m.headers["Authorization"] = auth }
         let parsed = TitleParser.parse(item.name)
         if parsed.episode != nil {
             m.anime = AnimeHint(title: parsed.title, episode: parsed.episode)

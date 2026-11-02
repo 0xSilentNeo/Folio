@@ -92,11 +92,15 @@ enum TitleParser {
             episode = Int(m.groups[0]); noteCut(m.range)
         }
 
-        if let m = match(#"(?i)\bS(?:eason)?[ ._]?(\d{1,2})\b"#, in: name), season == nil {
+        // "S2", "Season 2": an "s" ending a word ("Ocean's 11") is no season
+        // marker; until 1.20.3 that read as season 11 (review, 2 Nov).
+        if let m = match(#"(?i)(?<![A-Za-z'’])(?:season[ ._]?|s)(\d{1,2})\b"#, in: name), season == nil {
             season = Int(m.groups[0]); noteCut(m.range)
         }
 
-        if let m = match(#"[\(\. _](19\d{2}|20\d{2})(?:[\)\. _]|$)"#, in: name) {
+        // The release year: the last 19xx/20xx that can be one, so a number in
+        // the title stays in it ("Blade Runner 2049 (2017)" was year 2049).
+        if let m = lastYear(in: name) {
             year = Int(m.groups[0])
             noteCut(m.range)
         }
@@ -115,8 +119,10 @@ enum TitleParser {
             title = (rawName as NSString).deletingPathExtension
         }
 
-        // "Plain Title 9" style trailing number as an episode.
-        if episode == nil, let m = match(#"^(.*\D)\s(\d{1,3})$"#, in: title), let n = Int(m.groups[1]), n > 0, n < 1900 {
+        // "Plain Title 9" style trailing number as an episode, unless there's a
+        // year: then it's a film's number ("Toy Story 4 2019", "Apollo 13
+        // 1995"), which until 1.20.3 became episode 4 / 13 (review, 2 Nov).
+        if episode == nil, year == nil, let m = match(#"^(.*\D)\s(\d{1,3})$"#, in: title), let n = Int(m.groups[1]), n > 0, n < 1900 {
             title = m.groups[0].trimmingCharacters(in: .whitespaces)
             episode = n
         }
@@ -169,6 +175,19 @@ enum TitleParser {
     // MARK: Regex helpers
 
     struct Match { let range: Range<String.Index>; let groups: [String] }
+
+    /// The last plausible release year in `s` (no later than next year).
+    private static func lastYear(in s: String) -> Match? {
+        guard let re = try? NSRegularExpression(pattern: #"[\(\. _](19\d{2}|20\d{2})(?=[\)\. _]|$)"#) else { return nil }
+        let latest = Calendar.current.component(.year, from: Date()) + 1
+        var found: Match?
+        for m in re.matches(in: s, range: NSRange(s.startIndex..., in: s)) {
+            guard let r = Range(m.range, in: s), let gr = Range(m.range(at: 1), in: s),
+                  let y = Int(s[gr]), y <= latest else { continue }
+            found = Match(range: r, groups: [String(s[gr])])
+        }
+        return found
+    }
 
     static func match(_ pattern: String, in s: String) -> Match? {
         guard let re = try? NSRegularExpression(pattern: pattern) else { return nil }
