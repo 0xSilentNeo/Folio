@@ -6,14 +6,14 @@ import UIKit
 /// Picture in Picture trace: Settings → Help & Diagnostics → Diagnostics →
 /// Trace Picture in Picture. Off by default.
 ///
-/// Each line goes to the unified log (subsystem dev.silentneo.glassplayer,
+/// Each line goes to the unified log (subsystem: the app's bundle ID,
 /// category "pip", with signpost intervals for Instruments) and to app.log as
 /// "[pip] +N ms …", N counted from the start of the current transition
 /// (going into PiP, or coming back to the app while PiP plays), so the
 /// report you send has the whole timeline.
 @MainActor
 enum PiPTrace {
-    nonisolated static let subsystem = "dev.silentneo.glassplayer"
+    nonisolated static let subsystem = Bundle.main.bundleIdentifier ?? "dev.silentneo.folio"
     nonisolated static let logger = Logger(subsystem: subsystem, category: "pip")
     nonisolated static let signposter = OSSignposter(subsystem: subsystem, category: "pip")
 

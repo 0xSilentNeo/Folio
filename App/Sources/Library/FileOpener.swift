@@ -3,7 +3,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 import AVFoundation
 
-/// Opens files coming from the picker, "Open in GlassPlayer" or the share
+/// Opens files coming from the picker, "Open in Folio" or the share
 /// sheet: keeps the security scope, makes sure iCloud/provider files are
 /// downloaded, then starts playback.
 @MainActor

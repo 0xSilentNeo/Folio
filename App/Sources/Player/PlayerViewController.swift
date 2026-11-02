@@ -101,6 +101,7 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
         view.backgroundColor = .black
         rootView.onRotationLock = { [weak self] locked in self?.setRotationLocked(locked) }
         rootView.onClose = { [weak self] in self?.closePlayer() }
+        model.closeScreen = { [weak self] in self?.closePlayer() }
         watchAway()
     }
 
@@ -336,8 +337,8 @@ func dumpWindows(_ why: String) {
 }
 
 extension Notification.Name {
-    static let playerWillShow = Notification.Name("GlassPlayer.playerWillShow")
-    static let playerDidHide = Notification.Name("GlassPlayer.playerDidHide")
+    static let playerWillShow = Notification.Name("Folio.playerWillShow")
+    static let playerDidHide = Notification.Name("Folio.playerDidHide")
 }
 
 @MainActor

@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// The WebDAV browser's order (DAVOrder): folders first in every sort,
 /// numeric-aware names, items without a date or size last, direction.

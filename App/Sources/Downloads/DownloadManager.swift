@@ -393,7 +393,7 @@ final class DownloadManager: ObservableObject {
 /// queue and are passed to the manager on the main thread).
 final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
     static let shared = DownloadEngine()
-    static let identifier = "dev.silentneo.glassplayer.downloads"
+    static let identifier = (Bundle.main.bundleIdentifier ?? "dev.silentneo.folio") + ".downloads"
 
     static var resumeDir: URL {
         let d = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DownloadResume", isDirectory: true)

@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// Poster matching for release folders: the WebDAV browser script's scoring
 /// (PS.pick) plus a minimum confidence — a weak match gets the placeholder,

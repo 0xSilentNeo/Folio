@@ -27,7 +27,7 @@ enum Wikipedia {
                         URLQueryItem(name: "srsearch", value: q), URLQueryItem(name: "srlimit", value: "3"),
                         URLQueryItem(name: "format", value: "json"), URLQueryItem(name: "utf8", value: "1")]
         var req = URLRequest(url: c.url!); req.timeoutInterval = 8
-        req.setValue("GlassPlayer/1.0 (iOS)", forHTTPHeaderField: "User-Agent")
+        req.setValue("Folio/1.0 (iOS)", forHTTPHeaderField: "User-Agent")
         guard let r = try? await URLSession.shared.data(for: req),
               let root = try? JSONSerialization.jsonObject(with: r.0) as? [String: Any],
               let hits = (root["query"] as? [String: Any])?["search"] as? [[String: Any]] else { return nil }

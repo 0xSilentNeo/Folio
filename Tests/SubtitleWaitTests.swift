@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// A stream start waits for subtitle addons at most AddonPlayback.subtitleWait
 /// (1.20.0; the 30 Oct log had 20.3 s waits, twice). Answers that come later

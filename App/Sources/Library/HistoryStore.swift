@@ -12,7 +12,12 @@ struct HistoryEntry: Codable, Identifiable, Hashable {
     var watched: Bool?
 
     var progress: Double { watched == true ? 1 : duration > 0 ? min(1, max(0, position / duration)) : 0 }
-    var isFinished: Bool { watched == true || duration > 0 && (position / duration > 0.92 || duration - position < 90) }
+    /// Over 92% watched, or less than 90 s left (the end credits) of anything
+    /// 10 minutes or longer. Until 1.20.2 the 90 s rule held for any length,
+    /// so a clip shorter than 90 s counted as watched before it began.
+    var isFinished: Bool {
+        watched == true || duration > 0 && (position / duration > 0.92 || duration >= 600 && duration - position < 90)
+    }
     var canResume: Bool { position > 15 && !isFinished }
 }
 

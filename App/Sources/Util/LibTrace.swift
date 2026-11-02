@@ -7,7 +7,7 @@ import UIKit
 /// Diagnostics → Trace library and images (or `-libTrace` at launch). Off by
 /// default.
 ///
-/// Each line goes to the unified log (subsystem dev.silentneo.glassplayer,
+/// Each line goes to the unified log (subsystem: the app's bundle ID,
 /// one category per area, signpost intervals for Instruments) and to app.log
 /// as "[<category>] …", so a shared report has the whole timeline.
 enum LibTrace {

@@ -35,5 +35,5 @@ grep -o 'url: "[^"]*\.xcframework\.zip"' "$MPVKIT/Package.swift" | sed 's/url: "
   ditto -x -k "/tmp/$name.zip" "$OUT/Frameworks/"
 done
 ls -1 "$OUT/Frameworks"
-(cd "$OUT" && zip -qry ../GlassPlayerEngine.zip Frameworks)
-ls -lh GlassPlayerEngine.zip
+(cd "$OUT" && zip -qry ../FolioEngine.zip Frameworks)
+ls -lh FolioEngine.zip

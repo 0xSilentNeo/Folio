@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// A folder tile's collage (LibraryGroup.collageFiles, 1.20.0): one picture
 /// per title in the folder, up to four. Until 1.20.0 it was the folder's

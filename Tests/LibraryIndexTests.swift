@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// The WebDAV library index: saved and read back, a broken file rebuilt, and
 /// refreshes that list only what changed (additions, removals, renames).

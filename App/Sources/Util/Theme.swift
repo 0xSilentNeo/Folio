@@ -213,7 +213,7 @@ struct Wordmark: View {
 /// - thumb: the zoom from the row's picture (until 1.17.3)
 /// - row: the zoom from the whole row (1.17.4: your pick from the lab's
 ///   recording of all three)
-/// - push: the usual slide-in push, as in Infuse and iOS's own lists
+/// - push: the usual slide-in push, as in iOS's own lists
 enum ListTransition: String {
     case thumb, row, push
     static var current: ListTransition {

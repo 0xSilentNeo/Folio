@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// Titles and episodes are saved to disk (IMDb cache, metadata cache) and read
 /// back on later lookups: every field must survive that. A field missing from

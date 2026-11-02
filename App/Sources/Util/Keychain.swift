@@ -2,7 +2,7 @@ import Foundation
 import Security
 
 enum Keychain {
-    private static let service = "dev.silentneo.glassplayer"
+    private static let service = Bundle.main.bundleIdentifier ?? "dev.silentneo.folio"
 
     static func set(_ value: String?, for account: String) {
         let base: [String: Any] = [

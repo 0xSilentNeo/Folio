@@ -37,7 +37,7 @@
 **Sources**
 - **WebDAV**: Real-Debrid, TorBox, Premiumize presets or any server. Per-folder sort memory, clean titles, watched/progress badges, folder filter and a background **library-wide search** index. Passwords live in the Keychain.
 - **Discover** powered by IMDb directly (Most Popular, Top 250, genres incl. Anime, search, details, episodes) with an optional TMDB key. **Addons** (Stremio protocol, the same ones Nuvio uses) provide streams: Torrentio/Comet/MediaFusion (with your debrid key), OpenSubtitles, anime catalogs… addon subtitles attached automatically.
-- Local files (Files app → Folio → Media), "Open in…" from other apps, URLs, `glassplayer://play?url=…`
+- Local files (Files app → Folio → Media), "Open in…" from other apps, URLs, `folio://play?url=…`
 
 **Skip intro / outro**
 - Uses chapters in the file when present (Opening/OP/Ending/ED/Recap/Preview)
@@ -46,7 +46,7 @@
 
 ## Install
 
-Folio (formerly GlassPlayer) isn't on the App Store. Download `Folio-x.y.z.ipa` from [Releases](../../releases) and sideload it with **AltStore / SideStore**, **Sideloadly**, **TrollStore**, or your own developer account. The IPA is unsigned; the sideloading tool signs it.
+Folio isn't on the App Store. Download `Folio-x.y.z.ipa` from [Releases](../../releases) and sideload it with **AltStore / SideStore**, **Sideloadly**, **TrollStore**, or your own developer account. The IPA is unsigned; the sideloading tool signs it.
 
 Requires iOS 17 or later.
 
@@ -94,7 +94,7 @@ Local build (macOS + Xcode 16 or later):
 brew install xcodegen
 scripts/fetch-engine.sh      # downloads Vendor/Frameworks and writes Vendor/engine.xcconfig
 xcodegen generate
-open GlassPlayer.xcodeproj
+open Folio.xcodeproj
 ```
 
 ## Credits & license

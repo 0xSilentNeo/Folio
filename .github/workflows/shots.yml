@@ -9,7 +9,7 @@ on:
     inputs:
       only:
         description: 'xcodebuild -only-testing filter'
-        default: 'GlassPlayerUITests/ShotsUITests'
+        default: 'FolioUITests/ShotsUITests'
 
 permissions:
   contents: write
@@ -38,7 +38,7 @@ jobs:
 
       - name: Build for testing
         run: |
-          xcodebuild -project GlassPlayer.xcodeproj -scheme GlassPlayer -sdk iphonesimulator -configuration Release \
+          xcodebuild -project Folio.xcodeproj -scheme Folio -sdk iphonesimulator -configuration Release \
             -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
             CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" build-for-testing > build.log 2>&1 || {
               grep -E "error:|ld: |Undefined symbol" build.log | sort -u | head -60 | sed 's/^/::error::/'
@@ -69,14 +69,14 @@ jobs:
           REC=$!
           sleep 3
           python3 -c 'import time; print("RECSTART %.3f" % time.time())' | tee lab/recstart.txt
-          TEST_RUNNER_SHOTS_DIR="$PWD/lab/shots" xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release \
+          TEST_RUNNER_SHOTS_DIR="$PWD/lab/shots" xcodebuild test-without-building -project Folio.xcodeproj -scheme Folio -configuration Release \
             -destination "id=$UDID" -derivedDataPath build -resultBundlePath lab/shots.xcresult \
-            -only-testing:${{ github.event.inputs.only || 'GlassPlayerUITests/ShotsUITests' }} > lab/test.log 2>&1 || echo "::warning::some checks failed (see lab/test.log)"
+            -only-testing:${{ github.event.inputs.only || 'FolioUITests/ShotsUITests' }} > lab/test.log 2>&1 || echo "::warning::some checks failed (see lab/test.log)"
           grep -E "error:|failed|passed|LAUNCH|SHOT" lab/test.log | tail -120 | sed 's/^/::notice::/'
           kill -INT $REC; wait $REC || true
           # Attachments too, in case the runner couldn't write to SHOTS_DIR.
           xcrun xcresulttool export attachments --path lab/shots.xcresult --output-path lab/attachments > /dev/null 2>&1 || true
-          xcrun simctl spawn "$UDID" log show --last 15m --predicate 'process == "GlassPlayer" AND (messageType == error OR messageType == fault OR eventMessage CONTAINS "[lab]")' --style compact > lab/console.log 2>/dev/null || true
+          xcrun simctl spawn "$UDID" log show --last 15m --predicate 'process == "Folio" AND (messageType == error OR messageType == fault OR eventMessage CONTAINS "[lab]")' --style compact > lab/console.log 2>/dev/null || true
           rm -rf lab/shots.xcresult
           ls -la lab lab/shots | head -120
 

@@ -62,6 +62,13 @@ final class MPVClient {
     private let stateLock = NSLock()
     private var _isShutDown = false
     private var shutdownCompletion: (() -> Void)?
+    /// mpv quit by itself (its "q" key binding, `quit` from the console or a
+    /// script) rather than through `shutdown()`. The handle then stays until
+    /// the app has freed its render contexts and called `shutdown()`: mpv
+    /// requires that before the core is destroyed, and the event thread used
+    /// to destroy it at once (review, 31 Oct).
+    private var quitByCore = false
+    private let appReleased = DispatchSemaphore(value: 0)
 
     var isShutDown: Bool {
         stateLock.lock(); defer { stateLock.unlock() }
@@ -228,6 +235,13 @@ final class MPVClient {
     /// context must already be freed before calling this.
     func shutdown(completion: (() -> Void)? = nil) {
         stateLock.lock()
+        if quitByCore {
+            quitByCore = false
+            shutdownCompletion = completion
+            stateLock.unlock()
+            appReleased.signal()
+            return
+        }
         if _isShutDown { stateLock.unlock(); completion?(); return }
         _isShutDown = true
         shutdownCompletion = completion
@@ -258,13 +272,31 @@ final class MPVClient {
             guard let ev = mpv_wait_event(handle, -1) else { continue }
             let e = ev.pointee
             if e.event_id == MPV_EVENT_NONE { continue }
+            var byCore = false
+            if e.event_id == MPV_EVENT_SHUTDOWN {
+                stateLock.lock()
+                byCore = !_isShutDown
+                _isShutDown = true
+                quitByCore = byCore
+                stateLock.unlock()
+            }
             if let mapped = Self.map(e), shouldDeliver(mapped) {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
                     self.delegate?.mpvClient(self, didReceive: mapped)
                 }
             }
-            if e.event_id == MPV_EVENT_SHUTDOWN { break }
+            if e.event_id == MPV_EVENT_SHUTDOWN {
+                // At most 10 s: a player that is already gone never answers.
+                // Then the handle is left as it is rather than destroyed under
+                // a render context that may still be alive (mpv aborts).
+                if byCore, appReleased.wait(timeout: .now() + 10) == .timedOut {
+                    stateLock.lock(); quitByCore = false; stateLock.unlock()
+                    DispatchQueue.main.async { dlog("player/error", "mpv quit by itself and the player never let go of it; handle left") }
+                    return
+                }
+                break
+            }
         }
         stateLock.lock()
         _isShutDown = true

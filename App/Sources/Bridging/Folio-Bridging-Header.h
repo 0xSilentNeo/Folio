@@ -1,5 +1,5 @@
-#ifndef GlassPlayer_Bridging_Header_h
-#define GlassPlayer_Bridging_Header_h
+#ifndef Folio_Bridging_Header_h
+#define Folio_Bridging_Header_h
 
 #include <mpv/client.h>
 #include <mpv/render.h>

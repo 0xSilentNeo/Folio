@@ -336,7 +336,7 @@ struct MPVSettings: View {
 
     private var rendererText: String {
         renderer == "gl"
-            ? "OpenGL (being tested): every frame goes straight into the picture Picture in Picture shows, as in Outplayer, so PiP starts and ends without a switch. HDR and Dolby Vision show at normal brightness (SDR); no compute shaders."
+            ? "OpenGL (being tested): every frame goes straight into the picture Picture in Picture shows, so PiP starts and ends without a switch. HDR and Dolby Vision show at normal brightness (SDR); no compute shaders."
             : "Metal: mpv's newer renderer, with HDR, Dolby Vision and every shader. Picture in Picture switches renderer as it starts and ends, with a short pause in picture and sound."
     }
     private var pictureText: String {
@@ -487,7 +487,7 @@ struct ScriptsView: View {
                 Text("""
                 Works: mp.* API, observers, timers, OSD/overlays, script-message, key bindings (hardware keyboard or Settings → Commands).
                 Doesn't work on iOS: mp.utils.subprocess, io.popen, os.execute (no curl/yt-dlp), JavaScript scripts, mouse-only UIs.
-                You can also drop scripts into Files → GlassPlayer → mpv → scripts.
+                You can also drop scripts into Files → Folio → mpv → scripts.
                 """)
             }
         }
@@ -802,6 +802,7 @@ struct ConfigEditorView: View {
 struct LogView: View {
     @State private var text = ""
     @State private var errorsOnly = false
+    @State private var shareCopy: URL?
 
     var body: some View {
         ScrollView {
@@ -820,13 +821,21 @@ struct LogView: View {
                 Toggle(isOn: $errorsOnly) { Image(systemName: "exclamationmark.triangle") }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                ShareLink(item: MPVFiles.logFile) { Image(systemName: "square.and.arrow.up") }
+                if let shareCopy { ShareLink(item: shareCopy) { Image(systemName: "square.and.arrow.up") } }
             }
         }
-        .onAppear {
-            let full = MPVFiles.readText(MPVFiles.logFile)
-            // Keep the view responsive on huge logs.
-            text = full.count > 400_000 ? String(full.suffix(400_000)) : full
+        .task {
+            // Shown and shared without passwords or keys, as in the report:
+            // until 1.20.2 the share button sent mpv's log as it was (review,
+            // 31 Oct). The last 400 000 characters keep the view responsive.
+            let (shown, copy) = await Task.detached(priority: .userInitiated) { () -> (String, URL?) in
+                let full = MPVFiles.readText(MPVFiles.logFile)
+                let s = Diagnostics.redact(full.count > 400_000 ? String(full.suffix(400_000)) : full)
+                let url = FileManager.default.temporaryDirectory.appendingPathComponent("mpv-last.log")
+                return (s, (try? s.write(to: url, atomically: true, encoding: .utf8)) != nil ? url : nil)
+            }.value
+            text = shown
+            shareCopy = copy
         }
     }
 

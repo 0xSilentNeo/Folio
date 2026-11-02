@@ -18,7 +18,7 @@ on:
         default: '["v1.16.1","v1.17.4"]'
       only:
         description: 'xcodebuild -only-testing filter'
-        default: 'GlassPlayerUITests/OpenCostUITests/test60OpenClose'
+        default: 'FolioUITests/OpenCostUITests/test60OpenClose'
       title_style:
         description: 'Title page style for the test (full | files)'
         default: 'full'
@@ -43,7 +43,7 @@ jobs:
           if [ "${{ github.event_name }}" = "push" ]; then
             R=.github/perf-lab-request.json
             echo "refs=$(jq -c .refs $R)" >> "$GITHUB_OUTPUT"
-            echo "only=$(jq -r '.only // "GlassPlayerUITests/OpenCostUITests/test60OpenClose"' $R)" >> "$GITHUB_OUTPUT"
+            echo "only=$(jq -r '.only // "FolioUITests/OpenCostUITests/test60OpenClose"' $R)" >> "$GITHUB_OUTPUT"
             echo "style=$(jq -r '.title_style // "full"' $R)" >> "$GITHUB_OUTPUT"
           else
             echo 'refs=${{ github.event.inputs.refs }}' >> "$GITHUB_OUTPUT"
@@ -71,6 +71,9 @@ jobs:
           git checkout -q -f "${{ matrix.ref }}"
           git checkout -q "$LAB" -- UITests scripts/lab
           echo "app $(git rev-parse --short HEAD) ($(git describe --tags --always)), tests from ${LAB:0:7}"
+          # The app's project name and bundle ID at that ref (both changed in 1.20.2).
+          echo "APPNAME=$(awk '/^name:/{print $2; exit}' project.yml)" >> "$GITHUB_ENV"
+          echo "BUNDLEID=$(awk '/PRODUCT_BUNDLE_IDENTIFIER:/{print $2; exit}' project.yml)" >> "$GITHUB_ENV"
           ls UITests
 
       - name: Select Xcode
@@ -94,7 +97,7 @@ jobs:
 
       - name: Build for testing
         run: |
-          xcodebuild -project GlassPlayer.xcodeproj -scheme GlassPlayer -sdk iphonesimulator -configuration Release \
+          xcodebuild -project "$APPNAME.xcodeproj" -scheme "$APPNAME" -sdk iphonesimulator -configuration Release \
             -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
             CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" build-for-testing > build.log 2>&1 || {
               grep -E "error:|ld: |Undefined symbol" build.log | sort -u | head -40 | sed 's/^/::error::/'
@@ -125,11 +128,11 @@ jobs:
       - name: Install and seed a library like yours
         run: |
           UDID=${{ steps.sim.outputs.udid }}
-          APP=build/Build/Products/Release-iphonesimulator/GlassPlayer.app
+          APP=build/Build/Products/Release-iphonesimulator/$APPNAME.app
           xcrun simctl install "$UDID" "$APP"
-          xcrun simctl launch "$UDID" dev.silentneo.glassplayer -uiTestLibrary >/dev/null; sleep 6
-          xcrun simctl terminate "$UDID" dev.silentneo.glassplayer || true
-          CONT=$(xcrun simctl get_app_container "$UDID" dev.silentneo.glassplayer data)
+          xcrun simctl launch "$UDID" "$BUNDLEID" -uiTestLibrary >/dev/null; sleep 6
+          xcrun simctl terminate "$UDID" "$BUNDLEID" || true
+          CONT=$(xcrun simctl get_app_container "$UDID" "$BUNDLEID" data)
           SRC=$(find "$APP" -name lab.mp4 | head -1)
           M="$CONT/Documents/Media"
           mkdir -p "$M/Mobland s01" "$M/classroom of the elite."
@@ -158,14 +161,15 @@ jobs:
           python3 -c 'import datetime;print(datetime.datetime.now().astimezone().isoformat())' > lab/record-start.txt
           cat lab/record-start.txt
           ONLY="${{ needs.plan.outputs.only }}"
+          ONLY="${ONLY/#FolioUITests/${APPNAME}UITests}"
           TEST_RUNNER_LAB_TITLE_STYLE="${{ needs.plan.outputs.style }}" \
-          xcodebuild test-without-building -project GlassPlayer.xcodeproj -scheme GlassPlayer -configuration Release \
+          xcodebuild test-without-building -project "$APPNAME.xcodeproj" -scheme "$APPNAME" -configuration Release \
             -destination "id=$UDID" -derivedDataPath build -only-testing:"$ONLY" > lab/test.log 2>&1 &
           TEST=$!
           # Attach Time Profiler once the test has launched the app for good
           # (its first OPENCOST line), to the app in this simulator.
           for i in $(seq 1 900); do grep -q "OPENCOST" lab/test.log 2>/dev/null && break; sleep 0.2; done
-          PID=$(pgrep -f "GlassPlayer\.app/GlassPlayer( |$)" | tail -1)
+          PID=$(pgrep -f "$APPNAME\.app/$APPNAME( |$)" | tail -1)
           echo "app pid: ${PID:-none}"
           XT=""
           if [ -n "$PID" ]; then
@@ -174,7 +178,7 @@ jobs:
             sleep 4
             if ! kill -0 $XT 2>/dev/null; then
               echo "attach by pid failed ($(tail -1 lab/xctrace.log)); by name"
-              xcrun xctrace record --template 'Time Profiler' --device "$UDID" --attach GlassPlayer --output lab/tp.trace --time-limit 900s > lab/xctrace.log 2>&1 &
+              xcrun xctrace record --template 'Time Profiler' --device "$UDID" --attach "$APPNAME" --output lab/tp.trace --time-limit 900s > lab/xctrace.log 2>&1 &
               XT=$!
             fi
           fi
@@ -184,7 +188,7 @@ jobs:
           kill -INT $REC 2>/dev/null || true
           wait $REC || true
           ls -la lab
-          CONT=$(xcrun simctl get_app_container "$UDID" dev.silentneo.glassplayer data || true)
+          CONT=$(xcrun simctl get_app_container "$UDID" "$BUNDLEID" data || true)
           [ -n "$CONT" ] && find "$CONT" -path "*diagnostics*" -name "*.log" -exec cp {} lab/ \; || true
           tail -5 lab/xctrace.log || true
 

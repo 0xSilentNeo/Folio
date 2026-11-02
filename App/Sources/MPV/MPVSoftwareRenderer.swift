@@ -5,7 +5,7 @@ import CoreVideo
 /// active. It renders straight into IOSurface-backed pixel buffers with no
 /// GPU involvement, so it keeps working after the app is backgrounded.
 final class MPVSoftwareRenderer {
-    private let queue = DispatchQueue(label: "glassplayer.sw", qos: .userInteractive)
+    private let queue = DispatchQueue(label: "folio.sw", qos: .userInteractive)
     private var ctx: OpaquePointer?
     private var box: Unmanaged<Box>?
     private var pool: CVPixelBufferPool?

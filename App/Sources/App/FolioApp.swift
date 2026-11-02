@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 @main
-struct GlassPlayerApp: App {
+struct FolioApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
@@ -96,7 +96,36 @@ struct RootView: View {
                 .tag(2)
         }
         .onOpenURL(perform: handle)
+        .alert("Add this addon?", isPresented: Binding(get: { linkAddon != nil }, set: { if !$0 { linkAddon = nil } }), presenting: linkAddon) { target in
+            Button("Add") { installLinkedAddon(target) }
+            Button("Cancel", role: .cancel) {}
+        } message: { target in
+            Text("A link asks Folio to add the addon at \(URL(string: target)?.host ?? target). Addons can see what you search for and play.")
+        }
+        .alert("Couldn't add the addon", isPresented: Binding(get: { linkError != nil }, set: { if !$0 { linkError = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(linkError ?? "") }
     }
+
+    /// An addon a folio:// link asked for, waiting for a yes. Until 1.20.2
+    /// a link from any web page added it silently (review, 2 Nov), and a
+    /// failure was dropped.
+    @State private var linkAddon: String?
+    @State private var linkError: String?
+
+    private func installLinkedAddon(_ target: String) {
+        tab = 1
+        Task {
+            do { try await AddonStore.shared.install(target) } catch {
+                dlog("open", "addon from a link not added: \(error.localizedDescription)")
+                linkError = error.localizedDescription
+            }
+        }
+    }
+
+    /// What a folio://play link may hand to mpv: network streams, not mpv's
+    /// own protocols (edl://, lavfi://, a local path).
+    private static let playableSchemes: Set<String> = ["http", "https", "rtsp", "rtmp", "smb", "sftp", "ftp"]
 
     private func handle(_ url: URL) {
         dlog("open", "onOpenURL \(url.isFileURL ? url.lastPathComponent : url.absoluteString)")
@@ -114,15 +143,20 @@ struct RootView: View {
             FileOpener.open([url])
             return
         }
-        // glassplayer://play?url=<encoded>  or  glassplayer://addon?url=<manifest>
-        guard url.scheme == "glassplayer", let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
+        // folio://play?url=<encoded>  or  folio://addon?url=<manifest>
+        guard url.scheme?.lowercased() == "folio", let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let target = comps.queryItems?.first(where: { $0.name == "url" })?.value else { return }
-        switch url.host {
+        switch url.host?.lowercased() {
         case "addon":
-            Task { try? await AddonStore.shared.install(target) }
-            tab = 1
-        default:
+            linkAddon = target
+        case "play":
+            guard let s = URL(string: target)?.scheme?.lowercased(), Self.playableSchemes.contains(s) else {
+                dlog("open", "folio://play with a link Folio doesn't play: \(URL(string: target)?.scheme ?? "no scheme")")
+                return
+            }
             PlayerPresenter.play(MediaItem(url: target, title: "", source: .url))
+        default:
+            dlog("open", "folio:// link with an unknown action: \(url.host ?? "none")")
         }
     }
 }

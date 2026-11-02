@@ -4,7 +4,7 @@
  
  static int moltenvk_control(struct ra_ctx *ctx, int *events, int request, void *arg)
  {
-+    // GlassPlayer: the host app resizes the CAMetalLayer on rotation / PiP
++    // Folio: the host app resizes the CAMetalLayer on rotation / PiP
 +    // restore. Report it so vo_gpu_next resizes the swapchain right away
 +    // instead of stretching the old drawable until the next reconfig.
 +    struct priv *p = ctx->priv;

@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// Home's Thumbnails rows (TileRow, 1.20.1): the tiles split into rows of the
 /// column count, a fourth entry in a second row when there are three columns

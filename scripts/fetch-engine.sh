@@ -1,16 +1,16 @@
 #!/bin/bash
 # Puts the engine xcframeworks into Vendor/Frameworks.
 # Prefers this repo's "engine-<engine/VERSION>" release (libmpv with LuaJIT +
-# GlassPlayer patches). Falls back to MPVKit's stock GPL release (no Lua) so
+# Folio patches). Falls back to MPVKit's stock GPL release (no Lua) so
 # the app can still be built while a new engine is being produced.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-REPO="${GITHUB_REPOSITORY:-0xSilentNeo/GlassPlayer}"
+REPO="${GITHUB_REPOSITORY:-0xSilentNeo/Folio}"
 TAG="engine-$(tr -d '[:space:]' < engine/VERSION)"
 mkdir -p Vendor
 rm -rf Vendor/Frameworks
 # ENGINE=stock forces MPVKit's frameworks (they carry simulator slices; ours are device-only).
-if [ "${ENGINE:-}" != "stock" ] && curl -fsSL -o /tmp/engine.zip "https://github.com/$REPO/releases/download/$TAG/GlassPlayerEngine.zip"; then
+if [ "${ENGINE:-}" != "stock" ] && curl -fsSL -o /tmp/engine.zip "https://github.com/$REPO/releases/download/$TAG/FolioEngine.zip"; then
   ditto -x -k /tmp/engine.zip Vendor/
   # Older engine zips shipped without FFmpeg: add MPVKit's GPL FFmpeg (same n9.0.2).
   for lib in avcodec avdevice avfilter avformat avutil swresample swscale; do
