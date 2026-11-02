@@ -12,6 +12,7 @@ For each step: how many ms the main thread was busy in the 1.2 s after it
 was sent, and in what (inclusive time per function, our module's own
 functions listed first). Then the same summed over every step of a kind.
 """
+import os
 import re
 import sys
 import datetime as dt
@@ -99,7 +100,8 @@ for ev, el in ET.iterparse(tp_path, events=("end",)):
 print(f"{len(samples)} main-thread samples")
 
 def ours(frame):
-    return frame[1] in ("GlassPlayer", "GlassPlayer.debug.dylib")
+    app = os.environ.get("APPNAME", "Folio")
+    return frame[1] in (app, app + ".debug.dylib")
 
 def clean(name):
     name = re.sub(r"\(.*", "", name)                 # drop argument lists

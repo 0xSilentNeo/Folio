@@ -177,8 +177,8 @@ final class PlayerModel: ObservableObject {
 
     // MARK: Rendering
     /// `.metal`: mpv's gpu-next on a Metal layer; PiP swaps mpv's video
-    /// output to a CPU renderer and back. `.gl`: Outplayer's way — mpv's
-    /// OpenGL renderer draws every frame into PiP's own sample-buffer layer,
+    /// output to a CPU renderer and back. `.gl`: mpv's OpenGL renderer
+    /// draws every frame into PiP's own sample-buffer layer,
     /// which is also the picture in the player (SampleBufferRenderer); PiP
     /// changes nothing but the size frames are drawn at.
     enum Renderer { case metal, gl }
@@ -222,7 +222,7 @@ final class PlayerModel: ObservableObject {
     }
 
     private var snapshotTimer: Timer?
-    private let snapshotQueue = DispatchQueue(label: "glassplayer.snapshot", qos: .utility)
+    private let snapshotQueue = DispatchQueue(label: "folio.snapshot", qos: .utility)
     private var snapshotPool: CVPixelBufferPool?
     private var snapshotPoolSize = (0, 0)
 
@@ -239,7 +239,11 @@ final class PlayerModel: ObservableObject {
     private var closed = false
     private var loadStarted = Date()
     private var pendingW = 0, pendingH = 0
-    var onClose: (() -> Void)?
+    /// Closes the player's screen (PlayerViewController.closePlayer, which
+    /// calls close()): for a close the screen didn't ask for, such as mpv
+    /// quitting on its own. Not called from close() itself: that made every
+    /// close run twice (review of the 1.20.2 change, 2 Nov).
+    var closeScreen: (() -> Void)?
 
     private let defaults = UserDefaults.standard
 
@@ -361,7 +365,6 @@ final class PlayerModel: ObservableObject {
         EnergyMonitor.shared.note = ""
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        onClose?()
     }
 
     private func applyOptions(_ c: MPVClient) {
@@ -539,7 +542,8 @@ final class PlayerModel: ObservableObject {
             }
             return
         }
-        saveHistory(force: true)
+        saveHistory(force: true)            // the file that was playing, under its own entry
+        playingItem = item
         ended = false
         errorMessage = nil
         segments = []
@@ -1227,11 +1231,20 @@ final class PlayerModel: ObservableObject {
 
     // MARK: History
 
+    /// The item whose file mpv has open, for history. `item` follows
+    /// queueIndex, and Next, a pick and auto-next set that before the next
+    /// episode loads (and keep the last file playing while an addon is
+    /// asked). Saved under `item`, the last file's position and length went
+    /// to the next episode's entry, which load() then read as the place to
+    /// start: a manual Next mid-episode opened the next one at the old time
+    /// (review, 31 Oct).
+    private var playingItem: MediaItem?
+
     func saveHistory(force: Bool = false) {
         guard fileLoaded, duration > 0 || position > 0 else { return }
         if !force && Date().timeIntervalSince(lastHistorySave) < 5 { return }
         lastHistorySave = Date()
-        var stored = item
+        var stored = playingItem ?? item
         if stored.title.isEmpty { stored.title = mediaTitle }
         HistoryStore.shared.record(stored, position: position, duration: duration)
     }
@@ -1408,7 +1421,7 @@ final class PlayerModel: ObservableObject {
         }
     }
 
-    /// OpenGL: PiP's window has a new size. As Outplayer does, frames follow
+    /// OpenGL: PiP's window has a new size. Frames follow
     /// it 0.5 s after it settles (never during PiP's opening animation), at a
     /// quarter, half or all of the video's own size — the first that covers
     /// the window — or the video's size if the window is larger.
@@ -1932,6 +1945,7 @@ final class PlayerModel: ObservableObject {
 
     private func outputOffForBackground(_ c: MPVClient) {
         guard !outputOffForAway, let vid = c.string("vid"), vid != "no" else { return }
+        hardwareBeforeAway = !(hwdecCurrent.isEmpty || hwdecCurrent == "no")
         settleBeforeMetalThreadEnds()          // the swap ends mpv's Metal thread
         swapOutput(c, to: "null", label: "background: video output off")
         outputOffForAway = true
@@ -1977,6 +1991,7 @@ final class PlayerModel: ObservableObject {
     private func renewHardwareDecoder() {
         guard let c = client, fileLoaded, let hw = c.string("hwdec"), hw != "no",
               let vid = c.string("vid"), vid != "no" else { return }
+        swapSeekQuietUntil = CACurrentMediaTime() + 2   // its seek is from the buffer too
         c.set("hwdec", hw == "videotoolbox-copy" ? "videotoolbox" : "videotoolbox-copy")
         c.set("hwdec", hw)
         dlog("player", "back while paused: new hardware decoder (\(hw))")
@@ -2053,9 +2068,15 @@ final class PlayerModel: ObservableObject {
         outputBackAfterAway(c)
     }
 
+    /// Whether the file was on the hardware decoder when the app left: one
+    /// VideoToolbox can't decode (AV1 on older chips, MPEG-2) is in software
+    /// anyway, and isn't rebuilt on every return (review, 2 Nov).
+    private var hardwareBeforeAway = false
+
     private func checkDecoderAfterEarlyReturn() {
         guard outputBackWhileComing else { return }
         outputBackWhileComing = false
+        guard hardwareBeforeAway else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
             guard let self, self.mode == .main, self.fileLoaded,
                   self.defaults.string(forKey: SettingsKey.hwdec) != "no",
@@ -2241,8 +2262,17 @@ extension PlayerModel: MPVClientDelegate {
         case .videoReconfig:
             PiPTrace.event("mpv: video reconfig")
         case .clientMessage(let args):
-            if args.first == "glassplayer-toast", args.count > 1 { showToast(args[1]) }
-        case .log, .seek, .shutdown:
+            if args.first == "folio-toast", args.count > 1 { showToast(args[1]) }
+        case .shutdown:
+            // mpv quit by itself: "q" on a hardware keyboard (mpv's default
+            // bindings are on and keys are forwarded), `quit` in the console
+            // or from a script. The player used to stay up with no mpv behind
+            // it. Close it the way its close button does; MPVClient keeps the
+            // handle until close() has freed the renderers.
+            guard !closed else { break }
+            dlog("player", "mpv quit by itself (a quit key, the console or a script): closing the player")
+            if let closeScreen { closeScreen() } else { close() }
+        case .log, .seek:
             break
         }
     }
@@ -2378,8 +2408,8 @@ extension PlayerModel: PiPManagerDelegate {
             PiPTrace.event("PiP will stop")
             guard let self else { return }
             if self.renderer == .gl {
-                // Full-size frames again as the window grows back (Outplayer:
-                // at willStop). A size change PiP reports while it closes is
+                // Full-size frames again as the window grows back (at
+                // willStop). A size change PiP reports while it closes is
                 // ignored (pipWindowSized), so none lands after this.
                 self.pipStopping = true
                 self.pipSizeWork?.cancel()

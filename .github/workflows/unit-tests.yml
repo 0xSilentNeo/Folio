@@ -1,6 +1,6 @@
 name: Unit tests
 
-# Runs the GlassPlayerUnitTests scheme (Debug, simulator) on branch pushes
+# Runs the FolioUnitTests scheme (Debug, simulator) on branch pushes
 # that touch the app or the tests.
 
 on:
@@ -50,7 +50,7 @@ jobs:
       - name: Test
         run: |
           set -o pipefail
-          xcodebuild test -project GlassPlayer.xcodeproj -scheme GlassPlayerUnitTests -configuration Debug \
+          xcodebuild test -project Folio.xcodeproj -scheme FolioUnitTests -configuration Debug \
             -destination "id=${{ steps.sim.outputs.udid }}" -derivedDataPath build \
             CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" 2>&1 | tee test.log | grep -E "Test Case|error:|Executed|TEST (SUCCEEDED|FAILED)" || true
           grep -q "TEST SUCCEEDED" test.log

@@ -1,6 +1,6 @@
-# GlassPlayer roadmap
+# Folio roadmap
 
-What a full-featured iOS player has that GlassPlayer doesn't yet, grouped by
+What a full-featured iOS player has that Folio doesn't yet, grouped by
 how much they change day-to-day use. Items are ordered within each group by
 value ÷ effort. Nothing here is committed to a version until it moves into a
 release note.

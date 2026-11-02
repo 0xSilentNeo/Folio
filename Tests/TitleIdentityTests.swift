@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// Title identities for the shared watch history (1.20.0: the read-only
 /// linking check; nothing is migrated yet).

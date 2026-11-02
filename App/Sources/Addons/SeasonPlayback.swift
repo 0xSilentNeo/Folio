@@ -251,6 +251,13 @@ enum AddonPlayback {
 /// ready"): asking for its first byte makes a debrid service prepare the file
 /// (the 26 Oct log: 12–13.5 s from loadfile to "file loaded" for the next
 /// episode). Returns where the link finally points after its redirects.
+///
+/// Only the answer's headers are read, then the request is cancelled. Until
+/// 1.20.2 the whole answer was read into memory, and Real-Debrid sends the
+/// whole file whatever the Range asks for: the 1 Nov log has "HTTP 206,
+/// 885 MB in 17216 ms", then 891, 977 and 926 MB, for every next episode —
+/// a second download of each file, held in RAM (the memory warnings and the
+/// app ended while the next episode loaded, 27 Oct).
 enum LinkWarmer {
     static func resolve(_ url: URL, headers: [String: String]) async -> URL? {
         var r = URLRequest(url: url, timeoutInterval: 40)
@@ -263,14 +270,18 @@ enum LinkWarmer {
         defer { NetTrace.end(host) }
         let timer = NetTrace.Timer()
         let c0 = CFAbsoluteTimeGetCurrent()
-        let answer: (Data, URLResponse)
-        do { answer = try await URLSession.shared.data(for: r, delegate: timer) } catch {
+        let response: URLResponse
+        do {
+            let (body, r) = try await URLSession.shared.bytes(for: r, delegate: timer)
+            body.task.cancel()                      // the headers are all it needs
+            response = r
+        } catch {
             NetTrace.report("link", url: url, others: others, started: c0, timer: timer, status: nil, bytes: nil, error: error)
             dlog("player", "next episode: link didn't answer")
             return nil
         }
-        NetTrace.report("link", url: url, others: others, started: c0, timer: timer, status: (answer.1 as? HTTPURLResponse)?.statusCode, bytes: answer.0.count, error: nil)
-        guard let http = answer.1 as? HTTPURLResponse else { return nil }
+        NetTrace.report("link", url: url, others: others, started: c0, timer: timer, status: (response as? HTTPURLResponse)?.statusCode, bytes: 0, error: nil)
+        guard let http = response as? HTTPURLResponse else { return nil }
         dlog("player", String(format: "next episode: link answered HTTP %d in %.1f s%@", http.statusCode, Date().timeIntervalSince(t0),
                               http.url?.host != url.host ? " (redirected to \(http.url?.host ?? "?"))" : ""))
         return (200..<300).contains(http.statusCode) ? http.url : nil

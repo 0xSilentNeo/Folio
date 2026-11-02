@@ -1,5 +1,5 @@
 #!/bin/bash
-# Customises an MPVKit checkout for GlassPlayer:
+# Customises an MPVKit checkout for Folio:
 #  - Lua (LuaJIT) enabled on iOS so external mpv scripts work
 #  - extra raw demuxers (DTS, TrueHD/MLP, W64, PGS .sup)
 #  - extra libmpv patches from engine/patches (applied after MPVKit's own)

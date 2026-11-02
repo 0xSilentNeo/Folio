@@ -1,6 +1,6 @@
 import Foundation
 
-/// Layout of the user-visible mpv config folder (Files app → GlassPlayer → mpv).
+/// Layout of the user-visible mpv config folder (Files app → Folio → mpv).
 ///
 ///   mpv/mpv.conf            options, loaded at startup (config-dir)
 ///   mpv/input.conf          key bindings (hardware keyboards)

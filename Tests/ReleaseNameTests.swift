@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// ReleaseName: the WebDAV browser script's clean-title rules
 /// (webdav-browser-posters.lua, CT.parse / CT.parse_folder) in Swift. File

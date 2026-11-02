@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// Discover's search history store: each test has its own file in a
 /// temporary folder.

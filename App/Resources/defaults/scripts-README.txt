@@ -5,7 +5,7 @@ Put Lua scripts (*.lua) or script folders (with a main.lua inside) here.
 They load automatically every time playback starts, just like
 ~~/scripts on desktop mpv. Option files go in ../script-opts/<name>.conf.
 
-You can also manage scripts in GlassPlayer → Settings → Scripts, which can
+You can also manage scripts in Folio → Settings → Scripts, which can
 import files, install from a URL and switch scripts on and off.
 
 What works on iOS

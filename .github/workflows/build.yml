@@ -50,8 +50,8 @@ jobs:
       - name: Build
         run: |
           xcodebuild \
-            -project GlassPlayer.xcodeproj \
-            -scheme GlassPlayer \
+            -project Folio.xcodeproj \
+            -scheme Folio \
             -sdk iphoneos \
             -configuration Release \
             -destination 'generic/platform=iOS' \
@@ -77,9 +77,9 @@ jobs:
 
       - name: Package unsigned IPA
         run: |
-          APP=$(find build/Build/Products -type d -name "GlassPlayer.app" -path "*iphoneos*" | head -1)
+          APP=$(find build/Build/Products -type d -name "Folio.app" -path "*iphoneos*" | head -1)
           test -n "$APP"
-          file "$APP/GlassPlayer"
+          file "$APP/Folio"
           mkdir -p ipa/Payload
           cp -R "$APP" ipa/Payload/
           (cd ipa && zip -qry "../Folio-$VERSION.ipa" Payload)

@@ -165,7 +165,7 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
 /// the morph's length unchanged — iOS 26 doesn't drive it from that clock.
 /// A tap that arrives meanwhile is kept and acted on the moment it ends.
 ///
-/// iOS 27 (1.16.0; 1.17.1 as Outplayer does it): these rules replace the
+/// iOS 27 (1.16.0; reworked in 1.17.1): these rules replace the
 /// one-transition-at-a-time queue; nothing waits for a morph:
 /// - another panel: whatever is presented — even a panel still closing — is
 ///   dismissed, instantly, or animated if it is still opening, and the new
@@ -399,9 +399,8 @@ final class PanelPresenter {
             return
         }
 
-        // Outplayer's sequence (2026.10 build 219; its menu presenter at
-        // 0x1000c3308, disassembled): whatever is presented — a menu still
-        // closing included, there is no isBeingDismissed check — is dismissed
+        // The sequence: whatever is presented — a menu still closing
+        // included, there is no isBeingDismissed check — is dismissed
         // with `animated: isBeingPresented`, and the new menu is presented from
         // the same controller in the same call.
         //

@@ -15,7 +15,7 @@ final class Diagnostics: NSObject {
     static let shared = Diagnostics()
 
     let dir: URL
-    private let queue = DispatchQueue(label: "glassplayer.diag", qos: .utility)
+    private let queue = DispatchQueue(label: "folio.diag", qos: .utility)
     private var handle: FileHandle?
     private let maxBytes = 2_000_000
     private var watchdog: Thread?
@@ -119,6 +119,15 @@ final class Diagnostics: NSObject {
             // debrid API keys included (27 Oct report: a key in a loadfile
             // line). Any long base64 path segment is hidden.
             (#"/[A-Za-z0-9+_\-]{40,}={0,2}(?=[/?#\s"]|$)"#, "/••••"),
+            // …or in plain text, Torrentio style ("sort=size|realdebrid=KEY"),
+            // which the rule above missed: a "|" and "=" break the segment
+            // (review, 31 Oct). Any setting with a long key-like value goes.
+            (#"(?i)(\b|%7C)(realdebrid|alldebrid|premiumize|debridlink|torbox|offcloud|putio|easydebrid|pikpak|stremthru)=([^|&/\s"'%]+)"#, "$1$2=••••"),
+            (#"(?i)/(realdebrid|alldebrid|premiumize|debridlink|torbox|offcloud|putio|easydebrid|pikpak)/([A-Za-z0-9_\-]{12,})(?=[/?#\s"]|$)"#, "/$1/••••"),
+            // \b: without it the engine retries the name at every offset of
+            // a long run (20 000 characters: 3.7 s; with it, about 1 ms).
+            (#"\b([A-Za-z0-9_]+)=([A-Za-z0-9_\-]{24,})"#, "$1=••••"),
+            (#"(?i)(x-api-key|api-key|x-auth-token)(\s*[:=]\s*)\S+"#, "$1$2••••"),
         ]
         for (p, r) in rules {
             out = out.replacingOccurrences(of: p, with: r, options: .regularExpression)
@@ -130,6 +139,8 @@ final class Diagnostics: NSObject {
 
     private func installCrashHandlers() {
         Self.crashLogPath = strdup(crashLog.path)
+        Self.signalLine = strdup("\nsignal 00\n")
+        Self.frames = .allocate(capacity: 128)
         NSSetUncaughtExceptionHandler { exc in
             let text = "Uncaught exception: \(exc.name.rawValue): \(exc.reason ?? "")\n" + exc.callStackSymbols.joined(separator: "\n")
             Diagnostics.writeCrash(text)
@@ -144,6 +155,14 @@ final class Diagnostics: NSObject {
     }
 
     private static var crashLogPath: UnsafeMutablePointer<CChar>?
+    /// Made at install, so the signal handler allocates nothing.
+    private static var signalLine: UnsafeMutablePointer<CChar>?
+    private static var frames: UnsafeMutablePointer<UnsafeMutableRawPointer?>?
+    /// An uncaught exception is followed by abort(), whose signal handler
+    /// used to open crash.log afresh and replace the exception's name and
+    /// reason with a bare backtrace: the 1 Nov report's crash.log says only
+    /// "signal 05". The backtrace now goes after the exception.
+    private static var exceptionWritten = false
 
     private static func writeCrash(_ text: String) {
         guard let p = crashLogPath else { return }
@@ -153,19 +172,18 @@ final class Diagnostics: NSObject {
         _ = header.withCString { write(fd, $0, strlen($0)) }
         _ = text.withCString { write(fd, $0, strlen($0)) }
         close(fd)
+        exceptionWritten = true
     }
 
     /// Async-signal-safe: only write(2)/backtrace, no allocation.
     private static func writeSignalCrash(_ sig: Int32) {
-        guard let p = crashLogPath else { return }
-        let fd = open(p, O_WRONLY | O_CREAT | O_TRUNC, 0o644)
+        guard let p = crashLogPath, let line = signalLine, let frames else { return }
+        let fd = open(p, O_WRONLY | O_CREAT | (exceptionWritten ? O_APPEND : O_TRUNC), 0o644)
         guard fd >= 0 else { return }
-        var name: [CChar] = Array("signal 00\n".utf8CString)
-        name[7] = CChar(48 + (sig / 10)); name[8] = CChar(48 + (sig % 10))
-        _ = name.withUnsafeBufferPointer { write(fd, $0.baseAddress, 10) }
-        var frames = [UnsafeMutableRawPointer?](repeating: nil, count: 128)
-        let n = backtrace(&frames, 128)
-        backtrace_symbols_fd(&frames, n, fd)
+        line[8] = CChar(48 + (sig / 10)); line[9] = CChar(48 + (sig % 10))
+        _ = write(fd, line, 11)
+        let n = backtrace(frames, 128)
+        backtrace_symbols_fd(frames, n, fd)
         close(fd)
     }
 
@@ -200,7 +218,7 @@ final class Diagnostics: NSObject {
                 }
             }
         }
-        thread.name = "glassplayer.watchdog"
+        thread.name = "folio.watchdog"
         thread.qualityOfService = .utility
         thread.start()
         watchdog = thread
@@ -243,9 +261,12 @@ final class Diagnostics: NSObject {
         if let mpv = try? String(contentsOf: MPVFiles.logFile, encoding: .utf8) {
             try? Self.redact(String(mpv.suffix(600_000))).write(to: tmp.appendingPathComponent("mpv.log"), atomically: true, encoding: .utf8)
         }
+        // Settings go through the same filter, and a setting named like a
+        // secret (the TMDB key) is left out whole: until 1.20.2 they were
+        // written as they were (review, 31 Oct), addon links with keys too.
         var settings: [String: Any] = [:]
         for (k, v) in UserDefaults.standard.dictionaryRepresentation() where !k.hasPrefix("Apple") && !k.hasPrefix("NS") && !k.contains("webdavServers") {
-            settings[k] = "\(v)"
+            settings[k] = k.range(of: "key|token|secret|pass", options: [.regularExpression, .caseInsensitive]) != nil ? "••••" : Self.redact("\(v)")
         }
         settings["device"] = Self.model(); settings["ios"] = UIDevice.current.systemVersion
         settings["version"] = Bundle.main.infoDictionary?["CFBundleShortVersionString"] ?? ""

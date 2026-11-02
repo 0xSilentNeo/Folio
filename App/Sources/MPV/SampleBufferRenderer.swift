@@ -9,21 +9,20 @@ import CoreMedia
 /// there is nothing to hand over when PiP starts or stops: the same frames,
 /// from the same output, keep going into the same layer.
 ///
-/// This is how Outplayer does it (its 2026.10 binary: RenderingView's layer
-/// class is AVSampleBufferDisplayLayer, used as the PiP content source;
-/// vo=libmpv on OpenGL ES 3; each frame rendered into an IOSurface pixel
-/// buffer through a texture-backed framebuffer, glFinish, then enqueued with
-/// "display immediately"; PiP only changes the size frames are rendered at,
-/// 0.5 s after the PiP window settles). Folio's Metal renderer instead swaps
+/// How: the view's layer is an AVSampleBufferDisplayLayer, used as the PiP
+/// content source; vo=libmpv on OpenGL ES 3; each frame rendered into an
+/// IOSurface pixel buffer through a texture-backed framebuffer, glFinish,
+/// then enqueued with "display immediately"; PiP only changes the size
+/// frames are rendered at, 0.5 s after the PiP window settles. Folio's Metal renderer instead swaps
 /// mpv's video output at each PiP start and stop, and the 30 Oct log has
 /// the picture stalling 177–236 ms and the sound stopping ~0.3 s right at
 /// each swap.
 ///
-/// GPU work: allowed while the app is active or PiP is up (Outplayer keeps
-/// rendering in the background with PiP up); stopped, synchronously, when
-/// the app goes to the background without PiP.
+/// GPU work: allowed while the app is active or PiP is up (rendering goes
+/// on in the background while PiP is up); stopped, synchronously, when the
+/// app goes to the background without PiP.
 final class SampleBufferRenderer {
-    private let queue = DispatchQueue(label: "glassplayer.gl", qos: .userInteractive)
+    private let queue = DispatchQueue(label: "folio.gl", qos: .userInteractive)
     private let eagl: EAGLContext
     private let output: (CVPixelBuffer) -> Void
 

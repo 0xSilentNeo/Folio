@@ -2,7 +2,7 @@ mpv shaders
 ===========
 
 Put GLSL user shaders (*.glsl, *.hook) here, then turn them on in
-GlassPlayer → Settings → Shaders, or from the player's Shaders menu.
+Folio → Settings → Shaders, or from the player's Shaders menu.
 Active shaders are applied in the order you enable them.
 
 Limits on iOS

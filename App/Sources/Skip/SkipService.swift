@@ -390,7 +390,7 @@ actor SkipService {
     private func json(_ url: URL, timeout: TimeInterval = 15) async -> Any? {
         var req = URLRequest(url: url)
         req.timeoutInterval = timeout
-        req.setValue("GlassPlayer/1.0", forHTTPHeaderField: "User-Agent")
+        req.setValue("Folio/1.0", forHTTPHeaderField: "User-Agent")
         let t0 = CFAbsoluteTimeGetCurrent()
         func took() -> Int { Int((CFAbsoluteTimeGetCurrent() - t0) * 1000) }
         let result: (Data, URLResponse)

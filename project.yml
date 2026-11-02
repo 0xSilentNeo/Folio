@@ -1,6 +1,6 @@
-name: GlassPlayer
+name: Folio
 
-# XcodeGen spec. CI runs `xcodegen generate` to produce GlassPlayer.xcodeproj,
+# XcodeGen spec. CI runs `xcodegen generate` to produce Folio.xcodeproj,
 # so the .xcodeproj is never committed. Add new source folders here.
 
 options:
@@ -15,7 +15,7 @@ settings:
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
 
 targets:
-  GlassPlayer:
+  Folio:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
@@ -82,7 +82,7 @@ targets:
           - CFBundleTypeName: Subtitles
             CFBundleTypeRole: Viewer
             LSHandlerRank: Alternate
-            LSItemContentTypes: [org.matroska.mka, com.glassplayer.subtitle]
+            LSItemContentTypes: [org.matroska.mka, dev.silentneo.folio.subtitle]
         UTImportedTypeDeclarations:
           - UTTypeIdentifier: org.matroska.mkv
             UTTypeDescription: Matroska Video
@@ -104,7 +104,7 @@ targets:
             UTTypeConformsTo: [public.audio]
             UTTypeTagSpecification:
               public.filename-extension: [mka]
-          - UTTypeIdentifier: com.glassplayer.subtitle
+          - UTTypeIdentifier: dev.silentneo.folio.subtitle
             UTTypeDescription: Subtitle
             UTTypeConformsTo: [public.plain-text]
             UTTypeTagSpecification:
@@ -120,16 +120,16 @@ targets:
             UTTypeTagSpecification:
               public.filename-extension: [glsl, hook]
         CFBundleURLTypes:
-          - CFBundleURLName: dev.silentneo.glassplayer
-            CFBundleURLSchemes: [glassplayer, folio]
+          - CFBundleURLName: dev.silentneo.folio
+            CFBundleURLSchemes: [folio]
     settings:
       base:
-        PRODUCT_NAME: GlassPlayer
-        PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.glassplayer
+        PRODUCT_NAME: Folio
+        PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.folio
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1,2"
-        SWIFT_OBJC_BRIDGING_HEADER: App/Sources/Bridging/GlassPlayer-Bridging-Header.h
+        SWIFT_OBJC_BRIDGING_HEADER: App/Sources/Bridging/Folio-Bridging-Header.h
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Settings → General → App Icon (UIApplication.setAlternateIconName).
         ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIconMono AppIconAlt"
@@ -142,24 +142,24 @@ targets:
       Debug: Vendor/engine.xcconfig
       Release: Vendor/engine.xcconfig
     scheme:
-      testTargets: [GlassPlayerUITests]
+      testTargets: [FolioUITests]
       gatherCoverageData: false
 
   # Unit tests (Debug only: they import the app with @testable). Run with
-  # the GlassPlayerUnitTests scheme, so the app scheme's Release UI tests
+  # the FolioUnitTests scheme, so the app scheme's Release UI tests
   # don't build them.
-  GlassPlayerTests:
+  FolioTests:
     type: bundle.unit-test
     platform: iOS
     deploymentTarget: "17.0"
     sources:
       - path: Tests
     dependencies:
-      - target: GlassPlayer
+      - target: Folio
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.glassplayer.tests
+        PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.folio.tests
         # The engine is linked into the app only (the tests run inside it).
         OTHER_LDFLAGS: ""
     # The app's bridging header imports mpv's headers; a test target that
@@ -168,27 +168,27 @@ targets:
       Debug: Vendor/engine.xcconfig
       Release: Vendor/engine.xcconfig
 
-  GlassPlayerUITests:
+  FolioUITests:
     type: bundle.ui-testing
     platform: iOS
     deploymentTarget: "17.0"
     sources:
       - path: UITests
     dependencies:
-      - target: GlassPlayer
+      - target: Folio
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.glassplayer.uitests
-        TEST_TARGET_NAME: GlassPlayer
+        PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.folio.uitests
+        TEST_TARGET_NAME: Folio
 
 schemes:
-  GlassPlayerUnitTests:
+  FolioUnitTests:
     build:
       targets:
-        GlassPlayer: [test]
-        GlassPlayerTests: [test]
+        Folio: [test]
+        FolioTests: [test]
     test:
       config: Debug
       gatherCoverageData: false
-      targets: [GlassPlayerTests]
+      targets: [FolioTests]

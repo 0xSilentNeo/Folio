@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// The watched actions a menu offers (WatchedMenuItems), and that they follow
 /// the history straight after a change. 30 Oct screenshot: "Mark all as

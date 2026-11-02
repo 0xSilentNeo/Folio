@@ -1,5 +1,5 @@
 import XCTest
-@testable import GlassPlayer
+@testable import Folio
 
 /// Home's Real-Debrid row (LibraryIndexStore.newestReleases, 1.20.0): the
 /// start folder's releases, newest first, one per title, at most the limit.

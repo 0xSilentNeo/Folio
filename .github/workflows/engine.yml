@@ -1,7 +1,7 @@
 name: Build engine
 
 # Builds libmpv for iOS with MPVKit's toolchain (mpv + FFmpeg + libplacebo
-# + MoltenVK + libdovi), adds LuaJIT and GlassPlayer's patches, and publishes
+# + MoltenVK + libdovi), adds LuaJIT and Folio's patches, and publishes
 # the xcframeworks as release "engine-<engine/VERSION>". The app build
 # downloads that release.
 
@@ -67,9 +67,9 @@ jobs:
         run: |
           TAG="engine-$(tr -d '[:space:]' < engine/VERSION)"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" GlassPlayerEngine.zip --clobber
+            gh release upload "$TAG" FolioEngine.zip --clobber
           else
-            gh release create "$TAG" GlassPlayerEngine.zip --prerelease \
+            gh release create "$TAG" FolioEngine.zip --prerelease \
               --title "Engine $TAG" \
-              --notes "libmpv (mpv v0.41 + LuaJIT) with FFmpeg n9.0.2 (GPL), libplacebo, MoltenVK, libdovi — built from MPVKit $MPVKIT_SHA with GlassPlayer patches. Used by the app build; not an app release."
+              --notes "libmpv (mpv v0.41 + LuaJIT) with FFmpeg n9.0.2 (GPL), libplacebo, MoltenVK, libdovi — built from MPVKit $MPVKIT_SHA with Folio patches. Used by the app build; not an app release."
           fi

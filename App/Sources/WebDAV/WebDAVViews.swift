@@ -268,7 +268,7 @@ struct WebDAVBrowserView: View {
                 Menu {
                     // Menus show a toggle as a checkmark item only in the
                     // automatic style; the app-wide switch style
-                    // (GlassPlayerApp, BrandSwitchStyle) left them disabled in
+                    // (FolioApp, BrandSwitchStyle) left them disabled in
                     // menus (1.18.0 UI test: enabled=false).
                     Group {
                         Toggle("Clean titles", isOn: $cleanTitles)

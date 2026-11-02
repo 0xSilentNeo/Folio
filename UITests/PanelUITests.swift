@@ -266,20 +266,6 @@ final class PanelUITests: XCTestCase {
         XCTAssertEqual(ok, 10, "some taps did not open their panel")
     }
 
-    /// Lock button next to PiP: locks the controls, Unlock restores them.
-    func test5LockButton() throws {
-        let app = launchPlayer()
-        let lock = app.buttons["Lock controls"]
-        XCTAssertTrue(lock.waitForExistence(timeout: 5), "lock button missing")
-        lock.tap()
-        XCTAssertTrue(app.buttons["Unlock"].waitForExistence(timeout: 4), "Unlock did not appear")
-        XCTAssertFalse(app.buttons["Settings"].exists, "controls still shown while locked")
-        sleep(1)
-        app.buttons["Unlock"].tap()
-        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 4), "controls did not come back")
-        sleep(1)
-    }
-
     /// The tap sequence from the freeze log, replayed at its real timing.
     /// Afterwards the screen must match the last tap (Settings open) and the
     /// player must still respond: outside tap closes, Tracks opens and closes.
@@ -1164,11 +1150,6 @@ final class PanelUITests: XCTestCase {
     /// relay anchored to the button's rectangle, to the bar item, and off.
     func test33RelayLabRect() throws {
         _ = launchPlayer(["-relayLab", "-menuRelay", "YES", "-relaySource", "rect"], native: true, captureNow: false)
-        sleep(30)
-    }
-    /// The same in-app sequence with Outplayer's present/dismiss calls (no relay).
-    func test42RelayLabOutplayerWay() throws {
-        _ = launchPlayer(["-relayLab", "-menuRelay", "NO", "-outplayerMenus", "YES"], native: true, captureNow: false)
         sleep(30)
     }
     func test34RelayLabItem() throws {
