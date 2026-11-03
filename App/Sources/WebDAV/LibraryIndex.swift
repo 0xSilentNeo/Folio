@@ -293,6 +293,19 @@ final class LibraryIndexStore: ObservableObject {
         }
     }
 
+    /// A server just saved (added, or its login changed): its library is
+    /// read now, whatever the time since the last check. Home asked again
+    /// only when the address, user name or folder changed, so after fixing
+    /// a wrong password the Real-Debrid section stayed away until the next
+    /// launch (user report, 3 Nov).
+    func refreshNow(_ server: WebDAVServer) {
+        Task {
+            await load(server)
+            let index = state(server.id).index
+            await refresh(server, full: index == nil || index?.lastCheck?.unauthorized == true)
+        }
+    }
+
     /// Lists the server again (`full`: every folder, as pull to refresh).
     func refresh(_ server: WebDAVServer, full: Bool) async {
         if let running = refreshes[server.id] {
@@ -362,9 +375,18 @@ final class LibraryIndexStore: ObservableObject {
         return (index.folders[index.root]?.subfolders ?? [])
             .compactMap { key in index.folders[key].flatMap { f in ReleaseName.folder(f.name).map { (key, f, $0) } } }
             .sorted { ($0.1.added ?? $0.1.modified ?? .distantPast) > ($1.1.added ?? $1.1.modified ?? .distantPast) }
-            .filter { seen.insert(ReleaseMatcher.key($0.2)).inserted }
+            .filter { seen.insert(rowKey($0.2)).inserted }
             .prefix(limit)
             .map { Summary.Release(name: $0.1.name, url: $0.0, added: $0.1.added ?? $0.1.modified) }
+    }
+
+    /// One tile per title in Home's row. The poster lookup's key keeps the
+    /// year, so a show's season packs with and without one ("Show 2024
+    /// S02", "Show S01") were two tiles of one show (review, 2 Nov). A film
+    /// keeps its year: a remake is another film.
+    static func rowKey(_ r: ReleaseName) -> String {
+        let title = ReleaseMatch.norm(r.title)
+        return ReleaseMatch.kind(of: r) == .movie ? title + "|" + (r.year ?? "") : title
     }
 
     private func apply(_ index: LibraryIndex, to id: UUID) {

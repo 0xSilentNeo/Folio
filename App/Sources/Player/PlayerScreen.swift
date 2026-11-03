@@ -516,7 +516,11 @@ struct PlayerScreen: View {
             Image(systemName: "exclamationmark.triangle.fill").font(.title).foregroundStyle(Theme.accent)
             Text(message).multilineTextAlignment(.center).font(.callout)
             HStack(spacing: 12) {
-                Button("Retry") { model.load(model.item) }.buttonStyle(.borderedProminent).tint(Theme.accent)
+                // Only when mpv is running: with mpv failed to start (a bad
+                // mpv.conf), Retry did nothing; Close and reopen does.
+                if model.canRetry {
+                    Button("Retry") { model.load(model.item) }.buttonStyle(.borderedProminent).tint(Theme.accent)
+                }
                 Button("Close") { onClose() }.buttonStyle(.bordered)
             }
             Text("Details: Settings → Help & Diagnostics").font(.caption).foregroundStyle(.white.opacity(0.5))
@@ -574,6 +578,11 @@ struct SeekTrack: View {
     @ObservedObject var clock: PlaybackClock
     @ObservedObject private var prefs = SeekBarPrefs.shared
     @State private var dragging = false
+    /// True while a finger is on the bar. When iOS cancels the drag (the app
+    /// leaving, a call) onEnded never runs; this resetting is the only sign,
+    /// and the bar then let go of nothing: the time label stayed frozen and
+    /// the controls never hid (review, 2 Nov).
+    @GestureState private var touching = false
 
     var body: some View {
         GeometryReader { geo in
@@ -634,6 +643,7 @@ struct SeekTrack: View {
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
+                    .updating($touching) { _, state, _ in state = true }
                     .onChanged { v in
                         guard clock.duration > 0 else { return }
                         if !dragging { dragging = true; ui.scrubbing = true }
@@ -650,6 +660,14 @@ struct SeekTrack: View {
                     }
             )
             .animation(.easeOut(duration: 0.12), value: dragging)
+            .onChange(of: touching) { _, now in
+                // Cancelled (no onEnded): let go without seeking.
+                guard !now, dragging else { return }
+                dragging = false
+                ui.scrubbing = false
+                ui.scrubTime = nil
+                ui.scheduleHide()
+            }
         }
         .frame(height: 46)
     }

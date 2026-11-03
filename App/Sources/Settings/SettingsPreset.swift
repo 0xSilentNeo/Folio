@@ -41,6 +41,7 @@ enum SettingsPreset {
         "screenshotSubs": .bool, "discoverRegion": .string, "discoverPlatforms": .strings,
         "seekMarkerStyle": .string, "seekMarkerColor": .string, "seekShowChapterTitle": .bool, "seekShowSkip": .bool,
         "rememberPerShow": .bool, "subStyle": .string, "nightMode": .bool, "dialogueBoost": .bool,
+        "airingAlerts": .string,
     ]
     /// Never exported: app bookkeeping, not choices.
     private static let skip: Set<String> = ["enhancedQuality"]

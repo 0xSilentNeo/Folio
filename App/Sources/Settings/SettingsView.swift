@@ -19,6 +19,8 @@ struct SettingsView: View {
                     row("Discover", "sparkles.tv", .cyan) { DiscoverSettings() }
                     row("Downloads", "arrow.down.circle", .mint) { DownloadSettingsView() }
                 }
+                // The airing tracker (1.21.0): the tracked shows and their notifications.
+                TrackingSettingsSection()
                 Section {
                     row("mpv", "slider.horizontal.3", .teal) { MPVSettings() }
                 } footer: {

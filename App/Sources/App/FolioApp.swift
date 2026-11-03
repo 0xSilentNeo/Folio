@@ -18,6 +18,9 @@ struct FolioApp: App {
         MPVFiles.bootstrap()
         // Reconnects to downloads that ran while the app was closed.
         MainActor.assumeIsolated { _ = DownloadManager.shared }
+        // The airing tracker (1.21.0): its background refresh and the
+        // notification delegate, which iOS needs set before launch ends.
+        MainActor.assumeIsolated { AiringTracker.start() }
         if !["-uiTest", "-uiTestLibrary", "-labDiscover", "-shots"].contains(where: CommandLine.arguments.contains) { IMDbSource.warmUp() }
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
@@ -165,6 +168,11 @@ struct RootView: View {
                 return
             }
             ContinueQueue.play(entry.item)
+        case "track":
+            // folio://track?id=<tracked show id>: a new-episode notification
+            // or the Airing widget (1.21.0) opens the show's tracking page.
+            guard let id = TrackLink.id(from: url) else { return }
+            TrackingPresenter.open(id)
         default:
             dlog("open", "folio:// link with an unknown action: \(url.host ?? "none")")
         }

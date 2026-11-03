@@ -94,6 +94,53 @@ struct RealDebridSection: View {
     }
 }
 
+/// Home's Real-Debrid place before its first check works (1.21.0): the
+/// library being read, with its progress; a refused login, with Edit; or
+/// nothing (offline with no copy yet). It watches the index itself, so the
+/// progress redraws this row, not Home.
+struct RealDebridStatusRow: View {
+    let server: WebDAVServer
+    let summary: LibraryIndexStore.Summary?
+    let margin: CGFloat
+    let edit: () -> Void
+    @ObservedObject private var index = LibraryIndexStore.shared
+
+    var body: some View {
+        let state = index.state(server.id)
+        if summary?.unauthorized == true, !state.refreshing {
+            row(icon: "lock.trianglebadge.exclamationmark", title: "Real-Debrid refused the login",
+                detail: "Use the WebDAV password from real-debrid.com/account, not your login password.") {
+                Button("Edit", action: edit).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
+                    .accessibilityIdentifier("realDebridEdit")
+            }
+        } else if state.refreshing {
+            row(icon: "arrow.triangle.2.circlepath", title: "Reading your Real-Debrid library…",
+                detail: state.total > 1 ? "\(state.done) of \(state.total) folders" : "The first time takes a moment.") {
+                ProgressView()
+            }
+        }
+    }
+
+    private func row<Trailing: View>(icon: String, title: String, detail: String, @ViewBuilder trailing: () -> Trailing) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Real-Debrid").font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
+            HStack(spacing: 12) {
+                Image(systemName: icon).font(.title3).foregroundStyle(Theme.accent).frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.subheadline.weight(.semibold))
+                    Text(detail).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                trailing()
+            }
+            .padding(14)
+            .glass(cornerRadius: 18)
+        }
+        .padding(.horizontal, margin)
+        .accessibilityElement(children: .contain)
+    }
+}
+
 /// One release in the row: its poster (or initials), clean title, and what
 /// it is (season, year, resolution).
 struct ReleaseTile: View {

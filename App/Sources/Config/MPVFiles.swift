@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 /// Layout of the user-visible mpv config folder (Files app → Folio → mpv).
 ///
@@ -40,11 +41,31 @@ enum MPVFiles {
         seed(shadersDir.appendingPathComponent("README.txt"), resource: "shaders-README.txt")
     }
 
+    /// Every earlier version of the bundled files (SHA-256), from the repo's
+    /// history. A file still exactly like one of them was never edited, so
+    /// it's replaced by this version's, which explains much more (1.21.0).
+    /// A file you've changed is never touched.
+    private static let earlierDefaults: [String: Set<String>] = [
+        "mpv.conf": ["298e8b217b4f9ffad7628cf84910c67439c3939b445363efc377579597536f18",
+                     "6391e027cf25facde9b29ec76d149cb1191c5f60332f30f23c9e9ebb655a38d4"],
+        "input.conf": ["4fec4304d8b6a07682af8086b3ff1da430935a0cbd80ef7df01cef3fd88a2369",
+                       "abb4dff70e168635a87e40f4ebc45bdadd58f5f93e90f673359294e8e12645b9"],
+        "scripts-README.txt": ["768eb8f9234d06bc9e3d0053efa8935d9a608b96ce00f7a0d442672650c9bc79",
+                               "8a839949cd5c7abe69dc359ebed549f2986b1bfbefa529c072179a1fa9372329"],
+        "shaders-README.txt": ["120a647776251ba668f66023ac1594aad63b127bb48d7723023aae88ed8f1d5f",
+                               "926da425c3463f609756c43b6c70ff60a9e622f6ec6d777b6b199f58fa611404",
+                               "e1e777b71eee4b8627b29210542a369ef0883948b44c695e805eb6888fa6ef38"],
+    ]
+
     private static func seed(_ dest: URL, resource: String) {
-        guard !fm.fileExists(atPath: dest.path) else { return }
-        if let src = Bundle.main.url(forResource: resource, withExtension: nil, subdirectory: "defaults") {
-            try? fm.copyItem(at: src, to: dest)
+        guard let src = Bundle.main.url(forResource: resource, withExtension: nil, subdirectory: "defaults") else { return }
+        if let current = try? Data(contentsOf: dest) {
+            let hash = SHA256.hash(data: current).map { String(format: "%02x", $0) }.joined()
+            guard earlierDefaults[resource]?.contains(hash) == true, let fresh = try? Data(contentsOf: src) else { return }
+            if (try? fresh.write(to: dest, options: .atomic)) != nil { dlog("mpv", "\(resource): the unedited earlier default was updated") }
+            return
         }
+        try? fm.copyItem(at: src, to: dest)
     }
 
     // MARK: Scripts

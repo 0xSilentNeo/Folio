@@ -520,8 +520,7 @@ struct NowPlayingPanelContent: View {
                 SegmentPicker(options: [(0, "Playlist"), (1, "Chapters"), (2, "Markers")], selection: $tab)
                     .frame(maxWidth: .infinity)
                 Button {
-                    model.run(command: screenshotSubs ? "screenshot subtitles" : "screenshot video")
-                    model.showToast("Screenshot saved")
+                    model.takeScreenshot(subtitles: screenshotSubs)
                 } label: {
                     Image(systemName: "camera").font(.system(size: 15, weight: .semibold))
                         .frame(width: 38, height: 38).background(Color.accentColor, in: Circle())

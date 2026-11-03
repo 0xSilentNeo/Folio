@@ -166,6 +166,24 @@ final class HistoryStore: ObservableObject {
         scheduleSave()
     }
 
+    /// Library files that were deleted (files, or everything in a deleted
+    /// folder): their entries go. Their Continue Watching cards stayed and
+    /// failed to play (review, 2 Nov). By path only, never by name: a file
+    /// of the same name elsewhere keeps its progress.
+    func forget(deleted urls: [URL]) {
+        let gone = urls.map { $0.standardizedFileURL.path }
+        let before = entries.count
+        entries.removeAll { e in
+            guard case .local = e.item.source else { return false }
+            let p = URL(fileURLWithPath: e.item.historyKey ?? e.item.url).standardizedFileURL.path
+            return gone.contains { p == $0 || p.hasPrefix($0 + "/") }
+        }
+        if entries.count != before {
+            dlog("history", "forgot \(before - entries.count) entr\(before - entries.count == 1 ? "y" : "ies") of deleted files")
+            scheduleSave()
+        }
+    }
+
     func markWatched(_ entry: HistoryEntry) {
         guard let i = entries.firstIndex(where: { $0.id == entry.id }) else { return }
         entries[i].position = entries[i].duration

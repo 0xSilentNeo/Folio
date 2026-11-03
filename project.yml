@@ -42,7 +42,9 @@ targets:
         UILaunchScreen:
           UIColorName: LaunchBackground
           UIImageName: LaunchMark
-        UIBackgroundModes: [audio, picture-in-picture]
+        # fetch: the airing tracker's background refresh (1.21.0, AiringBackground).
+        UIBackgroundModes: [audio, picture-in-picture, fetch]
+        BGTaskSchedulerPermittedIdentifiers: [dev.silentneo.folio.airing-refresh]
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         UISupportsDocumentBrowser: false
