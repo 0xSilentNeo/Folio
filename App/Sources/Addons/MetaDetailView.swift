@@ -53,7 +53,11 @@ struct MetaDetailView: View {
                         if let d = m.description, !d.isEmpty {
                             ExpandableText(text: d, lines: 2)
                         }
-                        HStack(spacing: 0) { findButton.zoomSource(ZoomSource("find", streamsNS), cornerRadius: 28); Spacer(minLength: 0) }
+                        // Track (1.21.0): series only, once the page knows which show it is.
+                        TitleButtonRow {
+                            findButton.zoomSource(ZoomSource("find", streamsNS), cornerRadius: 28)
+                            if isSeries, !resolvedID.hasPrefix("tmdb:") { TrackButton(show: TrackedShow(meta: m, imdbID: usesIMDb ? resolvedID : nil)) }
+                        }
                         if castPosition == "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, -16) }
                         if isSeries && (!allVideos.isEmpty || !allSeasons.isEmpty) { episodeList }
                         if loadingEpisodes && allVideos.isEmpty { ProgressView().frame(maxWidth: .infinity).padding() }

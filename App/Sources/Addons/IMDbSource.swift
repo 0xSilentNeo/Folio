@@ -99,9 +99,19 @@ enum IMDbSource {
                 dlog("perf", String(format: "imdb %@ plain HTTP %.0f ms (%d KB)", path, (CACurrentMediaTime() - t0) * 1000, data.count / 1024))
                 return s
             }
+            // Only IMDb's bot check needs the hidden browser (it answers 202
+            // or 403 with a challenge page). A missing page or a server error
+            // isn't one: those went through the browser too, up to 25 s each,
+            // holding up the pages behind them (review, 2 Nov).
+            if status == 404 || status == 410 || (500...599).contains(status) {
+                dlog("imdb", "HTTP \(status) for \(path): no page")
+                return nil
+            }
             dlog("imdb", "HTTP \(status) for \(path) (\(data.count) bytes) → web view")
         } catch {
             if error is CancellationError { return nil }
+            // Offline: the browser can't do better.
+            if (error as? URLError)?.code == .notConnectedToInternet { dlog("imdb", "\(path): offline"); return nil }
             dlog("imdb", "\(path): \(error.localizedDescription) → web view")
         }
         if Task.isCancelled { return nil }

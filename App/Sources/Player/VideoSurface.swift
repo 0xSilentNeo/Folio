@@ -145,6 +145,15 @@ struct VideoSurface: UIViewRepresentable {
         }
 
         @objc private func pan(_ g: UIPanGestureRecognizer) {
+            // A pan cut short by the lock or a long press still has to let go
+            // of the scrub, or the time label stayed frozen (review, 2 Nov).
+            if [.ended, .cancelled, .failed].contains(g.state), panMode != .none, ui.locked || longPressActive {
+                ui.scrubbing = false
+                ui.scrubTime = nil
+                hideHUD(after: 0.3)
+                panMode = .none
+                return
+            }
             guard !ui.locked, let v = view, !longPressActive, UserDefaults.standard.bool(forKey: SettingsKey.gestureControl) else { return }
             let t = g.translation(in: v)
             switch g.state {
@@ -171,6 +180,7 @@ struct VideoSurface: UIViewRepresentable {
                     if downX < w * 0.25 {
                         panMode = .brightness
                         panStartValue = Double(v.window?.windowScene?.screen.brightness ?? UIScreen.main.brightness)
+                        if model.brightnessBefore == nil { model.brightnessBefore = CGFloat(panStartValue) }
                     } else if downX > w * 0.75 {
                         panMode = .volume
                         SystemVolume.attach(to: v.window)
@@ -207,7 +217,7 @@ struct VideoSurface: UIViewRepresentable {
                     }
                 case .none: break
                 }
-            case .ended, .cancelled:
+            case .ended, .cancelled, .failed:
                 if panMode == .seek, let target = ui.scrubTime, g.state == .ended {
                     model.seek(to: target)
                 }

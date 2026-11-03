@@ -296,6 +296,8 @@ final class PlayerModel: ObservableObject {
             try c.initialize(logLevel: defaults.string(forKey: SettingsKey.logLevel) ?? "info")
         } catch {
             errorMessage = "mpv failed to start: \(error.localizedDescription). Check mpv.conf for invalid options."
+            // Freed now: its core and thread were left running until the app quit.
+            c.shutdown()
             return
         }
         c.delegate = self
@@ -338,9 +340,21 @@ final class PlayerModel: ObservableObject {
     /// still held somewhere (with its video layers and PiP layer).
     deinit { dlog("player", "player model freed") }
 
+    /// The screen's brightness before a swipe in the player changed it: put
+    /// back when the player closes. It stayed at the player's level all
+    /// over the app (review, 2 Nov).
+    var brightnessBefore: CGFloat?
+
+    /// Retry reloads the file in the running mpv; with none, it can't.
+    var canRetry: Bool { client.map { !$0.isShutDown } ?? false }
+
     func close() {
         guard !closed else { return }
         closed = true
+        if let b = brightnessBefore {
+            (UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.screen ?? UIScreen.main).brightness = b
+            brightnessBefore = nil
+        }
         screener?.cancel()
         dlog("player", "close at \(Self.format(position))")
         saveHistory(force: true)
@@ -452,8 +466,9 @@ final class PlayerModel: ObservableObject {
         // Night mode's Dolby range compression (AudioFilters).
         if nightMode { c.setOption("ad-lavc-ac3drc", AudioFilters.ac3drc(night: true)) }
         c.setOption("speed", String(defaults.double(forKey: SettingsKey.defaultSpeed)))
-        let shaders = Anime4K.currentShaderList()
-        if !shaders.isEmpty { c.setOption("glsl-shaders", shaders) }
+        // One by one: as a ":"-separated list, a shader whose name has a
+        // ":" in it broke the whole list (review, 2 Nov).
+        for path in Anime4K.currentShaders() { c.setOption("glsl-shaders-append", path) }
         for (k, v) in PictureMode.current.options { c.setOption(k, v) }
         c.setOption("volume-max", "200")
         let boost = defaults.integer(forKey: SettingsKey.audioBoost)
@@ -539,7 +554,14 @@ final class PlayerModel: ObservableObject {
     /// The player's own Anime4K mode (a show's remembered one may differ
     /// from the saved default), then your shaders.
     private func applyShaderList() {
-        client?.set("glsl-shaders", (Anime4K.paths(mode: anime4kMode, quality: anime4kQuality) + MPVFiles.activeShaderPaths).joined(separator: ":"))
+        guard let c = client else { return }
+        let list = Anime4K.paths(mode: anime4kMode, quality: anime4kQuality) + MPVFiles.activeShaderPaths
+        if !list.contains(where: { $0.contains(":") }) {
+            c.set("glsl-shaders", list.joined(separator: ":"))      // one change, one shader reload
+        } else {
+            c.command(["change-list", "glsl-shaders", "clr", ""])
+            for p in list { c.command(["change-list", "glsl-shaders", "append", p]) }
+        }
     }
 
     private func observe(_ c: MPVClient) {
@@ -1157,10 +1179,17 @@ final class PlayerModel: ObservableObject {
 
     func addSubtitle(url: URL) {
         let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         let dest = FileManager.default.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
         try? FileManager.default.removeItem(at: dest)
-        try? FileManager.default.copyItem(at: url, to: dest)
-        if scoped { url.stopAccessingSecurityScopedResource() }
+        do {
+            try FileManager.default.copyItem(at: url, to: dest)
+        } catch {
+            // It used to be added anyway, and mpv quietly found nothing.
+            dlog("subs/error", "couldn't copy the subtitle file: \(error.localizedDescription)")
+            showToast("Couldn't open that subtitle file")
+            return
+        }
         client?.command(["sub-add", dest.path, "select"])
     }
 
@@ -1224,6 +1253,7 @@ final class PlayerModel: ObservableObject {
     }
 
     func seek(to seconds: Double, exact: Bool = true) {
+        if ended, duration > 0, seconds < duration - 0.5 { ended = false }
         _ = client?.commandAsync(["seek", String(max(0, seconds)), exact ? "absolute+exact" : "absolute+keyframes"])
     }
 
@@ -1316,9 +1346,20 @@ final class PlayerModel: ObservableObject {
         client?.set("video-aspect-override", value)
     }
 
-    func screenshot() {
-        client?.command(["screenshot", "subtitles"])
-        showToast("Screenshot saved")
+    /// mpv writes the picture off the main thread, and the toast says what
+    /// happened. It said "saved" whatever happened, and the save (a full
+    /// frame to PNG) held the main thread (review, 2 Nov).
+    func takeScreenshot(subtitles: Bool) {
+        guard let c = client else { return }
+        c.query({ $0.command(["screenshot", subtitles ? "subtitles" : "video"]) }) { [weak self] r in
+            guard let self else { return }
+            if r >= 0 {
+                self.showToast("Screenshot saved")
+            } else {
+                dlog("player/error", "screenshot failed: \(String(cString: mpv_error_string(r)))")
+                self.showToast("Screenshot failed")
+            }
+        }
     }
 
     func skip(_ segment: SkipSegment) {
@@ -2678,6 +2719,9 @@ extension PlayerModel: MPVClientDelegate {
             if value.bool == true, CACurrentMediaTime() > swapSeekQuietUntil { buffering = true }
         case "eof-reached":
             if value.bool == true { handleEOF() }
+            // Left the end (a seek back): Play continues from there. It used
+            // to restart the file from 0 (review, 2 Nov).
+            else if ended { ended = false }
         case "speed":
             speed = value.double ?? 1
             updateNowPlaying()

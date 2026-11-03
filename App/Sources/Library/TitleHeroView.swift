@@ -120,7 +120,8 @@ struct TitleHeroView: View {
                             ExpandableText(text: s, lines: 2)
                         }
                         // Play sits under the description, left-aligned (from the mockup).
-                        HStack(spacing: 14) {
+                        // Track (1.21.0) after it for a series, on its own line when there's no room.
+                        TitleButtonRow {
                             TiltPlayButton(title: entry?.canResume == true ? "Resume" : "Play",
                                            subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { tapped(file, "Play") }
                             if entry?.canResume == true {
@@ -130,7 +131,7 @@ struct TitleHeroView: View {
                                 }
                                 .buttonStyle(PressStyle())
                             }
-                            Spacer(minLength: 0)
+                            if group.isSeries { TrackButton(show: trackedShow) }
                         }
                         .padding(.vertical, 4)
                         if castPosition == "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, wide ? -28 : -20) }
@@ -206,6 +207,13 @@ struct TitleHeroView: View {
     }
 
     private var isAnime: Bool { meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false }
+
+    /// The series as the Track button tracks it: by its IMDb id when Folio
+    /// found one, with the newest season in the library (anime seasons are
+    /// separate AniList entries).
+    private var trackedShow: TrackedShow {
+        TrackedShow(libraryTitle: group.title, meta: meta, hint: entry?.item.anime, season: seasons.last)
+    }
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 6) {

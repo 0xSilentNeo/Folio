@@ -92,8 +92,9 @@ enum Anime4K {
     }
 
     /// Full `glsl-shaders` value: Anime4K chain first, then the user's own shaders.
-    static func currentShaderList() -> String {
-        (paths(mode: mode, quality: quality) + MPVFiles.activeShaderPaths).joined(separator: ":")
+    /// Anime4K's shaders for the saved mode, then yours, in order.
+    static func currentShaders() -> [String] {
+        paths(mode: mode, quality: quality) + MPVFiles.activeShaderPaths
     }
 }
 

@@ -8,6 +8,7 @@ struct HomeView: View {
     @ObservedObject private var indexSummaries = IndexSummaries.shared
     @State private var showOpenURL = false
     @State private var addServer = false
+    @State private var editingServer: WebDAVServer?
     @State private var showAddFiles = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -25,7 +26,10 @@ struct HomeView: View {
                     Group {
                         header(margin).padding(.top, 6)
                         if !history.continueWatching.isEmpty { continueWatching(width: geo.size.width, wide: wide, margin: margin).padding(.top, 30) }
+                        // Tracked shows' episodes out now or in the next 7 days (1.21.0); nothing when none.
+                        AiringRow(margin: margin)
                         if hasLibrary { libraryHeader(margin).padding(.top, 30) }
+                        else if realDebrid != nil { compactHowToAdd(margin).padding(.top, 24) }
                         else { howToAdd(margin).padding(.top, history.continueWatching.isEmpty ? 70 : 40) }
                     }
                     .homeRow()
@@ -35,6 +39,11 @@ struct HomeView: View {
                             .padding(.top, 30)
                             .homeRow()
                             .transition(reduceMotion ? AnyTransition.opacity : AnyTransition.opacity.combined(with: .move(edge: .bottom)))
+                    } else if let rd = realDebrid {
+                        // Until its first check works: what's happening, not nothing.
+                        RealDebridStatusRow(server: rd, summary: indexSummaries.all[rd.id], margin: margin) { editingServer = rd }
+                            .padding(.top, 30)
+                            .homeRow()
                     }
                     Color.clear.frame(height: 28).homeRow()
                 }
@@ -50,6 +59,7 @@ struct HomeView: View {
             .refreshable { local.refresh() }
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
+            .sheet(item: $editingServer) { ServerEditView(server: $0) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
             .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
@@ -301,6 +311,21 @@ struct HomeView: View {
         .frame(maxWidth: .infinity)
         .padding(.horizontal, margin + 10)
         .padding(.vertical, 30)
+    }
+
+    /// With a Real-Debrid account on Home, an empty library is one line, so
+    /// the Real-Debrid section starts high on the screen instead of below a
+    /// page of instructions (user request, 3 Nov).
+    private func compactHowToAdd(_ margin: CGFloat) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Your library is empty").font(.subheadline.weight(.semibold))
+                Text("Add videos from Files, or paste a link with +.").font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            addFilesButton(large: false)
+        }
+        .padding(.horizontal, margin)
     }
 
     // MARK: Library

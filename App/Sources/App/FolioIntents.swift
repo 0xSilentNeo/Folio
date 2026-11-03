@@ -237,7 +237,7 @@ enum ShowCatalog {
     /// none, the episode its title page would highlight (LibraryGroup.nextUp).
     static func play(_ id: String) async -> Bool {
         if let e = HistoryStore.shared.continueWatching.first(where: { HistoryStore.showKey($0) == id }) {
-            await IntentPlayback.play(e.item)
+            IntentPlayback.start(e.item)
             return true
         }
         guard let g = LibraryOrganizer.groups(await ContinueQueue.libraryFiles()).first(where: { $0.id == id }) else { return false }
@@ -245,22 +245,41 @@ enum ShowCatalog {
         var item = HistoryStore.shared.entry(forURL: f.path)?.item ?? HistoryStore.libraryItem(f.path)
         let p = TitleParser.parse(f.lastPathComponent)
         if item.anime == nil, p.episode != nil { item.anime = AnimeHint(title: p.title, episode: p.episode) }
-        await IntentPlayback.play(item)
+        IntentPlayback.start(item)
         return true
     }
 }
 
 @MainActor
 enum IntentPlayback {
-    /// An intent that opens Folio runs while Folio is still opening: wait
-    /// (up to 3 s) for its window, which the player is shown over.
-    static func play(_ item: MediaItem) async {
-        var waited = 0
-        while waited < 30, !UIApplication.shared.connectedScenes.contains(where: { $0.activationState == .foregroundActive }) {
-            try? await Task.sleep(nanoseconds: 100_000_000)
-            waited += 1
+    /// An intent that opens Folio runs while Folio is still opening: the
+    /// player waits (up to 3 s) for its window, which it's shown over. The
+    /// intent itself doesn't wait: Siri closes as soon as the intent ends.
+    static func start(_ item: MediaItem) {
+        Task { @MainActor in
+            var waited = 0
+            while waited < 30, !UIApplication.shared.connectedScenes.contains(where: { $0.activationState == .foregroundActive }) {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                waited += 1
+            }
+            ContinueQueue.play(item)
         }
-        ContinueQueue.play(item)
+    }
+}
+
+/// What Siri says when an intent can't play anything. On success an intent
+/// says nothing: a spoken answer kept Siri's orb and its card up over the
+/// player, and over a full-screen video it often couldn't be swiped away
+/// (it took leaving the app). The player opening is the answer.
+enum FolioIntentError: Error, CustomLocalizedStringResourceConvertible {
+    case nothingToContinue
+    case showGone(String)
+
+    var localizedStringResource: LocalizedStringResource {
+        switch self {
+        case .nothingToContinue: return "There's nothing to continue in Folio."
+        case .showGone(let name): return "\(name) isn't in Folio's Continue Watching or library any more."
+        }
     }
 }
 
@@ -272,12 +291,11 @@ struct ContinueWatchingIntent: AppIntent {
     static let openAppWhenRun = true
 
     @MainActor
-    func perform() async throws -> some IntentResult & ProvidesDialog {
-        guard let e = HistoryStore.shared.continueWatching.first else {
-            return .result(dialog: "There's nothing to continue in Folio.")
-        }
-        await IntentPlayback.play(e.item)
-        return .result(dialog: "Resuming \(ShowCatalog.name(of: e)).")
+    func perform() async throws -> some IntentResult {
+        guard let e = HistoryStore.shared.continueWatching.first else { throw FolioIntentError.nothingToContinue }
+        dlog("intents", "continue watching: \(ShowCatalog.name(of: e))")
+        IntentPlayback.start(e.item)
+        return .result()
     }
 }
 
@@ -297,11 +315,87 @@ struct PlayNextEpisodeIntent: AppIntent {
     init(show: ShowEntity) { self.show = show }
 
     @MainActor
+    func perform() async throws -> some IntentResult {
+        guard await ShowCatalog.play(show.id) else { throw FolioIntentError.showGone(show.name) }
+        dlog("intents", "next episode of \(show.name)")
+        return .result()
+    }
+}
+
+// MARK: - Airing (1.21.0)
+
+/// A show you track (TrackingStore), for "When's the next episode of <show>?".
+struct TrackedShowEntity: AppEntity {
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Tracked Show"
+    static let defaultQuery = TrackedShowQuery()
+
+    let id: String
+    let name: String
+
+    var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(name)") }
+}
+
+struct TrackedShowQuery: EntityStringQuery {
+    @MainActor
+    func entities(for identifiers: [String]) async throws -> [TrackedShowEntity] {
+        await TrackingStore.shared.whenLoaded()
+        return identifiers.compactMap { id in TrackingStore.shared.show(id: id).map(Self.entity) }
+    }
+
+    @MainActor
+    func suggestedEntities() async throws -> [TrackedShowEntity] {
+        await TrackingStore.shared.whenLoaded()
+        return TrackingStore.shared.shows.map(Self.entity)
+    }
+
+    @MainActor
+    func entities(matching string: String) async throws -> [TrackedShowEntity] {
+        await TrackingStore.shared.whenLoaded()
+        let q = string.trimmingCharacters(in: .whitespaces)
+        return TrackingStore.shared.shows
+            .filter { q.isEmpty || $0.name.range(of: q, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
+            .map(Self.entity)
+    }
+
+    private static func entity(_ s: TrackedShow) -> TrackedShowEntity { TrackedShowEntity(id: s.id, name: s.name) }
+}
+
+/// Answers out loud and stays where you are: nothing to open, so Folio isn't
+/// brought to the front.
+struct NextEpisodeIntent: AppIntent {
+    static let title: LocalizedStringResource = "When's the Next Episode"
+    static let description: IntentDescription? = IntentDescription("Says when the next episode of a show you track in Folio airs, in your time zone.")
+    static let openAppWhenRun = false
+
+    @Parameter(title: "Show", requestValueDialog: "Which show?")
+    var show: TrackedShowEntity
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("When's the next episode of \(\.$show)?")
+    }
+
+    init() {}
+    init(show: TrackedShowEntity) { self.show = show }
+
+    @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        guard await ShowCatalog.play(show.id) else {
-            return .result(dialog: "\(show.name) isn't in Folio's Continue Watching or library any more.")
+        let store = TrackingStore.shared
+        await store.whenLoaded()
+        guard let s = store.show(id: show.id) else {
+            return .result(dialog: "\(show.name) isn't tracked in Folio any more.")
         }
-        return .result(dialog: "Playing \(show.name).")
+        // An old schedule is fetched again first, for up to 5 s (Siri doesn't wait long).
+        if s.updated.map({ Date().timeIntervalSince($0) > TrackingStore.staleAge }) ?? true {
+            Task { await store.refresh(only: [s.id], reason: "Siri") }
+            var waited = 0
+            repeat {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                waited += 1
+            } while store.refreshing && waited < 50
+        }
+        let answer = AiringFormat.spoken(store.show(id: s.id) ?? s)
+        dlog("intents", "next episode of \(s.name): \(answer)")
+        return .result(dialog: "\(answer)")
     }
 }
 
@@ -318,5 +412,11 @@ struct FolioShortcuts: AppShortcutsProvider {
             "Continue \(\.$show) in \(.applicationName)",
             "Play the next episode in \(.applicationName)",
         ], shortTitle: "Play Next Episode", systemImageName: "forward.end.fill")
+        AppShortcut(intent: NextEpisodeIntent(), phrases: [
+            "When's the next episode of \(\.$show) in \(.applicationName)",
+            "When's the next episode of \(\.$show) on \(.applicationName)",
+            "When does \(\.$show) air in \(.applicationName)",
+            "When's the next episode in \(.applicationName)",
+        ], shortTitle: "Next Episode", systemImageName: "bell")
     }
 }

@@ -110,7 +110,7 @@ struct ConsoleBar: View {
                 }
                 HStack {
                     Image(systemName: "chevron.right").foregroundStyle(Theme.accent)
-                    TextField("e.g. set sub-scale 1.2  ·  script-binding stats/display-stats-toggle", text: $text)
+                    TextField("e.g. set sub-scale 1.2  ·  cycle deband", text: $text)
                         .font(.system(.subheadline, design: .monospaced))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()

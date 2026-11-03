@@ -377,10 +377,13 @@ enum PlayerPresenter {
         window = w
         current = vc
         HistoryStore.shared.deferPublishing = true
-        UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut]) { w.alpha = 1 } completion: { _ in
+        UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut]) { w.alpha = 1 } completion: { finished in
             // The library window underneath is fully covered: hide it so it
             // does no layout, animation or rendering work during playback.
-            guard window === w, !CommandLine.arguments.contains("-keepAppWindow") else { return }
+            // Not when the fade was cut short by closing: closed within its
+            // 0.22 s, the library was hidden after the player had gone, and
+            // the app showed nothing (review, 2 Nov).
+            guard finished, window === w, !CommandLine.arguments.contains("-keepAppWindow") else { return }
             for other in appWindows { other.isHidden = true }
         }
     }

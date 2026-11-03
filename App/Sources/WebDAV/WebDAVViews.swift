@@ -24,6 +24,7 @@ final class ServerStore: ObservableObject {
         } else {
             servers.append(s)
         }
+        LibraryIndexStore.shared.refreshNow(s)
     }
 
     func remove(_ s: WebDAVServer) {

@@ -130,6 +130,9 @@ final class BrowseModel: ObservableObject {
         let gen = generation
         loading = true
         defer { if gen == generation { loading = false } }
+        // "New" has no genre menu (it picks a year), so a genre chosen under
+        // another sort no longer filters it out of sight (review, 2 Nov).
+        let genre = sort == .new ? nil : self.genre
         if TMDB.enabled {
             let page = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: metas.count / 20 + 1)
             guard gen == generation else { return }

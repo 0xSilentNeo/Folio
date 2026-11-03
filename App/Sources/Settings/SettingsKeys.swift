@@ -91,6 +91,9 @@ enum SettingsKey {
     static let playbackMode = "playbackMode"      // playlist | single | loop
     static let logLevel = "logLevel"
 
+    // Tracking (1.21.0)
+    static let airingAlerts = "airingAlerts"            // air | hour | off: new-episode notifications (AiringAlerts)
+
     // Library
     static let cleanTitles = "cleanTitles"
     static let showOnlyMedia = "showOnlyMedia"
@@ -171,6 +174,7 @@ enum SettingsKey {
             logLevel: "info",
             cleanTitles: true,
             showOnlyMedia: false,
+            airingAlerts: "air",
         ])
     }
 }

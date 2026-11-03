@@ -193,10 +193,16 @@ final class LocalMediaStore: ObservableObject {
         let media = MPVFiles.mediaDir.standardizedFileURL.path
         var parents = Set<URL>()
         for url in urls {
+            // A folder's files' saved frames go with it, not only its own.
+            var inside = [url]
+            if let files = fm.enumerator(at: url, includingPropertiesForKeys: nil) {
+                for case let f as URL in files { inside.append(f) }
+            }
             try? fm.removeItem(at: url)
-            try? fm.removeItem(at: ThumbnailStore.url(for: url.path))
+            for f in inside { try? fm.removeItem(at: ThumbnailStore.url(for: f.path)) }
             parents.insert(url.deletingLastPathComponent().standardizedFileURL)
         }
+        HistoryStore.shared.forget(deleted: urls)
         for dir in parents where dir.path.hasPrefix(media + "/") {
             let left = (try? fm.contentsOfDirectory(atPath: dir.path))?.filter { !$0.hasPrefix(".") } ?? []
             if left.isEmpty { try? fm.removeItem(at: dir) }

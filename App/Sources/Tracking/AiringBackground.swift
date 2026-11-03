@@ -1,0 +1,95 @@
+import BackgroundTasks
+import UIKit
+import UserNotifications
+
+/// When schedules are fetched: on Track, when Folio comes to the front with
+/// a schedule older than six hours, on pull to refresh, and in a background
+/// refresh iOS runs now and then (BGAppRefreshTask), asked for shortly after
+/// the next air time so the widget and the notifications move on to the
+/// episode after it.
+enum AiringTracker {
+    /// FolioApp.init: before the app finishes launching, as BGTaskScheduler
+    /// and a notification tapped while Folio was closed both need.
+    @MainActor
+    static func start() {
+        AiringBackground.register()
+        UNUserNotificationCenter.current().delegate = AiringNotificationDelegate.shared
+        let nc = NotificationCenter.default
+        nc.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { refreshIfStale("foreground") }
+        }
+        nc.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { AiringBackground.schedule(TrackingStore.shared.shows) }
+        }
+        refreshIfStale("launch")
+        // `-openTrack <id|all>` (tests): opens a tracking page as folio://track does.
+        if let i = CommandLine.arguments.firstIndex(of: "-openTrack"), i + 1 < CommandLine.arguments.count {
+            let id = CommandLine.arguments[i + 1]
+            TrackingPresenter.open(id == "all" ? nil : id)
+        }
+    }
+
+    @MainActor
+    private static func refreshIfStale(_ reason: String) {
+        Task { await TrackingStore.shared.refresh(reason: reason) }
+    }
+}
+
+enum AiringBackground {
+    /// Also in Info.plist's BGTaskSchedulerPermittedIdentifiers (project.yml, Vendor/genproj.py).
+    static let taskID = "dev.silentneo.folio.airing-refresh"
+
+    static func register() {
+        let ok = BGTaskScheduler.shared.register(forTaskWithIdentifier: taskID, using: nil) { task in
+            guard let task = task as? BGAppRefreshTask else { task.setTaskCompleted(success: false); return }
+            run(task)
+        }
+        if !ok { dlog("tracking", "background refresh not registered (not in Info.plist?)") }
+    }
+
+    private static func run(_ task: BGAppRefreshTask) {
+        let work = Task { @MainActor in
+            let store = TrackingStore.shared
+            await store.whenLoaded()
+            // The next one first, in case this one runs out of time.
+            schedule(store.shows)
+            // In the background a schedule an hour old is fetched again:
+            // these runs are few, and the next episode may just have aired.
+            await store.refresh(maxAge: 3600, reason: "background")
+            task.setTaskCompleted(success: !Task.isCancelled)
+        }
+        task.expirationHandler = { work.cancel() }
+    }
+
+    /// Submitting can block (BGTaskScheduler docs): done on a queue of its own.
+    private static let queue = DispatchQueue(label: "dev.silentneo.folio.airing-refresh", qos: .utility)
+    private static var told = false          // on `queue`
+
+    /// Asks iOS for the next background refresh (it decides when; this is the earliest).
+    @MainActor
+    static func schedule(_ shows: [TrackedShow]) {
+        let earliest = shows.isEmpty ? nil : earliest(shows, now: Date())
+        queue.async {
+            guard let earliest else {
+                BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: taskID)
+                return
+            }
+            let request = BGAppRefreshTaskRequest(identifier: taskID)
+            request.earliestBeginDate = earliest
+            do {
+                try BGTaskScheduler.shared.submit(request)
+            } catch {
+                // The simulator always refuses; said once.
+                if !told { dlog("tracking", "background refresh not scheduled: \(error.localizedDescription)") }
+                told = true
+            }
+        }
+    }
+
+    /// A quarter of an hour after the soonest air time, within 15 min to 6 h from now.
+    static func earliest(_ shows: [TrackedShow], now: Date) -> Date {
+        let soonest = shows.compactMap { $0.upcoming(after: now).first?.airDate }.min()
+        let want = soonest.map { $0.addingTimeInterval(15 * 60) } ?? now.addingTimeInterval(6 * 3600)
+        return min(max(want, now.addingTimeInterval(15 * 60)), now.addingTimeInterval(6 * 3600))
+    }
+}
