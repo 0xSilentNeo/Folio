@@ -92,15 +92,50 @@ final class HistoryStore: ObservableObject {
     /// container path) never makes a second card for the same file.
     var continueWatching: [HistoryEntry] {
         if let c = index.continueWatching { return c }
-        var seen = Set<String>()
-        let c = entries.filter { $0.canResume }
-            .sorted { $0.updated > $1.updated }
-            .filter { seen.insert(Self.showKey($0)).inserted }
+        let c = Self.pickContinueWatching(entries)
         lookup?.continueWatching = c
         return c
     }
 
     /// Groups history entries that belong to the same show (or the same file).
+    /// One card per show: the episode furthest along in the show (latest
+    /// season, then episode), not the one played last; the show itself is
+    /// placed by its latest play. Playing an older season from the library
+    /// used to replace the newer one you were watching from Real-Debrid
+    /// (4 Nov report). Films and unnumbered files: the one played last.
+    static func pickContinueWatching(_ entries: [HistoryEntry]) -> [HistoryEntry] {
+        var best: [String: (entry: HistoryEntry, latest: Date)] = [:]
+        for e in entries where e.canResume {
+            let k = showKey(e)
+            guard let cur = best[k] else { best[k] = (e, e.updated); continue }
+            best[k] = (furtherAlong(e, than: cur.entry) ? e : cur.entry, max(cur.latest, e.updated))
+        }
+        return best.values.sorted { $0.latest > $1.latest }.map(\.entry)
+    }
+
+    private static func furtherAlong(_ a: HistoryEntry, than b: HistoryEntry) -> Bool {
+        if let x = episodeNumber(a), let y = episodeNumber(b), x != y { return x > y }
+        return a.updated > b.updated
+    }
+
+    /// (season, episode): an addon item's from its id ("tt…:3:2"), a file's from its name.
+    static func episodeNumber(_ e: HistoryEntry) -> EpisodeNumber? {
+        if let ref = e.item.addonRef {
+            let id = ref.split(separator: "|", omittingEmptySubsequences: false).dropFirst(2).first ?? ""
+            let parts = id.split(separator: ":")
+            if parts.count >= 3, let s = Int(parts[parts.count - 2]), let ep = Int(parts[parts.count - 1]) { return EpisodeNumber(season: s, episode: ep) }
+        }
+        let raw = (e.item.url as NSString).lastPathComponent
+        let p = TitleParser.parse(raw.removingPercentEncoding ?? raw)
+        guard let ep = p.episode else { return nil }
+        return EpisodeNumber(season: p.season ?? 1, episode: ep)
+    }
+
+    struct EpisodeNumber: Comparable {
+        let season: Int, episode: Int
+        static func < (a: Self, b: Self) -> Bool { (a.season, a.episode) < (b.season, b.episode) }
+    }
+
     static func showKey(_ e: HistoryEntry) -> String {
         if let ref = e.item.addonRef {
             let parts = ref.split(separator: "|", omittingEmptySubsequences: false)

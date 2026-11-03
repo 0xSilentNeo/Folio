@@ -49,6 +49,7 @@ enum SettingsKey {
     static let downloadNextEpisodes = "downloadNextEpisodes"    // 1.22.0: 0 (off) | 1 | 2 | 3 episodes after one watched past 70% (AutoDownload)
     static let downloadDeleteWatched = "downloadDeleteWatched"  // 1.22.0: 0 (off) | 1 | 7 days after a downloaded file was finished (WatchedCleanup)
     static let liveActivities = "liveActivities"                // 1.22.0: downloads and now playing on the Lock Screen and Dynamic Island
+    static let downloadParts = "downloadParts"                  // 1.22.1: 1...8 connections per big file (byte ranges side by side)
 
     // PiP
     static let pipEnabled = "pipEnabled"
@@ -83,7 +84,7 @@ enum SettingsKey {
     static let activeShaders = "activeShaders"
     static let scriptCommands = "scriptCommands"
     static let flipVideo = "flipVideo"
-    static let renderer = "renderer"            // "gl" (default since 1.22.0: one picture for the screen and PiP) | "metal"
+    static let renderer = "renderer"            // "metal" (default) | "gl"
     static let hdrOutput = "hdrOutput"
     static let surroundAudio = "surroundAudio"
     static let anime4kMode = "anime4kMode"
@@ -161,6 +162,7 @@ enum SettingsKey {
             downloadRetries: 3,
             downloadNextEpisodes: 0,
             downloadDeleteWatched: 0,
+            downloadParts: 4,
             liveActivities: true,
             pipEnabled: true,
             pipAuto: true,
@@ -183,7 +185,7 @@ enum SettingsKey {
             skipInjectChapters: true,
             skipOATLength: 90,
             flipVideo: false,
-            renderer: "gl",
+            renderer: "metal",
             hdrOutput: true,
             surroundAudio: true,
             anime4kMode: "off",
@@ -196,15 +198,13 @@ enum SettingsKey {
             showOnlyMedia: false,
             airingAlerts: "air",
         ])
-        // 1.22.0: the sample-buffer renderer is the default, the same picture
-        // for the screen and Picture in Picture, so PiP and leaving the app
-        // never pause the video. Moved over once, whatever was chosen before
-        // (Metal was the default, and a choice made while testing stuck);
-        // HDR (Metal) can be chosen again in Settings and stays.
+        // 1.22.1: Metal is the default again. 1.22.0 moved everyone to the
+        // OpenGL renderer, which some files didn't play on (user report,
+        // 4 Nov); those moved are moved back, once. A later choice stays.
         let d = UserDefaults.standard
-        if !d.bool(forKey: "rendererMovedToStandard") {
-            d.set(true, forKey: "rendererMovedToStandard")
-            if d.string(forKey: renderer) == "metal" { d.set("gl", forKey: renderer) }
+        if d.bool(forKey: "rendererMovedToStandard"), !d.bool(forKey: "rendererBackToMetal") {
+            d.set(true, forKey: "rendererBackToMetal")
+            if d.string(forKey: renderer) == "gl" { d.set("metal", forKey: renderer) }
         }
     }
 }

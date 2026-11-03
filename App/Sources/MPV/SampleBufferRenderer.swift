@@ -52,6 +52,33 @@ final class SampleBufferRenderer {
     /// the same few buffers back): the check stalls the GPU, once is enough.
     private var checked = Set<ObjectIdentifier>()
 
+    /// HDR output (1.22.1). An HDR video is drawn by mpv in BT.2020 with the
+    /// PQ (or HLG) curve into half-float pixel buffers, and each buffer is
+    /// tagged with that colour and the video's light levels, so the layer,
+    /// in the app and in Picture in Picture, shows it as HDR. Nil: SDR,
+    /// 8-bit buffers, untagged, as before.
+    struct HDROutput: Equatable {
+        var hlg: Bool
+        var maxCLL: Int?
+        var maxFALL: Int?
+        var maxLuma: Double?
+        var minLuma: Double?
+    }
+    private var hdr: HDROutput?
+    /// Told when half-float frames can't be made: the player goes back to SDR.
+    var onHDRFailed: (() -> Void)?
+
+    func setHDR(_ h: HDROutput?) {
+        queue.async { [weak self] in
+            guard let self, h != self.hdr else { return }
+            self.hdr = h
+            self.pool = nil                 // a new pixel format
+            self.checked = []
+            self.trace(h.map { "HDR output on: \($0.hlg ? "HLG" : "PQ") BT.2020, half-float frames, MaxCLL \($0.maxCLL.map(String.init) ?? "?") nits" } ?? "HDR output off: 8-bit frames")
+            self.render()
+        }
+    }
+
     static func make(output: @escaping (CVPixelBuffer) -> Void) -> SampleBufferRenderer? {
         guard let ctx = EAGLContext(api: .openGLES3) else { return nil }
         return SampleBufferRenderer(context: ctx, output: output)
@@ -217,9 +244,20 @@ final class SampleBufferRenderer {
         let made = CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &pbOut)
         guard made == kCVReturnSuccess, let pb = pbOut else { return skip("no pixel buffer (\(made))") }
         var texOut: CVOpenGLESTexture?
-        let wrapped = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, cache, pb, nil, GLenum(GL_TEXTURE_2D), GL_RGBA,
-                                                                   GLsizei(w), GLsizei(h), GLenum(GL_BGRA), GLenum(GL_UNSIGNED_BYTE), 0, &texOut)
-        guard wrapped == kCVReturnSuccess, let tex = texOut else { return skip("no texture for the pixel buffer (\(wrapped))") }
+        let half = hdr != nil
+        let wrapped = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, cache, pb, nil, GLenum(GL_TEXTURE_2D),
+                                                                   half ? GLint(GL_RGBA16F) : GL_RGBA, GLsizei(w), GLsizei(h),
+                                                                   GLenum(half ? GL_RGBA : GL_BGRA), GLenum(half ? GL_HALF_FLOAT : GL_UNSIGNED_BYTE), 0, &texOut)
+        guard wrapped == kCVReturnSuccess, let tex = texOut else {
+            if half {
+                // No half-float frames on this device: SDR rather than nothing.
+                trace("HDR output not possible: no half-float texture (\(wrapped)); back to SDR")
+                hdr = nil; self.pool = nil; checked = []
+                if let failed = onHDRFailed { DispatchQueue.main.async(execute: failed) }
+                return render()
+            }
+            return skip("no texture for the pixel buffer (\(wrapped))")
+        }
         glBindTexture(CVOpenGLESTextureGetTarget(tex), CVOpenGLESTextureGetName(tex))
         glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_S), GL_CLAMP_TO_EDGE)
         glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_T), GL_CLAMP_TO_EDGE)
@@ -232,7 +270,8 @@ final class SampleBufferRenderer {
         }
         glViewport(0, 0, GLsizei(w), GLsizei(h))
 
-        var target = mpv_opengl_fbo(fbo: Int32(fbo), w: Int32(w), h: Int32(h), internal_format: 0)
+        // The framebuffer's real format, so mpv draws (and dithers) for its depth.
+        var target = mpv_opengl_fbo(fbo: Int32(fbo), w: Int32(w), h: Int32(h), internal_format: half ? Int32(GL_RGBA16F) : 0)
         var flip = flipY
         let r: Int32 = withUnsafeMutablePointer(to: &target) { tp in
             withUnsafeMutablePointer(to: &flip) { fp in
@@ -249,6 +288,7 @@ final class SampleBufferRenderer {
         glFinish()
         glBindTexture(GLenum(GL_TEXTURE_2D), 0)
         CVOpenGLESTextureCacheFlush(cache, 0)
+        if let hdr { Self.tag(pb, hdr) }
         output(pb)
         lastSkip = nil
         if (w, h) != lastLoggedSize {
@@ -267,14 +307,54 @@ final class SampleBufferRenderer {
 
     private func trace(_ line: String) { Task { @MainActor in PiPTrace.event(line) } }
 
+    /// The colour and light levels iOS needs to show a frame as HDR.
+    private static func tag(_ pb: CVPixelBuffer, _ h: HDROutput) {
+        CVBufferSetAttachment(pb, kCVImageBufferColorPrimariesKey, kCVImageBufferColorPrimaries_ITU_R_2020, .shouldPropagate)
+        CVBufferSetAttachment(pb, kCVImageBufferTransferFunctionKey,
+                              h.hlg ? kCVImageBufferTransferFunction_ITU_R_2100_HLG : kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, .shouldPropagate)
+        CVBufferSetAttachment(pb, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_2020, .shouldPropagate)
+        if let data = contentLightLevel(h) { CVBufferSetAttachment(pb, kCVImageBufferContentLightLevelInfoKey, data as CFData, .shouldPropagate) }
+        if let data = masteringDisplay(h) { CVBufferSetAttachment(pb, kCVImageBufferMasteringDisplayColorVolumeKey, data as CFData, .shouldPropagate) }
+    }
+
+    /// MaxCLL and MaxFALL, two big-endian 16-bit numbers (HEVC's content
+    /// light level SEI), from mpv's video-params; nil when the file has none.
+    static func contentLightLevel(_ h: HDROutput) -> Data? {
+        guard let cll = h.maxCLL, cll > 0 else { return nil }
+        var d = Data()
+        for v in [cll, h.maxFALL ?? 0] { withUnsafeBytes(of: UInt16(clamping: v).bigEndian) { d.append(contentsOf: $0) } }
+        return d
+    }
+
+    /// The mastering display (HEVC's SEI layout, 24 bytes): BT.2020's
+    /// primaries in green, blue, red order and D65 white in 0.00002 steps,
+    /// then the max and min luminance from mpv in 0.0001 nit steps. Nil
+    /// without a max luminance.
+    static func masteringDisplay(_ h: HDROutput) -> Data? {
+        guard let maxL = h.maxLuma, maxL > 0 else { return nil }
+        var d = Data()
+        let xy: [Double] = [0.170, 0.797, 0.131, 0.046, 0.708, 0.292, 0.3127, 0.3290]
+        for v in xy { withUnsafeBytes(of: UInt16((v / 0.00002).rounded()).bigEndian) { d.append(contentsOf: $0) } }
+        for v in [maxL, h.minLuma ?? 0] { withUnsafeBytes(of: UInt32(clamping: Int((v / 0.0001).rounded())).bigEndian) { d.append(contentsOf: $0) } }
+        return d
+    }
+
     private func ensurePool(_ w: Int, _ h: Int) -> CVPixelBufferPool? {
         if let pool, poolSize == (w, h) { return pool }
         let attrs: [String: Any] = [
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+            kCVPixelBufferPixelFormatTypeKey as String: hdr != nil ? kCVPixelFormatType_64RGBAHalf : kCVPixelFormatType_32BGRA,
             kCVPixelBufferWidthKey as String: w,
             kCVPixelBufferHeightKey as String: h,
-            kCVPixelBufferIOSurfacePropertiesKey as String: [String: Any](),
+            // IOSurface-backed, usable as an OpenGL ES texture and as the
+            // framebuffer mpv draws into. Without the last three the texture
+            // cache could refuse the buffer (-6683, kCVReturnPixelBufferNot-
+            // OpenGLCompatible): every frame dropped, the simulator always.
+            kCVPixelBufferIOSurfacePropertiesKey as String: [
+                kCVPixelBufferIOSurfaceOpenGLESTextureCompatibilityKey as String: true,
+                kCVPixelBufferIOSurfaceOpenGLESFBOCompatibilityKey as String: true,
+            ],
             kCVPixelBufferOpenGLESCompatibilityKey as String: true,
+            kCVPixelBufferOpenGLESTextureCacheCompatibilityKey as String: true,
         ]
         var p: CVPixelBufferPool?
         CVPixelBufferPoolCreate(kCFAllocatorDefault, [kCVPixelBufferPoolMinimumBufferCountKey as String: 3] as CFDictionary, attrs as CFDictionary, &p)

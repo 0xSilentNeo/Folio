@@ -415,6 +415,12 @@ final class PlayerModel: ObservableObject {
             c.setOption("vo", "libmpv")
             c.setOption("gpu-api", "opengl")
             c.setOption("opengl-es", "yes")
+            // The hardware decoder hands OpenGL 8-bit frames: OpenGL ES on iOS
+            // can't sample its 10-bit ones (mpv's iOS interop answers "Format
+            // unsupported" and draws nothing), so 10-bit files, most anime
+            // releases, played black (4 Nov report). HDR files switch to
+            // 10-bit copy decoding instead (updateGLHDR).
+            c.setOption("hwdec-image-format", "nv12")
         }
         switch defaults.string(forKey: SettingsKey.hwdec) ?? "auto" {
         case "copy": c.setOption("hwdec", "videotoolbox-copy")
@@ -1239,6 +1245,56 @@ final class PlayerModel: ObservableObject {
         else if gamma == "pq" { videoFormat = "HDR10" }
         else if gamma == "hlg" { videoFormat = "HLG" }
         else { videoFormat = gamma.isEmpty ? "" : "SDR" }
+        updateGLHDR(gamma: gamma)
+    }
+
+    // MARK: HDR on the sample-buffer (OpenGL) renderer, 1.22.1
+
+    /// The reference design: mpv draws an HDR video in its own colour space
+    /// (BT.2020, PQ or HLG) into half-float frames tagged as HDR, which the
+    /// layer shows with HDR brightness, in the app and in PiP alike. Needs
+    /// "HDR output" on and a screen with HDR headroom; otherwise mpv tone-maps
+    /// to SDR as before.
+    private var glHDROn = false
+
+    private func updateGLHDR(gamma: String) {
+        guard renderer == .gl, let c = client, let gl = glRenderer else { return }
+        let hdrVideo = gamma == "pq" || gamma == "hlg"
+        let want = hdrVideo && defaults.bool(forKey: SettingsKey.hdrOutput) && UIScreen.main.potentialEDRHeadroom > 1
+        guard want != glHDROn else { return }
+        glHDROn = want
+        let autoDecode = (defaults.string(forKey: SettingsKey.hwdec) ?? "auto") == "auto"
+        if want {
+            let hlg = gamma == "hlg"
+            c.set("target-prim", "bt.2020")
+            c.set("target-trc", hlg ? "hlg" : "pq")
+            // All 10 bits: copy decoding gives mpv the 10-bit frames in memory,
+            // which OpenGL ES can draw; zero-copy ones it can't (see applyOptions).
+            if autoDecode { c.set("hwdec-image-format", "no"); c.set("hwdec", "videotoolbox-copy") }
+            let info = SampleBufferRenderer.HDROutput(hlg: hlg, maxCLL: c.int("video-params/max-cll").map(Int.init), maxFALL: c.int("video-params/max-fall").map(Int.init),
+                                                       maxLuma: c.double("video-params/max-luma"), minLuma: c.double("video-params/min-luma"))
+            gl.onHDRFailed = { [weak self] in self?.glHDRFailed() }
+            gl.setHDR(info)
+            pip.setHDR(true)
+            dlog("player", "OpenGL: HDR output \(hlg ? "HLG" : "PQ") BT.2020, 10-bit copy decoding\(autoDecode ? "" : " (your decoding setting kept)"), MaxCLL \(info.maxCLL.map(String.init) ?? "?"), mastering \(info.maxLuma.map { "\(Int($0))" } ?? "?") nits")
+        } else {
+            c.set("target-prim", "auto")
+            c.set("target-trc", "auto")
+            if autoDecode { c.set("hwdec", "videotoolbox,videotoolbox-copy"); c.set("hwdec-image-format", "nv12") }
+            gl.setHDR(nil)
+            pip.setHDR(false)
+            dlog("player", "OpenGL: SDR output\(hdrVideo ? " (HDR video tone-mapped: HDR output off or no HDR screen)" : "")")
+        }
+    }
+
+    /// The device couldn't make half-float frames: SDR output again.
+    private func glHDRFailed() {
+        guard glHDROn, let c = client else { return }
+        glHDROn = false
+        c.set("target-prim", "auto")
+        c.set("target-trc", "auto")
+        pip.setHDR(false)
+        dlog("player/error", "OpenGL: HDR frames not possible here; tone-mapped to SDR")
     }
 
     // MARK: Transport
@@ -2692,7 +2748,18 @@ final class PlayerModel: ObservableObject {
 
     private var remoteTargets: [(MPRemoteCommand, Any)] = []
 
+    /// The picture Control Center and the Lock Screen show (the saved frame).
+    private var nowPlayingArtwork: MPMediaItemArtwork? {
+        guard let img = ThumbnailStore.image(for: (playingItem ?? item).id) else { return nil }
+        return MPMediaItemArtwork(boundsSize: img.size) { _ in img }
+    }
+
     private func setUpRemoteCommands() {
+        // A player not built on AVPlayer has to ask for remote control events
+        // itself to become the Now Playing app (Control Center, the Lock
+        // Screen, headphones). Without it Folio could be left out of Control
+        // Center (4 Nov report).
+        UIApplication.shared.beginReceivingRemoteControlEvents()
         let cc = MPRemoteCommandCenter.shared()
         func add(_ cmd: MPRemoteCommand, _ handler: @escaping (MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus) {
             cmd.isEnabled = true
@@ -2724,13 +2791,17 @@ final class PlayerModel: ObservableObject {
     }
 
     private func updateNowPlaying() {
+        let it = playingItem ?? item
         var info: [String: Any] = [
-            MPMediaItemPropertyTitle: item.displayTitle,
+            MPMediaItemPropertyTitle: it.title.isEmpty ? (mediaTitle.isEmpty ? it.displayTitle : mediaTitle) : it.displayTitle,
             MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.video.rawValue,
             MPNowPlayingInfoPropertyElapsedPlaybackTime: position,
             MPNowPlayingInfoPropertyPlaybackRate: paused ? 0.0 : speed,
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: 1.0,
+            MPNowPlayingInfoPropertyIsLiveStream: false,
         ]
-        if let sub = item.subtitle { info[MPMediaItemPropertyArtist] = sub }
+        if let sub = it.subtitle { info[MPMediaItemPropertyArtist] = sub }
+        if let art = nowPlayingArtwork { info[MPMediaItemPropertyArtwork] = art }
         if duration > 0 { info[MPMediaItemPropertyPlaybackDuration] = duration }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
         updateLiveActivity()
@@ -2802,6 +2873,7 @@ extension PlayerModel: MPVClientDelegate {
             metalWaitRestarted = true
             PiPTrace.event("mpv: playback restart (first frame after the seek)")
             if renderer == .metal { scheduleSnapshot(after: 0.8) }
+            updateNowPlaying()              // Control Center's time after a seek
         case .videoReconfig:
             PiPTrace.event("mpv: video reconfig")
         case .clientMessage(let args):
@@ -2929,7 +3001,14 @@ extension PlayerModel: MPVClientDelegate {
         if playbackMode == "playlist", defaults.bool(forKey: SettingsKey.autoplayNext), hasNext {
             playNext()
         } else {
+            // The end: back to where you came from. There was a Replay / Close
+            // card; playing it again is a tap on its tile (user request, 4 Nov).
             ended = true
+            dlog("player", "end of file: closing the player")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                guard let self, self.ended, !self.closed else { return }
+                self.closeScreen?()
+            }
         }
     }
 }

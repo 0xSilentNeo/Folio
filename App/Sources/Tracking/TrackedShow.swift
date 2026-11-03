@@ -96,6 +96,11 @@ struct TrackedShow: Codable, Identifiable, Hashable, Sendable {
     var added: Date?
     /// The schedule's source was reached and doesn't know the show.
     var notFound: Bool?
+    /// The show's other names (1.22.1): its original or romaji title, and
+    /// the name its files have in the library. The library and Discover
+    /// pages find it tracked by any of them (isSameShow), so a show tracked
+    /// on one shows Tracking on the other with no id in common.
+    var otherNames: [String]?
 
     init(id: String, name: String) {
         self.id = id
@@ -147,9 +152,17 @@ extension TrackedShow {
         if let p = f.page { page = p }
         status = f.status
         network = f.network ?? network
+        // The episode just out keeps the moment it aired when Folio saw it
+        // coming: AniList names it without a time (1.22.1, for "New").
+        let known = schedule
+        func dated(_ e: AiringEpisode?) -> AiringEpisode? {
+            guard var e, e.airDate == nil, e.number != nil else { return e }
+            e.airDate = known.last { $0.number == e.number && ($0.season == nil || e.season == nil || $0.season == e.season) }?.airDate
+            return e
+        }
         next = f.next
         later = f.later.isEmpty ? nil : f.later
-        lastAired = f.lastAired ?? lastAired
+        lastAired = dated(f.lastAired) ?? lastAired
         updated = now
         notFound = nil
     }
@@ -196,6 +209,7 @@ extension TrackedShow {
         anime = m.isAnime || AiringRoute.isAnime(id: m.id, genres: m.genres, countries: m.countries)
         year = m.releaseInfo.flatMap { Int($0.prefix(4)) }
         poster = m.poster
+        otherNames = Self.names([m.originalName], besides: m.name)
     }
 
     /// A library series (TitleHeroView): its name, the metadata Folio found
@@ -210,6 +224,22 @@ extension TrackedShow {
         year = meta?.year.flatMap { Int($0.prefix(4)) }
         self.season = season
         poster = meta?.poster
+        otherNames = Self.names([meta?.originalName, libraryTitle, hint?.title], besides: name)
+    }
+
+    /// The names that aren't `name` (spelling aside), once each; nil when none.
+    static func names(_ list: [String?], besides name: String) -> [String]? {
+        var seen: Set<String> = [normalized(name)]
+        let out = list.compactMap { $0 }.filter { n in
+            let k = normalized(n)
+            return !k.isEmpty && seen.insert(k).inserted
+        }
+        return out.isEmpty ? nil : out
+    }
+
+    /// Every name the show goes by, as isSameShow compares them.
+    var allNames: Set<String> {
+        Set(([name] + (otherNames ?? [])).map(Self.normalized).filter { !$0.isEmpty })
     }
 
     /// The IMDb id when there is one (what Discover and the library share),
@@ -237,17 +267,83 @@ extension TrackedShow {
     /// Letters and digits only, lowercased: "Mob Land" and "MobLand" match.
     static func normalized(_ s: String) -> String { s.lowercased().filter { $0.isLetter || $0.isNumber } }
 
-    /// The same show tracked from another page: any id in common, else the
-    /// same name (and year, when both know it).
+    /// The same show tracked from another page: any id in common, else a
+    /// name in common (and the year, when both know it). 1.22.1: any of
+    /// their names, not just the first — the library's file name ("Sousou no
+    /// Frieren") against Discover's English title.
     func isSameShow(as o: TrackedShow) -> Bool {
         if id == o.id { return true }
         func same<T: Equatable>(_ a: T?, _ b: T?) -> Bool { a != nil && a == b }
         if same(imdb, o.imdb) || same(anilist, o.anilist) || same(mal, o.mal) || same(kitsu, o.kitsu) || same(tvmaze, o.tvmaze) { return true }
         // Two different IMDb ids are two different shows, whatever their names.
         if imdb != nil, o.imdb != nil { return false }
-        guard Self.normalized(name) == Self.normalized(o.name) else { return false }
+        guard !allNames.isDisjoint(with: o.allNames) else { return false }
         if let a = year, let b = o.year { return abs(a - b) <= 1 }
         return true
+    }
+}
+
+// MARK: - Episode tiles
+
+/// What a tracked show's episode tile says on a title page (1.22.1).
+enum AiringMark: Equatable {
+    /// Out in the last week, and the newest out.
+    case new
+    /// Not out yet: when it airs.
+    case airs(Date)
+}
+
+/// A tracked show's schedule as a title page's episode tiles use it: "New"
+/// on the episode just out, when it airs on the ones not out yet. From the
+/// schedule the tracker already keeps: no request per tile.
+struct EpisodeAiring: Equatable {
+    /// An episode is "New" for its first week (or until the next one is out).
+    static let newFor: TimeInterval = 7 * 86400
+
+    /// Not out yet, soonest first.
+    let upcoming: [AiringEpisode]
+    /// Out most recently, while it's new.
+    let justOut: AiringEpisode?
+    /// The season the schedule means when it numbers episodes without one
+    /// (AniList has an entry per season): the tracked season, else the
+    /// page's newest.
+    let season: Int?
+
+    init(show: TrackedShow, now: Date, newestSeason: Int?) {
+        let s = show.schedule
+        upcoming = s.filter { $0.airDate! > now }
+        justOut = s.last { $0.airDate! <= now }.flatMap { now.timeIntervalSince($0.airDate!) < Self.newFor ? $0 : nil }
+        season = show.season ?? newestSeason
+    }
+
+    /// The mark for the page's episode `episode` of `season`, if it has one.
+    func mark(season s: Int?, episode n: Int?) -> AiringMark? {
+        guard let n else { return nil }
+        if let e = upcoming.first(where: { matches($0, s, n) }) { return .airs(e.airDate!) }
+        if let e = justOut, matches(e, s, n) { return .new }
+        return nil
+    }
+
+    /// The episodes not out yet that the page has no tile for, under the
+    /// season it shows: that season's, and a season the page doesn't have
+    /// yet under its newest. At most `limit`.
+    func untiled(shown: Int?, seasons: [Int], episodes: [Int], limit: Int = 3) -> [AiringEpisode] {
+        let newest = seasons.max()
+        return Array(upcoming.filter { e in
+            let es = e.season ?? season
+            if let es, let shown, es != shown {
+                guard !seasons.contains(es), shown == newest else { return false }
+                return true
+            }
+            return e.number.map { !episodes.contains($0) } ?? true
+        }.prefix(limit))
+    }
+
+    private func matches(_ e: AiringEpisode, _ s: Int?, _ n: Int) -> Bool {
+        guard e.number == n else { return false }
+        // When either side doesn't know the season, the number decides.
+        guard let es = e.season ?? season, let s else { return true }
+        return es == s
     }
 }
 
@@ -287,7 +383,7 @@ enum AiringGroup: Int, CaseIterable, Identifiable {
 
     /// Today: out in the last six hours or airing before midnight. This week:
     /// the next seven days. Later: after that. Other: nothing to come.
-    static func of(_ show: TrackedShow, now: Date, calendar: Calendar = .current) -> AiringGroup {
+    static func of(_ show: TrackedShow, now: Date, calendar: Calendar = .autoupdatingCurrent) -> AiringGroup {
         guard let d = show.headline(at: now)?.airDate else { return .other }
         if d <= now || calendar.isDate(d, inSameDayAs: now) { return .today }
         if let end = calendar.date(byAdding: .day, value: 8, to: calendar.startOfDay(for: now)), d < end { return .week }
@@ -295,7 +391,7 @@ enum AiringGroup: Int, CaseIterable, Identifiable {
     }
 
     /// The groups that have shows, each soonest first (the last by name).
-    static func grouped(_ shows: [TrackedShow], now: Date, calendar: Calendar = .current) -> [AiringSection] {
+    static func grouped(_ shows: [TrackedShow], now: Date, calendar: Calendar = .autoupdatingCurrent) -> [AiringSection] {
         let byGroup = Dictionary(grouping: shows) { of($0, now: now, calendar: calendar) }
         return allCases.compactMap { g in
             guard let list = byGroup[g], !list.isEmpty else { return nil }

@@ -133,6 +133,16 @@ final class PiPManager: NSObject {
         view.displayLayer.videoGravity = fill ? .resizeAspectFill : .resizeAspect
     }
 
+    /// HDR frames from the sample-buffer renderer: the layer shows them with
+    /// HDR brightness (EDR) instead of tone-mapping them to SDR.
+    func setHDR(_ on: Bool) {
+        if #available(iOS 26.0, *) {
+            view.displayLayer.preferredDynamicRange = on ? .high : .standard
+        } else {
+            view.displayLayer.wantsExtendedDynamicRangeContent = on
+        }
+    }
+
     func start() { controller?.startPictureInPicture() }
     func stop() { controller?.stopPictureInPicture() }
 

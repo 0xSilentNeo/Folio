@@ -287,6 +287,24 @@ enum ForYou {
         return (picks.map(\.meta), ids)
     }
 
+    // MARK: - Kids profile
+
+    /// The row in the kids profile (1.22.1): only titles whose own rating
+    /// is known and within the limits; unknown and unrated ones are hidden.
+    /// Its titles come from the whole watch history (grown-up titles too),
+    /// and its tiles carry no rating: IMDb's "More like this" and TMDB's
+    /// recommendations give none. Until 1.22.1 the row went by KidsRules'
+    /// genre guess, so an animated show rated 13+ or TV-MA (Animation,
+    /// Action, Adventure: no grown-up genre) counted as G and was shown.
+    /// `ratings`: each title's rating from its IMDb title page ("" when the
+    /// page has none), as ForYouModel looks them up.
+    static func kidsRow(_ metas: [MetaItem], ratings: [String: String], limits: KidsRules.Limits) -> [MetaItem] {
+        metas.filter { m in
+            let rating = m.contentRating ?? ratings[m.id]
+            return KidsRules.ratedVerdict(rating: rating, isSeries: m.type != "movie", limits: limits) == .allowed
+        }
+    }
+
     // MARK: - Saved row
 
     struct Saved: Codable {
@@ -322,11 +340,20 @@ enum ForYou {
 /// nothing keeps the row it had.
 @MainActor
 final class ForYouModel: ObservableObject {
-    @Published private(set) var metas: [MetaItem] = []
+    @Published private(set) var metas: [MetaItem] = [] {
+        didSet { if KidsProfile.isOnNow { lookUpRatings() } }
+    }
     /// The history has a title to start from: the row shows only then.
     @Published private(set) var hasSeeds = false
     @Published private(set) var loading = false
+    /// Kids profile: the row's titles' content ratings from their IMDb title
+    /// pages ("" when a page has none), by IMDb id.
+    @Published private(set) var ratings: [String: String] = [:]
     private var generation = 0
+    private var ratingTask: Task<Void, Never>?
+    /// Asked for this launch, answered or not: a page that couldn't be
+    /// loaded leaves its title hidden rather than asked for again and again.
+    private var asked: Set<String> = []
 
     init() {
         // The last row, so it's there on the first frame (until the history says otherwise).
@@ -334,12 +361,33 @@ final class ForYouModel: ObservableObject {
             metas = saved.metas
             hasSeeds = true
         }
+        if KidsProfile.isOnNow { lookUpRatings() }
     }
 
-    /// The row as shown: in the kids profile, only what KidsRules allows (1.22.0).
+    /// The row as shown: in the kids profile, only titles rated within its
+    /// limits (ForYou.kidsRow; 1.22.1).
     func shown(_ limits: KidsRules.Limits?) -> [MetaItem] {
         guard let limits else { return metas }
-        return metas.filter { KidsRules.allows($0, limits: limits) }
+        return ForYou.kidsRow(metas, ratings: ratings, limits: limits)
+    }
+
+    /// Kids profile: the ratings of the row's titles that don't carry one,
+    /// a few title pages at a time. IMDbSource keeps each page's details 7
+    /// days (the title page reads the same), so this is once a week per title.
+    func lookUpRatings() {
+        guard ratingTask == nil else { return }
+        let missing = metas.filter { $0.contentRating == nil && $0.id.hasPrefix("tt") && !asked.contains($0.id) }
+        guard !missing.isEmpty else { return }
+        asked.formUnion(missing.map(\.id))
+        ratingTask = Task {
+            let found = await ForYou.each(missing, limit: ForYou.parallel) { m in
+                (m.id, await IMDbSource.details(id: m.id, type: m.type).map { $0.contentRating ?? "" })
+            }
+            for (id, rating) in found { if let rating { ratings[id] = rating } }
+            dlog("foryou", "kids profile: ratings of \(found.filter { $0.1 != nil }.count) of \(found.count) title(s)")
+            ratingTask = nil
+            lookUpRatings()            // the row may have changed meanwhile
+        }
     }
 
     /// Discover is open (`force`: pulled to refresh, the 12 hours don't count).

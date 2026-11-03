@@ -24,7 +24,11 @@ struct DownloadItem: Codable, Identifiable, Hashable {
     /// Paused by the app (Low Power Mode, not charging), not by you: starts
     /// again by itself when that ends.
     var held = false
-    /// Where the file goes (decided when it was added).
+    /// Where the file goes (decided when it was added). Saved inside
+    /// Documents ("Media/Show/E1.mkv", 1.22.1): iOS moves the app's
+    /// container on an update or a reinstall, and a whole path saved before
+    /// pointed into the old one, where the finished file couldn't be saved
+    /// ("You don't have permission to save the file", 4 Nov report).
     var destination: URL
     /// Request headers an addon asked for (1.17.0: downloads from addon streams).
     var headers: [String: String]?
@@ -35,12 +39,38 @@ struct DownloadItem: Codable, Identifiable, Hashable {
     /// Queued by "Download next episodes" (1.22.0): only over Wi-Fi that
     /// isn't metered or in Low Data Mode, whatever "Use mobile data" says.
     var wifiOnly: Bool?
+    /// Byte ranges downloading side by side (1.22.1, Settings → Downloads →
+    /// Connections per file); nil: one connection.
+    var parts: [DownloadPart]?
+    /// The server didn't answer a byte range: one connection for this file.
+    var singleOnly: Bool?
 
     var progress: Double { expected > 0 ? min(1, Double(received) / Double(expected)) : 0 }
     var isMedia: Bool { TitleParser.isMedia(fileName) }
 }
 
+/// One byte range of a file downloaded over several connections (1.22.1):
+/// its own background transfer with its own resume data. The parts are
+/// joined into the file when all are done.
+struct DownloadPart: Codable, Hashable {
+    var start: Int64
+    /// The last byte, included.
+    var end: Int64
+    var received: Int64 = 0
+    var done = false
+    var resumeFile: String?
+    /// A retry of this part waits until then.
+    var notBefore: Date?
+
+    var length: Int64 { end - start + 1 }
+}
+
 extension DownloadItem {
+    enum CodingKeys: String, CodingKey {
+        case id, url, serverID, fileName, package, expected, received, state, error, resumeFile, retries, added, finished, held
+        case destination, destinationPath, headers, notBefore, wifiOnly, parts, singleOnly
+    }
+
     /// Only the address, name and destination are required: a field with a
     /// default may be missing or of another type (a list saved by another
     /// version) and the item is still read. One unreadable field used to
@@ -61,10 +91,78 @@ extension DownloadItem {
         added = (try? c.decodeIfPresent(Date.self, forKey: .added)) ?? Date()
         finished = try? c.decodeIfPresent(Date.self, forKey: .finished)
         held = (try? c.decodeIfPresent(Bool.self, forKey: .held)) ?? false
-        destination = try c.decode(URL.self, forKey: .destination)
+        // 1.22.1 saves the path inside Documents; before, only the whole
+        // path, which is moved onto this container's Documents.
+        if let rel = try? c.decodeIfPresent(String.self, forKey: .destinationPath), let u = Self.inDocuments(rel) {
+            destination = u
+        } else {
+            destination = Self.rebased(try c.decode(URL.self, forKey: .destination))
+        }
         headers = try? c.decodeIfPresent([String: String].self, forKey: .headers)
         notBefore = try? c.decodeIfPresent(Date.self, forKey: .notBefore)
         wifiOnly = try? c.decodeIfPresent(Bool.self, forKey: .wifiOnly)
+        parts = try? c.decodeIfPresent([DownloadPart].self, forKey: .parts)
+        singleOnly = try? c.decodeIfPresent(Bool.self, forKey: .singleOnly)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(url, forKey: .url)
+        try c.encodeIfPresent(serverID, forKey: .serverID)
+        try c.encode(fileName, forKey: .fileName)
+        try c.encode(package, forKey: .package)
+        try c.encode(expected, forKey: .expected)
+        try c.encode(received, forKey: .received)
+        try c.encode(state, forKey: .state)
+        try c.encodeIfPresent(error, forKey: .error)
+        try c.encodeIfPresent(resumeFile, forKey: .resumeFile)
+        try c.encode(retries, forKey: .retries)
+        try c.encode(added, forKey: .added)
+        try c.encodeIfPresent(finished, forKey: .finished)
+        try c.encode(held, forKey: .held)
+        // The whole path as well: what 1.22.0 and earlier read.
+        try c.encode(destination, forKey: .destination)
+        try c.encodeIfPresent(Self.documentsPath(destination.path), forKey: .destinationPath)
+        try c.encodeIfPresent(headers, forKey: .headers)
+        try c.encodeIfPresent(notBefore, forKey: .notBefore)
+        try c.encodeIfPresent(wifiOnly, forKey: .wifiOnly)
+        try c.encodeIfPresent(parts, forKey: .parts)
+        try c.encodeIfPresent(singleOnly, forKey: .singleOnly)
+    }
+
+    // MARK: Paths
+
+    /// A path inside an app container's Documents, as "Media/Show/E1.mkv":
+    /// this container's or another one's (the install before an update).
+    /// Nil outside Documents.
+    static func documentsPath(_ path: String, documents: String = MPVFiles.documents.path) -> String? {
+        var p = path
+        if p.hasPrefix("file://"), let u = URL(string: p) { p = u.path }
+        var rest: Substring?
+        if p.hasPrefix(documents + "/") {
+            rest = p.dropFirst(documents.count + 1)
+        } else if let r = p.range(of: #"/Containers/Data/Application/[^/]+/Documents/"#, options: .regularExpression) {
+            rest = p[r.upperBound...]
+        }
+        guard let rest, !rest.isEmpty else { return nil }
+        return String(rest)
+    }
+
+    /// `path` (from documentsPath) in this container's Documents; nil for
+    /// one that would leave it.
+    static func inDocuments(_ path: String, documents: URL = MPVFiles.documents) -> URL? {
+        let parts = path.split(separator: "/")
+        guard !path.hasPrefix("/"), !parts.isEmpty, !parts.contains("..") else { return nil }
+        return documents.appendingPathComponent(path)
+    }
+
+    /// A destination saved as a whole path (1.22.0 and earlier), moved onto
+    /// this container's Documents. One outside any Documents stays as it is.
+    static func rebased(_ url: URL, documents: URL = MPVFiles.documents) -> URL {
+        guard url.isFileURL, let rel = documentsPath(url.path, documents: documents.path),
+              let moved = inDocuments(rel, documents: documents) else { return url }
+        return moved
     }
 }
 
@@ -74,6 +172,13 @@ extension DownloadItem {
 /// carries on with the transfers while Folio is suspended and relaunches it
 /// when they end. Pause keeps resume data, so a paused file continues where
 /// it stopped (when the server supports byte ranges, which WebDAV servers do).
+///
+/// A big file on a server that answers byte ranges downloads in parts side
+/// by side (1.22.1): a server that caps each connection (a debrid host on
+/// some networks: 10 Mbit/s of a 750 Mbit/s Wi-Fi, 4 Nov report) gives each
+/// part that much. Each part is a background transfer of its own, paused
+/// and resumed with its own resume data; the parts are joined into the file
+/// off the main thread when all are done.
 @MainActor
 final class DownloadManager: ObservableObject {
     static let shared = DownloadManager()
@@ -83,12 +188,29 @@ final class DownloadManager: ObservableObject {
     @Published private(set) var speed: Double = 0
     @Published private(set) var speedHistory: [Double] = Array(repeating: 0, count: 30)
 
+    /// Files smaller than this download over one connection: parts gain little there.
+    nonisolated static let splitFrom: Int64 = 64 * 1_048_576
+    /// No part smaller than this.
+    nonisolated static let smallestPart: Int64 = 8 * 1_048_576
+
     private let engine = DownloadEngine.shared
     private var lastBytes: [UUID: Int64] = [:]
+    private var lastTick: CFTimeInterval = 0
     private var ticker: Timer?
     private var saveWork: DispatchWorkItem?
     private let file: URL
     private var notifiedRun = false
+    /// Transfers handed to the engine and not ended yet, by task key.
+    private var inFlight = Set<String>()
+    /// Bumped each time a file starts or stops: an answer (a range check, a
+    /// join) that comes back after a pause or a removal is dropped.
+    private var runs: [UUID: Int] = [:]
+    private var joining = Set<UUID>()
+    /// When each file last started and its bytes then (the log's average speed).
+    private var startedAt: [UUID: (time: Date, bytes: Int64)] = [:]
+    /// Until reattach has seen which transfers still run, nothing starts:
+    /// a part still downloading would be started twice.
+    private var attached = false
 
     var active: [DownloadItem] { items.filter { $0.state == .running } }
     var hasWork: Bool { items.contains { $0.state == .running || $0.state == .queued } }
@@ -99,9 +221,12 @@ final class DownloadManager: ObservableObject {
         file = dir.appendingPathComponent("downloads.json")
         if let d = try? Data(contentsOf: file), let list = JSONDecoder().decodeLossy(DownloadItem.self, from: d) { items = list }
 
-        engine.onProgress = { [weak self] id, got, total in self?.progress(id, got, total) }
-        engine.onFinished = { [weak self] id, tmp in self?.finished(id, tmp) }
-        engine.onFailed = { [weak self] id, msg, resume in self?.failed(id, msg, resume) }
+        engine.onProgress = { [weak self] key, got, total in self?.progress(key, got, total) }
+        engine.onFinished = { [weak self] key, tmp in self?.taskFinished(key, tmp) }
+        engine.onFailed = { [weak self] key, msg, resume, rangesIgnored in self?.taskFailed(key, msg, resume, rangesIgnored: rangesIgnored) }
+        // Woken by iOS for the session's events: the bytes and speed since
+        // the last look, for the Live Activity, before Folio sleeps again.
+        engine.onEventsDone = { await DownloadManager.shared.catchUp(); await DownloadActivity.shared.refreshNow() }
 
         NotificationCenter.default.addObserver(forName: Notification.Name.NSProcessInfoPowerStateDidChange, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { DownloadManager.shared.conditionsChanged() }
@@ -110,6 +235,13 @@ final class DownloadManager: ObservableObject {
         NotificationCenter.default.addObserver(forName: UIDevice.batteryStateDidChangeNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { DownloadManager.shared.conditionsChanged() }
         }
+        // Back on screen: what the transfers did while Folio was suspended.
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { _ = Task<Void, Never> { @MainActor in await DownloadManager.shared.catchUp() } }
+        }
+        let moved = items.filter { $0.state != .done && !$0.destination.path.hasPrefix(MPVFiles.documents.path) }.count
+        dlog("dl", "list: \(items.count) item(s), \(items.filter { $0.state == .done }.count) done"
+             + (moved > 0 ? ", \(moved) saving outside this container's Documents" : ""))
         Task { await reattach() }
         // Live Activities and "Delete watched downloads" (1.22.0) read
         // `shared`: started after this init.
@@ -117,6 +249,7 @@ final class DownloadManager: ObservableObject {
             MainActor.assumeIsolated {
                 LiveActivities.start()
                 WatchedCleanup.start()
+                DownloadManager.shared.labArguments()
             }
         }
     }
@@ -128,8 +261,9 @@ final class DownloadManager: ObservableObject {
         let fileName = safeName(fileName)
         let root = MPVFiles.mediaDir
         let perFolder = (UserDefaults.standard.string(forKey: SettingsKey.downloadSaveTo) ?? "folder") == "folder"
-        let clean = package.replacingOccurrences(of: "/", with: "-").trimmingCharacters(in: .whitespacesAndNewlines)
-        let dir = perFolder && !clean.isEmpty ? root.appendingPathComponent(clean, isDirectory: true) : root
+        let clean = package.trimmingCharacters(in: .whitespacesAndNewlines)
+        // The folder's name made safe as well: a package ".." went above Media.
+        let dir = perFolder && !clean.isEmpty ? root.appendingPathComponent(safeName(clean), isDirectory: true) : root
         return dir.appendingPathComponent(fileName)
     }
 
@@ -164,7 +298,7 @@ final class DownloadManager: ObservableObject {
     /// automatically" says (it was asked for) and on Wi-Fi only.
     func enqueue(_ files: [DAVItem], server: WebDAVServer, package: String, auto: Bool = false) {
         let skip = UserDefaults.standard.bool(forKey: SettingsKey.downloadSkipExisting)
-        var added = 0
+        var added = 0, skipped = 0
         for f in files where !f.isDirectory {
             items.removeAll { $0.url == f.url && Self.isGone($0) }
             if items.contains(where: { $0.url == f.url && $0.state != .failed }) { continue }
@@ -176,12 +310,13 @@ final class DownloadManager: ObservableObject {
             if !auto, !UserDefaults.standard.bool(forKey: SettingsKey.downloadAutoStart) { item.state = .paused }
             if skip, let size = (try? dest.resourceValues(forKeys: [.fileSizeKey]))?.fileSize, Int64(size) == item.expected, size > 0 {
                 item.state = .done; item.received = item.expected; item.finished = Date()
+                skipped += 1
             }
             items.append(item)
             added += 1
         }
         guard added > 0 else { return }
-        dlog("dl", "queued \(added) file(s) from \(package)\(auto ? " (next episodes)" : "")")
+        dlog("dl", "queued \(added) file(s) from \(package)\(auto ? " (next episodes)" : "")\(skipped > 0 ? ", \(skipped) already in the library" : "")")
         notifiedRun = false
         // Not over the player for an automatic one: it asks when you tap Download.
         if !auto, UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify) { Self.askForNotifications() }
@@ -234,7 +369,8 @@ final class DownloadManager: ObservableObject {
         case .running:
             items[i].state = .paused
             items[i].held = false
-            Task { if let name = await engine.pause(id) { setResume(id, name) } }
+            dlog("dl", "pause \(items[i].fileName) at \(items[i].received.byteString)")
+            halt(id)
         case .queued:
             items[i].state = .paused
             items[i].held = false
@@ -249,6 +385,8 @@ final class DownloadManager: ObservableObject {
         items[i].state = .queued
         items[i].error = nil
         items[i].held = false
+        items[i].notBefore = nil
+        if let parts = items[i].parts { items[i].parts = parts.map { var p = $0; p.notBefore = nil; return p } }
         notifiedRun = false
         save(); pump()
     }
@@ -258,10 +396,15 @@ final class DownloadManager: ObservableObject {
     func remove(_ id: UUID, deleteFile: Bool = false) {
         guard let i = index(id) else { return }
         let item = items[i]
-        if item.state == .running { Task { await engine.cancel(id) } }
-        if let r = item.resumeFile { try? FileManager.default.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) }
-        if deleteFile, item.state == .done { LocalMediaStore.shared.delete(item.destination) }
+        // Off the list first, by id, before anything else can change it:
+        // deleting the file calls forgetDeleted, which takes this item off
+        // too, and the index looked up above was then removed again: out of
+        // range for the last item, another download's otherwise (4 Nov crash).
         items.remove(at: i)
+        forgetRun(id)
+        if item.state == .running || item.parts != nil { Task { await engine.cancel(id) } }
+        removeFiles(of: item)
+        if deleteFile, item.state == .done { LocalMediaStore.shared.delete(item.destination) }
         save(); pump()
     }
 
@@ -296,6 +439,21 @@ final class DownloadManager: ObservableObject {
         }
     }
 
+    /// Lab: `-labDownloadURL=<link>` queues that link as a stream download
+    /// (a local test server, to measure speed and parts in the simulator).
+    private func labArguments() {
+        for arg in CommandLine.arguments where arg.hasPrefix("-labDownloadURL=") {
+            guard let url = URL(string: String(arg.dropFirst("-labDownloadURL=".count))) else { continue }
+            let name = url.lastPathComponent
+            if enqueue(stream: url, fileName: name, package: "Lab Downloads", expected: 0, headers: [:]) {
+                dlog("dl", "lab: queued \(name) from \(url.host ?? "?")")
+            }
+        }
+    }
+
+    /// Tests (DownloadRemoveTests): items put in the list as they are; nothing starts.
+    func insertForTests(_ list: [DownloadItem]) { items.append(contentsOf: list) }
+
     func pausePackage(_ name: String) { for it in items where it.package == name && (it.state == .running || it.state == .queued) { pause(it.id) } }
     func resumePackage(_ name: String) { for it in items where it.package == name && (it.state == .paused || it.state == .failed) { resume(it.id) } }
 
@@ -315,19 +473,30 @@ final class DownloadManager: ObservableObject {
 
     private var maxConcurrent: Int { max(1, min(6, UserDefaults.standard.integer(forKey: SettingsKey.downloadConcurrent))) }
 
+    /// Connections per file (Settings → Downloads), 1...8.
+    nonisolated static var connectionsPerFile: Int {
+        let n = UserDefaults.standard.integer(forKey: SettingsKey.downloadParts)
+        return max(1, min(8, n == 0 ? 4 : n))
+    }
+
     /// Starts queued files up to the limit; holds running ones when Low Power
     /// Mode or "only while charging" says so.
     private func pump() {
         if !conditionsOK {
+            var held = 0
             for i in items.indices where items[i].state == .running {
-                let id = items[i].id
                 items[i].state = .queued
                 items[i].held = true
-                Task { if let name = await engine.pause(id) { setResume(id, name) } }
+                halt(items[i].id)
+                held += 1
             }
+            if held > 0 { dlog("dl", "holding \(held) download(s): Low Power Mode or not charging") }
             updateTicker(); save()
             return
         }
+        guard attached else { updateTicker(); return }
+        // A part waiting for its retry, or one left over by a relaunch.
+        for it in items where it.state == .running && it.parts != nil { startParts(it.id) }
         var running = items.filter { $0.state == .running }.count
         let now = Date()
         for i in items.indices where running < maxConcurrent && items[i].state == .queued && (items[i].notBefore ?? now) <= now {
@@ -340,23 +509,151 @@ final class DownloadManager: ObservableObject {
 
     private func start(_ i: Int) {
         // (Queued files only; paused ones wait for Resume.)
-        var item = items[i]
+        let id = items[i].id
+        items[i].state = .running
+        items[i].held = false
+        items[i].error = nil
+        items[i].notBefore = nil
+        let run = (runs[id] ?? 0) + 1
+        runs[id] = run
+        startedAt[id] = (Date(), items[i].received)
+        if items[i].parts != nil {
+            dlog("dl", "start \(items[i].fileName) (\(items[i].parts!.count) connections, resuming at \(items[i].received.byteString))")
+            startParts(id)
+            lastBytes[id] = items[i].received
+            save()
+            return
+        }
+        let item = items[i]
+        let ask = request(for: item)
+        if let resume = Self.loadResume(item.resumeFile) {
+            lastBytes[id] = item.received
+            inFlight.insert(DownloadEngine.key(id, nil))
+            engine.start(key: DownloadEngine.key(id, nil), request: ask, range: nil, resumeData: resume)
+            dlog("dl", "start \(item.fileName) (resuming at \(item.received.byteString))")
+            save()
+            return
+        }
+        items[i].received = 0
+        lastBytes[id] = 0
+        startedAt[id] = (Date(), 0)
+        let n = Self.connectionsPerFile
+        if n > 1, item.singleOnly != true, item.expected == 0 || item.expected >= Self.splitFrom {
+            dlog("dl", "start \(item.fileName): asking \(item.url.host ?? "the server") for byte ranges (\(n) connections)")
+            checkRanges(id, run: run, request: ask, connections: n)
+        } else {
+            startSingle(id, request: ask, why: n == 1 ? "1 connection set" : item.singleOnly == true ? "no byte ranges" : "small file")
+        }
+        save()
+    }
+
+    private func startSingle(_ id: UUID, request: DownloadEngine.Request, why: String) {
+        guard let i = index(id) else { return }
+        let key = DownloadEngine.key(id, nil)
+        inFlight.insert(key)
+        engine.start(key: key, request: request, range: nil, resumeData: nil)
+        dlog("dl", "start \(items[i].fileName) (\(why), \(items[i].expected > 0 ? items[i].expected.byteString : "size unknown"))")
+    }
+
+    /// Asks the server for the first byte: one that answers with that byte
+    /// and the file's length (HTTP 206) gets the file in parts.
+    private func checkRanges(_ id: UUID, run: Int, request: DownloadEngine.Request, connections: Int) {
+        // Started by the queue while Folio is in the background: a moment
+        // more, so the answer comes before iOS suspends it.
+        let bg = BackgroundTime("folio.download.ranges")
+        let t0 = CACurrentMediaTime()
+        Task {
+            let answer = await DownloadEngine.checkRanges(request)
+            defer { bg.end() }
+            let ms = Int((CACurrentMediaTime() - t0) * 1000)
+            guard let i = index(id), items[i].state == .running, runs[id] == run else { return }
+            let name = items[i].fileName
+            switch answer {
+            case .ranges(let total, let host):
+                guard total >= Self.splitFrom else {
+                    items[i].expected = total
+                    startSingle(id, request: request, why: "small file")
+                    return
+                }
+                let parts = Self.split(total: total, into: connections)
+                items[i].expected = total
+                items[i].parts = parts
+                dlog("dl", "\(host) answers byte ranges (\(ms) ms): \(name), \(total.byteString) in \(parts.count) parts")
+                startParts(id)
+            case .single(let why):
+                items[i].singleOnly = true
+                dlog("dl", "\(name): one connection, \(why) (\(ms) ms)")
+                startSingle(id, request: request, why: "no byte ranges")
+            case .unknown(let why):
+                dlog("dl", "\(name): couldn't check for byte ranges (\(why)), one connection")
+                startSingle(id, request: request, why: "range check failed")
+            }
+            save()
+        }
+    }
+
+    /// `total` bytes in up to `n` parts of equal size (the last takes the rest), none under smallestPart.
+    nonisolated static func split(total: Int64, into n: Int) -> [DownloadPart] {
+        guard total > 0 else { return [] }
+        let count = Int(max(1, min(Int64(max(1, n)), total / smallestPart)))
+        let size = total / Int64(count)
+        return (0..<count).map { k in
+            let start = Int64(k) * size
+            return DownloadPart(start: start, end: k == count - 1 ? total - 1 : start + size - 1)
+        }
+    }
+
+    /// Starts the parts not done, not running and not waiting for a retry;
+    /// joins them once all are done.
+    private func startParts(_ id: UUID) {
+        guard let i = index(id), items[i].state == .running, let parts = items[i].parts else { return }
+        if parts.allSatisfy(\.done) {
+            join(id)
+            return
+        }
+        let ask = request(for: items[i])
+        let now = Date()
+        var started: [String] = []
+        for (n, p) in parts.enumerated() where !p.done {
+            let key = DownloadEngine.key(id, n)
+            guard !inFlight.contains(key), (p.notBefore ?? now) <= now else { continue }
+            let resume = Self.loadResume(p.resumeFile)
+            if resume == nil { items[i].parts?[n].received = 0 }
+            inFlight.insert(key)
+            engine.start(key: key, request: ask, range: p.start...p.end, resumeData: resume)
+            started.append("\(n + 1)\(resume != nil ? " (resuming at \(p.received.byteString))" : "")")
+        }
+        recount(i)
+        if !started.isEmpty { dlog("dl", "\(items[i].fileName): part \(started.joined(separator: ", ")) of \(parts.count) started") }
+    }
+
+    private func request(for item: DownloadItem) -> DownloadEngine.Request {
         let server = ServerStore.shared.servers.first { $0.id == item.serverID }
         var headers: [String: String] = item.headers ?? [:]
         if let auth = server?.authHeader { headers["Authorization"] = auth }
-        let resume = item.resumeFile.flatMap { try? Data(contentsOf: DownloadEngine.resumeDir.appendingPathComponent($0)) }
-        if resume == nil { item.received = 0 }
-        item.state = .running
-        item.held = false
-        item.error = nil
-        item.notBefore = nil
-        items[i] = item
-        lastBytes[item.id] = item.received
-        let cellular = UserDefaults.standard.bool(forKey: SettingsKey.downloadCellular)
-        engine.start(id: item.id, url: item.url, headers: headers, resumeData: resume, allowCellular: cellular,
-                     unmeteredOnly: item.wifiOnly == true)
-        dlog("dl", "start \(item.fileName)\(resume != nil ? " (resuming)" : "")")
-        save()
+        return DownloadEngine.Request(url: item.url, headers: headers,
+                                      allowCellular: UserDefaults.standard.bool(forKey: SettingsKey.downloadCellular),
+                                      unmeteredOnly: item.wifiOnly == true)
+    }
+
+    /// Stops a file's transfers, keeping their resume data.
+    private func halt(_ id: UUID) {
+        guard let i = index(id) else { return }
+        runs[id] = (runs[id] ?? 0) + 1
+        let keys: [String]
+        if let parts = items[i].parts {
+            keys = parts.indices.filter { !parts[$0].done }.map { DownloadEngine.key(id, $0) }
+        } else {
+            keys = [DownloadEngine.key(id, nil)]
+        }
+        for k in keys { inFlight.remove(k) }
+        let engine = engine
+        Task {
+            await withTaskGroup(of: (String, String?).self) { group in
+                for k in keys { group.addTask { (k, await engine.pause(k)) } }
+                for await (k, name) in group { if let name { self.setResume(k, name) } }
+            }
+        }
     }
 
     private func conditionsChanged() { pump() }
@@ -367,13 +664,56 @@ final class DownloadManager: ObservableObject {
 
     /// Transfers survive an app relaunch inside the background session.
     private func reattach() async {
-        let live = Set(await engine.liveIDs())
-        for i in items.indices where items[i].state == .running && !live.contains(items[i].id) {
-            items[i].state = .queued
-            items[i].held = true             // was running: start again without asking
+        // Making the session delivers the events of transfers that ended
+        // while Folio wasn't running: a moment for them before deciding
+        // what still runs (a finished file started again downloaded twice).
+        _ = await engine.liveKeys()
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        let live = Set(await engine.liveKeys())
+        var again = 0
+        for i in items.indices where items[i].state == .running {
+            let id = items[i].id
+            if let parts = items[i].parts {
+                let keys = parts.indices.filter { !parts[$0].done }.map { DownloadEngine.key(id, $0) }
+                let going = keys.filter(live.contains)
+                inFlight.formUnion(going)
+                // None left: started again with every part's resume data;
+                // some: pump starts the others.
+                if going.isEmpty, !keys.isEmpty { items[i].state = .queued; items[i].held = true; again += 1 }
+            } else if live.contains(DownloadEngine.key(id, nil)) {
+                inFlight.insert(DownloadEngine.key(id, nil))
+            } else {
+                items[i].state = .queued
+                items[i].held = true             // was running: start again without asking
+                again += 1
+            }
         }
+        if !live.isEmpty || again > 0 { dlog("dl", "relaunched: \(live.count) transfer(s) still going, \(again) file(s) to start again") }
+        attached = true
         save()
         pump()
+    }
+
+    /// Folio runs again (back on screen, or woken by iOS for the session's
+    /// events): the bytes each transfer has now, read from the transfers
+    /// (a suspended app gets no progress), and the speed over that time.
+    func catchUp() async {
+        let now = await engine.snapshot()
+        guard !now.isEmpty else { return }
+        var gained: Int64 = 0
+        for (key, t) in now {
+            guard let (id, part) = DownloadEngine.parse(key), let i = index(id), items[i].state == .running else { continue }
+            if let part, let p = items[i].parts?[safe: part], !p.done {
+                let got = t.got(of: p.length)
+                if got > p.received { gained += got - p.received; items[i].parts?[part].received = got }
+                recount(i)
+            } else if part == nil, items[i].expected > 0 {
+                let got = t.got(of: items[i].expected)
+                if got > items[i].received { gained += got - items[i].received; items[i].received = got }
+            }
+        }
+        tick(force: true)
+        if gained > 0 { dlog("dl", "catch-up: \(now.count) transfer(s), \(gained.byteString) more since the last look\(speed > 0 ? ", " + speedString(speed) : "")") }
     }
 
     /// `url`, or "name 2.ext", "name 3.ext"… when a file is already there.
@@ -391,10 +731,99 @@ final class DownloadManager: ObservableObject {
 
     // MARK: Engine callbacks
 
-    private func progress(_ id: UUID, _ got: Int64, _ total: Int64?) {
-        guard let i = index(id), items[i].state == .running else { return }
-        items[i].received = got
-        if let total, total > 0 { items[i].expected = total }
+    private func progress(_ key: String, _ got: Int64, _ total: Int64?) {
+        guard let (id, part) = DownloadEngine.parse(key), let i = index(id), items[i].state == .running else { return }
+        if let part {
+            guard let p = items[i].parts?[safe: part], !p.done else { return }
+            items[i].parts?[part].received = min(got, p.length)
+            recount(i)
+        } else {
+            items[i].received = got
+            if let total, total > 0 { items[i].expected = total }
+        }
+    }
+
+    /// A file's bytes: its parts' (done ones in full).
+    private func recount(_ i: Int) {
+        guard let parts = items[i].parts else { return }
+        items[i].received = parts.reduce(Int64(0)) { $0 + ($1.done ? $1.length : min($1.received, $1.length)) }
+    }
+
+    private func taskFinished(_ key: String, _ tmp: URL) {
+        inFlight.remove(key)
+        guard let (id, part) = DownloadEngine.parse(key), let i = index(id) else { try? FileManager.default.removeItem(at: tmp); return }
+        guard let part else { finished(id, tmp); return }
+        guard let p = items[i].parts?[safe: part] else { try? FileManager.default.removeItem(at: tmp); return }
+        let size = Int64((try? tmp.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? -1)
+        guard size == p.length else {
+            try? FileManager.default.removeItem(at: tmp)
+            fallBackToOne(i, why: "part \(part + 1) came back with \(size.byteString) of \(p.length.byteString)")
+            return
+        }
+        items[i].parts?[part].done = true
+        items[i].parts?[part].received = p.length
+        items[i].parts?[part].notBefore = nil
+        if let r = p.resumeFile { try? FileManager.default.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) }
+        items[i].parts?[part].resumeFile = nil
+        recount(i)
+        let parts = items[i].parts ?? []
+        dlog("dl", "\(items[i].fileName): part \(part + 1) of \(parts.count) done (\(parts.filter(\.done).count) done)")
+        // A part finished while the file was paused is kept: it's whole.
+        if items[i].state == .running, parts.allSatisfy(\.done) { join(id) }
+        save()
+    }
+
+    /// All parts are in: joined into one file off the main thread, then saved like a single download.
+    private func join(_ id: UUID) {
+        guard let i = index(id), let parts = items[i].parts, !joining.contains(id) else { return }
+        joining.insert(id)
+        let lengths = parts.map(\.length), name = items[i].fileName, run = runs[id]
+        // Woken in the background for the last part: time to finish the join.
+        let bg = BackgroundTime("folio.download.join")
+        let t0 = CACurrentMediaTime()
+        Task {
+            let result = await Task.detached(priority: .utility) { Result { try DownloadEngine.join(id: id, lengths: lengths) } }.value
+            joining.remove(id)
+            defer { bg.end() }
+            switch result {
+            case .success(let joined):
+                dlog("dl", "joined \(lengths.count) parts of \(name) in \(Int((CACurrentMediaTime() - t0) * 1000)) ms")
+                guard index(id) != nil else { try? FileManager.default.removeItem(at: joined); return }
+                finished(id, joined)
+            case .failure(let error):
+                dlog("dl/error", "couldn't join the parts of \(name): \(error.localizedDescription)")
+                guard let i = index(id), runs[id] == run else { return }
+                // Parts whose files are gone download again on Retry.
+                for (n, _) in parts.enumerated() where !FileManager.default.fileExists(atPath: DownloadEngine.partFile(id, n).path) {
+                    items[i].parts?[n].done = false
+                    items[i].parts?[n].received = 0
+                }
+                if items[i].parts?.allSatisfy(\.done) == true { items[i].parts = nil; Self.removePartFiles(id) }
+                recount(i)
+                items[i].state = .failed
+                items[i].error = "Couldn't put the file together: \(error.localizedDescription)"
+                save(); pump()
+            }
+        }
+    }
+
+    /// The server answered something else than the part asked for: the
+    /// file starts again over one connection.
+    private func fallBackToOne(_ i: Int, why: String) {
+        let id = items[i].id
+        dlog("dl", "\(items[i].fileName): \(why); one connection from the start")
+        // The parts only: the whole-file transfer started below has the file's own key.
+        Task { await engine.cancel(id, partsOnly: true) }
+        for k in inFlight where k.hasPrefix(id.uuidString) { inFlight.remove(k) }
+        Self.removePartFiles(id)
+        for p in items[i].parts ?? [] { if let r = p.resumeFile { try? FileManager.default.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) } }
+        items[i].parts = nil
+        items[i].singleOnly = true
+        items[i].received = 0
+        lastBytes[id] = 0
+        runs[id] = (runs[id] ?? 0) + 1
+        if items[i].state == .running { startSingle(id, request: request(for: items[i]), why: "no byte ranges") }
+        save()
     }
 
     private func finished(_ id: UUID, _ tmp: URL) {
@@ -407,23 +836,75 @@ final class DownloadManager: ObservableObject {
             // " 2", " 3"… Until 1.20.3 it was deleted first, so same-named
             // files from two folders replaced each other in "Media" mode.
             dest = Self.freeName(for: dest)
-            items[i].destination = dest
+            // (A rename: the parts folder and Media are on one volume.)
             try fm.moveItem(at: tmp, to: dest)
-            items[i].state = .done
-            items[i].received = max(items[i].received, items[i].expected)
-            if items[i].expected == 0, let s = (try? dest.resourceValues(forKeys: [.fileSizeKey]))?.fileSize { items[i].expected = Int64(s); items[i].received = Int64(s) }
-            items[i].finished = Date()
-            if let r = items[i].resumeFile { try? fm.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) }
-            items[i].resumeFile = nil
-            dlog("dl", "done \(items[i].fileName)")
-            // What "Delete watched downloads" may delete (1.22.0).
-            DownloadLedger.add(dest)
-            LocalMediaStore.shared.refresh()
         } catch {
+            let ns = error as NSError
             items[i].state = .failed
             items[i].error = "Couldn't save the file: \(error.localizedDescription)"
+            dlog("dl/error", "couldn't save \(items[i].fileName) to \(DownloadItem.documentsPath(dest.path) ?? "outside Documents")"
+                 + "\(dest.path.hasPrefix(MPVFiles.documents.path) ? "" : " (not this container's)"): \(ns.domain) \(ns.code) \(error.localizedDescription)")
             try? fm.removeItem(at: tmp)
+            save(); pump()
+            return
         }
+        items[i].destination = dest
+        items[i].state = .done
+        items[i].received = max(items[i].received, items[i].expected)
+        let size = Int64((try? dest.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
+        if items[i].expected == 0, size > 0 { items[i].expected = size; items[i].received = size }
+        items[i].finished = Date()
+        if let r = items[i].resumeFile { try? fm.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) }
+        items[i].resumeFile = nil
+        let connections = items[i].parts?.count ?? 1
+        items[i].parts = nil
+        var took = ""
+        if let t = startedAt.removeValue(forKey: id) {
+            let s = max(0.001, Date().timeIntervalSince(t.time))
+            let moved = max(0, size - t.bytes)
+            took = t.bytes > 0 ? String(format: " (resumed: %@ in %.1f s, %@)", moved.byteString, s, speedString(Double(moved) / s))
+                               : String(format: " in %.1f s, %@", s, speedString(Double(moved) / s))
+        }
+        dlog("dl", "done \(items[i].fileName): \(size.byteString)\(took), \(connections) connection\(connections == 1 ? "" : "s")")
+        // What "Delete watched downloads" may delete (1.22.0).
+        DownloadLedger.add(dest)
+        LocalMediaStore.shared.refresh()
+        save(); pump()
+    }
+
+    private func taskFailed(_ key: String, _ message: String, _ resume: String?, rangesIgnored: Bool) {
+        inFlight.remove(key)
+        guard let (id, part) = DownloadEngine.parse(key), let i = index(id) else { return }
+        guard let part else { failed(id, message, resume); return }
+        guard let p = items[i].parts?[safe: part] else { return }
+        if rangesIgnored {
+            fallBackToOne(i, why: message)
+            return
+        }
+        if let resume {
+            items[i].parts?[part].resumeFile = resume
+        } else if let old = p.resumeFile {
+            // As for a whole file: the saved data may be what fails.
+            try? FileManager.default.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(old))
+            items[i].parts?[part].resumeFile = nil
+        }
+        // Paused or held meanwhile: kept for its resume.
+        guard items[i].state == .running else { save(); return }
+        let limit = UserDefaults.standard.integer(forKey: SettingsKey.downloadRetries)
+        if items[i].retries < limit, !Self.isPermanent(message) {
+            items[i].retries += 1
+            let delay = Double(min(30, 2 << min(items[i].retries, 4)))
+            items[i].parts?[part].notBefore = Date().addingTimeInterval(delay)
+            dlog("dl", "retry \(items[i].retries)/\(limit) part \(part + 1) of \(items[i].fileName) in \(Int(delay)) s: \(message)")
+            save()
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay + 0.1) { [weak self] in self?.pump() }
+            return
+        }
+        // The file stops; its other parts keep what they have for Retry.
+        items[i].state = .failed
+        items[i].error = message
+        dlog("dl/error", "failed \(items[i].fileName) (part \(part + 1)): \(message)")
+        halt(id)
         save(); pump()
     }
 
@@ -438,6 +919,7 @@ final class DownloadManager: ObservableObject {
             try? FileManager.default.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(old))
             items[i].resumeFile = nil
         }
+        guard items[i].state == .running else { save(); return }
         let limit = UserDefaults.standard.integer(forKey: SettingsKey.downloadRetries)
         if items[i].retries < limit, !Self.isPermanent(message) {
             items[i].retries += 1
@@ -465,10 +947,46 @@ final class DownloadManager: ObservableObject {
         return [401, 403, 404, 410].contains(code)
     }
 
-    private func setResume(_ id: UUID, _ name: String) {
-        guard let i = index(id) else { return }
-        items[i].resumeFile = name
+    private func setResume(_ key: String, _ name: String) {
+        guard let (id, part) = DownloadEngine.parse(key), let i = index(id) else {
+            try? FileManager.default.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(name))
+            return
+        }
+        if let part {
+            guard items[i].parts?[safe: part] != nil else { return }
+            items[i].parts?[part].resumeFile = name
+        } else {
+            items[i].resumeFile = name
+        }
         save()
+    }
+
+    // MARK: Files
+
+    private static func loadResume(_ name: String?) -> Data? {
+        name.flatMap { try? Data(contentsOf: DownloadEngine.resumeDir.appendingPathComponent($0)) }
+    }
+
+    /// A removed download's resume data and parts.
+    private func removeFiles(of item: DownloadItem) {
+        let fm = FileManager.default
+        if let r = item.resumeFile { try? fm.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) }
+        for p in item.parts ?? [] { if let r = p.resumeFile { try? fm.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) } }
+        if item.parts != nil { Self.removePartFiles(item.id) }
+    }
+
+    private static func removePartFiles(_ id: UUID) {
+        let fm = FileManager.default, dir = DownloadEngine.partialDir
+        for name in (try? fm.contentsOfDirectory(atPath: dir.path)) ?? [] where name.hasPrefix(id.uuidString) {
+            try? fm.removeItem(at: dir.appendingPathComponent(name))
+        }
+    }
+
+    private func forgetRun(_ id: UUID) {
+        runs[id] = nil
+        startedAt[id] = nil
+        lastBytes[id] = nil
+        for k in inFlight where k.hasPrefix(id.uuidString) { inFlight.remove(k) }
     }
 
     // MARK: Speed
@@ -476,8 +994,9 @@ final class DownloadManager: ObservableObject {
     private func updateTicker() {
         let need = items.contains { $0.state == .running }
         if need, ticker == nil {
+            lastTick = CACurrentMediaTime()
             ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-                MainActor.assumeIsolated { DownloadManager.shared.tick() }
+                MainActor.assumeIsolated { DownloadManager.shared.tick(force: false) }
             }
         } else if !need, let t = ticker {
             t.invalidate(); ticker = nil
@@ -486,14 +1005,24 @@ final class DownloadManager: ObservableObject {
         }
     }
 
-    private func tick() {
+    /// Bytes since the last reading over the time since it: after a
+    /// suspension that's the average while iOS downloaded alone (until
+    /// 1.22.1 a minute's bytes counted as one second's). In the background
+    /// no progress reaches Folio: the timer's readings there would say the
+    /// speed fell to nothing (and the Live Activity that it ends in hours),
+    /// so only catchUp, which asks the transfers, reads it there.
+    private func tick(force: Bool) {
+        if !force, UIApplication.shared.applicationState == .background { return }
+        let now = CACurrentMediaTime()
+        let dt = lastTick > 0 ? max(0.25, now - lastTick) : 1
+        lastTick = now
         var delta: Int64 = 0
         for it in items where it.state == .running {
             delta += max(0, it.received - (lastBytes[it.id] ?? it.received))
             lastBytes[it.id] = it.received
         }
-        let now = Double(delta)
-        speed = speed == 0 ? now : speed * 0.6 + now * 0.4
+        let rate = Double(delta) / dt
+        speed = speed == 0 || dt > 5 ? rate : speed * 0.6 + rate * 0.4
         speedHistory = Array((speedHistory + [speed]).suffix(30))
     }
 
@@ -528,134 +1057,363 @@ final class DownloadManager: ObservableObject {
     }
 }
 
+private extension Array {
+    subscript(safe i: Int) -> Element? { indices.contains(i) ? self[i] : nil }
+}
+
+/// A little more time when Folio may be in the background (woken by iOS
+/// for a transfer): ended when the work is, or when iOS says time is up.
+@MainActor
+private final class BackgroundTime {
+    private var id: UIBackgroundTaskIdentifier = .invalid
+
+    init(_ name: String) {
+        id = UIApplication.shared.beginBackgroundTask(withName: name) { MainActor.assumeIsolated { self.end() } }
+    }
+
+    func end() {
+        guard id != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(id)
+        id = .invalid
+    }
+}
+
 /// The background URLSession and its delegate (callbacks arrive on its own
-/// queue and are passed to the manager on the main thread).
+/// queue and are passed to the manager on the main thread). A transfer is
+/// known by its key: the item's id, or "id/n" for part n of a file.
 final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
     static let shared = DownloadEngine()
     static let identifier = (Bundle.main.bundleIdentifier ?? "dev.silentneo.folio") + ".downloads"
+
+    struct Request: Sendable {
+        var url: URL
+        var headers: [String: String]
+        var allowCellular: Bool
+        /// Wi-Fi only, never a hotspot's or Low Data Mode's (automatic downloads).
+        var unmeteredOnly: Bool
+    }
 
     static var resumeDir: URL {
         let d = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DownloadResume", isDirectory: true)
         try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
         return d
     }
-    private static var partialDir: URL {
-        let d = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("DownloadParts", isDirectory: true)
-        try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+    /// Finished parts until they're joined (1.22.1: Application Support, not
+    /// Caches, which iOS may empty while a long download runs).
+    static var partialDir: URL {
+        var d = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DownloadParts", isDirectory: true)
+        if !FileManager.default.fileExists(atPath: d.path) {
+            try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+            var v = URLResourceValues()
+            v.isExcludedFromBackup = true
+            try? d.setResourceValues(v)
+        }
         return d
     }
 
-    var onProgress: (@MainActor (UUID, Int64, Int64?) -> Void)?
-    var onFinished: (@MainActor (UUID, URL) -> Void)?
-    var onFailed: (@MainActor (UUID, String, String?) -> Void)?
+    static func key(_ id: UUID, _ part: Int?) -> String { part.map { "\(id.uuidString)/\($0)" } ?? id.uuidString }
+
+    static func parse(_ key: String) -> (UUID, Int?)? {
+        let bits = key.split(separator: "/")
+        guard let first = bits.first, let id = UUID(uuidString: String(first)) else { return nil }
+        if bits.count == 2, let n = Int(bits[1]), n >= 0 { return (id, n) }
+        return bits.count == 1 ? (id, nil) : nil
+    }
+
+    /// A finished part's file, until the join.
+    static func partFile(_ id: UUID, _ n: Int) -> URL { partialDir.appendingPathComponent("\(id.uuidString).\(n).part") }
+
+    var onProgress: (@MainActor (String, Int64, Int64?) -> Void)?
+    var onFinished: (@MainActor (String, URL) -> Void)?
+    /// key, message, resume data's file, the server ignored the byte range.
+    var onFailed: (@MainActor (String, String, String?, Bool) -> Void)?
+    /// After the session's events were delivered to a relaunched app.
+    var onEventsDone: (@MainActor () async -> Void)?
     /// Given by iOS when it relaunches the app for this session's events.
     var backgroundCompletionHandler: (() -> Void)?
 
     private let lock = NSLock()
-    private var lastReport: [UUID: CFTimeInterval] = [:]
+    private var lastReport: [String: CFTimeInterval] = [:]
+    /// Part transfers whose answer was looked at (by task identifier).
+    private var checked = Set<Int>()
 
     lazy var session: URLSession = {
         let c = URLSessionConfiguration.background(withIdentifier: Self.identifier)
         c.sessionSendsLaunchEvents = true
+        // At once, not when iOS finds it convenient. (A transfer started
+        // while Folio is in the background is left to iOS whatever this says.)
         c.isDiscretionary = false
-        c.httpMaximumConnectionsPerHost = 6
+        // Up to 8 parts of a file, two files at once: 6 per host (until
+        // 1.22.1) left parts waiting for others to end.
+        c.httpMaximumConnectionsPerHost = 16
+        c.allowsExpensiveNetworkAccess = true
+        c.allowsConstrainedNetworkAccess = true
         return URLSession(configuration: c, delegate: self, delegateQueue: nil)
     }()
 
-    func liveIDs() async -> [UUID] {
+    /// The range check: no cache, no cookies, its own short timeout.
+    private static let checkSession: URLSession = {
+        let c = URLSessionConfiguration.ephemeral
+        c.timeoutIntervalForRequest = 20
+        c.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: c)
+    }()
+
+    func liveKeys() async -> [String] {
         await session.allTasks.compactMap { t in
-            guard t.state == .running || t.state == .suspended else { return nil }
-            return t.taskDescription.flatMap(UUID.init(uuidString:))
+            guard t.state == .running || t.state == .suspended, let key = t.taskDescription, Self.parse(key) != nil else { return nil }
+            return key
         }
     }
 
-    /// `unmeteredOnly`: Wi-Fi only, never a hotspot's or Low Data Mode's
-    /// (automatic downloads). Resume data carries the request's rules along.
-    func start(id: UUID, url: URL, headers: [String: String], resumeData: Data?, allowCellular: Bool, unmeteredOnly: Bool = false) {
+    /// What each running transfer has received, read from the transfers.
+    struct Reading: Sendable {
+        var received: Int64
+        var toReceive: Int64
+        /// Of `length` bytes in all: a resumed transfer counts only what it
+        /// fetches itself, so it's the length less what it still has to fetch.
+        func got(of length: Int64) -> Int64 {
+            guard toReceive > 0 else { return 0 }
+            return min(length, max(0, length - max(0, toReceive - received)))
+        }
+    }
+
+    func snapshot() async -> [String: Reading] {
+        var out: [String: Reading] = [:]
+        for t in await session.allTasks where t.state == .running {
+            guard let key = t.taskDescription, Self.parse(key) != nil else { continue }
+            out[key] = Reading(received: t.countOfBytesReceived, toReceive: t.countOfBytesExpectedToReceive)
+        }
+        return out
+    }
+
+    /// `range`: the bytes of one part (none for a whole file or a resume,
+    /// whose data carries its request, range included).
+    func start(key: String, request r: Request, range: ClosedRange<Int64>?, resumeData: Data?) {
         let task: URLSessionDownloadTask
         if let resumeData {
             task = session.downloadTask(withResumeData: resumeData)
         } else {
-            var req = URLRequest(url: url)
-            req.allowsCellularAccess = allowCellular && !unmeteredOnly
-            if unmeteredOnly {
+            var req = URLRequest(url: r.url)
+            req.allowsCellularAccess = r.allowCellular && !r.unmeteredOnly
+            if r.unmeteredOnly {
                 req.allowsExpensiveNetworkAccess = false
                 req.allowsConstrainedNetworkAccess = false
             }
-            for (k, v) in headers { req.setValue(v, forHTTPHeaderField: k) }
+            for (k, v) in r.headers { req.setValue(v, forHTTPHeaderField: k) }
+            if let range { req.setValue("bytes=\(range.lowerBound)-\(range.upperBound)", forHTTPHeaderField: "Range") }
             task = session.downloadTask(with: req)
         }
-        task.taskDescription = id.uuidString
+        task.taskDescription = key
         task.resume()
     }
 
     /// Stops the transfer, keeping resume data; returns its file name.
-    func pause(_ id: UUID) async -> String? {
+    func pause(_ key: String) async -> String? {
         let tasks = await session.allTasks
-        guard let t = tasks.first(where: { $0.taskDescription == id.uuidString }) as? URLSessionDownloadTask else { return nil }
+        guard let t = tasks.first(where: { $0.taskDescription == key }) as? URLSessionDownloadTask else { return nil }
         let data: Data? = await withCheckedContinuation { c in t.cancel(byProducingResumeData: { c.resume(returning: $0) }) }
         guard let data else { return nil }
-        return Self.store(data, id)
+        return Self.store(data, key)
     }
 
-    func cancel(_ id: UUID) async {
-        await session.allTasks.filter { $0.taskDescription == id.uuidString }.forEach { $0.cancel() }
+    /// Every transfer of the file, its parts included (`partsOnly`: just those).
+    func cancel(_ id: UUID, partsOnly: Bool = false) async {
+        let s = id.uuidString
+        await session.allTasks.filter { (!partsOnly && $0.taskDescription == s) || $0.taskDescription?.hasPrefix(s + "/") == true }.forEach { $0.cancel() }
     }
 
-    private static func store(_ data: Data, _ id: UUID) -> String? {
-        let name = id.uuidString + ".resume"
+    private static func store(_ data: Data, _ key: String) -> String? {
+        let name = key.replacingOccurrences(of: "/", with: ".") + ".resume"
         do { try data.write(to: resumeDir.appendingPathComponent(name), options: .atomic); return name } catch { return nil }
+    }
+
+    // MARK: Byte ranges
+
+    enum RangeAnswer: Sendable {
+        /// HTTP 206 with the file's length.
+        case ranges(total: Int64, host: String)
+        /// The server sends the whole file whatever is asked.
+        case single(String)
+        /// No answer that says (an error, a refused login): one connection,
+        /// and the transfer itself reports what's wrong.
+        case unknown(String)
+    }
+
+    /// Asks for the first byte and reads the answer's head only.
+    static func checkRanges(_ r: Request) async -> RangeAnswer {
+        var req = URLRequest(url: r.url)
+        for (k, v) in r.headers { req.setValue(v, forHTTPHeaderField: k) }
+        req.setValue("bytes=0-0", forHTTPHeaderField: "Range")
+        req.allowsCellularAccess = r.allowCellular && !r.unmeteredOnly
+        if r.unmeteredOnly {
+            req.allowsExpensiveNetworkAccess = false
+            req.allowsConstrainedNetworkAccess = false
+        }
+        do {
+            let (bytes, response) = try await checkSession.bytes(for: req)
+            bytes.task.cancel()
+            guard let http = response as? HTTPURLResponse else { return .unknown("not an HTTP answer") }
+            let host = http.url?.host ?? "the server"
+            switch http.statusCode {
+            case 206:
+                guard let total = totalLength(http.value(forHTTPHeaderField: "Content-Range")), total > 0 else {
+                    return .single("\(host) gave no file length")
+                }
+                return .ranges(total: total, host: host)
+            case 200: return .single("\(host) sends the whole file (HTTP 200)")
+            default: return .unknown("HTTP \(http.statusCode)")
+            }
+        } catch {
+            return .unknown(error.localizedDescription)
+        }
+    }
+
+    /// "bytes 0-0/1234" → 1234.
+    static func totalLength(_ contentRange: String?) -> Int64? {
+        guard let s = contentRange, let r = s.range(of: #"/\s*(\d+)\s*$"#, options: .regularExpression) else { return nil }
+        return Int64(s[r].dropFirst().trimmingCharacters(in: .whitespaces))
+    }
+
+    /// Joins a file's parts in order into the first one, a few MB at a time
+    /// (never a whole part in memory), each part deleted once it's in.
+    /// Picks up where an earlier join stopped (Folio closed meanwhile): the
+    /// parts still there are those not in yet. Returns the file.
+    static func join(id: UUID, lengths: [Int64], in dir: URL = partialDir) throws -> URL {
+        let fm = FileManager.default
+        func part(_ n: Int) -> URL { dir.appendingPathComponent("\(id.uuidString).\(n).part") }
+        func size(_ u: URL) -> Int64 { Int64((try? u.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? -1) }
+        guard !lengths.isEmpty, fm.fileExists(atPath: part(0).path) else { throw JoinError.missing(1) }
+        var next = 1
+        while next < lengths.count, !fm.fileExists(atPath: part(next).path) { next += 1 }
+        for n in next..<lengths.count where size(part(n)) != lengths[n] { throw JoinError.missing(n + 1) }
+        let have = lengths[0..<next].reduce(0, +)
+        guard size(part(0)) >= have else { throw JoinError.missing(next) }
+        let out = try FileHandle(forUpdating: part(0))
+        defer { try? out.close() }
+        // An append cut short last time is dropped and done again.
+        try out.truncate(atOffset: UInt64(have))
+        try out.seekToEnd()
+        for n in next..<lengths.count {
+            let input = try FileHandle(forReadingFrom: part(n))
+            while true {
+                let chunk = try autoreleasepool { try input.read(upToCount: 4 << 20) }
+                guard let chunk, !chunk.isEmpty else { break }
+                try out.write(contentsOf: chunk)
+            }
+            try input.close()
+            // On disk before the part goes: a join picked up later relies on it.
+            try out.synchronize()
+            try fm.removeItem(at: part(n))
+        }
+        let total = lengths.reduce(0, +)
+        guard size(part(0)) == total else { throw JoinError.size(size(part(0)), total) }
+        let joined = dir.appendingPathComponent(id.uuidString + ".part")
+        try? fm.removeItem(at: joined)
+        try fm.moveItem(at: part(0), to: joined)
+        return joined
+    }
+
+    enum JoinError: LocalizedError {
+        case missing(Int), size(Int64, Int64)
+        var errorDescription: String? {
+            switch self {
+            case .missing(let n): return "part \(n) is missing"
+            case .size(let got, let want): return "the joined file has \(got) of \(want) bytes"
+            }
+        }
     }
 
     // MARK: URLSessionDownloadDelegate
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
                     totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        guard let id = downloadTask.taskDescription.flatMap(UUID.init(uuidString:)) else { return }
+        guard let key = downloadTask.taskDescription, let (_, part) = Self.parse(key) else { return }
+        if part != nil {
+            lock.lock()
+            let first = checked.insert(downloadTask.taskIdentifier).inserted
+            lock.unlock()
+            // A part must come back as that range (206): a server that
+            // sends the whole file instead is stopped at once.
+            if first, let http = downloadTask.response as? HTTPURLResponse, http.statusCode != 206 {
+                downloadTask.cancel()
+                let msg = "\(http.url?.host ?? "the server") ignored the byte range (HTTP \(http.statusCode))"
+                DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(key, msg, nil, true) } }
+                return
+            }
+        }
         let now = CACurrentMediaTime()
         lock.lock()
-        let report = now - (lastReport[id] ?? 0) > 0.4
-        if report { lastReport[id] = now }
+        let report = now - (lastReport[key] ?? 0) > 0.4
+        if report { lastReport[key] = now }
         lock.unlock()
         guard report else { return }
         let total: Int64? = totalBytesExpectedToWrite > 0 ? totalBytesExpectedToWrite : nil
-        DispatchQueue.main.async { MainActor.assumeIsolated { self.onProgress?(id, totalBytesWritten, total) } }
+        DispatchQueue.main.async { MainActor.assumeIsolated { self.onProgress?(key, totalBytesWritten, total) } }
     }
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        guard let id = downloadTask.taskDescription.flatMap(UUID.init(uuidString:)) else { return }
-        if let http = downloadTask.response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+        guard let key = downloadTask.taskDescription, let (id, part) = Self.parse(key) else { return }
+        let http = downloadTask.response as? HTTPURLResponse
+        if let http, !(200..<300).contains(http.statusCode) {
             let msg = http.statusCode == 401 ? "Wrong username or password (HTTP 401)" : "Server returned HTTP \(http.statusCode)"
-            DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(id, msg, nil) } }
+            dlog("dl/error", "\(Self.label(key)): HTTP \(http.statusCode) from \(http.url?.host ?? "?")")
+            DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(key, msg, nil, part != nil && http.statusCode == 416) } }
             return
         }
-        // The temporary file is deleted when this method returns: move it now.
-        let part = Self.partialDir.appendingPathComponent(id.uuidString + ".part")
-        try? FileManager.default.removeItem(at: part)
+        if part != nil, let http, http.statusCode != 206 {
+            let msg = "\(http.url?.host ?? "the server") ignored the byte range (HTTP \(http.statusCode))"
+            DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(key, msg, nil, true) } }
+            return
+        }
+        // The temporary file is deleted when this method returns: moved now,
+        // on this queue, before returning.
+        let target = part.map { Self.partFile(id, $0) } ?? Self.partialDir.appendingPathComponent(id.uuidString + ".part")
+        try? FileManager.default.removeItem(at: target)
         do {
-            try FileManager.default.moveItem(at: location, to: part)
-            DispatchQueue.main.async { MainActor.assumeIsolated { self.onFinished?(id, part) } }
+            try FileManager.default.moveItem(at: location, to: target)
+            DispatchQueue.main.async { MainActor.assumeIsolated { self.onFinished?(key, target) } }
         } catch {
-            let msg = error.localizedDescription
-            DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(id, msg, nil) } }
+            let ns = error as NSError
+            dlog("dl/error", "\(Self.label(key)): couldn't keep the downloaded file: \(ns.domain) \(ns.code) \(ns.localizedDescription)")
+            let msg = "Couldn't keep the downloaded file: \(ns.localizedDescription)"
+            DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(key, msg, nil, false) } }
         }
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        guard let error, let id = task.taskDescription.flatMap(UUID.init(uuidString:)) else { return }
+        lock.lock()
+        checked.remove(task.taskIdentifier)
+        lock.unlock()
+        guard let error, let key = task.taskDescription, Self.parse(key) != nil else { return }
         let ns = error as NSError
         // Our own pause / cancel.
         if ns.domain == NSURLErrorDomain && ns.code == NSURLErrorCancelled { return }
         var resume: String?
-        if let data = ns.userInfo[NSURLSessionDownloadTaskResumeData] as? Data { resume = Self.store(data, id) }
+        if let data = ns.userInfo[NSURLSessionDownloadTaskResumeData] as? Data { resume = Self.store(data, key) }
+        let status = (task.response as? HTTPURLResponse)?.statusCode
+        dlog("dl", "\(Self.label(key)) stopped after \(task.countOfBytesReceived.byteString): \(ns.domain) \(ns.code)"
+             + "\(status.map { ", HTTP \($0)" } ?? "")\(resume != nil ? ", resume data kept" : "")")
         let msg = error.localizedDescription
-        DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(id, msg, resume) } }
+        DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(key, msg, resume, false) } }
     }
 
     func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
         DispatchQueue.main.async {
-            self.backgroundCompletionHandler?()
-            self.backgroundCompletionHandler = nil
+            MainActor.assumeIsolated {
+                _ = Task<Void, Never> { @MainActor in
+                    await self.onEventsDone?()
+                    self.backgroundCompletionHandler?()
+                    self.backgroundCompletionHandler = nil
+                }
+            }
         }
+    }
+
+    /// A key as logged: "file" or "part 3" (no addresses: they can carry a login or a token).
+    private static func label(_ key: String) -> String {
+        guard let (id, part) = parse(key) else { return "transfer" }
+        let short = id.uuidString.prefix(8)
+        return part.map { "\(short) part \($0 + 1)" } ?? "\(short)"
     }
 }

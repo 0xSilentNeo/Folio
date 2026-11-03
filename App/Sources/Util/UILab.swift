@@ -58,6 +58,14 @@ enum UILab {
                     PlayerPresenter.play(queue: queue, index: start - 1)
                     return
                 }
+                // `-labPlayFile=<name>`: a file from Media instead of the lab clip
+                // (renderer checks with real files, e.g. 10-bit HEVC).
+                if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-labPlayFile=") }) {
+                    let f = MPVFiles.mediaDir.appendingPathComponent(String(arg.dropFirst("-labPlayFile=".count)))
+                    var m = MediaItem(url: f.path, title: TitleParser.clean(f.lastPathComponent), source: .local); m.historyKey = f.path
+                    PlayerPresenter.play(m)
+                    return
+                }
                 var m = MediaItem(url: url.path, title: "Lab clip", source: .local); m.historyKey = "lab"
                 PlayerPresenter.play(m)
             }

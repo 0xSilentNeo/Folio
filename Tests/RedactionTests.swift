@@ -7,6 +7,13 @@ import XCTest
 final class RedactionTests: XCTestCase {
     private let key = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd"
 
+    func testRealDebridFileLink() {
+        let line = "[player] loadfile https://syd3-4.download.real-debrid.com/d/Y4UFFNJQF564Y129/Show.S03E02.mkv source=url"
+        let out = Diagnostics.redact(line)
+        XCTAssertFalse(out.contains("Y4UFFNJQF564Y129"), out)
+        XCTAssertTrue(out.contains("download.real-debrid.com/d/••••/Show.S03E02.mkv"), out)
+    }
+
     func testDebridKeyInAnAddonPath() {
         let line = "loadfile https://addon.example/sort=qualitysize|realdebrid=\(key)/stream/series/tt1.json"
         let out = Diagnostics.redact(line)

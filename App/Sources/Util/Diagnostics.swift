@@ -146,6 +146,8 @@ final class Diagnostics: NSObject {
             (#"(?i)(password|token|apikey|secret)\"?\s*:\s*\"[^\"]+\""#, "$1: \"••••\""),
             (#"://([^/\s:@]+):([^@\s/]+)@"#, "://$1:••••@"),
             (#"/dav\.real-debrid\.com/[^\s]*"#, "/dav.real-debrid.com/…"),
+            // A Real-Debrid file link: /d/<id>/ opens the file for anyone (4 Nov report).
+            (#"(?i)(\.download\.real-debrid\.com/d/)[A-Za-z0-9]+"#, "$1••••"),
             (#"(?i)(config=|configuration/)[A-Za-z0-9+/=]{20,}"#, "$1••••"),
             // Addon links carry their settings in the path, base64-encoded —
             // debrid API keys included (27 Oct report: a key in a loadfile

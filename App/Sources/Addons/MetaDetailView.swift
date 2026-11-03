@@ -18,6 +18,8 @@ struct MetaDetailView: View {
     @Namespace private var streamsNS
     @ObservedObject private var history = HistoryStore.shared
     @ObservedObject private var kids = KidsProfile.shared
+    @ObservedObject private var tracking = TrackingStore.shared
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     /// The title's details have been asked for (the kids profile decides on them, not on the list's tile).
     @State private var loaded = false
     @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
@@ -57,10 +59,12 @@ struct MetaDetailView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.background.ignoresSafeArea())
                 .pageButtons(zooms: zooms, back: { dismiss() }) { EmptyView() }
+                .landscapeTopGap()
                 .task { await load(); loaded = true }
         } else if let v = kidsVerdict {
             KidsBlockedView(verdict: v)
                 .pageButtons(zooms: zooms, back: { dismiss() }) { EmptyView() }
+                .landscapeTopGap()
         } else {
             // Handoff (1.22.0): the other device opens the same title. The
             // addon by its manifest id: its address can hold a key.
@@ -86,10 +90,18 @@ struct MetaDetailView: View {
                         // Track (1.21.0): series only, once the page knows which show it is.
                         TitleButtonRow {
                             findButton.zoomSource(ZoomSource("find", streamsNS), cornerRadius: 28)
-                            if isSeries, !resolvedID.hasPrefix("tmdb:") { TrackButton(show: TrackedShow(meta: m, imdbID: usesIMDb ? resolvedID : nil)) }
+                            if canTrack { TrackButton(show: trackedShow) }
                         }
+                        if canTrack { TrackStatusLine(show: trackedShow).padding(.top, -8) }
                         if castPosition == "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, -16) }
-                        if isSeries && (!allVideos.isEmpty || !allSeasons.isEmpty) { episodeList }
+                        if isSeries && (!allVideos.isEmpty || !allSeasons.isEmpty) {
+                            episodeList
+                        } else if !untiledEpisodes.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Coming up").font(.title3.weight(.bold))
+                                ForEach(untiledEpisodes, id: \.self) { UpcomingEpisodeCard(episode: $0) }
+                            }
+                        }
                         if loadingEpisodes && allVideos.isEmpty { ProgressView().frame(maxWidth: .infinity).padding() }
                         if castPosition != "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, -16) }
                         if let d = m.director, !d.isEmpty {
@@ -109,6 +121,10 @@ struct MetaDetailView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .pageButtons(zooms: zooms, back: { dismiss() }) { EmptyView() }
+        .landscapeTopGap()
+        // Landscape phone: the floating tab bar sat on Track and the episodes,
+        // as it did on the library's title page (1.22.1).
+        .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .navigationDestination(item: $go) { t in
             // Zooms only from a page that draws its own bar (see pageButtons).
             StreamsView(meta: m, video: t.video, seasonVideos: t.queue)
@@ -168,6 +184,26 @@ struct MetaDetailView: View {
             .background(strong ? Theme.accent : Theme.fill, in: Capsule())
     }
 
+    // MARK: Tracking
+
+    /// A series the page knows (a TMDB tile's IMDb id isn't known yet).
+    private var canTrack: Bool { isSeries && !resolvedID.hasPrefix("tmdb:") }
+    private var trackedShow: TrackedShow { TrackedShow(meta: m, imdbID: usesIMDb ? resolvedID : nil) }
+
+    /// The tracked show's schedule for the episode tiles (1.22.1); nil when
+    /// it isn't tracked. No request of its own: the tracker's schedule.
+    private var airing: EpisodeAiring? {
+        guard canTrack, let s = tracking.tracked(like: trackedShow) else { return nil }
+        return EpisodeAiring(show: s, now: Date(), newestSeason: allSeasons.filter { $0 > 0 }.max())
+    }
+
+    /// Episodes not out yet that the list has no row for (IMDb often lists
+    /// only the next one), under the season shown.
+    private var untiledEpisodes: [AiringEpisode] {
+        guard let airing else { return [] }
+        return airing.untiled(shown: allSeasons.isEmpty ? nil : season, seasons: allSeasons, episodes: seasonEpisodes.compactMap(\.episode))
+    }
+
     // MARK: Find streams
 
     @ViewBuilder
@@ -223,14 +259,22 @@ struct MetaDetailView: View {
                     }
                 }
             }
+            let airing = self.airing
             LazyVStack(spacing: 10) {
                 ForEach(seasonEpisodes) { v in
+                    let mark = airing?.mark(season: v.season, episode: v.episode)
                     Button { go = StreamsTarget(video: v, queue: [], source: "ep|" + v.id) } label: {
-                        EpisodeRow(video: v, entry: history.entry(for: "addon:\(v.id)"))
+                        // A tracked episode's time is the badge's, in your time zone: the
+                        // row's own date is the network's (IMDb's US date), so it's left out.
+                        EpisodeRow(video: mark == nil ? v : { var u = v; u.released = nil; return u }(), entry: history.entry(for: "addon:\(v.id)"))
+                            .overlay(alignment: .topLeading) {
+                                if let mark { AiringBadge(mark: mark, maxWidth: 116).padding(14) }
+                            }
                             .zoomSource(ZoomSource("ep|" + v.id, streamsNS), cornerRadius: 14)
                     }
                     .buttonStyle(.plain)
                 }
+                ForEach(untiledEpisodes, id: \.self) { UpcomingEpisodeCard(episode: $0) }
             }
         }
         .padding(.top, 6)

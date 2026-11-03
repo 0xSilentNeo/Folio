@@ -87,7 +87,6 @@ struct PlayerScreen: View {
                 }
 
                 if let error = model.errorMessage { errorView(error) }
-                if model.ended && !model.hasNext && model.errorMessage == nil { endedView }
 
                 if ui.showTune {
                     TuneCard(ui: ui).transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
@@ -307,12 +306,20 @@ struct PlayerScreen: View {
 
     // MARK: Controls
 
+    static func sideMargin(_ geo: GeometryProxy, compact: Bool, controlsWidth: Double) -> CGFloat {
+        if compact { return 16 }
+        if abs(controlsWidth - 0.8) < 0.001 { return 78 }
+        let fullWidth = geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
+        return max(20, fullWidth * (1 - min(1, max(0.6, controlsWidth))) / 2)
+    }
+
     @ViewBuilder
     private func controls(_ geo: GeometryProxy, compact: Bool) -> some View {
-        // Landscape: the controls span `controlsWidth` of the screen (default
-        // 80%), centred, ignoring the horizontal safe area. Portrait: 16 pt.
-        let fullWidth = geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
-        let side: CGFloat = compact ? 16 : max(20, fullWidth * (1 - min(1, max(0.6, controlsWidth))) / 2)
+        // Landscape: 78 pt from each side (user's choice, 4 Nov; it was 10% of
+        // the width, 96 pt on a 17 Pro Max), ignoring the horizontal safe
+        // area; or `controlsWidth` of the screen when that's moved off its
+        // default. Portrait: 16 pt.
+        let side = Self.sideMargin(geo, compact: compact, controlsWidth: controlsWidth)
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 GlassIcon("xmark", size: 17) { onClose() }
@@ -492,9 +499,8 @@ struct PlayerScreen: View {
     @ViewBuilder
     private func upNextCard(_ geo: GeometryProxy) -> some View {
         if let next = model.upNext, !ui.locked, ui.panel == nil {
-            let fullWidth = geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
             let compact = geo.size.width < 640
-            let side: CGFloat = compact ? 16 : max(20, fullWidth * (1 - min(1, max(0.6, controlsWidth))) / 2)
+            let side = Self.sideMargin(geo, compact: compact, controlsWidth: controlsWidth)
             VStack {
                 Spacer()
                 HStack {
@@ -531,18 +537,6 @@ struct PlayerScreen: View {
         .foregroundStyle(.white)
     }
 
-    private var endedView: some View {
-        HStack(spacing: 12) {
-            Button { model.seek(to: 0); model.setPaused(false); model.ended = false } label: {
-                Label("Replay", systemImage: "arrow.counterclockwise")
-            }
-            .buttonStyle(.borderedProminent).tint(Theme.accent)
-            Button("Close") { onClose() }.buttonStyle(.bordered)
-        }
-        .padding(14)
-        .glass(cornerRadius: 20)
-        .offset(y: 90)
-    }
 }
 
 // MARK: - Progress pill
