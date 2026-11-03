@@ -43,6 +43,14 @@ final class SampleBufferRenderer {
     private var lastLoggedSize = (0, 0)
     /// The last reason a frame wasn't drawn (logged once each time it changes).
     private var lastSkip: String?
+    /// A render is already waiting on the queue: mpv's updates that come
+    /// meanwhile are served by it. Each update used to queue a render of its
+    /// own, and the extra ones drew the same frame again (review, 2 Nov).
+    private let queuedLock = NSLock()
+    private var queued = false
+    /// Pool buffers whose framebuffer was checked complete (the pool hands
+    /// the same few buffers back): the check stalls the GPU, once is enough.
+    private var checked = Set<ObjectIdentifier>()
 
     static func make(output: @escaping (CVPixelBuffer) -> Void) -> SampleBufferRenderer? {
         guard let ctx = EAGLContext(api: .openGLES3) else { return nil }
@@ -163,7 +171,9 @@ final class SampleBufferRenderer {
     /// (even numbers), or the view's size while the video's isn't known.
     private func mainSize() -> (Int, Int) {
         guard let v = videoSize, viewSize.0 > 0, viewSize.1 > 0 else { return viewSize }
-        let scale = min(Double(viewSize.0) / Double(v.0), Double(viewSize.1) / Double(v.1))
+        // At most twice the video's own size: a small video on a big iPad
+        // screen was drawn at 2732×1536, for no sharper picture.
+        let scale = min(Double(viewSize.0) / Double(v.0), Double(viewSize.1) / Double(v.1), 2)
         return (max(2, Int(Double(v.0) * scale) & ~1), max(2, Int(Double(v.1) * scale) & ~1))
     }
 
@@ -184,7 +194,16 @@ final class SampleBufferRenderer {
     }
 
     fileprivate func schedule() {
-        queue.async { [weak self] in self?.render() }
+        queuedLock.lock()
+        if queued { queuedLock.unlock(); return }
+        queued = true
+        queuedLock.unlock()
+        queue.async { [weak self] in
+            guard let self else { return }
+            // Cleared first: an update during this render queues the next one.
+            self.queuedLock.lock(); self.queued = false; self.queuedLock.unlock()
+            self.render()
+        }
     }
 
     private func render() {
@@ -206,8 +225,11 @@ final class SampleBufferRenderer {
         glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_T), GL_CLAMP_TO_EDGE)
         glBindFramebuffer(GLenum(GL_FRAMEBUFFER), fbo)
         glFramebufferTexture2D(GLenum(GL_FRAMEBUFFER), GLenum(GL_COLOR_ATTACHMENT0), CVOpenGLESTextureGetTarget(tex), CVOpenGLESTextureGetName(tex), 0)
-        let status = glCheckFramebufferStatus(GLenum(GL_FRAMEBUFFER))
-        guard status == GLenum(GL_FRAMEBUFFER_COMPLETE) else { return skip("framebuffer incomplete (0x\(String(status, radix: 16)))") }
+        if !checked.contains(ObjectIdentifier(pb)) {
+            let status = glCheckFramebufferStatus(GLenum(GL_FRAMEBUFFER))
+            guard status == GLenum(GL_FRAMEBUFFER_COMPLETE) else { return skip("framebuffer incomplete (0x\(String(status, radix: 16)))") }
+            checked.insert(ObjectIdentifier(pb))
+        }
         glViewport(0, 0, GLsizei(w), GLsizei(h))
 
         var target = mpv_opengl_fbo(fbo: Int32(fbo), w: Int32(w), h: Int32(h), internal_format: 0)
@@ -257,6 +279,7 @@ final class SampleBufferRenderer {
         var p: CVPixelBufferPool?
         CVPixelBufferPoolCreate(kCFAllocatorDefault, [kCVPixelBufferPoolMinimumBufferCountKey as String: 3] as CFDictionary, attrs as CFDictionary, &p)
         pool = p
+        checked = []
         poolSize = (w, h)
         return p
     }

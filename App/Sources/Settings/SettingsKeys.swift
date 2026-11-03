@@ -46,6 +46,9 @@ enum SettingsKey {
     static let downloadPauseLowPower = "downloadPauseLowPower"
     static let downloadOnlyCharging = "downloadOnlyCharging"
     static let downloadRetries = "downloadRetries"
+    static let downloadNextEpisodes = "downloadNextEpisodes"    // 1.22.0: 0 (off) | 1 | 2 | 3 episodes after one watched past 70% (AutoDownload)
+    static let downloadDeleteWatched = "downloadDeleteWatched"  // 1.22.0: 0 (off) | 1 | 7 days after a downloaded file was finished (WatchedCleanup)
+    static let liveActivities = "liveActivities"                // 1.22.0: downloads and now playing on the Lock Screen and Dynamic Island
 
     // PiP
     static let pipEnabled = "pipEnabled"
@@ -80,7 +83,7 @@ enum SettingsKey {
     static let activeShaders = "activeShaders"
     static let scriptCommands = "scriptCommands"
     static let flipVideo = "flipVideo"
-    static let renderer = "renderer"            // "metal" (default) | "gl"
+    static let renderer = "renderer"            // "gl" (default since 1.22.0: one picture for the screen and PiP) | "metal"
     static let hdrOutput = "hdrOutput"
     static let surroundAudio = "surroundAudio"
     static let anime4kMode = "anime4kMode"
@@ -99,6 +102,20 @@ enum SettingsKey {
     static let showOnlyMedia = "showOnlyMedia"
     static let folderSorts = "folderSorts"
     static let folderSortLast = "folderSortLast"         // WebDAV: the last sort chosen, for folders without their own
+    // 1.22.0: Home's library filters (LibraryFilter); "" is "any".
+    static let libraryFilterWatch = "libraryFilterWatch"     // all | unwatched | inProgress | watched
+    static let libraryFilterGenre = "libraryFilterGenre"
+    static let libraryFilterYear = "libraryFilterYear"
+
+    // Kids profile (1.22.0, KidsProfile). No registered defaults on purpose:
+    // registered keys go into presets, and a preset must never turn it off.
+    static let kidsProfile = "kidsProfile"
+    static let kidsFilmLimit = "kidsFilmLimit"           // G | PG | PG-13
+    static let kidsShowLimit = "kidsShowLimit"           // TV-Y | TV-Y7 | TV-G | TV-PG
+    static let kidsBiometrics = "kidsBiometrics"         // Face ID / Touch ID may stand in for the passcode
+
+    // What's new (1.22.0): the last version whose sheet was shown.
+    static let whatsNewShown = "whatsNewShown"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -142,6 +159,9 @@ enum SettingsKey {
             downloadPauseLowPower: true,
             downloadOnlyCharging: false,
             downloadRetries: 3,
+            downloadNextEpisodes: 0,
+            downloadDeleteWatched: 0,
+            liveActivities: true,
             pipEnabled: true,
             pipAuto: true,
             pipReturnOnOpen: true,
@@ -163,7 +183,7 @@ enum SettingsKey {
             skipInjectChapters: true,
             skipOATLength: 90,
             flipVideo: false,
-            renderer: "metal",
+            renderer: "gl",
             hdrOutput: true,
             surroundAudio: true,
             anime4kMode: "off",
@@ -176,5 +196,15 @@ enum SettingsKey {
             showOnlyMedia: false,
             airingAlerts: "air",
         ])
+        // 1.22.0: the sample-buffer renderer is the default, the same picture
+        // for the screen and Picture in Picture, so PiP and leaving the app
+        // never pause the video. Moved over once, whatever was chosen before
+        // (Metal was the default, and a choice made while testing stuck);
+        // HDR (Metal) can be chosen again in Settings and stays.
+        let d = UserDefaults.standard
+        if !d.bool(forKey: "rendererMovedToStandard") {
+            d.set(true, forKey: "rendererMovedToStandard")
+            if d.string(forKey: renderer) == "metal" { d.set("gl", forKey: renderer) }
+        }
     }
 }

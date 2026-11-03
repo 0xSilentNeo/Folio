@@ -77,7 +77,8 @@ enum ContinueSnapshotWriter {
             }
             return
         }
-        let entries = Array(HistoryStore.shared.continueWatching.prefix(ContinueSnapshot.limit))
+        // The kids profile shows an empty widget: Continue Watching is grown-up history.
+        let entries = KidsProfile.isOnNow ? [] : Array(HistoryStore.shared.continueWatching.prefix(ContinueSnapshot.limit))
         var items: [ContinueSnapshot.Item] = []
         for e in entries {
             let meta = await meta(for: e.item)
@@ -274,9 +275,11 @@ enum IntentPlayback {
 enum FolioIntentError: Error, CustomLocalizedStringResourceConvertible {
     case nothingToContinue
     case showGone(String)
+    case kidsProfile
 
     var localizedStringResource: LocalizedStringResource {
         switch self {
+        case .kidsProfile: return "Folio is in the kids profile. Open Folio to choose something."
         case .nothingToContinue: return "There's nothing to continue in Folio."
         case .showGone(let name): return "\(name) isn't in Folio's Continue Watching or library any more."
         }
@@ -292,6 +295,7 @@ struct ContinueWatchingIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        guard !KidsProfile.isOnNow else { throw FolioIntentError.kidsProfile }
         guard let e = HistoryStore.shared.continueWatching.first else { throw FolioIntentError.nothingToContinue }
         dlog("intents", "continue watching: \(ShowCatalog.name(of: e))")
         IntentPlayback.start(e.item)
@@ -316,6 +320,7 @@ struct PlayNextEpisodeIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        guard !KidsProfile.isOnNow else { throw FolioIntentError.kidsProfile }
         guard await ShowCatalog.play(show.id) else { throw FolioIntentError.showGone(show.name) }
         dlog("intents", "next episode of \(show.name)")
         return .result()

@@ -1,0 +1,156 @@
+import Foundation
+import CryptoKit
+import LocalAuthentication
+
+/// The kids profile (1.22.0): on or off, its limits, and its passcode.
+///
+/// - The passcode is the user's own, four digits, kept in the Keychain as a
+///   salted SHA-256, never as the digits themselves.
+/// - Five wrong tries lock the pad for 30 seconds (kept in UserDefaults, so
+///   closing the app doesn't start the count again).
+/// - Face ID or Touch ID can stand in for the passcode when it's allowed.
+/// - Its settings are never in a preset (no registered defaults, see
+///   SettingsPreset.known): importing one can't turn the profile off.
+@MainActor
+final class KidsProfile: ObservableObject {
+    static let shared = KidsProfile()
+
+    @Published private(set) var isOn: Bool
+    @Published var limits: KidsRules.Limits {
+        didSet {
+            UserDefaults.standard.set(limits.film.rawValue, forKey: SettingsKey.kidsFilmLimit)
+            UserDefaults.standard.set(limits.show.rawValue, forKey: SettingsKey.kidsShowLimit)
+            dlog("kids", "limits now \(KidsRules.summary(limits))")
+        }
+    }
+    @Published var allowBiometrics: Bool {
+        didSet { UserDefaults.standard.set(allowBiometrics, forKey: SettingsKey.kidsBiometrics) }
+    }
+
+    private init() {
+        isOn = Self.isOnNow
+        limits = Self.currentLimits
+        allowBiometrics = UserDefaults.standard.object(forKey: SettingsKey.kidsBiometrics) as? Bool ?? true
+    }
+
+    /// For code off the main actor (and the first frame): read straight from UserDefaults.
+    nonisolated static var isOnNow: Bool { UserDefaults.standard.bool(forKey: SettingsKey.kidsProfile) }
+    nonisolated static var currentLimits: KidsRules.Limits {
+        let d = UserDefaults.standard
+        return KidsRules.Limits(film: KidsRules.FilmLimit(rawValue: d.string(forKey: SettingsKey.kidsFilmLimit) ?? "") ?? .pg,
+                                show: KidsRules.ShowLimit(rawValue: d.string(forKey: SettingsKey.kidsShowLimit) ?? "") ?? .tvPG)
+    }
+
+    /// The limits while the profile is on; nil when it's off (nothing filtered).
+    var activeLimits: KidsRules.Limits? { isOn ? limits : nil }
+
+    // MARK: On and off
+
+    /// Turned on with a new passcode each time, so one forgotten from an
+    /// earlier time never locks you out.
+    func turnOn(passcode: String) {
+        guard Self.isValid(passcode) else { return }
+        Keychain.set(Self.hashed(passcode, salt: Self.newSalt()), for: Self.passcodeAccount)
+        UserDefaults.standard.set(true, forKey: SettingsKey.kidsProfile)
+        resetTries()
+        isOn = true
+        ContinueSnapshotWriter.schedule()           // the widget empties
+        dlog("kids", "kids profile on (\(KidsRules.summary(limits)))")
+    }
+
+    /// Only from a place the passcode (or Face ID) has just opened.
+    func turnOff() {
+        UserDefaults.standard.set(false, forKey: SettingsKey.kidsProfile)
+        isOn = false
+        ContinueSnapshotWriter.schedule()
+        dlog("kids", "kids profile off")
+    }
+
+    // MARK: Passcode
+
+    static let passcodeAccount = "kidsPasscode"
+    static let maxTries = 5
+    static let lockout: TimeInterval = 30
+
+    nonisolated static func isValid(_ code: String) -> Bool { code.count == 4 && code.allSatisfy { $0.isASCII && $0.isNumber } }
+
+    nonisolated static func newSalt() -> String {
+        (0..<16).map { _ in String(format: "%02x", UInt8.random(in: 0...255)) }.joined()
+    }
+
+    /// "salt$hash": what the Keychain keeps.
+    nonisolated static func hashed(_ code: String, salt: String) -> String {
+        let digest = SHA256.hash(data: Data("folio-kids|\(salt)|\(code)".utf8))
+        return salt + "$" + digest.map { String(format: "%02x", $0) }.joined()
+    }
+
+    nonisolated static func matches(_ code: String, stored: String) -> Bool {
+        guard let sep = stored.firstIndex(of: "$") else { return false }
+        return hashed(code, salt: String(stored[..<sep])) == stored
+    }
+
+    /// Seconds left before the pad takes another try; nil when it does now.
+    var lockedFor: TimeInterval? {
+        let until = UserDefaults.standard.double(forKey: Self.lockedUntilKey)
+        let left = until - Date().timeIntervalSince1970
+        return left > 0 ? left : nil
+    }
+
+    enum Check: Equatable { case right, wrong(triesLeft: Int), locked(seconds: Int) }
+
+    func check(_ code: String) -> Check {
+        if let left = lockedFor { return .locked(seconds: Int(left.rounded(.up))) }
+        guard let stored = Keychain.get(Self.passcodeAccount), Self.matches(code, stored: stored) else {
+            let d = UserDefaults.standard
+            let tries = d.integer(forKey: Self.triesKey) + 1
+            dlog("kids", "wrong passcode (\(tries) of \(Self.maxTries))")
+            if tries >= Self.maxTries {
+                d.set(0, forKey: Self.triesKey)
+                d.set(Date().timeIntervalSince1970 + Self.lockout, forKey: Self.lockedUntilKey)
+                return .locked(seconds: Int(Self.lockout))
+            }
+            d.set(tries, forKey: Self.triesKey)
+            return .wrong(triesLeft: Self.maxTries - tries)
+        }
+        resetTries()
+        return .right
+    }
+
+    private static let triesKey = "kidsPasscodeTries"
+    private static let lockedUntilKey = "kidsPasscodeLockedUntil"
+    private func resetTries() {
+        UserDefaults.standard.removeObject(forKey: Self.triesKey)
+        UserDefaults.standard.removeObject(forKey: Self.lockedUntilKey)
+    }
+
+    // MARK: Face ID / Touch ID
+
+    /// "Face ID", "Touch ID" or "Optic ID" when the device has one set up; nil otherwise.
+    var biometryName: String? {
+        let c = LAContext()
+        guard c.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) else { return nil }
+        switch c.biometryType {
+        case .faceID: return "Face ID"
+        case .touchID: return "Touch ID"
+        case .opticID: return "Optic ID"
+        default: return nil
+        }
+    }
+
+    /// Face ID or Touch ID instead of the passcode, when allowed. The system
+    /// shows its own prompt; the answer comes back here.
+    func unlockWithBiometrics(_ reason: String) async -> Bool {
+        guard allowBiometrics, biometryName != nil else { return false }
+        let c = LAContext()
+        c.localizedFallbackTitle = "Enter Passcode"
+        do {
+            let ok = try await c.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason)
+            dlog("kids", "unlocked with \(biometryName ?? "biometrics"): \(ok)")
+            if ok { resetTries() }
+            return ok
+        } catch {
+            dlog("kids", "biometric unlock not done: \(error.localizedDescription)")
+            return false
+        }
+    }
+}

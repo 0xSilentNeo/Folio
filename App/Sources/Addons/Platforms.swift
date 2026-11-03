@@ -132,9 +132,14 @@ final class BrowseModel: ObservableObject {
         defer { if gen == generation { loading = false } }
         // "New" has no genre menu (it picks a year), so a genre chosen under
         // another sort no longer filters it out of sight (review, 2 Nov).
-        let genre = sort == .new ? nil : self.genre
+        var genre = sort == .new ? nil : self.genre
+        // Kids profile (1.22.0): the lists start from IMDb's or TMDB's Family
+        // genre, and every title is checked by KidsRules where it's shown.
+        let kids = KidsProfile.shared.isOn
+        if kids && genre == nil { genre = "Family" }
         if TMDB.enabled {
-            let page = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: metas.count / 20 + 1)
+            var page = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: metas.count / 20 + 1)
+            if kids { page = Self.tagged(page, genre: genre) }
             guard gen == generation else { return }
             if page.isEmpty { exhausted = true; failed = metas.isEmpty && page.isEmpty && !Task.isCancelled && TMDB.lastError }
             let known = Set(metas.map(\.id))
@@ -144,18 +149,39 @@ final class BrowseModel: ObservableObject {
         // IMDb lists come whole (100–250 items); nothing to page.
         guard initial || metas.isEmpty else { exhausted = true; return }
         // Last list first (any age), fresh one when it arrives.
-        let stale = await IMDbSource.browse(sort: sort.imdb, type: type, genre: genre, year: year, staleOnly: true)
+        var stale = await IMDbSource.browse(sort: sort.imdb, type: type, genre: genre, year: year, staleOnly: true)
+        if kids { stale = Self.tagged(stale, genre: genre) }
         if gen == generation, !stale.isEmpty, metas.isEmpty { metas = stale }
-        let list = await IMDbSource.browse(sort: sort.imdb, type: type, genre: genre, year: year)
+        var list = await IMDbSource.browse(sort: sort.imdb, type: type, genre: genre, year: year)
+        if kids { list = Self.tagged(list, genre: genre) }
         guard gen == generation else { return }
         if !list.isEmpty || metas.isEmpty { metas = list }
         exhausted = true
         failed = metas.isEmpty
     }
+
+    /// A list asked for by genre whose titles don't say theirs (TMDB's never
+    /// do): they're in it, so the kids profile can go by it.
+    static func tagged(_ list: [MetaItem], genre: String?) -> [MetaItem] {
+        guard let genre else { return list }
+        return list.map { m in
+            guard m.genres?.isEmpty != false else { return m }
+            var m = m
+            m.genres = [genre]
+            return m
+        }
+    }
+
+    /// The titles to show: in the kids profile, those KidsRules allows.
+    func shown(_ limits: KidsRules.Limits?) -> [MetaItem] {
+        guard let limits else { return metas }
+        return metas.filter { KidsRules.allows($0, limits: limits) }
+    }
 }
 
 struct DiscoverView: View {
     @ObservedObject private var store = AddonStore.shared
+    @ObservedObject private var kids = KidsProfile.shared
     @Namespace private var zoomNS
     @StateObject private var browse = BrowseModel()
     @StateObject private var forYou = ForYouModel()
@@ -166,6 +192,7 @@ struct DiscoverView: View {
             GeometryReader { geo in
                 let margin: CGFloat = geo.size.width > 700 ? 28 : 20
                 let cols = max(3, Int((geo.size.width - margin * 2 + 12) / 122))
+                let shown = browse.shown(kids.activeLimits)
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 24) {
                         header(margin)
@@ -178,22 +205,24 @@ struct DiscoverView: View {
                                 if browse.loading && browse.metas.isEmpty { ProgressView() }
                             }
                             if let f = browse.sort.footnote { Text(f).font(.caption).foregroundStyle(.secondary) }
+                            if let limits = kids.activeLimits { KidsFilterNote(limits: limits).padding(.top, 2) }
                         }
                         .padding(.horizontal, margin)
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: cols), spacing: 18) {
-                            ForEach(browse.metas) { m in
+                            ForEach(shown) { m in
                                 NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS) } label: {
                                     PosterCard(meta: m, width: nil, zoom: ZoomSource(m.id, zoomNS))
                                 }
                                     .buttonStyle(.plain)
-                                    .onAppear { if m.id == browse.metas.last?.id { Task { await browse.loadMore() } } }
+                                    .onAppear { if m.id == shown.last?.id { Task { await browse.loadMore() } } }
                             }
                         }
                         .padding(.horizontal, margin)
                         if browse.loading && !browse.metas.isEmpty { ProgressView().frame(maxWidth: .infinity) }
-                        if !browse.loading && browse.metas.isEmpty {
+                        if !browse.loading && shown.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text(browse.failed ? "IMDb didn't answer." : "Nothing here.").foregroundStyle(.secondary)
+                                Text(browse.failed ? "IMDb didn't answer." : kids.isOn && !browse.metas.isEmpty ? "Nothing here rated for the kids profile." : "Nothing here.")
+                                    .foregroundStyle(.secondary)
                                 if browse.failed {
                                     Text("Check the connection, then pull to retry. The diagnostics log (Settings → Help & Diagnostics) records the HTTP status.")
                                         .font(.caption).foregroundStyle(.secondary)
@@ -217,6 +246,8 @@ struct DiscoverView: View {
                 forYou.load()
             }
             .refreshable { browse.reload(); forYou.load(force: true) }
+            // The kids profile turned on or off: the lists start from another genre.
+            .onChange(of: kids.isOn) { _, _ in browse.reload() }
             .sheet(isPresented: $showPlatformSettings) { PlatformSettingsView() }
         }
     }
@@ -239,11 +270,14 @@ struct DiscoverView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Search")
-            Menu {
-                Button { showPlatformSettings = true } label: { Label("Streaming services", systemImage: "rectangle.grid.2x2") }
-                NavigationLink { AddonsManagerView() } label: { Label("Addons", systemImage: "puzzlepiece.extension") }
-            } label: {
-                Image(systemName: "ellipsis").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
+            // Addons and streaming services are settings: locked in the kids profile (1.22.0).
+            if !kids.isOn {
+                Menu {
+                    Button { showPlatformSettings = true } label: { Label("Streaming services", systemImage: "rectangle.grid.2x2") }
+                    NavigationLink { AddonsManagerView() } label: { Label("Addons", systemImage: "puzzlepiece.extension") }
+                } label: {
+                    Image(systemName: "ellipsis").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
+                }
             }
         }
         .padding(.horizontal, margin)
@@ -256,7 +290,8 @@ struct DiscoverView: View {
     /// zoom by their own ids: the same title can be in the grid too.
     @ViewBuilder
     private func forYouRow(_ margin: CGFloat) -> some View {
-        if forYou.hasSeeds && (!forYou.metas.isEmpty || forYou.loading) {
+        let metas = forYou.shown(kids.activeLimits)
+        if forYou.hasSeeds && (!metas.isEmpty || (forYou.loading && forYou.metas.isEmpty)) {
             VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("For you").font(.title3.weight(.bold))
@@ -266,7 +301,7 @@ struct DiscoverView: View {
                 .padding(.horizontal, margin)
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 12) {
-                        if forYou.metas.isEmpty {
+                        if metas.isEmpty {
                             ForEach(0..<6, id: \.self) { _ in
                                 VStack(alignment: .leading, spacing: 6) {
                                     RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.card).frame(width: 118, height: 177)
@@ -275,7 +310,7 @@ struct DiscoverView: View {
                             }
                             .accessibilityHidden(true)
                         }
-                        ForEach(forYou.metas) { m in
+                        ForEach(metas) { m in
                             NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination("fy|" + m.id, in: zoomNS) } label: {
                                 PosterCard(meta: m, width: 118, zoom: ZoomSource("fy|" + m.id, zoomNS))
                             }
@@ -423,6 +458,7 @@ final class PlatformPageModel: ObservableObject {
 
 struct PlatformDetailView: View {
     let platform: StreamingPlatform
+    @ObservedObject private var kids = KidsProfile.shared
     @Namespace private var zoomNS
     @StateObject private var page: PlatformPageModel
     @State private var type = "series"
@@ -464,6 +500,8 @@ struct PlatformDetailView: View {
     /// page's header (TitleHeroView: safe area + its bar).
     private func tabPage(_ t: String, barBottom: CGFloat) -> some View {
         let tab = page.tabs[t] ?? PlatformPageModel.Tab()
+        // The kids profile: only what KidsRules allows (these catalogs rarely say, so often little).
+        let metas = kids.activeLimits.map { l in tab.metas.filter { KidsRules.allows($0, limits: l) } } ?? tab.metas
         return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 // The service's colours with its name in white, then a fade into the page.
@@ -488,6 +526,7 @@ struct PlatformDetailView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, 20)
+                if let limits = kids.activeLimits { KidsFilterNote(limits: limits).padding(.horizontal, 20) }
                 if tab.loading && tab.metas.isEmpty { ProgressView().frame(maxWidth: .infinity).padding() }
                 if let error = tab.error {
                     // Inline, over whatever the grid already has; never in its place.
@@ -502,7 +541,7 @@ struct PlatformDetailView: View {
                     .padding(.horizontal, 20)
                 }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
-                    ForEach(tab.metas) { m in
+                    ForEach(metas) { m in
                         NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS, zoom: false) } label: {
                             PosterCard(meta: m, width: 108, zoom: ZoomSource(m.id, zoomNS))
                         }
@@ -510,8 +549,9 @@ struct PlatformDetailView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                if !tab.loading && tab.metas.isEmpty && tab.error == nil {
-                    Text("Nothing here right now.").font(.subheadline).foregroundStyle(.secondary).padding(.horizontal, 20)
+                if !tab.loading && metas.isEmpty && tab.error == nil {
+                    Text(tab.metas.isEmpty ? "Nothing here right now." : "Nothing here rated for the kids profile.")
+                        .font(.subheadline).foregroundStyle(.secondary).padding(.horizontal, 20)
                 }
             }
         }

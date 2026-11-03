@@ -125,6 +125,14 @@ final class PiPManager: NSObject {
         controller?.canStartPictureInPictureAutomaticallyFromInline = on
     }
 
+    /// Fill (pinch, the Fill button, a show's memory) for the sample-buffer
+    /// renderer: its frames have the video's shape, so mpv's panscan has
+    /// nothing to crop; the layer fills the view instead. PiP's window always
+    /// shows the whole frame.
+    func setFill(_ fill: Bool) {
+        view.displayLayer.videoGravity = fill ? .resizeAspectFill : .resizeAspect
+    }
+
     func start() { controller?.startPictureInPicture() }
     func stop() { controller?.stopPictureInPicture() }
 

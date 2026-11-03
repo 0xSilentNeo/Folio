@@ -17,10 +17,20 @@ struct ShowSettings: Codable, Equatable {
     var panscan: Double?
     /// Anime4KMode raw value.
     var anime4k: String?
+    /// Playback speed picked in the player's menu (1.22.0).
+    var speed: Double?
+    /// Segments skipped by themselves for this show, whatever Settings says
+    /// ("intro", "outro", "recap", "preview"; 1.22.0).
+    var autoSkip: [String]?
+    /// The second subtitle, shown at the top (1.22.0).
+    var secondSubtitle: SubtitleChoice?
 
     /// Fields of `other` that this one doesn't have (two entries merged).
     func filled(from other: ShowSettings) -> ShowSettings {
         var s = self
+        s.speed = s.speed ?? other.speed
+        s.autoSkip = s.autoSkip ?? other.autoSkip
+        s.secondSubtitle = s.secondSubtitle ?? other.secondSubtitle
         s.audio = s.audio ?? other.audio
         s.subtitle = s.subtitle ?? other.subtitle
         s.subDelay = s.subDelay ?? other.subDelay

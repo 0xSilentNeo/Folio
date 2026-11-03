@@ -6,11 +6,15 @@ struct HomeView: View {
     @ObservedObject private var local = LocalMediaStore.shared
     @ObservedObject private var servers = ServerStore.shared
     @ObservedObject private var indexSummaries = IndexSummaries.shared
+    @ObservedObject private var kids = KidsProfile.shared
+    @ObservedObject private var metaIndex = LibraryMetaIndex.shared
     @State private var showOpenURL = false
     @State private var addServer = false
     @State private var editingServer: WebDAVServer?
     @State private var showAddFiles = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var path: [LibraryRoute] = []
 
@@ -22,18 +26,24 @@ struct HomeView: View {
                 // A List (1.17.0) so library rows have the system's swipe actions
                 // ("Adds custom swipe actions to a row in a list" — swipeActions docs);
                 // the rest are plain full-width rows.
+                let shown = groups
                 List {
                     Group {
                         header(margin).padding(.top, 6)
-                        if !history.continueWatching.isEmpty { continueWatching(width: geo.size.width, wide: wide, margin: margin).padding(.top, 30) }
+                        if !continueItems.isEmpty { continueWatching(width: geo.size.width, wide: wide, margin: margin).padding(.top, 30) }
                         // Tracked shows' episodes out now or in the next 7 days (1.21.0); nothing when none.
-                        AiringRow(margin: margin)
-                        if hasLibrary { libraryHeader(margin).padding(.top, 30) }
+                        // Not in the kids profile: they're the grown-ups' shows.
+                        if !kids.isOn { AiringRow(margin: margin) }
+                        // The newest titles (1.22.0), once the library is more than a screen of them.
+                        let recent = recentItems
+                        if !recent.isEmpty { recentlyAdded(recent, margin: margin).padding(.top, 30) }
+                        if hasLibrary { libraryHeader(margin, count: shown.count).padding(.top, 30) }
                         else if realDebrid != nil { compactHowToAdd(margin).padding(.top, 24) }
-                        else { howToAdd(margin).padding(.top, history.continueWatching.isEmpty ? 70 : 40) }
+                        else { howToAdd(margin).padding(.top, continueItems.isEmpty ? 70 : 40) }
                     }
                     .homeRow()
-                    if hasLibrary { libraryRows(width: geo.size.width, margin: margin) }
+                    if hasLibrary { libraryRows(shown, width: geo.size.width, margin: margin) }
+                    if hasLibrary && shown.isEmpty { filteredOut(margin).homeRow() }
                     if let rd = realDebridSummary {
                         RealDebridSection(summary: rd, margin: margin, seeAllAction: { openRealDebrid(nil) }, open: { openRealDebrid($0) })
                             .padding(.top, 30)
@@ -61,6 +71,9 @@ struct HomeView: View {
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
             .sheet(item: $editingServer) { ServerEditView(server: $0) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
+            .sheet(item: $pick) { PickForMeSheet(candidates: $0.candidates) { playFilm($0) } }
+            // Every title's metadata, for the filters, the kids profile and Pick (LibraryMetaIndex).
+            .task(id: local.files) { metaIndex.update(local.files) }
             .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
             .onAppear { LaunchTiming.homeAppeared() }
@@ -176,6 +189,9 @@ struct HomeView: View {
             SettingsView().zoomDestination("settings", in: zoomNS)
         case .group(let id):
             LibraryRoute.destination(route).zoomDestination(zoomID(id), in: zoomNS, zoom: !listPushes)
+        case .recent(let id):
+            // The shelf is tiles whatever the library's layout: always the zoom.
+            LibraryRoute.destination(route).zoomDestination(zoomID("r|" + id), in: zoomNS)
         case .folder(let path):
             LibraryRoute.destination(route).zoomDestination(zoomID("d|" + path), in: zoomNS, zoom: !listPushes)
         default:
@@ -226,12 +242,16 @@ struct HomeView: View {
                 }
             }
             Spacer()
+            if kids.isOn { KidsBadge() }
             Menu {
                 Button { showAddFiles = true } label: { Label("Add files or folders", systemImage: "folder.badge.plus") }
-                Button { showOpenURL = true } label: { Label("Open URL", systemImage: "link") }
-                Button { pasteAndPlay() } label: { Label("Paste & play", systemImage: "doc.on.clipboard") }
-                Divider()
-                Button { addServer = true } label: { Label("Add WebDAV server", systemImage: "externaldrive.connected.to.line.below") }
+                // The kids profile plays what the library and Discover let through, not any link.
+                if !kids.isOn {
+                    Button { showOpenURL = true } label: { Label("Open URL", systemImage: "link") }
+                    Button { pasteAndPlay() } label: { Label("Paste & play", systemImage: "doc.on.clipboard") }
+                    Divider()
+                    Button { addServer = true } label: { Label("Add WebDAV server", systemImage: "externaldrive.connected.to.line.below") }
+                }
             } label: {
                 Image(systemName: "plus").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
             }
@@ -275,8 +295,20 @@ struct HomeView: View {
 
     // MARK: Continue watching
 
+    /// Continue Watching; in the kids profile, only library files it allows
+    /// (an addon or server item's rating isn't known here).
+    private var continueItems: [HistoryEntry] {
+        let all = history.continueWatching
+        guard let limits = kids.activeLimits else { return all }
+        return all.filter { e in
+            // By the file's name (the index's key), not resolvedURL: that looks on disk, at each redraw.
+            guard case .local = e.item.source else { return false }
+            return KidsRules.allows(metaIndex.meta(for: URL(fileURLWithPath: e.item.historyKey ?? e.item.url)), limits: limits)
+        }
+    }
+
     private func continueWatching(width: CGFloat, wide: Bool, margin: CGFloat) -> some View {
-        let items = Array(history.continueWatching.prefix(12))
+        let items = Array(continueItems.prefix(12))
         let cardW: CGFloat = wide ? 320 : min(340, width - margin * 2 - 44)
         return VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Continue Watching", margin)
@@ -330,8 +362,9 @@ struct HomeView: View {
 
     // MARK: Library
 
-    /// The Real-Debrid account, when one is added with a user name.
-    private var realDebrid: WebDAVServer? { servers.servers.first(where: RealDebrid.isRealDebrid) }
+    /// The Real-Debrid account, when one is added with a user name. Not in
+    /// the kids profile: its library is the grown-ups'.
+    private var realDebrid: WebDAVServer? { kids.isOn ? nil : servers.servers.first(where: RealDebrid.isRealDebrid) }
 
     /// Home's Real-Debrid section (RealDebridSection.swift): shown when the
     /// last check of the library worked; kept while offline; gone on a
@@ -356,9 +389,40 @@ struct HomeView: View {
     @AppStorage("librarySort") private var librarySort: LibrarySort = .name
     @AppStorage("librarySortAsc") private var librarySortAsc = true
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
+    @AppStorage(SettingsKey.libraryFilterWatch) private var filterWatch = LibraryFilter.Watch.all.rawValue
+    @AppStorage(SettingsKey.libraryFilterGenre) private var filterGenre = ""
+    @AppStorage(SettingsKey.libraryFilterYear) private var filterYear = ""
+    /// The films the sheet picks from, as they were when the button was
+    /// tapped (in the sheet's item: a separate state read only by the
+    /// sheet's content came through empty the first time).
+    @State private var pick: PickRequest?
+    struct PickRequest: Identifiable {
+        let id = UUID()
+        let candidates: [PickForMe.Candidate]
+    }
 
-    private var groups: [LibraryGroup] {
+    /// Every title in the library, sorted.
+    private var allGroups: [LibraryGroup] {
         LibraryOrganizer.groups(local.files, sort: librarySort, ascending: librarySortAsc)
+    }
+
+    /// What the kids profile lets through (everything when it's off).
+    private var kidsGroups: [LibraryGroup] {
+        guard let limits = kids.activeLimits else { return allGroups }
+        return allGroups.filter { metaIndex.kidsAllow($0, limits) }
+    }
+
+    private var filter: LibraryFilter { LibraryFilter(watch: filterWatch, genre: filterGenre, year: filterYear) }
+
+    /// The library as Home shows it: the kids profile's titles, then the filters.
+    private var groups: [LibraryGroup] {
+        let f = filter, list = kidsGroups
+        guard f.isActive else { return list }
+        return list.filter { f.matches(any: metaIndex.facts(of: $0)) }
+    }
+
+    private func clearFilters() {
+        withAnimation(.smooth(duration: 0.3)) { filterWatch = LibraryFilter.Watch.all.rawValue; filterGenre = ""; filterYear = "" }
     }
 
     @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
@@ -400,16 +464,134 @@ struct HomeView: View {
         return (count, size)
     }
 
-    private func libraryHeader(_ margin: CGFloat) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text("Library").font(.title3.weight(.bold))
-            Text("\(groups.count)").font(.subheadline).foregroundStyle(.secondary)
-            Spacer()
-            LibrarySortMenu(sort: $librarySort, ascending: $librarySortAsc)
-            ViewModeMenu(mode: $libraryView)
+    private func libraryHeader(_ margin: CGFloat, count: Int) -> some View {
+        let facts = kidsGroups.flatMap { metaIndex.facts(of: $0) }
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Library").font(.title3.weight(.bold))
+                Text("\(count)").font(.subheadline).foregroundStyle(.secondary)
+                Spacer()
+                Button { pickSomething() } label: {
+                    Image(systemName: "dice").font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
+                }
+                .buttonStyle(PressStyle())
+                .foregroundStyle(.primary)
+                .accessibilityLabel("Pick something for me")
+                .accessibilityIdentifier("pickForMe")
+                LibraryFilterMenu(watch: $filterWatch, genre: $filterGenre, year: $filterYear,
+                                  genres: LibraryFilter.genres(in: facts), years: LibraryFilter.years(in: facts), loading: !metaIndex.complete)
+                LibrarySortMenu(sort: $librarySort, ascending: $librarySortAsc)
+                ViewModeMenu(mode: $libraryView)
+            }
+            if filter.isActive { LibraryFilterChip(summary: filter.summary, clear: clearFilters) }
         }
         .padding(.horizontal, margin)
         .padding(.bottom, 12)
+    }
+
+    /// Nothing left to show: the filters (or the kids profile) say why.
+    private func filteredOut(_ margin: CGFloat) -> some View {
+        let hiddenByKids = allGroups.count - kidsGroups.count
+        let message: String
+        if filter.isActive {
+            message = filter.emptyMessage(kidsHidden: hiddenByKids)
+        } else if !metaIndex.complete {
+            message = "Checking your library's ratings for the kids profile…"
+        } else {
+            message = "The kids profile hides every title here: they're rated above \(KidsRules.summary(kids.limits)), or Folio doesn't know their ratings."
+        }
+        return LibraryFilterEmpty(message: message, clear: filter.isActive ? clearFilters : nil)
+            .padding(.horizontal, margin)
+    }
+
+    // MARK: Recently added (1.22.0)
+
+    /// The newest titles, once the library (as the kids profile shows it) has
+    /// four or more. Not on a phone turned sideways, nor at the accessibility
+    /// text sizes: there the shelf filled the screen and pushed the whole
+    /// library below it, whose titles it only repeats (HomeGridUITests found
+    /// no tile on screen, in landscape and at the largest text).
+    private var recentItems: [RecentlyAdded.Item] {
+        guard hasLibrary, verticalSizeClass != .compact, !typeSize.isAccessibilitySize,
+              kidsGroups.count >= RecentlyAdded.minimumTitles else { return [] }
+        var files = local.files
+        if let limits = kids.activeLimits { files = files.filter { KidsRules.allows(metaIndex.meta(for: $0), limits: limits) } }
+        return RecentlyAdded.items(files, added: { LibraryOrganizer.info($0).date })
+    }
+
+    private func recentlyAdded(_ items: [RecentlyAdded.Item], margin: CGFloat) -> some View {
+        let posters = tileArtwork == "poster"
+        let byID = Dictionary(allGroups.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        return VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Recently added", margin)
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(alignment: .top, spacing: 14) {
+                    ForEach(items) { item in
+                        recentTile(item, group: byID[item.id], posters: posters)
+                            .frame(width: posters ? 112 : 184)
+                    }
+                }
+                .padding(.horizontal, margin)
+            }
+            .scrollClipDisabled()
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("recentlyAdded")
+    }
+
+    /// A shelf tile: the grid's tile (MediaTile), opening or playing as the
+    /// grid's does (Settings → Open title page on tap; a show always opens).
+    /// `group` is nil for a title inside a folder of different titles: its
+    /// file's page opens then, as from the folder.
+    private func recentTile(_ item: RecentlyAdded.Item, group g: LibraryGroup?, posters: Bool) -> some View {
+        let file = g?.nextUp ?? item.newest
+        let files = g?.files ?? [item.newest]
+        let title = g?.title ?? TitleParser.clean(item.newest.lastPathComponent)
+        let opens = openTitlePage || item.isSeries
+        let series = g.map { $0.isSeries } ?? false
+        return Button {
+            guard !TouchTracker.wasSwipe("home: recent \(title)") else { return }
+            if opens { open(g != nil ? .recent(item.id) : .file(item.newest.path)) } else { playLocal(file) }
+        } label: {
+            MediaTile(title: title, subtitle: series ? seriesSubtitle(g!) : file.pathExtension.uppercased(),
+                      key: file.path, fileURL: file, lookupName: file.lastPathComponent,
+                      progress: history.entry(forURL: file.path)?.progress,
+                      fixedTitle: series ? title : nil, fixedSubtitle: series ? seriesSubtitle(g!) : nil,
+                      poster: posters, zoom: opens && g != nil ? ZoomSource(zoomID("r|" + item.id), zoomNS) : nil,
+                      watched: !files.isEmpty && files.allSatisfy { history.isWatched($0) })
+        }
+        .buttonStyle(PressStyle(scale: 0.97))
+        .contextMenu {
+            Button { playLocal(file) } label: { Label(series ? "Play next episode" : "Play", systemImage: "play") }
+            WatchedMenuItems(files: files, scope: series ? .all : .one)
+        }
+        .accessibilityIdentifier("recent:" + title)
+    }
+
+    // MARK: Pick something for me (1.22.0)
+
+    /// Films not started yet (and, in the kids profile, allowed), as the picker weighs them.
+    private var pickCandidates: [PickForMe.Candidate] {
+        let limits = kids.activeLimits
+        return local.files.compactMap { f in
+            guard LibraryOrganizer.titleKey(f).hasPrefix("f|") else { return nil }       // films, not episodes
+            let e = history.entry(forURL: f.path)
+            guard LibraryFilter.watchState(watched: [e?.isFinished == true], resumable: [e?.canResume == true]) == .unwatched else { return nil }
+            let meta = metaIndex.meta(for: f)
+            if let limits, !KidsRules.allows(meta, limits: limits) { return nil }
+            return PickForMe.Candidate(file: f, added: LibraryOrganizer.info(f).date, hasMeta: meta?.poster != nil || meta?.description != nil)
+        }
+    }
+
+    private func pickSomething() {
+        pick = PickRequest(candidates: pickCandidates)
+    }
+
+    /// The picked film on its own.
+    private func playFilm(_ f: URL) {
+        var m = MediaItem(url: f.path, title: TitleParser.clean(f.lastPathComponent), source: .local)
+        m.historyKey = f.path
+        PlayerPresenter.play(m)
     }
 
     /// Thumbnails: one row holding the grid. List and Details: one list row
@@ -417,10 +599,10 @@ struct HomeView: View {
     /// title's card to delete it "doesn't look right"); a long press has
     /// the same actions (Delete asks first).
     @ViewBuilder
-    private func libraryRows(width: CGFloat, margin: CGFloat) -> some View {
+    private func libraryRows(_ groups: [LibraryGroup], width: CGFloat, margin: CGFloat) -> some View {
         let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
         if mode == .grid {
-            library(width: width, margin: margin)
+            library(groups, width: width, margin: margin)
         } else {
             let posters = tileArtwork == "poster"
             let style = ListTransition.current
@@ -461,7 +643,7 @@ struct HomeView: View {
     /// row of tiles is a plain HStack of equal columns, each in its own list
     /// row, and a different column count makes new rows.
     @ViewBuilder
-    private func library(width: CGFloat, margin: CGFloat) -> some View {
+    private func library(_ groups: [LibraryGroup], width: CGFloat, margin: CGFloat) -> some View {
         let posters = tileArtwork == "poster"
         let cols = posters ? max(3, Int((width - margin * 2 + 14) / 124)) : max(2, Int((width - margin * 2 + 14) / 184))
         ForEach(TileRow.rows(groups, columns: cols)) { row in
@@ -596,7 +778,7 @@ struct HomeView: View {
     }
 
     private func playLocal(_ f: URL) {
-        let group = groups.first { $0.files.contains(f) }
+        let group = allGroups.first { $0.files.contains(f) }
         let list = (group?.isSeries == true ? group!.files : LibraryOrganizer.sorted(local.files))
         let queue = list.map { u -> MediaItem in
             var m = MediaItem(url: u.path, title: TitleParser.clean(u.lastPathComponent), source: .local)

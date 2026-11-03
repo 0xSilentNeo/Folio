@@ -4,12 +4,15 @@ import WidgetKit
 
 /// Folio's widgets (1.20.3 (2 Nov)): Continue Watching on the Home Screen
 /// (small, medium) and the Lock Screen (rectangular); Airing (1.21.0,
-/// AiringWidget.swift), the tracked shows' next episodes.
+/// AiringWidget.swift), the tracked shows' next episodes; and the Live
+/// Activities (1.22.0) for downloads and what's playing.
 @main
 struct FolioWidgets: WidgetBundle {
     var body: some Widget {
         ContinueWatchingWidget()
         AiringWidget()
+        DownloadActivityWidget()
+        NowPlayingActivityWidget()
     }
 }
 

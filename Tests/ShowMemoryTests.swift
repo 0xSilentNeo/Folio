@@ -202,4 +202,19 @@ final class ShowMemoryTests: XCTestCase {
         XCTAssertEqual(e?.settings.anime4k, "aa")
         XCTAssertEqual(e?.subDelay(file: "file-1"), 1.25)
     }
+
+    /// 1.22.0's speed, always-skip and second subtitle: settings saved by
+    /// 1.20.3 still read, and two entries merge the new fields too.
+    func testNewFieldsReadOldSettingsAndMerge() throws {
+        let old = try JSONDecoder().decode(ShowSettings.self, from: Data(#"{"subDelay":0.5,"anime4k":"modeA"}"#.utf8))
+        XCTAssertEqual(old.subDelay, 0.5)
+        XCTAssertNil(old.speed)
+        XCTAssertNil(old.autoSkip)
+        var a = ShowSettings(); a.speed = 1.25
+        var b = ShowSettings(); b.autoSkip = ["intro"]; b.speed = 2; b.secondSubtitle = SubtitleChoice(lang: "ja")
+        let merged = a.filled(from: b)
+        XCTAssertEqual(merged.speed, 1.25)
+        XCTAssertEqual(merged.autoSkip, ["intro"])
+        XCTAssertEqual(merged.secondSubtitle?.lang, "ja")
+    }
 }

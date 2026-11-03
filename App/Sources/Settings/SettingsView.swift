@@ -5,49 +5,68 @@ import UIKit
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.zoomsFromTile) private var zooms
+    @ObservedObject private var kids = KidsProfile.shared
+    /// Open on this visit: the passcode was entered, or the kids profile was
+    /// off when Settings opened. Turned on from here, it locks Settings the
+    /// next time they open, not under your finger: swapping the list for the
+    /// lock while Kids Profile was pushed from it left the page unable to go
+    /// back (simulator run: Back started the pop, the page stayed).
+    @State private var unlocked = !KidsProfile.isOnNow
     var body: some View {
         Group {
-            List {
-                Section {
-                    row("General", "gearshape", .gray) { GeneralSettings() }
-                    row("Library", "film.stack", .green) { LibrarySettings() }
-                }
-                Section {
-                    row("Playback", "play.rectangle", .pink) { PlaybackSettings() }
-                    row("Audio & Subtitles", "captions.bubble", .orange) { SubtitleAudioSettings() }
-                    row("Skip Intro & Credits", "forward.end", .purple) { SkipSettings() }
-                    row("Discover", "sparkles.tv", .cyan) { DiscoverSettings() }
-                    row("Downloads", "arrow.down.circle", .mint) { DownloadSettingsView() }
-                }
-                // The airing tracker (1.21.0): the tracked shows and their notifications.
-                TrackingSettingsSection()
-                Section {
-                    row("mpv", "slider.horizontal.3", .teal) { MPVSettings() }
-                } footer: {
-                    Text("The video engine, scripts, shaders and config files.")
-                }
-                Section {
-                    row("Presets", "square.and.arrow.down.on.square", .blue) { PresetsView() }
-                    row("Help & Diagnostics", "stethoscope", .gray) { AdvancedSettings() }
-                }
-                Section {
-                    HStack {
-                        HStack(spacing: 8) {
-                            FolioLeaf().frame(width: 22, height: 22)
-                            Wordmark(size: 15)
-                        }
-                        Spacer()
-                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
-                            .foregroundStyle(.secondary)
-                    }
-                } footer: {
-                    Text("Your mpv folder is in Files → On My iPhone → Folio → mpv.")
-                }
+            if kids.isOn && !unlocked {
+                SettingsLocked { withAnimation(.smooth(duration: 0.3)) { unlocked = true } }
+            } else {
+                list
             }
-            .brandListBackground()
-            .background(TopEdgeNoBounce().frame(width: 0, height: 0).accessibilityHidden(true))
-            .pageChrome(zooms: zooms, title: "Settings", back: { dismiss() }) { EmptyView() }
         }
+        .pageChrome(zooms: zooms, title: "Settings", back: { dismiss() }) { EmptyView() }
+    }
+
+    private var list: some View {
+        List {
+            Section {
+                row("General", "gearshape", .gray) { GeneralSettings() }
+                row("Library", "film.stack", .green) { LibrarySettings() }
+            }
+            Section {
+                row("Playback", "play.rectangle", .pink) { PlaybackSettings() }
+                row("Audio & Subtitles", "captions.bubble", .orange) { SubtitleAudioSettings() }
+                row("Skip Intro & Credits", "forward.end", .purple) { SkipSettings() }
+                row("Discover", "sparkles.tv", .cyan) { DiscoverSettings() }
+                row("Downloads", "arrow.down.circle", .mint) { DownloadSettingsView() }
+            }
+            // 1.22.0: titles rated for kids only, Settings behind a passcode.
+            Section {
+                row("Kids Profile", "figure.and.child.holdinghands", .indigo) { KidsProfileSettings() }
+            }
+            // The airing tracker (1.21.0): the tracked shows and their notifications.
+            TrackingSettingsSection()
+            Section {
+                row("mpv", "slider.horizontal.3", .teal) { MPVSettings() }
+            } footer: {
+                Text("The video engine, scripts, shaders and config files.")
+            }
+            Section {
+                row("Presets", "square.and.arrow.down.on.square", .blue) { PresetsView() }
+                row("Help & Diagnostics", "stethoscope", .gray) { AdvancedSettings() }
+            }
+            Section {
+                HStack {
+                    HStack(spacing: 8) {
+                        FolioLeaf().frame(width: 22, height: 22)
+                        Wordmark(size: 15)
+                    }
+                    Spacer()
+                    Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
+                        .foregroundStyle(.secondary)
+                }
+            } footer: {
+                Text("Your mpv folder is in Files → On My iPhone → Folio → mpv.")
+            }
+        }
+        .brandListBackground()
+        .background(TopEdgeNoBounce().frame(width: 0, height: 0).accessibilityHidden(true))
     }
 
     private func row<D: View>(_ title: String, _ icon: String, _ color: Color, @ViewBuilder destination: @escaping () -> D) -> some View {
@@ -404,7 +423,7 @@ struct Explained<Content: View>: View {
 /// Everything mpv in one place (1.17.0): the video engine, scripts, shaders,
 /// config files and logs.
 struct MPVSettings: View {
-    @AppStorage(SettingsKey.renderer) private var renderer = "metal"
+    @AppStorage(SettingsKey.renderer) private var renderer = "gl"
     @AppStorage(SettingsKey.hdrOutput) private var hdr = true
     @AppStorage(SettingsKey.hwdec) private var hwdec = "auto"
     @AppStorage(SettingsKey.cacheMB) private var cacheMB = 150
@@ -414,8 +433,8 @@ struct MPVSettings: View {
 
     private var rendererText: String {
         renderer == "gl"
-            ? "OpenGL (being tested): every frame goes straight into the picture Picture in Picture shows, so PiP starts and ends without a switch. HDR and Dolby Vision show at normal brightness (SDR); no compute shaders."
-            : "Metal: mpv's newer renderer, with HDR, Dolby Vision and every shader. Picture in Picture switches renderer as it starts and ends, with a short pause in picture and sound."
+            ? "Standard (recommended): one picture for the screen and Picture in Picture, so PiP, Notification Centre and the app switcher never pause the video. HDR and Dolby Vision show at normal brightness (SDR); compute shaders don't run."
+            : "HDR (Metal): real HDR and Dolby Vision brightness and every shader. Picture in Picture, Notification Centre and leaving the app pause the picture for a moment, because the renderer has to switch."
     }
     private var pictureText: String {
         switch picture {
@@ -437,8 +456,8 @@ struct MPVSettings: View {
             Section {
                 Explained(rendererText) {
                     Picker("Renderer", selection: $renderer) {
-                        Text("OpenGL").tag("gl")
-                        Text("Metal").tag("metal")
+                        Text("Standard").tag("gl")
+                        Text("HDR (Metal)").tag("metal")
                     }
                 }
                 Explained(pictureText) {
@@ -495,12 +514,17 @@ struct MPVSettings: View {
 
 struct AdvancedSettings: View {
     @State private var confirmClear = false
+    @State private var whatsNew = false
 
     var body: some View {
         Form {
             Section {
                 NavigationLink { DiagnosticsView() } label: { Label("Diagnostics & report", systemImage: "stethoscope") }
             } footer: { Text("A report bundles the logs and your settings (passwords removed) to send when something goes wrong.") }
+            Section {
+                // 1.22.0: the sheet shown after an update, every version's list.
+                Button { whatsNew = true } label: { Label("What's new", systemImage: "sparkles") }
+            }
             Section {
                 Button("Clear watch history", role: .destructive) { confirmClear = true }
                     .confirmationDialog("Clear all history and resume positions?", isPresented: $confirmClear, titleVisibility: .visible) {
@@ -511,6 +535,7 @@ struct AdvancedSettings: View {
         .brandListBackground()
         .navigationTitle("Help & Diagnostics")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $whatsNew) { WhatsNewSheet(all: true) }
     }
 }
 

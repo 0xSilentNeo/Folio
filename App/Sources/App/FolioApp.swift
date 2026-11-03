@@ -7,6 +7,8 @@ struct FolioApp: App {
 
     init() {
         SettingsKey.registerDefaults()
+        // Before anything this launch writes: whether Folio was used before (WhatsNew.usedBefore).
+        MainActor.assumeIsolated { WhatsNew.noteLaunch() }
         Diagnostics.shared.start()
         MainThreadLayout.install()
         MainThreadLayout.lab()
@@ -58,6 +60,9 @@ struct RootView: View {
     @State private var tab = UserDefaults.standard.integer(forKey: SettingsKey.startupTab)
     @State private var splash = !CommandLine.arguments.contains("-noSplash")
     @AppStorage(SettingsKey.appearance) private var appearance = AppearanceMode.system.rawValue
+    @ObservedObject private var kids = KidsProfile.shared
+    /// What's new (1.22.0): once after an update, when the splash has gone.
+    @State private var whatsNew = false
 
     var body: some View {
         ZStack {
@@ -68,15 +73,29 @@ struct RootView: View {
         }
         .background(AppearanceProbe(mode: appearance).frame(width: 1, height: 1))
         .toggleStyle(BrandSwitchStyle())
+        .sheet(isPresented: $whatsNew) { WhatsNewSheet() }
+        .onChange(of: splash) { _, on in if !on { showWhatsNew() } }
+        // Handoff (1.22.0): a title page, or what was playing, from the other device.
+        .onContinueUserActivity(HandoffActivity.titleType) { HandoffActivity.continueActivity($0) }
+        .onContinueUserActivity(HandoffActivity.playingType) { HandoffActivity.continueActivity($0) }
         .onAppear {
             LaunchTiming.firstFrame()
             RootView.appearances += 1
             // More than once in one run: the root view was built again (a new
             // scene), and the launch splash with it.
             dlog("app", "root view appeared (\(RootView.appearances) in this run, splash \(splash ? "on" : "off"))")
+            if !splash { showWhatsNew() }
+            if kids.isOn && tab == 2 { tab = 0 }          // Network started on, but it's hidden
+            HandoffActivity.labStart()
         }
     }
     @MainActor static var appearances = 0
+
+    private func showWhatsNew() {
+        guard WhatsNew.pending else { return }
+        WhatsNew.pending = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { whatsNew = true }
+    }
 
     /// `-glassLab`: the Liquid Glass morph test screen over everything (CI only).
     @ViewBuilder
@@ -94,10 +113,14 @@ struct RootView: View {
             DiscoverView()
                 .tabItem { Label("Discover", systemImage: "sparkles.tv") }
                 .tag(1)
-            NetworkView()
-                .tabItem { Label("Network", systemImage: "externaldrive.connected.to.line.below") }
-                .tag(2)
+            // Not in the kids profile (1.22.0): servers play anything on them.
+            if !kids.isOn {
+                NetworkView()
+                    .tabItem { Label("Network", systemImage: "externaldrive.connected.to.line.below") }
+                    .tag(2)
+            }
         }
+        .onChange(of: kids.isOn) { _, on in if on && tab == 2 { tab = 0 } }
         .onOpenURL(perform: handle)
         .alert("Add this addon?", isPresented: Binding(get: { linkAddon != nil }, set: { if !$0 { linkAddon = nil } }), presenting: linkAddon) { target in
             Button("Add") { installLinkedAddon(target) }
@@ -132,6 +155,14 @@ struct RootView: View {
 
     private func handle(_ url: URL) {
         dlog("open", "onOpenURL \(url.isFileURL ? url.lastPathComponent : url.absoluteString)")
+        // Kids profile: nothing from outside the app (a widget, a link, a file
+        // or script from another app) opens, plays or installs; the profile's
+        // own screens decide what plays.
+        if KidsProfile.isOnNow {
+            dlog("open", "kids profile: \(url.isFileURL ? "file" : "link") not opened")
+            FileOpener.showAlert("Kids profile", "Folio is in the kids profile. Leave it from the badge on Home to open this.")
+            return
+        }
         if url.isFileURL {
             if url.pathExtension.lowercased() == "lua" {
                 _ = try? MPVFiles.importItem(from: url, into: MPVFiles.scriptsDir)
@@ -173,6 +204,9 @@ struct RootView: View {
             // or the Airing widget (1.21.0) opens the show's tracking page.
             guard let id = TrackLink.id(from: url) else { return }
             TrackingPresenter.open(id)
+        case "downloads":
+            // folio://downloads: the downloads Live Activity (1.22.0).
+            DownloadsPresenter.open()
         default:
             dlog("open", "folio:// link with an unknown action: \(url.host ?? "none")")
         }

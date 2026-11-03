@@ -109,6 +109,7 @@ final class DiscoverSearch: ObservableObject {
             return
         }
         let gen = generation
+        let kids = KidsProfile.shared.activeLimits
         phase = .loading                 // the last results stay up meanwhile: nothing jumps
         liveTask = Task { [weak self] in
             if wait {
@@ -116,7 +117,8 @@ final class DiscoverSearch: ObservableObject {
             }
             let t0 = CACurrentMediaTime()
             do {
-                let items = try await Self.lookUp(q)
+                var items = try await Self.lookUp(q)
+                if let kids { items = await Self.kidsFiltered(items, limits: kids) }
                 guard let self, gen == self.generation else { return }             // a newer query took over
                 self.titles = items
                 self.titlesQuery = q
@@ -137,6 +139,23 @@ final class DiscoverSearch: ObservableObject {
         return try await IMDbSource.suggest(q)
     }
 
+    /// Kids profile (1.22.0): suggestions carry no rating or genre, so the
+    /// first ones are looked up (IMDb's title page, kept 7 days), three at a
+    /// time, and only what KidsRules allows is kept. Cancelled with the search.
+    nonisolated static let kidsChecked = 10
+    nonisolated static func kidsFiltered(_ items: [MetaItem], limits: KidsRules.Limits) async -> [MetaItem] {
+        let checked = await ForYou.each(Array(items.prefix(kidsChecked)), limit: 3) { m -> MetaItem in
+            guard m.id.hasPrefix("tt"), m.contentRating == nil, let d = await IMDbSource.details(id: m.id, type: m.type) else { return m }
+            var out = m
+            out.contentRating = d.contentRating
+            out.genres = d.genres ?? m.genres
+            return out
+        }
+        let kept = checked.filter { KidsRules.allows($0, limits: limits) }
+        dlog("search", "kids profile: \(kept.count) of \(checked.count) title(s) kept")
+        return kept
+    }
+
     static func isOffline(_ error: Error) -> Bool {
         guard let code = (error as? URLError)?.code else { return false }
         return [.notConnectedToInternet, .networkConnectionLost, .dataNotAllowed, .internationalRoamingOff, .cannotFindHost, .cannotConnectToHost].contains(code)
@@ -149,11 +168,14 @@ final class DiscoverSearch: ObservableObject {
         let targets = AddonStore.shared.addons.flatMap { a in a.manifest.catalogs.filter(\.supportsSearch).map { (a, $0) } }
         guard !targets.isEmpty else { addonsSearching = false; return }
         addonsSearching = true
+        // The kids profile: an addon's titles go by what they carry (KidsRules; unknown is hidden).
+        let kids = KidsProfile.shared.activeLimits
         addonTask = Task { [weak self] in
             await withTaskGroup(of: AddonSearchView.SearchResult?.self) { group in
                 for (a, c) in targets {
                     group.addTask {
-                        let metas = (try? await AddonAPI.catalog(a, c, extra: ["search": q])) ?? []
+                        var metas = (try? await AddonAPI.catalog(a, c, extra: ["search": q])) ?? []
+                        if let kids { metas = metas.filter { KidsRules.allows($0, limits: kids) } }
                         guard !metas.isEmpty else { return nil }
                         return AddonSearchView.SearchResult(id: a.id + c.type + c.id, title: "\(c.name ?? c.id) · \(c.type.capitalized) — \(a.manifest.name)",
                                                             addon: a, metas: metas)
@@ -182,6 +204,7 @@ struct AddonSearchView: View {
     private struct Opened: Hashable { let meta: MetaItem; let addon: InstalledAddon? }
 
     @StateObject private var search = DiscoverSearch()
+    @ObservedObject private var kids = KidsProfile.shared
     @State private var query = ""
     @State private var fieldActive = false
     @State private var opened: Opened?
@@ -287,7 +310,8 @@ struct AddonSearchView: View {
                           detail: offline ? "Search works again once you're connected." : "Check the connection and try again.",
                           icon: offline ? "wifi.slash" : "exclamationmark.triangle", retry: true)
             case .done where search.titles.isEmpty && search.titlesQuery == typed:
-                statusRow("No titles match “\(typed)”.", detail: nil, icon: "magnifyingglass", retry: false)
+                statusRow(kids.isOn ? "No titles rated for the kids profile match “\(typed)”." : "No titles match “\(typed)”.",
+                          detail: nil, icon: "magnifyingglass", retry: false)
             case .idle where typed.count < DiscoverSearch.minLength:
                 statusRow("Keep typing to search titles.", detail: nil, icon: "character.cursor.ibeam", retry: false)
             default:
@@ -299,6 +323,7 @@ struct AddonSearchView: View {
         } header: {
             HStack(spacing: 8) {
                 Text("Titles")
+                if let limits = kids.activeLimits { Text("· rated \(KidsRules.summary(limits))") }
                 if search.phase == .loading {
                     ProgressView().controlSize(.small).accessibilityLabel("Searching")
                 }
