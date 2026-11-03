@@ -32,6 +32,9 @@ struct DownloadItem: Codable, Identifiable, Hashable {
     /// delayed queue run, and any other run (another file finishing) started
     /// it at once.
     var notBefore: Date?
+    /// Queued by "Download next episodes" (1.22.0): only over Wi-Fi that
+    /// isn't metered or in Low Data Mode, whatever "Use mobile data" says.
+    var wifiOnly: Bool?
 
     var progress: Double { expected > 0 ? min(1, Double(received) / Double(expected)) : 0 }
     var isMedia: Bool { TitleParser.isMedia(fileName) }
@@ -61,6 +64,7 @@ extension DownloadItem {
         destination = try c.decode(URL.self, forKey: .destination)
         headers = try? c.decodeIfPresent([String: String].self, forKey: .headers)
         notBefore = try? c.decodeIfPresent(Date.self, forKey: .notBefore)
+        wifiOnly = try? c.decodeIfPresent(Bool.self, forKey: .wifiOnly)
     }
 }
 
@@ -107,6 +111,14 @@ final class DownloadManager: ObservableObject {
             MainActor.assumeIsolated { DownloadManager.shared.conditionsChanged() }
         }
         Task { await reattach() }
+        // Live Activities and "Delete watched downloads" (1.22.0) read
+        // `shared`: started after this init.
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                LiveActivities.start()
+                WatchedCleanup.start()
+            }
+        }
     }
 
     // MARK: Adding
@@ -147,8 +159,10 @@ final class DownloadManager: ObservableObject {
     }
 
     /// Queues files from a server folder. Matching subtitle files (same name
-    /// start) come along so they load with the video.
-    func enqueue(_ files: [DAVItem], server: WebDAVServer, package: String) {
+    /// start) come along so they load with the video. `auto`: "Download
+    /// next episodes" (AutoDownload), which starts them whatever "Start
+    /// automatically" says (it was asked for) and on Wi-Fi only.
+    func enqueue(_ files: [DAVItem], server: WebDAVServer, package: String, auto: Bool = false) {
         let skip = UserDefaults.standard.bool(forKey: SettingsKey.downloadSkipExisting)
         var added = 0
         for f in files where !f.isDirectory {
@@ -158,7 +172,8 @@ final class DownloadManager: ObservableObject {
             let dest = Self.destination(fileName: f.name, package: package)
             var item = DownloadItem(url: f.url, serverID: server.id, fileName: f.name, package: package,
                                     expected: f.size ?? 0, destination: dest)
-            if !UserDefaults.standard.bool(forKey: SettingsKey.downloadAutoStart) { item.state = .paused }
+            if auto { item.wifiOnly = true }
+            if !auto, !UserDefaults.standard.bool(forKey: SettingsKey.downloadAutoStart) { item.state = .paused }
             if skip, let size = (try? dest.resourceValues(forKeys: [.fileSizeKey]))?.fileSize, Int64(size) == item.expected, size > 0 {
                 item.state = .done; item.received = item.expected; item.finished = Date()
             }
@@ -166,9 +181,10 @@ final class DownloadManager: ObservableObject {
             added += 1
         }
         guard added > 0 else { return }
-        dlog("dl", "queued \(added) file(s) from \(package)")
+        dlog("dl", "queued \(added) file(s) from \(package)\(auto ? " (next episodes)" : "")")
         notifiedRun = false
-        if UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify) { Self.askForNotifications() }
+        // Not over the player for an automatic one: it asks when you tap Download.
+        if !auto, UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify) { Self.askForNotifications() }
         save()
         pump()
     }
@@ -207,6 +223,7 @@ final class DownloadManager: ObservableObject {
         let before = items.count
         items.removeAll(where: Self.isGone)
         if items.count != before { dlog("downloads", "forgot \(before - items.count) finished download(s) whose files were deleted"); save() }
+        DownloadLedger.prune()
     }
 
     // MARK: Controls
@@ -284,7 +301,9 @@ final class DownloadManager: ObservableObject {
 
     // MARK: Queue
 
-    private var conditionsOK: Bool {
+    /// Low Power Mode and "Only while charging" allow downloads now (also
+    /// read by the downloads Live Activity).
+    var conditionsOK: Bool {
         let d = UserDefaults.standard
         if d.bool(forKey: SettingsKey.downloadPauseLowPower), ProcessInfo.processInfo.isLowPowerModeEnabled { return false }
         if d.bool(forKey: SettingsKey.downloadOnlyCharging) {
@@ -334,7 +353,8 @@ final class DownloadManager: ObservableObject {
         items[i] = item
         lastBytes[item.id] = item.received
         let cellular = UserDefaults.standard.bool(forKey: SettingsKey.downloadCellular)
-        engine.start(id: item.id, url: item.url, headers: headers, resumeData: resume, allowCellular: cellular)
+        engine.start(id: item.id, url: item.url, headers: headers, resumeData: resume, allowCellular: cellular,
+                     unmeteredOnly: item.wifiOnly == true)
         dlog("dl", "start \(item.fileName)\(resume != nil ? " (resuming)" : "")")
         save()
     }
@@ -396,6 +416,8 @@ final class DownloadManager: ObservableObject {
             if let r = items[i].resumeFile { try? fm.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) }
             items[i].resumeFile = nil
             dlog("dl", "done \(items[i].fileName)")
+            // What "Delete watched downloads" may delete (1.22.0).
+            DownloadLedger.add(dest)
             LocalMediaStore.shared.refresh()
         } catch {
             items[i].state = .failed
@@ -547,13 +569,19 @@ final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sen
         }
     }
 
-    func start(id: UUID, url: URL, headers: [String: String], resumeData: Data?, allowCellular: Bool) {
+    /// `unmeteredOnly`: Wi-Fi only, never a hotspot's or Low Data Mode's
+    /// (automatic downloads). Resume data carries the request's rules along.
+    func start(id: UUID, url: URL, headers: [String: String], resumeData: Data?, allowCellular: Bool, unmeteredOnly: Bool = false) {
         let task: URLSessionDownloadTask
         if let resumeData {
             task = session.downloadTask(withResumeData: resumeData)
         } else {
             var req = URLRequest(url: url)
-            req.allowsCellularAccess = allowCellular
+            req.allowsCellularAccess = allowCellular && !unmeteredOnly
+            if unmeteredOnly {
+                req.allowsExpensiveNetworkAccess = false
+                req.allowsConstrainedNetworkAccess = false
+            }
             for (k, v) in headers { req.setValue(v, forHTTPHeaderField: k) }
             task = session.downloadTask(with: req)
         }

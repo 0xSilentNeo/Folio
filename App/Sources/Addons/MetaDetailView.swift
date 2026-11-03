@@ -17,6 +17,9 @@ struct MetaDetailView: View {
     /// The streams page zooms out of what was tapped (1.15.0, #2), like Add files.
     @Namespace private var streamsNS
     @ObservedObject private var history = HistoryStore.shared
+    @ObservedObject private var kids = KidsProfile.shared
+    /// The title's details have been asked for (the kids profile decides on them, not on the list's tile).
+    @State private var loaded = false
     @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
 
@@ -39,7 +42,34 @@ struct MetaDetailView: View {
         var id: String { video?.id ?? "title" }
     }
 
+    /// The kids profile's answer when it isn't "allowed"; nil otherwise.
+    /// Decided on the full details (their content rating), the list's tile
+    /// only when they couldn't be loaded.
+    private var kidsVerdict: KidsRules.Verdict? {
+        guard let limits = kids.activeLimits else { return nil }
+        let v = KidsRules.verdict(m, limits: limits)
+        return v == .allowed ? nil : v
+    }
+
     var body: some View {
+        if kids.isOn && !loaded {
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Theme.background.ignoresSafeArea())
+                .pageButtons(zooms: zooms, back: { dismiss() }) { EmptyView() }
+                .task { await load(); loaded = true }
+        } else if let v = kidsVerdict {
+            KidsBlockedView(verdict: v)
+                .pageButtons(zooms: zooms, back: { dismiss() }) { EmptyView() }
+        } else {
+            // Handoff (1.22.0): the other device opens the same title. The
+            // addon by its manifest id: its address can hold a key.
+            page.handoffTitle(HandoffActivity.Payload(target: .discover(id: resolvedID, type: m.type, name: m.name, poster: m.poster,
+                                                                        addon: sourceAddon?.manifest.id)))
+        }
+    }
+
+    private var page: some View {
         GeometryReader { geo in
             let wide = geo.size.width > 700
             ScrollView {
@@ -84,7 +114,7 @@ struct MetaDetailView: View {
             StreamsView(meta: m, video: t.video, seasonVideos: t.queue)
                 .zoomDestination(t.source, in: streamsNS, zoom: zooms)
         }
-        .task { LibTrace.title.event("appeared", "addon title page appeared"); await load() }
+        .task { LibTrace.title.event("appeared", "addon title page appeared"); await load(); loaded = true }
         .task(id: season) {
             guard usesIMDb, isSeries, !seasons.isEmpty else { return }
             loadingEpisodes = true

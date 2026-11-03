@@ -177,7 +177,7 @@ func speedString(_ bps: Double) -> String {
 // MARK: - Downloads screen
 
 /// Packages (one per server folder) with their files, filters at the top and
-/// the speed card at the bottom — laid out like GetRekt's Downloads screen.
+/// the speed card at the bottom.
 struct DownloadsView: View {
     var inSheet = false
     @ObservedObject private var dm = DownloadManager.shared
@@ -564,6 +564,9 @@ struct DownloadSettingsView: View {
     @AppStorage(SettingsKey.downloadPauseLowPower) private var lowPower = true
     @AppStorage(SettingsKey.downloadOnlyCharging) private var charging = false
     @AppStorage(SettingsKey.downloadRetries) private var retries = 3
+    @AppStorage(SettingsKey.downloadNextEpisodes) private var nextEpisodes = 0
+    @AppStorage(SettingsKey.downloadDeleteWatched) private var deleteWatched = 0
+    @AppStorage(SettingsKey.liveActivities) private var liveActivities = true
 
     var body: some View {
         Form {
@@ -590,6 +593,28 @@ struct DownloadSettingsView: View {
             } header: { Text("Network & battery") } footer: {
                 Text("Downloads carry on in the background (iOS decides how fast while Folio isn't open). A paused file continues where it stopped. There is no speed limit: iOS doesn't let background downloads be slowed down.")
             }
+            // 1.22.0: AutoDownload and WatchedCleanup.
+            Section {
+                Picker("Download next episodes", selection: $nextEpisodes) {
+                    Text("Off").tag(0)
+                    Text("Next 1").tag(1)
+                    Text("Next 2").tag(2)
+                    Text("Next 3").tag(3)
+                }
+                Picker("Delete watched downloads", selection: $deleteWatched) {
+                    Text("Off").tag(0)
+                    Text("After 1 day").tag(1)
+                    Text("After 7 days").tag(7)
+                }
+            } header: { Text("Automatic") } footer: {
+                Text("Next episodes: when you've watched most of an episode from a WebDAV server, or one downloaded from it, the next ones in its folder download, on Wi-Fi only. Delete: a downloaded video you've finished leaves your library that long after you finished it, with its subtitles; turning it on also removes the ones finished longer ago than that. Files you added yourself are never deleted.")
+            }
+            Section {
+                Toggle("Live Activities", isOn: $liveActivities)
+            } footer: {
+                Text("Downloads and what's playing, on the Lock Screen and in the Dynamic Island."
+                     + (liveActivities && LiveActivities.blockedBySystem ? " They're turned off for Folio in iOS Settings → Folio." : ""))
+            }
         }
         .brandListBackground()
         .navigationTitle("Downloads")
@@ -597,5 +622,7 @@ struct DownloadSettingsView: View {
         .onChange(of: concurrent) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: lowPower) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: charging) { _, _ in DownloadManager.shared.settingsChanged() }
+        .onChange(of: liveActivities) { _, _ in LiveActivities.settingChanged() }
+        .onChange(of: deleteWatched) { _, _ in WatchedCleanup.run() }
     }
 }

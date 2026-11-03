@@ -9,7 +9,7 @@ final class PiPUITests: XCTestCase {
 
     private func launch() -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-uiTest", "-noSplash", "-pipTrace", "YES", "-pipEnabled", "YES", "-pipReturnOnOpen", "YES"]
+        app.launchArguments = ["-uiTest", "-noSplash", "-pipTrace", "YES", "-pipEnabled", "YES", "-pipReturnOnOpen", "YES"] + (ProcessInfo.processInfo.environment["PIP_RENDERER"].map { ["-renderer", $0] } ?? ["-renderer", "gl"])
         app.launch()
         XCTAssertTrue(app.buttons["Close player"].waitForExistence(timeout: 30), "player didn't open")
         sleep(5)                                            // playing, controls up (UI test keeps them)

@@ -202,8 +202,8 @@ struct SettingsPanelContent: View {
             PanelHeader(title: "Playback")
             PanelRow(icon: "gauge.with.dots.needle.67percent", title: "Speed") {
                 Stepper3(text: String(format: "%g×", (model.speed * 100).rounded() / 100),
-                         minus: { model.setSpeed(max(0.25, model.speed - 0.25)) },
-                         plus: { model.setSpeed(min(4, model.speed + 0.25)) })
+                         minus: { model.chooseSpeed(max(0.25, model.speed - 0.25)) },
+                         plus: { model.chooseSpeed(min(4, model.speed + 0.25)) })
             }
             PanelRow(icon: "hand.tap", title: "Hold to speed up", subtitle: model.holdEnabled ? "Press and hold the video" : "Off") {
                 HStack(spacing: 8) {
@@ -314,6 +314,13 @@ struct SettingsPanelContent: View {
             }
 
             PanelHeader(title: "More")
+            // 1.22.0: openings skipped by themselves for this show only.
+            if let show = model.memoryShowName, UserDefaults.standard.bool(forKey: SettingsKey.rememberPerShow) {
+                PanelRow(icon: "forward.end", title: "Always skip openings", subtitle: show) {
+                    Toggle("", isOn: Binding(get: { model.showAutoSkip.contains(SkipSegment.Kind.intro.rawValue) },
+                                             set: { model.setAlwaysSkip(.intro, $0) })).labelsHidden()
+                }
+            }
             if let show = model.rememberedShow {
                 // What's remembered for this show (Settings → Playback → Remember per show).
                 Button { model.forgetShow() } label: {
@@ -371,6 +378,15 @@ struct TracksPanelContent: View {
             TrackRow(title: "Off", subtitle: nil, selected: !model.tracks("sub").contains { $0.selected }) { model.selectTrack("sub", id: nil) }
             ForEach(model.tracks("sub")) { t in
                 TrackRow(title: t.label, subtitle: t.detail, selected: t.selected) { model.selectTrack("sub", id: t.id) }
+            }
+            // 1.22.0: a second language at the top of the picture.
+            let others = model.tracks("sub").filter { !$0.selected }
+            if model.tracks("sub").count > 1 {
+                PanelHeader(title: "Second subtitles (top)")
+                TrackRow(title: "Off", subtitle: nil, selected: model.secondarySid == "no") { model.selectSecondSubtitle(id: nil) }
+                ForEach(others) { t in
+                    TrackRow(title: t.label, subtitle: t.detail, selected: model.secondarySid == String(t.id)) { model.selectSecondSubtitle(id: t.id) }
+                }
             }
             Button(action: onLoadSubtitle) {
                 Label("Load subtitle file…", systemImage: "folder").font(.subheadline.weight(.semibold))

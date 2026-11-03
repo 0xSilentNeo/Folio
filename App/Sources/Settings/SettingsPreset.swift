@@ -42,6 +42,10 @@ enum SettingsPreset {
         "seekMarkerStyle": .string, "seekMarkerColor": .string, "seekShowChapterTitle": .bool, "seekShowSkip": .bool,
         "rememberPerShow": .bool, "subStyle": .string, "nightMode": .bool, "dialogueBoost": .bool,
         "airingAlerts": .string,
+        // 1.22.0: Home's library filters. The kids profile's settings are not here (KidsProfile).
+        SettingsKey.libraryFilterWatch: .string, SettingsKey.libraryFilterGenre: .string, SettingsKey.libraryFilterYear: .string,
+        // 1.22.0: Live Activities, next episodes and watched downloads (Settings → Downloads).
+        SettingsKey.liveActivities: .bool, SettingsKey.downloadNextEpisodes: .int, SettingsKey.downloadDeleteWatched: .int,
     ]
     /// Never exported: app bookkeeping, not choices.
     private static let skip: Set<String> = ["enhancedQuality"]

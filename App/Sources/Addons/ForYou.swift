@@ -336,6 +336,12 @@ final class ForYouModel: ObservableObject {
         }
     }
 
+    /// The row as shown: in the kids profile, only what KidsRules allows (1.22.0).
+    func shown(_ limits: KidsRules.Limits?) -> [MetaItem] {
+        guard let limits else { return metas }
+        return metas.filter { KidsRules.allows($0, limits: limits) }
+    }
+
     /// Discover is open (`force`: pulled to refresh, the 12 hours don't count).
     func load(force: Bool = false) {
         guard !loading || force else { return }

@@ -14,6 +14,7 @@ struct TitleHeroView: View {
     private var file: URL { focus ?? LibraryGroup.nextUp(in: group.files) }
     @ObservedObject private var local = LocalMediaStore.shared
     @ObservedObject private var history = HistoryStore.shared
+    @ObservedObject private var kids = KidsProfile.shared
     @StateObject private var thumb = ThumbLoader()
     @AppStorage("heroView") private var viewMode = LibraryViewMode.grid.rawValue
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
@@ -96,7 +97,26 @@ struct TitleHeroView: View {
         return siblings.filter { TitleParser.parse($0.lastPathComponent).season == season }
     }
 
+    /// The kids profile's answer for this title when it isn't "allowed"
+    /// (the page was opened by a link or from another device); nil otherwise.
+    private var kidsVerdict: KidsRules.Verdict? {
+        guard let limits = kids.activeLimits else { return nil }
+        let v = KidsRules.verdict(meta ?? LibraryMetaIndex.shared.meta(for: file), limits: limits)
+        return v == .allowed ? nil : v
+    }
+
     var body: some View {
+        if let v = kidsVerdict {
+            KidsBlockedView(verdict: v)
+                .pageButtons(zooms: zoomsFromTile, back: goBack) { EmptyView() }
+                .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true, hero: HeroMetrics.pixels) }
+        } else {
+            // Handoff (1.22.0): the other device opens this file's page when it has the file.
+            page.handoffTitle(HandoffActivity.Payload(target: .library(file: file.lastPathComponent, title: title)))
+        }
+    }
+
+    private var page: some View {
         GeometryReader { geo in
             let wide = geo.size.width > 700
             ScrollView {

@@ -360,6 +360,9 @@ final class PlayerModel: ObservableObject {
         saveHistory(force: true)
         HistoryStore.shared.flush()
         ShowMemoryStore.shared.flush()
+        NowPlayingActivity.end()
+        activityItemID = nil
+        HandoffActivity.stopPlaying()
         closeSubtitleSearch()
         observers.forEach { NotificationCenter.default.removeObserver($0) }
         observers = []
@@ -462,7 +465,7 @@ final class PlayerModel: ObservableObject {
         if let s = defaults.string(forKey: SettingsKey.audioLangs), !s.isEmpty { c.setOption("alang", s) }
         // The subtitle style preset over your size, position, bold and box
         // (1.20.3, 2 Nov). Set before mpv reads mpv.conf, which still wins.
-        for (k, v) in SubtitleStyle.savedOptions(defaults) { c.setOption(k, v) }
+        for (k, v) in subtitleOptions() { c.setOption(k, v) }
         // Night mode's Dolby range compression (AudioFilters).
         if nightMode { c.setOption("ad-lavc-ac3drc", AudioFilters.ac3drc(night: true)) }
         c.setOption("speed", String(defaults.double(forKey: SettingsKey.defaultSpeed)))
@@ -589,6 +592,7 @@ final class PlayerModel: ObservableObject {
         c.observe("audio-params/channels", .string)        // the track's own channels (AudioFilters)
         c.observe("demuxer-cache-duration", .double)
         c.observe("panscan", .double)
+        c.observe("secondary-sid", .string)
     }
 
     // MARK: Loading
@@ -1269,6 +1273,42 @@ final class PlayerModel: ObservableObject {
 
     func setSpeed(_ s: Double) { client?.set("speed", s) }
 
+    /// A speed picked in the menu (not hold-to-speed): remembered for the
+    /// show (1.22.0).
+    func chooseSpeed(_ s: Double) {
+        setSpeed(s)
+        speedTouched = true
+        remember { $0.speed = s }
+    }
+
+    /// The second subtitle (mpv's secondary-sid, drawn at the top): a
+    /// second language under the first, for learning one (1.22.0).
+    @Published private(set) var secondarySid = "no"
+
+    func selectSecondSubtitle(id: Int?) {
+        client?.set("secondary-sid", id.map(String.init) ?? "no")
+        if let id, let t = tracks.first(where: { $0.type == "sub" && $0.id == id }) {
+            remember { $0.secondSubtitle = SubtitleChoice(t) }
+        } else {
+            remember { $0.secondSubtitle = .turnedOff }
+        }
+    }
+
+    // MARK: Skipping for one show (1.22.0)
+
+    /// The open file's show, when its settings can be remembered (the
+    /// player menu's "Always skip … for this show").
+    @Published private(set) var memoryShowName: String?
+    @Published private(set) var showAutoSkip: Set<String> = []
+
+    func setAlwaysSkip(_ kind: SkipSegment.Kind, _ on: Bool) {
+        if on { showAutoSkip.insert(kind.rawValue) } else { showAutoSkip.remove(kind.rawValue) }
+        let list = showAutoSkip.sorted()
+        remember { $0.autoSkip = list }
+        if on, let seg = activeSegment, seg.kind == kind { skip(seg) }
+        showToast(on ? "\(kind.chapterTitle)s skipped for this show" : "\(kind.chapterTitle)s shown again")
+    }
+
     func beginHoldSpeed() {
         guard holdEnabled, !paused, !holdSpeedActive else { return }
         speedBeforeHold = speed
@@ -1328,10 +1368,20 @@ final class PlayerModel: ObservableObject {
     /// Your size times the style preset's (Large is a third larger).
     func setSubScale(_ v: Double) { client?.set("sub-scale", v * subtitleStyle.scaleFactor) }
 
+    /// The saved subtitle options for this renderer. The sample-buffer
+    /// renderer's frames are the video's shape, with no black bars to draw
+    /// in: a position below the picture (over 100) was cut off (review,
+    /// 2 Nov), so it stops at the bottom edge.
+    private func subtitleOptions() -> [(String, String)] {
+        let options = SubtitleStyle.savedOptions(defaults)
+        guard renderer == .gl else { return options }
+        return options.map { k, v in k == "sub-pos" ? (k, String(min(100, Int(v) ?? 100))) : (k, v) }
+    }
+
     /// The style preset with your size, position, bold and box, live.
     func applySubtitleStyle() {
         guard let c = client else { return }
-        for (k, v) in SubtitleStyle.savedOptions(defaults) { c.set(k, v) }
+        for (k, v) in subtitleOptions() { c.set(k, v) }
     }
 
     func toggleZoom() {
@@ -1443,6 +1493,12 @@ final class PlayerModel: ObservableObject {
         var stored = playingItem ?? item
         if stored.title.isEmpty { stored.title = mediaTitle }
         HistoryStore.shared.record(stored, position: position, duration: duration)
+        // Handoff: the other device can pick up here (Handoff.swift).
+        HandoffActivity.playing(item: stored, position: position, duration: duration)
+        // Next episodes downloaded on Wi-Fi, when that's on (AutoDownload; once per file a run).
+        if duration > 0, position / duration >= AutoDownload.threshold {
+            AutoDownload.watched(item: stored, progress: position / duration)
+        }
     }
 
     // MARK: Show memory (ShowMemory.swift)
@@ -1472,6 +1528,8 @@ final class PlayerModel: ObservableObject {
     private func resolveShowKey(for item: MediaItem) {
         showKey = nil
         rememberedShow = nil
+        memoryShowName = nil
+        showAutoSkip = []
         let id = item.id
         func showID(_ identity: String?) -> String? { identity.map { String($0.prefix { $0 != ":" }) } }
         if case .addon = item.source {
@@ -1497,6 +1555,7 @@ final class PlayerModel: ObservableObject {
         guard memoryItem.id == id else { return }
         guard let key else { dlog("memory", "no show to remember settings for (\(memoryItem.fileName))"); return }
         showKey = (id, key)
+        memoryShowName = key.name
         rememberedShow = ShowMemoryStore.shared.entry(for: key.keys) != nil ? key.name : nil
         applyMemoryIfReady()
     }
@@ -1505,6 +1564,9 @@ final class PlayerModel: ObservableObject {
     /// show with none remembered goes back to 0. Until then a delay is left
     /// as it is, so one from mpv.conf (a Bluetooth headset's) still applies.
     private var delaysTouched = false
+    /// The same for speed: a show with none remembered goes back to your
+    /// default speed only after one was changed in this player.
+    private var speedTouched = false
 
     /// Once per file, when it's open, its tracks are known and its show is:
     /// what's remembered for the show. Delays are the show's own: with none
@@ -1526,6 +1588,17 @@ final class PlayerModel: ObservableObject {
         if let p = s.panscan, (p > 0.5) != zoomToFill { c.set("panscan", p); done.append(p > 0.5 ? "Fill" : "Fit") }
         let mode = s.anime4k.flatMap(Anime4KMode.init(rawValue:)) ?? Anime4K.mode
         if mode != anime4kMode { anime4kMode = mode; done.append("Anime4K \(mode.title)") }
+        let wantSpeed = s.speed ?? (speedTouched ? defaults.double(forKey: SettingsKey.defaultSpeed) : speed)
+        if abs(wantSpeed - speed) > 0.001, wantSpeed > 0 { c.set("speed", wantSpeed); speedTouched = true; done.append(String(format: "speed %.2g×", wantSpeed)) }
+        showAutoSkip = Set(s.autoSkip ?? [])
+        if !showAutoSkip.isEmpty { done.append("always skip \(showAutoSkip.sorted().joined(separator: ", "))") }
+        if let second = s.secondSubtitle {
+            if second.off {
+                if secondarySid != "no" { c.set("secondary-sid", "no") }
+            } else if let t = TrackMatch.subtitle(second, among: tracks.filter { !$0.selected }) {
+                c.set("secondary-sid", String(t.id)); done.append("second subtitles \(t.id) \(t.label)")
+            }
+        }
         if let a = s.audio {
             if let t = TrackMatch.audio(a, among: tracks) {
                 if !t.selected { c.set("aid", String(t.id)); done.append("audio \(t.id) \(t.label) \(t.detail)") }
@@ -1804,7 +1877,7 @@ final class PlayerModel: ObservableObject {
         case .recap: key = SettingsKey.skipAutoRecap
         case .preview: key = SettingsKey.skipAutoPreview
         }
-        if defaults.bool(forKey: key) {
+        if defaults.bool(forKey: key) || showAutoSkip.contains(seg.kind.rawValue) {
             autoSkipped.insert(seg.id)
             seek(to: seg.end)
             showToast("Skipped \(seg.kind.chapterTitle.lowercased())")
@@ -1997,8 +2070,16 @@ final class PlayerModel: ObservableObject {
         guard mode == .main, let c = client else { return }
         if renderer == .gl {
             // Nothing to switch: the frames already go into PiP's layer. Only
-            // GPU work, if it was stopped for the background a moment before.
-            if let vid = c.string("vid"), vid != "no" { vidSaved = vid }
+            // GPU work, if it was stopped for the background a moment before,
+            // and the video track, if the app was away long enough for it to
+            // go: PiP showed a still picture with sound (review, 2 Nov).
+            awayToken += 1
+            if let vid = c.string("vid"), vid != "no" {
+                vidSaved = vid
+            } else if videoOffForBackground {
+                videoOffForBackground = false
+                c.set("vid", vidSaved ?? "auto")
+            }
             glRenderer?.setRenderingAllowed(true, why: "PiP up")
             return
         }
@@ -2253,6 +2334,19 @@ final class PlayerModel: ObservableObject {
 
     private func registerLifecycle() {
         let nc = NotificationCenter.default
+        // The Live Activity's buttons (Lock Screen, Dynamic Island).
+        observers.append(nc.addObserver(forName: NowPlayingCommand.notification, object: nil, queue: .main) { [weak self] note in
+            let command = note.userInfo?[NowPlayingCommand.key] as? String
+            MainActor.assumeIsolated {
+                guard let self, !self.closed else { return }
+                switch command {
+                case "toggle": self.togglePause()
+                case "back": self.seek(by: -10)
+                case "forward": self.seek(by: 10)
+                default: break
+                }
+            }
+        })
         // Subtitle addons answering after the stream started: into the playing
         // file when it's that video (before it has loaded, onFileLoaded adds them).
         observers.append(nc.addObserver(forName: AddonPlayback.lateSubtitlesArrived, object: nil, queue: .main) { [weak self] note in
@@ -2345,8 +2439,24 @@ final class PlayerModel: ObservableObject {
                 parkedPaused = true
                 dlog("player", "background while paused: video and buffer kept")
             } else {
-                videoOffForPlayback(c)
+                glTrackOffLater()
             }
+        }
+    }
+
+    /// Sample-buffer renderer, playing on in the background without PiP: the
+    /// picture stops at once (no rendering), the video track only after 15 s
+    /// away. A quick trip to the Home Screen or the app switcher then comes
+    /// back to the same buffer with nothing to reload. Turning the track off
+    /// at once made mpv drop its video buffer and read it again on return: a
+    /// stutter and a spinner (review, 2 Nov; Metal has waited since 1.17.2).
+    private func glTrackOffLater() {
+        awayToken += 1
+        let token = awayToken
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+            guard let self, self.awayToken == token, !self.paused, !self.isPiPActive,
+                  UIApplication.shared.applicationState == .background, let c = self.client else { return }
+            self.videoOffForPlayback(c)
         }
     }
 
@@ -2532,7 +2642,10 @@ final class PlayerModel: ObservableObject {
         }
         if pendingMain { switchToMain(); setPiPLayerOnTop(false); return }
         guard mode == .main else { return }
-        if renderer == .gl { glRenderer?.setRenderingAllowed(true, why: "app active") }
+        if renderer == .gl {
+            awayToken += 1              // back within 15 s: the track never went
+            glRenderer?.setRenderingAllowed(true, why: "app active")
+        }
         checkDecoderAfterEarlyReturn()
         if outputOffForAway, let c = client {
             outputBackAfterAway(c)
@@ -2620,6 +2733,25 @@ final class PlayerModel: ObservableObject {
         if let sub = item.subtitle { info[MPMediaItemPropertyArtist] = sub }
         if duration > 0 { info[MPMediaItemPropertyPlaybackDuration] = duration }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+        updateLiveActivity()
+    }
+
+    /// The Live Activity for what's playing (1.22.0, NowPlayingActivity):
+    /// started for each file once its length is known, then kept up to date
+    /// (it pushes to the Lock Screen only on a pause, play, seek or length
+    /// change). Its buttons come back as NowPlayingCommand notifications.
+    private var activityItemID: String?
+
+    private func updateLiveActivity() {
+        guard fileLoaded, duration > 0, !closed else { return }
+        let it = playingItem ?? item
+        if activityItemID != it.id {
+            activityItemID = it.id
+            NowPlayingActivity.start(id: it.id, title: it.title.isEmpty ? mediaTitle : it.displayTitle, subtitle: it.subtitle,
+                                     duration: duration, position: position, paused: paused, artwork: ThumbnailStore.image(for: it.id))
+        } else {
+            NowPlayingActivity.update(position: position, duration: duration, paused: paused)
+        }
     }
 
     // MARK: Helpers
@@ -2700,6 +2832,7 @@ extension PlayerModel: MPVClientDelegate {
             maybePrepareNext()
             if Date().timeIntervalSince(lastPiPSync) > 1 {
                 lastPiPSync = Date()
+                if activityItemID != nil { NowPlayingActivity.update(position: p, duration: duration, paused: paused) }
                 pip.updatePlayback(position: p, rate: paused ? 0 : speed)
             }
             saveHistory()
@@ -2736,6 +2869,8 @@ extension PlayerModel: MPVClientDelegate {
         case "sid":
             sid = value.string ?? "no"
             refreshTracks()
+        case "secondary-sid":
+            secondarySid = value.string ?? "no"
         case "sub-delay":
             subDelay = value.double ?? 0
         case "audio-delay":
@@ -2771,6 +2906,8 @@ extension PlayerModel: MPVClientDelegate {
             if abs(v - clock.cacheAhead) > 1 { clock.cacheAhead = v }
         case "panscan":
             zoomToFill = (value.double ?? 0) > 0.5
+            // Fill did nothing on the sample-buffer renderer (review, 2 Nov).
+            if renderer == .gl { pip.setFill(zoomToFill) }
         default:
             break
         }

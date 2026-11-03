@@ -53,6 +53,8 @@ targets:
         UIViewControllerBasedStatusBarAppearance: true
         # ProMotion: without this, an app's own animations are capped at 60 Hz on iPhone.
         CADisableMinimumFrameDurationOnPhone: true
+        # Live Activities (1.22.0): downloads and what's playing (App/Sources/Activities).
+        NSSupportsLiveActivities: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
@@ -67,6 +69,10 @@ targets:
           NSAllowsArbitraryLoadsForMedia: true
         NSLocalNetworkUsageDescription: Folio streams media from servers on your local network.
         NSBonjourServices: [_webdav._tcp, _webdavs._tcp]
+        # The kids profile (1.22.0): Face ID may stand in for its passcode.
+        NSFaceIDUsageDescription: Face ID can unlock the kids profile instead of its passcode.
+        # Handoff (1.22.0): a title page, and what's playing, between iPhone and iPad.
+        NSUserActivityTypes: [dev.silentneo.folio.title, dev.silentneo.folio.playing]
         CFBundleDocumentTypes:
           - CFBundleTypeName: Media
             CFBundleTypeRole: Viewer
