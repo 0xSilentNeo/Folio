@@ -1,96 +1,211 @@
 import SwiftUI
 
-// MARK: - The passcode pad
+// MARK: - The passcode screen
 
-/// Four dots and a number pad. `onEntered` gets each full code; it returns
-/// a message to show under the dots (wrong code, locked), or nil when the
-/// code was right (or taken).
-struct PasscodePad: View {
+/// What a code typed on the passcode screen gets.
+enum PasscodeAnswer {
+    /// Right: the circles stay full while the screen goes.
+    case accepted
+    /// Taken, and another code is asked for (a new passcode's second entry).
+    case next
+    /// Wrong: a shake and a buzz, then empty circles.
+    case wrong
+}
+
+/// The passcode as the Lock Screen asks for it (1.22.1): the title, four
+/// circles, a 3×4 pad of large round translucent keys with their letters,
+/// Cancel that becomes Delete once a digit is in, and Face ID at the bottom
+/// left when it may stand in. White on a blurred dark background, whatever
+/// the app's appearance. Every place the kids passcode is asked for or
+/// chosen shows it (KidsPasscodeScreen); until 1.22.1 each had a small pad
+/// of its own.
+struct PasscodeScreen: View {
     let title: String
-    var message: String? = nil
-    /// "Face ID" or "Touch ID": a button for it beside 0.
-    var biometry: String? = nil
-    var onBiometry: (() -> Void)? = nil
-    let onEntered: (String) -> String?
+    /// Under the circles: what it's for, or what went wrong.
+    var message: String?
+    /// "Face ID", "Touch ID" or "Optic ID": its button, bottom left.
+    var biometry: String?
+    var onBiometry: () -> Void = {}
+    /// Too many wrong tries: the keys wait.
+    var locked = false
+    let onCancel: () -> Void
+    let onEntered: (String) -> PasscodeAnswer
 
     @State private var code = ""
-    @State private var note: String?
-    @State private var shake: CGFloat = 0
+    @State private var shakes: CGFloat = 0
+    /// From the fourth digit until the answer is in: no more typing.
+    @State private var busy = false
+
+    /// The letters under the digits, as on a phone's keypad.
+    private static let letters = ["", "ABC", "DEF", "GHI", "JKL", "MNO", "PQRS", "TUV", "WXYZ"]
 
     var body: some View {
-        VStack(spacing: 22) {
-            VStack(spacing: 8) {
-                Image(systemName: "lock.fill").font(.system(size: 24, weight: .semibold)).foregroundStyle(Theme.accent)
-                Text(title).font(.title3.weight(.semibold)).multilineTextAlignment(.center).padding(.horizontal, 24)
-                // Two lines kept for it, so the dots and keys don't move when it appears.
-                Text(note ?? message ?? " ").font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                    .lineLimit(2).frame(minHeight: 36, alignment: .top).padding(.horizontal, 24)
-            }
-            HStack(spacing: 18) {
-                ForEach(0..<4, id: \.self) { i in
-                    Circle()
-                        .strokeBorder(Theme.accent, lineWidth: 1.5)
-                        .background(Circle().fill(i < code.count ? Theme.accent : .clear))
-                        .frame(width: 14, height: 14)
-                }
-            }
-            .modifier(Shake(amount: shake))
-            .accessibilityElement()
-            .accessibilityLabel("\(code.count) of 4 digits entered")
-            Grid(horizontalSpacing: 22, verticalSpacing: 14) {
-                ForEach(0..<3) { row in
-                    GridRow { ForEach(1...3, id: \.self) { col in key(String(row * 3 + col)) } }
-                }
-                GridRow {
-                    if let biometry, let onBiometry {
-                        Button(action: onBiometry) {
-                            Image(systemName: biometry == "Touch ID" ? "touchid" : biometry == "Optic ID" ? "opticid" : "faceid")
-                                .font(.system(size: 24)).frame(width: 72, height: 72)
+        GeometryReader { geo in
+            // A phone on its side has no room for the pad under the title: side by side then.
+            let landscape = geo.size.width > geo.size.height && geo.size.height < 600
+            // The Lock Screen's keys are about 80 pt on a 6.9" iPhone; smaller where it's short.
+            let key = landscape
+                ? max(52, min(74, (geo.size.height - 3 * 12 - 24) / 4))
+                : max(56, min(80, (geo.size.width - 100) / 3, (geo.size.height - 300) / 4.8))
+            Group {
+                if landscape {
+                    HStack(spacing: 0) {
+                        VStack(spacing: 0) {
+                            Spacer(minLength: 8)
+                            header
+                            Spacer(minLength: 8)
+                            bottomBar(key)
                         }
-                        .buttonStyle(PressStyle())
-                        .accessibilityLabel("Use \(biometry)")
-                    } else {
-                        Color.clear.frame(width: 72, height: 72)
+                        .padding(.bottom, 8)
+                        .frame(maxWidth: .infinity)
+                        keypad(key).frame(maxWidth: .infinity)
                     }
-                    key("0")
-                    Button { if !code.isEmpty { code.removeLast() } } label: {
-                        Image(systemName: "delete.left").font(.system(size: 22)).frame(width: 72, height: 72)
+                } else {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 12).frame(maxHeight: 110)
+                        header
+                        Spacer().frame(height: key * 0.55)
+                        keypad(key)
+                        Spacer(minLength: 12)
+                        bottomBar(key)
                     }
-                    .buttonStyle(PressStyle())
-                    .accessibilityLabel("Delete")
-                    .opacity(code.isEmpty ? 0.3 : 1)
+                    .padding(.bottom, 4)
                 }
             }
-            .foregroundStyle(.primary)
+            .frame(width: geo.size.width, height: geo.size.height)
         }
-        .padding(.vertical, 12)
+        .foregroundStyle(.white)
+        .background(PasscodeBackground())
+        .environment(\.colorScheme, .dark)
+        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
     }
 
-    private func key(_ d: String) -> some View {
-        Button { type(d) } label: {
-            Text(d).font(.system(size: 30, weight: .regular, design: .rounded))
-                .frame(width: 72, height: 72)
-                .background(Theme.fill, in: Circle())
+    private var header: some View {
+        VStack(spacing: 0) {
+            Text(title).font(.system(size: 20)).multilineTextAlignment(.center)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityIdentifier("passcodeTitle")
+            dots.padding(.top, 20)
+            // Two lines kept for it, so nothing moves when it appears.
+            Text(message ?? " ").font(.system(size: 15)).foregroundStyle(.white.opacity(0.75))
+                .multilineTextAlignment(.center)
+                .lineLimit(2, reservesSpace: true)
+                .padding(.top, 14).padding(.horizontal, 32)
+                .accessibilityIdentifier("passcodeMessage")
         }
-        .buttonStyle(PressStyle())
-        .accessibilityIdentifier("pin" + d)
+    }
+
+    private var dots: some View {
+        HStack(spacing: 24) {
+            ForEach(0..<4, id: \.self) { i in
+                Circle().strokeBorder(.white, lineWidth: 1.2)
+                    .background(Circle().fill(i < code.count ? Color.white : .clear))
+                    .frame(width: 13, height: 13)
+            }
+        }
+        .modifier(Shake(amount: shakes))
+        .accessibilityElement()
+        .accessibilityLabel("\(code.count) of 4 digits entered")
+        .accessibilityIdentifier("passcodeDots")
+    }
+
+    private func keypad(_ size: CGFloat) -> some View {
+        VStack(spacing: size * 0.2) {
+            ForEach(0..<3, id: \.self) { row in
+                HStack(spacing: size * 0.34) { ForEach(1...3, id: \.self) { col in key(row * 3 + col, size) } }
+            }
+            key(0, size)
+        }
+        .opacity(locked ? 0.4 : 1)
+    }
+
+    private func key(_ n: Int, _ size: CGFloat) -> some View {
+        Button { type(String(n)) } label: {
+            VStack(spacing: 0) {
+                Text("\(n)").font(.system(size: size * 0.46))
+                // 1 and 0 have no letters; the line is kept so every digit sits level.
+                Text(n >= 2 ? Self.letters[n - 1] : " ")
+                    .font(.system(size: size * 0.125, weight: .bold)).tracking(size * 0.025)
+                    .padding(.top, -size * 0.04)
+            }
+            .frame(width: size, height: size)
+            .contentShape(Circle())
+        }
+        .buttonStyle(KeyStyle())
+        .disabled(locked)
+        .accessibilityLabel("\(n)")
+        .accessibilityIdentifier("pin\(n)")
+    }
+
+    /// Where the Lock Screen has Emergency and Cancel: under the 7 and the 9.
+    private func bottomBar(_ size: CGFloat) -> some View {
+        HStack(spacing: size * 0.34) {
+            Group {
+                if let biometry {
+                    Button(biometry, action: onBiometry).accessibilityIdentifier("passcodeBiometry")
+                } else {
+                    Color.clear
+                }
+            }
+            .frame(width: size)
+            Color.clear.frame(width: size, height: 1)
+            Button(code.isEmpty ? "Cancel" : "Delete") {
+                if code.isEmpty { onCancel() } else if !busy { code.removeLast() }
+            }
+            .frame(width: size)
+            .accessibilityIdentifier(code.isEmpty ? "passcodeCancel" : "passcodeDelete")
+        }
+        .font(.system(size: 17))
+        .lineLimit(1).minimumScaleFactor(0.7)
+        .buttonStyle(.plain)
+        .frame(height: 44)
     }
 
     private func type(_ d: String) {
-        guard code.count < 4 else { return }
+        guard !busy, !locked, code.count < 4 else { return }
         code += d
         guard code.count == 4 else { return }
+        busy = true
         let entered = code
-        // A moment with four dots, then the answer.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            let answer = onEntered(entered)
-            code = ""
-            note = answer
-            if answer != nil {
+        // A moment with four full circles, then the answer.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            switch onEntered(entered) {
+            case .accepted:
+                break
+            case .next:
+                code = ""
+                busy = false
+            case .wrong:
                 UINotificationFeedbackGenerator().notificationOccurred(.error)
-                withAnimation(.linear(duration: 0.4)) { shake += 1 }
+                UIAccessibility.post(notification: .announcement, argument: "Wrong passcode")
+                withAnimation(.linear(duration: 0.45)) { shakes += 1 }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                    code = ""
+                    busy = false
+                }
             }
         }
+    }
+}
+
+/// A key lights up under the finger and fades back, as the Lock Screen's do.
+private struct KeyStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(Circle().fill(.white.opacity(configuration.isPressed ? 0.5 : 0.15)))
+            .animation(configuration.isPressed ? nil : .easeOut(duration: 0.4), value: configuration.isPressed)
+    }
+}
+
+/// What's under the passcode screen, blurred and darkened.
+struct PasscodeBackground: View {
+    var body: some View {
+        ZStack {
+            Rectangle().fill(.ultraThinMaterial)
+            Color.black.opacity(0.45)
+        }
+        .environment(\.colorScheme, .dark)
+        .ignoresSafeArea()
     }
 }
 
@@ -101,100 +216,200 @@ private struct Shake: GeometryEffect {
         set { amount = newValue }
     }
     func effectValue(size: CGSize) -> ProjectionTransform {
-        ProjectionTransform(CGAffineTransform(translationX: 9 * sin(amount * .pi * 6), y: 0))
+        ProjectionTransform(CGAffineTransform(translationX: 10 * sin(amount * .pi * 6), y: 0))
     }
 }
 
-// MARK: - Unlocking
+// MARK: - The kids passcode
 
-/// The passcode (or Face ID) asked for in place: Settings while the kids
-/// profile is on, leaving the profile.
-struct KidsUnlock: View {
-    let title: String
-    let reason: String
-    let unlocked: () -> Void
+/// What the kids passcode is asked for.
+enum KidsPasscodePurpose: Equatable {
+    /// The passcode (or Face ID) before a way out of the profile. `reason`
+    /// goes under the circles and in Face ID's prompt.
+    case unlock(reason: String)
+    /// Turning the profile on: a new passcode, entered twice.
+    case choose
+    /// The current passcode (or Face ID), then a new one twice.
+    case change
+}
+
+/// The passcode screen for the kids profile: checks the passcode
+/// (KidsProfile.check, with its 30-second wait after five wrong tries),
+/// offers Face ID first when it may stand in, and takes a new passcode twice.
+struct KidsPasscodeScreen: View {
+    let purpose: KidsPasscodePurpose
+    let cancel: () -> Void
+    /// Said yes: nil for .unlock, the new passcode for .choose and .change.
+    let done: (String?) -> Void
+
+    private enum Step: Equatable { case current, new, confirm(String) }
+    @State private var step: Step
+    @State private var note: String?
+    /// Seconds left of the wait after too many tries.
+    @State private var waitLeft: Int?
+    @State private var waitGeneration = 0
+    @State private var biometryName: String?
+    @State private var finished = false
     @ObservedObject private var kids = KidsProfile.shared
-    @State private var triedBiometry = false
+
+    init(purpose: KidsPasscodePurpose, cancel: @escaping () -> Void, done: @escaping (String?) -> Void) {
+        self.purpose = purpose
+        self.cancel = cancel
+        self.done = done
+        _step = State(initialValue: purpose == .choose ? .new : .current)
+    }
+
+    private var title: String {
+        switch step {
+        case .current: return "Enter Passcode"
+        case .new: return "Enter New Passcode"
+        case .confirm: return "Re-enter New Passcode"
+        }
+    }
+
+    /// What it's for, in words for the screen and for Face ID's prompt.
+    private var reason: String {
+        switch purpose {
+        case .unlock(let r): return r
+        case .choose: return "To turn on the kids profile"
+        case .change: return "To change the kids passcode"
+        }
+    }
+
+    private var message: String? {
+        if let s = waitLeft { return "Too many tries. Try again in \(s) s." }
+        if let note { return note }
+        switch step {
+        case .current: return reason
+        case .new: return purpose == .choose ? "It's asked for to leave the kids profile and to open Settings." : nil
+        case .confirm: return nil
+        }
+    }
 
     var body: some View {
-        let bio = kids.allowBiometrics ? kids.biometryName : nil
-        PasscodePad(title: title, message: kids.lockedFor.map { "Too many tries. Try again in \(Int($0.rounded(.up))) s." },
-                    biometry: bio, onBiometry: bio == nil ? nil : { useBiometry() }) { code in
+        PasscodeScreen(title: title, message: message,
+                       biometry: step == .current && kids.allowBiometrics ? biometryName : nil,
+                       onBiometry: useBiometry, locked: waitLeft != nil, onCancel: cancel, onEntered: entered)
+            .task {
+                biometryName = kids.biometryName
+                // Face ID first, as the Lock Screen does: once the screen is up.
+                guard step == .current, kids.allowBiometrics, biometryName != nil, kids.lockedFor == nil else { return }
+                try? await Task.sleep(nanoseconds: 350_000_000)
+                if !Task.isCancelled { useBiometry() }
+            }
+            .task(id: waitGeneration) {
+                // The wait after five wrong tries counts down here (it's kept across launches).
+                while let left = kids.lockedFor, !Task.isCancelled {
+                    waitLeft = Int(left.rounded(.up))
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                }
+                waitLeft = nil
+            }
+    }
+
+    private func entered(_ code: String) -> PasscodeAnswer {
+        guard !finished else { return .accepted }
+        switch step {
+        case .current:
             switch kids.check(code) {
             case .right:
-                unlocked()
-                return nil
+                note = nil
+                if purpose == .change { step = .new; return .next }
+                finish(nil)
+                return .accepted
             case .wrong(let left):
-                return left == 1 ? "Wrong passcode. One more try before a 30-second wait." : "Wrong passcode."
-            case .locked(let s):
-                return "Too many tries. Try again in \(s) s."
+                note = left == 1 ? "Wrong passcode. One more try before a 30-second wait." : "Wrong passcode."
+                return .wrong
+            case .locked:
+                note = nil
+                waitGeneration += 1
+                return .wrong
             }
-        }
-        .onAppear {
-            // Face ID at once, the way the Lock Screen does; once per visit.
-            guard bio != nil, !triedBiometry else { return }
-            triedBiometry = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { useBiometry() }
+        case .new:
+            note = nil
+            step = .confirm(code)
+            return .next
+        case .confirm(let first):
+            guard code == first else {
+                note = "The passcodes didn't match. Try again."
+                step = .new
+                return .wrong
+            }
+            finish(code)
+            return .accepted
         }
     }
 
     private func useBiometry() {
-        Task { if await kids.unlockWithBiometrics(reason) { unlocked() } }
+        let why = reason
+        Task {
+            guard await kids.unlockWithBiometrics(why), !finished else { return }
+            if purpose == .change {
+                note = nil
+                step = .new
+            } else {
+                finish(nil)
+            }
+        }
+    }
+
+    private func finish(_ code: String?) {
+        guard !finished else { return }
+        finished = true
+        done(code)
     }
 }
 
-/// Leaving the kids profile from Home: the passcode in a sheet.
-struct KidsLeaveSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        NavigationStack {
-            KidsUnlock(title: "Enter the passcode to leave the kids profile", reason: "Leave the kids profile") {
-                KidsProfile.shared.turnOff()
-                dismiss()
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(HomeBackdrop().ignoresSafeArea())
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+/// A way out of the kids profile, or a new passcode (1.22.1). The passcode
+/// screen comes up each time one is wanted: no "unlocked for this visit".
+/// `then` runs once it said yes, with the new passcode for .choose and .change.
+struct KidsGate: Identifiable {
+    let id = UUID()
+    let purpose: KidsPasscodePurpose
+    let then: (String?) -> Void
+
+    /// Without a sheet's slide: the pad comes up in place, as the Lock Screen's
+    /// does. On the next turn of the run loop: asked for from a rating
+    /// picker's menu while the menu was still closing, the pad never showed
+    /// (simulator run, 3 Nov).
+    @MainActor
+    static func open(_ gate: Binding<KidsGate?>, _ purpose: KidsPasscodePurpose, then: @escaping (String?) -> Void) {
+        let g = KidsGate(purpose: purpose, then: then)
+        DispatchQueue.main.async {
+            withTransaction(\.disablesAnimations, true) { gate.wrappedValue = g }
+        }
+    }
+
+    @MainActor
+    static func close(_ gate: Binding<KidsGate?>) {
+        withTransaction(\.disablesAnimations, true) { gate.wrappedValue = nil }
+    }
+}
+
+extension View {
+    /// The passcode screen over the whole app, with the page under it
+    /// blurred, while `gate` is set.
+    func kidsPasscode(_ gate: Binding<KidsGate?>) -> some View {
+        fullScreenCover(item: gate) { g in
+            KidsPasscodeCover(gate: g, binding: gate)
+                .presentationBackground(.clear)
         }
     }
 }
 
-/// Setting the passcode: typed twice.
-struct KidsSetPasscodeSheet: View {
-    let done: (String) -> Void
-    @Environment(\.dismiss) private var dismiss
-    @State private var first: String?
+private struct KidsPasscodeCover: View {
+    let gate: KidsGate
+    let binding: Binding<KidsGate?>
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if let first {
-                    PasscodePad(title: "Enter it again", message: "To be sure it's the one you meant.") { code in
-                        guard code == first else {
-                            self.first = nil
-                            return "They didn't match. Start again."
-                        }
-                        done(code)
-                        dismiss()
-                        return nil
-                    }
-                    .id("confirm")
-                } else {
-                    PasscodePad(title: "Choose a 4-digit passcode",
-                                message: "It's asked for to open Settings and to leave the kids profile. Folio can't show it again.") { code in
-                        first = code
-                        return nil
-                    }
-                    .id("first")
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(HomeBackdrop().ignoresSafeArea())
-            .navigationTitle("Kids Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+        KidsPasscodeScreen(purpose: gate.purpose) {
+            KidsGate.close(binding)
+        } done: { code in
+            KidsGate.close(binding)
+            // After the screen has gone: what it opens can remove the view it hangs on (Home's badge).
+            DispatchQueue.main.async { gate.then(code) }
         }
-        .interactiveDismissDisabled(first != nil)
+        .accessibilityIdentifier("kidsPasscode")
     }
 }
 
@@ -202,27 +417,36 @@ struct KidsSetPasscodeSheet: View {
 
 struct KidsProfileSettings: View {
     @ObservedObject private var kids = KidsProfile.shared
-    @State private var settingPasscode = false
+    @State private var gate: KidsGate?
 
     var body: some View {
         Form {
             Section {
                 if kids.isOn {
                     Label("The kids profile is on", systemImage: "figure.and.child.holdinghands")
-                    Button("Turn Off Kids Profile", role: .destructive) { kids.turnOff() }
+                    Button("Change Passcode…") {
+                        KidsGate.open($gate, .change) { code in if let code { kids.changePasscode(to: code) } }
+                    }
+                    Button("Turn Off Kids Profile", role: .destructive) {
+                        KidsGate.open($gate, .unlock(reason: "To turn off the kids profile")) { _ in kids.turnOff() }
+                    }
+                    .accessibilityIdentifier("kidsTurnOff")
                 } else {
-                    Button { settingPasscode = true } label: { Label("Turn On Kids Profile…", systemImage: "figure.and.child.holdinghands") }
+                    Button {
+                        KidsGate.open($gate, .choose) { code in if let code { kids.turnOn(passcode: code) } }
+                    } label: { Label("Turn On Kids Profile…", systemImage: "figure.and.child.holdinghands") }
+                    .accessibilityIdentifier("kidsTurnOn")
                 }
             } footer: {
                 Text(kids.isOn
-                     ? "Settings lock when you close them, and stay locked behind the passcode until you turn the profile off."
+                     ? "Settings, turning the profile off, and changing its ratings or passcode each ask for the passcode, every time."
                      : "Discover, search and your library show only titles rated for kids, Settings are locked behind a 4-digit passcode, and leaving the profile needs it too. You choose the passcode when you turn it on.")
             }
             Section {
-                Picker("Films up to", selection: $kids.limits.film) {
+                Picker("Films up to", selection: limit(\.film)) {
                     ForEach(KidsRules.FilmLimit.allCases) { Text($0.rawValue).tag($0) }
                 }
-                Picker("Shows up to", selection: $kids.limits.show) {
+                Picker("Shows up to", selection: limit(\.show)) {
                     ForEach(KidsRules.ShowLimit.allCases) { Text($0.rawValue).tag($0) }
                 }
             } header: { Text("Ratings") } footer: {
@@ -230,32 +454,52 @@ struct KidsProfileSettings: View {
             }
             if let name = kids.biometryName {
                 Section {
-                    Toggle("Unlock with \(name)", isOn: $kids.allowBiometrics)
+                    Toggle("Unlock with \(name)", isOn: biometrics)
                 } footer: { Text("\(name) can stand in for the passcode. Anyone whose face or finger this device knows can then unlock.") }
             }
         }
         .brandListBackground()
         .navigationTitle("Kids Profile")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $settingPasscode) { KidsSetPasscodeSheet { kids.turnOn(passcode: $0) } }
+        .kidsPasscode($gate)
+    }
+
+    /// A rating limit. While the profile is on, a new one is kept only after
+    /// the passcode; until then (and on Cancel) the picker shows the old one.
+    private func limit<T: Equatable>(_ key: WritableKeyPath<KidsRules.Limits, T>) -> Binding<T> {
+        Binding {
+            kids.limits[keyPath: key]
+        } set: { value in
+            guard kids.limits[keyPath: key] != value else { return }
+            guard kids.isOn else { kids.limits[keyPath: key] = value; return }
+            KidsGate.open($gate, .unlock(reason: "To change the kids profile's ratings")) { _ in kids.limits[keyPath: key] = value }
+        }
+    }
+
+    /// Face ID in place of the passcode: changed only with the passcode while the profile is on.
+    private var biometrics: Binding<Bool> {
+        Binding {
+            kids.allowBiometrics
+        } set: { value in
+            guard kids.isOn else { kids.allowBiometrics = value; return }
+            KidsGate.open($gate, .unlock(reason: value ? "To let Face ID or Touch ID unlock the kids profile" : "To change how the kids profile unlocks")) { _ in
+                kids.allowBiometrics = value
+            }
+        }
     }
 }
 
-/// Settings while the kids profile is on, until the passcode is entered.
+/// Settings while the kids profile is on (1.22.1): the passcode screen over
+/// them each time they open, until the passcode or Face ID is given. Cancel
+/// goes back.
 struct SettingsLocked: View {
+    let cancel: () -> Void
     let unlocked: () -> Void
     var body: some View {
-        ScrollView {
-            VStack(spacing: 6) {
-                Text("Settings are locked").font(.headline).padding(.top, 24)
-                Text("The kids profile is on.").font(.subheadline).foregroundStyle(.secondary)
-                KidsUnlock(title: "Enter the passcode", reason: "Open Settings", unlocked: unlocked)
-                    .padding(.top, 8)
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .background(HomeBackdrop().ignoresSafeArea())
-        .accessibilityIdentifier("settingsLocked")
+        KidsPasscodeScreen(purpose: .unlock(reason: "To open Settings"), cancel: cancel) { _ in unlocked() }
+            .background(HomeBackdrop().ignoresSafeArea())
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("settingsLocked")
     }
 }
 
@@ -282,9 +526,11 @@ struct KidsBlockedView: View {
 
 /// On Home while the kids profile is on; a tap asks for the passcode to leave it.
 struct KidsBadge: View {
-    @State private var leaving = false
+    @State private var gate: KidsGate?
     var body: some View {
-        Button { leaving = true } label: {
+        Button {
+            KidsGate.open($gate, .unlock(reason: "To leave the kids profile")) { _ in KidsProfile.shared.turnOff() }
+        } label: {
             Label("Kids", systemImage: "figure.and.child.holdinghands")
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 12).frame(height: 44)
@@ -295,7 +541,7 @@ struct KidsBadge: View {
         .accessibilityLabel("Kids profile on")
         .accessibilityHint("Asks for the passcode to leave it")
         .accessibilityIdentifier("kidsBadge")
-        .sheet(isPresented: $leaving) { KidsLeaveSheet() }
+        .kidsPasscode($gate)
     }
 }
 

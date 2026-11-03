@@ -2,116 +2,173 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-/// The downloads Live Activity (1.22.0; the app's DownloadActivity runs it):
-/// the file downloading, the run's progress, speed and time left, on the
-/// Lock Screen and in the Dynamic Island. Tapping it opens Downloads.
+/// The downloads Live Activity (1.22.0; the app's DownloadActivity runs it).
+/// Redrawn in 1.22.1 as liquid glass: a ring of water around a glass disc
+/// with the download arrow, the file's name, speed and time left, and the
+/// run's progress as water in a glass tube, on a dark see-through pane lit
+/// from behind. The ring, the tube and the time left move by themselves
+/// from the app's last estimate (timer views): in the background Folio is
+/// suspended and can't update it (4 Nov report: it showed no progress).
+/// Tapping it opens Downloads.
 struct DownloadActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: DownloadActivityAttributes.self) { context in
             DownloadLockScreen(state: context.state, stale: context.isStale)
-                .activityBackgroundTint(WidgetTheme.background)
-                .activitySystemActionForegroundColor(WidgetTheme.text)
+                .activityBackgroundTint(LiquidGlass.backdrop)
+                .activitySystemActionForegroundColor(.white)
                 .widgetURL(DownloadsLink.url)
         } dynamicIsland: { context in
             let s = context.state
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    DownloadRing(state: s, size: 44, track: .white.opacity(0.2), fill: .white)
-                        .padding(.leading, 4)
+                    DownloadRing(state: s, size: 54, line: 4.5)
+                        .padding(.leading, 6).padding(.top, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    if !s.done {
-                        Text(context.isStale ? s.percentText : s.speedText)
-                            .font(.subheadline.weight(.semibold).monospacedDigit())
-                            .lineLimit(1)
-                            .padding(.trailing, 4)
-                    }
+                    DownloadTimeLeft(state: s, stale: context.isStale, compact: false)
+                        .padding(.trailing, 6).padding(.top, 6)
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    Text(s.headline).font(.subheadline.weight(.semibold)).lineLimit(1)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(s.headline).font(.subheadline.weight(.semibold)).lineLimit(1)
+                        Text(DownloadLines.meta(s, stale: context.isStale))
+                            .font(.caption.monospacedDigit()).foregroundStyle(LiquidGlass.secondary).lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 6)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        if !s.done { ActivityBar(progress: s.progress, track: .white.opacity(0.2), fill: .white) }
-                        Text(DownloadLines.detail(s, stale: context.isStale))
-                            .font(.caption).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
+                    if !s.done {
+                        LiquidBar(range: s.timerRange, progress: s.progress, tint: LiquidGlass.aqua)
+                            .padding(.horizontal, 8).padding(.top, 10)
                     }
-                    .padding(.horizontal, 4)
                 }
             } compactLeading: {
-                Image(systemName: s.done ? "checkmark.circle.fill" : "arrow.down.circle.fill")
-                    .foregroundStyle(.white)
+                DownloadRing(state: s, size: 24, line: 2.6)
             } compactTrailing: {
-                Text(s.done ? "Done" : s.percentText)
-                    .font(.caption.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(.white)
+                DownloadTimeLeft(state: s, stale: context.isStale, compact: true)
             } minimal: {
-                DownloadRing(state: s, size: 22, track: .white.opacity(0.25), fill: .white)
+                DownloadRing(state: s, size: 24, line: 2.6)
             }
             .widgetURL(DownloadsLink.url)
-            .keylineTint(.white)
+            .keylineTint(LiquidGlass.aqua)
         }
     }
 }
 
-/// The Lock Screen's banner.
+/// The Lock Screen's pane.
 private struct DownloadLockScreen: View {
     let state: DownloadActivityAttributes.ContentState
     let stale: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                DownloadRing(state: state, size: 40, track: WidgetTheme.fill, fill: WidgetTheme.accent)
-                VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 14) {
+                DownloadRing(state: state, size: 58, line: 5)
+                VStack(alignment: .leading, spacing: 4) {
                     Text(state.headline).font(.headline).lineLimit(1)
-                    Text(DownloadLines.detail(state, stale: stale)).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text(DownloadLines.meta(state, stale: stale))
+                        .font(.caption.monospacedDigit()).foregroundStyle(LiquidGlass.secondary).lineLimit(1)
                 }
-                Spacer(minLength: 8)
-                if !state.done {
-                    Text(stale ? state.percentText : state.speedText)
-                        .font(.subheadline.weight(.semibold).monospacedDigit())
-                        .lineLimit(1)
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                DownloadTimeLeft(state: state, stale: stale, compact: false)
             }
-            if !state.done { ActivityBar(progress: state.progress, track: WidgetTheme.fill, fill: WidgetTheme.accent) }
+            if !state.done {
+                LiquidBar(range: state.timerRange, progress: state.progress, tint: LiquidGlass.aqua)
+            }
         }
         .padding(16)
-        .foregroundStyle(WidgetTheme.text)
+        .background(alignment: .topLeading) { Glow(color: LiquidGlass.aqua) }
+        .foregroundStyle(.white)
     }
 }
 
 private enum DownloadLines {
-    /// Under the title: what's left, or (stale: Folio hasn't updated it
-    /// for a while, it's in the background) that it carries on there.
-    static func detail(_ s: DownloadActivityAttributes.ContentState, stale: Bool) -> String {
-        if stale && !s.done {
-            return s.filesLeft > 1 ? "Downloading in the background · \(s.filesLeft) files" : "Downloading in the background"
-        }
-        return s.detailText ?? s.percentText
+    /// Under the name: speed and files, what's left once done, or (stale:
+    /// Folio hasn't been heard from past the estimate) that it carries on.
+    static func meta(_ s: DownloadActivityAttributes.ContentState, stale: Bool) -> String {
+        if s.done { return s.detailText ?? "" }
+        if stale { return s.filesLeft > 1 ? "Downloading in the background · \(s.filesLeft) files" : "Downloading in the background" }
+        if s.waiting { return s.filesText ?? "Waiting" }
+        var parts: [String] = []
+        if s.speed > 0 { parts.append(s.speedText) }
+        if let files = s.filesText { parts.append(files) }
+        if s.timerRange == nil, let detail = s.detailText, !s.waiting { parts.append(detail) }
+        return parts.isEmpty ? s.percentText : parts.joined(separator: " · ")
     }
 }
 
-/// The run's progress around an arrow (a check once done).
+/// The time left, counting down by itself ("12:34", "left" under it);
+/// the percentage with no estimate; Done at the end.
+private struct DownloadTimeLeft: View {
+    let state: DownloadActivityAttributes.ContentState
+    let stale: Bool
+    let compact: Bool
+
+    var body: some View {
+        if compact {
+            Group {
+                if state.done {
+                    Image(systemName: "checkmark").font(.caption.weight(.bold))
+                } else if let range = state.timeLeftRange, !stale {
+                    Text(timerInterval: range, countsDown: true).multilineTextAlignment(.trailing)
+                } else {
+                    Text(state.percentText)
+                }
+            }
+            .font(.system(.caption, design: .rounded).weight(.semibold).monospacedDigit())
+            .foregroundStyle(LiquidGlass.aqua)
+            .lineLimit(1)
+            // A timer takes the width it may ever need: "1:02:03" needs more than "12:34".
+            .frame(width: LiquidGlass.clockWidth(state.timeLeftRange), alignment: .trailing)
+        } else if !state.done {
+            VStack(alignment: .trailing, spacing: 0) {
+                Group {
+                    if let range = state.timeLeftRange, !stale {
+                        Text(timerInterval: range, countsDown: true).multilineTextAlignment(.trailing)
+                    } else {
+                        Text(state.percentText)
+                    }
+                }
+                .font(.system(.title3, design: .rounded).weight(.semibold).monospacedDigit())
+                .lineLimit(1)
+                Text(state.timeLeftRange != nil && !stale ? "left" : "done")
+                    .font(.caption2).foregroundStyle(LiquidGlass.secondary)
+            }
+            .frame(width: 78, alignment: .trailing)
+        }
+    }
+}
+
+/// The run's progress as a ring of water around a glass disc with the
+/// arrow (a check once done). Fills by itself with an estimate.
 private struct DownloadRing: View {
     let state: DownloadActivityAttributes.ContentState
     let size: CGFloat
-    let track: Color
-    let fill: Color
+    let line: CGFloat
 
     var body: some View {
-        let width = max(2, size / 12)
         ZStack {
-            Circle().stroke(track, lineWidth: width)
-            Circle().trim(from: 0, to: state.done ? 1 : max(0.02, min(1, state.progress)))
-                .stroke(fill, style: StrokeStyle(lineWidth: width, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            Image(systemName: state.done ? "checkmark" : "arrow.down")
-                .font(.system(size: size * 0.36, weight: .bold))
-                .foregroundStyle(fill)
+            Circle().inset(by: line / 2).stroke(LiquidGlass.track, lineWidth: line)
+            if state.done {
+                Circle().inset(by: line / 2).stroke(LiquidGlass.aqua, lineWidth: line)
+            } else if let range = state.timerRange {
+                ProgressView(timerInterval: range, countsDown: false) { EmptyView() } currentValueLabel: { EmptyView() }
+                    .progressViewStyle(.circular)
+                    .tint(LiquidGlass.aqua)
+            } else {
+                Circle().inset(by: line / 2).trim(from: 0, to: max(0.02, min(1, state.progress)))
+                    .stroke(LiquidGlass.aqua, style: StrokeStyle(lineWidth: line, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+            GlassFill(shape: Circle())
+                .padding(line + max(1.5, size * 0.06))
+            Image(systemName: state.done ? "checkmark" : state.waiting ? "clock" : "arrow.down")
+                .font(.system(size: size * 0.3, weight: .bold))
+                .foregroundStyle(state.done ? LiquidGlass.aqua : .white)
         }
-        .padding(width / 2)
         .frame(width: size, height: size)
+        .accessibilityElement()
         .accessibilityLabel(state.done ? "Downloads finished" : "Downloading, \(state.percentText)")
     }
 }

@@ -246,8 +246,12 @@ struct DiscoverView: View {
                 forYou.load()
             }
             .refreshable { browse.reload(); forYou.load(force: true) }
-            // The kids profile turned on or off: the lists start from another genre.
-            .onChange(of: kids.isOn) { _, _ in browse.reload() }
+            // The kids profile turned on or off: the lists start from another
+            // genre, and For you shows only titles whose rating is known (1.22.1).
+            .onChange(of: kids.isOn) { _, on in
+                browse.reload()
+                if on { forYou.lookUpRatings() }
+            }
             .sheet(isPresented: $showPlatformSettings) { PlatformSettingsView() }
         }
     }

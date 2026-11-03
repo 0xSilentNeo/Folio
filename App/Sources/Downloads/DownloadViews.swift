@@ -493,7 +493,9 @@ private struct FileRow: View {
 
     private var meta: String {
         switch item.state {
-        case .running: return "\(item.received.byteString) of \(item.expected.byteString)"
+        case .running:
+            let parts = item.parts.map { ps in ps.filter { !$0.done }.count } ?? 0
+            return "\(item.received.byteString) of \(item.expected.byteString)" + (parts > 1 ? " · \(parts) connections" : "")
         case .queued: return "Queued · \(item.expected.byteString)" + (item.held ? " · waiting" : "")
         case .paused: return "Paused · \(item.received.byteString) of \(item.expected.byteString)"
         case .failed: return item.error ?? "Failed"
@@ -556,6 +558,7 @@ struct ThinBar: View {
 
 struct DownloadSettingsView: View {
     @AppStorage(SettingsKey.downloadConcurrent) private var concurrent = 2
+    @AppStorage(SettingsKey.downloadParts) private var parts = 4
     @AppStorage(SettingsKey.downloadAutoStart) private var autoStart = true
     @AppStorage(SettingsKey.downloadSaveTo) private var saveTo = "folder"
     @AppStorage(SettingsKey.downloadSkipExisting) private var skipExisting = true
@@ -572,9 +575,10 @@ struct DownloadSettingsView: View {
         Form {
             Section {
                 Stepper("Simultaneous downloads: \(concurrent)", value: $concurrent, in: 1...6)
+                Stepper("Connections per file: \(parts)", value: $parts, in: 1...8)
                 Toggle("Start automatically", isOn: $autoStart)
             } header: { Text("Queue") } footer: {
-                Text("Off: a tapped file waits, paused, until you start it on the Downloads screen. More than two at once rarely helps on one WebDAV server.")
+                Text("Connections: a file over 64 MB downloads in that many parts side by side, when the server allows it. That helps most with a server that is slow per connection. Start automatically off: a tapped file waits, paused, until you start it on the Downloads screen.")
             }
             Section("Saving") {
                 Picker("Save to", selection: $saveTo) {

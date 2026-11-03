@@ -28,6 +28,13 @@ struct DownloadActivityAttributes: ActivityAttributes {
         /// Done: files that finished, and those that failed.
         var finished = 0
         var failed = 0
+        /// When `progress` was read, and when the run should end at the speed
+        /// then (1.22.1). From these the ring, the bar and the time left move
+        /// by themselves (timer views): while it downloads in the background
+        /// Folio is suspended (iOS does the transfer) and can't update the
+        /// activity. Each time Folio runs it corrects them.
+        var measuredAt: Date?
+        var finishBy: Date?
     }
 }
 
@@ -50,6 +57,36 @@ extension DownloadActivityAttributes.ContentState {
 
     /// The title on the Lock Screen, "Downloads finished" once done.
     var headline: String { done ? "Downloads finished" : title }
+
+    /// For ProgressView(timerInterval:): it starts where `progress` was at
+    /// `measuredAt` and is full at `finishBy`. Nil without an estimate
+    /// (a still ring and bar instead).
+    var timerRange: ClosedRange<Date>? {
+        guard !done, !waiting, let at = measuredAt, let end = finishBy, end > at, progress < 1 else { return nil }
+        let p = min(0.995, max(0, progress))
+        let start = at.addingTimeInterval(-end.timeIntervalSince(at) * p / (1 - p))
+        return start...end
+    }
+
+    /// For Text(timerInterval:): from the reading to the estimated end.
+    var timeLeftRange: ClosedRange<Date>? {
+        guard timerRange != nil, let at = measuredAt, let end = finishBy else { return nil }
+        return at...end
+    }
+
+    /// Where the timers say the run is at `date` (0...1).
+    func progress(at date: Date) -> Double {
+        guard let r = timerRange else { return min(1, max(0, progress)) }
+        let whole = r.upperBound.timeIntervalSince(r.lowerBound)
+        return whole > 0 ? min(1, max(0, date.timeIntervalSince(r.lowerBound) / whole)) : 1
+    }
+
+    /// "12 files" style line under the title while the timers run: the
+    /// time left is a timer view next to it.
+    var filesText: String? {
+        if waiting { return filesLeft > 1 ? "Waiting to retry · \(filesLeft) files" : "Waiting to retry" }
+        return filesLeft > 1 ? "\(filesLeft) files" : nil
+    }
 }
 
 /// folio://downloads: the downloads activity opens the Downloads screen.
@@ -78,6 +115,9 @@ struct NowPlayingActivityAttributes: ActivityAttributes {
         /// When `position` was read: from there the activity's timers move
         /// on by themselves, so it needs no update while the video plays.
         var at: Date
+        /// The picture's colour, "RRGGBB" (1.22.1): the glow behind the
+        /// Lock Screen pane and the ring in the Dynamic Island.
+        var tint: String?
     }
 }
 

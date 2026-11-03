@@ -2,11 +2,17 @@ import Foundation
 
 /// Air times as Folio shows them: in your time zone, in your locale's clock
 /// ("Today 9:00 PM", "Tue 2:30 AM", "in 3 h").
+///
+/// Every time comes from a moment (TVmaze's airstamp, AniList's airingAt),
+/// never from a date and time in the network's own zone (TVmaze's airdate
+/// and airtime aren't read at all). 1.22.1: the calendar is the
+/// autoupdating one, so a time zone changed while Folio is open (a trip,
+/// Settings → General → Date & Time) shows at once.
 enum AiringFormat {
     /// "Today 9:00 PM", "Tomorrow 9:00 PM", "Yesterday 9:00 PM", "Tue 2:30 AM"
     /// (this week), "Nov 20, 9:00 PM" (further off), "May 20, 2019, 11:00 AM"
     /// (another year).
-    static func when(_ date: Date, now: Date = Date(), calendar: Calendar = .current, locale: Locale = .current) -> String {
+    static func when(_ date: Date, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
         let time = formatter("jmm", calendar, locale).string(from: date)
         let days = dayOffset(date, from: now, calendar: calendar)
         switch days {
@@ -21,21 +27,38 @@ enum AiringFormat {
     }
 
     /// "Out now" (aired in the last six hours), "Aired" (before that),
-    /// "in 45 min", "in 3 h", "in 2 days".
-    static func countdown(to date: Date, now: Date = Date()) -> String {
+    /// "in 45 min", "in 3 h", "in 2 days". With a calendar (what the
+    /// screens pass, 1.22.1) a day or more away counts the calendar days, so
+    /// it agrees with the day beside it: "Tomorrow 9:00 PM" 39 hours off was
+    /// "in 2 days" (simulator screenshot, 3 Nov); it's "in 1 day" now.
+    static func countdown(to date: Date, now: Date = Date(), calendar: Calendar? = nil) -> String {
         let s = date.timeIntervalSince(now)
         if s <= 0 { return -s < AiringClock.outNowWindow ? "Out now" : "Aired" }
         let minutes = Int((s / 60).rounded(.up))
         if minutes < 60 { return "in \(minutes) min" }
         let hours = Int((s / 3600).rounded())
         if hours < 24 { return "in \(hours) h" }
-        let days = Int((s / 86400).rounded())
+        let days = calendar.map { max(1, dayOffset(date, from: now, calendar: $0)) } ?? Int((s / 86400).rounded())
         return days == 1 ? "in 1 day" : "in \(days) days"
+    }
+
+    /// An episode tile's line on a title page (1.22.1): "Airs today 9:00 PM",
+    /// "Airs Tue 9:00 PM", "Airs Nov 20, 9:00 PM".
+    static func airs(_ date: Date, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
+        var w = when(date, now: now, calendar: calendar, locale: locale)
+        if w.hasPrefix("Today") || w.hasPrefix("Tomorrow") || w.hasPrefix("Yesterday") { w = w.prefix(1).lowercased() + w.dropFirst() }
+        return "Airs " + w
+    }
+
+    /// The countdown standing on its own, as a tile shows it: "In 2 days", "In 3 h".
+    static func countdownTitle(to date: Date, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent) -> String {
+        let s = countdown(to: date, now: now, calendar: calendar)
+        return s.prefix(1).uppercased() + s.dropFirst()
     }
 
     /// What Siri says (NextEpisodeIntent): "MobLand season 1, episode 5,
     /// “The Fall”, airs today at 9:00 PM, in 3 hours."
-    static func spoken(_ show: TrackedShow, now: Date = Date(), calendar: Calendar = .current, locale: Locale = .current) -> String {
+    static func spoken(_ show: TrackedShow, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
         if let e = show.upcoming(after: now).first, let d = e.airDate {
             let rel = RelativeDateTimeFormatter()
             rel.locale = locale

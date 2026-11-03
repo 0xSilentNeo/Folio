@@ -55,16 +55,19 @@ enum NowPlayingActivity {
             shown = nil
         }
         current = State(title: title, subtitle: subtitle?.isEmpty == true ? nil : subtitle, artwork: same ? current?.artwork : nil,
-                        position: clean(position), duration: clean(duration), paused: paused, at: Date())
+                        position: clean(position), duration: clean(duration), paused: paused, at: Date(), tint: same ? current?.tint : nil)
         listen()
         dlog("activity", "now playing: \(same ? "again" : "start")\(artwork == nil ? ", no picture" : "")")
         guard let artwork, current?.artwork == nil else { show(force: true); return }
         // The picture first (a few ms, off the main thread): an activity
         // shown without it would need a second update a moment later.
         Task {
-            let name = await LiveActivities.savePicture(artwork, prefix: "nowplaying")
+            async let name = LiveActivities.savePicture(artwork, prefix: "nowplaying")
+            async let tint = LiveActivities.tint(of: artwork)
+            let (saved, colour) = await (name, tint)
             guard gen == generation, current != nil else { return }
-            current?.artwork = name
+            current?.artwork = saved
+            current?.tint = colour
             show(force: true)
         }
     }
@@ -110,7 +113,7 @@ enum NowPlayingActivity {
     nonisolated static func needsUpdate(from old: State, to new: State) -> Bool {
         if old.paused != new.paused { return true }
         if abs(old.duration - new.duration) > 1 { return true }
-        if old.title != new.title || old.subtitle != new.subtitle || old.artwork != new.artwork { return true }
+        if old.title != new.title || old.subtitle != new.subtitle || old.artwork != new.artwork || old.tint != new.tint { return true }
         return abs(old.position(at: new.at) - new.position) > 2
     }
 

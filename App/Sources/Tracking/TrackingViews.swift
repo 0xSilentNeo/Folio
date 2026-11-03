@@ -5,10 +5,12 @@ import UserNotifications
 // MARK: - Track button
 
 /// The title pages' Track button (Discover's and the library's, series
-/// only): a bell that becomes "Tracking". The first Track asks to allow
-/// notifications. Where the row is tight (Resume and Start over beside it)
-/// it's the bell alone; it keeps one width either way, so tapping it never
-/// moves the page.
+/// only): a bell and "Track", which becomes a filled bell and "Tracking" in
+/// the accent colour. The first Track asks to allow notifications. 1.22.1:
+/// always with its words (until then a tight row showed the bell alone,
+/// and a tracked show looked much like an untracked one); where the row
+/// has no room for them it goes on a line of its own (TitleButtonRow). It
+/// keeps one width either way, so tapping it never moves the page.
 struct TrackButton: View {
     let show: TrackedShow
     @ObservedObject private var store = TrackingStore.shared
@@ -19,23 +21,8 @@ struct TrackButton: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { store.toggle(show) }
         } label: {
-            ViewThatFits(in: .horizontal) {
-                face(on, text: true)
-                face(on, text: false)
-            }
-        }
-        .buttonStyle(PressStyle())
-        .accessibilityLabel(on ? "Tracking" : "Track")
-        .accessibilityHint(on ? "Stops telling you about new episodes." : "Tells you when new episodes air.")
-        .accessibilityIdentifier("trackButton")
-    }
-
-    @ViewBuilder
-    private func face(_ on: Bool, text: Bool) -> some View {
-        let bell = Image(systemName: on ? "bell.fill" : "bell").contentTransition(.symbolEffect(.replace))
-        if text {
             HStack(spacing: 6) {
-                bell
+                Image(systemName: on ? "bell.fill" : "bell").contentTransition(.symbolEffect(.replace))
                 // As wide as "Tracking" in both states.
                 ZStack {
                     Text("Tracking").hidden()
@@ -43,21 +30,123 @@ struct TrackButton: View {
                 }
             }
             .font(.subheadline.weight(.semibold))
+            .foregroundStyle(on ? Theme.onAccent : .primary)
             .padding(.horizontal, 16).frame(height: 44)
+            .background { if on { Capsule().fill(Theme.accent) } }
             .glass(cornerRadius: 22, interactive: true)
-        } else {
-            bell
-                .font(.subheadline.weight(.semibold))
-                .frame(width: 44, height: 44)
-                .glass(cornerRadius: 22, interactive: true)
+            .fixedSize()
         }
+        .buttonStyle(PressStyle())
+        .accessibilityLabel(on ? "Tracking" : "Track")
+        .accessibilityValue(on ? "On" : "Off")
+        .accessibilityHint(on ? "Stops telling you about new episodes." : "Tells you when new episodes air.")
+        .accessibilityIdentifier("trackButton")
+    }
+}
+
+/// Under a tracked show's buttons (1.22.1): that it's tracked, and when
+/// the next episode airs in your time zone.
+struct TrackStatusLine: View {
+    let show: TrackedShow
+    @ObservedObject private var store = TrackingStore.shared
+
+    var body: some View {
+        if let s = store.tracked(like: show) {
+            TimelineView(.everyMinute) { ctx in
+                Label(Self.text(s, now: ctx.date), systemImage: "bell.badge")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+            .accessibilityIdentifier("trackStatus")
+        }
+    }
+
+    /// "Tracking · next S2 · E8 airs Tue 9:00 PM, in 2 days", or why there's no time.
+    static func text(_ s: TrackedShow, now: Date, calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
+        if let e = s.upcoming(after: now).first, let d = e.airDate {
+            let airs = AiringFormat.airs(d, now: now, calendar: calendar, locale: locale)
+            return "Tracking · next \(e.label) \(airs.prefix(1).lowercased() + airs.dropFirst()), \(AiringFormat.countdown(to: d, now: now, calendar: calendar))"
+        }
+        return "Tracking · " + TrackedShowRow.line(s, now: now)
+    }
+}
+
+/// An episode tile's airing mark on a title page (1.22.1): "New" in the
+/// accent, or "Airs Tue 9:00 PM" over "In 2 days", in your time zone.
+struct AiringBadge: View {
+    let mark: AiringMark
+    /// One pill ("New", "Airs Tue 9:00 PM"), for a row's line of text.
+    var compact = false
+    /// The picture it sits on: a longer line ("Airs tomorrow 9:00 PM") is
+    /// drawn a little smaller to stay on it.
+    var maxWidth: CGFloat? = nil
+
+    var body: some View {
+        TimelineView(.everyMinute) { ctx in
+            switch mark {
+            case .new:
+                pill("New", strong: true)
+            case .airs(let d) where compact:
+                pill(AiringFormat.airs(d, now: ctx.date), strong: false)
+            case .airs(let d):
+                VStack(alignment: .leading, spacing: 3) {
+                    pill(AiringFormat.airs(d, now: ctx.date), strong: false)
+                    pill(AiringFormat.countdownTitle(to: d, now: ctx.date), strong: false)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("airingBadge")
+    }
+
+    private func pill(_ s: String, strong: Bool) -> some View {
+        Text(s).font(.caption2.weight(.bold).monospacedDigit()).lineLimit(1).minimumScaleFactor(0.7)
+            .foregroundStyle(strong ? Theme.onAccent : .white)
+            .padding(.horizontal, 7).padding(.vertical, 3)
+            .background(strong ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.black.opacity(0.62)), in: Capsule())
+            .fixedSize(horizontal: maxWidth == nil, vertical: true)
+            .frame(maxWidth: maxWidth, alignment: .leading)
+    }
+}
+
+/// An episode not out yet on a title page (1.22.1), where its tile will be:
+/// its number and title, when it airs in your time zone, and how long until.
+struct UpcomingEpisodeCard: View {
+    let episode: AiringEpisode
+
+    var body: some View {
+        TimelineView(.everyMinute) { ctx in
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.fill)
+                    Image(systemName: "calendar.badge.clock").font(.title2).foregroundStyle(.secondary)
+                }
+                .frame(width: 130, height: 73)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text([episode.label, episode.title].compactMap { $0 }.joined(separator: " · "))
+                        .font(.subheadline.weight(.semibold)).lineLimit(2)
+                    if let d = episode.airDate {
+                        Text(AiringFormat.airs(d, now: ctx.date)).font(.caption.weight(.semibold))
+                        Text(AiringFormat.countdownTitle(to: d, now: ctx.date))
+                            .font(.caption.weight(.semibold).monospacedDigit())
+                            .padding(.horizontal, 7).padding(.vertical, 2)
+                            .background(Theme.fill, in: Capsule())
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(8)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.hairline, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("upcomingEpisode")
     }
 }
 
 /// A title page's buttons in a row, centred on one another. The last one
-/// (Track) gets the room that's left, where it may draw itself smaller
-/// (TrackButton's bell alone); with too little even for that, it goes on a
-/// line of its own under the others (a narrow phone, large text).
+/// (Track) goes on a line of its own under the others when the row has no
+/// room for it (a narrow phone, Resume and Start over, large text).
 struct TitleButtonRow: Layout {
     var spacing: CGFloat = 14
     var lineSpacing: CGFloat = 12
@@ -146,7 +235,7 @@ struct TrackingView: View {
             }
             if !store.shows.isEmpty {
                 Section {} footer: {
-                    Text("Times are in your time zone (\(TimeZone.current.localizedName(for: .generic, locale: .current) ?? TimeZone.current.identifier)). Schedules from TVmaze (tvmaze.com, CC BY-SA) and AniList.")
+                    Text("Times are in your time zone (\(TimeZone.autoupdatingCurrent.localizedName(for: .generic, locale: .current) ?? TimeZone.autoupdatingCurrent.identifier)). Schedules from TVmaze (tvmaze.com, CC BY-SA) and AniList.")
                 }
             }
         }
@@ -219,7 +308,7 @@ struct CountdownPill: View {
 
     var body: some View {
         let out = date <= now
-        Text(AiringFormat.countdown(to: date, now: now))
+        Text(AiringFormat.countdown(to: date, now: now, calendar: .autoupdatingCurrent))
             .font(.caption.weight(.semibold).monospacedDigit()).lineLimit(1).fixedSize()
             .foregroundStyle(out ? Theme.onAccent : .primary)
             .padding(.horizontal, 7).padding(.vertical, 2)

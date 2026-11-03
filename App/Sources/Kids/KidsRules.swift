@@ -155,6 +155,16 @@ enum KidsRules {
     static func allows(_ m: MetaItem, limits: Limits) -> Bool { verdict(m, limits: limits) == .allowed }
     static func allows(_ m: MediaMeta?, limits: Limits) -> Bool { verdict(m, limits: limits) == .allowed }
 
+    /// By the rating alone, with no guess from the genres: a title with no
+    /// rating Folio knows (none, "Not Rated", one it can't read) is unknown.
+    /// For lists that aren't asked for by a kids genre, where a genre says
+    /// little: For you's titles come from the whole watch history, and an
+    /// animated show can be rated 13+ or TV-MA.
+    static func ratedVerdict(rating: String?, isSeries: Bool, limits: Limits) -> Verdict {
+        guard let r = rating, let l = level(ofRating: r) else { return .unknown }
+        return l <= limits.level(isSeries: isSeries) ? .allowed : .above(r.trimmingCharacters(in: .whitespaces))
+    }
+
     /// The limits in words, for the lists that are filtered ("up to PG and TV-PG").
     static func summary(_ limits: Limits) -> String { "up to \(limits.film.rawValue) and \(limits.show.rawValue)" }
 }

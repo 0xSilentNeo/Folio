@@ -15,6 +15,7 @@ struct TitleHeroView: View {
     @ObservedObject private var local = LocalMediaStore.shared
     @ObservedObject private var history = HistoryStore.shared
     @ObservedObject private var kids = KidsProfile.shared
+    @ObservedObject private var tracking = TrackingStore.shared
     @StateObject private var thumb = ThumbLoader()
     @AppStorage("heroView") private var viewMode = LibraryViewMode.grid.rawValue
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
@@ -109,6 +110,7 @@ struct TitleHeroView: View {
         if let v = kidsVerdict {
             KidsBlockedView(verdict: v)
                 .pageButtons(zooms: zoomsFromTile, back: goBack) { EmptyView() }
+                .landscapeTopGap()
                 .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true, hero: HeroMetrics.pixels) }
         } else {
             // Handoff (1.22.0): the other device opens this file's page when it has the file.
@@ -151,11 +153,12 @@ struct TitleHeroView: View {
                                 }
                                 .buttonStyle(PressStyle())
                             }
-                            if group.isSeries { TrackButton(show: trackedShow) }
+                            if isShow { TrackButton(show: trackedShow) }
                         }
                         .padding(.vertical, 4)
+                        if isShow { TrackStatusLine(show: trackedShow).padding(.top, -8) }
                         if castPosition == "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, wide ? -28 : -20) }
-                        if siblings.count > 1 { episodes }
+                        if siblings.count > 1 { episodes } else if !untiledEpisodes.isEmpty { comingUp.padding(.top, 10) }
                         if castPosition != "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, wide ? -28 : -20) }
                         if let m = meta, m.id.hasPrefix("tt") {
                             TitleLinks(name: m.name, year: m.year.map { String($0.prefix(4)) }, type: m.type, imdbID: m.id)
@@ -174,6 +177,7 @@ struct TitleHeroView: View {
         .background(HomeBackdrop().ignoresSafeArea())
         .background(BackSwipeProbe().frame(width: 1, height: 1))
         .pageButtons(zooms: zoomsFromTile, back: goBack) { moreButton }
+        .landscapeTopGap()
         // Landscape phone: the floating tab bar sat on the title and its details.
         .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .onAppear {
@@ -228,11 +232,52 @@ struct TitleHeroView: View {
 
     private var isAnime: Bool { meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false }
 
+    /// A show the Track button is for (1.22.1): the library grouped its
+    /// episodes, or the file has an episode number, or the metadata says
+    /// it's a series. Until 1.22.1 only the first, so an episode opened from
+    /// a folder of several titles (its group is the folder), or a show whose
+    /// file names don't parse as episodes, had no Track button and no sign
+    /// it was tracked.
+    private var isShow: Bool { group.isSeries || parsed.episode != nil || meta?.type == "series" }
+
     /// The series as the Track button tracks it: by its IMDb id when Folio
     /// found one, with the newest season in the library (anime seasons are
-    /// separate AniList entries).
+    /// separate AniList entries). Its library name goes with it, so
+    /// Discover finds it tracked by that too (TrackedShow.otherNames).
     private var trackedShow: TrackedShow {
-        TrackedShow(libraryTitle: group.title, meta: meta, hint: entry?.item.anime, season: seasons.last)
+        TrackedShow(libraryTitle: group.isSeries ? group.title : parsed.title, meta: meta, hint: entry?.item.anime, season: seasons.last)
+    }
+
+    /// The tracked show's schedule for the episode tiles (1.22.1); nil when
+    /// it isn't tracked.
+    private var airing: EpisodeAiring? {
+        guard isShow, let s = tracking.tracked(like: trackedShow) else { return nil }
+        return EpisodeAiring(show: s, now: Date(), newestSeason: seasons.last)
+    }
+
+    /// The season the episode list shows (nil: one list for all).
+    private var shownSeason: Int? { seasons.count > 1 ? (season ?? seasons.first) : seasons.first }
+
+    /// The episodes not out yet that have no file here, for the season shown.
+    private var untiledEpisodes: [AiringEpisode] {
+        guard let airing else { return [] }
+        let numbers = shownEpisodes.compactMap { TitleParser.parse($0.lastPathComponent).episode }
+        return airing.untiled(shown: shownSeason, seasons: seasons, episodes: numbers)
+    }
+
+    /// A file's mark: "New" on the episode just out (until you've watched it), when it airs on one not out yet.
+    private func airingMark(_ f: URL, _ airing: EpisodeAiring) -> AiringMark? {
+        let p = TitleParser.parse(f.lastPathComponent)
+        guard let mark = airing.mark(season: p.season, episode: p.episode) else { return nil }
+        return mark == .new && history.isWatched(f) ? nil : mark
+    }
+
+    /// Episodes not out yet with no file (1.22.1): when each airs, in your time zone.
+    private var comingUp: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Coming up").font(.headline)
+            ForEach(untiledEpisodes, id: \.self) { UpcomingEpisodeCard(episode: $0) }
+        }
     }
 
     private var titleBlock: some View {
@@ -287,7 +332,8 @@ struct TitleHeroView: View {
     }
 
     private var episodes: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let airing = self.airing
+        return VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text(group.isSeries || parsed.episode != nil ? "Episodes" : "Files").font(.title3.weight(.bold))
                 Text("\(siblings.count)").font(.subheadline).foregroundStyle(.secondary)
@@ -312,6 +358,7 @@ struct TitleHeroView: View {
                 .onAppear { if season == nil { season = parsed.season ?? seasons[0] } }
             }
             LibraryList(files: shownEpisodes, mode: LibraryViewMode(rawValue: viewMode) ?? .details, current: file, group: group,
+                        airing: airing.map { a in { airingMark($0, a) } },
                         swipe: { f in
                             [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = f },
                              history.isWatched(f)
@@ -324,6 +371,7 @@ struct TitleHeroView: View {
                             local.delete(f)
                             if last { dismiss() }
                         }) { tapped($0, "episode row") }
+            ForEach(untiledEpisodes, id: \.self) { UpcomingEpisodeCard(episode: $0) }
         }
         .padding(.top, 10)
     }
@@ -399,6 +447,26 @@ struct TitleHeroView: View {
     }
 }
 
+// MARK: - Landscape
+
+extension View {
+    /// The title pages' top buttons on a phone on its side (1.22.1). There's
+    /// no status bar there, so the top of the safe area is the screen's top
+    /// edge, and ‹ and ⋯ (pageButtons: a 44 pt bar at the top of the safe
+    /// area) sat against it, their tops cut by the screen's rounded corner
+    /// (simulator screenshots, iPhone 17 Pro Max on its side, library and
+    /// Discover pages). They get a gap there, as the system bar's buttons
+    /// have. Apply after pageButtons; the page's picture still reaches the top.
+    func landscapeTopGap() -> some View { modifier(LandscapeTopGap()) }
+}
+
+private struct LandscapeTopGap: ViewModifier {
+    @Environment(\.verticalSizeClass) private var vertical
+    func body(content: Content) -> some View {
+        content.safeAreaPadding(.top, vertical == .compact ? 12 : 0)
+    }
+}
+
 // MARK: - View modes shared by Home and the hero page
 
 enum LibraryViewMode: String, CaseIterable {
@@ -440,6 +508,8 @@ struct LibraryList: View {
     let mode: LibraryViewMode
     var current: URL? = nil
     var group: LibraryGroup? = nil
+    /// A tracked show's marks on its episodes (1.22.1): "New", "Airs Tue 9:00 PM".
+    var airing: ((URL) -> AiringMark?)? = nil
     /// Actions revealed by swiping a row to the left (over the tile in Thumbnails).
     var swipe: ((URL) -> [SwipeAction])? = nil
     /// The file whose delete question is up, and what Delete does. The question
@@ -521,11 +591,14 @@ struct LibraryList: View {
                         .padding(6).background(Theme.accent, in: Circle()).padding(6)
                 }
             }
+            .overlay(alignment: .topLeading) {
+                if let mark = airing?(f) { AiringBadge(mark: mark).padding(6) }
+            }
     }
 
     private func row(_ f: URL) -> some View {
         LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, size: LibraryOrganizer.info(f).size,
-                   watched: history.isWatched(f))
+                   watched: history.isWatched(f), airing: airing?(f))
     }
 }
 
@@ -548,6 +621,8 @@ struct LibraryRow: View {
     var size: Int64? = nil
     /// Watched (for a show's row on Home: every episode): an eye at the end.
     var watched = false
+    /// A tracked show's mark on the episode (1.22.1): "New", "Airs Tue 9:00 PM".
+    var airing: AiringMark? = nil
     @StateObject private var thumb = ThumbLoader()
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
 
@@ -620,6 +695,7 @@ struct LibraryRow: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 6) {
                 Text(tag).font(.caption2.weight(.bold)).foregroundStyle(Theme.accent)
+                if let airing { AiringBadge(mark: airing, compact: true) }
                 if let size {
                     Text(size.byteString).font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.secondary)
                 }

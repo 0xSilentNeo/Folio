@@ -9,9 +9,13 @@ import UIKit
 /// Downloads screen (folio://downloads).
 ///
 /// In the background the transfers go on without Folio (a background
-/// URLSession), so nothing updates the activity: it turns stale after a
-/// while and says it's downloading in the background. When the last file is
-/// done iOS wakes Folio, which ends it.
+/// URLSession runs in iOS's own process) and Folio is suspended: nothing
+/// can update the activity. Until 1.22.1 it stood still there (4 Nov
+/// report). Now it carries the time the run should end at the last measured
+/// speed, and the widget draws the ring, the bar and the time left as timer
+/// views that move on by themselves. Whenever Folio runs (back on screen,
+/// woken by iOS when a transfer or a part ends) it measures again and
+/// corrects them.
 @MainActor
 final class DownloadActivity {
     static let shared = DownloadActivity()
@@ -23,7 +27,7 @@ final class DownloadActivity {
     /// Pushed at least this often while it runs, so it turns stale only
     /// when Folio stops updating it.
     static let refreshEvery: TimeInterval = 60
-    static let staleAfter: TimeInterval = 120
+    nonisolated static let staleAfter: TimeInterval = 120
     static let doneShownFor: TimeInterval = 60
 
     enum Phase: Equatable {
@@ -42,11 +46,15 @@ final class DownloadActivity {
     private var run = Set<UUID>()
     private var shown: State?
     private var lastPush = Date.distantPast
+    private var lastLogged = Date.distantPast
     private var trailing: Task<Void, Never>?
+    private var updating: Task<Void, Never>?
     private var subscription: AnyCancellable?
     private var queued = false
     private var labMode = false
     private var toldBackground = false
+    /// refreshNow is running: its numbers come from the catch-up.
+    private var corrected = false
 
     private init() {}
 
@@ -81,8 +89,11 @@ final class DownloadActivity {
         switch Self.phase(dm.items, run: run, conditionsOK: dm.conditionsOK) {
         case .downloading, .waiting:
             run.formUnion(dm.items.filter { $0.state == .running || $0.state == .queued }.map(\.id))
-            let s = Self.state(dm.items, run: run, speed: dm.speed) { TitleParser.clean($0.fileName) }
+            let s = Self.state(dm.items, run: run, speed: dm.speed, now: now) { TitleParser.clean($0.fileName) }
             if let activity, activity.activityState == .active || activity.activityState == .stale {
+                // In the background no progress reaches Folio: its numbers
+                // lag until the catch-up, and only that (refreshNow) goes out.
+                if UIApplication.shared.applicationState == .background, !corrected { return }
                 guard let shown else { push(s, to: activity, now: now); return }
                 guard Self.looksDifferent(shown, s) || now.timeIntervalSince(lastPush) >= Self.refreshEvery else { return }
                 let wait = Self.minGap - now.timeIntervalSince(lastPush)
@@ -94,9 +105,25 @@ final class DownloadActivity {
         case .stopped:
             finish(nil, after: nil)
         case .finished:
-            var s = Self.state(dm.items, run: run, speed: 0) { TitleParser.clean($0.fileName) }
+            var s = Self.state(dm.items, run: run, speed: 0, now: now) { TitleParser.clean($0.fileName) }
             s.done = true
             finish(s, after: now.addingTimeInterval(Self.doneShownFor))
+        }
+    }
+
+    /// Woken by iOS in the background (DownloadEngine, after the session's
+    /// events): the new estimate goes out now, and is written before Folio
+    /// is suspended again.
+    func refreshNow() async {
+        guard !labMode else { return }
+        lastPush = .distantPast
+        let before = shown
+        corrected = true
+        refresh()
+        corrected = false
+        await updating?.value
+        if let s = shown, s != before, UIApplication.shared.applicationState == .background {
+            dlog("activity", "downloads: corrected in the background, \(s.percentText), \(Self.estimate(s))")
         }
     }
 
@@ -113,8 +140,9 @@ final class DownloadActivity {
         return .finished
     }
 
-    /// The activity's content for the run's files. `name`: a file's name as shown.
-    nonisolated static func state(_ items: [DownloadItem], run: Set<UUID>, speed: Double, name: (DownloadItem) -> String) -> State {
+    /// The activity's content for the run's files at `now`. `name`: a file's name as shown.
+    nonisolated static func state(_ items: [DownloadItem], run: Set<UUID>, speed: Double, now: Date = Date(),
+                                  name: (DownloadItem) -> String) -> State {
         let mine = items.filter { run.contains($0.id) }
         let running = items.filter { $0.state == .running }
         let left = mine.filter { $0.state == .running || $0.state == .queued }
@@ -129,19 +157,44 @@ final class DownloadActivity {
         case 1: title = name(running[0])
         default: title = "\(running.count) files"
         }
+        let seconds: Double? = !running.isEmpty && speed > 1 && bytesLeft > 0 ? Double(bytesLeft) / speed : nil
         return State(title: title, filesLeft: left.count,
                      progress: total > 0 ? Double(got) / Double(total) : 0,
                      speed: running.isEmpty ? 0 : speed,
-                     secondsLeft: !running.isEmpty && speed > 1 && bytesLeft > 0 ? Double(bytesLeft) / speed : nil,
+                     secondsLeft: seconds,
                      waiting: running.isEmpty,
                      finished: mine.filter { $0.state == .done }.count,
-                     failed: mine.filter { $0.state == .failed }.count)
+                     failed: mine.filter { $0.state == .failed }.count,
+                     measuredAt: seconds == nil ? nil : now,
+                     finishBy: seconds.map { now.addingTimeInterval($0) })
     }
 
     /// Whether the activity would read differently (what an update is for).
+    /// With timers, the progress and time left move by themselves: only a
+    /// new estimate counts, one the timers are off from by more than 2% of
+    /// the run, or 15 s or a tenth of the time left.
     nonisolated static func looksDifferent(_ a: State, _ b: State) -> Bool {
-        a.headline != b.headline || a.percentText != b.percentText || a.speedText != b.speedText
-            || a.detailText != b.detailText || a.waiting != b.waiting || a.done != b.done
+        if a.headline != b.headline || a.waiting != b.waiting || a.done != b.done || a.filesLeft != b.filesLeft { return true }
+        guard a.timerRange != nil || b.timerRange != nil else {
+            return a.percentText != b.percentText || a.speedText != b.speedText || a.detailText != b.detailText
+        }
+        guard let aEnd = a.finishBy, let bEnd = b.finishBy, let at = b.measuredAt, a.timerRange != nil, b.timerRange != nil else { return true }
+        if abs(a.progress(at: at) - b.progress) > 0.02 { return true }
+        let left = max(0, bEnd.timeIntervalSince(at))
+        return abs(aEnd.timeIntervalSince(bEnd)) > max(15, left * 0.1) || a.speedText != b.speedText
+    }
+
+    nonisolated static func staleDate(_ s: State, now: Date) -> Date? {
+        if s.done { return nil }
+        // An estimate holds until its end (the timers say so meanwhile);
+        // past it, without word from Folio, it's stale.
+        if let end = s.finishBy, s.timerRange != nil { return max(end, now).addingTimeInterval(staleAfter) }
+        return now.addingTimeInterval(staleAfter)
+    }
+
+    private static func estimate(_ s: State) -> String {
+        guard let end = s.finishBy else { return "no estimate" }
+        return "ends in \(Int(max(0, end.timeIntervalSinceNow)))s at \(s.speedText)"
     }
 
     // MARK: ActivityKit
@@ -159,7 +212,7 @@ final class DownloadActivity {
             activity = try Activity.request(attributes: DownloadActivityAttributes(), content: content(s), pushType: nil)
             shown = s
             lastPush = Date()
-            dlog("activity", "downloads: activity started (\(s.filesLeft) file(s))")
+            dlog("activity", "downloads: activity started (\(s.filesLeft) file(s), \(s.percentText), \(Self.estimate(s)))")
         } catch {
             dlog("activity", "downloads: no activity (\(error.localizedDescription))")
         }
@@ -170,8 +223,12 @@ final class DownloadActivity {
         trailing = nil
         shown = s
         lastPush = now
+        if now.timeIntervalSince(lastLogged) >= 60 {
+            lastLogged = now
+            dlog("activity", "downloads: update \(s.percentText), \(s.filesLeft) file(s), \(Self.estimate(s))")
+        }
         let c = content(s)
-        Task { await activity.update(c) }
+        updating = Task { await activity.update(c) }
     }
 
     private func holdBack(_ wait: TimeInterval) {
@@ -186,7 +243,7 @@ final class DownloadActivity {
     }
 
     private func content(_ s: State) -> ActivityContent<State> {
-        ActivityContent(state: s, staleDate: s.done ? nil : Date().addingTimeInterval(Self.staleAfter), relevanceScore: 50)
+        ActivityContent(state: s, staleDate: Self.staleDate(s, now: Date()), relevanceScore: 50)
     }
 
     /// Ends the activity: with `final` shown until `after`, or at once.
@@ -204,10 +261,13 @@ final class DownloadActivity {
 
     // MARK: Lab
 
-    /// -labLiveActivities: a sample run (the download list isn't touched).
+    /// -labLiveActivities: a sample run (the download list isn't touched),
+    /// its ring and time left moving by themselves.
     func lab() {
         labMode = true
-        let s = State(title: "Lab Show · S01E04", filesLeft: 3, progress: 0.42, speed: 2_400_000, secondsLeft: 760)
-        if let activity { push(s, to: activity, now: Date()) } else { request(s) }
+        let now = Date()
+        let s = State(title: "Lab Show · S01E04", filesLeft: 3, progress: 0.42, speed: 2_400_000, secondsLeft: 760,
+                      measuredAt: now, finishBy: now.addingTimeInterval(760))
+        if let activity { push(s, to: activity, now: now) } else { request(s) }
     }
 }

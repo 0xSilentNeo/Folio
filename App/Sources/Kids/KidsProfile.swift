@@ -1,6 +1,7 @@
 import Foundation
 import CryptoKit
 import LocalAuthentication
+import UIKit
 
 /// The kids profile (1.22.0): on or off, its limits, and its passcode.
 ///
@@ -26,11 +27,19 @@ final class KidsProfile: ObservableObject {
     @Published var allowBiometrics: Bool {
         didSet { UserDefaults.standard.set(allowBiometrics, forKey: SettingsKey.kidsBiometrics) }
     }
+    /// When Settings last had to lock again (1.22.1): the profile was turned
+    /// on, or Folio went to the background. A passcode given before this no
+    /// longer opens them (SettingsView), even if Settings stayed open under
+    /// a page pushed from them.
+    @Published private(set) var relockedAt = Date()
 
     private init() {
         isOn = Self.isOnNow
         limits = Self.currentLimits
         allowBiometrics = UserDefaults.standard.object(forKey: SettingsKey.kidsBiometrics) as? Bool ?? true
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { KidsProfile.shared.relockedAt = Date() }
+        }
     }
 
     /// For code off the main actor (and the first frame): read straight from UserDefaults.
@@ -54,11 +63,22 @@ final class KidsProfile: ObservableObject {
         UserDefaults.standard.set(true, forKey: SettingsKey.kidsProfile)
         resetTries()
         isOn = true
+        relockedAt = Date()
         ContinueSnapshotWriter.schedule()           // the widget empties
         dlog("kids", "kids profile on (\(KidsRules.summary(limits)))")
     }
 
-    /// Only from a place the passcode (or Face ID) has just opened.
+    /// A new passcode while the profile is on. Only after the current one
+    /// (or Face ID) was given just now (KidsPasscodeScreen's .change).
+    func changePasscode(to passcode: String) {
+        guard isOn, Self.isValid(passcode) else { return }
+        Keychain.set(Self.hashed(passcode, salt: Self.newSalt()), for: Self.passcodeAccount)
+        resetTries()
+        dlog("kids", "kids passcode changed")
+    }
+
+    /// Only right after the passcode (or Face ID) was given for it: every
+    /// way out asks each time (KidsGate), never "unlocked for a while".
     func turnOff() {
         UserDefaults.standard.set(false, forKey: SettingsKey.kidsProfile)
         isOn = false

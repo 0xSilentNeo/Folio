@@ -20,6 +20,18 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.22.1", items: [
+            Item(icon: "cpu", title: "Metal is the default again",
+                 text: "And the OpenGL renderer now plays 10-bit files and shows HDR as HDR, with Picture in Picture that never pauses. Try it in Settings → mpv → Renderer."),
+            Item(icon: "arrow.down.circle", title: "Faster, safer downloads",
+                 text: "Big files download in several parts at once, a download queued before an update no longer fails at the end, and the Live Activity keeps counting in the background."),
+            Item(icon: "lock", title: "The kids profile really locks",
+                 text: "Turning it off, its limits and Settings all ask for the passcode or Face ID, on a Lock Screen-style keypad. For you shows only titles rated within your limits."),
+            Item(icon: "bell.badge", title: "Tracking, clearer",
+                 text: "A tracked show says so on its page, and episode tiles show when the next one airs, in your own time zone."),
+            Item(icon: "rectangle.portrait.and.arrow.right", title: "The player closes at the end",
+                 text: "No more Replay card: the player closes when a file ends. Controls sit a little closer to the edges in landscape."),
+        ]),
         Release(version: "1.22.0", items: [
             Item(icon: "pip", title: "Picture in Picture without the pause",
                  text: "The screen and Picture in Picture now show one and the same picture, so PiP, Notification Centre and the app switcher no longer pause the video. For HDR brightness, choose HDR (Metal) in Settings → mpv → Renderer."),

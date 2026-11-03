@@ -16,6 +16,9 @@ enum AiringTracker {
         UNUserNotificationCenter.current().delegate = AiringNotificationDelegate.shared
         let nc = NotificationCenter.default
         nc.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { _ in
+            // Air times in the zone you're in now: Foundation keeps the
+            // system zone it first read until told to read it again (1.22.1).
+            NSTimeZone.resetSystemTimeZone()
             MainActor.assumeIsolated { refreshIfStale("foreground") }
         }
         nc.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in

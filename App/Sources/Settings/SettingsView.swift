@@ -6,21 +6,29 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.zoomsFromTile) private var zooms
     @ObservedObject private var kids = KidsProfile.shared
-    /// Open on this visit: the passcode was entered, or the kids profile was
-    /// off when Settings opened. Turned on from here, it locks Settings the
-    /// next time they open, not under your finger: swapping the list for the
-    /// lock while Kids Profile was pushed from it left the page unable to go
-    /// back (simulator run: Back started the pop, the page stayed).
-    @State private var unlocked = !KidsProfile.isOnNow
+    /// When the passcode (or Face ID) opened Settings on this visit (1.22.1).
+    /// Never kept for another visit, and no good once the profile is turned
+    /// on again or Folio has been in the background (KidsProfile.relockedAt).
+    /// Until 1.22.1 Settings opened with the profile off stayed open after it
+    /// was turned on, and Turn Off asked for nothing (reported on 1.22.0).
+    @State private var unlockedAt: Date?
+    private var locked: Bool { kids.isOn && !(unlockedAt.map { $0 > kids.relockedAt } ?? false) }
+
+    /// The lock goes over the list rather than in its place: swapping the
+    /// list out while Kids Profile was pushed from it left the page unable
+    /// to go back (simulator run: Back started the pop, the page stayed).
     var body: some View {
-        Group {
-            if kids.isOn && !unlocked {
-                SettingsLocked { withAnimation(.smooth(duration: 0.3)) { unlocked = true } }
-            } else {
-                list
+        list
+            .opacity(locked ? 0 : 1)
+            .allowsHitTesting(!locked)
+            .accessibilityHidden(locked)
+            .pageChrome(zooms: zooms, title: "Settings", back: { dismiss() }) { EmptyView() }
+            .overlay {
+                if locked {
+                    SettingsLocked(cancel: { dismiss() }) { withAnimation(.smooth(duration: 0.3)) { unlockedAt = Date() } }
+                        .transition(.opacity)
+                }
             }
-        }
-        .pageChrome(zooms: zooms, title: "Settings", back: { dismiss() }) { EmptyView() }
     }
 
     private var list: some View {
@@ -423,7 +431,7 @@ struct Explained<Content: View>: View {
 /// Everything mpv in one place (1.17.0): the video engine, scripts, shaders,
 /// config files and logs.
 struct MPVSettings: View {
-    @AppStorage(SettingsKey.renderer) private var renderer = "gl"
+    @AppStorage(SettingsKey.renderer) private var renderer = "metal"
     @AppStorage(SettingsKey.hdrOutput) private var hdr = true
     @AppStorage(SettingsKey.hwdec) private var hwdec = "auto"
     @AppStorage(SettingsKey.cacheMB) private var cacheMB = 150
@@ -433,8 +441,8 @@ struct MPVSettings: View {
 
     private var rendererText: String {
         renderer == "gl"
-            ? "Standard (recommended): one picture for the screen and Picture in Picture, so PiP, Notification Centre and the app switcher never pause the video. HDR and Dolby Vision show at normal brightness (SDR); compute shaders don't run."
-            : "HDR (Metal): real HDR and Dolby Vision brightness and every shader. Picture in Picture, Notification Centre and leaving the app pause the picture for a moment, because the renderer has to switch."
+            ? "OpenGL: one picture for the screen and Picture in Picture, so PiP and leaving the app don't pause the video. Some files may not play; HDR and Dolby Vision show at normal brightness (SDR); compute shaders don't run."
+            : "Metal (recommended): plays every file, with real HDR and Dolby Vision brightness and every shader. Picture in Picture and leaving the app pause the picture for a moment."
     }
     private var pictureText: String {
         switch picture {
@@ -456,8 +464,8 @@ struct MPVSettings: View {
             Section {
                 Explained(rendererText) {
                     Picker("Renderer", selection: $renderer) {
-                        Text("Standard").tag("gl")
-                        Text("HDR (Metal)").tag("metal")
+                        Text("Metal").tag("metal")
+                        Text("OpenGL").tag("gl")
                     }
                 }
                 Explained(pictureText) {
@@ -467,7 +475,7 @@ struct MPVSettings: View {
                     .onChange(of: picture) { _, m in PictureMode.current = m }
                 }
                 Explained("HDR and Dolby Vision videos play with real HDR brightness on screens that support it. Off: they are converted to normal brightness (SDR).") {
-                    Toggle("HDR output", isOn: $hdr).disabled(renderer != "metal")
+                    Toggle("HDR output", isOn: $hdr)
                 }
                 Explained(hwdecText) {
                     Picker("Hardware decoding", selection: $hwdec) {
