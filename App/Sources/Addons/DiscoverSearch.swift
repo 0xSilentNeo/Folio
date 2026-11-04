@@ -69,6 +69,7 @@ final class DiscoverSearch: ObservableObject {
     func submit(_ text: String) {
         let q = SearchHistoryStore.tidy(text)
         guard !q.isEmpty else { return }
+        dlog("search", "\"\(q)\" submitted")
         commit(q)
         if q != current || phase != .done { start(q, wait: false, minLength: 1) }
         searchAddons(q)
@@ -199,18 +200,33 @@ final class DiscoverSearch: ObservableObject {
 
 /// Discover → the magnifying glass.
 struct AddonSearchView: View {
+    /// The search tab's field (1.22.4): the tab bar's search button owns the
+    /// text, and the page adds your library and your servers above the
+    /// titles. Nil: Discover's own search page with its own field.
+    var tabQuery: Binding<String>? = nil
+
     struct SearchResult: Identifiable { let id: String; let title: String; let addon: InstalledAddon?; let metas: [MetaItem] }
     /// A title opened from the search (and the addon that found it, if any).
     private struct Opened: Hashable { let meta: MetaItem; let addon: InstalledAddon? }
 
     @StateObject private var search = DiscoverSearch()
     @ObservedObject private var kids = KidsProfile.shared
-    @State private var query = ""
+    @ObservedObject private var local = LocalMediaStore.shared
+    @ObservedObject private var index = LibraryIndexStore.shared
+    @AppStorage(SettingsKey.cleanTitles) private var cleanTitles = true
+    @State private var ownQuery = ""
     @State private var fieldActive = false
+    @State private var libraryRoute: LibraryRoute?
     @State private var opened: Opened?
     @State private var confirmClear = false
     @State private var focusedOnce = false
 
+    private var query: String {
+        get { tabQuery?.wrappedValue ?? ownQuery }
+        nonmutating set {
+            if let tabQuery { tabQuery.wrappedValue = newValue } else { ownQuery = newValue }
+        }
+    }
     private var typed: String { SearchHistoryStore.tidy(query) }
 
     var body: some View {
@@ -221,6 +237,10 @@ struct AddonSearchView: View {
                 let matches = search.matchingHistory(query)
                 if !matches.isEmpty {
                     Section { ForEach(matches) { historyRow($0) } }
+                }
+                if tabQuery != nil {
+                    librarySection
+                    serversSection
                 }
                 titlesSection
                 ForEach(search.addonResults) { addonSection($0) }
@@ -242,15 +262,20 @@ struct AddonSearchView: View {
         .scrollDismissesKeyboard(.immediately)
         .navigationTitle("Search")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $query, isPresented: $fieldActive, placement: .navigationBarDrawer(displayMode: .always), prompt: "Movies, shows, anime")
+        .modifier(OwnSearchField(on: tabQuery == nil, text: $ownQuery, active: $fieldActive))
         .onChange(of: query) { _, text in search.textChanged(text) }
         .onSubmit(of: .search) { search.submit(query) }
+        .onReceive(NotificationCenter.default.publisher(for: .searchTabSubmitted)) { note in
+            if tabQuery != nil { search.submit((note.object as? String) ?? query) }
+        }
         .task {
             await search.loadHistory()
             // The keyboard comes up the first time (you came here to type),
-            // not again on coming back from a title.
-            if !focusedOnce { focusedOnce = true; fieldActive = true }
+            // not again on coming back from a title. The search tab's field
+            // comes up by itself when its button is tapped.
+            if tabQuery == nil, !focusedOnce { focusedOnce = true; fieldActive = true }
         }
+        .navigationDestination(item: $libraryRoute) { r in LibraryRoute.destination(r) }
         .navigationDestination(item: $opened) { o in
             MetaDetailView(preview: o.meta, sourceAddon: o.addon).zoomDestination("search|" + o.meta.id, in: zoomNS, zoom: false)
         }
@@ -261,6 +286,91 @@ struct AddonSearchView: View {
     @Namespace private var zoomNS
 
     // MARK: Recent
+
+    // MARK: Your library and your servers (the search tab, 1.22.4)
+
+    /// The typed words, for matching names (two letters at least).
+    private var words: [String] {
+        typed.count >= 2 ? typed.lowercased().split(separator: " ").map(String.init) : []
+    }
+
+    /// Library titles whose name has every word: the kids profile's titles
+    /// only, as Home shows them.
+    private var libraryMatches: [LibraryGroup] {
+        let words = self.words
+        guard !words.isEmpty else { return [] }
+        var groups = LibraryOrganizer.groups(local.files)
+        if let limits = kids.activeLimits { groups = groups.filter { LibraryMetaIndex.shared.kidsAllow($0, limits) } }
+        return Array(groups.lazy.filter { g in
+            let name = (g.title + " " + (g.files.first.map { $0.deletingPathExtension().lastPathComponent } ?? "")).lowercased()
+            return words.allSatisfy { name.contains($0) }
+        }.prefix(20))
+    }
+
+    @ViewBuilder
+    private var librarySection: some View {
+        let groups = libraryMatches
+        if !groups.isEmpty {
+            Section {
+                ForEach(groups) { g in
+                    Button { libraryRoute = .group(g.id) } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: g.isSeries ? "tv" : "film").frame(width: 28).foregroundStyle(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(g.title).font(.body.weight(.medium)).lineLimit(1)
+                                Text(g.isSeries ? "\(g.count) episode\(g.count == 1 ? "" : "s")" : "Film").font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .listRowBackground(Color.clear)
+                    .accessibilityIdentifier("searchLibrary:" + g.title)
+                }
+            } header: { Text("In your library") }
+        }
+    }
+
+    /// Files on your WebDAV and Real-Debrid servers whose name has every
+    /// word, from each server's index (what "Search all files" searched).
+    /// Not in the kids profile: the servers are locked there.
+    private var serverMatches: [(server: WebDAVServer, file: LibraryIndex.File)] {
+        let words = self.words
+        guard !words.isEmpty, !kids.isOn else { return [] }
+        var out: [(server: WebDAVServer, file: LibraryIndex.File)] = []
+        for server in ServerStore.shared.servers {
+            for s in index.state(server.id).searchable where words.allSatisfy({ s.haystack.contains($0) }) {
+                out.append((server, s.file))
+                if out.count >= 60 { return out }
+            }
+        }
+        return out
+    }
+
+    @ViewBuilder
+    private var serversSection: some View {
+        let files = serverMatches
+        if !files.isEmpty {
+            Section {
+                ForEach(files, id: \.file.url) { hit in
+                    let item = DAVItem(url: hit.file.url, name: hit.file.name, isDirectory: false, size: hit.file.size, modified: hit.file.added, contentType: nil)
+                    Button {
+                        // With its folder as the queue, as the server's own search plays it.
+                        ContinueQueue.play(WebDAVClient(server: hit.server).mediaItem(for: item, cleanTitles: cleanTitles))
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            DAVRow(item: item, clean: cleanTitles, entry: HistoryStore.shared.entry(forURL: hit.file.url.absoluteString))
+                            Text(hit.server.name + " · " + (hit.file.url.deletingLastPathComponent().path.removingPercentEncoding ?? ""))
+                                .font(.caption2).foregroundStyle(.tertiary).lineLimit(1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .listRowBackground(Color.clear)
+                }
+            } header: { Text("On your servers") }
+        }
+    }
 
     @ViewBuilder
     private var recent: some View {
@@ -404,6 +514,22 @@ struct AddonSearchView: View {
             .listRowBackground(Color.clear)
         } header: {
             Text(r.title).lineLimit(1)
+        }
+    }
+}
+
+/// Discover's own search page has its own field; in the search tab the tab
+/// bar's search button has it (1.22.4).
+private struct OwnSearchField: ViewModifier {
+    let on: Bool
+    @Binding var text: String
+    @Binding var active: Bool
+
+    func body(content: Content) -> some View {
+        if on {
+            content.searchable(text: $text, isPresented: $active, placement: .navigationBarDrawer(displayMode: .always), prompt: "Movies, shows, anime")
+        } else {
+            content
         }
     }
 }

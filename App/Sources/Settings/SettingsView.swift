@@ -1088,6 +1088,7 @@ struct DiscoverSettings: View {
 
 struct GeneralSettings: View {
     @AppStorage(SettingsKey.startupTab) private var startupTab = 0
+    @AppStorage(SettingsKey.tabZoom) private var tabZoom = false
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
@@ -1118,6 +1119,9 @@ struct GeneralSettings: View {
                 }
                 Explained("Tapping a film opens its page first. Off: a tap plays it straight away (shows always open their page).") {
                     Toggle("Open title page on tap", isOn: $openTitlePage)
+                }
+                Explained("An experiment: the page zooms in as you switch between Home, Discover, Network and Search.") {
+                    Toggle("Zoom between tabs", isOn: $tabZoom)
                 }
             }
             Section {

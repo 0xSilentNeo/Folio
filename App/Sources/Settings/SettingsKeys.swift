@@ -15,6 +15,8 @@ enum SettingsKey {
     static let downmixNormalize = "downmixNormalize"
     static let lfeInDownmix = "lfeInDownmix"
     static let startupTab = "startupTab"
+    /// The page zooms in as you switch tabs (1.22.4, an experiment; off by default).
+    static let tabZoom = "tabZoom"
     static let appearance = "appearance"             // system | light | dark
     static let metadataFetching = "metadataFetching"
     static let showRatings = "showRatings"
@@ -133,6 +135,7 @@ enum SettingsKey {
             downmixNormalize: false,
             lfeInDownmix: false,
             startupTab: 0,
+            tabZoom: false,
             metadataFetching: true,
             showRatings: true,
             hideSpoilers: false,
