@@ -20,6 +20,12 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.22.4", items: [
+            Item(icon: "magnifyingglass", title: "Search beside the tab bar",
+                 text: "One search for your library, your servers' files and titles on IMDb and your addons, from the button beside the tab bar."),
+            Item(icon: "arrow.up.left.and.arrow.down.right", title: "Zoom between tabs",
+                 text: "An experiment, off at first: Settings → General → Zoom between tabs."),
+        ]),
         Release(version: "1.22.3", items: [
             Item(icon: "arrow.down.circle", title: "iOS's own download progress",
                  text: "On iOS 26 and later, iOS shows your downloads in the Dynamic Island and on the Lock Screen, with a button to stop them."),
