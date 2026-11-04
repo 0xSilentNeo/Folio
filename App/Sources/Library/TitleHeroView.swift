@@ -484,8 +484,9 @@ struct ViewModeMenu: View {
             }
         } label: {
             Image(systemName: LibraryViewMode(rawValue: mode)?.icon ?? "square.grid.2x2")
-                .font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
+                .font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).menuLabelCircle()
         }
+        .glassMenuCircle()
         .foregroundStyle(.primary)
         .accessibilityLabel("View, \((LibraryViewMode(rawValue: mode) ?? .grid).title)")
         .accessibilityIdentifier("viewModeMenu")

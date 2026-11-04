@@ -20,6 +20,16 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.22.3", items: [
+            Item(icon: "arrow.down.circle", title: "iOS's own download progress",
+                 text: "On iOS 26 and later, iOS shows your downloads in the Dynamic Island and on the Lock Screen, with a button to stop them."),
+            Item(icon: "speedometer", title: "Faster downloads",
+                 text: "Up to 8 connections per file, a slow connection is taken over, and the file is written straight into place."),
+            Item(icon: "chevron.down.circle", title: "Fold titles in Downloads",
+                 text: "Tap a title to hide its files, and again to show them."),
+            Item(icon: "square.grid.2x2", title: "A tidier Home",
+                 text: "Recently added is gone (the library sorts by date added too), and the round buttons open their menus smoothly."),
+        ]),
         Release(version: "1.22.2", items: [
             Item(icon: "lock", title: "One kids passcode",
                  text: "Chosen the first time and kept until you change it. Turning the kids profile on again asks for nothing."),

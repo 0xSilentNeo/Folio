@@ -1,38 +1,5 @@
 import Foundation
 
-/// Home's "Recently added" shelf (1.22.0): the titles whose files came into
-/// the library last, newest first. A show is one tile however many episodes
-/// came with it (its newest episode's date), so a season added at once
-/// doesn't fill the row. Hidden while the library has fewer than four
-/// titles: the library itself is then all on one screen.
-enum RecentlyAdded {
-    static let limit = 15
-    static let minimumTitles = 4
-
-    struct Item: Identifiable, Hashable {
-        /// The title's key (LibraryOrganizer.titleKey): a group's id when the
-        /// title isn't inside a folder of different titles.
-        let id: String
-        /// The title's newest file.
-        let newest: URL
-        let added: Date
-        let isSeries: Bool
-    }
-
-    /// `added`: a file's date added (LibraryOrganizer.info, read once per scan).
-    static func items(_ files: [URL], added: (URL) -> Date, limit: Int = limit) -> [Item] {
-        var best: [String: (file: URL, date: Date)] = [:]
-        for f in files {
-            let k = LibraryOrganizer.titleKey(f), d = added(f)
-            if let b = best[k], b.date > d || (b.date == d && b.file.lastPathComponent <= f.lastPathComponent) { continue }
-            best[k] = (f, d)
-        }
-        return best.map { Item(id: $0.key, newest: $0.value.file, added: $0.value.date, isSeries: $0.key.hasPrefix("s|")) }
-            .sorted { a, b in a.added != b.added ? a.added > b.added : a.id < b.id }
-            .prefix(limit).map { $0 }
-    }
-}
-
 /// "Pick something for me" (1.22.0): an unwatched film from the library, at
 /// random, with newer files and ones Folio has metadata for more likely.
 ///

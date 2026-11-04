@@ -36,9 +36,10 @@ struct LibrarySortMenu: View {
             if inToolbar {
                 ToolbarGlyph(Self.glyph)
             } else {
-                Image(systemName: Self.glyph).font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
+                Image(systemName: Self.glyph).font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).menuLabelCircle()
             }
         }
+        .glassMenuCircle(!inToolbar)
         .foregroundStyle(.primary)
         .accessibilityLabel("Sort by, \(sort.title), \(sort.direction(ascending: ascending))")
         .accessibilityIdentifier("librarySortMenu")

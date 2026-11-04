@@ -34,9 +34,6 @@ struct HomeView: View {
                         // Tracked shows' episodes out now or in the next 7 days (1.21.0); nothing when none.
                         // Not in the kids profile: they're the grown-ups' shows.
                         if !kids.isOn { AiringRow(margin: margin) }
-                        // The newest titles (1.22.0), once the library is more than a screen of them.
-                        let recent = recentItems
-                        if !recent.isEmpty { recentlyAdded(recent, margin: margin).padding(.top, 30) }
                         if hasLibrary { libraryHeader(margin, count: shown.count).padding(.top, 30) }
                         else if realDebrid != nil { compactHowToAdd(margin).padding(.top, 24) }
                         else { howToAdd(margin).padding(.top, continueItems.isEmpty ? 70 : 40) }
@@ -189,9 +186,6 @@ struct HomeView: View {
             SettingsView().zoomDestination("settings", in: zoomNS)
         case .group(let id):
             LibraryRoute.destination(route).zoomDestination(zoomID(id), in: zoomNS, zoom: !listPushes)
-        case .recent(let id):
-            // The shelf is tiles whatever the library's layout: always the zoom.
-            LibraryRoute.destination(route).zoomDestination(zoomID("r|" + id), in: zoomNS)
         case .folder(let path):
             LibraryRoute.destination(route).zoomDestination(zoomID("d|" + path), in: zoomNS, zoom: !listPushes)
         default:
@@ -253,8 +247,9 @@ struct HomeView: View {
                     Button { addServer = true } label: { Label("Add WebDAV server", systemImage: "externaldrive.connected.to.line.below") }
                 }
             } label: {
-                Image(systemName: "plus").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
+                Image(systemName: "plus").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).menuLabelCircle()
             }
+            .glassMenuCircle()
             .accessibilityLabel("Add")
             settingsLink
         }
@@ -502,70 +497,6 @@ struct HomeView: View {
         }
         return LibraryFilterEmpty(message: message, clear: filter.isActive ? clearFilters : nil)
             .padding(.horizontal, margin)
-    }
-
-    // MARK: Recently added (1.22.0)
-
-    /// The newest titles, once the library (as the kids profile shows it) has
-    /// four or more. Not on a phone turned sideways, nor at the accessibility
-    /// text sizes: there the shelf filled the screen and pushed the whole
-    /// library below it, whose titles it only repeats (HomeGridUITests found
-    /// no tile on screen, in landscape and at the largest text).
-    private var recentItems: [RecentlyAdded.Item] {
-        guard hasLibrary, verticalSizeClass != .compact, !typeSize.isAccessibilitySize,
-              kidsGroups.count >= RecentlyAdded.minimumTitles else { return [] }
-        var files = local.files
-        if let limits = kids.activeLimits { files = files.filter { KidsRules.allows(metaIndex.meta(for: $0), limits: limits) } }
-        return RecentlyAdded.items(files, added: { LibraryOrganizer.info($0).date })
-    }
-
-    private func recentlyAdded(_ items: [RecentlyAdded.Item], margin: CGFloat) -> some View {
-        let posters = tileArtwork == "poster"
-        let byID = Dictionary(allGroups.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        return VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Recently added", margin)
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(alignment: .top, spacing: 14) {
-                    ForEach(items) { item in
-                        recentTile(item, group: byID[item.id], posters: posters)
-                            .frame(width: posters ? 112 : 184)
-                    }
-                }
-                .padding(.horizontal, margin)
-            }
-            .scrollClipDisabled()
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("recentlyAdded")
-    }
-
-    /// A shelf tile: the grid's tile (MediaTile), opening or playing as the
-    /// grid's does (Settings → Open title page on tap; a show always opens).
-    /// `group` is nil for a title inside a folder of different titles: its
-    /// file's page opens then, as from the folder.
-    private func recentTile(_ item: RecentlyAdded.Item, group g: LibraryGroup?, posters: Bool) -> some View {
-        let file = g?.nextUp ?? item.newest
-        let files = g?.files ?? [item.newest]
-        let title = g?.title ?? TitleParser.clean(item.newest.lastPathComponent)
-        let opens = openTitlePage || item.isSeries
-        let series = g.map { $0.isSeries } ?? false
-        return Button {
-            guard !TouchTracker.wasSwipe("home: recent \(title)") else { return }
-            if opens { open(g != nil ? .recent(item.id) : .file(item.newest.path)) } else { playLocal(file) }
-        } label: {
-            MediaTile(title: title, subtitle: series ? seriesSubtitle(g!) : file.pathExtension.uppercased(),
-                      key: file.path, fileURL: file, lookupName: file.lastPathComponent,
-                      progress: history.entry(forURL: file.path)?.progress,
-                      fixedTitle: series ? title : nil, fixedSubtitle: series ? seriesSubtitle(g!) : nil,
-                      poster: posters, zoom: opens && g != nil ? ZoomSource(zoomID("r|" + item.id), zoomNS) : nil,
-                      watched: !files.isEmpty && files.allSatisfy { history.isWatched($0) })
-        }
-        .buttonStyle(PressStyle(scale: 0.97))
-        .contextMenu {
-            Button { playLocal(file) } label: { Label(series ? "Play next episode" : "Play", systemImage: "play") }
-            WatchedMenuItems(files: files, scope: series ? .all : .one)
-        }
-        .accessibilityIdentifier("recent:" + title)
     }
 
     // MARK: Pick something for me (1.22.0)

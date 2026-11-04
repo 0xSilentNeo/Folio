@@ -40,13 +40,27 @@ struct DownloadItem: Codable, Identifiable, Hashable {
     /// isn't metered or in Low Data Mode, whatever "Use mobile data" says.
     var wifiOnly: Bool?
     /// Byte ranges downloading side by side (1.22.1, Settings → Downloads →
-    /// Connections per file); nil: one connection.
+    /// Connections per file); nil: one connection. iOS's background session
+    /// only: since 1.22.3 a new download goes to `chunks`.
     var parts: [DownloadPart]?
     /// The server didn't answer a byte range: one connection for this file.
     var singleOnly: Bool?
+    /// The byte ranges of a file downloading in Folio itself (1.22.3), as
+    /// they are on disk: where a pause or a relaunch carries on from.
+    var chunks: [DownloadChunk]?
+    /// The server answered a byte range (HTTP 206): the file resumes and splits.
+    var ranges: Bool?
+    /// Started in iOS's background session because iOS wouldn't run its
+    /// continued task for Folio (before iOS 26, or refused): it downloads on
+    /// after Folio leaves the screen, as 1.22.2's did (1.22.3).
+    var inSession: Bool?
 
     var progress: Double { expected > 0 ? min(1, Double(received) / Double(expected)) : 0 }
     var isMedia: Bool { TitleParser.isMedia(fileName) }
+    /// In iOS's background session: started there by 1.22.2 or earlier (it
+    /// has that session's parts or resume data), or because iOS wouldn't run
+    /// its continued task (`inSession`). It finishes there, as it began.
+    var usesSession: Bool { parts != nil || resumeFile != nil || inSession == true }
 }
 
 /// One byte range of a file downloaded over several connections (1.22.1):
@@ -68,7 +82,7 @@ struct DownloadPart: Codable, Hashable {
 extension DownloadItem {
     enum CodingKeys: String, CodingKey {
         case id, url, serverID, fileName, package, expected, received, state, error, resumeFile, retries, added, finished, held
-        case destination, destinationPath, headers, notBefore, wifiOnly, parts, singleOnly
+        case destination, destinationPath, headers, notBefore, wifiOnly, parts, singleOnly, chunks, ranges
     }
 
     /// Only the address, name and destination are required: a field with a
@@ -103,6 +117,8 @@ extension DownloadItem {
         wifiOnly = try? c.decodeIfPresent(Bool.self, forKey: .wifiOnly)
         parts = try? c.decodeIfPresent([DownloadPart].self, forKey: .parts)
         singleOnly = try? c.decodeIfPresent(Bool.self, forKey: .singleOnly)
+        chunks = try? c.decodeIfPresent([DownloadChunk].self, forKey: .chunks)
+        ranges = try? c.decodeIfPresent(Bool.self, forKey: .ranges)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -129,6 +145,8 @@ extension DownloadItem {
         try c.encodeIfPresent(wifiOnly, forKey: .wifiOnly)
         try c.encodeIfPresent(parts, forKey: .parts)
         try c.encodeIfPresent(singleOnly, forKey: .singleOnly)
+        try c.encodeIfPresent(chunks, forKey: .chunks)
+        try c.encodeIfPresent(ranges, forKey: .ranges)
     }
 
     // MARK: Paths
@@ -168,17 +186,23 @@ extension DownloadItem {
 
 /// Downloads from WebDAV servers into Media (1.15.0, #13).
 ///
-/// Uses a background URLSession (`URLSessionConfiguration.background`): iOS
-/// carries on with the transfers while Folio is suspended and relaunches it
-/// when they end. Pause keeps resume data, so a paused file continues where
-/// it stopped (when the server supports byte ranges, which WebDAV servers do).
+/// Since 1.22.3 Folio downloads a file itself, over several connections at
+/// once (ChunkedDownload): iOS's background session, used until then, runs
+/// transfers in iOS's download daemon, which on the 4 Nov phone report gave
+/// half to a third of the Wi-Fi's speed. On iOS 26 and later the queue runs
+/// as a continued processing task (SystemProgress): iOS shows its progress
+/// as for Safari's downloads and Folio keeps downloading in the background.
+/// Without one (older iOS, declined, ended, or its stop button), files
+/// downloading in Folio carry on for the time iOS gives an app leaving the
+/// screen, then pause where they are and start again when Folio is back;
+/// the stop button pauses them as Safari's does.
 ///
-/// A big file on a server that answers byte ranges downloads in parts side
-/// by side (1.22.1): a server that caps each connection (a debrid host on
-/// some networks: 10 Mbit/s of a 750 Mbit/s Wi-Fi, 4 Nov report) gives each
-/// part that much. Each part is a background transfer of its own, paused
-/// and resumed with its own resume data; the parts are joined into the file
-/// off the main thread when all are done.
+/// Files a version before 1.22.3 started in the background session (with
+/// its resume data or parts) finish there, as they began: iOS carries on
+/// with those transfers while Folio is suspended and relaunches it when
+/// they end. A big one downloads in parts side by side (1.22.1), each a
+/// background transfer of its own with its own resume data, joined into the
+/// file off the main thread when all are done.
 @MainActor
 final class DownloadManager: ObservableObject {
     static let shared = DownloadManager()
@@ -187,11 +211,15 @@ final class DownloadManager: ObservableObject {
     /// Total speed now (bytes per second) and the last 30 readings (sparkline).
     @Published private(set) var speed: Double = 0
     @Published private(set) var speedHistory: [Double] = Array(repeating: 0, count: 30)
+    /// The speed the Live Activity estimates the time left from: 0 until it
+    /// has settled (SpeedMeter, 1.22.3).
+    private(set) var estimateSpeed: Double = 0
 
-    /// Files smaller than this download over one connection: parts gain little there.
-    nonisolated static let splitFrom: Int64 = 64 * 1_048_576
-    /// No part smaller than this.
+    /// No part of the background session's smaller than this (1.22.1; in
+    /// Folio itself ChunkPlan.minimum).
     nonisolated static let smallestPart: Int64 = 8 * 1_048_576
+    /// Files from this size download in parts in iOS's background session.
+    nonisolated static let splitFrom: Int64 = 64 * 1_048_576
 
     private let engine = DownloadEngine.shared
     private var lastBytes: [UUID: Int64] = [:]
@@ -212,8 +240,40 @@ final class DownloadManager: ObservableObject {
     /// a part still downloading would be started twice.
     private var attached = false
 
+    /// Files downloading in Folio itself (1.22.3), with the number their
+    /// events carry: an event of an earlier run of the file is dropped.
+    private var transfers: [UUID: (engine: ChunkedDownload, run: Int)] = [:]
+    /// Asked to pause and not answered yet: their answer brings the ranges to save.
+    private var stopping: [UUID: (engine: ChunkedDownload, run: Int)] = [:]
+    private var engineRuns = 0
+    /// Connections each in-app file runs now (the Downloads screen), and
+    /// the most it ran (the log's "done" line).
+    private(set) var connectionCounts: [UUID: Int] = [:]
+    private var peakConnections: [UUID: Int] = [:]
+    private var lastChunkSave: [UUID: Date] = [:]
+    private var meter = SpeedMeter()
+    /// The time iOS gives Folio when it leaves the screen with files
+    /// downloading in it and no continued processing task (1.22.3).
+    private var grace: UIBackgroundTaskIdentifier = .invalid
+    private var graceHolding = false
+    /// What iOS's own progress counts: the in-app files of this run.
+    private var systemRun = Set<UUID>()
+
     var active: [DownloadItem] { items.filter { $0.state == .running } }
     var hasWork: Bool { items.contains { $0.state == .running || $0.state == .queued } }
+    /// Files download in Folio itself: their progress comes in while Folio
+    /// runs in the background too (iOS's background session's doesn't).
+    var measuresInBackground: Bool { !transfers.isEmpty }
+    /// Files paused in the background (no continued task) wait for Folio to
+    /// be open again: the downloads Live Activity ends rather than say
+    /// "waiting to retry" until then.
+    var waitsForApp: Bool { !mayRunInApp && transfers.isEmpty && items.contains { $0.state == .queued && !$0.usesSession } }
+
+    /// The connections a running file uses now (the Downloads screen).
+    func connectionCount(_ item: DownloadItem) -> Int {
+        if let n = connectionCounts[item.id] { return n }
+        return item.parts.map { ps in ps.filter { !$0.done }.count } ?? 0
+    }
 
     private init() {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -235,10 +295,18 @@ final class DownloadManager: ObservableObject {
         NotificationCenter.default.addObserver(forName: UIDevice.batteryStateDidChangeNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { DownloadManager.shared.conditionsChanged() }
         }
-        // Back on screen: what the transfers did while Folio was suspended.
+        // Back on screen: what the transfers did while Folio was suspended,
+        // and the files that paused in the background carry on (1.22.3).
         NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { _ = Task<Void, Never> { @MainActor in await DownloadManager.shared.catchUp() } }
+            MainActor.assumeIsolated {
+                DownloadManager.shared.becameActive()
+                _ = Task<Void, Never> { @MainActor in await DownloadManager.shared.catchUp() }
+            }
         }
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { DownloadManager.shared.enteredBackground() }
+        }
+        SystemProgress.shared.onStop = { background in DownloadManager.shared.systemProgressStopped(background: background) }
         let moved = items.filter { $0.state != .done && !$0.destination.path.hasPrefix(MPVFiles.documents.path) }.count
         dlog("dl", "list: \(items.count) item(s), \(items.filter { $0.state == .done }.count) done"
              + (moved > 0 ? ", \(moved) saving outside this container's Documents" : ""))
@@ -318,6 +386,7 @@ final class DownloadManager: ObservableObject {
         guard added > 0 else { return }
         dlog("dl", "queued \(added) file(s) from \(package)\(auto ? " (next episodes)" : "")\(skipped > 0 ? ", \(skipped) already in the library" : "")")
         notifiedRun = false
+        SystemProgress.shared.userStarted()
         // Not over the player for an automatic one: it asks when you tap Download.
         if !auto, UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify) { Self.askForNotifications() }
         save()
@@ -338,6 +407,7 @@ final class DownloadManager: ObservableObject {
         items.append(item)
         dlog("dl", "queued addon stream \(fileName) → \(package)")
         notifiedRun = false
+        SystemProgress.shared.userStarted()
         if UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify) { Self.askForNotifications() }
         save()
         pump()
@@ -388,6 +458,7 @@ final class DownloadManager: ObservableObject {
         items[i].notBefore = nil
         if let parts = items[i].parts { items[i].parts = parts.map { var p = $0; p.notBefore = nil; return p } }
         notifiedRun = false
+        SystemProgress.shared.userStarted()
         save(); pump()
     }
 
@@ -401,6 +472,9 @@ final class DownloadManager: ObservableObject {
         // too, and the index looked up above was then removed again: out of
         // range for the last item, another download's otherwise (4 Nov crash).
         items.remove(at: i)
+        // In Folio: stopped and its file deleted on its own queue, after its last write.
+        transfers[id]?.engine.cancel(deleting: true)
+        stopping[id]?.engine.cancel(deleting: true)
         forgetRun(id)
         if item.state == .running || item.parts != nil { Task { await engine.cancel(id) } }
         removeFiles(of: item)
@@ -473,10 +547,12 @@ final class DownloadManager: ObservableObject {
 
     private var maxConcurrent: Int { max(1, min(6, UserDefaults.standard.integer(forKey: SettingsKey.downloadConcurrent))) }
 
-    /// Connections per file (Settings → Downloads), 1...8.
+    /// Connections per file (Settings → Downloads), 1...8. 8 by default
+    /// since 1.22.3 (4 before): on a server that caps each connection the
+    /// speed grows with them (lab: 2.5, 10 and 19.9 MB/s for 1, 4 and 8).
     nonisolated static var connectionsPerFile: Int {
         let n = UserDefaults.standard.integer(forKey: SettingsKey.downloadParts)
-        return max(1, min(8, n == 0 ? 4 : n))
+        return max(1, min(8, n == 0 ? 8 : n))
     }
 
     /// Starts queued files up to the limit; holds running ones when Low Power
@@ -494,17 +570,33 @@ final class DownloadManager: ObservableObject {
             updateTicker(); save()
             return
         }
-        guard attached else { updateTicker(); return }
+        guard attached else { updateTicker(); syncSystemProgress(); return }
         // A part waiting for its retry, or one left over by a relaunch.
         for it in items where it.state == .running && it.parts != nil { startParts(it.id) }
+        // Asks for iOS's own progress before the files start, so a refusal
+        // is known when each one's way of downloading is chosen (start).
+        syncSystemProgress()
         var running = items.filter { $0.state == .running }.count
         let now = Date()
+        let inApp = mayRunInApp
         for i in items.indices where running < maxConcurrent && items[i].state == .queued && (items[i].notBefore ?? now) <= now {
+            // In Folio only on screen or as iOS's continued task: in the
+            // background without one it would be suspended in seconds.
+            guard inApp || items[i].usesSession else { continue }
+            // Paused a moment ago and still writing: it starts once that's done.
+            guard stopping[items[i].id] == nil else { continue }
             start(i)
             running += 1
         }
         updateTicker()
+        syncSystemProgress()
         checkAllDone()
+    }
+
+    /// Folio may download itself now: it's on screen (or only covered, by
+    /// Control Center say), or iOS runs the queue as a continued task.
+    private var mayRunInApp: Bool {
+        UIApplication.shared.applicationState != .background || SystemProgress.shared.isRunning
     }
 
     private func start(_ i: Int) {
@@ -518,33 +610,51 @@ final class DownloadManager: ObservableObject {
         runs[id] = run
         startedAt[id] = (Date(), items[i].received)
         if items[i].parts != nil {
-            dlog("dl", "start \(items[i].fileName) (\(items[i].parts!.count) connections, resuming at \(items[i].received.byteString))")
+            dlog("dl", "start \(items[i].fileName) (iOS's background session as it began, \(items[i].parts!.count) connections, resuming at \(items[i].received.byteString))")
             startParts(id)
             lastBytes[id] = items[i].received
             save()
             return
         }
         let item = items[i]
-        let ask = request(for: item)
         if let resume = Self.loadResume(item.resumeFile) {
             lastBytes[id] = item.received
             inFlight.insert(DownloadEngine.key(id, nil))
-            engine.start(key: DownloadEngine.key(id, nil), request: ask, range: nil, resumeData: resume)
-            dlog("dl", "start \(item.fileName) (resuming at \(item.received.byteString))")
+            engine.start(key: DownloadEngine.key(id, nil), request: request(for: item), range: nil, resumeData: resume)
+            dlog("dl", "start \(item.fileName) (iOS's background session as it began, resuming at \(item.received.byteString))")
             save()
             return
         }
+        items[i].resumeFile = nil
+        // Without iOS's continued task (before iOS 26, or iOS refused it this
+        // launch) a file downloading in Folio would pause a few seconds after
+        // Folio leaves the screen; iOS's background session carries on, as
+        // in 1.22.2, in parts where the server allows.
+        if SystemProgress.shared.cannotCarry {
+            startInSession(i, run: run)
+        } else {
+            startInApp(i)
+        }
+        save()
+    }
+
+    /// 1.22.2's start: iOS's background session, in parts when the server
+    /// answers byte ranges (checkRanges), else over one connection.
+    private func startInSession(_ i: Int, run: Int) {
+        let item = items[i], id = item.id
+        let ask = request(for: item)
+        items[i].inSession = true
         items[i].received = 0
         lastBytes[id] = 0
         startedAt[id] = (Date(), 0)
         let n = Self.connectionsPerFile
+        let why = "iOS's background session: \(SystemProgress.shared.describe)"
         if n > 1, item.singleOnly != true, item.expected == 0 || item.expected >= Self.splitFrom {
-            dlog("dl", "start \(item.fileName): asking \(item.url.host ?? "the server") for byte ranges (\(n) connections)")
+            dlog("dl", "start \(item.fileName) (\(why)): asking \(item.url.host ?? "the server") for byte ranges (\(n) connections)")
             checkRanges(id, run: run, request: ask, connections: n)
         } else {
-            startSingle(id, request: ask, why: n == 1 ? "1 connection set" : item.singleOnly == true ? "no byte ranges" : "small file")
+            startSingle(id, request: ask, why: "\(why); " + (n == 1 ? "1 connection set" : item.singleOnly == true ? "no byte ranges" : "small file"))
         }
-        save()
     }
 
     private func startSingle(_ id: UUID, request: DownloadEngine.Request, why: String) {
@@ -592,7 +702,41 @@ final class DownloadManager: ObservableObject {
         }
     }
 
-    /// `total` bytes in up to `n` parts of equal size (the last takes the rest), none under smallestPart.
+    /// The file downloads in Folio itself (1.22.3), from where its saved
+    /// ranges say the file on disk is.
+    private func startInApp(_ i: Int) {
+        let item = items[i], id = item.id
+        let file = Self.inAppFile(id)
+        let have = FileManager.default.fileExists(atPath: file.path)
+        let chunks = item.ranges == true ? ChunkPlan.resumable(item.chunks, total: item.expected > 0 ? item.expected : nil, fileExists: have) : nil
+        let from = chunks.map(ChunkPlan.received) ?? 0
+        items[i].chunks = chunks
+        items[i].received = from
+        lastBytes[id] = from
+        startedAt[id] = (Date(), from)
+        let n = item.singleOnly == true ? 1 : Self.connectionsPerFile
+        engineRuns += 1
+        let run = engineRuns
+        let t = ChunkedDownload(id: id, request: request(for: item), file: file, fileName: item.fileName, chunks: chunks ?? [],
+                                total: chunks != nil && item.expected > 0 ? item.expected : nil, ranges: chunks != nil ? true : nil,
+                                connections: n) { event in
+            MainActor.assumeIsolated { DownloadManager.shared.engineEvent(id, run, event) }
+        }
+        transfers[id] = (t, run)
+        t.start()
+        let size = item.expected > 0 ? item.expected.byteString : "size unknown"
+        dlog("dl", "start \(item.fileName): in Folio, up to \(n) connection\(n == 1 ? "" : "s")"
+             + (item.singleOnly == true ? " (the server sends whole files)" : "")
+             + (from > 0 ? ", resuming at \(from.byteString) of \(size)" : ", \(size)") + "; \(SystemProgress.shared.describe)")
+    }
+
+    /// The one file a download in Folio writes into, until it's whole.
+    nonisolated static func inAppFile(_ id: UUID) -> URL {
+        DownloadEngine.partialDir.appendingPathComponent(id.uuidString + ".download")
+    }
+
+    /// `total` bytes in up to `n` parts of equal size (the last takes the
+    /// rest), none under smallestPart (the background session's parts, 1.22.1).
     nonisolated static func split(total: Int64, into n: Int) -> [DownloadPart] {
         guard total > 0 else { return [] }
         let count = Int(max(1, min(Int64(max(1, n)), total / smallestPart)))
@@ -636,10 +780,17 @@ final class DownloadManager: ObservableObject {
                                       unmeteredOnly: item.wifiOnly == true)
     }
 
-    /// Stops a file's transfers, keeping their resume data.
+    /// Stops a file's transfers, keeping their resume data (in Folio: what
+    /// arrived is written, and the answer brings the ranges to save).
     private func halt(_ id: UUID) {
         guard let i = index(id) else { return }
         runs[id] = (runs[id] ?? 0) + 1
+        if let t = transfers.removeValue(forKey: id) {
+            stopping[id] = t
+            connectionCounts[id] = nil
+            t.engine.pause()
+            return
+        }
         let keys: [String]
         if let parts = items[i].parts {
             keys = parts.indices.filter { !parts[$0].done }.map { DownloadEngine.key(id, $0) }
@@ -729,6 +880,203 @@ final class DownloadManager: ObservableObject {
         return url
     }
 
+    // MARK: In Folio (1.22.3)
+
+    /// What a file downloading in Folio reports. `run`: the engine's, so an
+    /// answer from an earlier start of the same file is dropped; a pause's
+    /// answer is taken from the engine asked to stop.
+    private func engineEvent(_ id: UUID, _ run: Int, _ event: ChunkedDownload.Event) {
+        let live = transfers[id]?.run == run
+        let pausing = stopping[id]?.run == run
+        guard live || pausing, let i = index(id) else {
+            // Removed meanwhile: a file that was finished anyway goes too.
+            if case .finished(let file, _) = event, index(id) == nil { try? FileManager.default.removeItem(at: file) }
+            return
+        }
+        let name = items[i].fileName
+        switch event {
+        case .answered(let total, let ranges, let host):
+            guard live else { return }
+            if let total, total > 0 { items[i].expected = total }
+            items[i].ranges = ranges
+            if !ranges { items[i].singleOnly = true }
+            let size = items[i].expected > 0 ? items[i].expected.byteString : "size unknown"
+            let n = Self.connectionsPerFile
+            dlog("dl", ranges ? "\(host) answers byte ranges: \(name), \(size), up to \(n) connection\(n == 1 ? "" : "s")"
+                              : "\(host) sends the whole file (no byte ranges): \(name), \(size), one connection")
+            save()
+        case .progress(let received, let chunks, let n):
+            guard live, items[i].state == .running else { return }
+            items[i].received = received
+            items[i].chunks = chunks
+            connectionCounts[id] = n
+            peakConnections[id] = max(peakConnections[id] ?? 0, n)
+            // The ranges are what a relaunch carries on from: saved every
+            // few seconds (each save writes the whole list).
+            if Date().timeIntervalSince(lastChunkSave[id] ?? .distantPast) > 5 {
+                lastChunkSave[id] = Date()
+                save()
+            }
+        case .paused(let received, let chunks):
+            stopping[id] = nil
+            items[i].received = received
+            items[i].chunks = chunks.isEmpty ? nil : chunks
+            dlog("dl", "\(name): stopped at \(received.byteString), written")
+            save()
+            stoppedOne()
+            // Resumed while it was stopping.
+            if items[i].state == .queued { pump() }
+        case .finished(let file, let received):
+            transfers[id] = nil
+            stopping[id] = nil
+            items[i].received = received
+            finished(id, file)
+            stoppedOne()
+        case .failed(let message, let chunks):
+            transfers[id] = nil
+            stopping[id] = nil
+            connectionCounts[id] = nil
+            items[i].chunks = chunks.isEmpty ? nil : chunks
+            items[i].received = ChunkPlan.received(chunks)
+            // Nothing to carry on from: the next try starts with an empty file.
+            if chunks.isEmpty { try? FileManager.default.removeItem(at: Self.inAppFile(id)) }
+            dlog("dl", "\(name) stopped: \(message) (at \(items[i].received.byteString))")
+            if live { failed(id, message, nil) } else { save() }
+            stoppedOne()
+        case .note(let line):
+            dlog("dl", "\(name): \(line)")
+        }
+    }
+
+    /// A file in Folio stopped (paused, finished or failed): once the last
+    /// one asked to stop has written, the time iOS gave can end.
+    private func stoppedOne() {
+        guard stopping.isEmpty else { return }
+        // Folio may be suspended as soon as the time ends: the list is written first.
+        if UIApplication.shared.applicationState == .background { saveNow() }
+        if graceHolding { endGrace() }
+        stopTime?.end()
+        stopTime = nil
+    }
+
+    /// Folio left the screen with files downloading in it. iOS's continued
+    /// task keeps it running; without one (older iOS, declined, ended, or
+    /// its stop button) they carry on for the time iOS gives an app leaving
+    /// the screen and then pause where they are, to start again when Folio
+    /// is back. Handing their ranges to iOS's background session instead was
+    /// weighed and left: a transfer created once an app is in the background
+    /// is always discretionary (iOS runs it when it likes, often only on
+    /// power and Wi-Fi), the bytes it fetched can't be taken back when Folio
+    /// returns without dropping them, and a second path that copies ranges
+    /// into the file is a second way to lose them. A pause keeps one truth:
+    /// the file on disk and its ranges.
+    private func enteredBackground() {
+        DownloadActivity.shared.leaving()
+        guard !transfers.isEmpty else { return }
+        if SystemProgress.shared.isRunning {
+            dlog("dl", "in the background: \(transfers.count) file(s) carry on in Folio (iOS shows the progress), \(speedString(speed))")
+            return
+        }
+        guard grace == .invalid else { return }
+        grace = UIApplication.shared.beginBackgroundTask(withName: "folio.download.grace") {
+            MainActor.assumeIsolated { DownloadManager.shared.holdForApp(why: "iOS's time is up", ending: true) }
+        }
+        let left = UIApplication.shared.backgroundTimeRemaining
+        dlog("dl", "in the background without iOS's own progress (\(SystemProgress.shared.describe)): \(transfers.count) file(s) carry on"
+             + (left < 1000 ? " for about \(Int(left)) s" : "") + ", then pause until Folio is open again")
+    }
+
+    /// Each second in the background: iOS's task came after all, or the time is nearly up.
+    private func checkGrace() {
+        guard grace != .invalid, !graceHolding else { return }
+        if SystemProgress.shared.isRunning {
+            dlog("dl", "iOS's own progress started: the files carry on in the background")
+            endGrace()
+        } else if UIApplication.shared.backgroundTimeRemaining < 6 {
+            holdForApp(why: "iOS's time in the background is nearly up", ending: false)
+        }
+    }
+
+    /// The files downloading in Folio stop where they are (what arrived is
+    /// written first) and wait, queued, until Folio is open again.
+    private func holdForApp(why: String, ending: Bool) {
+        guard !graceHolding else {
+            if ending { endGrace() }
+            return
+        }
+        graceHolding = true
+        var n = 0
+        for i in items.indices where items[i].state == .running && transfers[items[i].id] != nil {
+            items[i].state = .queued
+            items[i].held = true
+            halt(items[i].id)
+            n += 1
+        }
+        dlog("dl", "\(n) download(s) paused in the background (\(why)): they carry on when Folio is open again")
+        updateTicker()
+        saveNow()
+        // iOS's expiry handler must end the time now; otherwise the pauses' writes come first.
+        if ending || stopping.isEmpty { endGrace() }
+    }
+
+    private func endGrace() {
+        graceHolding = false
+        guard grace != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(grace)
+        grace = .invalid
+    }
+
+    /// Back on screen: the time asked for in the background isn't needed,
+    /// and files that paused there start again (pump).
+    private func becameActive() {
+        if grace != .invalid {
+            let held = items.filter { $0.state == .queued && $0.held && !$0.usesSession }.count
+            if held > 0 || !transfers.isEmpty { dlog("dl", "Folio is back: \(transfers.count) running, \(held) carry on") }
+        }
+        endGrace()
+        pump()
+    }
+
+    /// A moment in the background for the pauses' writes after iOS's progress was stopped.
+    private var stopTime: BackgroundTime?
+
+    /// iOS's own progress was stopped. In the background that's its stop
+    /// button (or iOS ending the task): the files pause, to resume when you
+    /// say, as Safari's downloads do. On screen iOS ended it and Folio
+    /// carries on downloading; Folio's Live Activity takes over.
+    private func systemProgressStopped(background: Bool) {
+        guard background else { return }
+        var n = 0
+        if stopTime == nil { stopTime = BackgroundTime("folio.download.stop") }
+        for i in items.indices where !items[i].usesSession && (items[i].state == .running || items[i].state == .queued) {
+            let running = items[i].state == .running
+            items[i].state = .paused
+            items[i].held = false
+            if running { halt(items[i].id) }
+            n += 1
+        }
+        dlog("dl", "\(n) download(s) paused: iOS's progress was stopped")
+        updateTicker()
+        saveNow()
+        if stopping.isEmpty { stopTime?.end(); stopTime = nil }
+    }
+
+    /// iOS's own progress for the files downloading in Folio (iOS 26).
+    private func syncSystemProgress() {
+        let pending = items.filter { !$0.usesSession && ($0.state == .running || $0.state == .queued) }
+        let busy = conditionsOK && !pending.isEmpty
+        if busy { systemRun.formUnion(pending.map(\.id)) }
+        let mine = items.filter { systemRun.contains($0.id) && $0.state != .paused && $0.state != .failed }
+        let total = mine.reduce(Int64(0)) { $0 + max(0, $1.expected) }
+        let got = mine.reduce(Int64(0)) { $0 + ($1.state == .done ? max(0, $1.expected) : min(max(0, $1.received), max(0, $1.expected))) }
+        let running = pending.filter { $0.state == .running }
+        let texts = SystemProgress.texts(running: running.map { TitleParser.clean($0.fileName) }, next: pending.first.map { TitleParser.clean($0.fileName) },
+                                         waiting: running.isEmpty && !pending.isEmpty, received: got, total: total)
+        let done = !systemRun.isEmpty && systemRun.allSatisfy { id in items.first { $0.id == id }.map { $0.state == .done } ?? true }
+        SystemProgress.shared.sync(.init(busy: busy, allDone: !busy && done, received: got, total: total, title: texts.title, subtitle: texts.subtitle))
+        if !busy { systemRun = [] }
+    }
+
     // MARK: Engine callbacks
 
     private func progress(_ key: String, _ got: Int64, _ total: Int64?) {
@@ -808,7 +1156,8 @@ final class DownloadManager: ObservableObject {
     }
 
     /// The server answered something else than the part asked for: the
-    /// file starts again over one connection.
+    /// file starts again over one connection (in Folio since 1.22.3, when
+    /// Folio may download: on screen or as iOS's continued task).
     private func fallBackToOne(_ i: Int, why: String) {
         let id = items[i].id
         dlog("dl", "\(items[i].fileName): \(why); one connection from the start")
@@ -822,8 +1171,12 @@ final class DownloadManager: ObservableObject {
         items[i].received = 0
         lastBytes[id] = 0
         runs[id] = (runs[id] ?? 0) + 1
-        if items[i].state == .running { startSingle(id, request: request(for: items[i]), why: "no byte ranges") }
+        if items[i].state == .running {
+            items[i].state = .queued
+            items[i].held = true
+        }
         save()
+        pump()
     }
 
     private func finished(_ id: UUID, _ tmp: URL) {
@@ -856,8 +1209,11 @@ final class DownloadManager: ObservableObject {
         items[i].finished = Date()
         if let r = items[i].resumeFile { try? fm.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) }
         items[i].resumeFile = nil
-        let connections = items[i].parts?.count ?? 1
+        let inApp = items[i].chunks != nil || peakConnections[id] != nil
+        let connections = peakConnections.removeValue(forKey: id) ?? items[i].parts?.count ?? 1
         items[i].parts = nil
+        items[i].chunks = nil
+        connectionCounts[id] = nil
         var took = ""
         if let t = startedAt.removeValue(forKey: id) {
             let s = max(0.001, Date().timeIntervalSince(t.time))
@@ -865,7 +1221,8 @@ final class DownloadManager: ObservableObject {
             took = t.bytes > 0 ? String(format: " (resumed: %@ in %.1f s, %@)", moved.byteString, s, speedString(Double(moved) / s))
                                : String(format: " in %.1f s, %@", s, speedString(Double(moved) / s))
         }
-        dlog("dl", "done \(items[i].fileName): \(size.byteString)\(took), \(connections) connection\(connections == 1 ? "" : "s")")
+        dlog("dl", "done \(items[i].fileName): \(size.byteString)\(took), \(inApp ? "in Folio, up to " : "")\(connections) connection\(connections == 1 ? "" : "s")"
+             + " → \(DownloadItem.documentsPath(dest.path) ?? "outside Documents")")
         // What "Delete watched downloads" may delete (1.22.0).
         DownloadLedger.add(dest)
         LocalMediaStore.shared.refresh()
@@ -967,12 +1324,12 @@ final class DownloadManager: ObservableObject {
         name.flatMap { try? Data(contentsOf: DownloadEngine.resumeDir.appendingPathComponent($0)) }
     }
 
-    /// A removed download's resume data and parts.
+    /// A removed download's resume data, parts and file in progress.
     private func removeFiles(of item: DownloadItem) {
         let fm = FileManager.default
         if let r = item.resumeFile { try? fm.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) }
         for p in item.parts ?? [] { if let r = p.resumeFile { try? fm.removeItem(at: DownloadEngine.resumeDir.appendingPathComponent(r)) } }
-        if item.parts != nil { Self.removePartFiles(item.id) }
+        if item.parts != nil || item.state != .done { Self.removePartFiles(item.id) }
     }
 
     private static func removePartFiles(_ id: UUID) {
@@ -986,6 +1343,12 @@ final class DownloadManager: ObservableObject {
         runs[id] = nil
         startedAt[id] = nil
         lastBytes[id] = nil
+        transfers[id] = nil
+        stopping[id] = nil
+        connectionCounts[id] = nil
+        peakConnections[id] = nil
+        lastChunkSave[id] = nil
+        systemRun.remove(id)
         for k in inFlight where k.hasPrefix(id.uuidString) { inFlight.remove(k) }
     }
 
@@ -1001,29 +1364,36 @@ final class DownloadManager: ObservableObject {
         } else if !need, let t = ticker {
             t.invalidate(); ticker = nil
             speed = 0
+            estimateSpeed = 0
+            meter.reset()
             speedHistory = Array(repeating: 0, count: 30)
         }
     }
 
-    /// Bytes since the last reading over the time since it: after a
-    /// suspension that's the average while iOS downloaded alone (until
-    /// 1.22.1 a minute's bytes counted as one second's). In the background
-    /// no progress reaches Folio: the timer's readings there would say the
-    /// speed fell to nothing (and the Live Activity that it ends in hours),
-    /// so only catchUp, which asks the transfers, reads it there.
+    /// The bytes since the last reading, into the speed over the last few
+    /// seconds (SpeedMeter): after a suspension that's the average while
+    /// iOS downloaded alone (until 1.22.1 a minute's bytes counted as one
+    /// second's). In the background the progress of iOS's background
+    /// session doesn't reach Folio: the timer's readings there would say the
+    /// speed fell to nothing, so only catchUp, which asks the transfers,
+    /// reads it there. Files downloading in Folio itself report while it
+    /// runs in the background as well (1.22.3).
     private func tick(force: Bool) {
-        if !force, UIApplication.shared.applicationState == .background { return }
+        let background = UIApplication.shared.applicationState == .background
+        if !force, background, transfers.isEmpty { return }
         let now = CACurrentMediaTime()
-        let dt = lastTick > 0 ? max(0.25, now - lastTick) : 1
         lastTick = now
         var delta: Int64 = 0
         for it in items where it.state == .running {
             delta += max(0, it.received - (lastBytes[it.id] ?? it.received))
             lastBytes[it.id] = it.received
         }
-        let rate = Double(delta) / dt
-        speed = speed == 0 || dt > 5 ? rate : speed * 0.6 + rate * 0.4
+        meter.add(delta, at: now)
+        speed = meter.rate
+        estimateSpeed = meter.estimate(at: now)
         speedHistory = Array((speedHistory + [speed]).suffix(30))
+        if background { checkGrace() }
+        syncSystemProgress()
     }
 
     // MARK: Done
@@ -1047,6 +1417,13 @@ final class DownloadManager: ObservableObject {
     // MARK: Store
 
     private func index(_ id: UUID) -> Int? { items.firstIndex { $0.id == id } }
+
+    /// The list written at once, not in a moment: Folio may be suspended next (1.22.3).
+    private func saveNow() {
+        saveWork?.cancel()
+        saveWork = nil
+        if let d = try? JSONEncoder().encode(items) { try? d.write(to: file, options: .atomic) }
+    }
 
     private func save() {
         saveWork?.cancel()
@@ -1151,14 +1528,6 @@ final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sen
         return URLSession(configuration: c, delegate: self, delegateQueue: nil)
     }()
 
-    /// The range check: no cache, no cookies, its own short timeout.
-    private static let checkSession: URLSession = {
-        let c = URLSessionConfiguration.ephemeral
-        c.timeoutIntervalForRequest = 20
-        c.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return URLSession(configuration: c)
-    }()
-
     func liveKeys() async -> [String] {
         await session.allTasks.compactMap { t in
             guard t.state == .running || t.state == .suspended, let key = t.taskDescription, Self.parse(key) != nil else { return nil }
@@ -1239,6 +1608,14 @@ final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sen
         /// and the transfer itself reports what's wrong.
         case unknown(String)
     }
+
+    /// The range check: no cache, no cookies, its own short timeout.
+    private static let checkSession: URLSession = {
+        let c = URLSessionConfiguration.ephemeral
+        c.timeoutIntervalForRequest = 20
+        c.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: c)
+    }()
 
     /// Asks for the first byte and reads the answer's head only.
     static func checkRanges(_ r: Request) async -> RangeAnswer {

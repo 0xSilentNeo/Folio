@@ -43,8 +43,11 @@ targets:
           UIColorName: LaunchBackground
           UIImageName: LaunchMark
         # fetch: the airing tracker's background refresh (1.21.0, AiringBackground).
-        UIBackgroundModes: [audio, picture-in-picture, fetch]
-        BGTaskSchedulerPermittedIdentifiers: [dev.silentneo.folio.airing-refresh]
+        # processing and downloads.*: the download queue as an iOS 26
+        # continued processing task, with iOS's own progress (1.22.3,
+        # SystemProgress; one identifier per request under the wildcard).
+        UIBackgroundModes: [audio, picture-in-picture, fetch, processing]
+        BGTaskSchedulerPermittedIdentifiers: [dev.silentneo.folio.airing-refresh, "dev.silentneo.folio.downloads.*"]
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         UISupportsDocumentBrowser: false
