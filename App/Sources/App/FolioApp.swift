@@ -105,21 +105,11 @@ struct RootView: View {
         #endif
     }
 
+    /// The search tab's text (1.22.4).
+    @State private var searchText = ""
+
     private var tabs: some View {
-        TabView(selection: $tab) {
-            HomeView()
-                .tabItem { Label("Home", systemImage: "play.rectangle.fill") }
-                .tag(0)
-            DiscoverView()
-                .tabItem { Label("Discover", systemImage: "sparkles.tv") }
-                .tag(1)
-            // Not in the kids profile (1.22.0): servers play anything on them.
-            if !kids.isOn {
-                NetworkView()
-                    .tabItem { Label("Network", systemImage: "externaldrive.connected.to.line.below") }
-                    .tag(2)
-            }
-        }
+        tabView
         .onChange(of: kids.isOn) { _, on in if on && tab == 2 { tab = 0 } }
         .onOpenURL(perform: handle)
         .alert("Add this addon?", isPresented: Binding(get: { linkAddon != nil }, set: { if !$0 { linkAddon = nil } }), presenting: linkAddon) { target in
@@ -131,6 +121,44 @@ struct RootView: View {
         .alert("Couldn't add the addon", isPresented: Binding(get: { linkError != nil }, set: { if !$0 { linkError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: { Text(linkError ?? "") }
+    }
+
+    /// iOS 18 and later: the search is a tab of its own (1.22.4), which iOS 26
+    /// draws as the round button beside the tab bar that opens into the
+    /// search field, as in Apple's apps. It searches your library, your
+    /// servers' files and titles on IMDb and the addons (AddonSearchView).
+    /// Until 1.22.4 each had its own search behind a button.
+    @ViewBuilder
+    private var tabView: some View {
+        if #available(iOS 18.0, *) {
+            TabView(selection: $tab) {
+                Tab("Home", systemImage: "play.rectangle.fill", value: 0) { HomeView().tabZoom() }
+                Tab("Discover", systemImage: "sparkles.tv", value: 1) { DiscoverView().tabZoom() }
+                // Not in the kids profile (1.22.0): servers play anything on them.
+                if !kids.isOn {
+                    Tab("Network", systemImage: "externaldrive.connected.to.line.below", value: 2) { NetworkView().tabZoom() }
+                }
+                Tab(value: 3, role: .search) { SearchTabView(query: $searchText).tabZoom() }
+            }
+            .modifier(TabBarSearchField(text: $searchText, selected: tab == 3))
+        } else {
+            TabView(selection: $tab) {
+                HomeView().tabZoom()
+                    .tabItem { Label("Home", systemImage: "play.rectangle.fill") }
+                    .tag(0)
+                DiscoverView().tabZoom()
+                    .tabItem { Label("Discover", systemImage: "sparkles.tv") }
+                    .tag(1)
+                if !kids.isOn {
+                    NetworkView().tabZoom()
+                        .tabItem { Label("Network", systemImage: "externaldrive.connected.to.line.below") }
+                        .tag(2)
+                }
+                SearchTabView(query: $searchText).tabZoom()
+                    .tabItem { Label("Search", systemImage: "magnifyingglass") }
+                    .tag(3)
+            }
+        }
     }
 
     /// An addon a folio:// link asked for, waiting for a yes. Until 1.20.2

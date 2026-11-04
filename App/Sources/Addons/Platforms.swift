@@ -269,11 +269,7 @@ struct DiscoverView: View {
         HStack(spacing: 10) {
             Text("Discover").font(.system(size: 28, weight: .bold, design: .rounded))
             Spacer()
-            NavigationLink { AddonSearchView() } label: {
-                Image(systemName: "magnifyingglass").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Search")
+            // The search is the tab bar's search button now (1.22.4).
             // Addons and streaming services are settings: locked in the kids profile (1.22.0).
             if !kids.isOn {
                 Menu {
