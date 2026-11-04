@@ -16,6 +16,11 @@ import UIKit
 /// views that move on by themselves. Whenever Folio runs (back on screen,
 /// woken by iOS when a transfer or a part ends) it measures again and
 /// corrects them.
+///
+/// Since 1.22.3 files download in Folio itself. On iOS 26 and later iOS
+/// shows their progress (SystemProgress) and this activity stays off; it's
+/// used on older iOS, or when iOS declines or ends that, and Folio then
+/// keeps measuring and updating it for as long as it runs in the background.
 @MainActor
 final class DownloadActivity {
     static let shared = DownloadActivity()
@@ -86,14 +91,23 @@ final class DownloadActivity {
         let dm = DownloadManager.shared
         guard LiveActivities.enabled else { finish(nil, after: nil); return }
         let now = Date()
-        switch Self.phase(dm.items, run: run, conditionsOK: dm.conditionsOK) {
+        // Paused in the background until Folio is back (1.22.3): as good as paused.
+        switch Self.phase(dm.items, run: run, conditionsOK: dm.conditionsOK && !dm.waitsForApp) {
         case .downloading, .waiting:
+            // iOS 26: iOS shows the progress itself (SystemProgress, 1.22.3); one is enough.
+            if SystemProgress.shared.isActive {
+                if activity != nil { dlog("activity", "downloads: iOS shows the progress, Folio's activity goes") }
+                finish(nil, after: nil)
+                return
+            }
             run.formUnion(dm.items.filter { $0.state == .running || $0.state == .queued }.map(\.id))
-            let s = Self.state(dm.items, run: run, speed: dm.speed, now: now) { TitleParser.clean($0.fileName) }
+            // The settled speed (SpeedMeter): none in a download's first
+            // seconds, whose connections are still starting (4 Nov report:
+            // 46 minutes left for a file in 25 s later).
+            let s = Self.state(dm.items, run: run, speed: dm.estimateSpeed, now: now) { TitleParser.clean($0.fileName) }
             if let activity, activity.activityState == .active || activity.activityState == .stale {
-                // In the background no progress reaches Folio: its numbers
-                // lag until the catch-up, and only that (refreshNow) goes out.
-                if UIApplication.shared.applicationState == .background, !corrected { return }
+                if !Self.mayUpdate(background: UIApplication.shared.applicationState == .background,
+                                   measuring: dm.measuresInBackground, corrected: corrected) { return }
                 guard let shown else { push(s, to: activity, now: now); return }
                 guard Self.looksDifferent(shown, s) || now.timeIntervalSince(lastPush) >= Self.refreshEvery else { return }
                 let wait = Self.minGap - now.timeIntervalSince(lastPush)
@@ -127,7 +141,26 @@ final class DownloadActivity {
         }
     }
 
+    /// Folio leaves the screen (1.22.3): the latest estimate goes out now,
+    /// as what the timers carry on from. Until then one up to a minute old
+    /// could stay (an estimate within 10% wasn't sent).
+    func leaving() {
+        guard !labMode, activity != nil else { return }
+        lastPush = .distantPast
+        corrected = true
+        refresh()
+        corrected = false
+    }
+
     // MARK: Decisions
+
+    /// Whether an update may go out now. In the background the progress of
+    /// iOS's background session doesn't reach Folio: its numbers lag until
+    /// the catch-up, and only that (`corrected`) goes out. Files downloading
+    /// in Folio itself report while it runs there (1.22.3).
+    nonisolated static func mayUpdate(background: Bool, measuring: Bool, corrected: Bool) -> Bool {
+        !background || measuring || corrected
+    }
 
     nonisolated static func phase(_ items: [DownloadItem], run: Set<UUID>, conditionsOK: Bool) -> Phase {
         if items.contains(where: { $0.state == .running }) { return .downloading }
