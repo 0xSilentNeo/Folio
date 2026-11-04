@@ -295,6 +295,8 @@ struct MetaItem: Codable, Hashable, Identifiable {
     var logo: String?
     var description: String?
     var releaseInfo: String?
+    /// A series' last year, when it has ended (IMDb's releaseYear.endYear; 1.22.2).
+    var endYear: Int?
     var imdbRating: String?
     var runtime: String?
     var genres: [String]?
@@ -329,6 +331,7 @@ struct MetaItem: Codable, Hashable, Identifiable {
         logo = c.flexString(.logo)
         description = c.flexString(.description)
         releaseInfo = c.flexString(.releaseInfo) ?? c.flexString(.year)
+        endYear = try? c.decodeIfPresent(Int.self, forKey: .endYear)
         imdbRating = c.flexString(.imdbRating)
         runtime = c.flexString(.runtime)
         genres = c.flexStrings(.genres) ?? c.flexStrings(.genre)
@@ -344,7 +347,7 @@ struct MetaItem: Codable, Hashable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, type, name, poster, posterShape, background, logo, description, releaseInfo, year, imdbRating, runtime, genres, genre, videos
+        case id, type, name, poster, posterShape, background, logo, description, releaseInfo, year, endYear, imdbRating, runtime, genres, genre, videos
         case rank, cast, originalName, director, contentRating, countries, credits, wikipedia
     }
 
@@ -359,6 +362,7 @@ struct MetaItem: Codable, Hashable, Identifiable {
         try c.encodeIfPresent(logo, forKey: .logo)
         try c.encodeIfPresent(description, forKey: .description)
         try c.encodeIfPresent(releaseInfo, forKey: .releaseInfo)
+        try c.encodeIfPresent(endYear, forKey: .endYear)
         try c.encodeIfPresent(imdbRating, forKey: .imdbRating)
         try c.encodeIfPresent(runtime, forKey: .runtime)
         try c.encodeIfPresent(genres, forKey: .genres)
@@ -474,4 +478,39 @@ struct AddonSubtitle: Codable, Hashable {
         id = c.flexString(.id)
         lang = c.flexString(.lang)
     }
+}
+
+extension MetaItem {
+    /// The series has ended: IMDb gives its last year, or an addon's years
+    /// are a closed range ("2011–2019"). A running show is "2025–" or one year.
+    var hasEnded: Bool {
+        if endYear != nil { return true }
+        guard let r = releaseInfo?.trimmingCharacters(in: .whitespaces) else { return false }
+        return r.range(of: #"^\d{4}\s*[–—-]\s*\d{4}$"#, options: .regularExpression) != nil
+    }
+}
+
+extension MetaVideo {
+    /// Not out yet: its release date (IMDb's "2026-11-20", an addon's ISO
+    /// time) is after `now`. Such an episode has no streams to find, so its
+    /// tile doesn't open the streams page (1.22.2). A date that can't be read
+    /// counts as out.
+    func airsLater(now: Date = Date(), calendar: Calendar = .autoupdatingCurrent) -> Bool {
+        guard let r = released?.trimmingCharacters(in: .whitespaces), r.count >= 10 else { return false }
+        if r.count > 10, let t = ISO8601DateFormatter.withFraction.date(from: r) ?? ISO8601DateFormatter().date(from: r) {
+            return t > now
+        }
+        let parts = r.prefix(10).split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3, let day = calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2])) else { return false }
+        return day > now
+    }
+}
+
+extension ISO8601DateFormatter {
+    /// "2025-11-28T08:00:00.000Z".
+    static let withFraction: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
 }

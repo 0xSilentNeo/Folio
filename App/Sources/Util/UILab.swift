@@ -23,6 +23,13 @@ enum UILab {
         if CommandLine.arguments.contains("-parseProbe") { parseProbe(); return }
         if CommandLine.arguments.contains("-nameProbe") { nameProbe(); return }
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-imdbProbe=") }) { imdbProbe(ids: arg.dropFirst("-imdbProbe=".count).split(separator: ",").map(String.init)); return }
+        // The kids profile off and no passcode chosen (KidsPasscodeUITests).
+        if CommandLine.arguments.contains("-labKidsReset") {
+            MainActor.assumeIsolated {
+                Keychain.set(nil, for: KidsProfile.passcodeAccount)
+                KidsProfile.shared.turnOff()
+            }
+        }
         if uiTestLibrary {
             if CommandLine.arguments.contains("-uiTestDownloads") { MainActor.assumeIsolated { DownloadManager.shared.labSeed() } }
             UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
@@ -288,6 +295,14 @@ enum UILab {
                                    cast.filter { $0.photo != nil }.count, cast.filter { $0.character != nil }.count, (CACurrentMediaTime() - t0) * 1000))
                 for c in cast.prefix(4) { dlog("lab", "  \(c.name) as \(c.character ?? "-") \(c.photo ?? "no photo")") }
                 if let m { dlog("lab", "  original=\(m.originalName ?? "-") rating=\(m.contentRating ?? "-") genres=\((m.genres ?? []).joined(separator: ","))") }
+                // 1.22.2: a show's years (Track hides on ended ones) and what
+                // "More like this" says each recommendation is (For you in the kids profile).
+                if let m { dlog("lab", "  type=\(m.type) years=\(m.releaseInfo ?? "-")–\(m.endYear.map(String.init) ?? "") ended=\(m.hasEnded)") }
+                for hint in ["movie", "series"] {
+                    for r in (await IMDbSource.related(id: id, type: hint) ?? []).prefix(12) {
+                        dlog("lab", "  related (hint \(hint)) \(r.meta.id) \(r.meta.name) type=\(r.meta.type) rating=\(r.meta.contentRating ?? "-")")
+                    }
+                }
                 let wiki = await Wikipedia.article(name: m?.name ?? id, year: m?.releaseInfo, type: "series")
                 dlog("lab", "  wikipedia=\(wiki?.absoluteString ?? "nil")")
             }

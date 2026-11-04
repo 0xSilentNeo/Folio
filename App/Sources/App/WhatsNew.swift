@@ -20,6 +20,18 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.22.2", items: [
+            Item(icon: "lock", title: "One kids passcode",
+                 text: "Chosen the first time and kept until you change it. Turning the kids profile on again asks for nothing."),
+            Item(icon: "rectangle.expand.vertical", title: "Player controls, evenly",
+                 text: "Every width is the same distance from both edges, and the menu buttons no longer cover the time bar."),
+            Item(icon: "goforward.10", title: "Quick skips",
+                 text: "Taps while a skip lands go as one, with the sound off until the picture is there."),
+            Item(icon: "pip", title: "Sharper PiP with OpenGL",
+                 text: "Picture in Picture shows the video at its own size, up to 1080p."),
+            Item(icon: "bell", title: "Track only what's still running",
+                 text: "Shows that have ended have no Track button, and episodes not out yet don't open the streams page."),
+        ]),
         Release(version: "1.22.1", items: [
             Item(icon: "cpu", title: "Metal is the default again",
                  text: "And the OpenGL renderer now plays 10-bit files and shows HDR as HDR, with Picture in Picture that never pauses. Try it in Settings → mpv → Renderer."),

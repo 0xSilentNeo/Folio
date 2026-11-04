@@ -25,8 +25,38 @@ enum FolioGroup {
             bundles.append(app)
         }
         let renamed = bundles.flatMap { ($0.object(forInfoDictionaryKey: "ALTAppGroups") as? [String]) ?? [] }
-        return (renamed + [id]).first { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: $0) != nil }
+        // The app's profile first in both processes, so app and widget pick the same group.
+        let fromProfiles = (bundles.dropFirst() + [Bundle.main]).flatMap(profileGroups)
+        return (renamed + [id] + fromProfiles).first { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: $0) != nil }
     }()
+
+    /// The App Groups in the signing profile (embedded.mobileprovision's
+    /// entitlements), 1.22.2. A tool that signs with a certificate of its own
+    /// (KSign with a bought one, 4 Nov) gives Folio its profile's groups,
+    /// under names Folio can't know in advance. Empty without a profile
+    /// (TrollStore, the simulator).
+    static func profileGroups(_ bundle: Bundle) -> [String] {
+        guard let url = bundle.url(forResource: "embedded", withExtension: "mobileprovision"),
+              let data = try? Data(contentsOf: url) else { return [] }
+        return profileGroups(fromProfile: data)
+    }
+
+    /// The groups out of a profile's bytes: a signed plist, whose XML sits in it as text.
+    static func profileGroups(fromProfile data: Data) -> [String] {
+        guard let start = data.range(of: Data("<?xml".utf8)),
+              let end = data.range(of: Data("</plist>".utf8), in: start.lowerBound..<data.endIndex),
+              let plist = try? PropertyListSerialization.propertyList(from: data.subdata(in: start.lowerBound..<end.upperBound), format: nil) as? [String: Any],
+              let entitlements = plist["Entitlements"] as? [String: Any] else { return [] }
+        return (entitlements["com.apple.security.application-groups"] as? [String]) ?? []
+    }
+
+    /// For the log: which group is used, or why none is.
+    static var status: String {
+        let listed = profileGroups(Bundle.main)
+        if let installedID { return "App Group \(installedID)" + (installedID == id ? "" : " (the signing tool's name for it)") }
+        if listed.isEmpty { return "no App Group container: \(id) not granted, and the signing profile lists no App Group" }
+        return "no App Group container: \(id) not granted, and none of the signing profile's \(listed.count) group(s) has one (\(listed.joined(separator: ", ")))"
+    }
 
     static var container: URL? {
         installedID.flatMap { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: $0) }

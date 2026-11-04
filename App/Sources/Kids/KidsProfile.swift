@@ -55,11 +55,18 @@ final class KidsProfile: ObservableObject {
 
     // MARK: On and off
 
-    /// Turned on with a new passcode each time, so one forgotten from an
-    /// earlier time never locks you out.
-    func turnOn(passcode: String) {
-        guard Self.isValid(passcode) else { return }
-        Keychain.set(Self.hashed(passcode, salt: Self.newSalt()), for: Self.passcodeAccount)
+    /// A passcode was chosen once: it's kept until it's changed (1.22.2;
+    /// until then turning the profile on asked for a new one every time).
+    var hasPasscode: Bool { Keychain.get(Self.passcodeAccount) != nil }
+
+    /// Turned on with the passcode chosen before, or with `passcode` the
+    /// first time (or after it was cleared).
+    func turnOn(passcode: String? = nil) {
+        if let passcode {
+            guard Self.isValid(passcode) else { return }
+            Keychain.set(Self.hashed(passcode, salt: Self.newSalt()), for: Self.passcodeAccount)
+        }
+        guard hasPasscode else { return }
         UserDefaults.standard.set(true, forKey: SettingsKey.kidsProfile)
         resetTries()
         isOn = true
@@ -68,10 +75,10 @@ final class KidsProfile: ObservableObject {
         dlog("kids", "kids profile on (\(KidsRules.summary(limits)))")
     }
 
-    /// A new passcode while the profile is on. Only after the current one
-    /// (or Face ID) was given just now (KidsPasscodeScreen's .change).
+    /// A new passcode, whether the profile is on or off. Only after the
+    /// current one (or Face ID) was given just now (KidsPasscodeScreen's .change).
     func changePasscode(to passcode: String) {
-        guard isOn, Self.isValid(passcode) else { return }
+        guard hasPasscode, Self.isValid(passcode) else { return }
         Keychain.set(Self.hashed(passcode, salt: Self.newSalt()), for: Self.passcodeAccount)
         resetTries()
         dlog("kids", "kids passcode changed")

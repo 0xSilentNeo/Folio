@@ -1309,7 +1309,70 @@ final class PlayerModel: ObservableObject {
     // the core, which on a network file can take long enough to freeze the
     // button that was tapped.
     func seek(by seconds: Double) {
-        _ = client?.commandAsync(["seek", String(seconds), "relative+exact"])
+        guard let c = client else { return }
+        // The sound is off until the picture lands, so quick skips don't
+        // play a few milliseconds from each place on the way (4 Nov
+        // recording: seven +10 s taps in 2 s, the sound cutting in and out).
+        if !mutedForSkip, !paused, c.flag("mute") == false {
+            _ = c.set("mute", true)
+            mutedForSkip = true
+        }
+        // A skip while one is still landing is added to the next one: one
+        // seek for a run of taps instead of one each.
+        if skipRunning {
+            skipPending += seconds
+            skipsGathered += 1
+            return
+        }
+        skipRunning = true
+        sendSkip(seconds, c)
+    }
+
+    // MARK: Quick skips (1.22.2)
+
+    /// A skip has been sent and its picture isn't up yet (playback restart).
+    private var skipRunning = false
+    private var skipStarted: CFTimeInterval = 0
+    /// Seconds of skips pressed meanwhile, sent as one when it lands.
+    private var skipPending: Double = 0
+    /// mpv's sound was turned off for a skip (only when it wasn't muted already).
+    private var mutedForSkip = false
+    private var skipsGathered = 0
+
+    private func sendSkip(_ seconds: Double, _ c: MPVClient) {
+        let started = CACurrentMediaTime()
+        skipStarted = started
+        _ = c.commandAsync(["seek", String(seconds), "relative+exact"])
+        // A seek that never shows a picture (an error, the end of the file)
+        // mustn't leave the sound off.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            guard let self, self.skipRunning, self.skipStarted == started else { return }
+            dlog("player", "skip: no picture 2 s after it; sound back")
+            self.skipPending = 0
+            self.skipLanded()
+        }
+    }
+
+    /// The picture of a skip is up: the gathered skips go as one seek, or,
+    /// with none, the sound comes back.
+    private func skipLanded() {
+        guard skipRunning || mutedForSkip else { return }
+        if skipRunning, skipPending != 0, let c = client {
+            let s = skipPending
+            skipPending = 0
+            sendSkip(s, c)
+            return
+        }
+        skipRunning = false
+        skipPending = 0
+        if skipsGathered > 0 {
+            dlog("player", "skips: \(skipsGathered + 1) taps went as fewer seeks, the sound off until the picture landed")
+            skipsGathered = 0
+        }
+        if mutedForSkip {
+            mutedForSkip = false
+            _ = client?.set("mute", false)
+        }
     }
 
     func seek(to seconds: Double, exact: Bool = true) {
@@ -1961,10 +2024,12 @@ final class PlayerModel: ObservableObject {
         }
     }
 
-    /// OpenGL: PiP's window has a new size. Frames follow
-    /// it 0.5 s after it settles (never during PiP's opening animation), at a
-    /// quarter, half or all of the video's own size — the first that covers
-    /// the window — or the video's size if the window is larger.
+    /// OpenGL: PiP's window has a new size. 0.5 s after it settles (never
+    /// during PiP's opening animation) the frames become the video's own
+    /// size, at most 1080p (PiPFrameSize). Until 1.22.2 they shrank to the
+    /// smallest quarter or half of it that covered the window's reported
+    /// size: 480×270 for a 1080p episode in a 418×235 window, stretched up
+    /// and blurry (4 Nov report).
     private var pipSizeWork: DispatchWorkItem?
     /// Between PiP's willStop and didStop (OpenGL renderer).
     private var pipStopping = false
@@ -1975,10 +2040,7 @@ final class PlayerModel: ObservableObject {
         pipSizeWork?.cancel()
         let w = DispatchWorkItem { [weak self] in
             guard let self, self.isPiPActive, !self.pipStopping, self.pendingW > 0, self.pendingH > 0 else { return }
-            let base = (self.pendingW, self.pendingH)
-            let pick = [4, 2, 1].map { ((base.0 / $0) & ~1, (base.1 / $0) & ~1) }
-                .first { $0.0 >= Int(size.width) && $0.1 >= Int(size.height) } ?? base
-            self.glRenderer?.setPiPSize(pick)
+            self.glRenderer?.setPiPSize(PiPFrameSize.pick(videoW: self.pendingW, videoH: self.pendingH))
         }
         pipSizeWork = w
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: w)
@@ -2420,7 +2482,11 @@ final class PlayerModel: ObservableObject {
             MainActor.assumeIsolated { self?.memoryWarning() }
         })
         observers.append(nc.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.aboutToLeave() }
+            MainActor.assumeIsolated {
+                // Control Center only makes the app inactive: what a pull does to the picture (1.22.2).
+                self?.traceTransition("app inactive (Control Center, Notification Centre or the app switcher)", seconds: 3)
+                self?.aboutToLeave()
+            }
         })
         observers.append(nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.didBecomeActive() }
@@ -2614,6 +2680,10 @@ final class PlayerModel: ObservableObject {
     /// first frame is drawn, so there is no black flash or jump.
     private func willEnterForeground() {
         if !isPiPActive, mode == .main, outputOffForAway, let c = client {
+            // 1.22.2: the picture and the main thread for 4 s after a trip
+            // away (Notification Centre), so a report shows what holds the
+            // picture up (4 Nov: "the stutter is back" on Metal).
+            traceTransition("coming forward (\(renderer == .metal ? "Metal: video output back" : "OpenGL"))")
             outputBackEarly(c)
             return
         }
@@ -2804,8 +2874,19 @@ final class PlayerModel: ObservableObject {
         if let art = nowPlayingArtwork { info[MPMediaItemPropertyArtwork] = art }
         if duration > 0 { info[MPMediaItemPropertyPlaybackDuration] = duration }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+        if nowPlayingLoggedFor != it.id {
+            // 1.22.2: Control Center said "Not Playing" (4 Nov recording) with
+            // no trace of why. What iOS goes by: the audio session, and
+            // whether another app's sound plays.
+            nowPlayingLoggedFor = it.id
+            let a = AVAudioSession.sharedInstance()
+            let cc = MPRemoteCommandCenter.shared()
+            let enabled = [cc.playCommand, cc.pauseCommand, cc.togglePlayPauseCommand, cc.changePlaybackPositionCommand].filter(\.isEnabled).count
+            dlog("player", "Now Playing set: audio session \(a.category.rawValue), \(a.mode.rawValue), options \(a.categoryOptions.rawValue), route sharing \(a.routeSharingPolicy.rawValue); other audio playing \(a.isOtherAudioPlaying); output \(a.currentRoute.outputs.map(\.portType.rawValue).joined(separator: ", ")); \(enabled) of 4 commands on; \(info.count) fields")
+        }
         updateLiveActivity()
     }
+    private var nowPlayingLoggedFor: String?
 
     /// The Live Activity for what's playing (1.22.0, NowPlayingActivity):
     /// started for each file once its length is known, then kept up to date
@@ -2868,6 +2949,7 @@ extension PlayerModel: MPVClientDelegate {
                 errorMessage = msg
             }
         case .playbackRestart:
+            skipLanded()
             buffering = false
             swapSeekQuietUntil = 0
             metalWaitRestarted = true

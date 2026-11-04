@@ -253,3 +253,15 @@ extension PiPManager: AVPictureInPictureSampleBufferPlaybackDelegate {
         completionHandler()
     }
 }
+
+/// The frames' size while PiP shows the OpenGL renderer's picture (1.22.2):
+/// the video's own, scaled down only past 1080p (a 4K film is drawn at
+/// 1920×1080), whatever size the window is, so a window made bigger is
+/// never blurry.
+enum PiPFrameSize {
+    static func pick(videoW: Int, videoH: Int) -> (Int, Int) {
+        guard videoW > 0, videoH > 0 else { return (videoW, videoH) }
+        let scale = min(1.0, 1920.0 / Double(max(videoW, videoH)), 1080.0 / Double(min(videoW, videoH)))
+        return (Int((Double(videoW) * scale).rounded()) & ~1, Int((Double(videoH) * scale).rounded()) & ~1)
+    }
+}

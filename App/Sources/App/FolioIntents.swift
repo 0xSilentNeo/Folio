@@ -27,6 +27,7 @@ enum ContinueSnapshotWriter {
     private static var written: ContinueSnapshot?
     private static var shortcutShows: [String]?
     private static var toldNoGroup = false
+    private static var toldGroup = false
 
     static func watch(_ store: HistoryStore) {
         guard subscription == nil else { return }
@@ -73,9 +74,13 @@ enum ContinueSnapshotWriter {
         guard let dir = ContinueSnapshot.directory(create: true) else {
             if !toldNoGroup {
                 toldNoGroup = true
-                dlog("widget", "no App Group container (\(FolioGroup.id) not granted): the widget shows Open Folio")
+                dlog("widget", "\(FolioGroup.status): the widget shows Open Folio")
             }
             return
+        }
+        if !toldGroup {
+            toldGroup = true
+            dlog("widget", FolioGroup.status)
         }
         // The kids profile shows an empty widget: Continue Watching is grown-up history.
         let entries = KidsProfile.isOnNow ? [] : Array(HistoryStore.shared.continueWatching.prefix(ContinueSnapshot.limit))

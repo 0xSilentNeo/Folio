@@ -188,21 +188,41 @@ struct PasscodeScreen: View {
     }
 }
 
-/// A key lights up under the finger and fades back, as the Lock Screen's do.
+/// A key as the Lock Screen's: on iOS 26 clear Liquid Glass that bends
+/// what's behind it and swells under the finger (1.22.2; it was a flat
+/// translucent disc). Before iOS 26 it lights up and fades back.
 private struct KeyStyle: ButtonStyle {
+    @ViewBuilder
     func makeBody(configuration: Configuration) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            // contentShape: the whole key takes the tap, not only its digits (see GlassCircle).
+            configuration.label
+                .glassEffect(.clear.interactive(), in: .circle)
+                .contentShape(Circle())
+        } else {
+            flat(configuration)
+        }
+        #else
+        flat(configuration)
+        #endif
+    }
+
+    private func flat(_ configuration: Configuration) -> some View {
         configuration.label
             .background(Circle().fill(.white.opacity(configuration.isPressed ? 0.5 : 0.15)))
             .animation(configuration.isPressed ? nil : .easeOut(duration: 0.4), value: configuration.isPressed)
     }
 }
 
-/// What's under the passcode screen, blurred and darkened.
+/// What's under the passcode screen, blurred and dimmed. Lighter than
+/// before 1.22.2, so the glass keys have the page to bend, as the Lock
+/// Screen's have the wallpaper.
 struct PasscodeBackground: View {
     var body: some View {
         ZStack {
             Rectangle().fill(.ultraThinMaterial)
-            Color.black.opacity(0.45)
+            Color.black.opacity(0.3)
         }
         .environment(\.colorScheme, .dark)
         .ignoresSafeArea()
@@ -227,7 +247,7 @@ enum KidsPasscodePurpose: Equatable {
     /// The passcode (or Face ID) before a way out of the profile. `reason`
     /// goes under the circles and in Face ID's prompt.
     case unlock(reason: String)
-    /// Turning the profile on: a new passcode, entered twice.
+    /// The first time the profile is turned on: a new passcode, entered twice.
     case choose
     /// The current passcode (or Face ID), then a new one twice.
     case change
@@ -279,11 +299,9 @@ struct KidsPasscodeScreen: View {
     private var message: String? {
         if let s = waitLeft { return "Too many tries. Try again in \(s) s." }
         if let note { return note }
-        switch step {
-        case .current: return reason
-        case .new: return purpose == .choose ? "It's asked for to leave the kids profile and to open Settings." : nil
-        case .confirm: return nil
-        }
+        // Only what went wrong, as on the Lock Screen's pad: nothing else under
+        // the circles (the reason is still Face ID's prompt).
+        return nil
     }
 
     var body: some View {
@@ -409,6 +427,9 @@ private struct KidsPasscodeCover: View {
             // After the screen has gone: what it opens can remove the view it hangs on (Home's badge).
             DispatchQueue.main.async { gate.then(code) }
         }
+        // A container of its own: without it the identifier replaced every
+        // key's ("pin2" was "kidsPasscode").
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("kidsPasscode")
     }
 }
@@ -424,23 +445,29 @@ struct KidsProfileSettings: View {
             Section {
                 if kids.isOn {
                     Label("The kids profile is on", systemImage: "figure.and.child.holdinghands")
-                    Button("Change Passcode…") {
-                        KidsGate.open($gate, .change) { code in if let code { kids.changePasscode(to: code) } }
-                    }
+                    changePasscodeButton
                     Button("Turn Off Kids Profile", role: .destructive) {
                         KidsGate.open($gate, .unlock(reason: "To turn off the kids profile")) { _ in kids.turnOff() }
                     }
                     .accessibilityIdentifier("kidsTurnOff")
                 } else {
                     Button {
-                        KidsGate.open($gate, .choose) { code in if let code { kids.turnOn(passcode: code) } }
-                    } label: { Label("Turn On Kids Profile…", systemImage: "figure.and.child.holdinghands") }
+                        // The passcode chosen the first time stays (1.22.2): turning on asks for nothing.
+                        if kids.hasPasscode {
+                            kids.turnOn()
+                        } else {
+                            KidsGate.open($gate, .choose) { code in if let code { kids.turnOn(passcode: code) } }
+                        }
+                    } label: { Label(kids.hasPasscode ? "Turn On Kids Profile" : "Turn On Kids Profile…", systemImage: "figure.and.child.holdinghands") }
                     .accessibilityIdentifier("kidsTurnOn")
+                    if kids.hasPasscode { changePasscodeButton }
                 }
             } footer: {
                 Text(kids.isOn
                      ? "Settings, turning the profile off, and changing its ratings or passcode each ask for the passcode, every time."
-                     : "Discover, search and your library show only titles rated for kids, Settings are locked behind a 4-digit passcode, and leaving the profile needs it too. You choose the passcode when you turn it on.")
+                     : kids.hasPasscode
+                     ? "Discover, search and your library show only titles rated for kids, and Settings and leaving the profile need your passcode. It stays the same until you change it."
+                     : "Discover, search and your library show only titles rated for kids, Settings are locked behind a 4-digit passcode, and leaving the profile needs it too. You choose the passcode the first time, and it stays until you change it.")
             }
             Section {
                 Picker("Films up to", selection: limit(\.film)) {
@@ -462,6 +489,13 @@ struct KidsProfileSettings: View {
         .navigationTitle("Kids Profile")
         .navigationBarTitleDisplayMode(.inline)
         .kidsPasscode($gate)
+    }
+
+    private var changePasscodeButton: some View {
+        Button("Change Passcode…") {
+            KidsGate.open($gate, .change) { code in if let code { kids.changePasscode(to: code) } }
+        }
+        .accessibilityIdentifier("kidsChangePasscode")
     }
 
     /// A rating limit. While the profile is on, a new one is kept only after

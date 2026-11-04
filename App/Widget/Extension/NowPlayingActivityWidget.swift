@@ -51,8 +51,10 @@ struct NowPlayingActivityWidget: Widget {
                 // The picture in a ring that fills as it plays.
                 PlaybackRing(state: s, tint: tint, size: 24, line: 2.4)
             } compactTrailing: {
+                // Words, not a pause glyph: beside the picture's placeholder that
+                // read as a play button and a pause button side by side (4 Nov).
                 if s.paused {
-                    Image(systemName: "pause.fill").font(.caption.weight(.bold)).foregroundStyle(tint)
+                    Text("Paused").font(.system(.caption, design: .rounded).weight(.semibold)).foregroundStyle(tint)
                 } else {
                     NowPlayingTimeLeft(state: s)
                         .font(.system(.caption, design: .rounded).weight(.semibold).monospacedDigit())
@@ -304,7 +306,8 @@ struct ActivityArtwork: View {
             } else {
                 ZStack {
                     LinearGradient(colors: [tint.opacity(0.45), Color(red: 0.08, green: 0.07, blue: 0.07)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    Image(systemName: "play.fill").font(.system(size: size * 0.34, weight: .semibold)).foregroundStyle(.white.opacity(0.75))
+                    // Not a play glyph: next to the play/pause button it read as a second control (4 Nov).
+                    Image(systemName: "film").font(.system(size: size * 0.32, weight: .semibold)).foregroundStyle(.white.opacity(0.75))
                 }
             }
         }
