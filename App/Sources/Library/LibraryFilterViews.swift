@@ -48,11 +48,12 @@ struct LibraryFilterMenu: View {
             // Sliders, not the sort's decreasing lines: the two buttons sit side by side.
             Image(systemName: "slider.horizontal.3")
                 .font(.system(size: 14, weight: .semibold))
-                .frame(width: 34, height: 34).glassCircle()
+                .frame(width: 34, height: 34).menuLabelCircle()
                 .overlay(alignment: .topTrailing) {
                     if filter.isActive { Circle().fill(Theme.accent).frame(width: 9, height: 9).overlay(Circle().strokeBorder(Theme.background, lineWidth: 1.5)) }
                 }
         }
+        .glassMenuCircle()
         .foregroundStyle(.primary)
         .accessibilityLabel(filter.isActive ? "Filter, \(filter.summary)" : "Filter")
         .accessibilityIdentifier("libraryFilterMenu")

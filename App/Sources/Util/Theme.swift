@@ -682,7 +682,50 @@ struct GlassCircle: ViewModifier {
     }
 }
 
+/// A Menu that is a round glass button itself (1.22.3). On iOS 26 the glass
+/// is on the menu, not inside its label, so the menu morphs out of a circle. With a glass circle drawn inside its label instead, the system
+/// lifted the label as a rounded square for a few frames before the morph
+/// (simulator recording of the library's filter button: round, square, menu).
+/// Before iOS 26 the label keeps its glass circle (`menuLabelCircle`).
+struct GlassMenuCircle: ViewModifier {
+    /// Off for a menu whose glass the system draws (a toolbar's).
+    var enabled = true
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *), enabled {
+            content.glassEffect(.regular.interactive(), in: .circle).contentShape(Circle())
+        } else {
+            content
+        }
+        #else
+        content
+        #endif
+    }
+}
+
+/// A round glass menu's label: its glass circle only before iOS 26, where
+/// the menu's button has none (GlassMenuCircle).
+struct MenuLabelCircle: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content
+        } else {
+            content.glassCircle()
+        }
+        #else
+        content.glassCircle()
+        #endif
+    }
+}
+
 extension View {
+    func glassMenuCircle(_ enabled: Bool = true) -> some View { modifier(GlassMenuCircle(enabled: enabled)) }
+    func menuLabelCircle() -> some View { modifier(MenuLabelCircle()) }
+
     func glass(cornerRadius: CGFloat = 18, interactive: Bool = false) -> some View {
         modifier(GlassBackground(cornerRadius: cornerRadius, interactive: interactive))
     }

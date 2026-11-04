@@ -237,9 +237,6 @@ enum LibraryOrganizer {
 /// neither Back nor the swipe closed it.
 enum LibraryRoute: Hashable {
     case group(String)        // LibraryGroup.id
-    /// A title from Home's Recently added shelf (1.22.0): the same page as
-    /// `.group`, zooming out of the shelf's tile instead of the grid's.
-    case recent(String)       // LibraryGroup.id
     case file(String)         // file path
     case folder(String)       // folder path
     case webdav(String)       // a WebDAV server's id: its library (See all on Home's Real-Debrid section)
@@ -253,7 +250,6 @@ enum LibraryRoute: Hashable {
     var logName: String {
         switch self {
         case .group(let id): return "group(\(id))"
-        case .recent(let id): return "recent(\(id))"
         case .file(let path): return "file(\((path as NSString).lastPathComponent))"
         case .folder(let path): return "folder(\((path as NSString).lastPathComponent))"
         case .webdav: return "webdav library"
@@ -267,7 +263,6 @@ enum LibraryRoute: Hashable {
     var zoomID: String? {
         switch self {
         case .group(let id): return id
-        case .recent(let id): return "r|" + id
         case .folder(let path): return "d|" + path
         case .settings, .file, .webdav, .webdavFolder: return nil
         }
@@ -276,7 +271,7 @@ enum LibraryRoute: Hashable {
     @MainActor @ViewBuilder
     static func destination(_ route: LibraryRoute) -> some View {
         switch route {
-        case .group(let id), .recent(let id):
+        case .group(let id):
             if let g = LibraryOrganizer.groups(LocalMediaStore.shared.files).first(where: { $0.id == id }) {
                 TitleHeroView(group: g)
             } else {

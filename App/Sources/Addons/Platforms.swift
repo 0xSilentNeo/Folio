@@ -280,8 +280,9 @@ struct DiscoverView: View {
                     Button { showPlatformSettings = true } label: { Label("Streaming services", systemImage: "rectangle.grid.2x2") }
                     NavigationLink { AddonsManagerView() } label: { Label("Addons", systemImage: "puzzlepiece.extension") }
                 } label: {
-                    Image(systemName: "ellipsis").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).glassCircle()
+                    Image(systemName: "ellipsis").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).menuLabelCircle()
                 }
+                .glassMenuCircle()
             }
         }
         .padding(.horizontal, margin)

@@ -81,24 +81,3 @@ final class LibraryFilterTests: XCTestCase {
         XCTAssertEqual(LibraryFilter(genre: LibraryFilter.unknown).emptyMessage(kidsHidden: 2), "No titles without a genre. The kids profile hides 2 more.")
     }
 }
-
-/// Home's Recently added shelf (1.22.0): one tile per title, newest first.
-final class RecentlyAddedTests: XCTestCase {
-    func testOneTilePerTitleNewestFirst() {
-        let dir = URL(fileURLWithPath: "/unit/Documents/Media")
-        let day: TimeInterval = 86400
-        let base = Date(timeIntervalSince1970: 1_700_000_000)
-        let dates: [String: Date] = [
-            "Old Film 2001.mp4": base,
-            "Show S01E01.mkv": base.addingTimeInterval(day),
-            "Show S01E02.mkv": base.addingTimeInterval(3 * day),
-            "New Film 2024.mp4": base.addingTimeInterval(2 * day),
-        ]
-        let files = dates.keys.map { dir.appendingPathComponent($0) }
-        let items = RecentlyAdded.items(files, added: { dates[$0.lastPathComponent]! })
-        XCTAssertEqual(items.map(\.newest.lastPathComponent), ["Show S01E02.mkv", "New Film 2024.mp4", "Old Film 2001.mp4"])
-        XCTAssertEqual(items.first?.id, "s|show", "a show's episodes are one tile, under its group id")
-        XCTAssertTrue(items.first?.isSeries == true)
-        XCTAssertEqual(RecentlyAdded.items(files, added: { dates[$0.lastPathComponent]! }, limit: 2).count, 2)
-    }
-}
