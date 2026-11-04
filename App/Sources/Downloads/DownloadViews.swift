@@ -187,6 +187,8 @@ struct DownloadsView: View {
     /// The file row whose swipe actions are open.
     @State private var openRow: String?
     @State private var confirmCancelAll = false
+    /// Packages folded to their header (1.22.3), kept between launches.
+    @State private var collapsed = DownloadCollapse.load()
 
     enum Filter: String, CaseIterable { case all = "All", active = "Active", queued = "Queued", done = "Done", failed = "Failed" }
 
@@ -231,12 +233,18 @@ struct DownloadsView: View {
                     }
                     .frame(maxWidth: .infinity).padding(.top, 60).padding(.horizontal, 20)
                 }
-                ForEach(packages) { p in PackageCard(name: p.name, all: p.all, shown: p.shown, openRow: $openRow) }
+                ForEach(packages) { p in
+                    PackageCard(name: p.name, all: p.all, shown: p.shown, openRow: $openRow, collapsed: collapsed.contains(p.name)) {
+                        toggle(p)
+                    }
+                }
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 120)
         }
         .scrollIndicators(.hidden)
+        // Packages no longer listed are forgotten.
+        .onAppear { collapsed = DownloadCollapse.prune(keeping: Set(dm.items.map(\.package))) }
         .confirmationDialog("Cancel all downloads that haven't finished? What they've downloaded so far is deleted.", isPresented: $confirmCancelAll, titleVisibility: .visible) {
             Button("Cancel all downloads", role: .destructive) { dm.cancelUnfinished() }
             Button("Keep them", role: .cancel) {}
@@ -264,6 +272,14 @@ struct DownloadsView: View {
                     .accessibilityLabel("Download settings")
             }
         }
+    }
+
+    /// Folds a package to its header, or opens it again.
+    private func toggle(_ p: Package) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        // A row's open swipe actions close with it.
+        if let open = openRow, p.all.contains(where: { $0.id.uuidString == open }) { openRow = nil }
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.86)) { collapsed = DownloadCollapse.toggle(p.name) }
     }
 
     private var filters: some View {
@@ -348,6 +364,9 @@ private struct PackageCard: View {
     let all: [DownloadItem]
     let shown: [DownloadItem]
     @Binding var openRow: String?
+    /// Folded to its header (1.22.3): a tap on the header folds or opens it.
+    var collapsed = false
+    var onToggle: () -> Void = {}
     @ObservedObject private var dm = DownloadManager.shared
     @StateObject private var thumb = ThumbLoader()
     @State private var ask: Question?
@@ -363,14 +382,30 @@ private struct PackageCard: View {
         let resumable = all.contains { $0.state == .paused || $0.state == .failed }
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                Color.clear.frame(width: 48, height: 48)
-                    .overlay { if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() } else { GeneratedArt(seed: name) } }
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(name).font(.headline).lineLimit(1)
-                    Text("\(got.byteString) of \(total.byteString) · \(done)/\(all.count) files").font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                // The header up to the buttons folds the card (its own
+                // buttons and menu keep their taps).
+                Button(action: onToggle) {
+                    HStack(spacing: 12) {
+                        Color.clear.frame(width: 48, height: 48)
+                            .overlay { if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() } else { GeneratedArt(seed: name) } }
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack(spacing: 6) {
+                                Text(name).font(.headline).lineLimit(1)
+                                Image(systemName: "chevron.down").font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                                    .rotationEffect(.degrees(collapsed ? -90 : 0))
+                            }
+                            Text("\(got.byteString) of \(total.byteString) · \(done)/\(all.count) files").font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .contentShape(Rectangle())
                 }
-                Spacer(minLength: 0)
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(name), \(done) of \(all.count) files")
+                .accessibilityValue(collapsed ? "Collapsed" : "Expanded")
+                .accessibilityHint(collapsed ? "Shows its files" : "Hides its files")
+                .accessibilityIdentifier("downloads.package.\(name)")
                 if running || resumable {
                     Button { running ? dm.pausePackage(name) : dm.resumePackage(name) } label: {
                         Image(systemName: running ? "pause.fill" : "play.fill").font(.system(size: 13, weight: .bold))
@@ -384,11 +419,14 @@ private struct PackageCard: View {
                 packageMenu(running: running, resumable: resumable, done: done)
             }
             ThinBar(progress: total > 0 ? Double(got) / Double(total) : 0, height: 4)
-            VStack(spacing: 0) {
-                ForEach(shown) { d in
-                    Divider().overlay(Theme.hairline)
-                    FileRow(item: d, openRow: $openRow)
+            if !collapsed {
+                VStack(spacing: 0) {
+                    ForEach(shown) { d in
+                        Divider().overlay(Theme.hairline)
+                        FileRow(item: d, openRow: $openRow)
+                    }
                 }
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .padding(14)
@@ -494,8 +532,8 @@ private struct FileRow: View {
     private var meta: String {
         switch item.state {
         case .running:
-            let parts = item.parts.map { ps in ps.filter { !$0.done }.count } ?? 0
-            return "\(item.received.byteString) of \(item.expected.byteString)" + (parts > 1 ? " · \(parts) connections" : "")
+            let n = dm.connectionCount(item)
+            return "\(item.received.byteString) of \(item.expected.byteString)" + (n > 1 ? " · \(n) connections" : "")
         case .queued: return "Queued · \(item.expected.byteString)" + (item.held ? " · waiting" : "")
         case .paused: return "Paused · \(item.received.byteString) of \(item.expected.byteString)"
         case .failed: return item.error ?? "Failed"
@@ -554,11 +592,43 @@ struct ThinBar: View {
     }
 }
 
+// MARK: - Folded packages
+
+/// The packages folded to their header on the Downloads screen (1.22.3),
+/// by name, kept in UserDefaults between launches.
+enum DownloadCollapse {
+    static let key = "downloadsCollapsedPackages"
+
+    static func load(_ d: UserDefaults = .standard) -> Set<String> { Set(d.stringArray(forKey: key) ?? []) }
+
+    /// Folds `name` or opens it again; returns all folded ones.
+    @discardableResult
+    static func toggle(_ name: String, in d: UserDefaults = .standard) -> Set<String> {
+        var s = load(d)
+        if s.remove(name) == nil { s.insert(name) }
+        store(s, d)
+        return s
+    }
+
+    /// Forgets the ones no longer on the list; returns those left.
+    @discardableResult
+    static func prune(keeping names: Set<String>, in d: UserDefaults = .standard) -> Set<String> {
+        let s = load(d)
+        let kept = s.intersection(names)
+        if kept != s { store(kept, d) }
+        return kept
+    }
+
+    private static func store(_ s: Set<String>, _ d: UserDefaults) {
+        if s.isEmpty { d.removeObject(forKey: key) } else { d.set(s.sorted(), forKey: key) }
+    }
+}
+
 // MARK: - Settings
 
 struct DownloadSettingsView: View {
     @AppStorage(SettingsKey.downloadConcurrent) private var concurrent = 2
-    @AppStorage(SettingsKey.downloadParts) private var parts = 4
+    @AppStorage(SettingsKey.downloadParts) private var parts = 8
     @AppStorage(SettingsKey.downloadAutoStart) private var autoStart = true
     @AppStorage(SettingsKey.downloadSaveTo) private var saveTo = "folder"
     @AppStorage(SettingsKey.downloadSkipExisting) private var skipExisting = true
@@ -578,7 +648,7 @@ struct DownloadSettingsView: View {
                 Stepper("Connections per file: \(parts)", value: $parts, in: 1...8)
                 Toggle("Start automatically", isOn: $autoStart)
             } header: { Text("Queue") } footer: {
-                Text("Connections: a file over 64 MB downloads in that many parts side by side, when the server allows it. That helps most with a server that is slow per connection. Start automatically off: a tapped file waits, paused, until you start it on the Downloads screen.")
+                Text("Connections: a file downloads over up to that many connections at once when the server allows it. One that finishes early takes over half of the biggest part left, and one far slower than the others starts again. That helps most with a server that is slow per connection. Start automatically off: a tapped file waits, paused, until you start it on the Downloads screen.")
             }
             Section("Saving") {
                 Picker("Save to", selection: $saveTo) {
@@ -595,7 +665,7 @@ struct DownloadSettingsView: View {
                 Toggle("Only while charging", isOn: $charging)
                 Stepper("Retries on error: \(retries)", value: $retries, in: 0...10)
             } header: { Text("Network & battery") } footer: {
-                Text("Downloads carry on in the background (iOS decides how fast while Folio isn't open). A paused file continues where it stopped. There is no speed limit: iOS doesn't let background downloads be slowed down.")
+                Text("Folio downloads files itself, not through iOS's background downloads. On iOS 26 and later they carry on in the background with iOS's own progress on the Lock Screen and in the Dynamic Island; its stop button pauses them. On older iOS they pause a little after you leave Folio and carry on when you're back. A paused file continues where it stopped.")
             }
             // 1.22.0: AutoDownload and WatchedCleanup.
             Section {

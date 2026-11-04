@@ -49,7 +49,7 @@ enum SettingsKey {
     static let downloadNextEpisodes = "downloadNextEpisodes"    // 1.22.0: 0 (off) | 1 | 2 | 3 episodes after one watched past 70% (AutoDownload)
     static let downloadDeleteWatched = "downloadDeleteWatched"  // 1.22.0: 0 (off) | 1 | 7 days after a downloaded file was finished (WatchedCleanup)
     static let liveActivities = "liveActivities"                // 1.22.0: downloads and now playing on the Lock Screen and Dynamic Island
-    static let downloadParts = "downloadParts"                  // 1.22.1: 1...8 connections per big file (byte ranges side by side)
+    static let downloadParts = "downloadParts"                  // 1.22.1: 1...8 connections per file (byte ranges side by side); 8 by default since 1.22.3
 
     // PiP
     static let pipEnabled = "pipEnabled"
@@ -162,7 +162,7 @@ enum SettingsKey {
             downloadRetries: 3,
             downloadNextEpisodes: 0,
             downloadDeleteWatched: 0,
-            downloadParts: 4,
+            downloadParts: 8,
             liveActivities: true,
             pipEnabled: true,
             pipAuto: true,
