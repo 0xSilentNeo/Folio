@@ -14,9 +14,30 @@ import UserNotifications
 struct TrackButton: View {
     let show: TrackedShow
     @ObservedObject private var store = TrackingStore.shared
+    /// IMDb says the show has ended (its last year, MetaItem.hasEnded):
+    /// nothing is left to air, so there's no Track button (1.22.2; it showed
+    /// on Game of Thrones). A show already tracked keeps it, to untrack it.
+    @State private var ended = false
 
     var body: some View {
         let on = store.tracked(like: show) != nil
+        Group {
+            if ended && !on {
+                EmptyView()
+            } else {
+                button(on)
+            }
+        }
+        .task(id: show.imdb) {
+            // The title page's own details, kept 7 days: usually no request of its own.
+            ended = false
+            guard let id = show.imdb, let meta = await IMDbSource.details(id: id, type: "series") else { return }
+            ended = meta.hasEnded
+            if ended { dlog("tracking", "\(show.name) has ended (\(meta.releaseInfo ?? "?")–\(meta.endYear.map(String.init) ?? "")): no Track button") }
+        }
+    }
+
+    private func button(_ on: Bool) -> some View {
         Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { store.toggle(show) }

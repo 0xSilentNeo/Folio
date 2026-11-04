@@ -263,6 +263,8 @@ struct MetaDetailView: View {
             LazyVStack(spacing: 10) {
                 ForEach(seasonEpisodes) { v in
                     let mark = airing?.mark(season: v.season, episode: v.episode)
+                    // Not out yet: no streams page with nothing on it (1.22.2).
+                    let notOut = v.airsLater()
                     Button { go = StreamsTarget(video: v, queue: [], source: "ep|" + v.id) } label: {
                         // A tracked episode's time is the badge's, in your time zone: the
                         // row's own date is the network's (IMDb's US date), so it's left out.
@@ -273,6 +275,9 @@ struct MetaDetailView: View {
                             .zoomSource(ZoomSource("ep|" + v.id, streamsNS), cornerRadius: 14)
                     }
                     .buttonStyle(.plain)
+                    .disabled(notOut)
+                    .opacity(notOut ? 0.6 : 1)
+                    .accessibilityHint(notOut ? "Not out yet." : "")
                 }
                 ForEach(untiledEpisodes, id: \.self) { UpcomingEpisodeCard(episode: $0) }
             }

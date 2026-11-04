@@ -14,6 +14,10 @@ struct PlayerScreen: View {
     @State private var showSubtitlePicker = false
     /// Extra toolbar width found to be needed (PanelToolbarView.onOverflow).
     @State private var toolbarExtra: CGFloat = 0
+    /// The player toolbar's glass capsule, left and right edges in the
+    /// toolbar's coordinates as laid out (PanelToolbarView's onCapsule); nil
+    /// until measured.
+    @State private var toolbarCapsule: (CGFloat, CGFloat)?
     /// A touch that began on the menus' tap catcher is still down.
     @GestureState private var catcherTouched = false
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
@@ -306,19 +310,27 @@ struct PlayerScreen: View {
 
     // MARK: Controls
 
+    /// Landscape: 78 pt from each side at the default 80% on a 17 Pro Max
+    /// (user's choice, 4 Nov), and every other width on the same scale. In
+    /// 1.22.1 only 80% was 78 pt and the rest kept the old scale (10% of the
+    /// width at 80%), so 75% jumped to 120 pt and 90% to 48 pt. Portrait: 16 pt.
     static func sideMargin(_ geo: GeometryProxy, compact: Bool, controlsWidth: Double) -> CGFloat {
         if compact { return 16 }
-        if abs(controlsWidth - 0.8) < 0.001 { return 78 }
         let fullWidth = geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
-        return max(20, fullWidth * (1 - min(1, max(0.6, controlsWidth))) / 2)
+        return sideMargin(fullWidth: fullWidth, controlsWidth: controlsWidth)
+    }
+
+    /// 78 pt over the 95.6 pt that 80% of a 956 pt wide screen left on each side.
+    static let marginScale = 78.0 / 95.6
+
+    static func sideMargin(fullWidth: CGFloat, controlsWidth: Double) -> CGFloat {
+        let w = min(1, max(0.6, controlsWidth))
+        return max(16, (fullWidth * (1 - w) / 2 * marginScale).rounded())
     }
 
     @ViewBuilder
     private func controls(_ geo: GeometryProxy, compact: Bool) -> some View {
-        // Landscape: 78 pt from each side (user's choice, 4 Nov; it was 10% of
-        // the width, 96 pt on a 17 Pro Max), ignoring the horizontal safe
-        // area; or `controlsWidth` of the screen when that's moved off its
-        // default. Portrait: 16 pt.
+        // Ignoring the horizontal safe area (see sideMargin).
         let side = Self.sideMargin(geo, compact: compact, controlsWidth: controlsWidth)
         VStack(spacing: 0) {
             HStack(spacing: 10) {
@@ -430,14 +442,32 @@ struct PlayerScreen: View {
             // out of the item's Liquid Glass (as in 1.14.0).
             // Wider (to the left, where the toolbar is empty) whenever its
             // buttons don't all fit; the glass capsule stays where it is.
+            //
+            // The row keeps only the capsule's own width, measured where UIKit
+            // draws it (onCapsule); the rest of the toolbar lies over the time
+            // bar and lets touches through. 1.22.1 assumed the capsule stays at
+            // the toolbar's right edge when it widens: on an iOS 27 phone it
+            // moved left and covered the end of the time bar (4 Nov screenshot;
+            // toolbar 202 → 226 pt in its log).
+            let width = PanelToolbarView.width + toolbarExtra
+            // Until measured: the capsule where the CI toolbar probe found it.
+            let span = toolbarCapsule ?? (PanelToolbarView.outside.leading, width - PanelToolbarView.outside.trailing)
             PanelToolbarView(ui: ui, onOverflow: {
                 guard toolbarExtra < 96 else { return }
                 toolbarExtra += 12
                 dlog("ui", "player toolbar: its buttons didn't all fit; now \(Int(PanelToolbarView.width + toolbarExtra)) pt wide")
+            }, onCapsule: { a, b in
+                guard toolbarCapsule.map({ abs($0.0 - a) > 0.5 || abs($0.1 - b) > 0.5 }) ?? true else { return }
+                toolbarCapsule = (a, b)
+                dlog("ui", "player toolbar: capsule at \(Int(a))…\(Int(b)) pt of the \(Int(PanelToolbarView.width + toolbarExtra)) pt toolbar")
             })
-                .frame(width: PanelToolbarView.width + toolbarExtra, height: 50)
-                .padding(.leading, -(PanelToolbarView.outside.leading + toolbarExtra))
-                .padding(.trailing, -PanelToolbarView.outside.trailing)
+                .frame(width: width, height: 50)
+                // The row's slot is the capsule itself: its left edge where the
+                // slot starts, its right edge on the margin. The rest of the
+                // toolbar (or a capsule reaching past it: iOS lays buttons out
+                // there when they don't fit) is outside the slot.
+                .padding(.leading, -span.0)
+                .padding(.trailing, -(width - span.1))
         } else {
             PanelPillView(ui: ui, height: tune.pillHeight)
                 .frame(width: tune.pillHeight * 3 + 8, height: tune.pillHeight)

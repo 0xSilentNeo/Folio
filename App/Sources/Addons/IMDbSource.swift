@@ -524,6 +524,7 @@ enum IMDbSource {
                             m2!.description = unescape(s) as String
                         }
                         if m2!.releaseInfo == nil, let ry = d["releaseYear"] as? [String: Any], let y = ry["year"] as? Int { m2!.releaseInfo = String(y) }
+                        if m2!.endYear == nil, let ry = d["releaseYear"] as? [String: Any], let ey = ry["endYear"] as? Int { m2!.endYear = ey }
                         if m2!.background == nil, let img = d["primaryVideos"] as? [String: Any], let edges = img["edges"] as? [[String: Any]],
                            let node = edges.first?["node"] as? [String: Any], let thumb = (node["thumbnail"] as? [String: Any])?["url"] as? String {
                             m2!.background = sized(thumb, width: 1280)

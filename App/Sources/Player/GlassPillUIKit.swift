@@ -115,17 +115,92 @@ struct PanelToolbarView: UIViewRepresentable {
     /// buttons went into a "⋯" whose menu did nothing (custom-view items have
     /// no menu form), though the simulator fits all three at 186 pt.
     var onOverflow: () -> Void = {}
+    /// Where the glass capsule is once laid out, in the toolbar's own
+    /// coordinates (1.22.2): its left and right edges, which can lie past
+    /// the toolbar's. The player row places the toolbar so the capsule
+    /// itself sits in its slot, never over the time bar.
+    var onCapsule: (CGFloat, CGFloat) -> Void = { _, _ in }
 
-    /// A toolbar that says when its buttons don't all fit, and takes touches
-    /// only on its buttons.
+    /// A toolbar that says when its buttons don't all fit and where its
+    /// capsule is, and takes touches only on its buttons.
     final class FitToolbar: UIToolbar {
         var onOverflow: (() -> Void)?
+        var onCapsule: ((CGFloat, CGFloat) -> Void)?
         private var checkPending = false
+        private var reported: (CGFloat, CGFloat)?
 
         private var buttons: [UIView] { (items ?? []).compactMap(\.customView) }
 
+        /// No safe area: the player row already keeps its controls where they
+        /// go. With the controls wider than 80%, the toolbar's right end lies
+        /// in the landscape safe area (62 pt on a 17 Pro Max), and UIKit moved
+        /// the glass that much to the left, over the time bar (1.22.1 at 90%:
+        /// 4 Nov screenshot; simulator log: capsule 3…173 → −20…152).
+        override var safeAreaInsets: UIEdgeInsets { .zero }
+
+        /// Its own views too: the glass inside reads the screen's safe area
+        /// by itself (simulator: still 7–10 pt to the left with only the
+        /// toolbar's turned off).
+        private func dropSafeArea(_ v: UIView) {
+            v.insetsLayoutMarginsFromSafeArea = false
+            v.layoutMargins = .zero
+            v.directionalLayoutMargins = .zero
+            for sub in v.subviews { dropSafeArea(sub) }
+        }
+
+        /// The capsule's edges: the glass view UIKit draws behind the buttons
+        /// (iOS 26.5: UIPlatformGlassInteractionView), else the smallest view
+        /// that holds them all, else the buttons and 16 pt around them.
+        private func capsuleSpan() -> (CGFloat, CGFloat)? {
+            let shown = buttons.filter { $0.window != nil && !$0.isHidden }
+            guard !shown.isEmpty else { return nil }
+            let area = shown.map { $0.convert($0.bounds, to: self) }.reduce(CGRect.null) { $0.union($1) }
+            var glass: CGRect?
+            var smallest: CGRect?
+            func visit(_ v: UIView) {
+                for sub in v.subviews where !sub.isHidden && sub.alpha > 0 && !shown.contains(sub) {
+                    let f = sub.convert(sub.bounds, to: self)
+                    if f.insetBy(dx: -1, dy: -1).contains(area) {
+                        if String(describing: type(of: sub)).contains("Glass"), glass.map({ f.width < $0.width }) ?? true { glass = f }
+                        if f.width < bounds.width - 1, smallest.map({ f.width < $0.width }) ?? true { smallest = f }
+                    }
+                    visit(sub)
+                }
+            }
+            visit(self)
+            if let f = glass ?? smallest { return (f.minX, f.maxX) }
+            return (area.minX - 16, area.maxX + 16)
+        }
+
+        /// Once per launch: the toolbar's views and where they are, so a
+        /// report shows where UIKit put the glass on that iOS (1.22.2).
+        private static var described = false
+        private func describeViews() {
+            guard !Self.described, window != nil, bounds.width > 0, buttons.contains(where: { $0.window != nil }) else { return }
+            Self.described = true
+            var lines: [String] = []
+            func visit(_ v: UIView, _ depth: Int) {
+                guard depth <= 5, lines.count < 40 else { return }
+                let f = v.convert(v.bounds, to: self)
+                lines.append(String(repeating: "  ", count: depth) + "\(type(of: v)) x \(Int(f.minX))…\(Int(f.maxX)) w \(Int(f.width))" + (v.isHidden ? " hidden" : ""))
+                for sub in v.subviews { visit(sub, depth + 1) }
+            }
+            for sub in subviews { visit(sub, 0) }
+            dlog("ui", "player toolbar \(Int(bounds.width)) pt, its views:\n" + lines.joined(separator: "\n"))
+        }
+
         override func layoutSubviews() {
+            dropSafeArea(self)
             super.layoutSubviews()
+            describeViews()
+            if window != nil, let (a, b) = capsuleSpan() {
+                let span = (a.rounded(), b.rounded())
+                if reported.map({ $0 != span }) ?? true {
+                    reported = span
+                    // After this layout pass: the row's new width lays the toolbar out again.
+                    DispatchQueue.main.async { [weak self] in self?.onCapsule?(span.0, span.1) }
+                }
+            }
             guard window != nil, bounds.width > 0, !checkPending, buttons.contains(where: { $0.window == nil }) else { return }
             // Only an overflow that lasts: while the player rotates, the
             // toolbar is briefly laid out at an in-between size (lab: an
@@ -178,6 +253,7 @@ struct PanelToolbarView: UIViewRepresentable {
         for (kind, item) in items { ui.barItems[kind] = item }
         ui.panelBar = bar
         (bar as? FitToolbar)?.onOverflow = onOverflow
+        (bar as? FitToolbar)?.onCapsule = onCapsule
         return bar
     }
 
@@ -220,7 +296,10 @@ struct PanelToolbarView: UIViewRepresentable {
         return (bar, byKind)
     }
 
-    func updateUIView(_ bar: UIToolbar, context: Context) { (bar as? FitToolbar)?.onOverflow = onOverflow }
+    func updateUIView(_ bar: UIToolbar, context: Context) {
+        (bar as? FitToolbar)?.onOverflow = onOverflow
+        (bar as? FitToolbar)?.onCapsule = onCapsule
+    }
 
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: UIToolbar, context: Context) -> CGSize? {
         CGSize(width: proposal.width ?? 180, height: 50)
