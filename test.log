@@ -1,0 +1,138 @@
+Command line invocation:
+    /Applications/Xcode_27.2_Release_Candidate.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project Folio.xcodeproj -scheme Folio -configuration Release -destination id=C6440860-3DBD-43F1-85B3-E0E2DBC9F273 -derivedDataPath build "-only-testing:FolioUITests/SearchTabUITests"
+
+2026-11-05 07:15:04.812593+0000 FolioUITests-Runner[40718:106276] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-11-05 07:15:17.327.
+Test Suite 'FolioUITests.xctest' started at 2026-11-05 07:15:17.332.
+Test Suite 'SearchTabUITests' started at 2026-11-05 07:15:17.332.
+Test Case '-[FolioUITests.SearchTabUITests test1LibraryTitlesFirst]' started.
+    t =     0.04s Start Test at 2026-11-05 07:15:17.373
+    t =     0.11s Set Up
+    t =     0.12s Open dev.silentneo.folio
+    t =     0.12s     Launch dev.silentneo.folio
+2026-11-05 07:15:18.717 xcodebuild[39825:103492] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-05 07:15:18.717 xcodebuild[39825:103492] [MT] IDELaunchParametersSnapshot: no debugger version
+objc[40718]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.N8SAQT/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x104b2c398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.N8SAQT/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x108028310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =     5.37s         Setting up automation session
+    t =    13.57s         Wait for dev.silentneo.folio to idle
+    t =    17.88s Waiting 10.0s for "Search" Button to exist
+    t =    18.97s     Checking `Expect predicate `existsNoRetry == 1` for object "Search" Button`
+    t =    18.97s         Checking existence of `"Search" Button`
+    t =    20.22s Tap "Search" Button
+    t =    20.22s     Wait for dev.silentneo.folio to idle
+    t =    20.23s     Find the "Search" Button
+    t =    20.96s     Check for interrupting elements affecting "Search" Button
+    t =    21.59s     Synthesize event
+    t =    22.32s     Wait for dev.silentneo.folio to idle
+    t =    26.10s Waiting 5.0s for SearchField (First Match) to exist
+    t =    27.11s     Checking `Expect predicate `existsNoRetry == 1` for object SearchField (First Match)`
+    t =    27.11s         Checking existence of `SearchField (First Match)`
+    t =    29.11s Waiting 5.0s for Keyboard (First Match) to exist
+    t =    30.17s     Checking `Expect predicate `existsNoRetry == 1` for object Keyboard (First Match)`
+    t =    30.17s         Checking existence of `Keyboard (First Match)`
+    t =    34.38s         Capturing element debug description
+    t =    34.40s     Checking existence of `Keyboard (First Match)`
+    t =    43.67s Type 'lab show' into SearchField (First Match)
+    t =    43.67s     Wait for dev.silentneo.folio to idle
+    t =    43.68s     Find the SearchField (First Match)
+    t =    47.28s     Check for interrupting elements affecting "Your library and servers" SearchField
+    t =    47.43s     Synthesize event
+    t =    47.90s     Wait for dev.silentneo.folio to idle
+    t =    48.17s Waiting 5.0s for "searchLibrary:Lab Show" Button to exist
+    t =    49.20s     Checking `Expect predicate `existsNoRetry == 1` for object "searchLibrary:Lab Show" Button`
+    t =    49.20s         Checking existence of `"searchLibrary:Lab Show" Button`
+    t =    49.72s Checking existence of `"In your library" StaticText`
+    t =    49.89s Tap "searchLibrary:Lab Show" Button
+    t =    49.89s     Wait for dev.silentneo.folio to idle
+    t =    49.89s     Find the "searchLibrary:Lab Show" Button
+    t =    50.53s     Check for interrupting elements affecting "searchLibrary:Lab Show" Button
+    t =    50.72s     Synthesize event
+    t =    51.06s     Wait for dev.silentneo.folio to idle
+    t =    51.96s Waiting 8.0s for "heroPlay" Any to exist
+    t =    53.05s     Checking `Expect predicate `existsNoRetry == 1` for object "heroPlay" Any`
+    t =    53.06s         Checking existence of `"heroPlay" Any`
+    t =    55.66s Tear Down
+Test Case '-[FolioUITests.SearchTabUITests test1LibraryTitlesFirst]' passed (58.547 seconds).
+Test Case '-[FolioUITests.SearchTabUITests test2TabZoomSwitches]' started.
+    t =     0.00s Start Test at 2026-11-05 07:16:15.925
+    t =     0.06s Set Up
+    t =     0.06s Open dev.silentneo.folio
+    t =     0.06s     Launch dev.silentneo.folio
+    t =     0.06s         Terminate dev.silentneo.folio:41422
+2026-11-05 07:16:18.029 xcodebuild[39825:103492] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-05 07:16:18.029 xcodebuild[39825:103492] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     3.63s         Setting up automation session
+    t =    12.20s         Wait for dev.silentneo.folio to idle
+    t =    15.35s Waiting 10.0s for "Discover" Button to exist
+    t =    16.41s     Checking `Expect predicate `existsNoRetry == 1` for object "Discover" Button`
+    t =    16.41s         Checking existence of `"Discover" Button`
+    t =    18.58s Tap "Discover" Button
+    t =    18.58s     Wait for dev.silentneo.folio to idle
+    t =    18.58s     Find the "Discover" Button
+    t =    18.64s     Check for interrupting elements affecting "sparkles.tv" Button
+    t =    18.79s     Synthesize event
+    t =    19.22s     Wait for dev.silentneo.folio to idle
+    t =    24.18s Tap "Home" Button
+    t =    24.18s     Wait for dev.silentneo.folio to idle
+    t =    24.20s     Find the "Home" Button
+    t =    24.37s     Check for interrupting elements affecting "play.rectangle.fill" Button
+    t =    24.86s     Synthesize event
+    t =    25.34s     Wait for dev.silentneo.folio to idle
+    t =    29.25s Checking existence of `"Discover" Button`
+    t =    29.39s Tear Down
+Test Case '-[FolioUITests.SearchTabUITests test2TabZoomSwitches]' passed (29.664 seconds).
+Test Case '-[FolioUITests.SearchTabUITests test3NetworkHasNoSearchBar]' started.
+    t =     0.00s Start Test at 2026-11-05 07:16:45.588
+    t =     0.04s Set Up
+    t =     0.04s Open dev.silentneo.folio
+    t =     0.04s     Launch dev.silentneo.folio
+    t =     0.04s         Terminate dev.silentneo.folio:42383
+2026-11-05 07:16:46.703 xcodebuild[39825:103492] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-05 07:16:46.703 xcodebuild[39825:103492] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.21s         Setting up automation session
+    t =     8.61s         Wait for dev.silentneo.folio to idle
+    t =    11.87s Waiting 10.0s for "Network" Button to exist
+    t =    12.91s     Checking `Expect predicate `existsNoRetry == 1` for object "Network" Button`
+    t =    12.91s         Checking existence of `"Network" Button`
+    t =    13.26s Tap "Network" Button
+    t =    13.26s     Wait for dev.silentneo.folio to idle
+    t =    13.29s     Find the "Network" Button
+    t =    13.45s     Check for interrupting elements affecting "externaldrive.connected.to.line.below" Button
+    t =    13.65s     Synthesize event
+    t =    14.18s     Wait for dev.silentneo.folio to idle
+    t =    18.93s Get number of matches for: Descendants matching type SearchField
+    t =    19.12s Swipe down Target Application 'dev.silentneo.folio'
+    t =    19.12s     Wait for dev.silentneo.folio to idle
+    t =    19.12s     Find the Target Application 'dev.silentneo.folio'
+    t =    19.21s     Check for interrupting elements affecting "Folio" Application
+    t =    19.34s     Synthesize event
+    t =    19.81s     Wait for dev.silentneo.folio to idle
+    t =    22.32s Get number of matches for: Descendants matching type SearchField
+    t =    22.40s Tap "Search" Button
+    t =    22.40s     Wait for dev.silentneo.folio to idle
+    t =    22.41s     Find the "Search" Button
+    t =    22.73s     Check for interrupting elements affecting "magnifyingglass" Button
+    t =    22.91s     Synthesize event
+    t =    23.35s     Wait for dev.silentneo.folio to idle
+    t =    26.63s Waiting 5.0s for "librarySearchIntro" Any to exist
+    t =    27.69s     Checking `Expect predicate `existsNoRetry == 1` for object "librarySearchIntro" Any`
+    t =    27.69s         Checking existence of `"librarySearchIntro" Any`
+    t =    28.08s Tear Down
+Test Case '-[FolioUITests.SearchTabUITests test3NetworkHasNoSearchBar]' passed (29.112 seconds).
+Test Suite 'SearchTabUITests' passed at 2026-11-05 07:17:14.700.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 117.323 (117.368) seconds
+Test Suite 'FolioUITests.xctest' passed at 2026-11-05 07:17:14.706.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 117.323 (117.374) seconds
+Test Suite 'Selected tests' passed at 2026-11-05 07:17:14.706.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 117.323 (117.379) seconds
+2026-11-05 07:17:16.262 xcodebuild[39825:103492] [MT] IDETestOperationsObserverDebug: 139.955 elapsed -- Testing started completed.
+2026-11-05 07:17:16.262 xcodebuild[39825:103492] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-11-05 07:17:16.262 xcodebuild[39825:103492] [MT] IDETestOperationsObserverDebug: 139.955 sec, +139.955 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/Folio/Folio/build/Logs/Test/Test-Folio-2026.11.05_07-14-55-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

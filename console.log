@@ -1,0 +1,266 @@
+Timestamp               Ty Process[PID:TID]
+2026-11-05 07:15:33.459 E  Folio[41422:1a630] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-11-05 07:15:33.479 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:15:33.481 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:15:36.330 F  Folio[41422:1a680] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-11-05 07:15:38.605 E  Folio[41422:1a680] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:15:38.689 E  Folio[41422:1a680] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:15:38.701 E  Folio[41422:1a680] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:15:38.708 E  Folio[41422:1a680] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:15:39.046 E  Folio[41422:1a630] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-11-05 07:15:40.041 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:15:40.041 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:15:40.124 E  Folio[41422:1a630] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-11-05 07:15:40.383 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:15:40.404 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:15:40.404 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:15:40.404 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:15:41.288 E  Folio[41422:1a630] [com.apple.UIKit:UIFocus] <compose failure [shared UUID]>
+2026-11-05 07:15:41.374 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.375 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.375 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.375 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.375 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.375 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.375 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.387 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.387 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.388 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.395 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.395 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.396 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.413 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.413 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.839 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.843 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.843 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.843 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.844 E  Folio[41422:1a630] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:15:41.862 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:42.297 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:15:42.582 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:42.585 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.052 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.070 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.071 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.073 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.081 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.081 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.084 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.085 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.087 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.087 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.088 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.088 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.089 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.090 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.090 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.107 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.108 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.112 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.112 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.115 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.115 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.121 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.121 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.123 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.131 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.131 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.133 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.133 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.139 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.140 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.148 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:43.153 E  Folio[41422:1a680] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:15:43.154 E  Folio[41422:1a680] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:15:44.899 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:15:44.913 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:02.805 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:02.863 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:04.748 E  Folio[41422:1a696] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:04.750 E  Folio[41422:1a696] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:05.104 E  Folio[41422:1aff6] (5827BB56-52E1-3D0B-AC02-7A3201246563) <compose failure [shared UUID]>
+2026-11-05 07:16:06.256 E  Folio[41422:1aff6] (5827BB56-52E1-3D0B-AC02-7A3201246563) <compose failure [shared UUID]>
+2026-11-05 07:16:06.293 E  Folio[41422:1aff6] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-05 07:16:06.711 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:06.732 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:07.195 E  Folio[41422:1a684] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:07.197 E  Folio[41422:1a684] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:07.430 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:07.472 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:08.041 E  Folio[41422:1a684] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:08.042 E  Folio[41422:1a684] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934641, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:16:08.459 E  Folio[41422:1b02c] [com.apple.locationd.Core:Core] <compose failure [shared UUID]>
+2026-11-05 07:16:08.873 E  Folio[41422:1a630] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-11-05 07:16:09.139 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:09.139 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:09.139 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:09.139 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:09.139 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:09.649 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:09.650 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:10.651 E  Folio[41422:1b056] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-11-05 07:16:10.651 E  Folio[41422:1b057] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-11-05 07:16:10.651 E  Folio[41422:1b058] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-11-05 07:16:10.703 E  Folio[41422:1b058] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-11-05 07:16:10.704 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:10.704 E  Folio[41422:1b057] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-11-05 07:16:10.704 E  Folio[41422:1b056] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-11-05 07:16:10.709 E  Folio[41422:1a630] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:10.785 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-11-05 07:16:11.337 E  Folio[41422:1a630] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-11-05 07:16:11.974 E  Folio[41422:1a69a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:11.989 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-11-05 07:16:12.028 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-11-05 07:16:12.028 E  Folio[41422:1a630] [com.apple.dt.xctest:Default] Unexpectedly received animationDidStop without a matching animationDidStart. Monitoring for idle animations may no longer function correctly.
+2026-11-05 07:16:12.407 E  Folio[41422:1a69a] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:29.435 E  Folio[42383:1b135] [com.apple.app_launch_measurement:General] <compose failure [shared UUID]>
+2026-11-05 07:16:29.598 E  Folio[42383:1b0fc] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-11-05 07:16:29.615 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:29.629 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:30.287 E  Folio[42383:1b1ed] [com.apple.app_launch_measurement:General] <compose failure [shared UUID]>
+2026-11-05 07:16:32.343 F  Folio[42383:1b147] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-11-05 07:16:34.680 E  Folio[42383:1b147] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:34.689 E  Folio[42383:1b147] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:34.690 E  Folio[42383:1b147] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:34.690 E  Folio[42383:1b147] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:34.824 E  Folio[42383:1b0fc] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-11-05 07:16:35.467 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:35.467 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:35.646 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:35.650 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:35.650 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:35.650 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:36.050 E  Folio[42383:1b133] [com.apple.corevideo:] <compose failure [shared UUID]>
+2026-11-05 07:16:36.050 E  Folio[42383:1b135] [com.apple.corevideo:] <compose failure [shared UUID]>
+2026-11-05 07:16:36.050 E  Folio[42383:1b22f] [com.apple.corevideo:] <compose failure [shared UUID]>
+2026-11-05 07:16:36.058 E  Folio[42383:1b135] [com.apple.corevideo:] <compose failure [shared UUID]>
+2026-11-05 07:16:36.061 E  Folio[42383:1b133] [com.apple.corevideo:] <compose failure [shared UUID]>
+2026-11-05 07:16:36.062 E  Folio[42383:1b22f] [com.apple.corevideo:] <compose failure [shared UUID]>
+2026-11-05 07:16:36.086 E  Folio[42383:1b135] [com.apple.corevideo:] <compose failure [shared UUID]>
+2026-11-05 07:16:38.643 F  Folio[42383:1b0fc] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-05 07:16:38.859 F  Folio[42383:1b0fc] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-05 07:16:39.366 E  Folio[42383:1b0fc] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-05 07:16:39.366 E  Folio[42383:1b0fc] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-05 07:16:39.366 E  Folio[42383:1b0fc] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-05 07:16:39.366 E  Folio[42383:1b0fc] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-05 07:16:40.297 F  Folio[42383:1b0fc] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-05 07:16:40.407 E  Folio[42383:1b0fc] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-05 07:16:40.456 E  Folio[42383:1b0fc] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-05 07:16:40.459 E  Folio[42383:1b0fc] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-05 07:16:40.459 E  Folio[42383:1b0fc] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-05 07:16:40.460 E  Folio[42383:1b0fc] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-05 07:16:40.460 E  Folio[42383:1b0fc] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-05 07:16:40.460 E  Folio[42383:1b0fc] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-05 07:16:40.460 E  Folio[42383:1b0fc] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-05 07:16:40.460 E  Folio[42383:1b0fc] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-05 07:16:40.460 E  Folio[42383:1b0fc] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-05 07:16:40.526 E  Folio[42383:1b22f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:40.548 E  Folio[42383:1b22f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:40.549 E  Folio[42383:1b22f] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:41.304 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:41.308 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:41.308 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:41.308 E  Folio[42383:1b0fc] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:43.667 E  Folio[42383:1b0fc] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-05 07:16:43.667 E  Folio[42383:1b0fc] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-05 07:16:43.667 E  Folio[42383:1b0fc] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-11-05 07:16:43.676 E  Folio[42383:1b230] [com.apple.runningboard:assertion] <compose failure [shared UUID]>
+2026-11-05 07:16:43.677 E  Folio[42383:1b230] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-11-05 07:16:44.873 E  Folio[42383:1b0fc] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-05 07:16:44.873 E  Folio[42383:1b0fc] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-05 07:16:55.656 E  Folio[42812:1b61f] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-11-05 07:16:55.748 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:55.749 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:16:58.512 F  Folio[42812:1b6b2] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-11-05 07:16:59.196 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:59.198 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:59.216 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:59.217 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:16:59.336 E  Folio[42812:1b61f] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-11-05 07:17:00.223 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:00.223 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:00.646 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:00.662 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:00.662 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:00.662 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:04.643 E  Folio[42812:1b6bd] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:17:04.649 E  Folio[42812:1b6bd] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:17:04.764 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:17:04.765 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:17:04.904 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:17:04.908 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:17:07.970 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:17:07.972 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:17:08.401 E  Folio[42812:1b6bd] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:17:08.403 E  Folio[42812:1b6bd] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-05 07:17:09.160 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:09.160 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:09.207 E  Folio[42812:1b61f] [com.apple.UIKit:Assert] <compose failure [shared UUID]>
+2026-11-05 07:17:09.307 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:09.310 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:09.310 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:09.311 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:09.812 E  Folio[42812:1b61f] [com.apple.UIKit:UIFocus] <compose failure [shared UUID]>
+2026-11-05 07:17:09.917 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.917 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.917 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.917 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.917 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.918 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.918 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.931 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.931 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.931 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.933 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.933 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.933 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.936 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:09.937 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:10.371 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:10.372 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:10.373 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:10.373 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:10.373 E  Folio[42812:1b61f] [com.apple.UIKit:UIKBRenderingLog] <compose failure [shared UUID]>
+2026-11-05 07:17:10.382 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:10.641 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:11.048 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:11.178 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:11.181 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:11.309 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:11.428 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:11.429 E  Folio[42812:1b61f] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-05 07:17:11.430 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:11.776 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:11.935 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:11.936 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.002 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.003 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.007 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.008 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.037 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.044 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.045 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.062 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.063 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.089 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.096 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.098 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.099 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.100 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.129 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.129 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.136 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.137 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.140 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.140 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.166 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.172 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.173 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.177 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.177 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.181 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:12.182 E  Folio[42812:1b6bd] [com.apple.corehaptics:hapi] <compose failure [shared UUID]>
+2026-11-05 07:17:12.185 E  Folio[42812:1b6bd] [com.apple.UIKit:UIKBFeedbackGenerator] <compose failure [shared UUID]>
+2026-11-05 07:17:13.532 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934649, but AXAutomationType returned 20 which maps to 20
+2026-11-05 07:17:13.564 E  Folio[42812:1b6b1] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class UIAccessibilityElementKBKey:UIAccessibilityElement, traits 8589934897, but AXAutomationType returned 20 which maps to 20

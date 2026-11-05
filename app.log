@@ -1,0 +1,59 @@
+07:15:25.139 [app] what's new: 1.0.0, last shown none
+07:15:25.162 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=32.34 GB
+07:15:25.199 [dl] list: 0 item(s), 0 done
+07:15:27.493 [hang] main thread unresponsive for 2.4 s
+07:15:31.163 [scene] 8F990E89 connects (portrait)
+07:15:31.164 [scene] 8F990E89 will enter foreground (portrait)
+07:15:31.849 [app] first screen 9833 ms after process start
+07:15:31.850 [app] root view appeared (1 in this run, splash off)
+07:15:33.515 [scene] 8F990E89 active (portrait)
+07:15:33.520 [app] active
+07:15:33.568 [widget] App Group group.dev.silentneo.folio
+07:15:33.581 [widget] snapshot: 0 item(s), 0 with a picture
+07:15:34.111 [app] Home: appeared 623 ms after the root view, next frame at 2255 ms, main thread free at 2262 ms
+07:15:34.417 [tracking] 0 tracked show(s)
+07:15:34.589 [tracking] Airing widget: 0 show(s)
+07:15:35.329 [library] metadata index: 0 of 1 title(s) found in 1563 ms
+07:15:41.002 [hang] main thread unresponsive for 2.2 s
+07:15:42.297 [search] search opened from tab 0: no frame over 25 ms; page appeared at +2 ms, page set up at +3 ms, field focused at +1660 ms
+07:15:49.029 [hang] main thread unresponsive for 1.8 s
+07:16:02.838 [hang] main thread unresponsive for 2.0 s
+07:16:04.284 [energy] cpu 27% (other 24%, main 3%) mem 48 MB (0 MB left) thermal=nominal playing=no
+07:16:08.709 [nav] title page appear Lab Show S01E01.mp4
+07:16:09.149 [nav] back swipe: edge enabled=true content=true pages=2 barHidden=false
+07:16:09.258 [nav] title page move: animated
+07:16:10.709 [hang] main thread unresponsive for 1.5 s
+07:16:12.056 [nav] title page move: none (navigation bar shown, alpha 1.00, height 54)
+07:16:21.004 [app] what's new: 1.0.0, last shown 1.0.0
+07:16:21.021 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=31.95 GB
+07:16:21.066 [dl] list: 0 item(s), 0 done
+07:16:23.264 [hang] main thread unresponsive for 2.3 s
+07:16:28.344 [scene] 8F990E89 connects (portrait)
+07:16:28.345 [scene] 8F990E89 will enter foreground (portrait)
+07:16:28.705 [app] first screen 10011 ms after process start
+07:16:28.706 [app] root view appeared (1 in this run, splash off)
+07:16:29.662 [scene] 8F990E89 active (portrait)
+07:16:29.695 [app] active
+07:16:29.766 [widget] App Group group.dev.silentneo.folio
+07:16:30.099 [app] Home: appeared 314 ms after the root view, next frame at 1103 ms, main thread free at 1393 ms
+07:16:30.122 [library] metadata index: 0 of 1 title(s) found in 287 ms
+07:16:30.640 [tracking] 0 tracked show(s)
+07:16:35.689 [foryou] no title in the history with an IMDb id: no row
+07:16:41.826 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+07:16:41.826 [imdb] webkit load /chart/moviemeter
+07:16:48.565 [app] what's new: 1.0.0, last shown 1.0.0
+07:16:48.573 [app] launch v1.0.0 (1) iOS 27.0 arm64 free=31.94 GB
+07:16:48.603 [dl] list: 0 item(s), 0 done
+07:16:50.929 [hang] main thread unresponsive for 2.4 s
+07:16:54.376 [scene] 8F990E89 connects (portrait)
+07:16:54.378 [scene] 8F990E89 will enter foreground (portrait)
+07:16:54.729 [app] first screen 7812 ms after process start
+07:16:54.729 [app] root view appeared (1 in this run, splash off)
+07:16:55.810 [scene] 8F990E89 active (portrait)
+07:16:55.817 [app] active
+07:16:55.887 [widget] App Group group.dev.silentneo.folio
+07:16:56.314 [app] Home: appeared 351 ms after the root view, next frame at 1573 ms, main thread free at 1585 ms
+07:16:56.315 [library] metadata index: 0 of 1 title(s) found in 239 ms
+07:16:56.508 [tracking] 0 tracked show(s)
+07:17:11.368 [hang] main thread unresponsive for 2.7 s
+07:17:11.489 [search] search opened from tab 2: frames over 25 ms: 1191 ms at +1153; page appeared at +1 ms, page set up at +1 ms, field focused at +1041 ms
