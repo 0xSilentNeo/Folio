@@ -41,7 +41,12 @@ struct RealDebridSection: View {
     }
 
     private var items: [Item] {
-        (summary.releases ?? []).compactMap { r in ReleaseName.folder(r.name).map { Item(release: r, name: $0) } }
+        // A folder named plainly ("Big Buck Bunny") reads as no release:
+        // shown by its name, not left out (review, 5 Nov).
+        (summary.releases ?? []).map { r in
+            Item(release: r, name: ReleaseName.folder(r.name)
+                 ?? ReleaseName(title: r.name, label: nil, year: nil, episodeTitle: nil, group: nil, alt: nil, attributes: [], raw: r.name))
+        }
     }
 
     @Environment(\.dynamicTypeSize) private var typeSize

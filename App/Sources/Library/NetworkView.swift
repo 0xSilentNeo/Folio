@@ -98,8 +98,17 @@ struct LocalFolderView: View {
     @AppStorage("libraryView") private var libraryView = LibraryViewMode.grid.rawValue
     @ObservedObject private var history = HistoryStore.shared
 
-    private var folders: [URL] { items.filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true } }
-    private var media: [URL] { LibraryOrganizer.sorted(items.filter { TitleParser.isMedia($0.lastPathComponent) }) }
+    /// In the kids profile no subfolders (nothing in them was rated, review
+    /// 5 Nov) and only the files whose title it allows.
+    private var folders: [URL] {
+        guard !KidsProfile.isOnNow else { return [] }
+        return items.filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
+    }
+    private var media: [URL] {
+        let files = LibraryOrganizer.sorted(items.filter { TitleParser.isMedia($0.lastPathComponent) })
+        guard let limits = KidsProfile.shared.activeLimits else { return files }
+        return files.filter { KidsRules.allows(LibraryMetaIndex.shared.meta(for: $0), limits: limits) }
+    }
     @AppStorage("librarySort") private var librarySort: LibrarySort = .name
     @AppStorage("librarySortAsc") private var librarySortAsc = true
     @Environment(\.dismiss) private var dismiss

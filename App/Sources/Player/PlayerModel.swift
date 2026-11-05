@@ -1084,10 +1084,14 @@ final class PlayerModel: ObservableObject {
     func playPicked(_ s: AddonStream, from addon: InstalledAddon, for request: PickRequest) {
         pickRequest = nil
         lookupToken += 1
+        let token = lookupToken
+        episodeStates[request.id] = .checking
         Task { [weak self] in
             guard let self else { return }
             let ctx = request.context
             let subs = await AddonPlayback.subtitles(type: ctx.type, videoId: ctx.videoId)
+            // A later choice (another pick, another episode) wins (review, 5 Nov).
+            guard self.lookupToken == token, !self.closed else { return }
             guard let item = AddonPlayback.makeItem(ctx, stream: s, addon: addon, extraSubtitles: subs) else { return }
             self.pickOverride = AddonPlayback.pick(from: s, addon: addon, context: ctx)
             // Later episodes are checked again against the new release.
@@ -3047,6 +3051,11 @@ extension PlayerModel: MPVClientDelegate {
                 }
                 dlog("player/error", msg)
                 errorMessage = msg
+                // A link found for this episode (an addon's, redirected) may
+                // have expired: Try again finds it again (review, 5 Nov).
+                if queue.indices.contains(queueIndex), resolvedItems[queueIndex] != nil, queue[queueIndex].url != item.url {
+                    resolvedItems[queueIndex] = nil
+                }
                 diagnose(playingItem ?? item, reason: String(cString: mpv_error_string(error)))
             }
         case .playbackRestart:
@@ -3181,6 +3190,18 @@ extension PlayerModel: MPVClientDelegate {
         saveHistory(force: true)
         // The picker is up for the next episode: wait for the choice.
         if pickRequest != nil { ended = true; return }
+        // A stream that ends well before its length: the connection dropped
+        // and mpv gave up, which it reports as the end. Said so, with Try
+        // again (from where it stopped) and Play next, instead of going on
+        // to the next episode or closing as if it had ended (review, 5 Nov).
+        let it = playingItem ?? item
+        if let u = it.resolvedURL, !u.isFileURL, duration > 120, position < duration - max(30, duration * 0.03) {
+            let where_ = serverName(of: it)
+            dlog("player", "the stream stopped at \(Self.format(position)) of \(Self.format(duration)): not the end")
+            show(ServerProblem(kind: .stoppedEarly, title: "The stream stopped at \(Self.format(position)) of \(Self.format(duration))",
+                               detail: "The connection to \(where_.name) dropped. Try again to go on from there.", icon: "wifi.exclamationmark"), for: it)
+            return
+        }
         if playbackMode == "playlist", defaults.bool(forKey: SettingsKey.autoplayNext), hasNext {
             playNext()
         } else {

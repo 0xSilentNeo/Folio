@@ -63,8 +63,8 @@ enum ServerPlayback {
 
     /// Subtitle files whose names start with the video's ("Film.en.srt" for "Film.mkv").
     static func matchingSubtitles(for name: String, in names: [String]) -> [String] {
-        let base = (name as NSString).deletingPathExtension.lowercased()
-        return names.filter { TitleParser.isSubtitle($0) && $0.lowercased().hasPrefix(base) }
+        // "Ep 1.mkv" doesn't take "Ep 10.srt" (review, 5 Nov; WebDAV's rule since 1.20.3).
+        names.filter { TitleParser.isSubtitle($0) && SubtitleMatch.belongs($0, to: name) }
     }
 }
 

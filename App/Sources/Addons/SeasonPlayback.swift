@@ -21,6 +21,9 @@ struct StreamPick: Codable, Hashable {
     var streamName: String?
     var resolution: String?
     var context: PlayContext
+    /// The addon's manifest id (1.23.0), so a pick still finds its addon
+    /// after it's added again with a new key or options (a new address).
+    var manifestID: String? = nil
 }
 
 enum AddonPlayback {
@@ -71,7 +74,20 @@ enum AddonPlayback {
 
     static func pick(from s: AddonStream, addon: InstalledAddon, context: PlayContext) -> StreamPick {
         StreamPick(addonID: addon.id, bingeGroup: s.behaviorHints?.bingeGroup, streamName: s.name,
-                   resolution: resolution(of: s), context: context)
+                   resolution: resolution(of: s), context: context, manifestID: addon.manifest.id)
+    }
+
+    /// The addon a saved pick came from: by its address, else the same
+    /// addon on the same server added again with a new key or options,
+    /// which until 1.23.0 marked every next episode "unavailable" (review, 5 Nov).
+    @MainActor
+    static func addon(for pick: StreamPick) -> InstalledAddon? {
+        let addons = AddonStore.shared.addons
+        if let a = addons.first(where: { $0.id == pick.addonID }) { return a }
+        let host = URL(string: pick.addonID)?.host
+        let sameHost = addons.filter { URL(string: $0.transportURL)?.host == host }
+        if let m = pick.manifestID { return sameHost.first { $0.manifest.id == m } }
+        return sameHost.count == 1 ? sameHost[0] : nil
     }
 
     static func resolution(of s: AddonStream) -> String? {
@@ -124,8 +140,8 @@ enum AddonPlayback {
     @MainActor
     static func screen(_ pick: StreamPick) async -> Match {
         let c = pick.context
-        guard let addon = AddonStore.shared.addons.first(where: { $0.id == pick.addonID }),
-              let streams = try? await AddonAPI.streams(addon, type: c.type, id: c.videoId) else { return .none }
+        guard let addon = addon(for: pick) else { return .other }       // gone: let you pick
+        guard let streams = try? await AddonAPI.streams(addon, type: c.type, id: c.videoId) else { return .none }
         recentStreams[recentKey(addon.id, c.videoId)] = (Date(), streams)
         guard streams.contains(where: \.isPlayable) else { return .none }
         if let s = sameRelease(streams, as: pick), let item = makeItem(c, stream: s, addon: addon, extraSubtitles: []) { return .same(item) }
@@ -136,7 +152,7 @@ enum AddonPlayback {
     @MainActor
     static func resolve(_ pick: StreamPick) async -> MediaItem? {
         let c = pick.context
-        guard let addon = AddonStore.shared.addons.first(where: { $0.id == pick.addonID }) else { return nil }
+        guard let addon = addon(for: pick) else { return nil }
         guard let streams = try? await AddonAPI.streams(addon, type: c.type, id: c.videoId),
               let s = choose(streams, like: pick) else { return nil }
         dlog("player", "season: \(c.videoLabel ?? c.videoId) → \(s.displayName) (\(resolution(of: s) ?? "?"))\(s.behaviorHints?.bingeGroup != nil && s.behaviorHints?.bingeGroup == pick.bingeGroup ? " same release" : "")")

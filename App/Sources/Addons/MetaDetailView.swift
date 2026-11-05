@@ -299,7 +299,9 @@ struct MetaDetailView: View {
                 ForEach(seasonEpisodes) { v in
                     let mark = airing?.mark(season: v.season, episode: v.episode)
                     // Not out yet: no streams page with nothing on it (1.22.2).
-                    let notOut = v.airsLater()
+                    // Also while its badge says it airs later today: IMDb's
+                    // date-only release counts from midnight (review, 5 Nov).
+                    let notOut = v.airsLater() || { if case .airs = mark { return true }; return false }()
                     Button { go = StreamsTarget(video: v, queue: [], source: "ep|" + v.id) } label: {
                         // A tracked episode's time is the badge's, in your time zone: the
                         // row's own date is the network's (IMDb's US date), so it's left out.

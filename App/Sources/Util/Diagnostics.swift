@@ -138,35 +138,75 @@ final class Diagnostics: NSObject {
     // MARK: Redaction
 
     /// Strips passwords, tokens and auth headers from anything we log.
+    /// The rules are compiled once (1.23.0: every log line compiled all of
+    /// them again, ~0.1 ms a line). Percent-encoded links are decoded first,
+    /// so a key in folio://addon?url=https%3A%2F%2F… is found like any other
+    /// (review, 5 Nov).
     static func redact(_ s: String) -> String {
-        var out = s
-        let rules: [(String, String)] = [
-            (#"(?i)(authorization\s*[:=]\s*)(basic|bearer)?\s*[A-Za-z0-9+/=._\-]{8,}"#, "$1$2 ••••"),
-            (#"(?i)(password|passwd|pass|token|apikey|api_key|key|secret)=([^&\s"']+)"#, "$1=••••"),
-            (#"(?i)(password|token|apikey|secret)\"?\s*:\s*\"[^\"]+\""#, "$1: \"••••\""),
-            (#"://([^/\s:@]+):([^@\s/]+)@"#, "://$1:••••@"),
-            (#"/dav\.real-debrid\.com/[^\s]*"#, "/dav.real-debrid.com/…"),
-            // A Real-Debrid file link: /d/<id>/ opens the file for anyone (4 Nov report).
-            (#"(?i)(\.download\.real-debrid\.com/d/)[A-Za-z0-9]+"#, "$1••••"),
-            (#"(?i)(config=|configuration/)[A-Za-z0-9+/=]{20,}"#, "$1••••"),
-            // Addon links carry their settings in the path, base64-encoded —
-            // debrid API keys included (27 Oct report: a key in a loadfile
-            // line). Any long base64 path segment is hidden.
-            (#"/[A-Za-z0-9+_\-]{40,}={0,2}(?=[/?#\s"]|$)"#, "/••••"),
-            // …or in plain text, Torrentio style ("sort=size|realdebrid=KEY"),
-            // which the rule above missed: a "|" and "=" break the segment
-            // (review, 31 Oct). Any setting with a long key-like value goes.
-            (#"(?i)(\b|%7C)(realdebrid|alldebrid|premiumize|debridlink|torbox|offcloud|putio|easydebrid|pikpak|stremthru)=([^|&/\s"'%]+)"#, "$1$2=••••"),
-            (#"(?i)/(realdebrid|alldebrid|premiumize|debridlink|torbox|offcloud|putio|easydebrid|pikpak)/([A-Za-z0-9_\-]{12,})(?=[/?#\s"]|$)"#, "/$1/••••"),
-            // \b: without it the engine retries the name at every offset of
-            // a long run (20 000 characters: 3.7 s; with it, about 1 ms).
-            (#"\b([A-Za-z0-9_]+)=([A-Za-z0-9_\-]{24,})"#, "$1=••••"),
-            (#"(?i)(x-api-key|api-key|x-auth-token)(\s*[:=]\s*)\S+"#, "$1$2••••"),
-        ]
-        for (p, r) in rules {
-            out = out.replacingOccurrences(of: p, with: r, options: .regularExpression)
+        var out = decodeEncodedLinks(s)
+        for (re, template) in redactionRules {
+            out = re.stringByReplacingMatches(in: out, range: NSRange(out.startIndex..., in: out), withTemplate: template)
         }
         return out
+    }
+
+    /// The rules, most specific first.
+    static let redactionPatterns: [(String, String)] = [
+        (#"(?i)(authorization\s*[:=]\s*)(basic|bearer)(?:\s+|%20|\+)[A-Za-z0-9+/=%._\-]{8,}"#, "$1$2 ••••"),
+        (#"(?i)(authorization\s*[:=]\s*)[A-Za-z0-9+/=._\-]{8,}"#, "$1••••"),
+        // Jellyfin's and Plex's tokens, as headers mpv's log prints
+        // ("X-Emby-Token: …") or in a link; MediaBrowser's Token="…".
+        (#"(?i)(x-emby-token|x-mediabrowser-token|x-plex-token|x-api-key|api-key|x-auth-token)(\s*[:=]\s*)[^\s"',\]&]+"#, "$1$2••••"),
+        (#"(?i)(\bToken=")[^"]+"#, "$1••••"),
+        // name=value, with or without quotes and spaces round the "="; only
+        // whole names (\b), so hotkey= and bypass= stay (review, 5 Nov).
+        (#"(?i)\b(password|passwd|pass|token|apikey|api_key|key|secret)(\s*=\s*)("?)[^&\s"']+"#, "$1$2$3••••"),
+        // JSON: "password": "…", "api_key":"…", keeping its quotes.
+        (#"(?i)("?\b(?:password|passwd|token|api_?key|apikey|secret)"?\s*:\s*)"[^"]*""#, "$1\"••••\""),
+        (#"://([^/\s:@]+):([^@\s/]+)@"#, "://$1:••••@"),
+        (#"/dav\.real-debrid\.com/[^\s]*"#, "/dav.real-debrid.com/…"),
+        // A Real-Debrid file link: /d/<id>/ opens the file for anyone (4 Nov report).
+        (#"(?i)(\.download\.real-debrid\.com/d/)[A-Za-z0-9]+"#, "$1••••"),
+        (#"(?i)(config=|configuration/)[A-Za-z0-9+/=]{20,}"#, "$1••••"),
+        // Addon links carry their settings in the path, base64-encoded —
+        // debrid API keys included (27 Oct report: a key in a loadfile
+        // line). Any long base64 path segment is hidden.
+        (#"/[A-Za-z0-9+_\-]{40,}={0,2}(?=[/?#\s"]|$)"#, "/••••"),
+        // …or in plain text, Torrentio style ("sort=size|realdebrid=KEY"),
+        // which the rule above missed: a "|" and "=" break the segment
+        // (review, 31 Oct). Any setting with a long key-like value goes.
+        (#"(?i)(\b|%7C)(realdebrid|alldebrid|premiumize|debridlink|torbox|offcloud|putio|easydebrid|pikpak|stremthru)=([^|&/\s"'%]+)"#, "$1$2=••••"),
+        (#"(?i)/(realdebrid|alldebrid|premiumize|debridlink|torbox|offcloud|putio|easydebrid|pikpak)/([A-Za-z0-9_\-]{12,})(?=[/?#\s"]|$)"#, "/$1/••••"),
+        // \b: without it the engine retries the name at every offset of
+        // a long run (20 000 characters: 3.7 s; with it, about 1 ms).
+        (#"\b([A-Za-z0-9_]+)=([A-Za-z0-9_\-]{24,})"#, "$1=••••"),
+    ]
+
+    private static let redactionRules: [(NSRegularExpression, String)] = redactionPatterns.compactMap { p, t in
+        (try? NSRegularExpression(pattern: p)).map { ($0, t) }
+    }
+
+    private static let encodedLink = try? NSRegularExpression(pattern: #"(?i)[a-z][a-z0-9+.\-]*%3A%2F%2F[^\s"'&]*"#)
+
+    /// "https%3A%2F%2Fhost%2Fkey%2F…" → "https://host/key/…", so the rules see it.
+    static func decodeEncodedLinks(_ s: String) -> String {
+        guard s.contains("%3A%2F%2F") || s.contains("%3a%2f%2f"), let re = encodedLink else { return s }
+        var out = s
+        for m in re.matches(in: s, range: NSRange(s.startIndex..., in: s)).reversed() {
+            guard let r = Range(m.range, in: out) else { continue }
+            out.replaceSubrange(r, with: String(out[r]).removingPercentEncoding ?? String(out[r]))
+        }
+        return out
+    }
+
+    /// The end of a log, `limit` characters at most, starting at a line: a
+    /// cut through the middle of a line could leave half a secret the rules
+    /// no longer recognise (review, 5 Nov).
+    static func tail(_ s: String, limit: Int) -> String {
+        guard s.count > limit else { return s }
+        let cut = s.suffix(limit)
+        guard let nl = cut.firstIndex(of: "\n") else { return String(cut) }
+        return String(cut[cut.index(after: nl)...])
     }
 
     // MARK: Crash capture
@@ -301,7 +341,7 @@ final class Diagnostics: NSObject {
             }
         }
         if let mpv = Self.lenientText(MPVFiles.logFile) {
-            try? Self.redact(String(mpv.suffix(600_000))).write(to: tmp.appendingPathComponent("mpv.log"), atomically: true, encoding: .utf8)
+            try? Self.redact(Self.tail(mpv, limit: 600_000)).write(to: tmp.appendingPathComponent("mpv.log"), atomically: true, encoding: .utf8)
         }
         // Settings go through the same filter, and a setting named like a
         // secret (the TMDB key) is left out whole: until 1.20.2 they were

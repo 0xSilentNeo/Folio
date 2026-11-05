@@ -571,7 +571,7 @@ final class CatalogSearch: ObservableObject {
             guard let self, !Task.isCancelled else { return }
             self.results = found.filter { !$0.entries.isEmpty || $0.error != nil }
             self.searching = false
-            dlog("search", "Plex/Jellyfin \"\(q)\": " + found.map { "\($0.server.displayName) \($0.error == nil ? "\($0.entries.count)" : "error")" }.joined(separator: ", ")
+            dlog("search", "Plex/Jellyfin: " + found.map { "\($0.server.displayName) \($0.error == nil ? "\($0.entries.count)" : "error")" }.joined(separator: ", ")
                  + String(format: " in %.0f ms", (CACurrentMediaTime() - t0) * 1000))
         }
     }

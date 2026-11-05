@@ -9,11 +9,23 @@ import Foundation
 ///   - SMB, Jellyfin and Plex: the rest of the folder or season (ServerQueue)
 /// Anything else (a pasted link) plays on its own.
 enum ContinueQueue {
+    /// The queue being built. A newer tap replaces it, and a player opened
+    /// meanwhile (another card, a file) isn't replaced when a slow server's
+    /// listing comes back (review, 5 Nov).
+    @MainActor private static var pending: Task<Void, Never>?
+
     @MainActor
     static func play(_ item: MediaItem) {
-        Task { @MainActor in
+        pending?.cancel()
+        let before = PlayerPresenter.current.map(ObjectIdentifier.init)
+        pending = Task { @MainActor in
             let t0 = Date()
             let (queue, index) = await build(item)
+            guard !Task.isCancelled else { return }
+            guard PlayerPresenter.current.map(ObjectIdentifier.init) == before else {
+                dlog("player", "continue: another player opened while the queue was built; not replaced")
+                return
+            }
             dlog("player", String(format: "continue: %d item(s) in queue, starting at %d (built in %.0f ms)", queue.count, index + 1, Date().timeIntervalSince(t0) * 1000))
             PlayerPresenter.play(queue: queue, index: index)
         }

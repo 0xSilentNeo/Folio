@@ -955,7 +955,7 @@ struct LogView: View {
             // 31 Oct). The last 400 000 characters keep the view responsive.
             let (shown, copy) = await Task.detached(priority: .userInitiated) { () -> (String, URL?) in
                 let full = MPVFiles.readText(MPVFiles.logFile)
-                let s = Diagnostics.redact(full.count > 400_000 ? String(full.suffix(400_000)) : full)
+                let s = Diagnostics.redact(Diagnostics.tail(full, limit: 400_000))
                 let url = FileManager.default.temporaryDirectory.appendingPathComponent("mpv-last.log")
                 return (s, (try? s.write(to: url, atomically: true, encoding: .utf8)) != nil ? url : nil)
             }.value

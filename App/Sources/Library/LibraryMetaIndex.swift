@@ -112,6 +112,15 @@ final class LibraryMetaIndex: ObservableObject {
 
     func facts(of g: LibraryGroup) -> [LibraryFilter.Facts] { Self.titles(of: g).map(facts) }
 
+    /// A queue for the kids profile (1.23.0): only files whose title it
+    /// allows, and the one tapped. Without it a film's queue was the whole
+    /// library, and autoplay went on to an R-rated film (review, 5 Nov).
+    /// Outside the profile, the list as it is.
+    func kidsQueue(_ files: [URL], keeping tapped: URL) -> [URL] {
+        guard let limits = KidsProfile.shared.activeLimits else { return files }
+        return files.filter { $0 == tapped || KidsRules.allows(meta(for: $0), limits: limits) }
+    }
+
     /// The kids profile lets the entry through: a folder only when every title in it is allowed.
     func kidsAllow(_ g: LibraryGroup, _ limits: KidsRules.Limits) -> Bool {
         Self.titles(of: g).allSatisfy { files in KidsRules.allows(files.first.flatMap(meta(for:)), limits: limits) }

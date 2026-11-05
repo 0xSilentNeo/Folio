@@ -1203,7 +1203,10 @@ final class DownloadManager: ObservableObject {
             items[i].error = "Couldn't save the file: \(error.localizedDescription)"
             dlog("dl/error", "couldn't save \(items[i].fileName) to \(DownloadItem.documentsPath(dest.path) ?? "outside Documents")"
                  + "\(dest.path.hasPrefix(MPVFiles.documents.path) ? "" : " (not this container's)"): \(ns.domain) \(ns.code) \(error.localizedDescription)")
-            try? fm.removeItem(at: tmp)
+            // The whole file downloaded in Folio stays, so Retry tries the
+            // move again instead of downloading it all again (review, 5 Nov);
+            // removing the download deletes it (removePartFiles).
+            if tmp.standardizedFileURL != Self.inAppFile(id).standardizedFileURL { try? fm.removeItem(at: tmp) }
             save(); pump()
             return
         }

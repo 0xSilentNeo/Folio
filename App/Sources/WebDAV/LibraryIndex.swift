@@ -116,6 +116,13 @@ struct LibraryIndexer: Sendable {
         let items: [DAVItem]?
         let error: String?
         let unauthorized: Bool
+        /// 404 or 410: the folder isn't there any more (a torrent Real-Debrid removed).
+        var gone = false
+    }
+
+    static func isGone(_ error: Error) -> Bool {
+        if case .http(let code)? = error as? WebDAVError { return code == 404 || code == 410 }
+        return false
     }
 
     static func isUnauthorized(_ error: Error) -> Bool {
@@ -153,7 +160,7 @@ struct LibraryIndexer: Sendable {
                     group.addTask {
                         do { return Listed(url: next.url, depth: next.depth, items: try await list(next.url), error: nil, unauthorized: false) }
                         catch { return Listed(url: next.url, depth: next.depth, items: nil, error: error.localizedDescription,
-                                              unauthorized: Self.isUnauthorized(error)) }
+                                              unauthorized: Self.isUnauthorized(error), gone: Self.isGone(error)) }
                     }
                     running += 1
                 }
@@ -164,6 +171,13 @@ struct LibraryIndexer: Sendable {
                     report.failed += 1
                     if done.unauthorized { report.unauthorized = true }
                     if key == fresh.root { report.rootFailed = true }
+                    // Gone from the server: its files leave the search, not
+                    // kept from the last listing (review, 5 Nov).
+                    if done.gone, key != fresh.root {
+                        LibTrace.index.log("\(done.url.lastPathComponent): not on the server any more, dropped")
+                        progress(report.listed + report.kept, report.listed + report.kept + queue.count + running)
+                        continue
+                    }
                     LibTrace.index.log("\(done.url.lastPathComponent): listing failed (\(done.error ?? "?")), keeping what was saved")
                     keep(key)
                     progress(report.listed + report.kept, report.listed + report.kept + queue.count + running)

@@ -133,7 +133,9 @@ enum IMDbSource {
         }
         Task.detached(priority: .utility) {
             let t0 = CACurrentMediaTime()
-            _ = await html("/chart/moviemeter/")   // also fills the Trending cache
+            // Through chart(): html() keeps nothing, so the page was fetched
+            // and dropped, and Discover fetched it again (review, 5 Nov).
+            _ = await chart("/chart/moviemeter/", type: "movie")
             dlog("perf", String(format: "imdb warm-up done in %.0f ms", (CACurrentMediaTime() - t0) * 1000))
         }
     }
@@ -335,7 +337,7 @@ enum IMDbSource {
         do {
             return try await suggest(query)
         } catch {
-            if !isCancellation(error) { dlog("imdb/error", "suggestion failed for \(query): \(error.localizedDescription)") }
+            if !isCancellation(error) { dlog("imdb/error", "suggestion failed: \(error.localizedDescription)") }
             return []
         }
     }

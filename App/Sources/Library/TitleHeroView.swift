@@ -431,7 +431,7 @@ struct TitleHeroView: View {
     }
 
     private func play(_ f: URL, fromStart: Bool = false) {
-        let list = siblings.count > 1 ? siblings : LibraryOrganizer.sorted(local.files)
+        let list = LibraryMetaIndex.shared.kidsQueue(siblings.count > 1 ? siblings : LibraryOrganizer.sorted(local.files), keeping: f)
         let queue = list.map { u -> MediaItem in
             var m = MediaItem(url: u.path, title: TitleParser.clean(u.lastPathComponent), source: .local)
             m.historyKey = u.path

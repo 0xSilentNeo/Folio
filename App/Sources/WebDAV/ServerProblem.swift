@@ -16,6 +16,8 @@ struct ServerProblem: Equatable {
         case unreachable
         /// The server sends the file: it's the file itself that didn't play.
         case fileItself
+        /// A stream that ended well before its length (the connection dropped).
+        case stoppedEarly
         case other
     }
 

@@ -713,7 +713,7 @@ struct HomeView: View {
 
     private func playLocal(_ f: URL) {
         let group = allGroups.first { $0.files.contains(f) }
-        let list = (group?.isSeries == true ? group!.files : LibraryOrganizer.sorted(local.files))
+        let list = LibraryMetaIndex.shared.kidsQueue(group?.isSeries == true ? group!.files : LibraryOrganizer.sorted(local.files), keeping: f)
         let queue = list.map { u -> MediaItem in
             var m = MediaItem(url: u.path, title: TitleParser.clean(u.lastPathComponent), source: .local)
             m.historyKey = u.path

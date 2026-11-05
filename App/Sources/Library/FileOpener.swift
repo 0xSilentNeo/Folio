@@ -49,7 +49,9 @@ enum FileOpener {
             }
         }
         LocalMediaStore.shared.refresh()
-        if added.count == 1, urls.count == 1, let f = added.first, TitleParser.isMedia(f.lastPathComponent) {
+        // One file added plays at once; not in the kids profile, where
+        // nothing plays without its rating checked (review, 5 Nov).
+        if !KidsProfile.isOnNow, added.count == 1, urls.count == 1, let f = added.first, TitleParser.isMedia(f.lastPathComponent) {
             var m = MediaItem(url: f.path, title: TitleParser.clean(f.lastPathComponent), source: .local)
             m.historyKey = f.path
             PlayerPresenter.play(m)

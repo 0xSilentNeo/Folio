@@ -69,6 +69,10 @@ enum KidsRules {
         "U": .allAges, "UC": .allAges, "12A": .teens, "12PG": .teens, "15A": .adults, "16": .adults, "R18": .adults,
         "14A": .teens, "18A": .adults, "R13": .teens, "R15": .adults, "R16": .adults, "RP13": .teens, "RP16": .adults,
         "PG12": .teens, "R15+": .adults, "ALL": .allAges, "L": .allAges, "TP": .allAges, "APTA": .allAges, "AL": .allAges, "KT": .allAges,
+        // Japan, Singapore, India, the Philippines (1.23.0: these were
+        // unknown, and an unknown rating fell back to the genres)
+        "R-18": .adults, "R-16": .adults, "R-15": .adults, "R-13": .teens, "M18": .adults, "NC16": .adults, "R21": .adults,
+        "A": .adults, "S": .adults, "UA": .teens, "UA7+": .parentalGuidance, "UA13+": .teens, "UA16+": .adults, "SPG": .teens,
     ]
 
     /// Ratings that say nothing about the content.
@@ -132,11 +136,21 @@ enum KidsRules {
 
     // MARK: Verdicts
 
+    /// "Not Rated" and the like: no rating at all.
+    static func isUnrated(_ rating: String) -> Bool {
+        let s = normalized(rating)
+        return s.isEmpty || unrated.contains(s) || unrated.contains(rating.uppercased().trimmingCharacters(in: .whitespaces))
+    }
+
     static func verdict(rating: String?, genres: [String]?, isSeries: Bool, limits: Limits) -> Verdict {
         let limit = limits.level(isSeries: isSeries)
         if let r = rating, let l = level(ofRating: r) {
             return l <= limit ? .allowed : .above(r.trimmingCharacters(in: .whitespaces))
         }
+        // A rating Folio can't read is not "no rating": hidden, never guessed
+        // from the genres, which let an R-18 animated comedy through as G
+        // (review, 5 Nov).
+        if let r = rating, !isUnrated(r) { return .unknown }
         if let g = genres, let l = genreLevel(g) {
             return l <= limit ? .allowed : .unknown
         }

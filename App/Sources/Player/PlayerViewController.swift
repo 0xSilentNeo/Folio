@@ -401,7 +401,11 @@ enum PlayerPresenter {
         let done = {
             w.isHidden = true
             w.rootViewController = nil
-            if window === w { window = nil }
+            // A player opened while this one faded out is the current one
+            // now: the rest is its business (review, 5 Nov: the fade's end
+            // cleared it, and a later play couldn't close it).
+            guard window === w else { return }
+            window = nil
             current = nil
             NotificationCenter.default.post(name: .playerDidHide, object: nil)
             restoreOrientation()

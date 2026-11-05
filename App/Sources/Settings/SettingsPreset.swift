@@ -46,6 +46,10 @@ enum SettingsPreset {
         SettingsKey.libraryFilterWatch: .string, SettingsKey.libraryFilterGenre: .string, SettingsKey.libraryFilterYear: .string,
         // 1.22.0: Live Activities, next episodes and watched downloads (Settings → Downloads).
         SettingsKey.liveActivities: .bool, SettingsKey.downloadNextEpisodes: .int, SettingsKey.downloadDeleteWatched: .int,
+        // Discover's IMDb settings (review, 5 Nov: left out of presets).
+        IMDbSource.Key.language: .string, IMDbSource.Key.minVotes: .int, IMDbSource.Key.animeJapan: .bool,
+        // 1.23.0: the search's Files or Posters.
+        SettingsKey.searchServerLayout: .string,
     ]
     /// Never exported: app bookkeeping, not choices.
     private static let skip: Set<String> = ["enhancedQuality"]
