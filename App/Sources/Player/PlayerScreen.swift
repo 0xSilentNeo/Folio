@@ -202,6 +202,22 @@ struct PlayerScreen: View {
         }
     }
 
+    /// "Load subtitle file…" from the Tracks menu (1.23.0). The menu is a
+    /// popover the player presents, and UIKit presents one thing at a time:
+    /// the file picker asked for while it was up never came (review, 5 Nov).
+    /// The menu closes first; the picker comes once it has gone.
+    private func loadSubtitleFile() {
+        guard ui.panel != nil || ui.panelClosing else { showSubtitlePicker = true; return }
+        ui.closePanel()
+        Task { @MainActor in
+            for _ in 0..<30 where ui.panel != nil || ui.panelClosing {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+            }
+            try? await Task.sleep(nanoseconds: 150_000_000)
+            showSubtitlePicker = true
+        }
+    }
+
     /// The stream picker for an episode without the release being watched.
     /// Drawn in the player rather than presented as a sheet: 1.17.0's sheet was
     /// a second presentation from the player while the Now Playing menu (a
@@ -287,7 +303,7 @@ struct PlayerScreen: View {
     private func panelContent(_ kind: PlayerUIState.Panel, width: CGFloat, maxHeight: CGFloat) -> () -> AnyView {
         { [model, ui, onRotationLock] in
             AnyView(PlayerPanel(kind: kind, model: model, ui: ui, width: width, maxHeight: maxHeight,
-                                onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock, bare: true))
+                                onLoadSubtitle: loadSubtitleFile, onRotationLock: onRotationLock, bare: true))
         }
     }
 
@@ -436,7 +452,7 @@ struct PlayerScreen: View {
             GlassPanelPill(model: model, ui: ui, ns: glassNS,
                            width: compact ? max(240, geo.size.width - 40) : min(tune.panelMax, geo.size.width * tune.panelWidth),
                            maxHeight: max(180, geo.size.height - (tune.pillHeight + 26) - 58),
-                           onLoadSubtitle: { showSubtitlePicker = true }, onRotationLock: onRotationLock)
+                           onLoadSubtitle: loadSubtitleFile, onRotationLock: onRotationLock)
         } else if #available(iOS 26.0, *) {
             // Native menu morph: bar items in a toolbar; the popover morphs
             // out of the item's Liquid Glass (as in 1.14.0).
@@ -547,24 +563,40 @@ struct PlayerScreen: View {
         }
     }
 
+    /// Why the file didn't play (1.23.0): for a file on a server, what the
+    /// server answered (a file Real-Debrid removed, a refused login…), else
+    /// mpv's own reason.
     private func errorView(_ message: String) -> some View {
-        VStack(spacing: 14) {
-            Image(systemName: "exclamationmark.triangle.fill").font(.title).foregroundStyle(Theme.accent)
-            Text(message).multilineTextAlignment(.center).font(.callout)
-            HStack(spacing: 12) {
-                // Only when mpv is running: with mpv failed to start (a bad
-                // mpv.conf), Retry did nothing; Close and reopen does.
-                if model.canRetry {
-                    Button("Retry") { model.load(model.item) }.buttonStyle(.borderedProminent).tint(Theme.accent)
-                }
-                Button("Close") { onClose() }.buttonStyle(.bordered)
-            }
-            Text("Details: Settings → Help & Diagnostics").font(.caption).foregroundStyle(.white.opacity(0.5))
+        let problem = model.problem ?? ServerProblem(kind: .other, title: "Playback failed",
+                                                     detail: message.replacingOccurrences(of: "Playback failed: ", with: "mpv: "),
+                                                     icon: "exclamationmark.triangle")
+        var actions: [ProblemCard.Action] = []
+        // Only when mpv is running: with mpv failed to start (a bad
+        // mpv.conf), Retry did nothing; Close and reopen does.
+        if model.canRetry, problem.retryable, !model.checkingProblem {
+            actions.append(.init(title: "Try again", primary: true) { model.load(model.item) })
         }
-        .padding(22)
+        if problem.kind == .stoppedEarly, model.hasNext {
+            actions.append(.init(title: "Play next") { model.playNext() })
+        }
+        if problem.kind == .gone, let entry = model.problemHistoryEntry {
+            actions.append(.init(title: "Remove from Continue Watching", role: .destructive) {
+                HistoryStore.shared.remove(entry)
+                onClose()
+            })
+        }
+        actions.append(.init(title: "Close", primary: actions.isEmpty) { onClose() })
+        return VStack(spacing: 10) {
+            ProblemCard(problem: problem, onVideo: true, checking: model.checkingProblem, actions: actions)
+            if model.problem == nil && !model.checkingProblem {
+                Text("Details: Settings → Help & Diagnostics").font(.caption).foregroundStyle(.white.opacity(0.5))
+                    .padding(.bottom, 14)
+            }
+        }
         .frame(maxWidth: 400)
-        .glass(cornerRadius: 24)
-        .foregroundStyle(.white)
+        .glass(cornerRadius: 28)
+        .padding(.horizontal, 20)
+        .animation(.easeOut(duration: 0.2), value: model.checkingProblem)
     }
 
 }
@@ -936,7 +968,7 @@ struct BusySpinner: View {
 
     var body: some View {
         ZStack {
-            if shown { ProgressView().controlSize(.large).tint(.white) }
+            if shown { FolioSpinner(size: .large, tint: .white).transition(.opacity) }
         }
         .allowsHitTesting(false)
         .task(id: busy) {

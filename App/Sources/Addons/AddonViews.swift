@@ -125,7 +125,7 @@ struct CatalogGridView: View {
                 }
             }
             .padding(16)
-            if loading { ProgressView().padding() }
+            if loading { FolioSpinner().padding() }
         }
         .background(Theme.background)
         .brandListBackground()
@@ -228,7 +228,7 @@ struct StreamsView: View {
                 }
             }
             if loading && groups.allSatisfy({ $0.streams.isEmpty }) {
-                HStack { ProgressView(); Text("Asking addons…").foregroundStyle(.secondary) }
+                FolioWorkingRow(text: "Asking addons…", size: .regular)
             }
             ForEach(groups) { g in
                 Section(g.addon.manifest.name) {
@@ -258,7 +258,7 @@ struct StreamsView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .overlay { if starting { ProgressView().controlSize(.large).padding(20).glass() } }
+        .overlay { if starting { FolioSpinner(size: .large).padding(20).glass() } }
         .overlay(alignment: .bottom) {
             if let note = downloadNote {
                 Text(note).font(.footnote.weight(.semibold)).multilineTextAlignment(.center)
@@ -398,7 +398,7 @@ struct AddonsManagerView: View {
                             do { try await store.install(url); url = ""; error = nil } catch { self.error = error.localizedDescription }
                         }
                     } label: {
-                        if store.installing { ProgressView() } else { Text("Install").fontWeight(.semibold) }
+                        if store.installing { FolioSpinner(size: .small) } else { Text("Install").fontWeight(.semibold) }
                     }
                     .disabled(url.isEmpty || store.installing)
                 }
@@ -464,7 +464,7 @@ struct StreamPickerSheet: View {
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 if loading && groups.allSatisfy({ $0.streams.isEmpty }) {
-                    HStack { ProgressView(); Text("Asking addons…").foregroundStyle(.secondary) }
+                    FolioWorkingRow(text: "Asking addons…", size: .regular)
                 }
                 ForEach(groups) { g in
                     Section(g.addon.manifest.name) {

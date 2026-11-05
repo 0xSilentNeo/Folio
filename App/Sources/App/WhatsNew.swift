@@ -20,6 +20,20 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.23.0", items: [
+            Item(icon: "magnifyingglass", title: "A smoother, tidier search",
+                 text: "Opens without the stall, starts with what it searches, shows server files as a list or as posters, and a pill opens a file's folder."),
+            Item(icon: "exclamationmark.icloud", title: "When a server lets you down",
+                 text: "A file Real-Debrid removed, a refused login or a server that's down is now said plainly, with what you can do."),
+            Item(icon: "photo", title: "Artwork in Control Center",
+                 text: "Control Center and the Lock Screen show the title's picture. The player's own Live Activity is gone: Now Playing does its job."),
+            Item(icon: "square.grid.2x2", title: "More on Discover",
+                 text: "Lists go on past 100 as you scroll, up to the 250 IMDb gives."),
+            Item(icon: "leaf", title: "Folio's own loading",
+                 text: "A light runs round the Folio leaf wherever something is loading."),
+            Item(icon: "rectangle.on.rectangle", title: "Widgets without an App Group",
+                 text: "When the install has no App Group, Folio tries to reach its widgets through the Keychain."),
+        ]),
         Release(version: "1.22.7", items: [
             Item(icon: "play.rectangle.on.rectangle", title: "Control Center and the Lock Screen",
                  text: "What's playing should show there now. Like Music and TV, Folio's sound now pauses other apps' sound instead of mixing with it."),

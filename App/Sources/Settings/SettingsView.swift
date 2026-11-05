@@ -435,7 +435,6 @@ struct MPVSettings: View {
     @AppStorage(SettingsKey.hdrOutput) private var hdr = true
     @AppStorage(SettingsKey.hwdec) private var hwdec = "auto"
     @AppStorage(SettingsKey.cacheMB) private var cacheMB = 150
-    @AppStorage(SettingsKey.logLevel) private var logLevel = "info"
     @AppStorage(SettingsKey.flipVideo) private var flipVideo = false
     @State private var picture = PictureMode.current
 
@@ -505,12 +504,9 @@ struct MPVSettings: View {
             } header: { Text("Customise") } footer: {
                 Text("Scripts and shaders load with every video. mpv.conf holds mpv options, input.conf keyboard shortcuts, script-opts each script's options; player commands appear in the player's Commands menu. Your mpv folder is in Files → On My iPhone → Folio → mpv.")
             }
+            // No Log level any more (1.23.0): mpv writes its log file at debug
+            // detail whatever it's set to, so all four choices did nothing (review).
             Section("Logs") {
-                Explained("How much detail the playback log keeps. \"v\" and \"debug\" are for tracking down a problem and make the log much larger.") {
-                    Picker("Log level", selection: $logLevel) {
-                        ForEach(["warn", "info", "v", "debug"], id: \.self) { Text($0).tag($0) }
-                    }
-                }
                 NavigationLink { LogView() } label: { Label("Last playback log", systemImage: "text.alignleft") }
             }
         }
@@ -753,7 +749,7 @@ struct ShadersView: View {
                         if files.contains(where: { $0.lastPathComponent == e.file }) {
                             Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accent)
                         } else if downloading.contains(e.file) {
-                            ProgressView()
+                            FolioSpinner(size: .small)
                         } else {
                             Button { download(e) } label: { Image(systemName: "arrow.down.circle") }
                         }
@@ -955,7 +951,7 @@ struct LogView: View {
             // 31 Oct). The last 400 000 characters keep the view responsive.
             let (shown, copy) = await Task.detached(priority: .userInitiated) { () -> (String, URL?) in
                 let full = MPVFiles.readText(MPVFiles.logFile)
-                let s = Diagnostics.redact(full.count > 400_000 ? String(full.suffix(400_000)) : full)
+                let s = Diagnostics.redact(Diagnostics.tail(full, limit: 400_000))
                 let url = FileManager.default.temporaryDirectory.appendingPathComponent("mpv-last.log")
                 return (s, (try? s.write(to: url, atomically: true, encoding: .utf8)) != nil ? url : nil)
             }.value
@@ -1011,7 +1007,7 @@ struct DiagnosticsView: View {
                             DispatchQueue.main.async { report = r; making = false }
                         }
                     } label: {
-                        HStack { Label("Prepare report", systemImage: "doc.zipper"); Spacer(); if making { ProgressView() } }
+                        HStack { Label("Prepare report", systemImage: "doc.zipper"); Spacer(); if making { FolioSpinner(size: .small) } }
                     }
                 }
             } footer: {
@@ -1354,7 +1350,7 @@ private struct HistoryLinkSection: View {
                 HStack {
                     Text("Check watch history linking")
                     Spacer()
-                    if running { ProgressView() }
+                    if running { FolioSpinner(size: .small) }
                 }
             }
             .disabled(running)

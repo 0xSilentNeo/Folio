@@ -75,7 +75,11 @@ actor SkipService {
             let end = i + 1 < chapters.count ? chapters[i + 1].time : duration
             guard end > ch.time else { continue }
             let kind: SkipSegment.Kind?
-            if t.range(of: #"^(op|opening|intro|oped)\b|^opening|\bopening\b|^op\s?\d|^intro"#, options: .regularExpression) != nil {
+            // A post-, mid- or after-credits scene is the film, not its
+            // credits: never an outro to skip (review, 5 Nov).
+            if t.range(of: #"\b(post|mid|after)[- ]?credits?\b"#, options: .regularExpression) != nil {
+                kind = nil
+            } else if t.range(of: #"^(op|opening|intro|oped)\b|^opening|\bopening\b|^op\s?\d|^intro"#, options: .regularExpression) != nil {
                 kind = .intro
             } else if t.range(of: #"^(ed|ending|outro|credits)\b|^ending|\bending\b|^ed\s?\d|credits"#, options: .regularExpression) != nil {
                 kind = .outro

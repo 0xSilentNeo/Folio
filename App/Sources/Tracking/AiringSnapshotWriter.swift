@@ -28,17 +28,17 @@ enum AiringSnapshotWriter {
             let eps = s.schedule.filter { $0.airDate! > since }.prefix(8)
             guard !eps.isEmpty else { return nil }
             return AiringSnapshot.Item(id: s.id, name: s.name, network: s.network,
-                                       episodes: eps.map { AiringSnapshot.Episode(label: $0.label, title: $0.title, airDate: $0.airDate!) })
+                                       episodes: eps.map { AiringSnapshot.Episode(label: $0.label, title: $0.title, airDate: $0.airDate!, day: $0.day) })
         }
         let sorted = items.sorted { ($0.headline(at: now)?.airDate ?? .distantFuture) < ($1.headline(at: now)?.airDate ?? .distantFuture) }
         return AiringSnapshot(items: Array(sorted.prefix(AiringSnapshot.limit)))
     }
 
     private static func write(_ shows: [TrackedShow]) async {
-        guard let dir = AiringSnapshot.directory(create: true) else {
+        guard let dir = WidgetStore.airing(create: true) else {
             if !toldNoGroup {
                 toldNoGroup = true
-                dlog("tracking", "no App Group container: the Airing widget shows Open Folio")
+                dlog("tracking", "no App Group container and no Keychain group: the Airing widget shows Open Folio")
             }
             return
         }
@@ -58,27 +58,24 @@ enum AiringSnapshotWriter {
             }
             // Posters no show uses any more.
             let keep = Set(final.items.compactMap(\.picture))
-            for f in (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? [] where f.hasSuffix(".jpg") && !keep.contains(f) {
-                try? FileManager.default.removeItem(at: dir.appendingPathComponent(f))
-            }
+            for f in dir.names() where f.hasSuffix(".jpg") && !keep.contains(f) { dir.remove(f) }
             return true
         }.value
         guard let wrote else { return }
         written = snap
         guard wrote else { return }
         WidgetCenter.shared.reloadTimelines(ofKind: AiringSnapshot.widgetKind)
-        dlog("tracking", "Airing widget: \(snap.items.count) show(s)")
+        dlog("tracking", "Airing widget: \(snap.items.count) show(s)\(dir.isKeychain ? " (Keychain)" : "")")
     }
 
     /// The poster's file name next to the snapshot, named by its address.
-    private static func picture(_ poster: String?, in dir: URL) async -> String? {
+    private static func picture(_ poster: String?, in dir: WidgetStore) async -> String? {
         guard let poster, let url = URL(string: IMDbSource.sized(poster, width: 300) ?? poster) else { return nil }
         let name = hash(poster) + ".jpg"
-        if FileManager.default.fileExists(atPath: dir.appendingPathComponent(name).path) { return name }
+        if dir.exists(name) { return name }
         guard let img = await ImageCache.shared.image(url, maxPixel: AiringSnapshot.picturePixels) else { return nil }
         return await Task.detached(priority: .utility) { () -> String? in
-            guard let jpeg = img.jpegData(compressionQuality: 0.8),
-                  (try? jpeg.write(to: dir.appendingPathComponent(name), options: .atomic)) != nil else { return nil }
+            guard let jpeg = img.jpegData(compressionQuality: 0.8), (try? dir.write(jpeg, name)) != nil else { return nil }
             return name
         }.value
     }

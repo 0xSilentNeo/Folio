@@ -157,7 +157,9 @@ enum TrackMatch {
         c = c.replacingOccurrences(of: "_", with: "-")
         if let special = regional[c] { return special }
         let parts = c.split(separator: "-", maxSplits: 1).map(String.init)
-        var base = parts[0]
+        // "-", "--" or "_" split into nothing (an addon's "lang":"-"): no
+        // language, not a crash (review, 5 Nov).
+        guard var base = parts.first else { return nil }
         if base.count == 3 {
             base = alpha2[base] ?? Locale.LanguageCode(base).identifier(.alpha2) ?? base
         }

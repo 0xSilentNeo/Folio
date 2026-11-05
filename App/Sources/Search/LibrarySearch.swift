@@ -14,12 +14,24 @@ struct LibrarySearchPage: View {
     @ObservedObject private var local = LocalMediaStore.shared
     @ObservedObject private var index = LibraryIndexStore.shared
     @ObservedObject private var webdav = ServerStore.shared
+    @ObservedObject private var mediaServers = MediaServerStore.shared
     @StateObject private var catalogs = CatalogSearch()
     @AppStorage(SettingsKey.cleanTitles) private var cleanTitles = true
+    /// Files or posters for what's on the servers (1.23.0), kept between searches.
+    @AppStorage(SettingsKey.searchServerLayout) private var serverLayout = ServerLayout.files
     @State private var route: LibraryRoute?
     @State private var opened: OpenedEntry?
     /// The library's titles, grouped once (not at every keystroke).
     @State private var groups: [LibraryGroup] = []
+
+    /// How the files found on the servers show: a row each, or a poster for
+    /// each release they're in.
+    enum ServerLayout: String, CaseIterable, Identifiable {
+        case files, posters
+        var id: String { rawValue }
+        var title: String { self == .files ? "Files" : "Posters" }
+        var icon: String { self == .files ? "list.bullet" : "square.grid.2x2" }
+    }
 
     /// A Plex or Jellyfin show or season, opened in its server's browser.
     private struct OpenedEntry: Hashable {
@@ -30,60 +42,60 @@ struct LibrarySearchPage: View {
     }
 
     /// The typed words, two letters at least.
-    private var words: [String] {
-        let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        return q.count >= 2 ? q.split(separator: " ").map(String.init) : []
-    }
+    private var words: [String] { LibrarySearchText.words(query) }
 
     var body: some View {
-        let library = libraryMatches
-        let files = serverMatches
-        List {
+        let words = self.words
+        let library = libraryMatches(words)
+        let files = serverMatches(words)
+        let indexing = self.indexing
+        let found = !library.isEmpty || !files.isEmpty || catalogs.results.contains { !$0.entries.isEmpty || $0.error != nil }
+        let working = !indexing.isEmpty || catalogs.searching
+        Group {
             if words.isEmpty {
-                Text(kids.isOn ? "Search your library." : "Search your library, your Real-Debrid and WebDAV servers, and Plex and Jellyfin.")
-                    .font(.subheadline).foregroundStyle(.secondary)
-                    .listRowBackground(Color.clear)
+                ScrollView { SearchIntro(sources: sources).padding(.top, 36) }
+                    .scrollDismissesKeyboard(.immediately)
+            } else if !found && !working {
+                ScrollView {
+                    SearchNothing(query: query.trimmingCharacters(in: .whitespacesAndNewlines), sources: sources)
+                        .padding(.top, 36)
+                }
+                .scrollDismissesKeyboard(.immediately)
             } else {
-                if !library.isEmpty { librarySection(library) }
-                ForEach(files, id: \.server.id) { group in serverSection(group.server, group.files) }
-                ForEach(indexing, id: \.id) { server in
-                    let st = index.state(server.id)
-                    HStack(spacing: 10) {
-                        ProgressView().controlSize(.small)
-                        Text("Indexing \(server.name)… \(st.done) of \(st.total) folders").font(.subheadline).foregroundStyle(.secondary)
+                List {
+                    if !library.isEmpty { librarySection(library) }
+                    if !files.isEmpty { serverSection(files) }
+                    ForEach(indexing, id: \.id) { server in
+                        let st = index.state(server.id)
+                        FolioWorkingRow(text: "Indexing \(server.name)… \(st.done) of \(st.total) folders")
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                     }
-                    .listRowBackground(Color.clear)
-                }
-                ForEach(catalogs.results) { r in catalogSection(r) }
-                if catalogs.searching {
-                    HStack(spacing: 10) {
-                        ProgressView().controlSize(.small)
-                        Text("Searching Plex and Jellyfin…").font(.subheadline).foregroundStyle(.secondary)
+                    ForEach(catalogs.results) { r in catalogSection(r) }
+                    if catalogs.searching {
+                        FolioWorkingRow(text: "Searching Plex and Jellyfin…")
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                     }
-                    .listRowBackground(Color.clear)
                 }
-                if library.isEmpty && files.isEmpty && catalogs.results.allSatisfy(\.entries.isEmpty) && !catalogs.searching {
-                    Text("Nothing in your library\(kids.isOn ? "" : " or on your servers") matches “\(query.trimmingCharacters(in: .whitespaces))”.")
-                        .font(.subheadline).foregroundStyle(.secondary)
-                        .listRowBackground(Color.clear)
-                        .accessibilityIdentifier("librarySearchEmpty")
-                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .scrollDismissesKeyboard(.immediately)
             }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .background(Theme.background.ignoresSafeArea())
-        .scrollDismissesKeyboard(.immediately)
         .navigationTitle("Search")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: query) { _, q in catalogs.textChanged(kids.isOn ? "" : q) }
         // Each server's index brought up to date when it's due, as the
         // server's "Search all files" page did until 1.22.5.
         .onAppear {
+            HitchProbe.mark("search", "page appeared")
             if !kids.isOn { for server in webdav.servers { index.refreshIfNeeded(server) } }
             // Text kept from the last search asks Plex and Jellyfin again.
             catalogs.textChanged(kids.isOn ? "" : query)
             groups = LibraryOrganizer.groups(local.files)
+            HitchProbe.mark("search", "page set up")
         }
         .onChange(of: local.files) { _, files in groups = LibraryOrganizer.groups(files) }
         .navigationDestination(item: $route) { r in LibraryRoute.destination(r) }
@@ -94,12 +106,21 @@ struct LibrarySearchPage: View {
         }
     }
 
+    /// What the search looks through, for the page before typing and the
+    /// one with nothing found: the library, then each server by name.
+    private var sources: [SearchSource] {
+        var out = [SearchSource(name: "Library", icon: "play.rectangle.fill")]
+        guard !kids.isOn else { return out }
+        out += webdav.servers.map { SearchSource(name: $0.name, icon: RealDebrid.isRealDebrid($0) ? "bolt.horizontal.circle.fill" : "externaldrive.fill") }
+        out += mediaServers.servers.filter { $0.kind != .smb }.map { SearchSource(name: $0.displayName, icon: $0.kind.icon) }
+        return out
+    }
+
     // MARK: The library
 
     /// Library titles whose name has every word: the kids profile's titles
     /// only, as Home shows them.
-    private var libraryMatches: [LibraryGroup] {
-        let words = self.words
+    private func libraryMatches(_ words: [String]) -> [LibraryGroup] {
         guard !words.isEmpty else { return [] }
         var groups = self.groups
         if let limits = kids.activeLimits { groups = groups.filter { LibraryMetaIndex.shared.kidsAllow($0, limits) } }
@@ -120,21 +141,20 @@ struct LibrarySearchPage: View {
                 .listRowBackground(Color.clear)
                 .accessibilityIdentifier("searchLibrary:" + g.title)
             }
-        } header: { Text("In your library") }
+        } header: { SearchHeader(title: "In your library") }
     }
 
     // MARK: WebDAV and Real-Debrid
 
     /// Each server's indexed files whose name has every word, at most 40
     /// a server. Not in the kids profile.
-    private var serverMatches: [(server: WebDAVServer, files: [LibraryIndex.File])] {
-        let words = self.words
+    private func serverMatches(_ words: [String]) -> [ServerFile] {
         guard !words.isEmpty, !kids.isOn else { return [] }
-        return webdav.servers.compactMap { server in
-            let files = index.state(server.id).searchable.lazy
+        return webdav.servers.flatMap { server in
+            index.state(server.id).searchable.lazy
                 .filter { s in words.allSatisfy { s.haystack.contains($0) } }
-                .prefix(40).map(\.file)
-            return files.isEmpty ? nil : (server, Array(files))
+                .prefix(40)
+                .map { ServerFile(server: server, file: $0.file) }
         }
     }
 
@@ -143,24 +163,68 @@ struct LibrarySearchPage: View {
         kids.isOn ? [] : webdav.servers.filter { index.state($0.id).refreshing }
     }
 
-    private func serverSection(_ server: WebDAVServer, _ files: [LibraryIndex.File]) -> some View {
+    private func serverSection(_ files: [ServerFile]) -> some View {
         Section {
-            ForEach(files, id: \.url) { file in
-                let item = DAVItem(url: file.url, name: file.name, isDirectory: false, size: file.size, modified: file.added, contentType: nil)
-                Button {
-                    // With its folder as the queue, as the server's browser plays it.
-                    ContinueQueue.play(WebDAVClient(server: server).mediaItem(for: item, cleanTitles: cleanTitles))
-                } label: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        DAVRow(item: item, clean: cleanTitles, entry: HistoryStore.shared.entry(forURL: file.url.absoluteString))
-                        Text(file.url.deletingLastPathComponent().path.removingPercentEncoding ?? "")
-                            .font(.caption2).foregroundStyle(.tertiary).lineLimit(1)
-                    }
-                }
-                .buttonStyle(.plain)
-                .listRowBackground(Color.clear)
+            switch serverLayout {
+            case .files:
+                ForEach(files) { f in fileRow(f) }
+            case .posters:
+                posterGrid(ServerFile.releases(files))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 12, trailing: 20))
             }
-        } header: { Text(server.name) }
+        } header: {
+            HStack(spacing: 10) {
+                SearchHeader(title: "On your servers")
+                Spacer(minLength: 8)
+                LayoutPill(selection: $serverLayout)
+            }
+        }
+    }
+
+    /// A file: tap to play it (its folder as the queue, as the server's
+    /// browser plays it); its server's pill opens the folder it's in.
+    private func fileRow(_ f: ServerFile) -> some View {
+        let item = f.davItem
+        return VStack(alignment: .leading, spacing: 8) {
+            Button { play(f) } label: {
+                DAVRow(item: item, clean: cleanTitles, entry: HistoryStore.shared.entry(forURL: f.file.url.absoluteString))
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("searchFile:" + f.file.name)
+            ServerPill(name: f.server.name, icon: RealDebrid.isRealDebrid(f.server) ? "bolt.horizontal.circle.fill" : "externaldrive.fill") {
+                route = f.folderRoute
+            }
+            .padding(.leading, 84)              // under the name, past the picture
+            .accessibilityLabel("Open the folder on \(f.server.name)")
+            .accessibilityIdentifier("searchFileFolder:" + f.file.name)
+        }
+        .listRowBackground(Color.clear)
+    }
+
+    private func posterGrid(_ releases: [ServerFile.Release]) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 104, maximum: 132), spacing: 14, alignment: .top)], alignment: .leading, spacing: 18) {
+            ForEach(releases) { r in
+                Button { open(r) } label: { ReleaseTile(release: r.name) }
+                    .buttonStyle(PressStyle(scale: 0.97))
+                    .accessibilityLabel(ReleaseTile.spoken(r.name) + (r.count > 1 ? ", \(r.count) files" : ""))
+                    .accessibilityIdentifier("searchRelease:" + r.name.title)
+            }
+        }
+    }
+
+    private func play(_ f: ServerFile) {
+        ContinueQueue.play(WebDAVClient(server: f.server).mediaItem(for: f.davItem, cleanTitles: cleanTitles))
+    }
+
+    /// A release: its folder; one file on its own (at the server's top): it plays.
+    private func open(_ r: ServerFile.Release) {
+        if let folder = r.folder {
+            route = .webdavFolder(r.server.id.uuidString, folder.absoluteString, r.name.raw)
+        } else if let f = r.files.first {
+            play(f)
+        }
     }
 
     // MARK: Plex and Jellyfin
@@ -186,7 +250,7 @@ struct LibrarySearchPage: View {
                 .listRowBackground(Color.clear)
                 .accessibilityIdentifier("searchCatalog:" + e.name)
             }
-        } header: { Text(r.server.displayName) }
+        } header: { SearchHeader(title: r.server.displayName) }
     }
 
     private func icon(_ e: CatalogEntry) -> String {
@@ -216,6 +280,240 @@ struct LibrarySearchPage: View {
             Spacer(minLength: 0)
         }
         .contentShape(Rectangle())
+    }
+}
+
+/// The typed words: two letters at least, lowercased, split on spaces.
+enum LibrarySearchText {
+    static func words(_ query: String) -> [String] {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return q.count >= 2 ? q.split(separator: " ").map(String.init) : []
+    }
+}
+
+/// A file one of the WebDAV or Real-Debrid servers has, from its index.
+struct ServerFile: Identifiable {
+    let server: WebDAVServer
+    let file: LibraryIndex.File
+    var id: String { server.id.uuidString + "|" + file.url.absoluteString }
+
+    var davItem: DAVItem {
+        DAVItem(url: file.url, name: file.name, isDirectory: false, size: file.size, modified: file.added, contentType: nil)
+    }
+
+    /// The server's start folder.
+    var root: URL? { WebDAVClient(server: server).url(forPath: server.rootPath) }
+
+    /// Where the file is, under the start folder: ["Show.S01.1080p", "E01.mkv"].
+    static func components(of url: URL, under root: URL?) -> [String] {
+        let all = url.standardized.pathComponents.filter { $0 != "/" }
+        guard let root else { return [all.last].compactMap { $0 } }
+        let base = root.standardized.pathComponents.filter { $0 != "/" }
+        guard all.count > base.count, Array(all.prefix(base.count)) == base else { return [all.last].compactMap { $0 } }
+        return Array(all.dropFirst(base.count))
+    }
+
+    /// The page the server pill opens: the folder the file is in (the
+    /// server's library when that's the start folder).
+    var folderRoute: LibraryRoute {
+        let parts = Self.components(of: file.url, under: root)
+        guard parts.count > 1 else { return .webdav(server.id.uuidString) }
+        let folder = file.url.deletingLastPathComponent()
+        return .webdavFolder(server.id.uuidString, folder.absoluteString, parts[parts.count - 2])
+    }
+
+    /// The files found, a poster for each release (the folder at the
+    /// server's top they're in, or the file itself when it's there), in the
+    /// order found.
+    struct Release: Identifiable {
+        let server: WebDAVServer
+        /// nil: a file at the server's top, which plays.
+        let folder: URL?
+        let name: ReleaseName
+        var files: [ServerFile]
+        var count: Int { files.count }
+        var id: String { server.id.uuidString + "|" + (folder?.absoluteString ?? files.first?.file.url.absoluteString ?? name.raw) }
+    }
+
+    static func releases(_ files: [ServerFile]) -> [Release] {
+        var out: [Release] = []
+        var at: [String: Int] = [:]
+        var roots: [UUID: URL?] = [:]
+        for f in files {
+            let root: URL?
+            if let r = roots[f.server.id] { root = r } else { root = f.root; roots[f.server.id] = root }
+            let parts = components(of: f.file.url, under: root)
+            let folder: URL?
+            let raw: String
+            if parts.count > 1, let root {
+                folder = root.appendingPathComponent(parts[0], isDirectory: true)
+                raw = parts[0]
+            } else {
+                folder = nil
+                raw = f.file.name
+            }
+            let key = f.server.id.uuidString + "|" + (folder?.absoluteString ?? f.file.url.absoluteString)
+            if let i = at[key] { out[i].files.append(f); continue }
+            let name = (folder != nil ? ReleaseName.folder(raw) : ReleaseName.file(raw))
+                ?? ReleaseName(title: (raw as NSString).deletingPathExtension, label: nil, year: nil, episodeTitle: nil,
+                               group: nil, alt: nil, attributes: [], raw: raw)
+            at[key] = out.count
+            out.append(Release(server: f.server, folder: folder, name: name, files: [f]))
+        }
+        return out
+    }
+}
+
+/// A place the search looks, shown as a chip.
+struct SearchSource: Hashable {
+    let name: String
+    let icon: String
+}
+
+/// Before anything is typed: what this search finds and where it looks,
+/// in Folio's own style (until 1.23.0 a line of grey text between list
+/// separators at the top).
+private struct SearchIntro: View {
+    let sources: [SearchSource]
+
+    var body: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle().fill(Theme.accentSoft).frame(width: 76, height: 76)
+                Image(systemName: "magnifyingglass").font(.system(size: 30, weight: .semibold)).foregroundStyle(Theme.accent)
+            }
+            .accessibilityHidden(true)
+            VStack(spacing: 6) {
+                Text("Search what's yours").font(.title3.weight(.bold))
+                Text(sources.count > 1 ? "Titles in your library and the files on your servers." : "The titles in your library.")
+                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            }
+            SourceChips(sources: sources)
+        }
+        .padding(.horizontal, 28)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("librarySearchIntro")
+    }
+}
+
+/// Nothing found: said in the same style, with where it looked.
+private struct SearchNothing: View {
+    let query: String
+    let sources: [SearchSource]
+
+    var body: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle().fill(Theme.accentSoft).frame(width: 76, height: 76)
+                Image(systemName: "questionmark.text.page").font(.system(size: 28, weight: .semibold)).foregroundStyle(Theme.accent)
+            }
+            .accessibilityHidden(true)
+            VStack(spacing: 6) {
+                Text("Nothing matches “\(query)”").font(.title3.weight(.bold)).multilineTextAlignment(.center)
+                Text("Try fewer words, or another spelling. Looked in:")
+                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            }
+            SourceChips(sources: sources)
+        }
+        .padding(.horizontal, 28)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("librarySearchEmpty")
+    }
+}
+
+private struct SourceChips: View {
+    let sources: [SearchSource]
+
+    var body: some View {
+        FlowLayout(spacing: 8, lineSpacing: 8) {
+            ForEach(sources, id: \.self) { s in
+                Label(s.name, systemImage: s.icon)
+                    .labelStyle(ChipLabelStyle())
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.primary.opacity(0.8))
+                    .padding(.horizontal, 12).padding(.vertical, 7)
+                    .background(Theme.fill, in: Capsule())
+            }
+        }
+        .frame(maxWidth: 340)
+    }
+}
+
+private struct ChipLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 5) {
+            configuration.icon.imageScale(.small)
+            configuration.title.lineLimit(1)
+        }
+    }
+}
+
+/// A section's name, in the page's own type (not the list's small caps).
+private struct SearchHeader: View {
+    let title: String
+    var body: some View {
+        Text(title).font(.subheadline.weight(.bold)).foregroundStyle(.primary)
+            .textCase(nil)
+            .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// Files or Posters: two halves of one pill, the chosen one filled.
+private struct LayoutPill: View {
+    @Binding var selection: LibrarySearchPage.ServerLayout
+    @Namespace private var ns
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(LibrarySearchPage.ServerLayout.allCases) { l in
+                let on = selection == l
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { selection = l }
+                } label: {
+                    Label(l.title, systemImage: l.icon)
+                        .labelStyle(ChipLabelStyle())
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(on ? Theme.onAccent : .primary.opacity(0.75))
+                        .padding(.horizontal, 10).padding(.vertical, 6)
+                        .background {
+                            if on { Capsule().fill(Theme.accent).matchedGeometryEffect(id: "on", in: ns) }
+                        }
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(on ? .isSelected : [])
+                .accessibilityIdentifier("searchLayout:" + l.rawValue)
+            }
+        }
+        .padding(3)
+        .background(Theme.fill, in: Capsule())
+        .textCase(nil)
+    }
+}
+
+/// Which server a file is on, as a button: it opens the folder the file is in.
+struct ServerPill: View {
+    let name: String
+    let icon: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: icon).imageScale(.small)
+                Text(name).lineLimit(1)
+                Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).opacity(0.6)
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.primary.opacity(0.8))
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(Theme.fill, in: Capsule())
+            .overlay(Capsule().strokeBorder(Theme.hairline, lineWidth: 0.5))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(PressStyle(scale: 0.95))
     }
 }
 
@@ -273,7 +571,7 @@ final class CatalogSearch: ObservableObject {
             guard let self, !Task.isCancelled else { return }
             self.results = found.filter { !$0.entries.isEmpty || $0.error != nil }
             self.searching = false
-            dlog("search", "Plex/Jellyfin \"\(q)\": " + found.map { "\($0.server.displayName) \($0.error == nil ? "\($0.entries.count)" : "error")" }.joined(separator: ", ")
+            dlog("search", "Plex/Jellyfin: " + found.map { "\($0.server.displayName) \($0.error == nil ? "\($0.entries.count)" : "error")" }.joined(separator: ", ")
                  + String(format: " in %.0f ms", (CACurrentMediaTime() - t0) * 1000))
         }
     }

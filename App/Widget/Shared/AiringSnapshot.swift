@@ -28,6 +28,18 @@ struct AiringSnapshot: Codable, Equatable {
         var label: String
         var title: String?
         var airDate: Date
+        /// The network's date ("2026-11-13") when there's no time for it
+        /// (1.23.0, as the app has had since 1.22.6): the widget shows the
+        /// day only, not TVmaze's stand-in 12:00 UTC (11 pm in Melbourne).
+        var day: String? = nil
+
+        /// The day at the start of `day` in `calendar`, for a day-only episode.
+        func localDay(_ calendar: Calendar = .autoupdatingCurrent) -> Date? {
+            guard let day else { return nil }
+            let p = day.prefix(10).split(separator: "-").compactMap { Int($0) }
+            guard p.count == 3 else { return nil }
+            return calendar.date(from: DateComponents(year: p[0], month: p[1], day: p[2]))
+        }
     }
 
     struct Item: Codable, Equatable, Identifiable {
@@ -77,12 +89,23 @@ struct AiringSnapshot: Codable, Equatable {
 
     /// When the widget's picture changes without the app: now, each air
     /// time ("in 2 h" becomes "Out now"), and the end of each "Out now".
-    func timelineDates(from now: Date, limit: Int = 60) -> [Date] {
+    func timelineDates(from now: Date, limit: Int = 60, calendar: Calendar = .autoupdatingCurrent) -> [Date] {
         var dates = Set<Date>([now])
+        var last = now
         for e in items.flatMap(\.episodes) {
             if e.airDate > now { dates.insert(e.airDate) }
             let gone = e.airDate.addingTimeInterval(AiringClock.outNowWindow)
             if gone > now { dates.insert(gone) }
+            last = max(last, e.airDate)
+        }
+        // Each midnight up to the last episode too (1.23.0): "Tomorrow"
+        // becomes "Today" when the day changes, not at the next air time
+        // (review, 5 Nov: "Tomorrow 9:00 PM" all of the day itself).
+        var midnight = calendar.startOfDay(for: now)
+        for _ in 0..<14 {
+            guard let next = calendar.date(byAdding: .day, value: 1, to: midnight), next <= last else { break }
+            dates.insert(next)
+            midnight = next
         }
         return Array(dates.sorted().prefix(limit))
     }
@@ -108,6 +131,17 @@ struct AiringSnapshot: Codable, Equatable {
     func write(to dir: URL) throws {
         let data = try JSONEncoder().encode(self)
         try data.write(to: dir.appendingPathComponent(Self.fileName), options: .atomic)
+    }
+
+    /// The same through WidgetStore (1.23.0): the App Group's folder, or the
+    /// Keychain when the install has no group.
+    static func read(from store: WidgetStore?) -> AiringSnapshot? {
+        guard let data = store?.read(fileName) else { return nil }
+        return try? JSONDecoder().decode(AiringSnapshot.self, from: data)
+    }
+
+    func write(to store: WidgetStore) throws {
+        try store.write(try JSONEncoder().encode(self), Self.fileName)
     }
 }
 

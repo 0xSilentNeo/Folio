@@ -116,6 +116,7 @@ struct RootView: View {
         // The search searches the page it's opened from; a new page, a new search.
         .onChange(of: tab) { old, new in
             guard new == 3, old != 3 else { return }
+            HitchProbe.start("search", "search opened from tab \(old)")
             if SearchScope(fromTab: old) != SearchScope(fromTab: searchFrom) { searchText = "" }
             searchFrom = old
         }
@@ -125,6 +126,12 @@ struct RootView: View {
             Button("Cancel", role: .cancel) {}
         } message: { target in
             Text("A link asks Folio to add the addon at \(URL(string: target)?.host ?? target). Addons can see what you search for and play.")
+        }
+        .alert("Play this stream?", isPresented: Binding(get: { linkPlay != nil }, set: { if !$0 { linkPlay = nil } }), presenting: linkPlay) { target in
+            Button("Play") { PlayerPresenter.play(MediaItem(url: target, title: "", source: .url)) }
+            Button("Cancel", role: .cancel) {}
+        } message: { target in
+            Text("A link asks Folio to play a stream from \(URL(string: target)?.host ?? "another app").")
         }
         .alert("Couldn't add the addon", isPresented: Binding(get: { linkError != nil }, set: { if !$0 { linkError = nil } })) {
             Button("OK", role: .cancel) {}
@@ -148,7 +155,7 @@ struct RootView: View {
                 }
                 Tab(value: 3, role: .search) { SearchTabView(query: $searchText, scope: SearchScope(fromTab: searchFrom)) }
             }
-            .modifier(TabBarSearchField(text: $searchText, prompt: SearchScope(fromTab: searchFrom).prompt, selected: tab == 3))
+            .modifier(TabBarSearchField())
         } else {
             TabView(selection: $tab) {
                 HomeView().tabZoom()
@@ -174,6 +181,8 @@ struct RootView: View {
     /// failure was dropped.
     @State private var linkAddon: String?
     @State private var linkError: String?
+    /// A stream a folio://play link asked for, waiting for a yes (1.23.0).
+    @State private var linkPlay: String?
 
     private func installLinkedAddon(_ target: String) {
         tab = 1
@@ -190,7 +199,9 @@ struct RootView: View {
     private static let playableSchemes: Set<String> = ["http", "https", "rtsp", "rtmp", "smb", "sftp", "ftp"]
 
     private func handle(_ url: URL) {
-        dlog("open", "onOpenURL \(url.isFileURL ? url.lastPathComponent : url.absoluteString)")
+        // What the link does, not the link: an addon's address carries its
+        // debrid key, percent-encoded past the log's filter (review, 5 Nov).
+        dlog("open", "onOpenURL \(url.isFileURL ? url.lastPathComponent : "\(url.scheme ?? "?")://\(url.host ?? "")")")
         // Kids profile: nothing from outside the app (a widget, a link, a file
         // or script from another app) opens, plays or installs; the profile's
         // own screens decide what plays.
@@ -225,7 +236,9 @@ struct RootView: View {
                 dlog("open", "folio://play with a link Folio doesn't play: \(target.flatMap { URL(string: $0)?.scheme } ?? "no scheme")")
                 return
             }
-            PlayerPresenter.play(MediaItem(url: target, title: "", source: .url))
+            // Asked first, as an addon link is: any app, web page, Shortcut
+            // or QR code can open folio://play (review, 5 Nov).
+            linkPlay = target
         case "continue":
             // The Continue Watching widget (1.20.3): plays the entry as Home's
             // card does. The widget's copy can be a moment behind; an entry

@@ -94,6 +94,9 @@ final class SubtitleSearch: ObservableObject, Identifiable {
     let id = UUID()
     @Published private(set) var phase: Phase = .lookingUp
     @Published private(set) var results: [Result] = []
+    /// Addons asked, and those that didn't answer (an error, offline).
+    @Published private(set) var askedAddons = 0
+    @Published private(set) var failedAddons = 0
     @Published private(set) var heading: String
     private var task: Task<Void, Never>?
     private let item: MediaItem
@@ -129,21 +132,34 @@ final class SubtitleSearch: ObservableObject, Identifiable {
             dlog("subs", "search: none of the subtitle addons covers \(target.type) \(target.id)")
             return
         }
+        askedAddons = addons.count
         phase = .searching(answered: 0, of: addons.count)
         dlog("subs", "search: asking \(addons.count) subtitle addon(s) for \(target.type) \(target.id)")
         let t0 = Date()
-        await withTaskGroup(of: (String, [AddonSubtitle]).self) { group in
+        failedAddons = 0
+        // A failure is counted, not taken for "nothing found" (review, 5 Nov:
+        // offline, every addon "found nothing").
+        await withTaskGroup(of: (String, Swift.Result<[AddonSubtitle], Error>).self) { group in
             for a in addons {
                 let name = a.manifest.name
-                group.addTask { (name, (try? await AddonAPI.subtitles(a, type: target.type, id: target.id)) ?? []) }
+                group.addTask {
+                    do { return (name, .success(try await AddonAPI.subtitles(a, type: target.type, id: target.id))) }
+                    catch { return (name, .failure(error)) }
+                }
             }
             var answered = 0
-            for await (name, list) in group {
+            for await (name, result) in group {
                 guard !Task.isCancelled else { return }
                 answered += 1
-                add(list, from: name)
+                switch result {
+                case .success(let list):
+                    add(list, from: name)
+                    dlog("subs", "search: \(name) answered with \(list.count) subtitle(s) after \(Int(Date().timeIntervalSince(t0) * 1000)) ms")
+                case .failure(let error):
+                    failedAddons += 1
+                    dlog("subs/error", "search: \(name) didn't answer: \(error.localizedDescription)")
+                }
                 phase = answered == addons.count ? .done : .searching(answered: answered, of: addons.count)
-                dlog("subs", "search: \(name) answered with \(list.count) subtitle(s) after \(Int(Date().timeIntervalSince(t0) * 1000)) ms")
             }
         }
     }
@@ -252,11 +268,15 @@ struct SubtitleSearchCard: View {
     @ViewBuilder private var status: some View {
         switch search.phase {
         case .lookingUp:
-            HStack(spacing: 8) { ProgressView().tint(.white); Text("Finding the title…") }.font(.subheadline)
+            HStack(spacing: 8) { FolioSpinner(size: .small, tint: .white); Text("Finding the title…") }.font(.subheadline)
         case .searching(let answered, let total):
-            HStack(spacing: 8) { ProgressView().tint(.white); Text("Asking subtitle addons… \(answered) of \(total)") }.font(.subheadline)
+            HStack(spacing: 8) { FolioSpinner(size: .small, tint: .white); Text("Asking subtitle addons… \(answered) of \(total)") }.font(.subheadline)
         case .done:
-            if search.results.isEmpty { note("The subtitle addons found nothing for this title.") }
+            if search.results.isEmpty {
+                note(search.failedAddons > 0 && search.failedAddons == search.askedAddons
+                     ? "Couldn't reach the subtitle addons. Check the connection and try again."
+                     : "The subtitle addons found nothing for this title.")
+            }
         case .noAddon:
             note("No subtitle addon is installed. Add one in Settings → Discover → Addons.")
         case .noAddonForTitle:

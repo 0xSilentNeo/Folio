@@ -114,6 +114,17 @@ struct ContinueSnapshot: Codable, Equatable {
         let data = try JSONEncoder().encode(self)
         try data.write(to: dir.appendingPathComponent(Self.fileName), options: .atomic)
     }
+
+    /// The same through WidgetStore (1.23.0): the App Group's folder, or the
+    /// Keychain when the install has no group.
+    static func read(from store: WidgetStore?) -> ContinueSnapshot? {
+        guard let data = store?.read(fileName) else { return nil }
+        return try? JSONDecoder().decode(ContinueSnapshot.self, from: data)
+    }
+
+    func write(to store: WidgetStore) throws {
+        try store.write(try JSONEncoder().encode(self), Self.fileName)
+    }
 }
 
 extension ContinueSnapshot.Item {

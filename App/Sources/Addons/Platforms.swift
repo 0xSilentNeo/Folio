@@ -119,14 +119,21 @@ final class BrowseModel: ObservableObject {
     @Published var metas: [MetaItem] = []
     @Published var loading = false
     @Published var failed = false
-    private var exhausted = false
+    /// Nothing more to load: the list's end line shows (IMDb, 1.23.0).
+    @Published private(set) var exhausted = false
     private var generation = 0
     private var task: Task<Void, Never>?
+    /// TMDB's next page (1.23.0): counted per page received, not worked out
+    /// from the titles kept, which a repeat across pages made ask for the
+    /// same page again and stop for good (review, 5 Nov).
+    private var nextPage = 1
+    /// IMDb's longer list has been asked for.
+    private var askedMore = false
 
     func reload() {
         task?.cancel()
         generation += 1          // anything still in flight is stale now
-        metas = []; exhausted = false; failed = false
+        metas = []; exhausted = false; failed = false; nextPage = 1; askedMore = false
         loading = true           // keep the spinner up through the gap, no empty-state flash
         task = Task { await load(initial: true) }
     }
@@ -147,16 +154,41 @@ final class BrowseModel: ObservableObject {
         let kids = KidsProfile.shared.isOn
         if kids && genre == nil { genre = "Family" }
         if TMDB.enabled {
-            var page = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: metas.count / 20 + 1)
-            if kids { page = Self.tagged(page, genre: genre) }
-            guard gen == generation else { return }
-            if page.isEmpty { exhausted = true; failed = metas.isEmpty && page.isEmpty && !Task.isCancelled && TMDB.lastError }
-            let known = Set(metas.map(\.id))
-            metas += page.filter { !known.contains($0.id) }
+            // A page that repeats only titles already shown: the next one,
+            // up to three in a row, so the grid never stalls on a repeat.
+            for _ in 0..<3 {
+                var page = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: nextPage)
+                if kids { page = Self.tagged(page, genre: genre) }
+                guard gen == generation else { return }
+                if page.isEmpty {
+                    // A failed page can be asked for again (scrolling back to the end).
+                    if !TMDB.lastError { exhausted = true }
+                    failed = metas.isEmpty && !Task.isCancelled && TMDB.lastError
+                    return
+                }
+                nextPage += 1
+                let known = Set(metas.map(\.id))
+                let new = page.filter { !known.contains($0.id) }
+                metas += new
+                if !new.isEmpty { return }
+            }
             return
         }
-        // IMDb lists come whole (100–250 items); nothing to page.
-        guard initial || metas.isEmpty else { exhausted = true; return }
+        if !initial && !metas.isEmpty {
+            // More (1.23.0): one IMDb page holds up to 250 titles, so the
+            // grid goes on from its first 100 to IMDb's longer list once.
+            guard !askedMore else { exhausted = true; return }
+            askedMore = true
+            var more = await IMDbSource.browse(sort: sort.imdb, type: type, genre: genre, year: year, more: true)
+            if kids { more = Self.tagged(more, genre: genre) }
+            guard gen == generation else { return }
+            let known = Set(metas.map(\.id))
+            let new = more.filter { !known.contains($0.id) }
+            metas += new
+            dlog("discover", "more: \(new.count) title(s) after the first \(known.count)")
+            exhausted = true
+            return
+        }
         // Last list first (any age), fresh one when it arrives.
         var stale = await IMDbSource.browse(sort: sort.imdb, type: type, genre: genre, year: year, staleOnly: true)
         if kids { stale = Self.tagged(stale, genre: genre) }
@@ -165,8 +197,17 @@ final class BrowseModel: ObservableObject {
         if kids { list = Self.tagged(list, genre: genre) }
         guard gen == generation else { return }
         if !list.isEmpty || metas.isEmpty { metas = list }
-        exhausted = true
+        // A full first page (100) may have more behind it; the Top 250
+        // chart is whole.
+        exhausted = metas.count < 100 || (genre == nil && sort == .topRated)
         failed = metas.isEmpty
+    }
+
+    /// The grid's last line once it can't go on (IMDb lists, 1.23.0).
+    var endNote: String? {
+        guard exhausted, !TMDB.enabled, !metas.isEmpty else { return nil }
+        if genre == nil && sort == .topRated && sort != .new { return "That's IMDb's whole Top 250." }
+        return "That's as far as IMDb's list goes: \(metas.count) titles."
     }
 
     /// A list asked for by genre whose titles don't say theirs (TMDB's never
@@ -211,7 +252,7 @@ struct DiscoverView: View {
                             HStack(alignment: .firstTextBaseline) {
                                 Text(gridTitle).font(.title3.weight(.bold))
                                 Spacer()
-                                if browse.loading && browse.metas.isEmpty { ProgressView() }
+                                if browse.loading && browse.metas.isEmpty { FolioSpinner(size: .small) }
                             }
                             if let f = browse.sort.footnote { Text(f).font(.caption).foregroundStyle(.secondary) }
                             if let limits = kids.activeLimits { KidsFilterNote(limits: limits).padding(.top, 2) }
@@ -227,7 +268,12 @@ struct DiscoverView: View {
                             }
                         }
                         .padding(.horizontal, margin)
-                        if browse.loading && !browse.metas.isEmpty { ProgressView().frame(maxWidth: .infinity) }
+                        if browse.loading && !browse.metas.isEmpty { FolioSpinner().frame(maxWidth: .infinity).padding(.vertical, 8) }
+                        if !browse.loading, let note = browse.endNote {
+                            Text(note).font(.footnote).foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity).padding(.vertical, 6)
+                                .accessibilityIdentifier("discoverEnd")
+                        }
                         if !browse.loading && shown.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(browse.failed ? "IMDb didn't answer." : kids.isOn && !browse.metas.isEmpty ? "Nothing here rated for the kids profile." : "Nothing here.")
@@ -550,7 +596,7 @@ struct PlatformDetailView: View {
                 .pickerStyle(.segmented)
                 .padding(.horizontal, 20)
                 if let limits = kids.activeLimits { KidsFilterNote(limits: limits).padding(.horizontal, 20) }
-                if tab.loading && tab.metas.isEmpty { ProgressView().frame(maxWidth: .infinity).padding() }
+                if tab.loading && tab.metas.isEmpty { FolioSpinner().frame(maxWidth: .infinity).padding() }
                 if let error = tab.error {
                     // Inline, over whatever the grid already has; never in its place.
                     HStack(spacing: 10) {

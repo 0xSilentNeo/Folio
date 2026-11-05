@@ -136,10 +136,18 @@ final class ImageCache: @unchecked Sendable {
         return files.reduce(0) { $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
     }
 
+    /// The folder is moved aside at once and deleted in the background:
+    /// thousands of pictures kept the screen frozen (review, 5 Nov).
     func clear() {
         memory.removeAllObjects()
-        try? FileManager.default.removeItem(at: dir)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let fm = FileManager.default
+        let old = dir.deletingLastPathComponent().appendingPathComponent("artwork-old-\(UUID().uuidString)", isDirectory: true)
+        if (try? fm.moveItem(at: dir, to: old)) != nil {
+            Task.detached(priority: .utility) { try? FileManager.default.removeItem(at: old) }
+        } else {
+            try? fm.removeItem(at: dir)
+        }
+        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
     }
 }
 

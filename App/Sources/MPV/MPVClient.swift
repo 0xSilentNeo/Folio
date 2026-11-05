@@ -94,7 +94,7 @@ final class MPVClient {
         return mpv_set_option(handle, name, MPV_FORMAT_INT64, &v)
     }
 
-    func initialize(logLevel: String = "info") throws {
+    func initialize() throws {
         // Logs go to mpv's log-file; don't ferry every line to the main thread.
         mpv_request_log_messages(handle, "no")
         let r = mpv_initialize(handle)

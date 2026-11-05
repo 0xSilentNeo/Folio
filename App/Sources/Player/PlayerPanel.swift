@@ -278,9 +278,16 @@ struct SettingsPanelContent: View {
 
             PanelHeader(title: "Interface")
             PanelRow(icon: "arrow.counterclockwise", title: "Skip interval") {
-                SegmentPicker(options: [(5, "5"), (10, "10"), (15, "15"), (30, "30")],
-                              selection: Binding(get: { seekStep }, set: { seekStep = $0; UserDefaults.standard.set($0, forKey: SettingsKey.seekBackStep) }))
-                    .frame(width: 168)
+                // 60 as Settings has it; the back step follows only when it
+                // was the same as this one (review, 5 Nov: it was overwritten,
+                // and 60 showed as 5).
+                SegmentPicker(options: [(5, "5"), (10, "10"), (15, "15"), (30, "30"), (60, "60")],
+                              selection: Binding(get: { seekStep }, set: { new in
+                                  let d = UserDefaults.standard
+                                  if d.integer(forKey: SettingsKey.seekBackStep) == seekStep { d.set(new, forKey: SettingsKey.seekBackStep) }
+                                  seekStep = new
+                              }))
+                    .frame(width: 200)
             }
             PanelRow(icon: "rectangle.landscape.rotate", title: "Auto-Rotate", subtitle: ui.rotationLocked ? "Locked" : nil) {
                 Toggle("", isOn: Binding(get: { !ui.rotationLocked }, set: { on in

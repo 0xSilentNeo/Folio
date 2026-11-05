@@ -69,7 +69,7 @@ final class DiscoverSearch: ObservableObject {
     func submit(_ text: String) {
         let q = SearchHistoryStore.tidy(text)
         guard !q.isEmpty else { return }
-        dlog("search", "\"\(q)\" submitted")
+        dlog("search", "\(q.count) character(s) submitted")
         commit(q)
         if q != current || phase != .done { start(q, wait: false, minLength: 1) }
         searchAddons(q)
@@ -124,12 +124,13 @@ final class DiscoverSearch: ObservableObject {
                 self.titles = items
                 self.titlesQuery = q
                 self.phase = .done
-                dlog("search", String(format: "\"%@\": %d title(s) in %.0f ms", q, items.count, (CACurrentMediaTime() - t0) * 1000))
+                // Counts only: what you search for stays out of the log (review, 5 Nov).
+                dlog("search", String(format: "%d title(s) in %.0f ms", items.count, (CACurrentMediaTime() - t0) * 1000))
             } catch {
                 guard let self, gen == self.generation, !IMDbSource.isCancellation(error) else { return }
                 let offline = Self.isOffline(error)
                 self.phase = .failed(offline: offline)
-                dlog("search/error", "\"\(q)\": \(error.localizedDescription)\(offline ? " (offline)" : "")")
+                dlog("search/error", "\(error.localizedDescription)\(offline ? " (offline)" : "")")
             }
         }
     }
@@ -237,12 +238,8 @@ struct AddonSearchView: View {
                 ForEach(search.addonResults) { addonSection($0) }
                 if search.addonsSearching {
                     Section {
-                        HStack(spacing: 10) {
-                            ProgressView().controlSize(.small)
-                            Text("Searching your addons…").font(.subheadline).foregroundStyle(.secondary)
-                        }
+                        FolioWorkingRow(text: "Searching your addons…")
                         .listRowBackground(Color.clear)
-                        .accessibilityElement(children: .combine)
                     }
                 }
             }
@@ -341,7 +338,7 @@ struct AddonSearchView: View {
                 Text("Titles")
                 if let limits = kids.activeLimits { Text("· rated \(KidsRules.summary(limits))") }
                 if search.phase == .loading {
-                    ProgressView().controlSize(.small).accessibilityLabel("Searching")
+                    FolioSpinner(size: .small).accessibilityLabel("Searching")
                 }
                 Spacer()
             }

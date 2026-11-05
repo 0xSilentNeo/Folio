@@ -690,7 +690,7 @@ struct DownloadSettingsView: View {
             Section {
                 Toggle("Live Activities", isOn: $liveActivities)
             } footer: {
-                Text("Downloads and what's playing, on the Lock Screen and in the Dynamic Island."
+                Text("Downloads, on the Lock Screen and in the Dynamic Island. What's playing shows in Control Center and on the Lock Screen."
                      + (liveActivities && LiveActivities.blockedBySystem ? " They're turned off for Folio in iOS Settings → Folio." : ""))
             }
         }

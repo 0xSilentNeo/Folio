@@ -51,7 +51,7 @@ struct MediaServerEditView: View {
                 loginSection
                 Section {
                     Button { Task { await test() } } label: {
-                        HStack { Text("Test connection"); Spacer(); if testing { ProgressView() } }
+                        HStack { Text("Test connection"); Spacer(); if testing { FolioSpinner(size: .small) } }
                     }
                     .disabled(!valid || testing || saving)
                     if let result { Text(result).font(.footnote).foregroundStyle(.secondary) }
@@ -63,7 +63,7 @@ struct MediaServerEditView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    if saving { ProgressView() } else {
+                    if saving { FolioSpinner(size: .small) } else {
                         Button(kind == .jellyfin && (accountChanged || !secret.isEmpty) ? "Sign In" : "Save") { Task { await save() } }
                             .disabled(!valid || testing)
                     }

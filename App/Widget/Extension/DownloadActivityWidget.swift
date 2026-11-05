@@ -93,7 +93,9 @@ private enum DownloadLines {
         var parts: [String] = []
         if s.speed > 0 { parts.append(s.speedText) }
         if let files = s.filesText { parts.append(files) }
-        if s.timerRange == nil, let detail = s.detailText, !s.waiting { parts.append(detail) }
+        // The time left only: detailText repeats the file count (review,
+        // 5 Nov: "3 files · 3 files").
+        if s.timerRange == nil, !s.waiting, let left = s.secondsLeft { parts.append(ActivityFormat.minutesLeft(left)) }
         return parts.isEmpty ? s.percentText : parts.joined(separator: " · ")
     }
 }

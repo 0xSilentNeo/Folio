@@ -63,7 +63,7 @@ struct CatalogBrowserView: View {
             }
         }
         .listStyle(.plain)
-        .overlay { if loading && entries.isEmpty { ProgressView() } }
+        .overlay { if loading && entries.isEmpty { FolioSpinner(size: .large) } }
         .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)

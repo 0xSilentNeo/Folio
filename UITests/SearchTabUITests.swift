@@ -46,4 +46,27 @@ final class SearchTabUITests: XCTestCase {
         sleep(2)
         XCTAssertTrue(app.buttons["Discover"].firstMatch.exists)
     }
+
+    /// 1.23.0 (5 Nov: "remove the search bar at the top of the Network
+    /// page"): Network shows no search field of its own, on iOS 27 too, and
+    /// the search page opens on its intro.
+    func test3NetworkHasNoSearchBar() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-labNoEngine", "-noSplash", "-appearance", "dark"]
+        app.launch()
+        let network = app.buttons["Network"].firstMatch
+        XCTAssertTrue(network.waitForExistence(timeout: 10), "no Network tab")
+        network.tap()
+        sleep(2)
+        hold("search-2-network")
+        XCTAssertEqual(app.searchFields.count, 0, "a search field on the Network page")
+        // A search bar can hide under the title until the page is pulled down.
+        app.swipeDown()
+        sleep(2)
+        hold("search-3-network-pulled")
+        XCTAssertEqual(app.searchFields.count, 0, "a search field after pulling the Network page down")
+        app.buttons["Search"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["librarySearchIntro"].waitForExistence(timeout: 5), "the search page's intro didn't show")
+        hold("search-4-intro")
+    }
 }

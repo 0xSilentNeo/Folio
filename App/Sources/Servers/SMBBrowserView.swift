@@ -77,7 +77,7 @@ struct SMBBrowserView: View {
             }
         }
         .listStyle(.plain)
-        .overlay { if loading && items.isEmpty { ProgressView() } }
+        .overlay { if loading && items.isEmpty { FolioSpinner(size: .large) } }
         .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)

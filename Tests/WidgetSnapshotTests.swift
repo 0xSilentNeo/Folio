@@ -55,7 +55,8 @@ final class WidgetSnapshotTests: XCTestCase {
     /// the widget shows Open Folio.
     func testWithoutTheGroupThereIsNoSnapshot() {
         XCTAssertNil(ContinueSnapshot.directory(in: nil, create: true))
-        XCTAssertNil(ContinueSnapshot.read(from: nil))
+        XCTAssertNil(ContinueSnapshot.read(from: nil as URL?))
+        XCTAssertNil(ContinueSnapshot.read(from: nil as WidgetStore?))
         XCTAssertNil(ContinueSnapshot.read(from: dir))          // the group, but nothing written yet
     }
 
