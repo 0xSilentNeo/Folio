@@ -83,6 +83,8 @@ actor AiringService {
     /// episode; TVmaze had it Ended), and every episode's date. Kept for
     /// the launch, 6 hours at most, so a page opened again asks nothing.
     struct PageSchedule: Sendable {
+        /// The show on TVmaze.
+        var id: Int
         var status: TrackedShow.Status
         var episodes: [AiringEpisode]
         /// The network's date of each episode ("2026-11-13"), by "season:number".
@@ -98,17 +100,26 @@ actor AiringService {
         let key = imdb + (episodes ? "|e" : "")
         if let hit = pageCache[key], Date().timeIntervalSince(hit.at) < 6 * 3600 { return hit.value }
         if !episodes, let hit = pageCache[imdb + "|e"], Date().timeIntervalSince(hit.at) < 6 * 3600 { return hit.value }
-        guard let url = URL(string: "https://api.tvmaze.com/lookup/shows?imdb=\(imdb)"), let r = await get(url) else { return nil }
-        guard r.status == 200, let show = AiringParse.tvmazeShow(r.data), let id = show.tvmaze else {
-            pageCache[key] = (Date(), nil)          // not on TVmaze: not asked again this launch
-            return nil
+        var value: PageSchedule
+        if let hit = pageCache[imdb], Date().timeIntervalSince(hit.at) < 6 * 3600 {
+            // The Track button looked the show up: only its episodes are left to ask.
+            guard let known = hit.value else { return nil }
+            value = known
+        } else {
+            guard let url = URL(string: "https://api.tvmaze.com/lookup/shows?imdb=\(imdb)"), let r = await get(url) else { return nil }
+            guard r.status == 200, let show = AiringParse.tvmazeShow(r.data), let id = show.tvmaze else {
+                pageCache[imdb] = (Date(), nil)     // not on TVmaze: not asked again this launch
+                return nil
+            }
+            value = PageSchedule(id: id, status: show.status, episodes: [], dates: [:])
+            pageCache[imdb] = (Date(), value)
         }
-        var value = PageSchedule(status: show.status, episodes: [], dates: [:])
-        if episodes, let u = URL(string: "https://api.tvmaze.com/shows/\(id)/episodes"), let e = await get(u), e.status == 200 {
-            let list = AiringParse.tvmazeEpisodes(e.data)
-            value.episodes = list.map(\.episode)
-            for item in list { if let s = item.episode.season, let n = item.episode.number, let d = item.airdate { value.dates["\(s):\(n)"] = d } }
-        }
+        guard episodes else { return value }
+        // Kept only when the episodes came: a failed request is asked again next time.
+        guard let u = URL(string: "https://api.tvmaze.com/shows/\(value.id)/episodes"), let e = await get(u), e.status == 200 else { return value }
+        let list = AiringParse.tvmazeEpisodes(e.data)
+        value.episodes = list.map(\.episode)
+        for item in list { if let s = item.episode.season, let n = item.episode.number, let d = item.airdate { value.dates["\(s):\(n)"] = d } }
         pageCache[key] = (Date(), value)
         return value
     }
