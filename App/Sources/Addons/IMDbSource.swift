@@ -383,6 +383,13 @@ enum IMDbSource {
 
     // MARK: - Title details
 
+    /// The title's details if a page has ever loaded them, however old,
+    /// without asking IMDb (1.22.6: the tracker, refreshing in the
+    /// background, learns from it whether a series has ended).
+    static func cachedDetails(id: String) -> MetaItem? {
+        cachedStale("title4|\(id)|\(language)", as: MetaItem.self)
+    }
+
     static func details(id: String, type hint: String) async -> MetaItem? {
         // title4 (1.18.1): titles saved before kept no original (romaji) title,
         // MetaItem's Codable left it out, so each one is fetched once more.

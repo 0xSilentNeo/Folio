@@ -11,6 +11,8 @@ struct MetaDetailView: View {
     @State private var seasons: [Int] = []
     @State private var episodes: [MetaVideo] = []
     @State private var loadingEpisodes = false
+    /// TVmaze's date for each episode, "season:number" → "2026-11-13" (1.22.6).
+    @State private var tvDates: [String: String] = [:]
     @State private var go: StreamsTarget?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.zoomsFromTile) private var zooms
@@ -32,7 +34,21 @@ struct MetaDetailView: View {
     private var allVideos: [MetaVideo] { usesIMDb ? episodes : (m.videos ?? []) }
     private var isSeries: Bool { m.type != "movie" }
     private var seasonEpisodes: [MetaVideo] {
-        allVideos.filter { allSeasons.isEmpty || $0.season == season }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
+        let now = Date()
+        return allVideos.filter { allSeasons.isEmpty || $0.season == season }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
+            .map { checkedDate($0, now: now) }
+    }
+
+    /// An episode's date, checked against TVmaze when it's out lately or
+    /// still to come (1.22.6). IMDb's dates for coming episodes are often
+    /// placeholders and can lag a change: on 5 Nov it had Tulsa King S4E5
+    /// on Nov 14, TVmaze (weekly, Fridays) on Nov 13.
+    private func checkedDate(_ v: MetaVideo, now: Date) -> MetaVideo {
+        guard let s = v.season, let n = v.episode, let tv = tvDates["\(s):\(n)"],
+              let pick = EpisodeDateCheck.pick(imdb: v.released, tvmaze: tv, now: now), pick != v.released else { return v }
+        var u = v
+        u.released = pick
+        return u
     }
 
     /// Where the big button goes; episodes also have their own rows.
@@ -135,8 +151,27 @@ struct MetaDetailView: View {
             guard usesIMDb, isSeries, !seasons.isEmpty else { return }
             loadingEpisodes = true
             let eps = await IMDbSource.episodes(id: resolvedID, season: season)
-            if !Task.isCancelled { episodes = eps; loadingEpisodes = false }
+            if !Task.isCancelled { episodes = eps; loadingEpisodes = false; logDateChecks() }
         }
+        // A running series' dates, from TVmaze (1.22.6). Not anime: TVmaze
+        // and IMDb often number their seasons differently.
+        .task(id: loaded) {
+            guard loaded, usesIMDb, isSeries, !m.hasEnded, trackedShow.anime != true,
+                  let tv = await AiringService.shared.pageSchedule(imdb: resolvedID, episodes: true), !Task.isCancelled else { return }
+            tvDates = tv.dates
+            logDateChecks()
+        }
+    }
+
+    /// The season's dates that TVmaze changed, in the log.
+    private func logDateChecks() {
+        guard !tvDates.isEmpty else { return }
+        let now = Date()
+        let changed = allVideos.filter { allSeasons.isEmpty || $0.season == season }.compactMap { v -> String? in
+            let c = checkedDate(v, now: now)
+            return c.released == v.released ? nil : "S\(v.season ?? 0)E\(v.episode ?? 0) \(v.released ?? "none") → \(c.released ?? "none")"
+        }
+        if !changed.isEmpty { dlog("airdates", "\(m.name): TVmaze's dates instead of IMDb's: " + changed.joined(separator: ", ")) }
     }
 
     // MARK: Header
@@ -268,7 +303,9 @@ struct MetaDetailView: View {
                     Button { go = StreamsTarget(video: v, queue: [], source: "ep|" + v.id) } label: {
                         // A tracked episode's time is the badge's, in your time zone: the
                         // row's own date is the network's (IMDb's US date), so it's left out.
-                        EpisodeRow(video: mark == nil ? v : { var u = v; u.released = nil; return u }(), entry: history.entry(for: "addon:\(v.id)"))
+                        // Only under "Airs…": the "New" badge has no date (1.22.6; until
+                        // then Tulsa King's newest episode showed none).
+                        EpisodeRow(video: { if case .airs = mark { var u = v; u.released = nil; return u }; return v }(), entry: history.entry(for: "addon:\(v.id)"))
                             .overlay(alignment: .topLeading) {
                                 if let mark { AiringBadge(mark: mark, maxWidth: 116).padding(14) }
                             }

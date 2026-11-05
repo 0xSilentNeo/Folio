@@ -13,6 +13,12 @@ struct AiringEpisode: Codable, Hashable, Sendable {
     var title: String?
     /// The moment it airs (TVmaze's airstamp, AniList's airingAt).
     var airDate: Date?
+    /// The network's date ("2026-11-13") when TVmaze has no time for it
+    /// (1.22.6). Streaming releases mostly have none, and TVmaze's airstamp
+    /// is then 12:00 UTC, which isn't when it comes out (Tulsa King showed
+    /// "Airs tomorrow 11:00 pm" in Melbourne): such an episode shows its day
+    /// only. `airDate` still orders it and decides when it's "New".
+    var day: String?
 
     /// "S1 · E5", "E5", "S1 · Special".
     var label: String {
@@ -101,6 +107,12 @@ struct TrackedShow: Codable, Identifiable, Hashable, Sendable {
     /// pages find it tracked by any of them (isSameShow), so a show tracked
     /// on one shows Tracking on the other with no id in common.
     var otherNames: [String]?
+    /// The series is over (1.22.6): IMDb gives it an end year, or TVmaze
+    /// calls it Ended. AniList's "finished" is a season's, not the show's,
+    /// so it doesn't count. With it, a finished AniList season's sequel isn't
+    /// followed (Dragon Ball took Dragon Ball Super: Beerus's schedule), and
+    /// the show stops being tracked once its last episode's week is over.
+    var seriesEnded: Bool?
 
     init(id: String, name: String) {
         self.id = id
@@ -151,6 +163,7 @@ extension TrackedShow {
         if poster == nil { poster = f.poster }
         if let p = f.page { page = p }
         status = f.status
+        if f.source == .tvmaze, f.status == .ended { seriesEnded = true }
         network = f.network ?? network
         // The episode just out keeps the moment it aired when Folio saw it
         // coming: AniList names it without a time (1.22.1, for "New").
@@ -174,6 +187,15 @@ extension TrackedShow {
         updated = now
         if status == nil { status = .unknown }
     }
+
+    /// Nothing more will air (1.22.6): the series has ended, nothing is on
+    /// its schedule, and its last episode has had its week as "New" (or has
+    /// no date: Bleach's last aired in 2012).
+    func isOver(at now: Date) -> Bool {
+        guard seriesEnded == true, upcoming(after: now).isEmpty else { return false }
+        if let d = lastAired?.airDate, now.timeIntervalSince(d) < EpisodeAiring.newFor { return false }
+        return true
+    }
 }
 
 /// What TVmaze or AniList says about a show (AiringParse).
@@ -193,6 +215,9 @@ struct AiringFetch: Equatable, Sendable {
     var lastAired: AiringEpisode?
     /// AniList: the next season (an airing or announced one first), followed when this one has finished.
     var sequel: Int?
+    /// AniList: the sequel's format ("TV", "MOVIE", "SPECIAL"…). Only a TV
+    /// or web series is followed (1.22.6).
+    var sequelFormat: String?
 }
 
 // MARK: - Making one
@@ -210,6 +235,7 @@ extension TrackedShow {
         year = m.releaseInfo.flatMap { Int($0.prefix(4)) }
         poster = m.poster
         otherNames = Self.names([m.originalName], besides: m.name)
+        if m.hasEnded { seriesEnded = true }
     }
 
     /// A library series (TitleHeroView): its name, the metadata Folio found
@@ -289,8 +315,9 @@ extension TrackedShow {
 enum AiringMark: Equatable {
     /// Out in the last week, and the newest out.
     case new
-    /// Not out yet: when it airs.
-    case airs(Date)
+    /// Not out yet: when it airs, and the network's date when the hour
+    /// isn't known (AiringEpisode.day).
+    case airs(Date, day: String? = nil)
 }
 
 /// A tracked show's schedule as a title page's episode tiles use it: "New"
@@ -319,7 +346,7 @@ struct EpisodeAiring: Equatable {
     /// The mark for the page's episode `episode` of `season`, if it has one.
     func mark(season s: Int?, episode n: Int?) -> AiringMark? {
         guard let n else { return nil }
-        if let e = upcoming.first(where: { matches($0, s, n) }) { return .airs(e.airDate!) }
+        if let e = upcoming.first(where: { matches($0, s, n) }) { return .airs(e.airDate!, day: e.day) }
         if let e = justOut, matches(e, s, n) { return .new }
         return nil
     }

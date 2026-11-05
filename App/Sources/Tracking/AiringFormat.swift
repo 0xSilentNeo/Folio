@@ -12,7 +12,11 @@ enum AiringFormat {
     /// "Today 9:00 PM", "Tomorrow 9:00 PM", "Yesterday 9:00 PM", "Tue 2:30 AM"
     /// (this week), "Nov 20, 9:00 PM" (further off), "May 20, 2019, 11:00 AM"
     /// (another year).
-    static func when(_ date: Date, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
+    ///
+    /// With `day` (the network's date when the hour isn't known, 1.22.6):
+    /// the day alone, "Today", "Tomorrow", "Fri", "Nov 13".
+    static func when(_ date: Date, day: String? = nil, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
+        if let day, let d = Self.date(ofDay: day, calendar: calendar) { return dayOnly(d, now: now, calendar: calendar, locale: locale) }
         let time = formatter("jmm", calendar, locale).string(from: date)
         let days = dayOffset(date, from: now, calendar: calendar)
         switch days {
@@ -31,7 +35,17 @@ enum AiringFormat {
     /// screens pass, 1.22.1) a day or more away counts the calendar days, so
     /// it agrees with the day beside it: "Tomorrow 9:00 PM" 39 hours off was
     /// "in 2 days" (simulator screenshot, 3 Nov); it's "in 1 day" now.
-    static func countdown(to date: Date, now: Date = Date(), calendar: Calendar? = nil) -> String {
+    ///
+    /// With `day` (no hour known, 1.22.6): "Today", "in 1 day", "in 2 days",
+    /// then "Aired" from the next day.
+    static func countdown(to date: Date, day: String? = nil, now: Date = Date(), calendar: Calendar? = nil) -> String {
+        if let day {
+            let cal = calendar ?? .autoupdatingCurrent
+            if let d = Self.date(ofDay: day, calendar: cal) {
+                let n = dayOffset(d, from: now, calendar: cal)
+                return n < 0 ? "Aired" : n == 0 ? "today" : n == 1 ? "in 1 day" : "in \(n) days"
+            }
+        }
         let s = date.timeIntervalSince(now)
         if s <= 0 { return -s < AiringClock.outNowWindow ? "Out now" : "Aired" }
         let minutes = Int((s / 60).rounded(.up))
@@ -44,15 +58,15 @@ enum AiringFormat {
 
     /// An episode tile's line on a title page (1.22.1): "Airs today 9:00 PM",
     /// "Airs Tue 9:00 PM", "Airs Nov 20, 9:00 PM".
-    static func airs(_ date: Date, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
-        var w = when(date, now: now, calendar: calendar, locale: locale)
+    static func airs(_ date: Date, day: String? = nil, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
+        var w = when(date, day: day, now: now, calendar: calendar, locale: locale)
         if w.hasPrefix("Today") || w.hasPrefix("Tomorrow") || w.hasPrefix("Yesterday") { w = w.prefix(1).lowercased() + w.dropFirst() }
         return "Airs " + w
     }
 
     /// The countdown standing on its own, as a tile shows it: "In 2 days", "In 3 h".
-    static func countdownTitle(to date: Date, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent) -> String {
-        let s = countdown(to: date, now: now, calendar: calendar)
+    static func countdownTitle(to date: Date, day: String? = nil, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent) -> String {
+        let s = countdown(to: date, day: day, now: now, calendar: calendar)
         return s.prefix(1).uppercased() + s.dropFirst()
     }
 
@@ -96,6 +110,27 @@ enum AiringFormat {
         }
     }
 
+    /// "2026-11-13" as that day in `calendar` (its start): the network's
+    /// date stays that date wherever you are.
+    static func date(ofDay day: String, calendar: Calendar) -> Date? {
+        let p = day.prefix(10).split(separator: "-").compactMap { Int($0) }
+        guard p.count == 3 else { return nil }
+        return calendar.date(from: DateComponents(year: p[0], month: p[1], day: p[2]))
+    }
+
+    /// "Today", "Tomorrow", "Yesterday", "Fri", "Nov 13", "Nov 13, 2027".
+    private static func dayOnly(_ d: Date, now: Date, calendar: Calendar, locale: Locale) -> String {
+        switch dayOffset(d, from: now, calendar: calendar) {
+        case 0: return "Today"
+        case 1: return "Tomorrow"
+        case -1: return "Yesterday"
+        case 2...6: return formatter("EEE", calendar, locale).string(from: d)
+        default:
+            let sameYear = calendar.component(.year, from: d) == calendar.component(.year, from: now)
+            return formatter(sameYear ? "MMMd" : "yMMMd", calendar, locale).string(from: d)
+        }
+    }
+
     /// Calendar days from `now`'s to `date`'s, in the calendar's time zone.
     static func dayOffset(_ date: Date, from now: Date, calendar: Calendar) -> Int {
         calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: date)).day ?? 0
@@ -116,5 +151,27 @@ enum AiringFormat {
         f.setLocalizedDateFormatFromTemplate(template)
         formatters[key] = f
         return f
+    }
+}
+
+/// Which date an episode row shows when IMDb and TVmaze disagree (1.22.6).
+enum EpisodeDateCheck {
+    /// How far back a date still gets checked: an episode out in the last
+    /// month. Older dates are history; IMDb's stay.
+    static let window: TimeInterval = 30 * 86400
+
+    /// TVmaze's date ("2026-11-13") for an episode out lately or still to
+    /// come by either date, or one IMDb has no date for; else IMDb's. Nil
+    /// when neither has one.
+    static func pick(imdb: String?, tvmaze: String?, now: Date, calendar: Calendar = Calendar(identifier: .gregorian)) -> String? {
+        let i = imdb.map { String($0.prefix(10)) }.flatMap { $0.count == 10 ? $0 : nil }
+        guard let t = tvmaze, t.count == 10, AiringFormat.date(ofDay: t, calendar: calendar) != nil else { return imdb }
+        guard let i else { return t }
+        if i == t { return imdb }
+        let recent: (String) -> Bool = { d in
+            guard let day = AiringFormat.date(ofDay: d, calendar: calendar) else { return false }
+            return now.timeIntervalSince(day) < window
+        }
+        return recent(i) || recent(t) ? t : imdb
     }
 }
