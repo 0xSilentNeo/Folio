@@ -227,7 +227,21 @@ final class PlexClient: CatalogSource, @unchecked Sendable {
 
     func search(_ query: String) async throws -> [CatalogEntry] {
         guard let url = PlexAPI.searchURL(base: base, query: query) else { throw ServerError.badAddress }
-        return try PlexAPI.decodeHubs(await ServerHTTP.data(request(url))).map(\.entry)
+        let items = try PlexAPI.decodeHubs(await ServerHTTP.data(request(url)))
+        // A film or episode needs its file to play; a search answer may leave
+        // it out, so those are read whole (a few at most: limit 15 a kind).
+        return await withTaskGroup(of: (Int, CatalogEntry).self) { group in
+            for (n, item) in items.enumerated() {
+                group.addTask {
+                    guard ["movie", "episode"].contains(item.type ?? ""), item.partKey == nil, let key = item.ratingKey,
+                          let whole = try? await self.children(at: "/library/metadata/\(key)").first else { return (n, item.entry) }
+                    return (n, whole)
+                }
+            }
+            var out: [(Int, CatalogEntry)] = []
+            for await e in group { out.append(e) }
+            return out.sorted { $0.0 < $1.0 }.map(\.1)
+        }
     }
 
     func mediaItem(for e: CatalogEntry, parent: CatalogEntry?) -> MediaItem {

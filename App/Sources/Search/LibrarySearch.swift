@@ -18,6 +18,8 @@ struct LibrarySearchPage: View {
     @AppStorage(SettingsKey.cleanTitles) private var cleanTitles = true
     @State private var route: LibraryRoute?
     @State private var opened: OpenedEntry?
+    /// The library's titles, grouped once (not at every keystroke).
+    @State private var groups: [LibraryGroup] = []
 
     /// A Plex or Jellyfin show or season, opened in its server's browser.
     private struct OpenedEntry: Hashable {
@@ -77,7 +79,13 @@ struct LibrarySearchPage: View {
         .onChange(of: query) { _, q in catalogs.textChanged(kids.isOn ? "" : q) }
         // Each server's index brought up to date when it's due, as the
         // server's "Search all files" page did until 1.22.5.
-        .onAppear { if !kids.isOn { for server in webdav.servers { index.refreshIfNeeded(server) } } }
+        .onAppear {
+            if !kids.isOn { for server in webdav.servers { index.refreshIfNeeded(server) } }
+            // Text kept from the last search asks Plex and Jellyfin again.
+            catalogs.textChanged(kids.isOn ? "" : query)
+            groups = LibraryOrganizer.groups(local.files)
+        }
+        .onChange(of: local.files) { _, files in groups = LibraryOrganizer.groups(files) }
         .navigationDestination(item: $route) { r in LibraryRoute.destination(r) }
         .navigationDestination(item: $opened) { o in
             if let source = CatalogSearch.source(for: o.server) {
@@ -93,7 +101,7 @@ struct LibrarySearchPage: View {
     private var libraryMatches: [LibraryGroup] {
         let words = self.words
         guard !words.isEmpty else { return [] }
-        var groups = LibraryOrganizer.groups(local.files)
+        var groups = self.groups
         if let limits = kids.activeLimits { groups = groups.filter { LibraryMetaIndex.shared.kidsAllow($0, limits) } }
         return Array(groups.lazy.filter { g in
             let name = (g.title + " " + (g.files.first.map { $0.deletingPathExtension().lastPathComponent } ?? "")).lowercased()

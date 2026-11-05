@@ -20,6 +20,14 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.22.5", items: [
+            Item(icon: "magnifyingglass", title: "Search the page you're on",
+                 text: "From Home: your library, Real-Debrid, WebDAV, Plex and Jellyfin. From Discover: titles on IMDb and your addons."),
+            Item(icon: "popcorn", title: "Loading, with popcorn",
+                 text: "A title page that takes a moment shows a line or two of nonsense instead of a spinner."),
+            Item(icon: "circle", title: "Round buttons stay round",
+                 text: "Settings and the other round buttons open from their own shape."),
+        ]),
         Release(version: "1.22.4", items: [
             Item(icon: "magnifyingglass", title: "Search beside the tab bar",
                  text: "One search for your library, your servers' files and titles on IMDb and your addons, from the button beside the tab bar."),
