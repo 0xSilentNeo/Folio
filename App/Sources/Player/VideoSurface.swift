@@ -229,10 +229,56 @@ struct VideoSurface: UIViewRepresentable {
             }
         }
 
+        /// Pinch between Fit and Fill (1.23.1): the picture follows the
+        /// fingers, then springs to Fit or Fill when they lift, and mpv takes
+        /// over the framing. Until 1.23.0 nothing moved until the fingers
+        /// lifted, then it jumped (5 Nov: "it instantly changes").
+        private var pinchFromFill = false
+        private var pinchRatio: CGFloat = 1
+
         @objc private func pinch(_ g: UIPinchGestureRecognizer) {
-            guard !ui.locked, g.state == .ended else { return }
-            if g.scale > 1.15, !model.zoomToFill { model.toggleZoom() }
-            else if g.scale < 0.87, model.zoomToFill { model.toggleZoom() }
+            guard !ui.locked else { return }
+            let v = model.videoView
+            switch g.state {
+            case .began:
+                pinchFromFill = model.zoomToFill
+                pinchRatio = model.fillRatio
+            case .changed:
+                guard pinchRatio > 1.02 else { return }
+                let lo: CGFloat = pinchFromFill ? 1 / pinchRatio : 1
+                let hi: CGFloat = pinchFromFill ? 1 : pinchRatio
+                v.transform = CGAffineTransform(scaleX: Self.rubber(g.scale, lo, hi), y: Self.rubber(g.scale, lo, hi))
+            case .ended, .cancelled, .failed:
+                // Picture already the screen's shape: Fit and Fill look alike;
+                // a firm pinch still switches, as before.
+                guard pinchRatio > 1.02 else {
+                    if g.state == .ended, (g.scale > 1.15 && !model.zoomToFill) || (g.scale < 0.87 && model.zoomToFill) { model.toggleZoom() }
+                    return
+                }
+                let s = v.transform.a
+                let r = pinchRatio
+                let toFill = pinchFromFill ? s >= (1 + 1 / r) / 2 : s > (1 + r) / 2
+                let changes = g.state == .ended && toFill != pinchFromFill
+                let target: CGFloat = changes ? (pinchFromFill ? 1 / r : r) : 1
+                UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0,
+                               options: [.allowUserInteraction, .beginFromCurrentState]) {
+                    v.transform = CGAffineTransform(scaleX: target, y: target)
+                } completion: { [weak model] _ in
+                    guard changes, let model else { v.transform = .identity; return }
+                    // mpv frames the next picture itself; the stand-in scale
+                    // goes once it has had a frame to do so.
+                    model.toggleZoom()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { v.transform = .identity }
+                }
+            default: break
+            }
+        }
+
+        /// The pinch's scale within lo…hi, with a little give past either end.
+        static func rubber(_ x: CGFloat, _ lo: CGFloat, _ hi: CGFloat) -> CGFloat {
+            if x < lo { return lo - (lo - x) * 0.25 }
+            if x > hi { return hi + (x - hi) * 0.25 }
+            return x
         }
 
         private func flashHUD(icon: String, text: String) {

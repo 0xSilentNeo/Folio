@@ -115,6 +115,8 @@ struct RootView: View {
         .onChange(of: kids.isOn) { _, on in if on && tab == 2 { tab = 0 } }
         // The search searches the page it's opened from; a new page, a new search.
         .onChange(of: tab) { old, new in
+            // How smoothly a tab switch (and its zoom) goes, in the report (1.23.1).
+            if new != 3 { HitchProbe.start("tab", "tab \(old) → \(new)", seconds: 0.8) }
             guard new == 3, old != 3 else { return }
             HitchProbe.start("search", "search opened from tab \(old)")
             if SearchScope(fromTab: old) != SearchScope(fromTab: searchFrom) { searchText = "" }

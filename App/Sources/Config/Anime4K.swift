@@ -65,8 +65,35 @@ enum Anime4K {
 
     static var bundleDir: URL? { Bundle.main.resourceURL?.appendingPathComponent("shaders", isDirectory: true) }
 
-    /// Shader file names, in order, for a mode and quality.
-    static func chain(mode: Anime4KMode, quality: Anime4KQuality) -> [String] {
+    /// Below this on-screen scale (video shown at less than 1.5× its size)
+    /// only the restore stages run (1.23.1). The ×2 upscalers run whenever the
+    /// scale is over 1.2 (their `//!WHEN OUTPUT.w MAIN.w / 1.200 >`), so a
+    /// 1080p video on a 2868×1320 screen (2347×1320, 1.22×) built a
+    /// 3840×2160 image every frame, ran A+A's second restore on it (4× the
+    /// pixels: Anime4K's docs, "Shaders applied after a x2 upscaling step will
+    /// take four times the processing time"), and shrank it straight back
+    /// (AutoDownscalePre_x2). The doubled modes are meant "only on upscaling
+    /// ratios of x2 or higher" (GLSL_Instructions_Advanced.md). 5 Nov: the
+    /// phone lagged, Control Center too, and got hot.
+    static let fullChainScale: CGFloat = 1.5
+
+    /// Shader file names, in order, for a mode and quality. `restoreOnly`:
+    /// the restore stages alone, at the video's own size (modes A, B and
+    /// their doubles; C's denoise is its upscaler, so C keeps its chain).
+    static func chain(mode: Anime4KMode, quality: Anime4KQuality, restoreOnly: Bool = false) -> [String] {
+        if restoreOnly {
+            let (p1, p2) = quality.sizes
+            let clamp = "Anime4K_Clamp_Highlights"
+            let names: [String]?
+            switch mode {
+            case .a: names = [clamp, "Anime4K_Restore_CNN_\(p1)"]
+            case .b: names = [clamp, "Anime4K_Restore_CNN_Soft_\(p1)"]
+            case .aa: names = [clamp, "Anime4K_Restore_CNN_\(p1)", "Anime4K_Restore_CNN_\(p2)"]
+            case .bb: names = [clamp, "Anime4K_Restore_CNN_Soft_\(p1)", "Anime4K_Restore_CNN_Soft_\(p2)"]
+            default: names = nil
+            }
+            if let names { return names.map { $0 + ".glsl" } }
+        }
         let (p1, p2) = quality.sizes
         let clamp = "Anime4K_Clamp_Highlights"
         let down = ["Anime4K_AutoDownscalePre_x2", "Anime4K_AutoDownscalePre_x4"]
@@ -84,9 +111,9 @@ enum Anime4K {
         return names.map { $0 + ".glsl" }
     }
 
-    static func paths(mode: Anime4KMode, quality: Anime4KQuality) -> [String] {
+    static func paths(mode: Anime4KMode, quality: Anime4KQuality, restoreOnly: Bool = false) -> [String] {
         guard let dir = bundleDir else { return [] }
-        return chain(mode: mode, quality: quality)
+        return chain(mode: mode, quality: quality, restoreOnly: restoreOnly)
             .map { dir.appendingPathComponent($0).path }
             .filter { FileManager.default.fileExists(atPath: $0) }
     }
