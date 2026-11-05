@@ -82,7 +82,7 @@ struct DownloadPart: Codable, Hashable {
 extension DownloadItem {
     enum CodingKeys: String, CodingKey {
         case id, url, serverID, fileName, package, expected, received, state, error, resumeFile, retries, added, finished, held
-        case destination, destinationPath, headers, notBefore, wifiOnly, parts, singleOnly, chunks, ranges
+        case destination, destinationPath, headers, notBefore, wifiOnly, parts, singleOnly, chunks, ranges, inSession
     }
 
     /// Only the address, name and destination are required: a field with a
@@ -119,6 +119,7 @@ extension DownloadItem {
         singleOnly = try? c.decodeIfPresent(Bool.self, forKey: .singleOnly)
         chunks = try? c.decodeIfPresent([DownloadChunk].self, forKey: .chunks)
         ranges = try? c.decodeIfPresent(Bool.self, forKey: .ranges)
+        inSession = try? c.decodeIfPresent(Bool.self, forKey: .inSession)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -147,6 +148,8 @@ extension DownloadItem {
         try c.encodeIfPresent(singleOnly, forKey: .singleOnly)
         try c.encodeIfPresent(chunks, forKey: .chunks)
         try c.encodeIfPresent(ranges, forKey: .ranges)
+        // Saved: after a relaunch a session download must not start again in Folio.
+        try c.encodeIfPresent(inSession, forKey: .inSession)
     }
 
     // MARK: Paths
@@ -705,6 +708,9 @@ final class DownloadManager: ObservableObject {
     /// The file downloads in Folio itself (1.22.3), from where its saved
     /// ranges say the file on disk is.
     private func startInApp(_ i: Int) {
+        // Restarted in Folio (a session download that failed without resume
+        // data): from now on it's an in-app download, paused on leaving.
+        items[i].inSession = nil
         let item = items[i], id = item.id
         let file = Self.inAppFile(id)
         let have = FileManager.default.fileExists(atPath: file.path)

@@ -218,7 +218,7 @@ struct HomeView: View {
         if #available(iOS 18.0, *) {
             Button { showAddFiles = true } label: { label }
                 .buttonStyle(PressStyle())
-                .matchedTransitionSource(id: "addfiles", in: zoomNS)
+                .matchedTransitionSource(id: "addfiles", in: zoomNS) { $0.clipShape(RoundedRectangle(cornerRadius: large ? 26 : 20, style: .continuous)) }
         } else {
             Button { showAddFiles = true } label: { label }.buttonStyle(PressStyle())
         }
@@ -269,7 +269,10 @@ struct HomeView: View {
             }
             .buttonStyle(PressStyle())
             .accessibilityLabel("Settings")
-            .matchedTransitionSource(id: "settings", in: zoomNS)
+            // The zoom starts from the circle (a rounded rectangle half as round
+            // as it is wide: the only shape a zoom source takes). Without a
+            // shape it started from the button's square for a moment (5 Nov).
+            .matchedTransitionSource(id: "settings", in: zoomNS) { $0.clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous)) }
         } else {
             Button { open(.settings) } label: {
                 Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).glassCircle()

@@ -55,7 +55,7 @@ struct MetaDetailView: View {
 
     var body: some View {
         if kids.isOn && !loaded {
-            ProgressView()
+            LoadingQuips()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.background.ignoresSafeArea())
                 .pageButtons(zooms: zooms, back: { dismiss() }) { EmptyView() }
@@ -102,7 +102,7 @@ struct MetaDetailView: View {
                                 ForEach(untiledEpisodes, id: \.self) { UpcomingEpisodeCard(episode: $0) }
                             }
                         }
-                        if loadingEpisodes && allVideos.isEmpty { ProgressView().frame(maxWidth: .infinity).padding() }
+                        if loadingEpisodes && allVideos.isEmpty { LoadingQuips().padding(.vertical, 8) }
                         if castPosition != "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, -16) }
                         if let d = m.director, !d.isEmpty {
                             Text((isSeries ? "Created by " : "Directed by ") + d.prefix(3).joined(separator: ", "))
@@ -303,6 +303,8 @@ struct MetaDetailView: View {
             // film path, and the Swift runtime aborted the app on every title
             // (swift_task_dealloc in asyncLet_finish — same stack on device and in CI).
             loadingEpisodes = preview.type != "movie"
+            // Lab: a slow page, to see its loading lines (LoadingQuipsUITests).
+            if CommandLine.arguments.contains("-labSlowTitle") { try? await Task.sleep(nanoseconds: 6_000_000_000) }
             let seasonsTask: Task<[Int], Never>? = preview.type == "movie" ? nil : Task { await IMDbSource.seasons(id: id) }
             defer { seasonsTask?.cancel() }
             if var full = await IMDbSource.details(id: id, type: preview.type) {

@@ -1,21 +1,35 @@
 import SwiftUI
 
-/// The search tab (1.22.4): one field for your library, the files on your
-/// WebDAV and Real-Debrid servers, and titles on IMDb and your addons
-/// (AddonSearchView with the tab's text).
+/// What the tab bar's search button searches: the page it was opened from
+/// (1.22.5). From Home or Network your library and servers
+/// (LibrarySearchPage); from Discover titles on IMDb and the addons
+/// (AddonSearchView). In 1.22.4 it was one page for everything, which
+/// looked like Discover's search wherever it was opened.
+enum SearchScope: Equatable {
+    case library, discover
+
+    /// The tab the button was tapped on: 1 is Discover.
+    init(fromTab tab: Int) { self = tab == 1 ? .discover : .library }
+
+    var prompt: String { self == .discover ? "Movies, shows, anime" : "Your library and servers" }
+}
+
+/// The search tab: iOS 26 draws it as the round button beside the tab bar
+/// that opens into the field where it is.
 struct SearchTabView: View {
     @Binding var query: String
+    let scope: SearchScope
 
     var body: some View {
         NavigationStack {
-            AddonSearchView(tabQuery: $query)
+            switch scope {
+            case .library: LibrarySearchPage(query: $query)
+            case .discover: AddonSearchView(tabQuery: $query)
+            }
         }
-        .modifier(PageSearchField(text: $query))
+        .modifier(PageSearchField(text: $query, prompt: scope.prompt))
     }
 }
-
-/// The field's prompt, wherever it is drawn.
-private let searchPrompt = "Library, servers, titles"
 
 /// iOS 26: the field belongs to the tab view, so the search tab's button
 /// beside the tab bar opens into it. Before iOS 26 the page has it.
@@ -23,6 +37,7 @@ private let searchPrompt = "Library, servers, titles"
 /// did: you came to type.
 struct TabBarSearchField: ViewModifier {
     @Binding var text: String
+    let prompt: String
     /// The search tab is the one showing.
     let selected: Bool
     @FocusState private var focused: Bool
@@ -31,7 +46,7 @@ struct TabBarSearchField: ViewModifier {
     func body(content: Content) -> some View {
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
-            content.searchable(text: $text, prompt: searchPrompt)
+            content.searchable(text: $text, prompt: prompt)
                 .searchFocused($focused)
                 // The Search key reaches the view that has the field, not the
                 // page inside the tab: it's passed on (simulator: "labx\n"
@@ -52,6 +67,7 @@ struct TabBarSearchField: ViewModifier {
 
 private struct PageSearchField: ViewModifier {
     @Binding var text: String
+    let prompt: String
 
     @ViewBuilder
     func body(content: Content) -> some View {
@@ -59,10 +75,10 @@ private struct PageSearchField: ViewModifier {
         if #available(iOS 26.0, *) {
             content
         } else {
-            content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: searchPrompt)
+            content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
         }
         #else
-        content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: searchPrompt)
+        content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
         #endif
     }
 }

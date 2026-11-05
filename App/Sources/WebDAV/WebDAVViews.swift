@@ -196,7 +196,6 @@ struct WebDAVBrowserView: View {
     @State private var loading = true
     @State private var error: String?
     @State private var offline = false
-    @State private var filter = ""
     @State private var sort: LibrarySort = .name
     @State private var ascending = true
     @State private var prefLoaded = false
@@ -255,7 +254,7 @@ struct WebDAVBrowserView: View {
                 }
             }
             if !loading && visible.isEmpty && error == nil {
-                Text(filter.isEmpty ? "Empty folder" : "No matches").foregroundStyle(.secondary)
+                Text("Empty folder").foregroundStyle(.secondary)
             }
         }
         .listStyle(.plain)
@@ -263,7 +262,8 @@ struct WebDAVBrowserView: View {
         .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $filter, prompt: "Filter this folder")
+        // No search bar of its own (1.22.5): the tab bar's search button,
+        // opened from Home or Network, searches every server's files.
         .refreshable { await load() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -291,11 +291,6 @@ struct WebDAVBrowserView: View {
                 .accessibilityLabel("More")
                 .accessibilityIdentifier("davMoreMenu")
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    LibrarySearchView(server: server, root: url)
-                } label: { ToolbarGlyph("magnifyingglass.circle") }
-            }
         }
         .task {
             loadSortPref()
@@ -306,16 +301,10 @@ struct WebDAVBrowserView: View {
         .onChange(of: cleanTitles) { _, _ in rekey() }
     }
 
-    /// The listing in order, then the filters (cheap; the sort is done).
+    /// The listing in order, then "Only media" (cheap; the sort is done).
     private var visible: [DAVItem] {
         var list = ordered
         if onlyMedia { list = list.filter { $0.isDirectory || $0.isMedia } }
-        if !filter.isEmpty {
-            list = list.filter { i in
-                i.name.localizedCaseInsensitiveContains(filter) || TitleParser.clean(i.name).localizedCaseInsensitiveContains(filter)
-                    || (i.isDirectory && ReleaseName.folder(i.name)?.title.localizedCaseInsensitiveContains(filter) == true)
-            }
-        }
         return list
     }
 
@@ -504,82 +493,3 @@ struct DAVRow: View {
     }
 }
 
-/// Searches every media file of the server's library, from the saved index
-/// (LibraryIndexStore): results at once, a quiet refresh in the background
-/// when the index is older than 10 minutes, pull to refresh for a full one.
-/// Opened from a folder, it searches that folder and everything under it.
-struct LibrarySearchView: View {
-    let server: WebDAVServer
-    let root: URL
-
-    @ObservedObject private var store = LibraryIndexStore.shared
-    @State private var query = ""
-    @AppStorage(SettingsKey.cleanTitles) private var cleanTitles = true
-
-    private var state: LibraryIndexStore.State { store.state(server.id) }
-    private var scope: String { LibraryIndex.key(root) }
-
-    var body: some View {
-        List {
-            Section { status }
-            ForEach(results, id: \.url) { file in
-                let item = DAVItem(url: file.url, name: file.name, isDirectory: false, size: file.size, modified: file.added, contentType: nil)
-                Button {
-                    ContinueQueue.play(WebDAVClient(server: server).mediaItem(for: item, cleanTitles: cleanTitles))   // with its folder as the queue
-                } label: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        DAVRow(item: item, clean: cleanTitles, entry: HistoryStore.shared.entry(forURL: file.url.absoluteString))
-                        Text(file.url.deletingLastPathComponent().path.removingPercentEncoding ?? "")
-                            .font(.caption2).foregroundStyle(.tertiary).lineLimit(1)
-                    }
-                }
-                .buttonStyle(.plain)
-                .contextMenu { Text(file.name) }
-            }
-        }
-        .listStyle(.plain)
-        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search all files")
-        .brandListBackground()
-        .navigationTitle("Search Library")
-        .navigationBarTitleDisplayMode(.inline)
-        .refreshable { await store.refresh(server, full: true) }
-        .onAppear { store.refreshIfNeeded(server) }
-    }
-
-    /// One quiet line: what's indexed and when, or how far a refresh is.
-    private var status: some View {
-        HStack(spacing: 8) {
-            if state.refreshing { ProgressView().controlSize(.mini) }
-            Group {
-                if state.refreshing {
-                    Text(state.full ? "Indexing… \(state.done) of \(state.total) folders" : "Checking for changes… \(state.done) of \(state.total) folders")
-                } else if let index = state.index {
-                    let files = state.searchable.count
-                    if let r = index.refreshed {
-                        Text("\(index.folders.count) folders, \(files) files · updated \(r.formatted(.relative(presentation: .named)))")
-                    } else {
-                        Text("\(index.folders.count) folders, \(files) files · not updated yet")
-                    }
-                } else {
-                    Text("Not indexed yet")
-                }
-            }
-            .font(.caption).foregroundStyle(.secondary).monospacedDigit()
-            if let c = state.index?.lastCheck, !c.ok, !state.refreshing {
-                Spacer(minLength: 0)
-                Label(c.unauthorized ? "Login refused" : "Offline", systemImage: c.unauthorized ? "lock" : "wifi.slash")
-                    .font(.caption).foregroundStyle(.orange)
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private var results: [LibraryIndex.File] {
-        guard query.count >= 2 else { return [] }
-        let words = query.lowercased().split(separator: " ")
-        let scope = self.scope
-        return state.searchable.lazy
-            .filter { s in s.file.url.absoluteString.hasPrefix(scope) && words.allSatisfy { s.haystack.contains($0) } }
-            .prefix(300).map(\.file)
-    }
-}

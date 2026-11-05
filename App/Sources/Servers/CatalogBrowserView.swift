@@ -17,7 +17,6 @@ struct CatalogBrowserView: View {
     @State private var loading = true
     @State private var error: String?
     @State private var offline = false
-    @State private var filter = ""
     @State private var sort: LibrarySort = .name
     @State private var ascending = true
     @State private var prefLoaded = false
@@ -60,7 +59,7 @@ struct CatalogBrowserView: View {
                 }
             }
             if !loading && visible.isEmpty && error == nil {
-                Text(filter.isEmpty ? (parent == nil ? "No libraries" : "Nothing here") : "No matches").foregroundStyle(.secondary)
+                Text(parent == nil ? "No libraries" : "Nothing here").foregroundStyle(.secondary)
             }
         }
         .listStyle(.plain)
@@ -68,7 +67,8 @@ struct CatalogBrowserView: View {
         .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $filter, prompt: parent == nil ? "Filter libraries" : "Filter this list")
+        // No search bar of its own (1.22.5): the tab bar's search button,
+        // opened from Home or Network, asks every Plex and Jellyfin server.
         .refreshable { await load() }
         .toolbar {
             if parent != nil {
@@ -83,13 +83,7 @@ struct CatalogBrowserView: View {
         .onChange(of: ascending) { _, _ in saveSortPref(); reorder() }
     }
 
-    private var visible: [CatalogEntry] {
-        guard !filter.isEmpty else { return ordered }
-        return ordered.filter { e in
-            e.name.localizedCaseInsensitiveContains(filter) || CatalogTitles.rowTitle(e).localizedCaseInsensitiveContains(filter)
-                || (e.seriesName?.localizedCaseInsensitiveContains(filter) ?? false)
-        }
-    }
+    private var visible: [CatalogEntry] { ordered }
 
     private func reorder() {
         // The libraries stay in the server's order.

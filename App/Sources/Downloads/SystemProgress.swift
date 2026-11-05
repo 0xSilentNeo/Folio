@@ -157,9 +157,10 @@ final class SystemProgress {
             dlog("dl", "asked iOS to show the download progress (continued processing task)")
         } catch {
             let ns = error as NSError
-            // Unavailable, not permitted or not possible: new files go to iOS's
-            // background session (cannotCarry). Too many pending: soon again.
-            if ns.code != 2 { refused = true }
+            // Unavailable or not permitted: new files go to iOS's background
+            // session for this launch (cannotCarry).
+            // Codes 2 (too many pending) and 4 (not right now) pass: asked again later.
+            if ns.code == 1 || ns.code == 3 { refused = true }
             // Unavailable (the simulator) won't change this launch; refused
             // may once background activity is allowed again; busy soon.
             retryAfter = ns.code == 1 ? .distantFuture : Date().addingTimeInterval(ns.code == 3 ? 600 : 60)

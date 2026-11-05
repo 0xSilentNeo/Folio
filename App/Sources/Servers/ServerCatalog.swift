@@ -49,6 +49,9 @@ protocol CatalogSource: AnyObject, Sendable {
     func mediaItem(for entry: CatalogEntry, parent: CatalogEntry?) -> MediaItem
     /// A picture of the entry about `pixels` tall, login in the headers.
     func imageRequest(for entry: CatalogEntry, pixels: Int) -> URLRequest?
+    /// Films, shows and episodes whose name matches, from the whole server
+    /// (Home's search, 1.22.5).
+    func search(_ query: String) async throws -> [CatalogEntry]
 }
 
 extension CatalogSource {

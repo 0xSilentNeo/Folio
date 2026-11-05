@@ -1377,6 +1377,8 @@ final class PlayerModel: ObservableObject {
 
     func seek(to seconds: Double, exact: Bool = true) {
         if ended, duration > 0, seconds < duration - 0.5 { ended = false }
+        // A place chosen outright: skips still waiting would move it on.
+        skipPending = 0
         _ = client?.commandAsync(["seek", String(max(0, seconds)), exact ? "absolute+exact" : "absolute+keyframes"])
     }
 

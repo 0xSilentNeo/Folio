@@ -163,6 +163,21 @@ enum JellyfinAPI {
         return ServerHTTP.endpoint(base, "/Users/\(ServerHTTP.segment(userID))/Items", q)
     }
 
+    /// Films, shows and episodes whose name matches, from every library
+    /// (Home's search, 1.22.5).
+    static func searchURL(base: URL, userID: String, query: String) -> URL? {
+        ServerHTTP.endpoint(base, "/Users/\(ServerHTTP.segment(userID))/Items", [
+            URLQueryItem(name: "searchTerm", value: query),
+            URLQueryItem(name: "Recursive", value: "true"),
+            URLQueryItem(name: "IncludeItemTypes", value: "Movie,Series,Episode,Video"),
+            URLQueryItem(name: "Limit", value: "30"),
+            URLQueryItem(name: "Fields", value: "DateCreated,Path,ChildCount"),
+            URLQueryItem(name: "EnableImageTypes", value: "Primary"),
+            URLQueryItem(name: "ImageTypeLimit", value: "1"),
+            URLQueryItem(name: "EnableUserData", value: "false"),
+        ])
+    }
+
     /// The file itself, as it is on the server (no transcoding).
     static func streamURL(base: URL, itemID: String) -> URL? {
         ServerHTTP.endpoint(base, "/Videos/\(ServerHTTP.segment(itemID))/stream", [URLQueryItem(name: "static", value: "true")])
@@ -239,6 +254,11 @@ final class JellyfinClient: CatalogSource, @unchecked Sendable {
 
     func children(at parentID: String, episodes: Bool) async throws -> [CatalogEntry] {
         guard let url = JellyfinAPI.itemsURL(base: base, userID: session.userID, parentID: parentID, episodes: episodes) else { throw ServerError.badAddress }
+        return try JellyfinAPI.decodeItems(await ServerHTTP.data(request(url))).map(\.entry)
+    }
+
+    func search(_ query: String) async throws -> [CatalogEntry] {
+        guard let url = JellyfinAPI.searchURL(base: base, userID: session.userID, query: query) else { throw ServerError.badAddress }
         return try JellyfinAPI.decodeItems(await ServerHTTP.data(request(url))).map(\.entry)
     }
 
