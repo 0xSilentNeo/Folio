@@ -158,4 +158,11 @@ final class Fixes1230Tests: XCTestCase {
         XCTAssertEqual(plan.first.map { cal.component(.hour, from: $0.fire) }, 9)
         XCTAssertEqual(plan.first.map { cal.component(.day, from: $0.fire) }, 13)
     }
+
+    func testKidsLockoutsGrow() {
+        XCTAssertEqual(KidsProfile.lockout(after: 0), 30)
+        XCTAssertEqual(KidsProfile.lockout(after: 1), 60)
+        XCTAssertEqual(KidsProfile.lockout(after: 3), 900)
+        XCTAssertEqual(KidsProfile.lockout(after: 9), 3600)
+    }
 }

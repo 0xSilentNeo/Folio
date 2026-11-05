@@ -298,7 +298,7 @@ final class PlayerModel: ObservableObject {
         }
         applyOptions(c)
         do {
-            try c.initialize(logLevel: defaults.string(forKey: SettingsKey.logLevel) ?? "info")
+            try c.initialize()
         } catch {
             errorMessage = "mpv failed to start: \(error.localizedDescription). Check mpv.conf for invalid options."
             // Freed now: its core and thread were left running until the app quit.

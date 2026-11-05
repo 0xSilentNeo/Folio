@@ -402,8 +402,14 @@ final class TrackingTests: XCTestCase {
         XCTAssertEqual(evening.map(\.id), ["b"])
         XCTAssertEqual(evening.first?.episode.airDate, now.addingTimeInterval(26 * h))
 
-        XCTAssertEqual(snap.timelineDates(from: now), [now, now.addingTimeInterval(2 * h), now.addingTimeInterval(5 * h),
-                                                         now.addingTimeInterval(8 * h), now.addingTimeInterval(26 * h), now.addingTimeInterval(32 * h)])
+        // The air times, the ends of "Out now", and (1.23.0) each midnight
+        // before the last episode, here Melbourne's (13:00 UTC).
+        var melbourne = Calendar(identifier: .gregorian)
+        melbourne.timeZone = TimeZone(identifier: "Australia/Melbourne")!
+        let midnight = melbourne.date(byAdding: .day, value: 1, to: melbourne.startOfDay(for: now))!
+        XCTAssertEqual(snap.timelineDates(from: now, calendar: melbourne),
+                       [now, now.addingTimeInterval(2 * h), now.addingTimeInterval(5 * h), now.addingTimeInterval(8 * h),
+                        midnight, now.addingTimeInterval(26 * h), now.addingTimeInterval(32 * h)].sorted())
     }
 
     func testTheTrackLink() {

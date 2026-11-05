@@ -132,9 +132,16 @@ final class KidsProfile: ObservableObject {
             let tries = d.integer(forKey: Self.triesKey) + 1
             dlog("kids", "wrong passcode (\(tries) of \(Self.maxTries))")
             if tries >= Self.maxTries {
+                // Each lockout in a row waits longer (30 s, 1 min, 5 min,
+                // 15 min, then an hour) until the right code: a fixed 30 s
+                // let every code be tried in an afternoon (review, 5 Nov).
+                let n = d.integer(forKey: Self.lockoutsKey)
+                let wait = Self.lockout(after: n)
+                d.set(n + 1, forKey: Self.lockoutsKey)
                 d.set(0, forKey: Self.triesKey)
-                d.set(Date().timeIntervalSince1970 + Self.lockout, forKey: Self.lockedUntilKey)
-                return .locked(seconds: Int(Self.lockout))
+                d.set(Date().timeIntervalSince1970 + wait, forKey: Self.lockedUntilKey)
+                dlog("kids", "passcode locked for \(Int(wait)) s (lockout \(n + 1) in a row)")
+                return .locked(seconds: Int(wait))
             }
             d.set(tries, forKey: Self.triesKey)
             return .wrong(triesLeft: Self.maxTries - tries)
@@ -145,8 +152,17 @@ final class KidsProfile: ObservableObject {
 
     private static let triesKey = "kidsPasscodeTries"
     private static let lockedUntilKey = "kidsPasscodeLockedUntil"
+    private static let lockoutsKey = "kidsPasscodeLockouts"
+
+    /// The wait after the n-th lockout in a row (0 is the first).
+    nonisolated static func lockout(after n: Int) -> TimeInterval {
+        let waits: [TimeInterval] = [lockout, 60, 300, 900, 3600]
+        return waits[min(max(0, n), waits.count - 1)]
+    }
+
     private func resetTries() {
         UserDefaults.standard.removeObject(forKey: Self.triesKey)
+        UserDefaults.standard.removeObject(forKey: Self.lockoutsKey)
         UserDefaults.standard.removeObject(forKey: Self.lockedUntilKey)
     }
 

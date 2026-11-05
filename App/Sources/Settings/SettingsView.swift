@@ -435,7 +435,6 @@ struct MPVSettings: View {
     @AppStorage(SettingsKey.hdrOutput) private var hdr = true
     @AppStorage(SettingsKey.hwdec) private var hwdec = "auto"
     @AppStorage(SettingsKey.cacheMB) private var cacheMB = 150
-    @AppStorage(SettingsKey.logLevel) private var logLevel = "info"
     @AppStorage(SettingsKey.flipVideo) private var flipVideo = false
     @State private var picture = PictureMode.current
 
@@ -505,12 +504,9 @@ struct MPVSettings: View {
             } header: { Text("Customise") } footer: {
                 Text("Scripts and shaders load with every video. mpv.conf holds mpv options, input.conf keyboard shortcuts, script-opts each script's options; player commands appear in the player's Commands menu. Your mpv folder is in Files → On My iPhone → Folio → mpv.")
             }
+            // No Log level any more (1.23.0): mpv writes its log file at debug
+            // detail whatever it's set to, so all four choices did nothing (review).
             Section("Logs") {
-                Explained("How much detail the playback log keeps. \"v\" and \"debug\" are for tracking down a problem and make the log much larger.") {
-                    Picker("Log level", selection: $logLevel) {
-                        ForEach(["warn", "info", "v", "debug"], id: \.self) { Text($0).tag($0) }
-                    }
-                }
                 NavigationLink { LogView() } label: { Label("Last playback log", systemImage: "text.alignleft") }
             }
         }
