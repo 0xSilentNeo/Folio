@@ -55,9 +55,10 @@ final class TrackingTests: XCTestCase {
         XCTAssertEqual(f.network, "Paramount+")           // a streaming show: its web channel
         XCTAssertEqual(f.page, "https://www.tvmaze.com/shows/75026/mobland")
         XCTAssertEqual(f.poster, "https://static.tvmaze.com/uploads/images/medium_portrait/556/1391393.jpg")
-        XCTAssertEqual(f.next, AiringEpisode(season: 2, number: 8, title: "We Don't Talk Anymore", airDate: Date(timeIntervalSince1970: 1_793_966_400)))
-        XCTAssertEqual(f.lastAired, AiringEpisode(season: 2, number: 7, title: "Ace of Spades", airDate: Date(timeIntervalSince1970: 1_793_361_600)))
+        XCTAssertEqual(f.next, AiringEpisode(season: 2, number: 8, title: "We Don't Talk Anymore", airDate: Date(timeIntervalSince1970: 1_793_966_400), day: "2026-11-06"))
+        XCTAssertEqual(f.lastAired, AiringEpisode(season: 2, number: 7, title: "Ace of Spades", airDate: Date(timeIntervalSince1970: 1_793_361_600), day: "2026-10-30"))
         XCTAssertEqual(f.next?.label, "S2 · E8")
+        // Paramount+ gives no hour ("airtime":""): the day alone (1.22.6).
     }
 
     func testAnEndedTVmazeShowHasNoNextEpisode() throws {

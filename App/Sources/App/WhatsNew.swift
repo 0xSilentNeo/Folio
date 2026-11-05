@@ -20,6 +20,16 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.22.6", items: [
+            Item(icon: "magnifyingglass", title: "Search on its own, on iOS 27 too",
+                 text: "The round search button sits beside the tab bar and opens into the field where it is. Cancel takes you back."),
+            Item(icon: "bell.slash", title: "No tracking for shows that have ended",
+                 text: "Dragon Ball no longer picks up another series' times, and an ended show is no longer tracked."),
+            Item(icon: "calendar", title: "Episode dates checked",
+                 text: "Coming and recent episodes are checked against TVmaze, and a release with no known hour shows its day only."),
+            Item(icon: "tv", title: "Streaming services' logos",
+                 text: "Netflix, Prime Video and the others on Discover show their own logos."),
+        ]),
         Release(version: "1.22.5", items: [
             Item(icon: "magnifyingglass", title: "Search the page you're on",
                  text: "From Home: your library, Real-Debrid, WebDAV, Plex and Jellyfin. From Discover: titles on IMDb and your addons."),

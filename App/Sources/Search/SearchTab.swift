@@ -47,6 +47,13 @@ struct TabBarSearchField: ViewModifier {
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
             content.searchable(text: $text, prompt: prompt)
+                // Choosing the tab opens its field, and Cancel goes back to the
+                // tab you were on (UISearchTab.automaticallyActivatesSearch).
+                // iOS 27 also sets only such a search tab apart from the bar,
+                // as the round button beside it (UITabBarController
+                // .prominentTabIdentifier's notes); without it, iOS 27 drew
+                // Search as a fourth tab inside the bar (your 5 Nov screenshots).
+                .tabViewSearchActivation(.searchTabSelection)
                 .searchFocused($focused)
                 // The Search key reaches the view that has the field, not the
                 // page inside the tab: it's passed on (simulator: "labx\n"

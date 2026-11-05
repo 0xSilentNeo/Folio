@@ -76,6 +76,54 @@ actor AiringService {
         return .found(f)
     }
 
+    // MARK: TVmaze for title pages
+
+    /// What a title page asks TVmaze (1.22.6): whether the show has ended
+    /// (IMDb still had Thousand-Year Blood War as "2022–" after its last
+    /// episode; TVmaze had it Ended), and every episode's date. Kept for
+    /// the launch, 6 hours at most, so a page opened again asks nothing.
+    struct PageSchedule: Sendable {
+        /// The show on TVmaze.
+        var id: Int
+        var status: TrackedShow.Status
+        var episodes: [AiringEpisode]
+        /// The network's date of each episode ("2026-11-13"), by "season:number".
+        var dates: [String: String]
+    }
+
+    private var pageCache: [String: (at: Date, value: PageSchedule?)] = [:]
+
+    /// The show with this IMDb id on TVmaze: its status, and its episodes
+    /// when `episodes` (a second request). Nil when TVmaze doesn't know it
+    /// or can't be reached.
+    func pageSchedule(imdb: String, episodes: Bool) async -> PageSchedule? {
+        let key = imdb + (episodes ? "|e" : "")
+        if let hit = pageCache[key], Date().timeIntervalSince(hit.at) < 6 * 3600 { return hit.value }
+        if !episodes, let hit = pageCache[imdb + "|e"], Date().timeIntervalSince(hit.at) < 6 * 3600 { return hit.value }
+        var value: PageSchedule
+        if let hit = pageCache[imdb], Date().timeIntervalSince(hit.at) < 6 * 3600 {
+            // The Track button looked the show up: only its episodes are left to ask.
+            guard let known = hit.value else { return nil }
+            value = known
+        } else {
+            guard let url = URL(string: "https://api.tvmaze.com/lookup/shows?imdb=\(imdb)"), let r = await get(url) else { return nil }
+            guard r.status == 200, let show = AiringParse.tvmazeShow(r.data), let id = show.tvmaze else {
+                pageCache[imdb] = (Date(), nil)     // not on TVmaze: not asked again this launch
+                return nil
+            }
+            value = PageSchedule(id: id, status: show.status, episodes: [], dates: [:])
+            pageCache[imdb] = (Date(), value)
+        }
+        guard episodes else { return value }
+        // Kept only when the episodes came: a failed request is asked again next time.
+        guard let u = URL(string: "https://api.tvmaze.com/shows/\(value.id)/episodes"), let e = await get(u), e.status == 200 else { return value }
+        let list = AiringParse.tvmazeEpisodes(e.data)
+        value.episodes = list.map(\.episode)
+        for item in list { if let s = item.episode.season, let n = item.episode.number, let d = item.airdate { value.dates["\(s):\(n)"] = d } }
+        pageCache[key] = (Date(), value)
+        return value
+    }
+
     // MARK: AniList
 
     private func aniList(_ show: TrackedShow) async -> Outcome {
@@ -87,13 +135,21 @@ actor AiringService {
         } else {
             outcome = .notFound
             // A later season is its own entry: that season's first.
-            if let s = show.season, s > 1 { outcome = await aniListSearch("\(show.name) Season \(s)") }
-            if case .notFound = outcome { outcome = await aniListSearch(show.name) }
+            let airingFirst = show.seriesEnded != true
+            if let s = show.season, s > 1 { outcome = await aniListSearch("\(show.name) Season \(s)", airingFirst: airingFirst) }
+            if case .notFound = outcome { outcome = await aniListSearch(show.name, airingFirst: airingFirst) }
         }
         // A finished season with a sequel: the newest season's schedule is the
-        // one you want (season 1 → 2 → 3, a few hops at most).
+        // one you want (season 1 → 2 → 3, a few hops at most). 1.22.6: only
+        // while the series itself hasn't ended, and only to a TV or web
+        // series. AniList calls a new series a "sequel" too: Dragon Ball's
+        // led through Dragon Ball Z to Dragon Ball Super: Beerus, airing in
+        // 2026, whose times Dragon Ball then showed; Bleach's to the last
+        // part of Thousand-Year Blood War. IMDb has those as series of their
+        // own, and gives Dragon Ball and Bleach an end year.
         var hops = 0
-        while case .found(let f) = outcome, f.status == .ended, let sequel = f.sequel, hops < 3 {
+        while case .found(let f) = outcome, f.status == .ended, show.seriesEnded != true,
+              let sequel = f.sequel, Self.followable(f.sequelFormat), hops < 3 {
             hops += 1
             let next = await aniListMedia(["id": sequel])
             guard case .found = next else { break }
@@ -103,9 +159,15 @@ actor AiringService {
         return outcome
     }
 
+    /// A sequel that's another season: a TV or web series, not a film or a special.
+    static func followable(_ format: String?) -> Bool {
+        guard let format else { return true }
+        return ["TV", "TV_SHORT", "ONA"].contains(format)
+    }
+
     private static let mediaFields = "id idMal title{romaji english} status episodes siteUrl nextAiringEpisode{airingAt episode} "
         + "airingSchedule(notYetAired:true,perPage:6){nodes{airingAt episode}} coverImage{large} externalLinks{site type} "
-        + "relations{edges{relationType node{id type status}}}"
+        + "relations{edges{relationType node{id type status format}}}"
 
     private func aniListMedia(_ vars: [String: Any]) async -> Outcome {
         let query = "query($id:Int,$mal:Int){Media(id:$id,idMal:$mal,type:ANIME){\(Self.mediaFields)}}"
@@ -115,12 +177,12 @@ actor AiringService {
         return AiringParse.aniListMedia(r.data).map(Outcome.found) ?? .notFound
     }
 
-    private func aniListSearch(_ name: String) async -> Outcome {
+    private func aniListSearch(_ name: String, airingFirst: Bool) async -> Outcome {
         let query = "query($s:String){Page(perPage:6){media(search:$s,type:ANIME,sort:SEARCH_MATCH){\(Self.mediaFields)}}}"
         guard let r = await aniListPost(query, ["s": name]) else { return .unreachable }
         if r.status == 404 { return .notFound }
         guard r.status == 200 else { return .unreachable }
-        return AiringParse.aniListSearch(r.data, name: name).map(Outcome.found) ?? .notFound
+        return AiringParse.aniListSearch(r.data, name: name, airingFirst: airingFirst).map(Outcome.found) ?? .notFound
     }
 
     /// The same request style as SkipService.aniListSearch.
@@ -221,6 +283,10 @@ enum AiringParse {
         var season: Int?
         var number: Int?
         var airstamp: String?
+        /// The network's own date and time; the time is empty when TVmaze
+        /// doesn't know it (streaming releases), and the airstamp is then 12:00 UTC.
+        var airdate: String?
+        var airtime: String?
     }
 
     private struct TVHit: Decodable { var show: TVShow }
@@ -242,7 +308,16 @@ enum AiringParse {
     private static func episode(_ e: TVEpisode?) -> AiringEpisode? {
         guard let e else { return nil }
         let title = e.name?.trimmingCharacters(in: .whitespaces)
-        return AiringEpisode(season: e.season, number: e.number, title: title?.isEmpty == false ? title : nil, airDate: date(e.airstamp))
+        var out = AiringEpisode(season: e.season, number: e.number, title: title?.isEmpty == false ? title : nil, airDate: date(e.airstamp))
+        if (e.airtime ?? "").trimmingCharacters(in: .whitespaces).isEmpty, let d = e.airdate, d.count == 10 { out.day = d }
+        return out
+    }
+
+    /// `/shows/:id/episodes`: every episode, with the network's date.
+    static func tvmazeEpisodes(_ data: Data) -> [(episode: AiringEpisode, airdate: String?)] {
+        (JSONDecoder().decodeLossy(TVEpisode.self, from: data) ?? []).compactMap { e in
+            episode(e).map { ($0, e.airdate.flatMap { $0.count == 10 ? $0 : nil }) }
+        }
     }
 
     /// `/lookup/shows?imdb=`: the show it redirected to.
@@ -293,7 +368,7 @@ enum AiringParse {
         struct Link: Decodable { var site: String?; var type: String? }
         struct Relations: Decodable {
             struct Edge: Decodable {
-                struct Node: Decodable { var id: Int; var type: String?; var status: String? }
+                struct Node: Decodable { var id: Int; var type: String?; var status: String?; var format: String? }
                 var relationType: String?
                 var node: Node?
             }
@@ -362,8 +437,11 @@ enum AiringParse {
 
     /// `Page { media(search:) }`: of the entries whose title matches the
     /// name, one airing or announced first (you track what's on), else
-    /// AniList's best match.
-    static func aniListSearch(_ data: Data, name: String) -> AiringFetch? {
+    /// AniList's best match. A series that has ended (`airingFirst` false,
+    /// 1.22.6): the entry with exactly its name first, since an airing one
+    /// that starts with it is another series ("Dragon Ball" found "Dragon
+    /// Ball Super: Beerus").
+    static func aniListSearch(_ data: Data, name: String, airingFirst: Bool = true) -> AiringFetch? {
         guard let list = (try? JSONDecoder().decode(ALPageAnswer.self, from: data))?.data?.Page?.media, !list.isEmpty else { return nil }
         let want = TrackedShow.normalized(name)
         let close = list.filter { m in
@@ -373,6 +451,9 @@ enum AiringParse {
             }
         }
         let active: (ALMedia) -> Bool = { ["RELEASING", "NOT_YET_RELEASED"].contains($0.status ?? "") }
+        if !airingFirst, let exact = close.first(where: { m in m.titles.contains { TrackedShow.normalized($0) == want } }) {
+            return fetch(exact)
+        }
         return (close.first(where: active) ?? close.first ?? list.first).map(fetch)
     }
 
@@ -400,10 +481,12 @@ enum AiringParse {
         // A season's sequel, an airing or announced one first. Seasons chain
         // (Frieren: season 1 → 2 → 3), so a finished sequel is followed too.
         let sequels = (m.relations?.edges ?? []).filter { $0.relationType == "SEQUEL" && ($0.node?.type ?? "ANIME") == "ANIME" }
-        let sequel = (sequels.first { ["RELEASING", "NOT_YET_RELEASED"].contains($0.node?.status ?? "") } ?? sequels.first)?.node?.id
+        // 1.22.6: a TV or web series first (Dragon Ball Super's sequels include a film).
+        let ordered = sequels.filter { AiringService.followable($0.node?.format) } + sequels.filter { !AiringService.followable($0.node?.format) }
+        let pick = ordered.first { ["RELEASING", "NOT_YET_RELEASED"].contains($0.node?.status ?? "") } ?? ordered.first
         return AiringFetch(source: .anilist, anilist: m.id, mal: m.idMal, name: m.title?.english ?? m.title?.romaji,
                            status: status, network: streaming, poster: m.coverImage?.large,
                            page: m.idMal.map { "https://myanimelist.net/anime/\($0)" } ?? m.siteUrl ?? "https://anilist.co/anime/\(m.id)",
-                           next: next, later: later, lastAired: last, sequel: sequel)
+                           next: next, later: later, lastAired: last, sequel: pick?.node?.id, sequelFormat: pick?.node?.format)
     }
 }

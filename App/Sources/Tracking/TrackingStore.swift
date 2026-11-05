@@ -67,6 +67,28 @@ final class TrackingStore: ObservableObject {
         if let s = tracked(like: candidate) { untrack(s.id) } else { track(candidate) }
     }
 
+    /// A title page found the series has ended (1.22.6): the tracked show
+    /// learns it, and stops being tracked when nothing more will air.
+    func seriesEnded(like candidate: TrackedShow) {
+        guard let i = shows.firstIndex(where: { $0.isSameShow(as: candidate) }), shows[i].seriesEnded != true else { return }
+        shows[i].seriesEnded = true
+        let id = shows[i].id
+        dlog("tracking", "\(shows[i].name): the series has ended")
+        dropOver(reason: "its title page")
+        // Its schedule may be a sequel's (another series): asked again.
+        if shows.contains(where: { $0.id == id }) { Task { await refresh(only: [id], reason: "series ended") } }
+    }
+
+    /// Stops tracking the shows with nothing more to air (TrackedShow.isOver).
+    private func dropOver(reason: String) {
+        let now = Date()
+        let over = shows.filter { $0.isOver(at: now) }
+        guard !over.isEmpty else { changed(); return }
+        for s in over { dlog("tracking", "stopped tracking \(s.name): it has ended and nothing more will air (\(reason))") }
+        shows.removeAll { $0.isOver(at: now) }
+        changed()
+    }
+
     // MARK: Refresh
 
     /// Fetches the schedules older than `maxAge` (all with `force`; just
@@ -99,8 +121,21 @@ final class TrackingStore: ObservableObject {
     private func run(_ due: [TrackedShow], reason: String) async {
         dlog("tracking", "refreshing \(due.count) show(s) (\(reason))")
         var found = 0, missing = 0, failed = 0
-        for s in due {
+        for var s in due {
             guard !Task.isCancelled else { break }
+            // Shows tracked before 1.22.6 don't know whether the series has
+            // ended: IMDb's details, if a title page loaded them, say so.
+            if s.seriesEnded == nil, let imdb = s.imdb, IMDbSource.cachedDetails(id: imdb)?.hasEnded == true {
+                s.seriesEnded = true
+                if let i = shows.firstIndex(where: { $0.id == s.id }) { shows[i].seriesEnded = true }
+            }
+            // An ended series' AniList entry, learned from a fetch (its id is
+            // the IMDb one), may be a sequel that's another series: until
+            // 1.22.6 Dragon Ball kept Dragon Ball Super: Beerus's. Looked up
+            // again by name, without following sequels.
+            if s.seriesEnded == true, s.imdb != nil, s.source == .anilist {
+                s.anilist = nil; s.mal = nil; s.source = nil
+            }
             let outcome = await AiringService.shared.fetch(s)
             // Stopped tracking while it was asked.
             guard let i = shows.firstIndex(where: { $0.id == s.id }) else { continue }
@@ -116,7 +151,7 @@ final class TrackingStore: ObservableObject {
             }
         }
         dlog("tracking", "refreshed: \(found) found, \(missing) not found, \(failed) not reached\(Task.isCancelled ? " (stopped: out of time)" : "")")
-        changed()
+        dropOver(reason: "refresh")
     }
 
     // MARK: Saving

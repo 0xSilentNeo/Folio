@@ -14,26 +14,42 @@ import UserNotifications
 struct TrackButton: View {
     let show: TrackedShow
     @ObservedObject private var store = TrackingStore.shared
-    /// IMDb says the show has ended (its last year, MetaItem.hasEnded):
-    /// nothing is left to air, so there's no Track button (1.22.2; it showed
-    /// on Game of Thrones). A show already tracked keeps it, to untrack it.
-    @State private var ended = false
+    /// The show has ended (1.22.2: IMDb gives its last year, MetaItem.hasEnded;
+    /// 1.22.6: or TVmaze calls it Ended, which IMDb hadn't caught up with
+    /// for Thousand-Year Blood War). Nothing is left to air, so there's no
+    /// Track button; a show tracked before it ended stops being tracked
+    /// once its last episode's week is over (TrackingStore.seriesEnded).
+    /// Nil while that's being found out: the button keeps its place but
+    /// isn't shown, so it doesn't appear and then vanish.
+    @State private var ended: Bool?
 
     var body: some View {
         let on = store.tracked(like: show) != nil
         Group {
-            if ended && !on {
+            if ended == true && (!on || store.tracked(like: show)?.isOver(at: Date()) == true) {
                 EmptyView()
             } else {
                 button(on)
+                    .opacity(ended == nil && !on ? 0 : 1)
+                    .allowsHitTesting(ended != nil || on)
+                    .animation(.easeOut(duration: 0.2), value: ended)
             }
         }
         .task(id: show.imdb) {
+            ended = nil
+            guard let id = show.imdb else { ended = false; return }
             // The title page's own details, kept 7 days: usually no request of its own.
-            ended = false
-            guard let id = show.imdb, let meta = await IMDbSource.details(id: id, type: "series") else { return }
-            ended = meta.hasEnded
-            if ended { dlog("tracking", "\(show.name) has ended (\(meta.releaseInfo ?? "?")–\(meta.endYear.map(String.init) ?? "")): no Track button") }
+            let meta = await IMDbSource.details(id: id, type: "series")
+            var over = meta?.hasEnded == true
+            if over {
+                dlog("tracking", "\(show.name) has ended (IMDb \(meta?.releaseInfo ?? "?")–\(meta?.endYear.map(String.init) ?? "")): no Track button")
+            } else if let tv = await AiringService.shared.pageSchedule(imdb: id, episodes: false), tv.status == .ended {
+                over = true
+                dlog("tracking", "\(show.name) has ended (TVmaze; IMDb has \(meta?.releaseInfo ?? "?")–): no Track button")
+            }
+            guard !Task.isCancelled else { return }
+            ended = over
+            if over { store.seriesEnded(like: show) }
         }
     }
 
@@ -85,8 +101,8 @@ struct TrackStatusLine: View {
     /// "Tracking · next S2 · E8 airs Tue 9:00 PM, in 2 days", or why there's no time.
     static func text(_ s: TrackedShow, now: Date, calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
         if let e = s.upcoming(after: now).first, let d = e.airDate {
-            let airs = AiringFormat.airs(d, now: now, calendar: calendar, locale: locale)
-            return "Tracking · next \(e.label) \(airs.prefix(1).lowercased() + airs.dropFirst()), \(AiringFormat.countdown(to: d, now: now, calendar: calendar))"
+            let airs = AiringFormat.airs(d, day: e.day, now: now, calendar: calendar, locale: locale)
+            return "Tracking · next \(e.label) \(airs.prefix(1).lowercased() + airs.dropFirst()), \(AiringFormat.countdown(to: d, day: e.day, now: now, calendar: calendar))"
         }
         return "Tracking · " + TrackedShowRow.line(s, now: now)
     }
@@ -107,12 +123,12 @@ struct AiringBadge: View {
             switch mark {
             case .new:
                 pill("New", strong: true)
-            case .airs(let d) where compact:
-                pill(AiringFormat.airs(d, now: ctx.date), strong: false)
-            case .airs(let d):
+            case .airs(let d, let day) where compact:
+                pill(AiringFormat.airs(d, day: day, now: ctx.date), strong: false)
+            case .airs(let d, let day):
                 VStack(alignment: .leading, spacing: 3) {
-                    pill(AiringFormat.airs(d, now: ctx.date), strong: false)
-                    pill(AiringFormat.countdownTitle(to: d, now: ctx.date), strong: false)
+                    pill(AiringFormat.airs(d, day: day, now: ctx.date), strong: false)
+                    pill(AiringFormat.countdownTitle(to: d, day: day, now: ctx.date), strong: false)
                 }
             }
         }
@@ -147,8 +163,8 @@ struct UpcomingEpisodeCard: View {
                     Text([episode.label, episode.title].compactMap { $0 }.joined(separator: " · "))
                         .font(.subheadline.weight(.semibold)).lineLimit(2)
                     if let d = episode.airDate {
-                        Text(AiringFormat.airs(d, now: ctx.date)).font(.caption.weight(.semibold))
-                        Text(AiringFormat.countdownTitle(to: d, now: ctx.date))
+                        Text(AiringFormat.airs(d, day: episode.day, now: ctx.date)).font(.caption.weight(.semibold))
+                        Text(AiringFormat.countdownTitle(to: d, day: episode.day, now: ctx.date))
                             .font(.caption.weight(.semibold).monospacedDigit())
                             .padding(.horizontal, 7).padding(.vertical, 2)
                             .background(Theme.fill, in: Capsule())
@@ -285,10 +301,10 @@ struct TrackedShowRow: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(show.name).font(.body.weight(.semibold)).lineLimit(2)
                         Text(Self.line(show, now: now)).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
-                        if let d = show.headline(at: now)?.airDate {
+                        if let e = show.headline(at: now), let d = e.airDate {
                             HStack(spacing: 6) {
-                                Text(AiringFormat.when(d, now: now)).font(.footnote.weight(.medium)).lineLimit(1)
-                                CountdownPill(date: d, now: now)
+                                Text(AiringFormat.when(d, day: e.day, now: now)).font(.footnote.weight(.medium)).lineLimit(1)
+                                CountdownPill(date: d, day: e.day, now: now)
                             }
                         }
                     }
@@ -325,11 +341,13 @@ struct TrackedShowRow: View {
 /// "in 3 h", or "Out now" in the accent.
 struct CountdownPill: View {
     let date: Date
+    /// The network's date when the hour isn't known (AiringEpisode.day).
+    var day: String? = nil
     let now: Date
 
     var body: some View {
         let out = date <= now
-        Text(AiringFormat.countdown(to: date, now: now, calendar: .autoupdatingCurrent))
+        Text(AiringFormat.countdown(to: date, day: day, now: now, calendar: .autoupdatingCurrent))
             .font(.caption.weight(.semibold).monospacedDigit()).lineLimit(1).fixedSize()
             .foregroundStyle(out ? Theme.onAccent : .primary)
             .padding(.horizontal, 7).padding(.vertical, 2)
@@ -448,8 +466,8 @@ struct TrackingDetailView: View {
             Spacer(minLength: 8)
             if let d = e.airDate {
                 VStack(alignment: .trailing, spacing: 3) {
-                    Text(AiringFormat.when(d, now: now)).font(.subheadline.weight(.medium)).lineLimit(1)
-                    if d > now || now.timeIntervalSince(d) < AiringClock.outNowWindow { CountdownPill(date: d, now: now) }
+                    Text(AiringFormat.when(d, day: e.day, now: now)).font(.subheadline.weight(.medium)).lineLimit(1)
+                    if d > now || now.timeIntervalSince(d) < AiringClock.outNowWindow { CountdownPill(date: d, day: e.day, now: now) }
                 }
             }
         }
@@ -569,8 +587,8 @@ private struct AiringCard: View {
                     .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 Spacer(minLength: 2)
                 if let d = slot.episode.airDate {
-                    Text(AiringFormat.when(d, now: now)).font(.caption.weight(.medium)).lineLimit(1)
-                    CountdownPill(date: d, now: now)
+                    Text(AiringFormat.when(d, day: slot.episode.day, now: now)).font(.caption.weight(.medium)).lineLimit(1)
+                    CountdownPill(date: d, day: slot.episode.day, now: now)
                 }
             }
             Spacer(minLength: 0)

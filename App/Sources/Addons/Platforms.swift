@@ -9,18 +9,27 @@ struct StreamingPlatform: Identifiable, Hashable {
     let short: String
     let color: Color
     let color2: Color
+    /// The service's logo on TMDB's image server (1.22.6), the square one
+    /// TMDB shows for where to watch; until it loads, or offline, the
+    /// letters on the service's colours. Each checked by eye on 5 Nov.
+    var logo: String? = nil
 
     static let all: [StreamingPlatform] = [
-        .init(id: "nfx", name: "Netflix", short: "N", color: Color(red: 0.90, green: 0.04, blue: 0.08), color2: Color(red: 0.45, green: 0.0, blue: 0.02)),
-        .init(id: "amp", name: "Prime Video", short: "prime", color: Color(red: 0.0, green: 0.66, blue: 0.88), color2: Color(red: 0.0, green: 0.25, blue: 0.45)),
-        .init(id: "hbm", name: "HBO Max", short: "max", color: Color(red: 0.0, green: 0.17, blue: 0.91), color2: Color(red: 0.35, green: 0.13, blue: 0.70)),
-        .init(id: "dnp", name: "Disney+", short: "D+", color: Color(red: 0.07, green: 0.24, blue: 0.81), color2: Color(red: 0.02, green: 0.08, blue: 0.30)),
-        .init(id: "atp", name: "Apple TV+", short: "tv+", color: Color(white: 0.55), color2: Color(white: 0.12)),
-        .init(id: "pmp", name: "Paramount+", short: "P+", color: Color(red: 0.0, green: 0.39, blue: 1.0), color2: Color(red: 0.0, green: 0.12, blue: 0.40)),
-        .init(id: "hlu", name: "Hulu", short: "hulu", color: Color(red: 0.11, green: 0.91, blue: 0.51), color2: Color(red: 0.02, green: 0.35, blue: 0.20)),
-        .init(id: "pcp", name: "Peacock", short: "P", color: Color(red: 0.98, green: 0.73, blue: 0.0), color2: Color(red: 0.40, green: 0.10, blue: 0.55)),
-        .init(id: "cru", name: "Crunchyroll", short: "CR", color: Color(red: 0.96, green: 0.46, blue: 0.13), color2: Color(red: 0.45, green: 0.15, blue: 0.0)),
+        .init(id: "nfx", name: "Netflix", short: "N", color: Color(red: 0.90, green: 0.04, blue: 0.08), color2: Color(red: 0.45, green: 0.0, blue: 0.02), logo: "pbpMk2JmcoNnQwx5JGpXngfoWtp"),
+        .init(id: "amp", name: "Prime Video", short: "prime", color: Color(red: 0.0, green: 0.66, blue: 0.88), color2: Color(red: 0.0, green: 0.25, blue: 0.45), logo: "pvske1MyAoymrs5bguRfVqYiM9a"),
+        .init(id: "hbm", name: "HBO Max", short: "max", color: Color(red: 0.0, green: 0.17, blue: 0.91), color2: Color(red: 0.35, green: 0.13, blue: 0.70), logo: "Ajqyt5aNxNGjmF9uOfxArGrdf3X"),
+        .init(id: "dnp", name: "Disney+", short: "D+", color: Color(red: 0.07, green: 0.24, blue: 0.81), color2: Color(red: 0.02, green: 0.08, blue: 0.30), logo: "97yvRBw1GzX7fXprcF80er19ot"),
+        .init(id: "atp", name: "Apple TV+", short: "tv+", color: Color(white: 0.55), color2: Color(white: 0.12), logo: "2E03IAZsX4ZaUqM7tXlctEPMGWS"),
+        .init(id: "pmp", name: "Paramount+", short: "P+", color: Color(red: 0.0, green: 0.39, blue: 1.0), color2: Color(red: 0.0, green: 0.12, blue: 0.40), logo: "h5DcR0J2EESLitnhR8xLG1QymTE"),
+        .init(id: "hlu", name: "Hulu", short: "hulu", color: Color(red: 0.11, green: 0.91, blue: 0.51), color2: Color(red: 0.02, green: 0.35, blue: 0.20), logo: "bxBlRPEPpMVDc4jMhSrTf2339DW"),
+        .init(id: "pcp", name: "Peacock", short: "P", color: Color(red: 0.98, green: 0.73, blue: 0.0), color2: Color(red: 0.40, green: 0.10, blue: 0.55), logo: "2aGrp1xw3qhwCYvNGAJZPdjfeeX"),
+        .init(id: "cru", name: "Crunchyroll", short: "CR", color: Color(red: 0.96, green: 0.46, blue: 0.13), color2: Color(red: 0.45, green: 0.15, blue: 0.0), logo: "fzN5Jok5Ig1eJ7gyNGoMhnLSCfh"),
     ]
+
+    /// The logo's address, sized for a badge `points` wide.
+    func logoURL(points: CGFloat) -> URL? {
+        logo.flatMap { URL(string: TMDB.image + (points * 3 > 154 ? "w300" : "w154") + "/\($0).jpg") }
+    }
 
     static func byID(_ id: String) -> StreamingPlatform? { all.first { $0.id == id } }
 
@@ -336,6 +345,8 @@ struct DiscoverView: View {
                             Text(p.name).font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
                         }
                         .frame(width: 68)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(p.name)
                     }
                     .buttonStyle(.plain)
                 }
@@ -389,20 +400,31 @@ struct FilterChip: View {
     }
 }
 
+/// A streaming service's badge: its logo (1.22.6), shaped like an app's
+/// icon so the square logos keep their edges (a circle cut into "prime
+/// video" and "hulu"). Until 1.22.6 its letters on its colours, which are
+/// still what shows until the logo loads, or offline.
 struct PlatformBadge: View {
     let platform: StreamingPlatform
     var size: CGFloat = 44
     var body: some View {
-        ZStack {
-            Circle().fill(LinearGradient(colors: [platform.color, platform.color2], startPoint: .topLeading, endPoint: .bottomTrailing))
-            Text(platform.short)
-                .font(.system(size: size * (platform.short.count > 2 ? 0.24 : 0.36), weight: .heavy, design: .rounded))
-                .foregroundStyle(.white)
-                .minimumScaleFactor(0.5)
-                .padding(4)
+        let shape = RoundedRectangle(cornerRadius: size * 0.23, style: .continuous)
+        CachedImage(url: platform.logoURL(points: size), maxPixel: size * 3) {
+            $0.resizable().scaledToFill()
+        } placeholder: {
+            ZStack {
+                shape.fill(LinearGradient(colors: [platform.color, platform.color2], startPoint: .topLeading, endPoint: .bottomTrailing))
+                Text(platform.short)
+                    .font(.system(size: size * (platform.short.count > 2 ? 0.24 : 0.36), weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
+                    .minimumScaleFactor(0.5)
+                    .padding(4)
+            }
         }
         .frame(width: size, height: size)
-        .overlay(Circle().strokeBorder(.white.opacity(0.15)))
+        .clipShape(shape)
+        .overlay(shape.strokeBorder(.white.opacity(0.15)))
+        .accessibilityLabel(platform.name)
     }
 }
 
