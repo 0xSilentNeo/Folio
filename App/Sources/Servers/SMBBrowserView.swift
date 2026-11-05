@@ -21,7 +21,6 @@ struct SMBBrowserView: View {
     @State private var loading = true
     @State private var error: String?
     @State private var offline = false
-    @State private var filter = ""
     @State private var sort: LibrarySort = .name
     @State private var ascending = true
     @State private var prefLoaded = false
@@ -74,7 +73,7 @@ struct SMBBrowserView: View {
                 }
             }
             if !loading && visible.isEmpty && error == nil {
-                Text(filter.isEmpty ? (path == "/" ? "No shares" : "Empty folder") : "No matches").foregroundStyle(.secondary)
+                Text(path == "/" ? "No shares" : "Empty folder").foregroundStyle(.secondary)
             }
         }
         .listStyle(.plain)
@@ -82,7 +81,7 @@ struct SMBBrowserView: View {
         .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $filter, prompt: "Filter this folder")
+        // No search bar on Network's pages (1.22.5): the tab bar has the search.
         .refreshable { await load() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -112,12 +111,6 @@ struct SMBBrowserView: View {
     private var visible: [DAVItem] {
         var list = ordered
         if onlyMedia { list = list.filter { $0.isDirectory || $0.isMedia } }
-        if !filter.isEmpty {
-            list = list.filter { i in
-                i.name.localizedCaseInsensitiveContains(filter) || TitleParser.clean(i.name).localizedCaseInsensitiveContains(filter)
-                    || (i.isDirectory && ReleaseName.folder(i.name)?.title.localizedCaseInsensitiveContains(filter) == true)
-            }
-        }
         return list
     }
 

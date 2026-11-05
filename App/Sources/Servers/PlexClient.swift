@@ -132,6 +132,13 @@ enum PlexAPI {
 
     /// Where an entry's children are: a section's items, a show's seasons, a season's episodes.
     static func childrenURL(base: URL, path: String) -> URL? { ServerHTTP.endpoint(base, path) }
+    /// The server's search across its libraries (Home's search, 1.22.5).
+    static func searchURL(base: URL, query: String) -> URL? {
+        ServerHTTP.endpoint(base, "/hubs/search", [URLQueryItem(name: "query", value: query), URLQueryItem(name: "limit", value: "15")])
+    }
+    /// Kinds of search results kept: films, shows, seasons and episodes
+    /// (hubs/search also answers with music, people, collections…).
+    static let searchedTypes: Set<String> = ["movie", "show", "season", "episode"]
 
     /// The file: a part key, already in URL form ("/library/parts/301/1690000000/file.mkv").
     static func partURL(base: URL, part: String) -> URL? { ServerHTTP.endpoint(base, part) }
@@ -161,6 +168,24 @@ enum PlexAPI {
         }
         guard let a = try? JSONDecoder().decode(Answer.self, from: data) else { throw ServerError.parse }
         return (a.container.directory?.items ?? []) + (a.container.metadata?.items ?? [])
+    }
+
+    /// hubs/search's answer: one hub per kind, each with its "Metadata".
+    static func decodeHubs(_ data: Data) throws -> [PlexItem] {
+        struct Answer: Decodable {
+            struct Hub: Decodable {
+                var metadata: LenientList<PlexItem>?
+                enum CodingKeys: String, CodingKey { case metadata = "Metadata" }
+            }
+            struct Container: Decodable {
+                var hub: LenientList<Hub>?
+                enum CodingKeys: String, CodingKey { case hub = "Hub" }
+            }
+            var container: Container
+            enum CodingKeys: String, CodingKey { case container = "MediaContainer" }
+        }
+        guard let a = try? JSONDecoder().decode(Answer.self, from: data) else { throw ServerError.parse }
+        return (a.container.hub?.items ?? []).flatMap { $0.metadata?.items ?? [] }.filter { searchedTypes.contains($0.type ?? "") }
     }
 }
 
@@ -198,6 +223,11 @@ final class PlexClient: CatalogSource, @unchecked Sendable {
     func children(at path: String) async throws -> [CatalogEntry] {
         guard let url = PlexAPI.childrenURL(base: base, path: path) else { throw ServerError.badAddress }
         return try PlexAPI.decode(await ServerHTTP.data(request(url))).map(\.entry)
+    }
+
+    func search(_ query: String) async throws -> [CatalogEntry] {
+        guard let url = PlexAPI.searchURL(base: base, query: query) else { throw ServerError.badAddress }
+        return try PlexAPI.decodeHubs(await ServerHTTP.data(request(url))).map(\.entry)
     }
 
     func mediaItem(for e: CatalogEntry, parent: CatalogEntry?) -> MediaItem {

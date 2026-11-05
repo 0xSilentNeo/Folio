@@ -137,7 +137,8 @@ private struct ZoomSource2: ViewModifier {
     let id: String
     let ns: Namespace.ID
     func body(content: Content) -> some View {
-        if #available(iOS 18.0, *) { content.matchedTransitionSource(id: id, in: ns) } else { content }
+        // From the pill's own shape, not its square (5 Nov).
+        if #available(iOS 18.0, *) { content.matchedTransitionSource(id: id, in: ns) { $0.clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous)) } } else { content }
     }
 }
 
@@ -465,9 +466,12 @@ private extension PackageCard {
             }
         } label: {
             Image(systemName: "ellipsis").font(.system(size: 14, weight: .bold))
-                .frame(width: 36, height: 36).background(Theme.fill, in: Circle())
+                .frame(width: 36, height: 36).menuLabelCircle()
                 .contentShape(Circle())
         }
+        // Glass on the menu, as the library's round menus (1.22.3): it opens
+        // from a circle, not from the label's square.
+        .glassMenuCircle()
         .accessibilityLabel("More for \(name)")
     }
 }

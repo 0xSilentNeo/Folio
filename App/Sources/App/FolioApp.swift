@@ -105,12 +105,20 @@ struct RootView: View {
         #endif
     }
 
-    /// The search tab's text (1.22.4).
+    /// The search tab's text (1.22.4), and the page it was opened from,
+    /// which it searches (1.22.5).
     @State private var searchText = ""
+    @State private var searchFrom = 0
 
     private var tabs: some View {
         tabView
         .onChange(of: kids.isOn) { _, on in if on && tab == 2 { tab = 0 } }
+        // The search searches the page it's opened from; a new page, a new search.
+        .onChange(of: tab) { old, new in
+            guard new == 3, old != 3 else { return }
+            if SearchScope(fromTab: old) != SearchScope(fromTab: searchFrom) { searchText = "" }
+            searchFrom = old
+        }
         .onOpenURL(perform: handle)
         .alert("Add this addon?", isPresented: Binding(get: { linkAddon != nil }, set: { if !$0 { linkAddon = nil } }), presenting: linkAddon) { target in
             Button("Add") { installLinkedAddon(target) }
@@ -138,9 +146,9 @@ struct RootView: View {
                 if !kids.isOn {
                     Tab("Network", systemImage: "externaldrive.connected.to.line.below", value: 2) { NetworkView().tabZoom() }
                 }
-                Tab(value: 3, role: .search) { SearchTabView(query: $searchText).tabZoom() }
+                Tab(value: 3, role: .search) { SearchTabView(query: $searchText, scope: SearchScope(fromTab: searchFrom)) }
             }
-            .modifier(TabBarSearchField(text: $searchText, selected: tab == 3))
+            .modifier(TabBarSearchField(text: $searchText, prompt: SearchScope(fromTab: searchFrom).prompt, selected: tab == 3))
         } else {
             TabView(selection: $tab) {
                 HomeView().tabZoom()
@@ -154,7 +162,7 @@ struct RootView: View {
                         .tabItem { Label("Network", systemImage: "externaldrive.connected.to.line.below") }
                         .tag(2)
                 }
-                SearchTabView(query: $searchText).tabZoom()
+                SearchTabView(query: $searchText, scope: SearchScope(fromTab: searchFrom))
                     .tabItem { Label("Search", systemImage: "magnifyingglass") }
                     .tag(3)
             }
