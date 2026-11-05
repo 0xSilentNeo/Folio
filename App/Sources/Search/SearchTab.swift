@@ -59,10 +59,8 @@ struct TabBarSearchField: ViewModifier {
                 // page inside the tab: it's passed on (simulator: "labx\n"
                 // never got to the page's onSubmit, so it wasn't kept).
                 .onSubmit(of: .search) { NotificationCenter.default.post(name: .searchTabSubmitted, object: text) }
-                .onChange(of: selected) { _, on in
-                    // After the button has opened into the field.
-                    if on { DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { focused = true } }
-                }
+                .onChange(of: focused) { _, f in if f { HitchProbe.mark("search", "field focused") } }
+                .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in HitchProbe.mark("search", "keyboard up") }
         } else {
             content
         }

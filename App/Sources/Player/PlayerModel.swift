@@ -149,6 +149,11 @@ final class PlayerModel: ObservableObject {
     @Published var audioOut = ""
     @Published var ended = false
     @Published var errorMessage: String?
+    /// Why a file on a server didn't play, from the server's own answer
+    /// (1.23.0): a file Real-Debrid removed, a refused login, a server down.
+    @Published var problem: ServerProblem?
+    /// The server is being asked why (the card says so meanwhile).
+    @Published var checkingProblem = false
     @Published var isPiPActive = false
     @Published var isPiPPossible = false
     @Published var segments: [SkipSegment] = []
@@ -356,12 +361,12 @@ final class PlayerModel: ObservableObject {
             brightnessBefore = nil
         }
         screener?.cancel()
+        problemCheck?.cancel(); problemCheck = nil
+        nowPlayingArtTask?.cancel(); nowPlayingArtTask = nil
         dlog("player", "close at \(Self.format(position))")
         saveHistory(force: true)
         HistoryStore.shared.flush()
         ShowMemoryStore.shared.flush()
-        NowPlayingActivity.end()
-        activityItemID = nil
         HandoffActivity.stopPlaying()
         closeSubtitleSearch()
         observers.forEach { NotificationCenter.default.removeObserver($0) }
@@ -639,6 +644,9 @@ final class PlayerModel: ObservableObject {
         playingItem = item
         ended = false
         errorMessage = nil
+        problem = nil
+        checkingProblem = false
+        problemCheck?.cancel(); problemCheck = nil
         segments = []
         activeSegment = nil
         autoSkipped = []
@@ -698,7 +706,80 @@ final class PlayerModel: ObservableObject {
             let r = c.command(["loadfile", item.mpvPath, "replace", "-1", opts.joined(separator: ",")])
             dlog("player", "loadfile \(item.mpvPath) source=\(item.source) opts=\(opts) -> \(r)")
         }
+        watchLoading(item)
         updateNowPlaying()
+    }
+
+    // MARK: Why a file didn't play (1.23.0)
+
+    private var problemCheck: Task<Void, Never>?
+
+    /// The server the item is on, by name, and whether it's Real-Debrid.
+    private func serverName(of it: MediaItem) -> (name: String, realDebrid: Bool) {
+        if case .webdav(let id) = it.source, let s = ServerStore.shared.server(id: id) {
+            return (s.name, RealDebrid.isRealDebrid(s))
+        }
+        let host = it.resolvedURL?.host?.lowercased() ?? ""
+        if host.hasSuffix("real-debrid.com") { return ("Real-Debrid", true) }
+        return (host.isEmpty ? "The server" : host, false)
+    }
+
+    /// An HTTP file still opening after 12 s: the server is asked whether
+    /// it's there. A removed file or a refused login ends the wait with the
+    /// card (mpv can wait on a server a long time); anything else is only
+    /// logged and the player keeps waiting.
+    private func watchLoading(_ it: MediaItem) {
+        guard let url = it.resolvedURL, ["http", "https"].contains(url.scheme?.lowercased() ?? "") else { return }
+        let id = it.id
+        problemCheck = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 12_000_000_000)
+            guard let self, !Task.isCancelled, self.isLoading, !self.fileLoaded, self.playingItem?.id == id else { return }
+            let answer = await ServerProblem.probe(url, headers: it.headers)
+            guard !Task.isCancelled, self.isLoading, !self.fileLoaded, self.playingItem?.id == id, self.errorMessage == nil else { return }
+            let where_ = self.serverName(of: it)
+            let p = ServerProblem.classify(status: answer.status, error: answer.error, server: where_.name, realDebrid: where_.realDebrid)
+            dlog("player", "still opening after 12 s: the server answers \(answer.status.map(String.init) ?? "nothing") (\(p.kind))")
+            guard p.kind == .gone || p.kind == .refused else { return }
+            self.client?.command(["stop"])
+            self.show(p, for: it)
+        }
+    }
+
+    /// mpv couldn't open the file: for a file on a server, the server is
+    /// asked why, and the card says it.
+    private func diagnose(_ it: MediaItem, reason: String) {
+        guard let url = it.resolvedURL, ["http", "https"].contains(url.scheme?.lowercased() ?? "") else { return }
+        problemCheck?.cancel()
+        checkingProblem = true
+        let id = it.id
+        problemCheck = Task { [weak self] in
+            let answer = await ServerProblem.probe(url, headers: it.headers)
+            guard let self, !Task.isCancelled, self.playingItem?.id == id, self.errorMessage != nil else { return }
+            let where_ = self.serverName(of: it)
+            let p = ServerProblem.classify(status: answer.status, error: answer.error, server: where_.name,
+                                           realDebrid: where_.realDebrid, reason: reason)
+            dlog("player/error", "the server answers \(answer.status.map(String.init) ?? (answer.error as? URLError).map { "URLError \($0.code.rawValue)" } ?? "nothing"): \(p.title)")
+            self.show(p, for: it)
+        }
+    }
+
+    private func show(_ p: ServerProblem, for it: MediaItem) {
+        isLoading = false
+        checkingProblem = false
+        problem = p
+        if errorMessage == nil { errorMessage = p.title }
+        // A file Real-Debrid (or another server) no longer has leaves the
+        // search and Home's row at the next look (the index is read again).
+        if p.kind == .gone, case .webdav(let sid) = it.source, let s = ServerStore.shared.server(id: sid) {
+            LibraryIndexStore.shared.refreshNow(s)
+        }
+    }
+
+    /// The history entry of the file that didn't play, for "Remove from
+    /// Continue Watching".
+    var problemHistoryEntry: HistoryEntry? {
+        guard let it = playingItem else { return nil }
+        return HistoryStore.shared.entry(for: it.id)
     }
 
     /// Start over (TitleHeroView): the first file opens at 0. Until 1.20.3 its
@@ -721,6 +802,8 @@ final class PlayerModel: ObservableObject {
         isLoading = true
         ended = false
         errorMessage = nil
+        problem = nil
+        checkingProblem = false
         mediaTitle = [pick.context.name, pick.context.videoLabel].compactMap { $0 }.joined(separator: " · ")
         showToast("Finding \(pick.context.videoLabel ?? "next episode")…")
         Task { [weak self] in
@@ -2464,19 +2547,6 @@ final class PlayerModel: ObservableObject {
 
     private func registerLifecycle() {
         let nc = NotificationCenter.default
-        // The Live Activity's buttons (Lock Screen, Dynamic Island).
-        observers.append(nc.addObserver(forName: NowPlayingCommand.notification, object: nil, queue: .main) { [weak self] note in
-            let command = note.userInfo?[NowPlayingCommand.key] as? String
-            MainActor.assumeIsolated {
-                guard let self, !self.closed else { return }
-                switch command {
-                case "toggle": self.togglePause()
-                case "back": self.seek(by: -10)
-                case "forward": self.seek(by: 10)
-                default: break
-                }
-            }
-        })
         // Subtitle addons answering after the stream started: into the playing
         // file when it's that video (before it has loaded, onFileLoaded adds them).
         observers.append(nc.addObserver(forName: AddonPlayback.lateSubtitlesArrived, object: nil, queue: .main) { [weak self] note in
@@ -2830,10 +2900,33 @@ final class PlayerModel: ObservableObject {
 
     private var remoteTargets: [(MPRemoteCommand, Any)] = []
 
-    /// The picture Control Center and the Lock Screen show (the saved frame).
+    /// The picture Control Center and the Lock Screen show (1.23.0): the
+    /// title's own art, found as the library's rows find theirs (until
+    /// then only the saved frame, which a file not played before doesn't
+    /// have: no picture, 5 Nov). Looked up once per file, off the main thread.
+    private var nowPlayingArt: (id: String, image: UIImage)?
+    private var nowPlayingArtFor: String?
+    private var nowPlayingArtTask: Task<Void, Never>?
+
     private var nowPlayingArtwork: MPMediaItemArtwork? {
-        guard let img = ThumbnailStore.image(for: (playingItem ?? item).id) else { return nil }
+        let id = (playingItem ?? item).id
+        guard let art = nowPlayingArt, art.id == id else { return nil }
+        let img = art.image
         return MPMediaItemArtwork(boundsSize: img.size) { _ in img }
+    }
+
+    private func findNowPlayingArt(_ it: MediaItem) {
+        guard nowPlayingArtFor != it.id else { return }
+        nowPlayingArtFor = it.id
+        nowPlayingArtTask?.cancel()
+        nowPlayingArtTask = Task { [weak self] in
+            let found = await NowPlayingArt.find(for: it)
+            guard let self, !Task.isCancelled, !self.closed, (self.playingItem ?? self.item).id == it.id else { return }
+            guard let found else { dlog("player", "Now Playing: no picture found for \(it.displayTitle)"); return }
+            self.nowPlayingArt = (it.id, found.image)
+            dlog("player", "Now Playing picture: \(found.source), \(Int(found.image.size.width))×\(Int(found.image.size.height))")
+            self.updateNowPlaying()
+        }
     }
 
     private func setUpRemoteCommands() {
@@ -2874,6 +2967,7 @@ final class PlayerModel: ObservableObject {
 
     private func updateNowPlaying() {
         let it = playingItem ?? item
+        findNowPlayingArt(it)
         var info: [String: Any] = [
             MPMediaItemPropertyTitle: it.title.isEmpty ? (mediaTitle.isEmpty ? it.displayTitle : mediaTitle) : it.displayTitle,
             MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.video.rawValue,
@@ -2896,7 +2990,6 @@ final class PlayerModel: ObservableObject {
             let enabled = [cc.playCommand, cc.pauseCommand, cc.togglePlayPauseCommand, cc.changePlaybackPositionCommand].filter(\.isEnabled).count
             dlog("player", "Now Playing set: audio session \(a.category.rawValue), \(a.mode.rawValue), options \(a.categoryOptions.rawValue), route sharing \(a.routeSharingPolicy.rawValue); other audio playing \(a.isOtherAudioPlaying); output \(a.currentRoute.outputs.map(\.portType.rawValue).joined(separator: ", ")); \(enabled) of 4 commands on; \(info.count) fields")
         }
-        updateLiveActivity()
     }
     private var nowPlayingLoggedFor: String?
 
@@ -2912,24 +3005,6 @@ final class PlayerModel: ObservableObject {
         dlog("player", "audio session while playing: \(a.category.rawValue), \(a.mode.rawValue), options \(a.categoryOptions.rawValue)\(mixes ? " (mixes with others: iOS won't make Folio the Now Playing app)" : ""), route sharing \(a.routeSharingPolicy.rawValue)")
     }
     private var audioSessionLoggedFor: String?
-
-    /// The Live Activity for what's playing (1.22.0, NowPlayingActivity):
-    /// started for each file once its length is known, then kept up to date
-    /// (it pushes to the Lock Screen only on a pause, play, seek or length
-    /// change). Its buttons come back as NowPlayingCommand notifications.
-    private var activityItemID: String?
-
-    private func updateLiveActivity() {
-        guard fileLoaded, duration > 0, !closed else { return }
-        let it = playingItem ?? item
-        if activityItemID != it.id {
-            activityItemID = it.id
-            NowPlayingActivity.start(id: it.id, title: it.title.isEmpty ? mediaTitle : it.displayTitle, subtitle: it.subtitle,
-                                     duration: duration, position: position, paused: paused, artwork: ThumbnailStore.image(for: it.id))
-        } else {
-            NowPlayingActivity.update(position: position, duration: duration, paused: paused)
-        }
-    }
 
     // MARK: Helpers
 
@@ -2972,6 +3047,7 @@ extension PlayerModel: MPVClientDelegate {
                 }
                 dlog("player/error", msg)
                 errorMessage = msg
+                diagnose(playingItem ?? item, reason: String(cString: mpv_error_string(error)))
             }
         case .playbackRestart:
             logAudioSessionOnce()
@@ -3012,7 +3088,6 @@ extension PlayerModel: MPVClientDelegate {
             maybePrepareNext()
             if Date().timeIntervalSince(lastPiPSync) > 1 {
                 lastPiPSync = Date()
-                if activityItemID != nil { NowPlayingActivity.update(position: p, duration: duration, paused: paused) }
                 pip.updatePlayback(position: p, rate: paused ? 0 : speed)
             }
             saveHistory()

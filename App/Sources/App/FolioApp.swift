@@ -116,6 +116,7 @@ struct RootView: View {
         // The search searches the page it's opened from; a new page, a new search.
         .onChange(of: tab) { old, new in
             guard new == 3, old != 3 else { return }
+            HitchProbe.start("search", "search opened from tab \(old)")
             if SearchScope(fromTab: old) != SearchScope(fromTab: searchFrom) { searchText = "" }
             searchFrom = old
         }

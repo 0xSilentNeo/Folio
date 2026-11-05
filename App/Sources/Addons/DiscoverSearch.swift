@@ -237,12 +237,8 @@ struct AddonSearchView: View {
                 ForEach(search.addonResults) { addonSection($0) }
                 if search.addonsSearching {
                     Section {
-                        HStack(spacing: 10) {
-                            ProgressView().controlSize(.small)
-                            Text("Searching your addons…").font(.subheadline).foregroundStyle(.secondary)
-                        }
+                        FolioWorkingRow(text: "Searching your addons…")
                         .listRowBackground(Color.clear)
-                        .accessibilityElement(children: .combine)
                     }
                 }
             }
@@ -341,7 +337,7 @@ struct AddonSearchView: View {
                 Text("Titles")
                 if let limits = kids.activeLimits { Text("· rated \(KidsRules.summary(limits))") }
                 if search.phase == .loading {
-                    ProgressView().controlSize(.small).accessibilityLabel("Searching")
+                    FolioSpinner(size: .small).accessibilityLabel("Searching")
                 }
                 Spacer()
             }

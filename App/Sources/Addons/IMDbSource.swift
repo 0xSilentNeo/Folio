@@ -246,18 +246,22 @@ enum IMDbSource {
     /// no genre is chosen, otherwise IMDb advanced search with the same rules.
     /// `staleOnly`: return whatever the cache holds (any age) without a request,
     /// so the grid can show the last list at once while a fresh one loads.
-    static func browse(sort: Sort, type: String, genre: String?, year: String, staleOnly: Bool = false) async -> [MetaItem] {
+    /// `more` (1.23.0): the longer list for scrolling on, as many as one
+    /// IMDb page holds (`moreCount`); Most Popular goes on past its chart's
+    /// 100 with the same popularity order. Nil when there's nothing more
+    /// (the Top 250 chart is whole).
+    static func browse(sort: Sort, type: String, genre: String?, year: String, staleOnly: Bool = false, more: Bool = false) async -> [MetaItem] {
         let series = type == "series"
         if genre == nil {
             switch sort {
-            case .trending: return await chart(series ? "/chart/tvmeter/" : "/chart/moviemeter/", type: type, staleOnly: staleOnly)
-            case .topRated: return await chart(series ? "/chart/toptv/" : "/chart/top/", type: type, staleOnly: staleOnly)
-            case .new: break
+            case .trending where !more: return await chart(series ? "/chart/tvmeter/" : "/chart/moviemeter/", type: type, staleOnly: staleOnly)
+            case .topRated: return more ? [] : await chart(series ? "/chart/toptv/" : "/chart/top/", type: type, staleOnly: staleOnly)
+            default: break
             }
         }
         var q: [String: String] = [
             "title_type": series ? "tv_series,tv_miniseries" : "feature,tv_movie",
-            "count": "100",
+            "count": more ? "\(moreCount)" : "100",
         ]
         if let genre {
             if genre == "Anime" {
@@ -291,6 +295,11 @@ enum IMDbSource {
         if !items.isEmpty { store(key, items) }
         return items
     }
+
+    /// The most titles one advanced-search page holds: IMDb answers
+    /// count=250 with 250 and anything higher with its default 50, and
+    /// ignores start=, page= and after= (simulator, 5 Nov).
+    static let moreCount = 250
 
     static func chart(_ path: String, type: String, staleOnly: Bool = false) async -> [MetaItem] {
         let key = "chart|\(path)|\(language)"

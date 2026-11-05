@@ -19,12 +19,17 @@ enum AiringTracker {
             // Air times in the zone you're in now: Foundation keeps the
             // system zone it first read until told to read it again (1.22.1).
             NSTimeZone.resetSystemTimeZone()
-            MainActor.assumeIsolated { refreshIfStale("foreground") }
+            MainActor.assumeIsolated {
+                refreshIfStale("foreground")
+                // Notifications allowed in iOS Settings meanwhile: planned now,
+                // not at the next refresh up to six hours on (review, 5 Nov).
+                AiringNotifications.reschedule(TrackingStore.shared.shows)
+            }
         }
         nc.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { AiringBackground.schedule(TrackingStore.shared.shows) }
         }
-        refreshIfStale("launch")
+        refreshAfterUpdate()
         // `-openTrack <id|all>` (tests): opens a tracking page as folio://track does.
         if let i = CommandLine.arguments.firstIndex(of: "-openTrack"), i + 1 < CommandLine.arguments.count {
             let id = CommandLine.arguments[i + 1]
@@ -35,6 +40,21 @@ enum AiringTracker {
     @MainActor
     private static func refreshIfStale(_ reason: String) {
         Task { await TrackingStore.shared.refresh(reason: reason) }
+    }
+
+    /// The first launch of a new version asks every show again (1.23.0):
+    /// what an older version saved is worked out with its rules, which a
+    /// refresh only replaces once the show is due (5 Nov: Dragon Ball kept
+    /// Beerus's times and Tulsa King its made-up hour after 1.22.6).
+    @MainActor
+    private static func refreshAfterUpdate() {
+        let key = "trackingRefreshedForBuild"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        guard UserDefaults.standard.string(forKey: key) != build else { refreshIfStale("launch"); return }
+        Task {
+            await TrackingStore.shared.refresh(force: true, reason: "Folio updated")
+            UserDefaults.standard.set(build, forKey: key)
+        }
     }
 }
 

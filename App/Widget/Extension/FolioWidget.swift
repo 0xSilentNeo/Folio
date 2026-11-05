@@ -5,14 +5,14 @@ import WidgetKit
 /// Folio's widgets (1.20.3 (2 Nov)): Continue Watching on the Home Screen
 /// (small, medium) and the Lock Screen (rectangular); Airing (1.21.0,
 /// AiringWidget.swift), the tracked shows' next episodes; and the Live
-/// Activities (1.22.0) for downloads and what's playing.
+/// Activity (1.22.0) for downloads. What's playing is in Control Center and
+/// on the Lock Screen (Now Playing) since 1.22.7; its own activity went in 1.23.0.
 @main
 struct FolioWidgets: WidgetBundle {
     var body: some Widget {
         ContinueWatchingWidget()
         AiringWidget()
         DownloadActivityWidget()
-        NowPlayingActivityWidget()
     }
 }
 
@@ -34,8 +34,11 @@ struct ContinueEntry: TimelineEntry {
         case items([ContinueSnapshot.Item])
         /// The group is there but Continue Watching is empty.
         case empty
-        /// No group container, or the app hasn't written a snapshot yet.
+        /// The app hasn't written a snapshot yet.
         case openFolio
+        /// This install gives the widget no way to read Folio's data: no
+        /// App Group, and the app's Keychain group is refused (1.23.0).
+        case cantShare
     }
     let date: Date
     let content: Content
@@ -67,13 +70,16 @@ struct ContinueProvider: TimelineProvider {
     }
 
     static func load() -> ContinueEntry {
-        let dir = ContinueSnapshot.directory()
-        guard let snapshot = ContinueSnapshot.read(from: dir) else { return ContinueEntry(date: Date(), content: .openFolio) }
+        let dir = WidgetStore.continueWatching()
+        guard let snapshot = ContinueSnapshot.read(from: dir) else {
+            return ContinueEntry(date: Date(), content: WidgetAccess.cantShare(dir) ? .cantShare : .openFolio)
+        }
+        if dir?.isKeychain == true { KeychainShare.widgetSaw("Continue Watching: \(snapshot.items.count) item(s)") }
         guard !snapshot.items.isEmpty else { return ContinueEntry(date: Date(), content: .empty) }
         var pictures: [String: UIImage] = [:]
         if let dir {
             for name in snapshot.items.compactMap(\.picture) {
-                if let img = UIImage(contentsOfFile: dir.appendingPathComponent(name).path) { pictures[name] = img }
+                if let data = dir.read(name), let img = UIImage(data: data) { pictures[name] = img }
             }
         }
         return ContinueEntry(date: Date(), content: .items(snapshot.items), pictures: pictures)
@@ -98,6 +104,8 @@ struct ContinueWidgetView: View {
             Message(icon: "play.rectangle", title: "Nothing to continue", detail: "What you start in Folio shows up here.")
         case .openFolio:
             Message(icon: "play.rectangle.fill", title: "Open Folio", detail: "to see what you're watching.")
+        case .cantShare:
+            Message(icon: "lock.rectangle", title: "Can't reach Folio", detail: WidgetAccess.cantShareDetail)
         }
     }
 }

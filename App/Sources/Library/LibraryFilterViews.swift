@@ -133,7 +133,7 @@ struct PickForMeSheet: View {
                              : "Every film in your library is watched or started. Add some films, or mark one as unwatched.")
                     }
                 } else {
-                    ProgressView()
+                    FolioSpinner(size: .large)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

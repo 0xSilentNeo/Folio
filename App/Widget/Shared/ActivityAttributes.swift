@@ -96,17 +96,15 @@ enum DownloadsLink {
 
 // MARK: - Now playing
 
-/// The Live Activity for what's playing. Everything is in the content (none
-/// of it in the attributes, which can't change), so the next episode can
-/// take over the same activity: an app in the background can update one but
-/// can't start one.
+/// The Live Activity for what's playing (1.22.0 to 1.22.7). Only kept so the
+/// app can end one an older version left (NowPlayingActivity.endLeftovers):
+/// Control Center and the Lock Screen's Now Playing show what plays.
 struct NowPlayingActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         var title: String
         /// The episode line ("S1 · E3 · Title"), if there is one.
         var subtitle: String?
-        /// The picture's file name in the group container's Activities
-        /// folder (LiveActivityFiles), if there is one.
+        /// The picture's file name in the group container's Activities folder.
         var artwork: String?
         /// Seconds into the video at `at`.
         var position: Double
@@ -118,36 +116,6 @@ struct NowPlayingActivityAttributes: ActivityAttributes {
         /// The picture's colour, "RRGGBB" (1.22.1): the glow behind the
         /// Lock Screen pane and the ring in the Dynamic Island.
         var tint: String?
-    }
-}
-
-extension NowPlayingActivityAttributes.ContentState {
-    /// When the video would have started, played straight through to `position`.
-    var startDate: Date { at.addingTimeInterval(-max(0, position)) }
-    /// When it ends at this pace.
-    var endDate: Date { startDate.addingTimeInterval(max(0, duration)) }
-
-    /// For ProgressView(timerInterval:) and Text(timerInterval:): nil while
-    /// paused or with no length known (a static bar and text instead).
-    var timerRange: ClosedRange<Date>? {
-        guard !paused, duration > 0, position < duration else { return nil }
-        return startDate...endDate
-    }
-
-    func position(at date: Date) -> Double {
-        let p = paused ? position : position + date.timeIntervalSince(at)
-        return duration > 0 ? min(duration, max(0, p)) : max(0, p)
-    }
-
-    func progress(at date: Date) -> Double { duration > 0 ? position(at: date) / duration : 0 }
-
-    func timeLeft(at date: Date) -> Double { max(0, duration - position(at: date)) }
-
-    /// "12:34 left", "1:02:03 left" (paused: a still line, as the timer
-    /// text doesn't move then). Empty with no length known.
-    func timeLeftText(at date: Date) -> String {
-        guard duration > 0 else { return "" }
-        return ActivityFormat.clock(timeLeft(at: date)) + " left"
     }
 }
 
@@ -171,26 +139,5 @@ enum ActivityFormat {
         let t = seconds.isFinite ? max(0, Int(seconds.rounded(.down))) : 0
         let h = t / 3600, m = t % 3600 / 60, s = t % 60
         return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
-    }
-}
-
-// MARK: - Pictures
-
-/// Where the app leaves the activities' pictures for the widget extension
-/// (it runs in its own process and can't see the app's files): an
-/// Activities folder in the App Group's container. Nil without the group.
-enum LiveActivityFiles {
-    static func directory(in container: URL? = FolioGroup.container, create: Bool = false) -> URL? {
-        guard let container else { return nil }
-        let dir = container.appendingPathComponent("Activities", isDirectory: true)
-        if create {
-            do { try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true) } catch { return nil }
-        }
-        return dir
-    }
-
-    static func url(for name: String?) -> URL? {
-        guard let name, !name.isEmpty, !name.contains("/") else { return nil }
-        return directory()?.appendingPathComponent(name)
     }
 }

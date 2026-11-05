@@ -124,27 +124,38 @@ final class TrackingStore: ObservableObject {
         for var s in due {
             guard !Task.isCancelled else { break }
             // Shows tracked before 1.22.6 don't know whether the series has
-            // ended: IMDb's details, if a title page loaded them, say so.
-            if s.seriesEnded == nil, let imdb = s.imdb, IMDbSource.cachedDetails(id: imdb)?.hasEnded == true {
-                s.seriesEnded = true
-                if let i = shows.firstIndex(where: { $0.id == s.id }) { shows[i].seriesEnded = true }
+            // ended: IMDb's details say so. From the cache a title page left,
+            // else asked (1.23.0: until then only a cached page counted, so
+            // Dragon Ball tracked from the library kept Beerus's dates).
+            if s.seriesEnded == nil, let imdb = s.imdb {
+                var ended = IMDbSource.cachedDetails(id: imdb)?.hasEnded == true
+                if !ended, let d = await IMDbSource.details(id: imdb, type: "series") { ended = d.hasEnded }
+                if ended {
+                    s.seriesEnded = true
+                    if let i = shows.firstIndex(where: { $0.id == s.id }) { shows[i].seriesEnded = true }
+                }
             }
             // An ended series' AniList entry, learned from a fetch (its id is
             // the IMDb one), may be a sequel that's another series: until
             // 1.22.6 Dragon Ball kept Dragon Ball Super: Beerus's. Looked up
             // again by name, without following sequels.
+            var repaired = false
             if s.seriesEnded == true, s.imdb != nil, s.source == .anilist {
                 s.anilist = nil; s.mal = nil; s.source = nil
+                repaired = true
             }
             let outcome = await AiringService.shared.fetch(s)
             // Stopped tracking while it was asked.
             guard let i = shows.firstIndex(where: { $0.id == s.id }) else { continue }
+            if repaired { shows[i].anilist = nil; shows[i].mal = nil; shows[i].source = nil }
             switch outcome {
             case .found(let f):
                 shows[i].apply(f, at: Date())
                 found += 1
             case .notFound:
                 shows[i].markNotFound(at: Date())
+                // The other series' episodes it had go with its ids.
+                if repaired { shows[i].next = nil; shows[i].later = [] }
                 missing += 1
             case .unreachable:
                 failed += 1

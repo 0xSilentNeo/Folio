@@ -73,6 +73,19 @@ enum AiringFormat {
     /// What Siri says (NextEpisodeIntent): "MobLand season 1, episode 5,
     /// “The Fall”, airs today at 9:00 PM, in 3 hours."
     static func spoken(_ show: TrackedShow, now: Date = Date(), calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
+        if let e = show.upcoming(after: now).first, let day = e.day, let d = date(ofDay: day, calendar: calendar) {
+            // Day only (1.23.0): no made-up hour, no "in 3 hours".
+            var lead = episodeWords(e).map { "\(show.name) \($0)" } ?? "The next episode of \(show.name)"
+            if let t = e.title { lead += ", “\(t)”," }
+            let when: String
+            switch dayOffset(d, from: now, calendar: calendar) {
+            case ...0: when = "today"
+            case 1: when = "tomorrow"
+            case 2...6: when = "on " + formatter("EEEE", calendar, locale).string(from: d)
+            default: when = "on " + formatter("MMMMd", calendar, locale).string(from: d)
+            }
+            return "\(lead) comes out \(when)."
+        }
         if let e = show.upcoming(after: now).first, let d = e.airDate {
             let rel = RelativeDateTimeFormatter()
             rel.locale = locale

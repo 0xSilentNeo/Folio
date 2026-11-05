@@ -2,12 +2,9 @@ import XCTest
 @testable import Folio
 
 /// The Live Activities' content (1.22.0): the downloads activity's run,
-/// texts and when it ends (DownloadActivity), the now-playing activity's
-/// progress, time left and when ActivityKit needs an update
-/// (NowPlayingActivity).
+/// texts and when it ends (DownloadActivity).
 final class LiveActivityTests: XCTestCase {
     typealias Download = DownloadActivityAttributes.ContentState
-    typealias Playing = NowPlayingActivityAttributes.ContentState
 
     // MARK: Text
 
@@ -136,70 +133,5 @@ final class LiveActivityTests: XCTestCase {
         var u = s
         u.filesLeft = 1
         XCTAssertTrue(DownloadActivity.looksDifferent(s, u))
-    }
-
-    // MARK: Now playing
-
-    private let t0 = Date(timeIntervalSince1970: 1_800_000_000)
-
-    private func playing(_ position: Double, duration: Double = 1440, paused: Bool = false, at: Date? = nil) -> Playing {
-        Playing(title: "Lab Show", subtitle: "S1 · E3", artwork: nil, position: position, duration: duration, paused: paused, at: at ?? t0)
-    }
-
-    func testPlayingMovesOnByItself() {
-        let s = playing(300)
-        XCTAssertEqual(s.startDate, t0.addingTimeInterval(-300))
-        XCTAssertEqual(s.endDate, t0.addingTimeInterval(1140))
-        XCTAssertEqual(s.timerRange, t0.addingTimeInterval(-300)...t0.addingTimeInterval(1140))
-        let later = t0.addingTimeInterval(60)
-        XCTAssertEqual(s.position(at: later), 360)
-        XCTAssertEqual(s.progress(at: later), 0.25, accuracy: 0.0001)
-        XCTAssertEqual(s.timeLeft(at: later), 1080)
-        XCTAssertEqual(s.timeLeftText(at: later), "18:00 left")
-        // Past the end it stays at the end.
-        XCTAssertEqual(s.timeLeft(at: t0.addingTimeInterval(5000)), 0)
-    }
-
-    func testPausedStandsStill() {
-        let s = playing(300, paused: true)
-        XCTAssertNil(s.timerRange)
-        XCTAssertEqual(s.position(at: t0.addingTimeInterval(600)), 300)
-        XCTAssertEqual(s.timeLeftText(at: t0.addingTimeInterval(600)), "19:00 left")
-        XCTAssertNil(NowPlayingActivity.staleDate(s))
-        XCTAssertEqual(NowPlayingActivity.staleDate(playing(300)), t0.addingTimeInterval(1200))
-    }
-
-    func testNoLengthKnown() {
-        let s = playing(30, duration: 0)
-        XCTAssertNil(s.timerRange)
-        XCTAssertEqual(s.progress(at: t0), 0)
-        XCTAssertEqual(s.timeLeftText(at: t0), "")
-    }
-
-    func testUpdatesOnlyOnPausePlaySeekOrLength() {
-        let shown = playing(300)
-        // The player reports every second: the timers already show that.
-        XCTAssertFalse(NowPlayingActivity.needsUpdate(from: shown, to: playing(330, at: t0.addingTimeInterval(30))))
-        XCTAssertFalse(NowPlayingActivity.needsUpdate(from: shown, to: playing(331.5, at: t0.addingTimeInterval(30))), "a little jitter")
-        // Paused, played, seeked, a new length, a new video.
-        XCTAssertTrue(NowPlayingActivity.needsUpdate(from: shown, to: playing(330, paused: true, at: t0.addingTimeInterval(30))))
-        XCTAssertTrue(NowPlayingActivity.needsUpdate(from: playing(300, paused: true), to: playing(300, at: t0.addingTimeInterval(30))))
-        XCTAssertTrue(NowPlayingActivity.needsUpdate(from: shown, to: playing(340, at: t0.addingTimeInterval(30))), "skipped 10 s")
-        XCTAssertTrue(NowPlayingActivity.needsUpdate(from: shown, to: playing(320, at: t0.addingTimeInterval(30))), "back 10 s")
-        XCTAssertTrue(NowPlayingActivity.needsUpdate(from: shown, to: playing(330, duration: 1500, at: t0.addingTimeInterval(30))))
-        var next = playing(0, at: t0.addingTimeInterval(30))
-        next.title = "Next episode"
-        XCTAssertTrue(NowPlayingActivity.needsUpdate(from: shown, to: next))
-        // Paused and still paused at the same place: nothing.
-        XCTAssertFalse(NowPlayingActivity.needsUpdate(from: playing(300, paused: true), to: playing(300, paused: true, at: t0.addingTimeInterval(90))))
-    }
-
-    func testContentStaysSmall() throws {
-        // ActivityKit refuses content over 4 KB.
-        var s = playing(300)
-        s.title = String(repeating: "A long title ", count: 20)
-        s.subtitle = String(repeating: "S1 · E3 · A long episode title ", count: 10)
-        s.artwork = "nowplaying-1234ABCD.jpg"
-        XCTAssertLessThan(try JSONEncoder().encode(s).count, 4096)
     }
 }

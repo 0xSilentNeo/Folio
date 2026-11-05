@@ -1,4 +1,5 @@
 import SwiftUI
+import Security
 import UIKit
 import WidgetKit
 
@@ -23,8 +24,10 @@ struct AiringWidget: Widget {
 struct AiringEntry: TimelineEntry {
     enum Content {
         case snapshot(AiringSnapshot)
-        /// No group container, or the app hasn't written a snapshot yet.
+        /// The app hasn't written a snapshot yet.
         case openFolio
+        /// No App Group, and the app's Keychain group is refused (1.23.0).
+        case cantShare
     }
     let date: Date
     let content: Content
@@ -71,12 +74,15 @@ struct AiringProvider: TimelineProvider {
     }
 
     static func entries(from now: Date) -> [AiringEntry] {
-        let dir = AiringSnapshot.directory()
-        guard let snap = AiringSnapshot.read(from: dir) else { return [AiringEntry(date: now, content: .openFolio)] }
+        let dir = WidgetStore.airing()
+        guard let snap = AiringSnapshot.read(from: dir) else {
+            return [AiringEntry(date: now, content: WidgetAccess.cantShare(dir) ? .cantShare : .openFolio)]
+        }
+        if dir?.isKeychain == true { KeychainShare.widgetSaw("Airing: \(snap.items.count) show(s)") }
         var pictures: [String: UIImage] = [:]
         if let dir {
             for name in snap.items.compactMap(\.picture) {
-                if let img = UIImage(contentsOfFile: dir.appendingPathComponent(name).path) { pictures[name] = img }
+                if let data = dir.read(name), let img = UIImage(data: data) { pictures[name] = img }
             }
         }
         return snap.timelineDates(from: now).map { AiringEntry(date: $0, content: .snapshot(snap), pictures: pictures) }
@@ -93,11 +99,13 @@ struct AiringWidgetView: View {
         let rows = entry.rows
         switch family {
         case .accessoryInline:
-            InlineLine(row: rows.first, tracksNothing: entry.tracksNothing)
+            InlineLine(row: rows.first, tracksNothing: entry.tracksNothing, content: entry.content)
         case .accessoryRectangular:
             if let r = rows.first { LockScreenAiring(row: r) } else { LockScreenEmpty(entry: entry) }
         default:
-            if case .openFolio = entry.content {
+            if case .cantShare = entry.content {
+                AiringMessage(icon: "lock.rectangle", title: "Can't reach Folio", detail: WidgetAccess.cantShareDetail)
+            } else if case .openFolio = entry.content {
                 AiringMessage(icon: "bell.fill", title: "Open Folio", detail: "to see the shows you track.")
             } else if entry.tracksNothing {
                 AiringMessage(icon: "bell", title: "Nothing tracked", detail: "Tap Track on a show's page in Folio.")
@@ -114,13 +122,32 @@ struct AiringWidgetView: View {
     private func picture(_ r: AiringSnapshot.Row) -> UIImage? { r.item.picture.flatMap { entry.pictures[$0] } }
 }
 
-/// "Today 9:00 PM", "Tue 9:00 PM", "Nov 20, 9:00 PM" in the phone's time zone.
+/// "Today 9:00 PM", "Tue 9:00 PM", "Nov 20, 9:00 PM" in the phone's time zone;
+/// a day-only episode (no time known): "Today", "Fri", "Nov 20".
 private struct AirTime: View {
     let date: Date
+    var day: Date? = nil
     let now: Date
 
     var body: some View {
         let cal = Calendar.current
+        if let day {
+            if cal.isDate(day, inSameDayAs: now) {
+                Text("Today")
+            } else if let tomorrow = cal.date(byAdding: .day, value: 1, to: now), cal.isDate(day, inSameDayAs: tomorrow) {
+                Text("Tomorrow")
+            } else if day.timeIntervalSince(now) < 6 * 86400 {
+                Text(day, format: .dateTime.weekday(.abbreviated))
+            } else {
+                Text(day, format: .dateTime.month(.abbreviated).day())
+            }
+        } else {
+            timed(cal)
+        }
+    }
+
+    @ViewBuilder
+    private func timed(_ cal: Calendar) -> some View {
         if cal.isDate(date, inSameDayAs: now) {
             Text("Today ") + Text(date, style: .time)
         } else if let tomorrow = cal.date(byAdding: .day, value: 1, to: now), cal.isDate(date, inSameDayAs: tomorrow) {
@@ -133,13 +160,19 @@ private struct AirTime: View {
     }
 }
 
-/// "Out now", or a countdown that runs by itself ("2 hr, 5 min").
+/// "Out now", or a countdown that runs by itself ("2 hr, 5 min"); a
+/// day-only episode counts days ("Today", "In 2 days"), as the app does.
 private struct Countdown: View {
     let row: AiringSnapshot.Row
+    var now: Date = Date()
 
     var body: some View {
         if row.isOut {
             Text("Out now").fontWeight(.semibold)
+        } else if let day = row.episode.localDay() {
+            let cal = Calendar.current
+            let n = cal.dateComponents([.day], from: cal.startOfDay(for: now), to: day).day ?? 0
+            Text(n <= 0 ? "Today" : n == 1 ? "In 1 day" : "In \(n) days")
         } else {
             Text(row.episode.airDate, style: .relative).monospacedDigit()
         }
@@ -161,8 +194,8 @@ private struct SmallAiring: View {
             Spacer(minLength: 4)
             Text(row.item.name).font(.subheadline.weight(.bold)).lineLimit(2)
             Text(row.episode.label).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-            AirTime(date: row.episode.airDate, now: now).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-            Countdown(row: row).font(.caption.weight(.semibold)).foregroundStyle(WidgetTheme.accent).lineLimit(1)
+            AirTime(date: row.episode.airDate, day: row.episode.localDay(), now: now).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+            Countdown(row: row, now: now).font(.caption.weight(.semibold)).foregroundStyle(WidgetTheme.accent).lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .foregroundStyle(WidgetTheme.text)
@@ -200,8 +233,8 @@ private struct AiringList: View {
                         }
                         Spacer(minLength: 6)
                         VStack(alignment: .trailing, spacing: 1) {
-                            AirTime(date: r.episode.airDate, now: now).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-                            Countdown(row: r).font(.caption.weight(.semibold)).foregroundStyle(r.isOut ? WidgetTheme.accent : WidgetTheme.text)
+                            AirTime(date: r.episode.airDate, day: r.episode.localDay(), now: now).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                            Countdown(row: r, now: now).font(.caption.weight(.semibold)).foregroundStyle(r.isOut ? WidgetTheme.accent : WidgetTheme.text)
                                 .lineLimit(1).multilineTextAlignment(.trailing)
                         }
                         .frame(maxWidth: 110, alignment: .trailing)
@@ -245,6 +278,7 @@ private struct LockScreenEmpty: View {
 
     private var detail: String {
         if case .openFolio = entry.content { return "Open Folio" }
+        if case .cantShare = entry.content { return "Can't reach Folio" }
         return entry.tracksNothing ? "Nothing tracked" : "No dates yet"
     }
 }
@@ -253,6 +287,7 @@ private struct LockScreenEmpty: View {
 private struct InlineLine: View {
     let row: AiringSnapshot.Row?
     let tracksNothing: Bool
+    let content: AiringEntry.Content
 
     var body: some View {
         line
@@ -261,8 +296,18 @@ private struct InlineLine: View {
     }
 
     private var line: Text {
-        guard let row else { return Text(tracksNothing ? "Nothing tracked" : "No new episodes") }
+        guard let row else {
+            // Until 1.23.0 "No new episodes" even when the app had written nothing (review, 5 Nov).
+            if case .openFolio = content { return Text("Open Folio for your shows") }
+            if case .cantShare = content { return Text("Can't reach Folio") }
+            return Text(tracksNothing ? "Nothing tracked" : "No new episodes")
+        }
         if row.isOut { return Text("\(row.item.name) \(row.episode.label) is out") }
+        if let day = row.episode.localDay() {
+            let cal = Calendar.current
+            let n = cal.dateComponents([.day], from: cal.startOfDay(for: Date()), to: day).day ?? 0
+            return Text("\(row.item.name) \(row.episode.label) " + (n <= 0 ? "today" : n == 1 ? "tomorrow" : "in \(n) days"))
+        }
         return Text("\(row.item.name) \(row.episode.label) in ") + Text(row.episode.airDate, style: .relative)
     }
 }
@@ -302,4 +347,17 @@ private struct Poster: View {
         .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(WidgetTheme.hairline))
     }
+}
+
+/// Whether the widget can never see Folio's data on this install (1.23.0):
+/// no App Group, and the app's Keychain group refused. Then the widget says
+/// so instead of "Open Folio", which never helped.
+enum WidgetAccess {
+    static func cantShare(_ store: WidgetStore?) -> Bool {
+        guard FolioGroup.container == nil else { return false }
+        guard store != nil, let status = KeychainShare.reachable() else { return true }
+        return status == errSecMissingEntitlement
+    }
+
+    static let cantShareDetail = "This install's signing doesn't let Folio share with its widgets."
 }

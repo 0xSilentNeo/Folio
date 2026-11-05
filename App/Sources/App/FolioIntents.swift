@@ -71,16 +71,25 @@ enum ContinueSnapshotWriter {
     }
 
     private static func write() async {
-        guard let dir = ContinueSnapshot.directory(create: true) else {
+        // Siri's show names don't need the widget's files (they were never
+        // updated without an App Group: review, 5 Nov).
+        defer { updateShortcuts() }
+        guard let dir = WidgetStore.continueWatching(create: true) else {
             if !toldNoGroup {
                 toldNoGroup = true
-                dlog("widget", "\(FolioGroup.status): the widget shows Open Folio")
+                dlog("widget", "\(FolioGroup.status), and no Keychain group to share either (team \(KeychainShare.team ?? "unknown")): the widget shows Open Folio")
             }
             return
         }
         if !toldGroup {
             toldGroup = true
-            dlog("widget", FolioGroup.status)
+            if dir.isKeychain {
+                let seen = KeychainShare.lastSeen()
+                dlog("widget", "\(FolioGroup.status): the widgets' files go in the Keychain group \(KeychainShare.group ?? "?") (the profile's Keychain groups: \(KeychainShare.profileKeychainGroups.joined(separator: ", ")))"
+                     + "; the widget last read them: \(seen ?? "never (its signing may not allow the group)")")
+            } else {
+                dlog("widget", FolioGroup.status)
+            }
         }
         // The kids profile shows an empty widget: Continue Watching is grown-up history.
         let entries = KidsProfile.isOnNow ? [] : Array(HistoryStore.shared.continueWatching.prefix(ContinueSnapshot.limit))
@@ -101,10 +110,9 @@ enum ContinueSnapshotWriter {
             }
             written = snapshot
             sweep(dir, keeping: Set(items.compactMap(\.picture)))
-            WidgetCenter.shared.reloadAllTimelines()
-            dlog("widget", "snapshot: \(items.count) item(s), \(items.filter { $0.picture != nil }.count) with a picture")
+            WidgetCenter.shared.reloadTimelines(ofKind: ContinueSnapshot.widgetKind)
+            dlog("widget", "snapshot: \(items.count) item(s), \(items.filter { $0.picture != nil }.count) with a picture\(dir.isKeychain ? " (Keychain)" : "")")
         }
-        updateShortcuts()
     }
 
     /// One widget row: what Home's card shows for the entry.
@@ -127,12 +135,12 @@ enum ContinueSnapshotWriter {
     /// you stopped watching (ThumbnailStore), else the title's art. Named by
     /// the entry and the picture's version, so a newer frame is a new file,
     /// and so a new snapshot, which reloads the widget.
-    private static func picture(for e: HistoryEntry, meta: MediaMeta?, in dir: URL) async -> String? {
+    private static func picture(for e: HistoryEntry, meta: MediaMeta?, in dir: WidgetStore) async -> String? {
         let base = hash(e.id)
         let frame = ThumbnailStore.url(for: e.id)
         if let saved = (try? frame.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate {
             let name = "\(base)-\(Int(saved.timeIntervalSince1970)).jpg"
-            if FileManager.default.fileExists(atPath: dir.appendingPathComponent(name).path) { return name }
+            if dir.exists(name) { return name }
             return await Task.detached(priority: .utility) { () -> String? in
                 guard let data = try? Data(contentsOf: frame),
                       let img = ImageCache.downsample(data, maxPixel: ContinueSnapshot.picturePixels) else { return nil }
@@ -142,24 +150,22 @@ enum ContinueSnapshotWriter {
         let art = e.item.addonRef == nil ? (meta?.wideArt ?? e.item.artwork) : e.item.artwork
         guard let art, let url = URL(string: art) else { return nil }
         let name = "\(base)-\(hash(art)).jpg"
-        if FileManager.default.fileExists(atPath: dir.appendingPathComponent(name).path) { return name }
+        if dir.exists(name) { return name }
         // ImageCache: from its disk copy when Home has shown the art before.
         guard let img = await ImageCache.shared.image(url, maxPixel: ContinueSnapshot.picturePixels) else { return nil }
         return await Task.detached(priority: .utility) { save(img, name, in: dir) }.value
     }
 
-    nonisolated private static func save(_ img: UIImage, _ name: String, in dir: URL) -> String? {
-        guard let jpeg = img.jpegData(compressionQuality: 0.8),
-              (try? jpeg.write(to: dir.appendingPathComponent(name), options: .atomic)) != nil else { return nil }
+    nonisolated private static func save(_ img: UIImage, _ name: String, in dir: WidgetStore) -> String? {
+        guard let jpeg = img.jpegData(compressionQuality: 0.8), (try? dir.write(jpeg, name)) != nil else { return nil }
         return name
     }
 
     /// Pictures no entry uses any more.
-    static func sweep(_ dir: URL, keeping: Set<String>) {
-        let files = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
-        for f in files where f.hasSuffix(".jpg") && !keeping.contains(f) {
-            try? FileManager.default.removeItem(at: dir.appendingPathComponent(f))
-        }
+    static func sweep(_ dir: URL, keeping: Set<String>) { sweep(.folder(dir), keeping: keeping) }
+
+    static func sweep(_ dir: WidgetStore, keeping: Set<String>) {
+        for f in dir.names() where f.hasSuffix(".jpg") && !keeping.contains(f) { dir.remove(f) }
     }
 
     /// Stable across launches (Swift's hashValue isn't), short enough for a file name.

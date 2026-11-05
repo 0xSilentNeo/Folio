@@ -50,7 +50,7 @@ enum SettingsKey {
     static let downloadRetries = "downloadRetries"
     static let downloadNextEpisodes = "downloadNextEpisodes"    // 1.22.0: 0 (off) | 1 | 2 | 3 episodes after one watched past 70% (AutoDownload)
     static let downloadDeleteWatched = "downloadDeleteWatched"  // 1.22.0: 0 (off) | 1 | 7 days after a downloaded file was finished (WatchedCleanup)
-    static let liveActivities = "liveActivities"                // 1.22.0: downloads and now playing on the Lock Screen and Dynamic Island
+    static let liveActivities = "liveActivities"                // 1.22.0: downloads on the Lock Screen and Dynamic Island (now playing until 1.23.0)
     static let downloadParts = "downloadParts"                  // 1.22.1: 1...8 connections per file (byte ranges side by side); 8 by default since 1.22.3
 
     // PiP
@@ -102,6 +102,7 @@ enum SettingsKey {
 
     // Library
     static let cleanTitles = "cleanTitles"
+    static let searchServerLayout = "searchServerLayout"   // files | posters: what the search shows of the servers' files (1.23.0)
     static let showOnlyMedia = "showOnlyMedia"
     static let folderSorts = "folderSorts"
     static let folderSortLast = "folderSortLast"         // WebDAV: the last sort chosen, for folders without their own

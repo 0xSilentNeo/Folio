@@ -116,7 +116,7 @@ struct RealDebridStatusRow: View {
         } else if state.refreshing {
             row(icon: "arrow.triangle.2.circlepath", title: "Reading your Real-Debrid library…",
                 detail: state.total > 1 ? "\(state.done) of \(state.total) folders" : "The first time takes a moment.") {
-                ProgressView()
+                FolioSpinner()
             }
         }
     }

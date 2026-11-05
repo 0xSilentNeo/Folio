@@ -753,7 +753,7 @@ struct ShadersView: View {
                         if files.contains(where: { $0.lastPathComponent == e.file }) {
                             Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accent)
                         } else if downloading.contains(e.file) {
-                            ProgressView()
+                            FolioSpinner(size: .small)
                         } else {
                             Button { download(e) } label: { Image(systemName: "arrow.down.circle") }
                         }
@@ -1011,7 +1011,7 @@ struct DiagnosticsView: View {
                             DispatchQueue.main.async { report = r; making = false }
                         }
                     } label: {
-                        HStack { Label("Prepare report", systemImage: "doc.zipper"); Spacer(); if making { ProgressView() } }
+                        HStack { Label("Prepare report", systemImage: "doc.zipper"); Spacer(); if making { FolioSpinner(size: .small) } }
                     }
                 }
             } footer: {
@@ -1354,7 +1354,7 @@ private struct HistoryLinkSection: View {
                 HStack {
                     Text("Check watch history linking")
                     Spacer()
-                    if running { ProgressView() }
+                    if running { FolioSpinner(size: .small) }
                 }
             }
             .disabled(running)

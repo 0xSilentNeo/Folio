@@ -43,15 +43,28 @@ enum AiringNotifications {
     /// The soonest `limit` episodes still to come, at their air time less
     /// the setting's lead. One whose moment has already passed (airing in
     /// 30 minutes with "1 hour before") gets none.
-    static func plan(_ shows: [TrackedShow], now: Date, mode: AiringAlerts, limit: Int = limit) -> [PlannedAlert] {
+    /// When a day-only episode is announced: 9 in the morning of its day.
+    static let dayOnlyHour: Double = 9
+
+    static func plan(_ shows: [TrackedShow], now: Date, mode: AiringAlerts, limit: Int = limit, calendar: Calendar = .autoupdatingCurrent) -> [PlannedAlert] {
         guard mode != .off else { return [] }
         var out: [PlannedAlert] = []
         for s in shows {
             for e in s.upcoming(after: now) {
-                let fire = e.airDate!.addingTimeInterval(-mode.lead)
-                guard fire > now else { continue }
                 let what = e.number == nil && e.season == nil ? "A new episode of \(s.name)" : "\(s.name) \(e.label)"
-                let title = mode == .hour ? "\(what) is out in an hour" : "\(what) is out"
+                let fire: Date
+                let title: String
+                if let day = e.day, let start = AiringFormat.date(ofDay: day, calendar: calendar) {
+                    // No time known (TVmaze's 12:00 UTC stands in): the
+                    // morning of its day, not a made-up hour (1.23.0; the
+                    // app shows such episodes by day since 1.22.6).
+                    fire = start.addingTimeInterval(dayOnlyHour * 3600)
+                    title = "\(what) comes out today"
+                } else {
+                    fire = e.airDate!.addingTimeInterval(-mode.lead)
+                    title = mode == .hour ? "\(what) is out in an hour" : "\(what) is out"
+                }
+                guard fire > now else { continue }
                 let body = [e.title, s.network.map { "On \($0)" }].compactMap { $0 }.joined(separator: " · ")
                 let key = e.number.map { "\(e.season ?? 0).\($0)" } ?? "\(Int(e.airDate!.timeIntervalSince1970))"
                 out.append(PlannedAlert(id: "\(prefix)\(s.id).\(key)", showID: s.id, fire: fire, title: title, body: body))

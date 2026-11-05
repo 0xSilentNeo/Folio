@@ -252,9 +252,9 @@ struct SubtitleSearchCard: View {
     @ViewBuilder private var status: some View {
         switch search.phase {
         case .lookingUp:
-            HStack(spacing: 8) { ProgressView().tint(.white); Text("Finding the title…") }.font(.subheadline)
+            HStack(spacing: 8) { FolioSpinner(size: .small, tint: .white); Text("Finding the title…") }.font(.subheadline)
         case .searching(let answered, let total):
-            HStack(spacing: 8) { ProgressView().tint(.white); Text("Asking subtitle addons… \(answered) of \(total)") }.font(.subheadline)
+            HStack(spacing: 8) { FolioSpinner(size: .small, tint: .white); Text("Asking subtitle addons… \(answered) of \(total)") }.font(.subheadline)
         case .done:
             if search.results.isEmpty { note("The subtitle addons found nothing for this title.") }
         case .noAddon:

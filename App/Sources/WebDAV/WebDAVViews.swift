@@ -90,7 +90,7 @@ struct ServerEditView: View {
                     Button {
                         Task { await test() }
                     } label: {
-                        HStack { Text("Test connection"); Spacer(); if testing { ProgressView() } }
+                        HStack { Text("Test connection"); Spacer(); if testing { FolioSpinner(size: .small) } }
                     }
                     if let testResult { Text(testResult).font(.footnote).foregroundStyle(.secondary) }
                 }
@@ -194,8 +194,8 @@ struct WebDAVBrowserView: View {
     /// What each entry shows under its clean title (worked out with the keys).
     @State private var attributeLines: [URL: [String]] = [:]
     @State private var loading = true
-    @State private var error: String?
-    @State private var offline = false
+    /// Why the folder couldn't be listed, said in Folio's style (1.23.0).
+    @State private var problem: ServerProblem?
     @State private var sort: LibrarySort = .name
     @State private var ascending = true
     @State private var prefLoaded = false
@@ -209,11 +209,12 @@ struct WebDAVBrowserView: View {
 
     var body: some View {
         List {
-            if let error {
-                Section {
-                    Label(error, systemImage: offline ? "wifi.slash" : "exclamationmark.triangle").foregroundStyle(.orange)
-                    Button("Retry") { Task { await load() } }
-                }
+            if let problem {
+                ProblemCard(problem: problem, actions: [ProblemCard.Action(title: "Try again", primary: true) { Task { await load() } }])
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 24)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             }
             ForEach(visible) { item in
                 if item.isDirectory {
@@ -253,12 +254,12 @@ struct WebDAVBrowserView: View {
                     }
                 }
             }
-            if !loading && visible.isEmpty && error == nil {
+            if !loading && visible.isEmpty && problem == nil {
                 Text("Empty folder").foregroundStyle(.secondary)
             }
         }
         .listStyle(.plain)
-        .overlay { if loading && items.isEmpty { ProgressView() } }
+        .overlay { if loading && items.isEmpty { FolioSpinner(size: .large) } }
         .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
@@ -324,12 +325,16 @@ struct WebDAVBrowserView: View {
         do {
             items = try await client.list(url)
             rekey()
-            error = nil
+            problem = nil
         } catch {
-            // Offline: said plainly (Home's Real-Debrid section stays while offline and opens here).
-            let codes: [URLError.Code] = [.notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed]
-            offline = (error as? URLError).map { codes.contains($0.code) } ?? false
-            self.error = offline ? "You're offline, or \(server.name) can't be reached right now." : error.localizedDescription
+            // Offline, a removed release, a refused login: said plainly (Home's
+            // Real-Debrid section stays while offline and opens here).
+            let p = ServerProblem.classify(status: nil, error: error, server: server.name,
+                                           realDebrid: RealDebrid.isRealDebrid(server), folder: true)
+            problem = p
+            dlog("webdav", "folder not listed (\(server.name)): \(p.title)")
+            // A release Real-Debrid removed leaves Home's row and the search.
+            if p.kind == .gone { LibraryIndexStore.shared.refreshNow(server) }
         }
     }
 
