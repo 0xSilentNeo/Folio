@@ -149,7 +149,7 @@ struct RootView: View {
                 }
                 Tab(value: 3, role: .search) { SearchTabView(query: $searchText, scope: SearchScope(fromTab: searchFrom)) }
             }
-            .modifier(TabBarSearchField(text: $searchText, prompt: SearchScope(fromTab: searchFrom).prompt, selected: tab == 3))
+            .modifier(TabBarSearchField())
         } else {
             TabView(selection: $tab) {
                 HomeView().tabZoom()
