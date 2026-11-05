@@ -20,6 +20,10 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.22.7", items: [
+            Item(icon: "play.rectangle.on.rectangle", title: "Control Center and the Lock Screen",
+                 text: "What's playing should show there now. Like Music and TV, Folio's sound now pauses other apps' sound instead of mixing with it."),
+        ]),
         Release(version: "1.22.6", items: [
             Item(icon: "magnifyingglass", title: "Search on its own, on iOS 27 too",
                  text: "The round search button sits beside the tab bar and opens into the field where it is. Cancel takes you back."),
