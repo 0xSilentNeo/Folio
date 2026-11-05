@@ -28,6 +28,8 @@ final class PlayerUIState: ObservableObject {
     var presentNow: ((Panel) -> Void)?
 
     func toggle(_ p: Panel) {
+        // How smoothly the press and the menu go (5 Nov: "a hitch on every button").
+        HitchProbe.start("ui", "menu \(p.rawValue) pressed", seconds: 1.2)
         panel = panel == p ? nil : p
         dlog("ui", "panel \(panel?.rawValue ?? "closed")")
         if let panel { presentNow?(panel) }

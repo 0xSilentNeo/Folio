@@ -13,7 +13,8 @@ import Security
 /// only ever said "Open Folio".
 enum WidgetStore: Sendable {
     case folder(URL)
-    case keychain(group: String, area: String)
+    /// `group` nil: the process's default Keychain group (1.23.1).
+    case keychain(group: String?, area: String)
 
     /// Continue Watching's files ("Widget").
     static func continueWatching(create: Bool = false) -> WidgetStore? { store(area: "Widget", create: create) }
@@ -28,8 +29,13 @@ enum WidgetStore: Sendable {
             }
             return .folder(dir)
         }
-        if let group = KeychainShare.group { return .keychain(group: group, area: area) }
-        return nil
+        // The default Keychain group, named by no one: a signing tool built on
+        // zsign (KSign) gives the app and its widget the profile's very same
+        // entitlements, so their default group is the same (zsign copies the
+        // profile's Entitlements into every binary: openssl.cpp, archo.cpp).
+        // 1.23.0 named the group "TEAM.<bundle id>", which such a profile
+        // doesn't grant: -34018 on every write (5 Nov report).
+        return .keychain(group: nil, area: area)
     }
 
     var isKeychain: Bool { if case .keychain = self { return true } else { return false } }
@@ -157,15 +163,15 @@ enum KeychainShare {
         return first
     }
 
-    private static func query(group: String, account: String? = nil) -> [String: Any] {
+    private static func query(group: String?, account: String? = nil) -> [String: Any] {
         var q: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
-                                kSecAttrService as String: service,
-                                kSecAttrAccessGroup as String: group]
+                                kSecAttrService as String: service]
+        if let group { q[kSecAttrAccessGroup as String] = group }
         if let account { q[kSecAttrAccount as String] = account }
         return q
     }
 
-    static func read(group: String, account: String) -> (data: Data?, status: OSStatus) {
+    static func read(group: String?, account: String) -> (data: Data?, status: OSStatus) {
         var q = query(group: group, account: account)
         q[kSecReturnData as String] = true
         q[kSecMatchLimit as String] = kSecMatchLimitOne
@@ -174,14 +180,14 @@ enum KeychainShare {
         return (status == errSecSuccess ? out as? Data : nil, status)
     }
 
-    static func exists(group: String, account: String) -> Bool {
+    static func exists(group: String?, account: String) -> Bool {
         var q = query(group: group, account: account)
         q[kSecMatchLimit as String] = kSecMatchLimitOne
         return SecItemCopyMatching(q as CFDictionary, nil) == errSecSuccess
     }
 
     @discardableResult
-    static func write(_ data: Data, group: String, account: String) -> OSStatus {
+    static func write(_ data: Data, group: String?, account: String) -> OSStatus {
         let q = query(group: group, account: account)
         let status = SecItemUpdate(q as CFDictionary, [kSecValueData as String: data] as CFDictionary)
         guard status == errSecItemNotFound else { return status }
@@ -191,7 +197,7 @@ enum KeychainShare {
         return SecItemAdd(add as CFDictionary, nil)
     }
 
-    static func accounts(group: String) -> [String] {
+    static func accounts(group: String?) -> [String] {
         var q = query(group: group)
         q[kSecReturnAttributes as String] = true
         q[kSecMatchLimit as String] = kSecMatchLimitAll
@@ -200,7 +206,7 @@ enum KeychainShare {
         return items.compactMap { $0[kSecAttrAccount as String] as? String }
     }
 
-    static func remove(group: String, account: String) {
+    static func remove(group: String?, account: String) {
         SecItemDelete(query(group: group, account: account) as CFDictionary)
     }
 
@@ -210,22 +216,43 @@ enum KeychainShare {
     /// app's log can say whether sharing works on this install.
     static let seenAccount = "seen"
 
+    /// The default group as this process has it (a probe item's group), for
+    /// the log: the app's and the widget's must be the same for sharing.
+    static let defaultGroup: String? = probedGroup()
+
     static func widgetSaw(_ what: String) {
-        guard let group else { return }
-        let line = ISO8601DateFormatter().string(from: Date()) + " " + what
-        write(Data(line.utf8), group: group, account: seenAccount)
+        let line = ISO8601DateFormatter().string(from: Date()) + " " + what + " (the widget's Keychain group: " + (defaultGroup ?? "?") + ")"
+        write(Data(line.utf8), group: nil, account: seenAccount)
     }
 
-    /// What the widget wrote, if it could reach the group.
+    /// What the widget wrote, if it reached the same group.
     static func lastSeen() -> String? {
-        guard let group, let data = read(group: group, account: seenAccount).data else { return nil }
+        guard let data = read(group: nil, account: seenAccount).data else { return nil }
         return String(data: data, encoding: .utf8)
     }
 
-    /// Whether this process may use the group at all (the widget: whether
-    /// its signature allows the app's group). errSecMissingEntitlement: no.
+    /// Whether this process may use its Keychain at all. errSecMissingEntitlement: no.
     static func reachable() -> OSStatus? {
-        guard let group else { return nil }
-        return read(group: group, account: seenAccount).status
+        read(group: nil, account: seenAccount).status
+    }
+
+    private static func probedGroup() -> String? {
+        let base: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                                   kSecAttrService as String: "folio.team-probe",
+                                   kSecAttrAccount as String: "probe"]
+        var out: CFTypeRef?
+        var query = base
+        query[kSecReturnAttributes as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var status = SecItemCopyMatching(query as CFDictionary, &out)
+        if status == errSecItemNotFound {
+            var add = base
+            add[kSecValueData as String] = Data()
+            add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            add[kSecReturnAttributes as String] = true
+            status = SecItemAdd(add as CFDictionary, &out)
+        }
+        guard status == errSecSuccess, let attrs = out as? [String: Any] else { return "status \(status)" }
+        return attrs[kSecAttrAccessGroup as String] as? String
     }
 }

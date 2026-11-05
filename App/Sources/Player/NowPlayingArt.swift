@@ -8,17 +8,18 @@ import UIKit
 ///     poster,
 ///   - the frame saved when it was last closed.
 enum NowPlayingArt {
-    /// Big enough for the Lock Screen's large artwork, small in memory.
-    static let maxPixel: CGFloat = 800
+    /// The Lock Screen's large artwork fills the width of a Pro Max (1320 px):
+    /// 1.23.0 used the rows' 480 px episode pictures, blurry there (5 Nov).
+    static let maxPixel: CGFloat = 1400
 
     static func find(for it: MediaItem) async -> (image: UIImage, source: String)? {
-        if let a = it.artwork, let u = URL(string: a), ["http", "https"].contains(u.scheme?.lowercased() ?? ""),
+        if let a = it.artwork.map(large), let u = URL(string: a), ["http", "https"].contains(u.scheme?.lowercased() ?? ""),
            let img = await ImageCache.shared.image(u, maxPixel: maxPixel) {
             return (img, "its own picture")
         }
         if let m = await MetadataService.shared.lookup(filename: lookupName(it)) {
             for (kind, address) in [("episode still", m.episodeThumb), ("backdrop", m.background), ("poster", m.poster)] {
-                guard let address, let u = URL(string: address) else { continue }
+                guard let address, let u = URL(string: large(address)) else { continue }
                 if let img = await ImageCache.shared.image(u, maxPixel: maxPixel) { return (img, kind) }
             }
         }
@@ -35,5 +36,16 @@ enum NowPlayingArt {
         let name = it.fileName
         let parsed = TitleParser.parse(name)
         return parsed.title.count >= 2 ? name : it.displayTitle
+    }
+
+    /// The same picture at the size the Lock Screen needs: IMDb and TMDB
+    /// serve any width from the same address (IMDb's "._V1_…UX480_" part,
+    /// TMDB's "/t/p/w300/").
+    static func large(_ address: String) -> String {
+        if address.contains("._V1_") { return IMDbSource.sized(address, width: Int(maxPixel)) ?? address }
+        if let r = address.range(of: #"/t/p/w\d+/"#, options: .regularExpression) {
+            return address.replacingCharacters(in: r, with: "/t/p/w1280/")
+        }
+        return address
     }
 }

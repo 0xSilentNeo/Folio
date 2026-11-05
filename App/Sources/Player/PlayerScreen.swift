@@ -941,7 +941,10 @@ struct PillIcon: View {
 
     var body: some View {
         let h = tune.pillHeight
-        Button(action: action) {
+        Button(action: {
+            HitchProbe.start("ui", "\(icon) pressed", seconds: 1.0)
+            action()
+        }) {
             Image(systemName: icon)
                 .font(.system(size: size, weight: .semibold))
                 .contentTransition(.symbolEffect(.replace))

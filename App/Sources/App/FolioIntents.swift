@@ -85,8 +85,8 @@ enum ContinueSnapshotWriter {
             toldGroup = true
             if dir.isKeychain {
                 let seen = KeychainShare.lastSeen()
-                dlog("widget", "\(FolioGroup.status): the widgets' files go in the Keychain group \(KeychainShare.group ?? "?") (the profile's Keychain groups: \(KeychainShare.profileKeychainGroups.joined(separator: ", ")))"
-                     + "; the widget last read them: \(seen ?? "never (its signing may not allow the group)")")
+                dlog("widget", "\(FolioGroup.status): the widgets' files go in the default Keychain group, here \(KeychainShare.defaultGroup ?? "?") (the profile's Keychain groups: \(KeychainShare.profileKeychainGroups.joined(separator: ", ")))"
+                     + "; the widget last read them: \(seen ?? "never")")
             } else {
                 dlog("widget", FolioGroup.status)
             }

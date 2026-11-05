@@ -314,7 +314,7 @@ final class PlayerModel: ObservableObject {
             do { try glRenderer.attach(to: c) } catch {
                 errorMessage = "Video output failed: \(error.localizedDescription)"
             }
-            pip.view.onLayout = { [weak glRenderer] pixels in glRenderer?.setViewSize(pixels) }
+            pip.view.onLayout = { [weak glRenderer, weak self] pixels in glRenderer?.setViewSize(pixels); self?.refitAnime4K() }
             let b = pip.view.bounds.size, n = pip.view.layouts
             Task { @MainActor in PiPTrace.event("OpenGL renderer listening for the view's size: \(Int(b.width))×\(Int(b.height)) pt after \(n) layout(s)") }
             // start() runs in viewDidAppear, after the view's layout: its size
@@ -322,7 +322,10 @@ final class PlayerModel: ObservableObject {
             // turns).
             pip.view.reportSize()
         }
-        metalView?.onResize = { [weak self] in self?.nudgeRedraw() }
+        metalView?.onResize = { [weak self] in self?.nudgeRedraw(); self?.refitAnime4K() }
+        observers.append(NotificationCenter.default.addObserver(forName: ProcessInfo.thermalStateDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refitAnime4K() }
+        })
         mode = .main
 
         if defaults.bool(forKey: SettingsKey.pipEnabled), PiPManager.isSupported {
@@ -577,15 +580,52 @@ final class PlayerModel: ObservableObject {
 
     /// The player's own Anime4K mode (a show's remembered one may differ
     /// from the saved default), then your shaders.
-    private func applyShaderList() {
+    private func applyShaderList(force: Bool = true) {
         guard let c = client else { return }
-        let list = Anime4K.paths(mode: anime4kMode, quality: anime4kQuality) + MPVFiles.activeShaderPaths
+        let restoreOnly = anime4kRestoreOnly
+        let list = Anime4K.paths(mode: anime4kMode, quality: anime4kQuality, restoreOnly: restoreOnly) + MPVFiles.activeShaderPaths
+        // A change of size or heat that changes nothing: no reload.
+        guard force || list != appliedShaders else { return }
+        if anime4kMode != .off, appliedShaders != list {
+            dlog("player", "Anime4K \(anime4kMode.rawValue)/\(anime4kQuality.rawValue): \(restoreOnly ? "restore stages only" : "full chain")"
+                 + " (on screen at \(anime4kScale.map { String(format: "%.2f×", $0) } ?? "?"), thermal \(ProcessInfo.processInfo.thermalState.rawValue))")
+        }
+        appliedShaders = list
         if !list.contains(where: { $0.contains(":") }) {
             c.set("glsl-shaders", list.joined(separator: ":"))      // one change, one shader reload
         } else {
             c.command(["change-list", "glsl-shaders", "clr", ""])
             for p in list { c.command(["change-list", "glsl-shaders", "append", p]) }
         }
+    }
+
+    // MARK: Anime4K fitted to the screen (1.23.1)
+
+    private var appliedShaders: [String] = []
+
+    /// How much bigger than its own size the video is shown, fitted in the
+    /// player view; nil until both are known.
+    private var anime4kScale: CGFloat? {
+        let v = videoSize
+        let px = videoView.bounds.size
+        let scale = videoView.window?.screen.scale ?? UIScreen.main.scale
+        guard v.width > 0, v.height > 0, px.width > 0, px.height > 0 else { return nil }
+        return min(px.width * scale / v.width, px.height * scale / v.height)
+    }
+
+    /// The restore stages only: the video shown at under 1.5× (Anime4K.fullChainScale),
+    /// or the phone hot (Apple: at "serious", "reduce GPU usage").
+    private var anime4kRestoreOnly: Bool {
+        if ProcessInfo.processInfo.thermalState.rawValue >= ProcessInfo.ThermalState.serious.rawValue { return true }
+        guard let s = anime4kScale else { return false }
+        return s < Anime4K.fullChainScale
+    }
+
+    /// The video's size, the view's size or the heat changed: the chain again
+    /// if it's now a different one.
+    private func refitAnime4K() {
+        guard anime4kMode != .off else { return }
+        applyShaderList(force: false)
     }
 
     private func observe(_ c: MPVClient) {
@@ -670,6 +710,8 @@ final class PlayerModel: ObservableObject {
         loadStarted = Date()
         userMarkers = MarkerStore.shared.markers(for: item.id)
         mediaTitle = item.displayTitle
+        lastGamma = ""
+        glHDRFailedForFile = false
 
         if let old = scopedURL { old.stopAccessingSecurityScopedResource(); scopedURL = nil }
         if let u = item.resolvedURL, u.isFileURL, !u.path.hasPrefix(MPVFiles.documents.path) {
@@ -1335,7 +1377,14 @@ final class PlayerModel: ObservableObject {
 
     private var lastGamma = ""
     private func updateVideoFormat(gamma: String? = nil) {
-        if let gamma { lastGamma = gamma }
+        // While the decoder restarts, mpv has no video params for a moment
+        // and reports no gamma: that isn't an SDR video. Read as one, the
+        // OpenGL renderer switched HDR off, which changed the decoding and
+        // restarted the decoder, which reported no gamma again, round and
+        // round: a 4K Dolby Vision file never got going (5 Nov report: the
+        // decoder flipped between VideoToolbox and software many times a
+        // second). The last gamma is forgotten when a new file loads.
+        if let gamma, !gamma.isEmpty { lastGamma = gamma }
         let gamma = lastGamma
         let dv = tracks.first { $0.type == "video" && $0.selected }?.dvProfile ?? 0
         if dv > 0 { videoFormat = "Dolby Vision" }
@@ -1353,11 +1402,17 @@ final class PlayerModel: ObservableObject {
     /// "HDR output" on and a screen with HDR headroom; otherwise mpv tone-maps
     /// to SDR as before.
     private var glHDROn = false
+    /// Half-float frames failed for this file: not tried again until the
+    /// next one (the simulator, which can't make them, tried after every
+    /// decoder restart, round and round).
+    private var glHDRFailedForFile = false
 
     private func updateGLHDR(gamma: String) {
         guard renderer == .gl, let c = client, let gl = glRenderer else { return }
         let hdrVideo = gamma == "pq" || gamma == "hlg"
-        let want = hdrVideo && defaults.bool(forKey: SettingsKey.hdrOutput) && UIScreen.main.potentialEDRHeadroom > 1
+        // -labEDR: as on an HDR screen (the simulator has none), to test this path.
+        let edr = UIScreen.main.potentialEDRHeadroom > 1 || CommandLine.arguments.contains("-labEDR")
+        let want = hdrVideo && defaults.bool(forKey: SettingsKey.hdrOutput) && edr && !glHDRFailedForFile
         guard want != glHDROn else { return }
         glHDROn = want
         let autoDecode = (defaults.string(forKey: SettingsKey.hwdec) ?? "auto") == "auto"
@@ -1388,6 +1443,7 @@ final class PlayerModel: ObservableObject {
     private func glHDRFailed() {
         guard glHDROn, let c = client else { return }
         glHDROn = false
+        glHDRFailedForFile = true
         c.set("target-prim", "auto")
         c.set("target-trc", "auto")
         pip.setHDR(false)
@@ -1600,6 +1656,15 @@ final class PlayerModel: ObservableObject {
     func applySubtitleStyle() {
         guard let c = client else { return }
         for (k, v) in subtitleOptions() { c.set(k, v) }
+    }
+
+    /// How much bigger the picture is filled than fitted in the player view
+    /// (1: the video is the view's shape). The pinch follows it (1.23.1).
+    var fillRatio: CGFloat {
+        let v = videoSize, b = videoView.bounds.size
+        guard v.width > 0, v.height > 0, b.width > 0, b.height > 0 else { return 1 }
+        let fit = min(b.width / v.width, b.height / v.height), fill = max(b.width / v.width, b.height / v.height)
+        return fit > 0 ? fill / fit : 1
     }
 
     func toggleZoom() {
@@ -3157,6 +3222,8 @@ extension PlayerModel: MPVClientDelegate {
                 }
             }
         case "video-params/gamma":
+            // Logged as mpv reports it: a decoder restart reports none for a moment.
+            dlog("player", "video gamma: \(value.string.map { $0.isEmpty ? "(empty)" : $0 } ?? "(none)")")
             updateVideoFormat(gamma: value.string ?? "")
         case "audio-out-params/channels":
             audioOut = value.string ?? ""
@@ -3179,7 +3246,7 @@ extension PlayerModel: MPVClientDelegate {
 
     private func applyVideoSize() {
         let size = CGSize(width: pendingW, height: pendingH)
-        if size != videoSize { videoSize = size }
+        if size != videoSize { videoSize = size; refitAnime4K() }
         if pendingW > 0, pendingH > 0, renderer == .metal {
             sw.setVideoSize(width: pendingW, height: pendingH)
         }

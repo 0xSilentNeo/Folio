@@ -20,6 +20,20 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.23.1", items: [
+            Item(icon: "rectangle.on.rectangle", title: "Widgets, another way in",
+                 text: "Without an App Group, the widgets now look in the Keychain the signing gives the app and the widget alike."),
+            Item(icon: "photo", title: "Sharp artwork in Control Center",
+                 text: "The Lock Screen and Control Center get the picture at full size, not the list's small one."),
+            Item(icon: "sparkles", title: "Anime4K, lighter",
+                 text: "On this screen a 1080p video gets the restore stages at its own size, not a 4K image every frame; it eases off when the phone is hot."),
+            Item(icon: "play.rectangle", title: "HDR on OpenGL no longer stuck loading",
+                 text: "The renderer stopped switching decoding back and forth while a 4K HDR file started."),
+            Item(icon: "slider.horizontal.3", title: "A steady time bar",
+                 text: "The bar no longer grows and shrinks while you press the menu buttons on iOS 27."),
+            Item(icon: "arrow.up.left.and.arrow.down.right", title: "Pinch follows your fingers",
+                 text: "Pinching the video moves the picture as you pinch, then settles on Fit or Fill."),
+        ]),
         Release(version: "1.23.0", items: [
             Item(icon: "magnifyingglass", title: "A smoother, tidier search",
                  text: "Opens without the stall, starts with what it searches, shows server files as a list or as posters, and a pill opens a file's folder."),

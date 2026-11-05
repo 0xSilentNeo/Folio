@@ -128,6 +128,13 @@ struct PanelToolbarView: UIViewRepresentable {
         var onCapsule: ((CGFloat, CGFloat) -> Void)?
         private var checkPending = false
         private var reported: (CGFloat, CGFloat)?
+        private var settle: DispatchWorkItem?
+
+        /// A menu is up or on its way: iOS lifts its button out of the
+        /// toolbar into the menu's glass, which isn't "doesn't fit", and the
+        /// capsule round the others isn't the capsule at rest (5 Nov phone
+        /// log: "now 202 pt wide" and "capsule at 68…114" as a menu opened).
+        private var menuUp: Bool { window?.rootViewController?.presentedViewController != nil }
 
         private var buttons: [UIView] { (items ?? []).compactMap(\.customView) }
 
@@ -193,15 +200,25 @@ struct PanelToolbarView: UIViewRepresentable {
             dropSafeArea(self)
             super.layoutSubviews()
             describeViews()
-            if window != nil, let (a, b) = capsuleSpan() {
-                let span = (a.rounded(), b.rounded())
-                if reported.map({ $0 != span }) ?? true {
-                    reported = span
-                    // After this layout pass: the row's new width lays the toolbar out again.
-                    DispatchQueue.main.async { [weak self] in self?.onCapsule?(span.0, span.1) }
+            // Where the capsule settles, not every step on the way: on iOS 27
+            // the glass swells while a button is held and shrinks back, and
+            // each step resized the time bar beside it (5 Nov: up to 13
+            // sizes in one press; "the progress bar shrinks and expands").
+            // Reported 0.35 s after the last change, with no menu up.
+            if window != nil, capsuleSpan() != nil {
+                settle?.cancel()
+                let work = DispatchWorkItem { [weak self] in
+                    guard let self, self.window != nil, !self.menuUp, let (a, b) = self.capsuleSpan() else { return }
+                    let span = (a.rounded(), b.rounded())
+                    guard self.reported.map({ $0 != span }) ?? true else { return }
+                    self.reported = span
+                    self.onCapsule?(span.0, span.1)
                 }
+                settle = work
+                // The first one at once: the row needs it to place the toolbar.
+                DispatchQueue.main.asyncAfter(deadline: .now() + (reported == nil ? 0 : 0.35), execute: work)
             }
-            guard window != nil, bounds.width > 0, !checkPending, buttons.contains(where: { $0.window == nil }) else { return }
+            guard window != nil, bounds.width > 0, !checkPending, !menuUp, buttons.contains(where: { $0.window == nil }) else { return }
             // Only an overflow that lasts: while the player rotates, the
             // toolbar is briefly laid out at an in-between size (lab: an
             // overflow at launch in landscape that was gone 0.5 s later).
@@ -209,7 +226,7 @@ struct PanelToolbarView: UIViewRepresentable {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
                 guard let self else { return }
                 self.checkPending = false
-                if self.window != nil, self.buttons.contains(where: { $0.window == nil }) { self.onOverflow?() }
+                if self.window != nil, !self.menuUp, self.buttons.contains(where: { $0.window == nil }) { self.onOverflow?() }
             }
         }
 
