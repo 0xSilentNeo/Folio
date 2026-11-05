@@ -460,6 +460,16 @@ final class PlayerModel: ObservableObject {
         // renderer switch (PiP), and left audio up to 3 s out of sync for ~10 s.
         // AudioUnit stayed within 0.17 s and recovered in about a second.
         c.setOption("ao", aoOverride ?? "audiounit,avfoundation")
+        // Folio's sound doesn't mix with other apps' (1.22.7). mpv's AudioUnit
+        // output sets the audio session again when it starts, and without
+        // this asks it to mix with others (ao_audiounit.m: no
+        // AO_INIT_EXCLUSIVE → AVAudioSessionCategoryOptionMixWithOthers).
+        // iOS never makes an app that mixes the Now Playing app, so Control
+        // Center and the Lock Screen said "Not Playing" (4 Nov report): the
+        // session read "options 1" once a file with sound played, in the
+        // simulator, whatever Folio had set before. Music and TV don't mix
+        // either: another app's sound pauses when a video starts.
+        c.setOption("audio-exclusive", "yes")
         c.setOption("audio-channels", defaults.bool(forKey: SettingsKey.surroundAudio) ? "auto" : "stereo")
         c.setOption("sub-auto", "fuzzy")
         if defaults.string(forKey: SettingsKey.subtitlesDefault) == "off" { c.setOption("sid", "no") }
@@ -2890,6 +2900,19 @@ final class PlayerModel: ObservableObject {
     }
     private var nowPlayingLoggedFor: String?
 
+    /// The audio session as mpv's audio output left it, once a file plays
+    /// (1.22.7). mpv sets the session itself when its output starts, after
+    /// Folio's own setup (ao_audiounit.m), so this is what iOS goes by.
+    private func logAudioSessionOnce() {
+        let id = (playingItem ?? item).id
+        guard audioSessionLoggedFor != id else { return }
+        audioSessionLoggedFor = id
+        let a = AVAudioSession.sharedInstance()
+        let mixes = a.categoryOptions.contains(.mixWithOthers)
+        dlog("player", "audio session while playing: \(a.category.rawValue), \(a.mode.rawValue), options \(a.categoryOptions.rawValue)\(mixes ? " (mixes with others: iOS won't make Folio the Now Playing app)" : ""), route sharing \(a.routeSharingPolicy.rawValue)")
+    }
+    private var audioSessionLoggedFor: String?
+
     /// The Live Activity for what's playing (1.22.0, NowPlayingActivity):
     /// started for each file once its length is known, then kept up to date
     /// (it pushes to the Lock Screen only on a pause, play, seek or length
@@ -2951,6 +2974,7 @@ extension PlayerModel: MPVClientDelegate {
                 errorMessage = msg
             }
         case .playbackRestart:
+            logAudioSessionOnce()
             skipLanded()
             buffering = false
             swapSeekQuietUntil = 0
