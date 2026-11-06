@@ -230,24 +230,51 @@ struct VideoSurface: UIViewRepresentable {
         }
 
         /// Pinch between Fit and Fill (1.23.1): the picture follows the
-        /// fingers, then springs to Fit or Fill when they lift, and mpv takes
-        /// over the framing. Until 1.23.0 nothing moved until the fingers
-        /// lifted, then it jumped (5 Nov: "it instantly changes").
+        /// fingers, then springs to Fit or Fill when they lift. Until 1.23.0
+        /// nothing moved until the fingers lifted, then it jumped (5 Nov:
+        /// "it instantly changes").
+        ///
+        /// 1.23.4 (6 Nov recording: a frame of the wrong size when the
+        /// fingers lifted, and subtitles cut while pinching):
+        /// - OpenGL: the view is scaled as a stand-in while the fingers move,
+        ///   and subtitles follow it (PlayerModel.setPinchScale). At the end
+        ///   the layer's Fill and the stand-in's removal go in one screen
+        ///   update with no animation. 1.23.1 asked mpv for Fill and removed
+        ///   the stand-in 50 ms later, whichever frame was showing by then.
+        /// - Metal: mpv frames the picture itself as the fingers move (live
+        ///   panscan), so there's nothing to hand over and mpv keeps text
+        ///   subtitles on the screen.
         private var pinchFromFill = false
         private var pinchRatio: CGFloat = 1
+        private var pinchPanscan: Double = 0
+        private var panscanAnimation: CADisplayLink?
+        private var panscanFrom: Double = 0, panscanTo: Double = 0, panscanStart: CFTimeInterval = 0
+        private var panscanDone: (() -> Void)?
 
         @objc private func pinch(_ g: UIPinchGestureRecognizer) {
             guard !ui.locked else { return }
             let v = model.videoView
+            let gl = model.renderer == .gl
             switch g.state {
             case .began:
+                panscanAnimation?.invalidate(); panscanAnimation = nil
                 pinchFromFill = model.zoomToFill
                 pinchRatio = model.fillRatio
+                pinchPanscan = pinchFromFill ? 1 : 0
             case .changed:
                 guard pinchRatio > 1.02 else { return }
                 let lo: CGFloat = pinchFromFill ? 1 / pinchRatio : 1
                 let hi: CGFloat = pinchFromFill ? 1 : pinchRatio
-                v.transform = CGAffineTransform(scaleX: Self.rubber(g.scale, lo, hi), y: Self.rubber(g.scale, lo, hi))
+                if gl {
+                    let s = Self.rubber(g.scale, lo, hi)
+                    v.transform = CGAffineTransform(scaleX: s, y: s)
+                    model.setPinchScale(s)
+                } else {
+                    // Scale relative to Fit, within Fit…Fill → panscan 0…1.
+                    let fit = (pinchFromFill ? pinchRatio : 1) * min(max(g.scale, lo), hi)
+                    pinchPanscan = Double((fit - 1) / (pinchRatio - 1))
+                    model.setLivePanscan(pinchPanscan)
+                }
             case .ended, .cancelled, .failed:
                 // Picture already the screen's shape: Fit and Fill look alike;
                 // a firm pinch still switches, as before.
@@ -255,29 +282,64 @@ struct VideoSurface: UIViewRepresentable {
                     if g.state == .ended, (g.scale > 1.15 && !model.zoomToFill) || (g.scale < 0.87 && model.zoomToFill) { model.toggleZoom() }
                     return
                 }
-                let s = v.transform.a
                 let r = pinchRatio
-                let toFill = pinchFromFill ? s >= (1 + 1 / r) / 2 : s > (1 + r) / 2
-                let changes = g.state == .ended && toFill != pinchFromFill
-                let target: CGFloat = changes ? (pinchFromFill ? 1 / r : r) : 1
-                UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0,
-                               options: [.allowUserInteraction, .beginFromCurrentState]) {
-                    v.transform = CGAffineTransform(scaleX: target, y: target)
-                } completion: { [weak model] _ in
-                    guard changes, let model else { v.transform = .identity; return }
-                    // mpv frames the next picture itself; the stand-in scale
-                    // goes once it has had a frame to do so.
-                    model.toggleZoom()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { v.transform = .identity }
+                if gl {
+                    let s = v.transform.a
+                    let toFill = pinchFromFill ? s >= (1 + 1 / r) / 2 : s > (1 + r) / 2
+                    let changes = g.state == .ended && toFill != pinchFromFill
+                    let target: CGFloat = changes ? (pinchFromFill ? 1 / r : r) : 1
+                    model.setPinchScale(target)
+                    UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0,
+                                   options: [.allowUserInteraction, .beginFromCurrentState]) {
+                        v.transform = CGAffineTransform(scaleX: target, y: target)
+                    } completion: { [weak model] _ in
+                        guard let model else { v.transform = .identity; return }
+                        // The layer's Fill and the stand-in's removal in one update, unanimated.
+                        CATransaction.begin()
+                        CATransaction.setDisableActions(true)
+                        model.dropPinchScale()
+                        if changes { model.setZoom(fill: toFill) } else { model.applySubtitleFraming() }
+                        v.transform = .identity
+                        CATransaction.commit()
+                    }
+                } else {
+                    let toFill = pinchPanscan >= 0.5
+                    let changes = g.state == .ended && toFill != pinchFromFill
+                    let end: Double = changes ? (toFill ? 1 : 0) : (pinchFromFill ? 1 : 0)
+                    animatePanscan(from: pinchPanscan, to: end) { [weak model] in
+                        guard let model else { return }
+                        if changes { model.setZoom(fill: toFill) } else { model.setLivePanscan(end) }
+                    }
                 }
             default: break
             }
         }
 
+        /// Metal: panscan eased to Fit or Fill over a quarter second, a step per screen refresh.
+        private func animatePanscan(from: Double, to: Double, done: @escaping () -> Void) {
+            panscanAnimation?.invalidate()
+            panscanFrom = from; panscanTo = to; panscanStart = CACurrentMediaTime(); panscanDone = done
+            let link = CADisplayLink(target: self, selector: #selector(panscanStep(_:)))
+            link.add(to: .main, forMode: .common)
+            panscanAnimation = link
+        }
+
+        @objc private func panscanStep(_ link: CADisplayLink) {
+            let t = min(1, (CACurrentMediaTime() - panscanStart) / 0.25)
+            let eased = 1 - pow(1 - t, 3)
+            model.setLivePanscan(panscanFrom + (panscanTo - panscanFrom) * eased)
+            guard t >= 1 else { return }
+            link.invalidate(); panscanAnimation = nil
+            let done = panscanDone; panscanDone = nil
+            done?()
+        }
+
         /// The pinch's scale within lo…hi, with a little give past either end.
+        /// At most 10% past either end (1.23.4: fingers spread wide took the
+        /// picture to 2.4× Fit in the simulator).
         static func rubber(_ x: CGFloat, _ lo: CGFloat, _ hi: CGFloat) -> CGFloat {
-            if x < lo { return lo - (lo - x) * 0.25 }
-            if x > hi { return hi + (x - hi) * 0.25 }
+            if x < lo { return max(lo * 0.9, lo - (lo - x) * 0.25) }
+            if x > hi { return min(hi * 1.1, hi + (x - hi) * 0.25) }
             return x
         }
 

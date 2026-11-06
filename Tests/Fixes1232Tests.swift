@@ -184,6 +184,50 @@ final class Fixes1232Tests: XCTestCase {
         XCTAssertTrue(HistoryStore.better(finished, than: a), "watched to the end since: start over next time")
     }
 
+    // MARK: Subtitles that follow the zoom (1.23.4)
+
+    func testFillOnOpenGLMovesSubtitlesUpIntoView() {
+        // The 6 Nov recording: a 16:9 file on the 2868×1320 px landscape screen, OpenGL, Fill.
+        let video = CGSize(width: 3840, height: 2160), view = CGSize(width: 956, height: 440)
+        let ratio: CGFloat = 956 / (440 * 16 / 9)                        // Fill is 1.22× Fit
+        let f = PlayerModel.subtitleFraming(gl: true, fill: true, fillRatio: ratio, pinch: 1, video: video, view: view)
+        XCTAssertEqual(f.scale, ratio, accuracy: 0.001)
+        XCTAssertEqual(f.visible, 1 / ratio, accuracy: 0.001, "82% of the frame's height is on screen")
+        let p = PlayerModel.subtitlePlacement(userPos: 100, userScale: 1, framing: f, follow: true, gl: true)
+        XCTAssertEqual(p.pos, 91, "up by the 9% Fill cuts off the bottom")
+        XCTAssertEqual(p.scale, 1 / Double(ratio), accuracy: 0.001, "the same size on screen as in Fit")
+        // Manual: left as set.
+        let m = PlayerModel.subtitlePlacement(userPos: 100, userScale: 1, framing: f, follow: false, gl: true)
+        XCTAssertEqual(m.pos, 100); XCTAssertEqual(m.scale, 1)
+    }
+
+    func testFitAndWidePicturesLeaveSubtitlesAlone() {
+        let view = CGSize(width: 956, height: 440)
+        let fit = PlayerModel.subtitleFraming(gl: true, fill: false, fillRatio: 1.22, pinch: 1, video: CGSize(width: 3840, height: 2160), view: view)
+        XCTAssertEqual(PlayerModel.subtitlePlacement(userPos: 95, userScale: 1.2, framing: fit, follow: true, gl: true).pos, 95)
+        // A 2.39:1 film fills by cropping its sides: nothing cut at the bottom, only the size kept.
+        let wide = PlayerModel.subtitleFraming(gl: true, fill: true, fillRatio: 1.1, pinch: 1, video: CGSize(width: 3840, height: 1606), view: view)
+        XCTAssertEqual(wide.visible, 1, accuracy: 0.001)
+        XCTAssertEqual(PlayerModel.subtitlePlacement(userPos: 100, userScale: 1, framing: wide, follow: true, gl: true).pos, 100)
+    }
+
+    func testAPinchOnMetalKeepsSubtitlesInView() {
+        let f = PlayerModel.subtitleFraming(gl: false, fill: false, fillRatio: 1.22, pinch: 1.2, video: CGSize(width: 1920, height: 1080), view: CGSize(width: 956, height: 440))
+        XCTAssertEqual(f.visible, 1 / 1.2, accuracy: 0.001)
+        XCTAssertEqual(PlayerModel.subtitlePlacement(userPos: 100, userScale: 1, framing: f, follow: true, gl: false).pos, 92)
+        // OpenGL can't go below the frame's bottom (no black bars drawn in).
+        XCTAssertEqual(PlayerModel.subtitlePlacement(userPos: 140, userScale: 1, framing: (1, 1), follow: true, gl: true).pos, 100)
+    }
+
+    func testOneUnreadableAddonDoesntLoseTheOthers() throws {
+        let good = #"{"transportURL":"https://a.example/manifest.json","manifest":{"id":"a","name":"A","types":["movie"],"catalogs":[],"resources":["stream"]}}"#
+        let bad = #"{"transportURL":"https://b.example/manifest.json"}"#         // no manifest: can't be read
+        let data = Data("[\(good),\(bad)]".utf8)
+        XCTAssertNil(try? JSONDecoder().decode([InstalledAddon].self, from: data), "read whole, one bad entry fails the list")
+        let lossy = try XCTUnwrap(JSONDecoder().decodeLossy(InstalledAddon.self, from: data))
+        XCTAssertEqual(lossy.map(\.manifest.name), ["A"])
+    }
+
     func testOnlyAnAnimeIDMakesAnime() {
         XCTAssertFalse(AnimeHint(title: "MobLand", episode: 2).hasAnimeID)
         XCTAssertTrue(AnimeHint(title: "Frieren", episode: 4, malId: 52991).hasAnimeID)

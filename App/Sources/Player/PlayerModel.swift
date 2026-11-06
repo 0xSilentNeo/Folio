@@ -316,7 +316,7 @@ final class PlayerModel: ObservableObject {
             do { try glRenderer.attach(to: c) } catch {
                 errorMessage = "Video output failed: \(error.localizedDescription)"
             }
-            pip.view.onLayout = { [weak glRenderer, weak self] pixels in glRenderer?.setViewSize(pixels); self?.refitAnime4K() }
+            pip.view.onLayout = { [weak glRenderer, weak self] pixels in glRenderer?.setViewSize(pixels); self?.refitAnime4K(); self?.applySubtitleFraming() }
             let b = pip.view.bounds.size, n = pip.view.layouts
             Task { @MainActor in PiPTrace.event("OpenGL renderer listening for the view's size: \(Int(b.width))×\(Int(b.height)) pt after \(n) layout(s)") }
             // start() runs in viewDidAppear, after the view's layout: its size
@@ -1770,7 +1770,87 @@ final class PlayerModel: ObservableObject {
         remember { $0.audioDelay = v }
     }
     /// Your size times the style preset's (Large is a third larger).
-    func setSubScale(_ v: Double) { client?.set("sub-scale", v * subtitleStyle.scaleFactor) }
+    func setSubScale(_ v: Double) {
+        defaults.set(v, forKey: SettingsKey.subScale)
+        applySubtitleFraming()
+    }
+
+    func setSubPos(_ v: Int) {
+        defaults.set(v, forKey: SettingsKey.subPos)
+        applySubtitleFraming()
+    }
+
+    // MARK: Subtitles that follow the zoom (1.23.4)
+
+    /// On the OpenGL renderer the frames are the video's shape (so PiP's
+    /// window is) and Fill is the layer cropping them, subtitles and all:
+    /// a two-line subtitle lost its second line below the screen (6 Nov
+    /// recording; mpv's log: "Window size: 2346x1320", OSD borders 0 in Fill
+    /// and Fit alike). A pinch scales the picture before mpv frames it again,
+    /// on both renderers. Automatic moves and resizes them so they keep
+    /// their place and size on what's visible (sub-pos, sub-scale); on Metal
+    /// mpv's own Fill keeps text subtitles on the screen already (libass with
+    /// margins, mpv's default sub-use-margins).
+    var subtitlesFollowZoom: Bool { (defaults.string(forKey: SettingsKey.subFollowZoom) ?? "auto") != "manual" }
+
+    /// A pinch's stand-in scale of the picture (1: none).
+    private(set) var pinchScale: CGFloat = 1
+    /// The stand-in scale gone with nothing applied yet: the caller applies
+    /// the framing that replaces it (setZoom), so no subtitle placement
+    /// counts both at once.
+    func dropPinchScale() { pinchScale = 1 }
+    func setPinchScale(_ s: CGFloat) {
+        guard abs(s - pinchScale) > 0.004 || s == 1 else { return }
+        pinchScale = s
+        applySubtitleFraming()
+    }
+
+    /// How much bigger than fitted the frame is shown, and the part of its
+    /// height that's on the screen.
+    static func subtitleFraming(gl: Bool, fill: Bool, fillRatio: CGFloat, pinch: CGFloat,
+                                video: CGSize, view: CGSize) -> (scale: CGFloat, visible: CGFloat) {
+        guard gl else {
+            // Metal: the frame is the view; mpv frames Fill itself.
+            let k = max(0.05, pinch)
+            return (k, min(1, 1 / k))
+        }
+        let k = max(0.05, (fill ? fillRatio : 1) * pinch)
+        guard video.width > 0, video.height > 0, view.width > 0, view.height > 0 else { return (k, 1) }
+        let fitH = min(view.height, view.width * video.height / video.width)
+        return (k, min(1, view.height / (fitH * k)))
+    }
+
+    /// sub-pos and sub-scale for what's on screen: your position and size
+    /// on the visible part of the picture (Automatic), or as set (Manual).
+    static func subtitlePlacement(userPos: Double, userScale: Double, framing: (scale: CGFloat, visible: CGFloat),
+                                  follow: Bool, gl: Bool) -> (pos: Int, scale: Double) {
+        var pos = userPos, scale = userScale
+        if follow {
+            pos = userPos - 50 * (1 - Double(framing.visible))
+            scale = userScale / Double(framing.scale)
+        }
+        pos = min(gl ? 100 : 150, max(0, pos))
+        return (Int(pos.rounded()), scale)
+    }
+
+    func applySubtitleFraming() {
+        guard let c = client else { return }
+        let framing = Self.subtitleFraming(gl: renderer == .gl, fill: zoomToFill, fillRatio: fillRatio, pinch: pinchScale,
+                                           video: videoSize, view: videoView.bounds.size)
+        let userScale = (defaults.object(forKey: SettingsKey.subScale) == nil ? 1 : defaults.double(forKey: SettingsKey.subScale)) * subtitleStyle.scaleFactor
+        let userPos = defaults.object(forKey: SettingsKey.subPos) == nil ? 100 : Double(defaults.integer(forKey: SettingsKey.subPos))
+        let p = Self.subtitlePlacement(userPos: userPos, userScale: userScale, framing: framing, follow: subtitlesFollowZoom, gl: renderer == .gl)
+        guard lastSubPlacement.map({ $0.pos != p.pos || abs($0.scale - p.scale) > 0.005 }) ?? true else { return }
+        lastSubPlacement = p
+        if pinchScale == 1 {
+            dlog("player", String(format: "subtitles %@: picture %.2f× fitted, %.0f%% of its height on screen (%@) → sub-pos %d, sub-scale %.2f",
+                                  subtitlesFollowZoom ? "kept on screen" : "as set", framing.scale, framing.visible * 100,
+                                  renderer == .gl ? (zoomToFill ? "OpenGL Fill" : "OpenGL Fit") : (zoomToFill ? "Metal Fill" : "Metal Fit"), p.pos, p.scale))
+        }
+        c.set("sub-pos", String(p.pos))
+        c.set("sub-scale", String(format: "%.3f", p.scale))
+    }
+    private var lastSubPlacement: (pos: Int, scale: Double)?
 
     /// The saved subtitle options for this renderer. The sample-buffer
     /// renderer's frames are the video's shape, with no black bars to draw
@@ -1786,6 +1866,8 @@ final class PlayerModel: ObservableObject {
     func applySubtitleStyle() {
         guard let c = client else { return }
         for (k, v) in subtitleOptions() { c.set(k, v) }
+        lastSubPlacement = nil
+        applySubtitleFraming()
     }
 
     /// How much bigger the picture is filled than fitted in the player view
@@ -1797,11 +1879,25 @@ final class PlayerModel: ObservableObject {
         return fit > 0 ? fill / fit : 1
     }
 
-    func toggleZoom() {
-        let fill = !zoomToFill
+    func toggleZoom() { setZoom(fill: !zoomToFill) }
+
+    /// Fit or Fill. On OpenGL the layer's gravity changes here and now, in
+    /// the caller's transaction, not when mpv's echo of panscan arrives: a
+    /// pinch drops its stand-in scale in the same screen update (1.23.4; the
+    /// 6 Nov recording had a frame of each framing at once).
+    func setZoom(fill: Bool, toast: Bool = true) {
+        if renderer == .gl { pip.setFill(fill) }
+        zoomToFill = fill
         client?.set("panscan", fill ? 1.0 : 0.0)
-        showToast(fill ? "Fill" : "Fit")
+        if toast { showToast(fill ? "Fill" : "Fit") }
         remember { $0.panscan = fill ? 1 : 0 }
+        applySubtitleFraming()
+    }
+
+    /// Metal: a pinch frames the picture in mpv as the fingers move (panscan
+    /// between Fit, 0, and Fill, 1), so there's no stand-in to hand over.
+    func setLivePanscan(_ p: Double) {
+        client?.set("panscan", min(1, max(0, p)))
     }
 
     func setAspect(_ value: String) {
@@ -3596,6 +3692,7 @@ extension PlayerModel: MPVClientDelegate {
             zoomToFill = (value.double ?? 0) > 0.5
             // Fill did nothing on the sample-buffer renderer (review, 2 Nov).
             if renderer == .gl { pip.setFill(zoomToFill) }
+            applySubtitleFraming()
         default:
             break
         }
@@ -3603,7 +3700,7 @@ extension PlayerModel: MPVClientDelegate {
 
     private func applyVideoSize() {
         let size = CGSize(width: pendingW, height: pendingH)
-        if size != videoSize { videoSize = size; refitAnime4K() }
+        if size != videoSize { videoSize = size; refitAnime4K(); applySubtitleFraming() }
         if pendingW > 0, pendingH > 0, renderer == .metal {
             sw.setVideoSize(width: pendingW, height: pendingH)
         }

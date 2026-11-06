@@ -20,6 +20,12 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.23.4", items: [
+            Item(icon: "captions.bubble", title: "Subtitles stay in view",
+                 text: "Fill and pinching no longer push subtitles off the screen: they move and resize with the picture. Turn it off in the player's Subtitles menu (When zoomed)."),
+            Item(icon: "arrow.up.left.and.arrow.down.right", title: "A cleaner pinch",
+                 text: "No jump when your fingers lift: Fill and Fit take over in the same frame."),
+        ]),
         Release(version: "1.23.3", items: [
             Item(icon: "play.circle", title: "Resume resumes",
                  text: "After an update, Resume on a title page and a tap on an episode started from the beginning though the button showed your place. They go on from it now."),
