@@ -144,6 +144,46 @@ final class Fixes1232Tests: XCTestCase {
         XCTAssertEqual(RenderPasses.summary(#"{"fresh":[{"desc":"a","avg":0}]}"#), "1 passes (no GPU timings): a")
     }
 
+    // MARK: Resume after a reinstall (library files' paths)
+
+    private func libEntry(_ path: String, _ pos: Double, _ dur: Double, ago: Double) -> HistoryEntry {
+        var m = MediaItem(url: path, title: "Lab Show S01E02", source: .local)
+        m.historyKey = path
+        return HistoryEntry(item: m, position: pos, duration: dur, updated: Date().addingTimeInterval(-ago))
+    }
+
+    func testLibraryFilesAreKnownByTheirPlaceInMedia() {
+        XCTAssertEqual(HistoryStore.libraryRelative("/private/var/mobile/Containers/Data/Application/986B236C-AAAA/Documents/Media/show/E1.mkv"), "show/E1.mkv")
+        XCTAssertEqual(HistoryStore.libraryRelative("/var/mobile/Containers/Data/Application/DFBF5E79-BBBB/Documents/Media/show/E1.mkv"), "show/E1.mkv")
+        XCTAssertNil(HistoryStore.libraryRelative("https://dav.real-debrid.com/torrents/x/E1.mkv"))
+        XCTAssertNil(HistoryStore.libraryRelative("/private/var/mobile/Library/Mobile Documents/E1.mkv"))
+    }
+
+    func testAReinstallKeepsThePlaceToResume() {
+        // 5 Nov: E12 at 12:53 under the old install's folder; after 1.23.0 a
+        // page played it from 0 and 7 s were saved under the new folder.
+        let old = libEntry("/var/mobile/Containers/Data/Application/DFBF5E79-1111/Documents/Media/Lab Show S01E02.mp4", 773, 1440, ago: 3600)
+        let falseStart = libEntry("/private/var/mobile/Containers/Data/Application/986B236C-2222/Documents/Media/Lab Show S01E02.mp4", 7, 1440, ago: 60)
+        let other = libEntry("/var/mobile/Containers/Data/Application/DFBF5E79-1111/Documents/Media/Other/Lab Show S01E02.mp4", 300, 1440, ago: 30)
+        let dir = "/var/mobile/Containers/Data/Application/986B236C-2222/Documents/Media"
+        let r = HistoryStore.rebased([old, falseStart, other], mediaDir: dir)
+        XCTAssertEqual(r.entries.count, 2, "the two entries for one file became one; the file in another folder stays its own")
+        XCTAssertEqual(r.merged, 1)
+        let e = r.entries.first { $0.item.url.hasSuffix("Media/Lab Show S01E02.mp4") }
+        XCTAssertEqual(e?.position, 773, "the entry with a place to resume wins over a few seconds' false start")
+        XCTAssertEqual(e?.item.url, dir + "/Lab Show S01E02.mp4")
+        XCTAssertEqual(e?.id, dir + "/Lab Show S01E02.mp4", "its id moves too, so the player finds it")
+        XCTAssertEqual(r.entries.first { $0.item.url.contains("/Other/") }?.position, 300)
+    }
+
+    func testANewerEntryThatSaysMoreWins() {
+        let a = libEntry("/x/Documents/Media/E.mkv", 400, 1440, ago: 100)
+        let b = libEntry("/y/Documents/Media/E.mkv", 900, 1440, ago: 10)
+        XCTAssertTrue(HistoryStore.better(b, than: a))
+        let finished = libEntry("/y/Documents/Media/E.mkv", 1440, 1440, ago: 5)
+        XCTAssertTrue(HistoryStore.better(finished, than: a), "watched to the end since: start over next time")
+    }
+
     func testOnlyAnAnimeIDMakesAnime() {
         XCTAssertFalse(AnimeHint(title: "MobLand", episode: 2).hasAnimeID)
         XCTAssertTrue(AnimeHint(title: "Frieren", episode: 4, malId: 52991).hasAnimeID)

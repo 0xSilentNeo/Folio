@@ -46,6 +46,7 @@ final class HistoryStore: ObservableObject {
         var byKey: [String: Int] = [:]          // item.url or id → first entry with it
         var byID: [String: Int] = [:]           // id → first entry with it
         var byMediaName: [String: Int] = [:]    // a library file's name → first library entry with it
+        var byLibrary: [String: Int] = [:]      // a library file's path inside Media → its entry (1.23.2)
         var continueWatching: [HistoryEntry]?
     }
     private var lookup: Lookup?
@@ -60,6 +61,10 @@ final class HistoryStore: ObservableObject {
             if Self.isLibraryFile(e.item.url) {
                 let name = (e.item.url as NSString).lastPathComponent
                 if l.byMediaName[name] == nil { l.byMediaName[name] = i }
+            }
+            if let rel = Self.libraryRelative(e.id) ?? Self.libraryRelative(e.item.url) {
+                if let j = l.byLibrary[rel], !Self.better(e, than: entries[j]) { continue }
+                l.byLibrary[rel] = i
             }
         }
         lookup = l
@@ -81,7 +86,12 @@ final class HistoryStore: ObservableObject {
         fileURL = dir.appendingPathComponent("history.json")
         if let data = try? Data(contentsOf: fileURL),
            let decoded = try? JSONDecoder().decode([HistoryEntry].self, from: data) {
-            entries = decoded
+            let r = Self.rebased(decoded, mediaDir: MPVFiles.mediaDir.path)
+            entries = r.entries
+            if r.moved > 0 || r.merged > 0 {
+                dlog("history", "library files: \(r.moved) entr(ies) moved to this install's folder, \(r.merged) duplicate(s) merged")
+                DispatchQueue.main.async { [weak self] in self?.scheduleSave() }
+            }
         }
         // The widget's copy of Continue Watching follows these entries (1.20.3, FolioIntents.swift).
         ContinueSnapshotWriter.watch(self)
@@ -152,18 +162,74 @@ final class HistoryStore: ObservableObject {
 
     var recent: [HistoryEntry] { entries.sorted { $0.updated > $1.updated } }
 
+    /// The entry the player resumes from. A library file is also found by
+    /// its place inside Media (1.23.2), as the pages find it: the player
+    /// looked only for the exact path, which a reinstall changes, so a page
+    /// said "Resume from 12:53" and the file started at 0 (5 Nov log, 19:09:47).
     func entry(for key: String) -> HistoryEntry? {
-        index.byID[key].map { entries[$0] }
+        let l = index
+        if let i = l.byID[key] { return entries[i] }
+        if let rel = Self.libraryRelative(key), let i = l.byLibrary[rel] { return entries[i] }
+        return nil
     }
 
     /// The first entry whose URL or id is `url`; for a library file, else the
-    /// first library entry with its file name (library files keep their
-    /// progress across a reinstall, which changes the container path).
+    /// entry of the file at the same place inside Media. Until 1.23.2 that was
+    /// any library entry with the same file name, so "A/01.mkv" showed
+    /// "B/01.mkv"'s progress (review, 2 Nov).
     func entry(forURL url: String) -> HistoryEntry? {
         let l = index
         if let i = l.byKey[url] { return entries[i] }
-        guard Self.isLibraryFile(url) else { return nil }
-        return l.byMediaName[(url as NSString).lastPathComponent].map { entries[$0] }
+        guard let rel = Self.libraryRelative(url) else { return nil }
+        return l.byLibrary[rel].map { entries[$0] }
+    }
+
+    // MARK: Library files across installs (1.23.2)
+
+    /// A library file's path inside Documents/Media: the same after a
+    /// reinstall or a sideloaded update (each moves the app's container:
+    /// …/DFBF5E79…/Documents/Media/ became …/986B236C…/ when 1.23.0 went on
+    /// in the 5 Nov log), and whether the path was written "/private/var/…"
+    /// or "/var/…" (both forms are in that log for the same episode).
+    nonisolated static func libraryRelative(_ path: String) -> String? {
+        let ns = path as NSString
+        let r = ns.range(of: "/Documents/Media/")
+        guard r.location != NSNotFound else { return nil }
+        let rel = ns.substring(from: r.location + r.length)
+        return rel.isEmpty ? nil : rel
+    }
+
+    /// Of two entries for the same file, the one that says more: one with a
+    /// place to resume or finished, then the newer.
+    nonisolated static func better(_ a: HistoryEntry, than b: HistoryEntry) -> Bool {
+        let am = a.isFinished || a.canResume, bm = b.isFinished || b.canResume
+        if am != bm { return am }
+        return a.updated > b.updated
+    }
+
+    /// Library entries moved to this install's Media folder, and two for one
+    /// file made one.
+    nonisolated static func rebased(_ list: [HistoryEntry], mediaDir: String) -> (entries: [HistoryEntry], moved: Int, merged: Int) {
+        let base = mediaDir.hasSuffix("/") ? mediaDir : mediaDir + "/"
+        var out: [HistoryEntry] = []
+        var at: [String: Int] = [:]
+        var moved = 0, merged = 0
+        for var e in list {
+            guard let rel = libraryRelative(e.id) ?? libraryRelative(e.item.url) else { out.append(e); continue }
+            let path = base + rel
+            var changed = false
+            if libraryRelative(e.item.url) != nil, e.item.url != path { e.item.url = path; changed = true }
+            if let k = e.item.historyKey, libraryRelative(k) != nil, k != path { e.item.historyKey = path; changed = true }
+            if changed { moved += 1 }
+            if let j = at[rel] {
+                merged += 1
+                if better(e, than: out[j]) { out[j] = e }
+                continue
+            }
+            at[rel] = out.count
+            out.append(e)
+        }
+        return (out, moved, merged)
     }
 
     /// A file in the library's folder. NSString's own search: a URL's path
@@ -187,6 +253,8 @@ final class HistoryStore: ObservableObject {
         let entry = HistoryEntry(item: Self.stored(item), position: position, duration: duration, updated: Date())
         if let i = entries.firstIndex(where: { $0.id == item.id }) {
             entries[i] = entry
+        } else if let rel = Self.libraryRelative(item.id), let i = entries.firstIndex(where: { Self.libraryRelative($0.id) == rel }) {
+            entries[i] = entry          // the same library file under another path (1.23.2)
         } else {
             entries.append(entry)
         }

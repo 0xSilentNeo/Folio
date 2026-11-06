@@ -20,6 +20,12 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.23.3", items: [
+            Item(icon: "play.circle", title: "Resume resumes",
+                 text: "After an update, Resume on a title page and a tap on an episode started from the beginning though the button showed your place. They go on from it now."),
+            Item(icon: "rectangle.stack", title: "One place per file",
+                 text: "Each downloaded file keeps one saved place, not one per install, and a file no longer shows the progress of another with the same name."),
+        ]),
         Release(version: "1.23.2", items: [
             Item(icon: "forward.end", title: "On to the next episode",
                  text: "A show you added on Real-Debrid one episode at a time now goes on to the next one, wherever its folder is."),
