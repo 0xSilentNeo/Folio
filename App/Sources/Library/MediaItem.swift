@@ -14,6 +14,9 @@ struct AnimeHint: Codable, Hashable {
     var anilistId: Int?
     var kitsuId: Int?
     var anidbId: Int?
+
+    /// Known to be anime: an anime database's id, not just a title and number.
+    var hasAnimeID: Bool { malId != nil || anilistId != nil || kitsuId != nil || anidbId != nil }
 }
 
 /// Saved in history, so a new case here must still read old entries.

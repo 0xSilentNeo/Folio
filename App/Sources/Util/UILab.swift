@@ -16,6 +16,7 @@ enum UILab {
 
     static func start() {
         if LabDAV.on { LabDAV.seed() }
+        LabDAV.seedServer()
         if ShotsSeed.enabled { ShotsSeed.run(); return }
         if CommandLine.arguments.contains("-avLab") { avLab(); return }
         if CommandLine.arguments.contains("-labDiscover") { IMDbSource.seedForLab(); return }

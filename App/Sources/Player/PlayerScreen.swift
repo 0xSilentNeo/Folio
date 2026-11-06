@@ -44,7 +44,8 @@ struct PlayerScreen: View {
                     .allowsHitTesting(false)
                 }
 
-                BusySpinner(busy: (model.buffering || model.isLoading) && model.errorMessage == nil)
+                BusySpinner(busy: (model.buffering || model.isLoading) && model.errorMessage == nil,
+                            delay: model.isLoading ? 0.35 : model.spinnerDelay)
                     .offset(y: ui.controlsVisible && !ui.locked ? -10 : 0)
 
                 // iOS 26: while a panel is open, a tap anywhere outside it closes
@@ -967,6 +968,8 @@ struct PillIcon: View {
 /// the 1 Nov log has ten seeks in one second while the phone turned).
 struct BusySpinner: View {
     let busy: Bool
+    /// Seconds before it shows (a local file's seek: a second; PlayerModel.spinnerDelay).
+    var delay: Double = 0.35
     @State private var shown = false
 
     var body: some View {
@@ -976,7 +979,7 @@ struct BusySpinner: View {
         .allowsHitTesting(false)
         .task(id: busy) {
             guard busy else { shown = false; return }
-            try? await Task.sleep(for: .milliseconds(350))
+            try? await Task.sleep(for: .milliseconds(Int(delay * 1000)))
             if !Task.isCancelled { shown = true }
         }
     }

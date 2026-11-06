@@ -20,6 +20,21 @@ enum ContinueQueue {
         let before = PlayerPresenter.current.map(ObjectIdentifier.init)
         pending = Task { @MainActor in
             let t0 = Date()
+            if case .webdav = item.source {
+                // The player opens at once and the folder's other files join
+                // its queue when the listing comes (1.23.2): the listing took
+                // 1.2 s on Real-Debrid ("built in 1212 ms", 5 Nov log) before
+                // the file was even asked for.
+                let it = await webdavAddress(item)
+                guard !Task.isCancelled, PlayerPresenter.current.map(ObjectIdentifier.init) == before else { return }
+                PlayerPresenter.play(queue: [it], index: 0)
+                let opened = PlayerPresenter.current.map(ObjectIdentifier.init)
+                let (queue, index) = await build(it)
+                guard !Task.isCancelled, let player = PlayerPresenter.current, ObjectIdentifier(player) == opened else { return }
+                dlog("player", String(format: "continue: %d item(s) in queue, starting at %d (built in %.0f ms, the player already open)", queue.count, index + 1, Date().timeIntervalSince(t0) * 1000))
+                if queue.count > 1 { player.model.adoptQueue(queue, index: index) }
+                return
+            }
             let (queue, index) = await build(item)
             guard !Task.isCancelled else { return }
             guard PlayerPresenter.current.map(ObjectIdentifier.init) == before else {
@@ -29,6 +44,33 @@ enum ContinueQueue {
             dlog("player", String(format: "continue: %d item(s) in queue, starting at %d (built in %.0f ms)", queue.count, index + 1, Date().timeIntervalSince(t0) * 1000))
             PlayerPresenter.play(queue: queue, index: index)
         }
+    }
+
+    /// A WebDAV episode saved under its download address (1.23.1 and older
+    /// put a prepared next episode's download address in the episode, so
+    /// history kept it: the 5 Nov log played "syd3-4.download.real-debrid.com
+    /// /d/…" from Continue Watching as a queue of one, an address that
+    /// expires). Its WebDAV address is found again in the server's library by
+    /// file name, and its history entry moves there with its position.
+    @MainActor
+    static func webdavAddress(_ item: MediaItem) async -> MediaItem {
+        guard case .webdav(let id) = item.source, let server = ServerStore.shared.servers.first(where: { $0.id == id }),
+              let u = URL(string: item.url), let base = URL(string: server.baseURL),
+              let host = u.host?.lowercased(), host != base.host?.lowercased() else { return item }
+        await LibraryIndexStore.shared.load(server)
+        let name = u.lastPathComponent.removingPercentEncoding ?? u.lastPathComponent
+        guard let f = LibraryIndexStore.shared.state(id).index?.allFiles.first(where: { $0.name == name }) else {
+            dlog("player", "continue: \(name) was saved under a download address and isn't in \(server.name)'s library")
+            return item
+        }
+        var it = item
+        it.url = f.url.absoluteString
+        if let e = HistoryStore.shared.entry(for: item.id) {
+            HistoryStore.shared.record(it, position: e.position, duration: e.duration)
+            HistoryStore.shared.remove(e)
+        }
+        dlog("player", "continue: \(name) was saved under a download address; its WebDAV address on \(server.name) instead")
+        return it
     }
 
     @MainActor

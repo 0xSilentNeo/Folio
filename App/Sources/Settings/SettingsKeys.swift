@@ -81,6 +81,8 @@ enum SettingsKey {
     static let skipUseChapters = "skipUseChapters"
     static let skipInjectChapters = "skipInjectChapters"
     static let skipOATLength = "skipOATLength"
+    /// 1.23.2: an intro pill you watch through in two episodes of a show stops showing for it.
+    static let skipLearnIntros = "skipLearnIntros"
 
     // mpv
     static let activeShaders = "activeShaders"
@@ -188,6 +190,7 @@ enum SettingsKey {
             skipUseChapters: true,
             skipInjectChapters: true,
             skipOATLength: 90,
+            skipLearnIntros: true,
             flipVideo: false,
             renderer: "metal",
             hdrOutput: true,

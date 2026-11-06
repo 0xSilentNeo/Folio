@@ -20,6 +20,18 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.23.2", items: [
+            Item(icon: "forward.end", title: "On to the next episode",
+                 text: "A show you added on Real-Debrid one episode at a time now goes on to the next one, wherever its folder is."),
+            Item(icon: "bolt", title: "Real-Debrid opens faster",
+                 text: "Folio finds the file's download address first, so opening, resuming and seeking no longer go back through Real-Debrid's WebDAV each time."),
+            Item(icon: "text.badge.checkmark", title: "Up Next says what it covers",
+                 text: "Watch Ending, Watch Preview: named after the part. No card over a scene after the credits; a preview keeps it."),
+            Item(icon: "forward.frame", title: "Intros you watch",
+                 text: "Watch an intro through in two episodes and its Skip button stops showing for that show. Bring it back in Settings → Skip Intro & Credits."),
+            Item(icon: "circle.dashed", title: "Calmer seeks",
+                 text: "Seeking in a downloaded file no longer flashes the loading spinner."),
+        ]),
         Release(version: "1.23.1", items: [
             Item(icon: "rectangle.on.rectangle", title: "Widgets, another way in",
                  text: "Without an App Group, the widgets now look in the Keychain the signing gives the app and the widget alike."),

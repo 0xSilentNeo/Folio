@@ -275,7 +275,11 @@ enum AddonPlayback {
 /// a second download of each file, held in RAM (the memory warnings and the
 /// app ended while the next episode loaded, 27 Oct).
 enum LinkWarmer {
-    static func resolve(_ url: URL, headers: [String: String]) async -> URL? {
+    /// Hosts that answered without a redirect this launch (a NAS, most
+    /// WebDAV servers): their files aren't asked twice before mpv opens them.
+    @MainActor static var direct: Set<String> = []
+
+    static func resolve(_ url: URL, headers: [String: String], purpose: String = "next episode") async -> URL? {
         var r = URLRequest(url: url, timeoutInterval: 40)
         r.setValue("bytes=0-0", forHTTPHeaderField: "Range")
         r.setValue("libmpv", forHTTPHeaderField: "User-Agent")       // what the player sends
@@ -293,12 +297,12 @@ enum LinkWarmer {
             response = r
         } catch {
             NetTrace.report("link", url: url, others: others, started: c0, timer: timer, status: nil, bytes: nil, error: error)
-            dlog("player", "next episode: link didn't answer")
+            dlog("player", "\(purpose): link didn't answer")
             return nil
         }
         NetTrace.report("link", url: url, others: others, started: c0, timer: timer, status: (response as? HTTPURLResponse)?.statusCode, bytes: 0, error: nil)
         guard let http = response as? HTTPURLResponse else { return nil }
-        dlog("player", String(format: "next episode: link answered HTTP %d in %.1f s%@", http.statusCode, Date().timeIntervalSince(t0),
+        dlog("player", String(format: "%@: link answered HTTP %d in %.1f s%@", purpose, http.statusCode, Date().timeIntervalSince(t0),
                               http.url?.host != url.host ? " (redirected to \(http.url?.host ?? "?"))" : ""))
         return (200..<300).contains(http.statusCode) ? http.url : nil
     }

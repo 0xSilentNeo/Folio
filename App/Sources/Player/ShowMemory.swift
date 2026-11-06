@@ -24,6 +24,14 @@ struct ShowSettings: Codable, Equatable {
     var autoSkip: [String]?
     /// The second subtitle, shown at the top (1.22.0).
     var secondSubtitle: SubtitleChoice?
+    /// Intro pills watched through without a skip, by the pill's name
+    /// (lower-cased): the episodes (item ids) since you last skipped it
+    /// (1.23.2).
+    var introWatched: [String: [String]]?
+    /// Intro pills that no longer show for this show: watched through in
+    /// two episodes in a row ("intro" where a release calls the episode's
+    /// first scene the intro; 6 Nov request).
+    var introHidden: [String]?
 
     /// Fields of `other` that this one doesn't have (two entries merged).
     func filled(from other: ShowSettings) -> ShowSettings {
@@ -31,6 +39,8 @@ struct ShowSettings: Codable, Equatable {
         s.speed = s.speed ?? other.speed
         s.autoSkip = s.autoSkip ?? other.autoSkip
         s.secondSubtitle = s.secondSubtitle ?? other.secondSubtitle
+        s.introWatched = s.introWatched ?? other.introWatched
+        s.introHidden = s.introHidden ?? other.introHidden
         s.audio = s.audio ?? other.audio
         s.subtitle = s.subtitle ?? other.subtitle
         s.subDelay = s.subDelay ?? other.subDelay
@@ -326,6 +336,19 @@ final class ShowMemoryStore: ObservableObject {
 
     func forget(_ id: Entry.ID) {
         entries.removeAll { $0.id == id }
+        scheduleSave()
+    }
+
+    /// Shows with intro pills hidden (Settings → Skip Intro & Credits).
+    var hiddenIntroShows: [Entry] {
+        entries.filter { !($0.settings.introHidden ?? []).isEmpty }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    /// Brings a show's hidden intro pills back and starts counting again.
+    func showIntrosAgain(_ id: Entry.ID) {
+        guard let i = entries.firstIndex(where: { $0.id == id }) else { return }
+        entries[i].settings.introHidden = nil
+        entries[i].settings.introWatched = nil
         scheduleSave()
     }
 

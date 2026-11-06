@@ -9,6 +9,29 @@ enum LabDAV {
     static var on: Bool { CommandLine.arguments.contains("-labDAV") }
     static let base = "https://dav.lab.invalid/"
 
+    /// `-labDAVServer=<address>`: a real WebDAV server for the simulator lab
+    /// (a local one that serves files, with a folder per torrent as on a
+    /// debrid service), added as "Lab Server" (1.23.2).
+    @MainActor static func seedServer() {
+        guard let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-labDAVServer=") }) else { return }
+        let base = String(arg.dropFirst("-labDAVServer=".count))
+        if !ServerStore.shared.servers.contains(where: { $0.baseURL == base }) {
+            ServerStore.shared.upsert(WebDAVServer(name: "Lab Server", baseURL: base, username: ""))
+            dlog("lab", "WebDAV server added: \(base)")
+        }
+        // `-labPlayDAV=<path on it>`: plays that file as Continue Watching
+        // would (loading-time measurements).
+        guard let play = CommandLine.arguments.first(where: { $0.hasPrefix("-labPlayDAV=") }),
+              let server = ServerStore.shared.servers.first(where: { $0.baseURL == base }),
+              let url = URL(string: base.trimmingCharacters(in: CharacterSet(charactersIn: "/")) + String(play.dropFirst("-labPlayDAV=".count))) else { return }
+        UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            let item = WebDAVClient(server: server).mediaItem(for: DAVItem(url: url, name: url.lastPathComponent, isDirectory: false, size: nil, modified: nil, contentType: nil), cleanTitles: true)
+            dlog("lab", "playing \(url.lastPathComponent) from the lab server")
+            ContinueQueue.play(item)
+        }
+    }
+
     @MainActor static func seed() {
         guard on, !ServerStore.shared.servers.contains(where: { $0.baseURL == base }) else { return }
         ServerStore.shared.upsert(WebDAVServer(name: "Lab DAV", baseURL: base, username: ""))
