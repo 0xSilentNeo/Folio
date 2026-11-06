@@ -379,6 +379,8 @@ struct SkipSettings: View {
     @AppStorage(SettingsKey.skipUseChapters) private var useChapters = true
     @AppStorage(SettingsKey.skipInjectChapters) private var injectChapters = true
     @AppStorage(SettingsKey.skipOATLength) private var oatLength = 90.0
+    @AppStorage(SettingsKey.skipLearnIntros) private var learnIntros = true
+    @ObservedObject private var memory = ShowMemoryStore.shared
 
     var body: some View {
         Form {
@@ -406,6 +408,26 @@ struct SkipSettings: View {
                     Explained("Open Anime Timestamps only knows where a part starts, so its length is assumed.") {
                         Stepper("OAT segment length  \(Int(oatLength)) s", value: $oatLength, in: 60...150, step: 5)
                     }
+                }
+                Section {
+                    Explained("Watch an intro to its end in \(PlayerModel.introEpisodesToHide) episodes of a show without skipping it, and its Skip button stops showing for that show. Some releases call the episode's first scene the intro.") {
+                        Toggle("Hide intros I watch", isOn: $learnIntros)
+                    }
+                    ForEach(memory.hiddenIntroShows) { e in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(e.name)
+                                Text((e.settings.introHidden ?? []).map { "Skip " + $0.capitalized }.joined(separator: ", "))
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Show again") { memory.showIntrosAgain(e.id) }
+                                .buttonStyle(.borderless)
+                                .accessibilityIdentifier("introShowAgain:" + e.name)
+                        }
+                    }
+                } header: { Text("Intros you watch") } footer: {
+                    if learnIntros, memory.hiddenIntroShows.isEmpty { Text("No show has its intro hidden yet.") }
                 }
             }
         }

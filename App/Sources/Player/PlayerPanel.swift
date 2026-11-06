@@ -328,6 +328,15 @@ struct SettingsPanelContent: View {
                                              set: { model.setAlwaysSkip(.intro, $0) })).labelsHidden()
                 }
             }
+            if !model.hiddenIntros.isEmpty, let show = model.memoryShowName {
+                // 1.23.2: intro pills you watched through in two episodes.
+                Button { model.showIntrosAgain() } label: {
+                    PanelRow(icon: "forward.frame", title: "Show Skip Intro again", subtitle: show) { EmptyView() }
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PressStyle(scale: 0.98))
+                .foregroundStyle(.white)
+            }
             if let show = model.rememberedShow {
                 // What's remembered for this show (Settings → Playback → Remember per show).
                 Button { model.forgetShow() } label: {

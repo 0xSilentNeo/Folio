@@ -247,7 +247,7 @@ struct UpNextCard: View {
                 Text("UP NEXT · \(heading)").font(.caption2.weight(.bold)).tracking(1).foregroundStyle(.white.opacity(0.6))
                 Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
                 HStack(spacing: 8) {
-                    Button { model.dismissUpNext(); model.playNext() } label: {
+                    Button { model.playNextFromCard() } label: {
                         HStack(spacing: 5) {
                             Image(systemName: "play.fill").font(.caption.weight(.bold))
                             Text(upNext.autoplay && !model.paused ? "Play in \(Int(remaining.rounded(.up)))" : "Play Now")
@@ -270,7 +270,7 @@ struct UpNextCard: View {
                     }
                     .buttonStyle(PressStyle(scale: 0.95))
                     Button { model.dismissUpNext() } label: {
-                        Text(upNext.autoplay ? "Watch Credits" : "Close").font(.caption.weight(.semibold))
+                        Text(upNext.autoplay ? upNext.stay : "Close").font(.caption.weight(.semibold))
                             .padding(.horizontal, 12).frame(height: 30)
                             .background(.white.opacity(0.12), in: Capsule())
                     }

@@ -178,7 +178,9 @@ final class PlayerModel: ObservableObject {
     private(set) var position: Double = 0
     var duration: Double { clock.duration }
 
-    let queue: [MediaItem]
+    /// Grows only at its end: the show's later episodes from other folders
+    /// on the same server (findMoreEpisodes).
+    @Published private(set) var queue: [MediaItem]
     var item: MediaItem { resolvedItems[queueIndex] ?? queue[queueIndex] }
     /// Play Season: episodes whose stream was found when their turn came.
     private var resolvedItems: [Int: MediaItem] = [:]
@@ -681,6 +683,7 @@ final class PlayerModel: ObservableObject {
             return
         }
         saveHistory(force: true)            // the file that was playing, under its own entry
+        leftFinished = false
         playingItem = item
         ended = false
         errorMessage = nil
@@ -690,6 +693,10 @@ final class PlayerModel: ObservableObject {
         segments = []
         activeSegment = nil
         autoSkipped = []
+        introsShown = []
+        openTimelineLogged = false
+        seekStarted = nil
+        waitStarted = nil
         upNext = nil
         upNextDismissed = false
         postCredits = false
@@ -736,7 +743,7 @@ final class PlayerModel: ObservableObject {
             c.set("demuxer-max-bytes", "\(max(32, defaults.integer(forKey: SettingsKey.cacheMB)))MiB")
         }
         readToEndCheck?.invalidate(); readToEndCheck = nil
-        if let a = appended, a.index == queueIndex, a.path == item.mpvPath {
+        if let a = appended, a.index == queueIndex, a.path == mpvPath(item) {
             // Prepared near the end of the last episode: next in mpv's playlist,
             // opened (and buffered, once the last file was fully read) already.
             appended = nil
@@ -745,11 +752,83 @@ final class PlayerModel: ObservableObject {
             dlog("player", "playlist-next → the prepared episode \(item.displayTitle) -> \(r)")
         } else {
             appended = nil
-            let r = c.command(["loadfile", item.mpvPath, "replace", "-1", opts.joined(separator: ",")])
-            dlog("player", "loadfile \(item.mpvPath) source=\(item.source) opts=\(opts) -> \(r)")
+            if resolvesFirst(item), let u = item.resolvedURL {
+                // Its download address first: mpv goes back to the address it
+                // was given on every reconnect and is redirected again. The
+                // last file pauses meanwhile (Next without a prepared episode);
+                // the play state is put back once the new file is asked for.
+                let wasPaused = paused
+                if !wasPaused { c.set("pause", true) }
+                let id = item.id
+                Task { [weak self] in
+                    let final = await LinkWarmer.resolve(u, headers: item.headers, purpose: "this file")
+                    guard let self, !self.closed, self.playingItem?.id == id, self.appended == nil else { return }
+                    if let final, final != u { self.playLinks[id] = final } else if final == u { LinkWarmer.direct.insert(u.host ?? "") }
+                    self.loadFile(item, opts, c)
+                    if !wasPaused { c.set("pause", false) }
+                }
+            } else {
+                loadFile(item, opts, c)
+            }
         }
         watchLoading(item)
         updateNowPlaying()
+    }
+
+    private func loadFile(_ item: MediaItem, _ opts: [String], _ c: MPVClient) {
+        let r = c.command(["loadfile", mpvPath(item), "replace", "-1", opts.joined(separator: ",")])
+        dlog("player", "loadfile \(mpvPath(item)) source=\(item.source) opts=\(opts) -> \(r)")
+    }
+
+    // MARK: Links (1.23.2)
+
+    /// The address mpv opens for an item when it isn't the item's own: a
+    /// WebDAV or addon link already followed to the file's download address.
+    /// Kept apart from the item, so history, Continue Watching and the queue
+    /// keep the item's own address: 1.23.1 wrote a prepared next episode's
+    /// download address into the episode, and Real-Debrid episodes were saved
+    /// under it (5 Nov log, 18:05: a Continue Watching card played
+    /// "syd3-4.download.real-debrid.com/d/…" as a queue of one).
+    private var playLinks: [String: URL] = [:]
+    private func mpvPath(_ it: MediaItem) -> String { playLinks[it.id]?.absoluteString ?? it.mpvPath }
+
+    /// Worth following to its download address before mpv opens it: mpv
+    /// goes back to the address it was given on every reconnect (a resume
+    /// position, the index at the end of a file, each seek past its buffer)
+    /// and is redirected again each time — 1.9–2.3 s for Real-Debrid's
+    /// WebDAV from your phone ("link answered HTTP 206 in 2.2 s (redirected
+    /// to syd3-4.download.real-debrid.com)", 4–5 Nov logs). Measured in the
+    /// simulator against a lab server that redirects: a resume made three
+    /// trips through the redirecting host before the first picture.
+    private func resolvesFirst(_ it: MediaItem) -> Bool {
+        guard playLinks[it.id] == nil, !CommandLine.arguments.contains("-labNoResolve"),
+              let u = it.resolvedURL, ["http", "https"].contains(u.scheme?.lowercased() ?? ""),
+              !LinkWarmer.direct.contains(u.host ?? "") else { return false }
+        switch it.source {
+        case .webdav, .addon: return true
+        case .url: return it.streamPick != nil
+        case .local: return false
+        }
+    }
+
+    /// Continue Watching's queue, built after the player opened (a WebDAV
+    /// folder's listing, 1.2 s on Real-Debrid, held the player back: "built
+    /// in 1212 ms", 5 Nov log). Taken while nothing else has been queued
+    /// after the file but the show's episodes from other folders.
+    func adoptQueue(_ built: [MediaItem], index: Int) {
+        let items = built.map { $0.preparedForPlayback() }
+        guard items.indices.contains(index), items.count > 1, items[index].id == queue[queueIndex].id,
+              queue.count - addedFromElsewhere == 1, appended == nil, preparing == nil, !closed else {
+            dlog("player", "continue: folder queue not taken (\(built.count) item(s); the player has \(queue.count), prepared \(appended != nil || preparing != nil))")
+            return
+        }
+        queue = items
+        queueIndex = index
+        resolvedItems = [:]
+        episodeStates = [:]
+        subsFetched = []
+        lookedForMore = false
+        addedFromElsewhere = 0
     }
 
     // MARK: Why a file didn't play (1.23.0)
@@ -831,6 +910,8 @@ final class PlayerModel: ObservableObject {
 
     private func startOptions(for item: MediaItem, toast: Bool) -> [String] {
         if startFirstAtZero { startFirstAtZero = false; return ["start=0"] }
+        // Lab: a resume position for the first file (loading measurements).
+        if item.id == queue.first?.id, let s = CommandLine.arguments.first(where: { $0.hasPrefix("-labStart=") }) { return ["start=" + s.dropFirst("-labStart=".count)] }
         guard defaults.bool(forKey: SettingsKey.resumePlayback),
               let entry = HistoryStore.shared.entry(for: item.id), entry.canResume else { return [] }
         if toast { showToast("Resuming from \(Self.format(entry.position))") }
@@ -1020,9 +1101,8 @@ final class PlayerModel: ObservableObject {
             subsFetched.insert(i)
             resolvedItems[i] = item
         }
-        if let u = item.resolvedURL, !u.isFileURL, let final = await LinkWarmer.resolve(u, headers: item.headers), final != u {
-            item.url = final.absoluteString
-            resolvedItems[i] = item
+        if let u = item.resolvedURL, !u.isFileURL, playLinks[item.id] == nil, let final = await LinkWarmer.resolve(u, headers: item.headers), final != u {
+            playLinks[item.id] = final
         }
         guard queueIndex + 1 == i, !closed, fileLoaded, let c = client else { return }
         // Next in mpv's playlist: mpv opens it and starts filling its buffer as
@@ -1034,8 +1114,8 @@ final class PlayerModel: ObservableObject {
         c.set("demuxer-readahead-secs", String(Int(max(60, duration - position + 30))))
         c.command(["playlist-clear"])
         let opts = startOptions(for: item, toast: false)
-        c.command(["loadfile", item.mpvPath, "append", "-1", opts.joined(separator: ",")])
-        appended = (i, item.mpvPath)
+        c.command(["loadfile", mpvPath(item), "append", "-1", opts.joined(separator: ",")])
+        appended = (i, mpvPath(item))
         readToEnd()
         dlog("player", "next episode ready: \(item.displayTitle) — buffers once this file is read to the end")
     }
@@ -1177,6 +1257,56 @@ final class PlayerModel: ObservableObject {
         startScreener()
         applyMemoryIfReady()
         readAudioLayoutLater()
+        findMoreEpisodes()
+        startPassLog()
+    }
+
+    /// The last episode in the queue, on a WebDAV server: the show's later
+    /// episodes are looked for in the server's library, in other folders too,
+    /// and added to the queue, so Up Next, getting the next one ready and
+    /// autoplay go on to them. A debrid service keeps each torrent in its own
+    /// folder, and a show added episode by episode had a queue of one (5 Nov
+    /// report: The Gentlemen on Real-Debrid). Once per player.
+    private var lookedForMore = false
+    /// How many of the queue's items findMoreEpisodes added.
+    private var addedFromElsewhere = 0
+    private func findMoreEpisodes() {
+        guard !lookedForMore, !hasNext, playbackMode == "playlist" else { return }
+        let it = queue[queueIndex]
+        guard case .webdav(let serverID) = it.source, let url = URL(string: it.url), url.scheme?.hasPrefix("http") == true,
+              TitleParser.parse(url.lastPathComponent.removingPercentEncoding ?? url.lastPathComponent).episode != nil,
+              let server = ServerStore.shared.servers.first(where: { $0.id == serverID }) else { return }
+        lookedForMore = true
+        let name = url.lastPathComponent.removingPercentEncoding ?? url.lastPathComponent
+        Task { [weak self] in
+            let store = LibraryIndexStore.shared
+            await store.load(server)
+            var files = store.state(serverID).index?.allFiles ?? []
+            var found = await Task.detached(priority: .utility) { NextEpisodes.after(name, url: url, in: files) }.value
+            // Nothing in a library listed more than 10 minutes ago: list it
+            // again (what changed only) and look once more.
+            if found.isEmpty, (store.state(serverID).index?.refreshed).map({ Date().timeIntervalSince($0) > LibraryIndexStore.freshFor }) ?? true {
+                await store.refresh(server, full: false)
+                files = store.state(serverID).index?.allFiles ?? []
+                found = await Task.detached(priority: .utility) { NextEpisodes.after(name, url: url, in: files) }.value
+            }
+            guard let self, !self.closed else { return }
+            guard !found.isEmpty else {
+                dlog("player", "next episodes: none on \(server.name) after this one (\(files.count) files in its library)")
+                return
+            }
+            let client = WebDAVClient(server: server)
+            let clean = self.defaults.bool(forKey: SettingsKey.cleanTitles)
+            let known = Set(self.queue.map(\.url))
+            let more = found.map { f in
+                client.mediaItem(for: DAVItem(url: f.url, name: f.name, isDirectory: false, size: f.size, modified: f.added, contentType: nil), cleanTitles: clean)
+            }.filter { !known.contains($0.url) }
+            guard !more.isEmpty else { return }
+            self.queue += more
+            self.addedFromElsewhere += more.count
+            let folders = Set(found.map { $0.url.deletingLastPathComponent() }).count
+            dlog("player", "next episodes: \(more.count) from \(folders) folder(s) on \(server.name) added after this one, first \(found[0].name)")
+        }
     }
 
     /// The file's length: the time bar, skip segments (looked up only once
@@ -1697,7 +1827,8 @@ final class PlayerModel: ObservableObject {
 
     func skip(_ segment: SkipSegment) {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        showToast("Skipped \(segment.kind.chapterTitle.lowercased())")
+        showToast("Skipped \((segment.name ?? segment.kind.chapterTitle).lowercased())")
+        if segment.kind == .intro { introSkipped(segment) }
         seek(to: segment.end)
         autoSkipped.insert(segment.id)
         skipSuppressedUntil = Date().addingTimeInterval(3)   // position still reads "inside" until the seek lands
@@ -1775,7 +1906,7 @@ final class PlayerModel: ObservableObject {
         lastHistorySave = Date()
         var stored = playingItem ?? item
         if stored.title.isEmpty { stored.title = mediaTitle }
-        HistoryStore.shared.record(stored, position: position, duration: duration)
+        HistoryStore.shared.record(stored, position: leftFinished && duration > 0 ? duration : position, duration: duration)
         // Handoff: the other device can pick up here (Handoff.swift).
         HandoffActivity.playing(item: stored, position: position, duration: duration)
         // Next episodes downloaded on Wi-Fi, when that's on (AutoDownload; once per file a run).
@@ -1813,6 +1944,7 @@ final class PlayerModel: ObservableObject {
         rememberedShow = nil
         memoryShowName = nil
         showAutoSkip = []
+        hiddenIntros = []
         let id = item.id
         func showID(_ identity: String?) -> String? { identity.map { String($0.prefix { $0 != ":" }) } }
         if case .addon = item.source {
@@ -1840,6 +1972,8 @@ final class PlayerModel: ObservableObject {
         showKey = (id, key)
         memoryShowName = key.name
         rememberedShow = ShowMemoryStore.shared.entry(for: key.keys) != nil ? key.name : nil
+        hiddenIntros = Set(ShowMemoryStore.shared.entry(for: key.keys)?.settings.introHidden ?? [])
+        if !hiddenIntros.isEmpty { dlog("skip", "\(key.name): intro pills hidden (watched in \(Self.introEpisodesToHide) episodes): \(hiddenIntros.sorted())") }
         applyMemoryIfReady()
     }
 
@@ -2024,7 +2158,7 @@ final class PlayerModel: ObservableObject {
         // Looked up even with the Skip button off: Up Next uses the credits time.
         if defaults.bool(forKey: SettingsKey.skipUseChapters) {
             let chs = chapters.map { ($0.title, $0.time) }
-            let s = SkipService.tidy(SkipService.segments(fromChapters: chs, duration: duration), duration: duration, chapters: chs, anime: item.anime != nil)
+            let s = SkipService.tidy(SkipService.segments(fromChapters: chs, duration: duration), duration: duration, chapters: chs, anime: item.anime?.hasAnimeID == true)
             if !s.isEmpty { segments = s; dlog("skip", "from chapters: \(s.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })"); return }
         }
 
@@ -2034,7 +2168,12 @@ final class PlayerModel: ObservableObject {
         var hint = item.anime ?? AnimeHint()
         if hint.title == nil { hint.title = parsed.title }
         if hint.episode == nil { hint.episode = parsed.episode }
-        let explicitAnime = item.anime != nil
+        // An anime database's id for it. Not just a hint: every episode file
+        // gets one with its title and number (WebDAVClient.mediaItem and the
+        // other sources), so "has a hint" was true for live-action shows too,
+        // which then got anime lookups and Opening/Ending names (MobLand in
+        // the 5 Nov log: "Skip Opening", "Skip Ending").
+        let explicitAnime = item.anime?.hasAnimeID == true
         // Fansub naming ("[Group] Title - 05") is a strong anime signal.
         let fansubName = fileName.hasPrefix("[") || fileName.range(of: #" - \d{1,4}\b"#, options: .regularExpression) != nil
         let key = item.id
@@ -2047,11 +2186,11 @@ final class PlayerModel: ObservableObject {
                 found = await SkipService.shared.lookupTV(imdbId: meta.id, season: parsed.episode != nil ? (parsed.season ?? 1) : nil,
                                                           episode: parsed.episode, duration: dur)
             }
-            // Anime databases only for anime: an explicit hint, animation per
-            // IMDb, or an unknown title with fansub-style naming. Never a
-            // fuzzy anime search for a live-action show.
+            // Anime databases only for anime: an anime id, animation per IMDb,
+            // or a title IMDb doesn't know (AniList's search decides). Never
+            // for a show IMDb knows as live action.
             let animation = meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false
-            if found.segments.isEmpty, hint.episode != nil, explicitAnime || animation || (meta == nil && fansubName) {
+            if found.segments.isEmpty, hint.episode != nil, explicitAnime || animation || meta == nil {
                 found.segments = await SkipService.shared.lookup(hint: hint, season: parsed.season, duration: dur, oatLength: len > 0 ? len : 90)
                 dlog("skip", "anime lookup \(hint.title ?? "?") s\(parsed.season ?? 1)e\(hint.episode ?? 0): \(found.segments.count) segment(s)")
             }
@@ -2059,11 +2198,11 @@ final class PlayerModel: ObservableObject {
                 guard let self, self.item.id == key else { return }
                 self.postCredits = found.postCredits
                 guard !found.segments.isEmpty else { return }
-                let anime = explicitAnime || animation || found.segments.contains { $0.source == "AniSkip" || $0.source == "OAT" }
+                let anime = explicitAnime || animation || (meta == nil && fansubName) || found.segments.contains { $0.source == "AniSkip" || $0.source == "OAT" }
                 self.segments = SkipService.tidy(found.segments, duration: dur, chapters: self.chapters.map { ($0.title, $0.time) }, anime: anime)
                 dlog("skip", "segments: \(self.segments.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })")
                 if self.defaults.bool(forKey: SettingsKey.skipInjectChapters), self.chapters.isEmpty {
-                    self.injectChapters(found.segments)
+                    self.injectChapters(self.segments)
                 }
             }
         }
@@ -2075,6 +2214,10 @@ final class PlayerModel: ObservableObject {
         let start: Double          // playback time the card appeared at
         let autoplay: Bool         // counts down and plays the next file
         let next: MediaItem
+        /// The card's other button: what it lets you watch, named as the
+        /// part is ("Watch Ending", "Watch Preview"). 1.23.2: it said
+        /// "Watch Credits" over every part (6 Nov request).
+        var stay = "Keep Watching"
     }
     @Published var upNext: UpNext?
     private var upNextDismissed = false
@@ -2083,23 +2226,35 @@ final class PlayerModel: ObservableObject {
 
     /// When the card appears: the start of the credits (file chapters,
     /// IntroDB / TheIntroDB, AniSkip ending) if known, else 30 s before the end.
-    private var upNextTrigger: (time: Double, autoplay: Bool)? {
-        guard hasNext, playbackMode == "playlist", defaults.bool(forKey: SettingsKey.upNextEnabled), duration > 120 else { return nil }
-        let autoplayOn = defaults.bool(forKey: SettingsKey.autoplayNext)
-        if let outro = segments.filter({ $0.kind == .outro && $0.start > duration * 0.5 }).first {
-            // Story content after the credits (and not a "next episode" preview)
-            // means a post-credits scene: show the card, but don't jump away.
-            let after = duration - outro.end
-            let previewFollows = segments.contains { $0.kind == .preview && $0.start >= outro.end - 2 }
-            let sceneAfter = postCredits || (after > 30 && !previewFollows)
-            return (outro.start, autoplayOn && !sceneAfter)
+    ///
+    /// 1.23.2 (6 Nov request): no card over the credits when a scene follows
+    /// them (a post-credits scene, an epilogue chapter: more than 30 s of the
+    /// episode after them that isn't a preview). It came up there without its
+    /// countdown and covered the scene; now the scene plays, and the next
+    /// episode starts when the file ends (autoplay). A preview after the
+    /// credits is no scene, and some would rather not see it: the card comes
+    /// at the credits, or at the preview when a scene comes in between.
+    static func upNextTrigger(segments: [SkipSegment], duration: Double, postCredits: Bool, autoplay: Bool) -> (time: Double, autoplay: Bool, stay: String)? {
+        func stay(_ s: SkipSegment) -> String { "Watch " + (s.name ?? (s.kind == .preview ? "Preview" : "Credits")) }
+        let preview = segments.filter { $0.kind == .preview && $0.start > duration * 0.6 }.min { $0.start < $1.start }
+        if let outro = segments.filter({ $0.kind == .outro && $0.start > duration * 0.5 }).min(by: { $0.start < $1.start }) {
+            if let preview, preview.start >= outro.end - 2 {
+                // Credits, then a preview: the card at the credits, unless a scene comes between them.
+                return postCredits || preview.start - outro.end > 30 ? (preview.start, autoplay, stay(preview)) : (outro.start, autoplay, stay(outro))
+            }
+            if postCredits || duration - outro.end > 30 { return nil }
+            return (outro.start, autoplay, stay(outro))
         }
         // No credits known but a skippable preview closes the episode: the card
         // takes over there instead of a "Skip Preview" pill.
-        if let preview = segments.filter({ $0.kind == .preview && $0.start > duration * 0.6 }).first {
-            return (preview.start, autoplayOn && !postCredits)
-        }
-        return (max(duration * 0.9, duration - 30), autoplayOn && !postCredits)
+        if let preview { return (preview.start, autoplay, stay(preview)) }
+        if postCredits { return nil }
+        return (max(duration * 0.9, duration - 30), autoplay, "Keep Watching")
+    }
+
+    private var upNextTrigger: (time: Double, autoplay: Bool, stay: String)? {
+        guard hasNext, playbackMode == "playlist", defaults.bool(forKey: SettingsKey.upNextEnabled), duration > 120 else { return nil }
+        return Self.upNextTrigger(segments: segments, duration: duration, postCredits: postCredits, autoplay: defaults.bool(forKey: SettingsKey.autoplayNext))
     }
 
     private func updateUpNext() {
@@ -2109,7 +2264,7 @@ final class PlayerModel: ObservableObject {
         }
         if position >= trigger.time && position < duration - 0.3 {
             if upNext == nil {
-                upNext = UpNext(start: trigger.time, autoplay: trigger.autoplay, next: queue[queueIndex + 1])
+                upNext = UpNext(start: trigger.time, autoplay: trigger.autoplay, next: queue[queueIndex + 1], stay: trigger.stay)
                 // Whether Play Next will be instant: the next file is in mpv's
                 // playlist, and this one has been read to the end (mpv opens the
                 // next one only then).
@@ -2124,12 +2279,29 @@ final class PlayerModel: ObservableObject {
                 upNext = nil
                 upNextDismissed = true
                 dlog("player", "up next: countdown finished")
+                finishedHere()
                 playNext()
             }
         } else if upNext != nil {
             upNext = nil      // seeked back before the credits
         }
     }
+
+    /// The card's Play Now.
+    func playNextFromCard() {
+        dismissUpNext()
+        finishedHere()
+        playNext()
+    }
+
+    /// Up Next went on to the next episode: this one counts as watched,
+    /// though its credits or preview didn't play. In the lab (6 Nov) an
+    /// episode left at its "Ending" chapter stayed "2:10 / 2:30", in
+    /// progress: 87% and 20 s left is under History's "finished" line.
+    private func finishedHere() {
+        leftFinished = true             // saveHistory records it played to its end
+    }
+    private var leftFinished = false
 
     func dismissUpNext() {
         upNextDismissed = true
@@ -2141,18 +2313,192 @@ final class PlayerModel: ObservableObject {
         let sorted = segs.sorted { $0.start < $1.start }
         if let first = sorted.first, first.start > 1 { marks.append(("Episode", 0)) }
         for (i, s) in sorted.enumerated() {
-            marks.append((s.kind.chapterTitle, s.start))
+            // The pill's own name (tidy's: the file's chapter, or Intro/Ending
+            // by where it sits), so an intro moved to the end isn't an "Opening".
+            marks.append((s.name ?? s.kind.chapterTitle, s.start))
             let nextStart = i + 1 < sorted.count ? sorted[i + 1].start : duration
             if s.end < nextStart - 1, s.end < duration - 1 { marks.append(("Episode", s.end)) }
         }
         client?.setChapters(marks)
     }
 
+    // MARK: GPU work per frame (1.23.2)
+
+    /// What the renderer does for each frame, from mpv's own count
+    /// (`vo-passes`: every render pass with its GPU time, on both renderers),
+    /// and the frames dropped or late since the last line. 20 s into a file,
+    /// then every 2 minutes. Anime4K was said to lag on Metal and not on
+    /// OpenGL: this shows which passes run on each, and what they cost on
+    /// the phone, instead of a guess.
+    private var passLog: Task<Void, Never>?
+    private var lastDrops: (dropped: Int64, delayed: Int64)?
+
+    private func startPassLog() {
+        passLog?.cancel()
+        lastDrops = nil
+        let id = (playingItem ?? item).id
+        passLog = Task { [weak self] in
+            var wait: UInt64 = 20
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: wait * 1_000_000_000)
+                wait = 120
+                guard let self, !self.closed, (self.playingItem ?? self.item).id == id else { return }
+                if !self.paused { self.logPasses() }
+            }
+        }
+    }
+
+    private func logPasses() {
+        guard let c = client else { return }
+        let renderer = renderer == .metal ? "Metal" : "OpenGL"
+        let a4k = anime4kMode == .off ? "Anime4K off" : "Anime4K \(anime4kMode.rawValue)/\(anime4kQuality.rawValue)\(anime4kRestoreOnly ? " restore only" : "")"
+        c.query({ c -> (String?, Int64, Int64, Double) in
+            (c.string("vo-passes"), c.int("frame-drop-count") ?? 0, c.int("vo-delayed-frame-count") ?? 0, c.double("display-fps") ?? 0)
+        }) { [weak self] r in
+            guard let self else { return }
+            let drops = (r.1, r.2)
+            let since = self.lastDrops.map { (drops.0 - $0.dropped, drops.1 - $0.delayed) } ?? drops
+            self.lastDrops = (drops.0, drops.1)
+            let passes = r.0.flatMap { RenderPasses.summary($0) } ?? (r.0.map { "pass list unreadable: \($0.prefix(120))" } ?? "the renderer gives no pass list")
+            dlog("player", "GPU per frame (\(renderer), \(a4k)): \(passes); \(since.0) dropped, \(since.1) late since the last line; display \(Int(r.3.rounded())) Hz")
+        }
+    }
+
+    // MARK: Seeks and waits (1.23.2)
+
+    /// How long the spinner waits before it shows. A local file is never
+    /// waiting for data: a seek is the decoder's work from the keyframe
+    /// before (0.14–0.43 s for your library files in the 5 Nov mpv log; the
+    /// 0.43 s one waited for the sound to line up), so the spinner shows only
+    /// after a second there. 350 ms for anything streamed.
+    var spinnerDelay: Double {
+        guard let u = (playingItem ?? item).resolvedURL, u.isFileURL else { return 0.35 }
+        return 1.0
+    }
+
+    private var seekStarted: (at: CFTimeInterval, from: Double)?
+    private var waitStarted: CFTimeInterval?
+
+    /// A seek that took long enough to notice, in the log: from where, to
+    /// where, how long, local or streamed.
+    private func logSeekTime() {
+        guard let s = seekStarted else { return }
+        seekStarted = nil
+        let ms = (CACurrentMediaTime() - s.at) * 1000
+        guard ms >= 250, fileLoaded else { return }
+        let local = (playingItem ?? item).resolvedURL?.isFileURL == true
+        dlog("player", String(format: "seek %@ → %@: playing again after %.0f ms (%@%@)", Self.format(s.from), Self.format(position), ms,
+                              local ? "local file" : "streamed", ms >= spinnerDelay * 1000 ? ", spinner shown" : ""))
+    }
+
+    /// mpv paused itself for data (paused-for-cache): when, for how long, and
+    /// what the cache held, in the log.
+    private func logWaitForData(_ waiting: Bool) {
+        if waiting {
+            guard waitStarted == nil, fileLoaded else { return }
+            waitStarted = CACurrentMediaTime()
+            client?.query({ c -> String in
+                let ahead = c.double("demuxer-cache-duration") ?? 0
+                let speed = (c.double("cache-speed") ?? 0) / 1_048_576
+                return String(format: "%.1f s buffered ahead, reading %.1f MB/s", ahead, speed)
+            }) { [weak self] s in
+                guard let self else { return }
+                dlog("player", "waiting for data at \(Self.format(self.position)) (\((self.playingItem ?? self.item).resolvedURL?.isFileURL == true ? "local file" : "streamed")): \(s)")
+            }
+        } else if let t = waitStarted {
+            waitStarted = nil
+            dlog("player", String(format: "waiting for data over after %.0f ms", (CACurrentMediaTime() - t) * 1000))
+        }
+    }
+
+    // MARK: Opening a network file (1.23.2)
+
+    private var openTimelineLogged = false
+    /// The first picture of a network file: what mpv did to open it, from
+    /// its log (OpenTimeline), in the app's log.
+    private func logOpenTimelineOnce() {
+        guard !openTimelineLogged, let u = (playingItem ?? item).resolvedURL, !u.isFileURL else { return }
+        openTimelineLogged = true
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1) {
+            guard let s = OpenTimeline.summary(MPVFiles.readText(MPVFiles.logFile)) else { return }
+            dlog("player", s)
+        }
+    }
+
+    // MARK: Intros you watch (1.23.2)
+
+    /// Intro pills hidden for the open file's show, by name (lower-cased):
+    /// you watched them through in two episodes without skipping. Some
+    /// releases call the episode's first scene, which is the story, the
+    /// intro (Classroom of the Elite S3: "Intro" 0:00–2:01, then "Opening").
+    @Published private(set) var hiddenIntros: Set<String> = []
+    /// Intro pills shown in this file (segment ids): only those count.
+    private var introsShown: Set<String> = []
+    static let introEpisodesToHide = 2
+    private var learnIntrosOn: Bool { defaults.bool(forKey: SettingsKey.skipLearnIntros) }
+
+    static func introName(_ s: SkipSegment) -> String { (s.name ?? s.kind.chapterTitle).lowercased() }
+
+    private func introHidden(_ s: SkipSegment) -> Bool {
+        s.kind == .intro && learnIntrosOn && hiddenIntros.contains(Self.introName(s))
+    }
+
+    /// Playback went on from `from` to `to`: an intro pill shown in this file
+    /// whose end was played through, not skipped or jumped over (a seek moves
+    /// more than 3 s at once), counts this episode for its name. Two
+    /// episodes since you last skipped it, and it no longer shows for the show.
+    private func learnIntros(from: Double, to: Double) {
+        guard learnIntrosOn, to > from, to - from < 3, !introsShown.isEmpty, let key = memoryKey(for: memoryItem) else { return }
+        for s in segments where s.kind == .intro && introsShown.contains(s.id) && !autoSkipped.contains(s.id) {
+            let end = s.end - 1
+            guard from < end, to >= end else { continue }
+            let name = Self.introName(s), file = memoryItem.id
+            var count = 0
+            ShowMemoryStore.shared.update(key) { e in
+                var watched = e.settings.introWatched ?? [:]
+                var eps = watched[name] ?? []
+                if !eps.contains(file) { eps.append(file) }
+                eps = Array(eps.suffix(5))
+                watched[name] = eps
+                e.settings.introWatched = watched
+                count = eps.count
+                if count >= Self.introEpisodesToHide {
+                    var hidden = Set(e.settings.introHidden ?? [])
+                    hidden.insert(name)
+                    e.settings.introHidden = hidden.sorted()
+                }
+            }
+            dlog("skip", "\(key.name): “\(s.label)” watched through, not skipped (\(count) episode(s) since it was last skipped)")
+            if count >= Self.introEpisodesToHide, !hiddenIntros.contains(name) {
+                hiddenIntros.insert(name)
+                showToast("“\(s.label)” won't show for \(key.name) any more")
+            }
+        }
+    }
+
+    /// You skipped an intro: it's one you skip, and the count starts again.
+    private func introSkipped(_ s: SkipSegment) {
+        guard let key = memoryKey(for: memoryItem) else { return }
+        let name = Self.introName(s)
+        guard ShowMemoryStore.shared.entry(for: key.keys)?.settings.introWatched?[name]?.isEmpty == false else { return }
+        ShowMemoryStore.shared.update(key) { $0.settings.introWatched?[name] = nil }
+    }
+
+    /// The player menu's "Show intro pills again".
+    func showIntrosAgain() {
+        guard let key = memoryKey(for: memoryItem), let e = ShowMemoryStore.shared.entry(for: key.keys) else { return }
+        ShowMemoryStore.shared.showIntrosAgain(e.id)
+        hiddenIntros = []
+        dlog("skip", "\(key.name): intro pills shown again")
+        showToast("Skip Intro shows again for \(key.name)")
+    }
+
     private func updateActiveSegment() {
         guard Date() >= skipSuppressedUntil, defaults.bool(forKey: SettingsKey.skipEnabled) else { return }
-        let seg = segments.first { position >= $0.start && position < $0.end - 0.5 }
+        let seg = segments.first { position >= $0.start && position < $0.end - 0.5 && !introHidden($0) }
         if seg != activeSegment { activeSegment = seg }
         guard let seg, !autoSkipped.contains(seg.id) else { return }
+        if seg.kind == .intro { introsShown.insert(seg.id) }
         let key: String
         switch seg.kind {
         case .intro: key = SettingsKey.skipAutoIntro
@@ -3121,10 +3467,14 @@ extension PlayerModel: MPVClientDelegate {
                 if queue.indices.contains(queueIndex), resolvedItems[queueIndex] != nil, queue[queueIndex].url != item.url {
                     resolvedItems[queueIndex] = nil
                 }
+                // A download address may have expired: Try again goes back to the item's own.
+                playLinks[(playingItem ?? item).id] = nil
                 diagnose(playingItem ?? item, reason: String(cString: mpv_error_string(error)))
             }
         case .playbackRestart:
             logAudioSessionOnce()
+            logOpenTimelineOnce()
+            logSeekTime()
             skipLanded()
             buffering = false
             swapSeekQuietUntil = 0
@@ -3154,7 +3504,9 @@ extension PlayerModel: MPVClientDelegate {
         switch name {
         case "time-pos":
             let p = value.double ?? 0
+            let before = position
             position = p
+            learnIntros(from: before, to: p)
             // Publish at most ~4x per second (skips SwiftUI work per frame).
             if abs(p - clock.position) >= 0.25 || p < clock.position { clock.position = p }
             updateActiveSegment()
@@ -3176,9 +3528,14 @@ extension PlayerModel: MPVClientDelegate {
             UIApplication.shared.isIdleTimerDisabled = !paused
             if paused { saveHistory(force: true); scheduleSnapshot(after: 0.3) } else { resumedInBackground() }
         case "paused-for-cache":
-            buffering = value.bool ?? false
+            let waiting = value.bool ?? false
+            buffering = waiting
+            logWaitForData(waiting)
         case "seeking":
-            if value.bool == true, CACurrentMediaTime() > swapSeekQuietUntil { buffering = true }
+            if value.bool == true, CACurrentMediaTime() > swapSeekQuietUntil {
+                buffering = true
+                if seekStarted == nil { seekStarted = (CACurrentMediaTime(), position) }
+            }
         case "eof-reached":
             if value.bool == true { handleEOF() }
             // Left the end (a seek back): Play continues from there. It used
@@ -3265,6 +3622,7 @@ extension PlayerModel: MPVClientDelegate {
         if let u = it.resolvedURL, !u.isFileURL, duration > 120, position < duration - max(30, duration * 0.03) {
             let where_ = serverName(of: it)
             dlog("player", "the stream stopped at \(Self.format(position)) of \(Self.format(duration)): not the end")
+            playLinks[it.id] = nil          // Try again: the item's own address, redirected afresh
             show(ServerProblem(kind: .stoppedEarly, title: "The stream stopped at \(Self.format(position)) of \(Self.format(duration))",
                                detail: "The connection to \(where_.name) dropped. Try again to go on from there.", icon: "wifi.exclamationmark"), for: it)
             return
