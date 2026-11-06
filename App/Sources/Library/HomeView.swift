@@ -73,7 +73,12 @@ struct HomeView: View {
             .task(id: local.files) { metaIndex.update(local.files) }
             .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
-            .onAppear { LaunchTiming.homeAppeared() }
+            .onAppear {
+                LaunchTiming.homeAppeared()
+                if let r = HomeRouter.shared.take() { open(r) }
+            }
+            // A widget's link to a release's folder (1.24.0, HomeRouter).
+            .onReceive(HomeRouter.shared.routes) { _ in if let r = HomeRouter.shared.take() { open(r) } }
             // The Real-Debrid section's library, checked again in the
             // background (again when the account is added or changed).
             .task(id: realDebrid.map(LibraryIndex.account)) { if let rd = realDebrid { LibraryIndexStore.shared.refreshIfNeeded(rd) } }
@@ -794,6 +799,14 @@ struct HeroCard: View {
     /// Daemons of the Shadow Realm S01 1080p…"), an addon's "S1 · E24 —
     /// title", or a library file's bare episode title (30 Oct screenshots).
     static func line(_ item: MediaItem, meta: MediaMeta?) -> String? {
+        let p = parts(item, meta: meta)
+        if let number = p.number { return ([number] + [p.title].compactMap { $0 }).joined(separator: " · ") }
+        return meta?.synopsis
+    }
+
+    /// The line's two parts (1.24.0, for the widgets): "S1 · E24" (nil for a
+    /// film) and the episode's title.
+    static func parts(_ item: MediaItem, meta: MediaMeta?) -> (number: String?, title: String?) {
         var season: Int?, episode: Int?, title: String?
         if let ref = item.addonRef {
             // The addon episode's label (MetaVideo.label): "S1 · E24 — title",
@@ -820,11 +833,8 @@ struct HeroCard: View {
             if episode != nil, season == nil { season = 1 }
         }
         title = meta?.episodeTitle ?? title ?? ReleaseName.file(item.fileName)?.episodeTitle
-        if let episode {
-            let number = season.map { "S\($0) · E\(episode)" } ?? "E\(episode)"
-            return ([number] + [title].compactMap { $0 }).joined(separator: " · ")
-        }
-        return meta?.synopsis
+        guard let episode else { return (nil, nil) }
+        return (season.map { "S\($0) · E\(episode)" } ?? "E\(episode)", title)
     }
 
     let entry: HistoryEntry

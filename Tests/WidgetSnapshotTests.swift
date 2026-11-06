@@ -121,9 +121,17 @@ final class WidgetSnapshotTests: XCTestCase {
         XCTAssertEqual(row.remaining, 1200)
         XCTAssertNil(row.picture)
 
-        // No metadata (off, or not looked up yet): the file's own title and numbers.
+        // 1.24.0: the episode's number and title apart, and the whole length.
+        XCTAssertEqual(row.episode, "S1 · E3")
+        XCTAssertEqual(row.episodeTitle, "Funeral Plans")
+        XCTAssertEqual(row.duration, 1800)
+        XCTAssertFalse(row.isFilm)
+
+        // No metadata (off, or not looked up yet): the show's name from the
+        // file (1.24.0; the file's whole title until then), and its numbers.
         let bare = ContinueSnapshotWriter.item(for: e, meta: nil)
-        XCTAssertEqual(bare.title, e.item.displayTitle)
+        XCTAssertEqual(bare.title, "MobLand")
+        XCTAssertEqual(bare.episode, "S1 · E3")
         XCTAssertEqual(bare.line.map { $0.hasPrefix("S1 · E3") }, true)
     }
 

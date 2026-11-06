@@ -46,14 +46,18 @@ enum AiringNotifications {
     /// When a day-only episode is announced: 9 in the morning of its day.
     static let dayOnlyHour: Double = 9
 
-    static func plan(_ shows: [TrackedShow], now: Date, mode: AiringAlerts, limit: Int = limit, calendar: Calendar = .autoupdatingCurrent) -> [PlannedAlert] {
+    /// `voice`: the engagement notifications are on (1.24.0), and an episode
+    /// out in the day (9:00 to 22:00) says so in their voice; at night, and
+    /// for "1 hour before" or a day-only episode, the plain wording stays.
+    static func plan(_ shows: [TrackedShow], now: Date, mode: AiringAlerts, limit: Int = limit, voice: Bool = false,
+                     calendar: Calendar = .autoupdatingCurrent) -> [PlannedAlert] {
         guard mode != .off else { return [] }
         var out: [PlannedAlert] = []
         for s in shows {
             for e in s.upcoming(after: now) {
                 let what = e.number == nil && e.season == nil ? "A new episode of \(s.name)" : "\(s.name) \(e.label)"
                 let fire: Date
-                let title: String
+                var title: String
                 if let day = e.day, let start = AiringFormat.date(ofDay: day, calendar: calendar) {
                     // No time known (TVmaze's 12:00 UTC stands in): the
                     // morning of its day, not a made-up hour (1.23.0; the
@@ -65,7 +69,10 @@ enum AiringNotifications {
                     title = mode == .hour ? "\(what) is out in an hour" : "\(what) is out"
                 }
                 guard fire > now else { continue }
-                let body = [e.title, s.network.map { "On \($0)" }].compactMap { $0 }.joined(separator: " · ")
+                var body = [e.title, s.network.map { "On \($0)" }].compactMap { $0 }.joined(separator: " · ")
+                if voice, mode == .air, e.day == nil, !EngagePlanner.isQuiet(fire, calendar: calendar) {
+                    (title, body) = EngagePlanner.airingWording(show: s.name, episode: e)
+                }
                 let key = e.number.map { "\(e.season ?? 0).\($0)" } ?? "\(Int(e.airDate!.timeIntervalSince1970))"
                 out.append(PlannedAlert(id: "\(prefix)\(s.id).\(key)", showID: s.id, fire: fire, title: title, body: body))
             }
@@ -79,7 +86,7 @@ enum AiringNotifications {
 
     @MainActor
     static func reschedule(_ shows: [TrackedShow]) {
-        let planned = plan(shows, now: Date(), mode: .current)
+        let planned = plan(shows, now: Date(), mode: .current, voice: EngagementNotifications.isOn)
         let previous = running
         running = Task {
             await previous?.value
@@ -144,7 +151,10 @@ final class AiringNotificationDelegate: NSObject, UNUserNotificationCenterDelega
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler(notification.request.identifier.hasPrefix(AiringNotifications.prefix) ? [.banner, .list, .sound] : [])
+        let id = notification.request.identifier
+        // The engagement ones (1.24.0) aren't pending while Folio is open; the lab's are shown over it.
+        let show = id.hasPrefix(AiringNotifications.prefix) || (EngagementNotifications.lab && id.hasPrefix(EngagementNotifications.prefix))
+        completionHandler(show ? [.banner, .list, .sound] : [])
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
@@ -152,6 +162,10 @@ final class AiringNotificationDelegate: NSObject, UNUserNotificationCenterDelega
         if response.actionIdentifier == UNNotificationDefaultActionIdentifier,
            let id = response.notification.request.content.userInfo["track"] as? String {
             DispatchQueue.main.async { MainActor.assumeIsolated { TrackingPresenter.open(id) } }
+        } else if response.actionIdentifier == UNNotificationDefaultActionIdentifier,
+                  let link = response.notification.request.content.userInfo["engage"] as? String {
+            // An engagement notification (1.24.0): plays what it was about.
+            DispatchQueue.main.async { MainActor.assumeIsolated { EngagementNotifications.open(link) } }
         }
         completionHandler()
     }

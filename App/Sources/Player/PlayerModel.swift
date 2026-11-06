@@ -371,6 +371,7 @@ final class PlayerModel: ObservableObject {
         dlog("player", "close at \(Self.format(position))")
         saveHistory(force: true)
         HistoryStore.shared.flush()
+        WatchLog.shared.flush()
         ShowMemoryStore.shared.flush()
         HandoffActivity.stopPlaying()
         closeSubtitleSearch()
@@ -2000,6 +2001,7 @@ final class PlayerModel: ObservableObject {
         guard fileLoaded, duration > 0 || position > 0 else { return }
         if !force && Date().timeIntervalSince(lastHistorySave) < 5 { return }
         lastHistorySave = Date()
+        flushWatched()
         var stored = playingItem ?? item
         if stored.title.isEmpty { stored.title = mediaTitle }
         HistoryStore.shared.record(stored, position: leftFinished && duration > 0 ? duration : position, duration: duration)
@@ -2009,6 +2011,29 @@ final class PlayerModel: ObservableObject {
         if duration > 0, position / duration >= AutoDownload.threshold {
             AutoDownload.watched(item: stored, progress: position / duration)
         }
+    }
+
+    // MARK: Watch time (WatchLog, 1.24.0)
+
+    /// Time watched since the last save, in real seconds (at 2x, a minute
+    /// of the file is 30 s). Only playback moving on by itself counts: a
+    /// seek or a jump of more than 2 s doesn't.
+    private var watchPending: Double = 0
+
+    private func countWatched(from before: Double, to p: Double) {
+        let d = p - before
+        guard !paused, d > 0, d <= 2 else { return }
+        watchPending += d / max(0.25, speed)
+    }
+
+    private func flushWatched() {
+        guard watchPending >= 1 else { return }
+        let stored = playingItem ?? item
+        let e = HistoryEntry(item: stored, position: 0, duration: 0, updated: Date())
+        let episode = HeroCard.parts(stored, meta: nil).number != nil
+        WatchLog.shared.add(seconds: watchPending, id: e.id, isEpisode: episode,
+                            showKey: episode ? HistoryStore.showKey(e) : nil, showName: episode ? ShowCatalog.name(of: e) : nil)
+        watchPending = 0
     }
 
     // MARK: Show memory (ShowMemory.swift)
@@ -3603,6 +3628,7 @@ extension PlayerModel: MPVClientDelegate {
             let before = position
             position = p
             learnIntros(from: before, to: p)
+            countWatched(from: before, to: p)
             // Publish at most ~4x per second (skips SwiftUI work per frame).
             if abs(p - clock.position) >= 0.25 || p < clock.position { clock.position = p }
             updateActiveSegment()

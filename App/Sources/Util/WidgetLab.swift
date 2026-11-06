@@ -1,0 +1,165 @@
+import SwiftUI
+import UIKit
+import WidgetKit
+
+/// `-labWidgets` (1.24.0): draws every widget, in every look, into PNG files
+/// in Documents/LabWidgets, from what the app has written for the widgets
+/// (with `-shots`: the screenshot seed's library and Continue Watching),
+/// else the widgets' samples. A check of the layouts without a Home Screen.
+///
+/// Light and Dark are drawn as the widget is. Clear and Tinted are close
+/// stand-ins only: iOS draws those itself (the accented rendering mode,
+/// colouring by alpha), so here the widget is drawn in that mode, made grey
+/// (Clear) or grey times a tint (Tinted), over a glass card on a wallpaper.
+@MainActor
+enum WidgetLab {
+    static var on: Bool { CommandLine.arguments.contains("-labWidgets") }
+
+    enum Look: String, CaseIterable { case light, dark, clear, tinted }
+
+    static func start() {
+        guard on else { return }
+        // After the writers have run (the first snapshot comes 1.5 s after launch, its pictures after).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 12) { render() }
+    }
+
+    static let small = CGSize(width: 170, height: 170)
+    static let medium = CGSize(width: 364, height: 170)
+    static let large = CGSize(width: 364, height: 382)
+
+    static func render() {
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+        let out = docs.appendingPathComponent("LabWidgets", isDirectory: true)
+        try? FileManager.default.removeItem(at: out)
+        try? FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+
+        let cont = continueEntry()
+        let air = airingEntry()
+        let glance = glanceEntry()
+        var tiles: [(String, CGSize, AnyView, Bool)] = [
+            ("cw-small-hero", small, AnyView(ContinueWidgetView(entry: cont, family: .systemSmall)), false),
+            ("cw-small-ring", small, AnyView(ContinueWidgetView(entry: cont, family: .systemSmall, style: .ring)), false),
+            ("cw-medium-hero", medium, AnyView(ContinueWidgetView(entry: cont, family: .systemMedium)), false),
+            ("cw-medium-episode", medium, AnyView(ContinueWidgetView(entry: cont, family: .systemMedium, style: .episode)), false),
+            ("cw-large-hero", large, AnyView(ContinueWidgetView(entry: cont, family: .systemLarge)), false),
+            ("cw-large-shelf", large, AnyView(ContinueWidgetView(entry: cont, family: .systemLarge, style: .shelf)), false),
+            ("air-small-countdown", small, AnyView(AiringWidgetView(entry: air, family: .systemSmall)), false),
+            ("air-small-day", small, AnyView(AiringWidgetView(entry: air, family: .systemSmall, style: .day)), false),
+            ("air-medium-week", medium, AnyView(AiringWidgetView(entry: air, family: .systemMedium)), false),
+            ("air-medium-outnow", medium, AnyView(AiringWidgetView(entry: air, family: .systemMedium, style: .outNow)), false),
+            ("air-large-agenda", large, AnyView(AiringWidgetView(entry: air, family: .systemLarge)), false),
+            ("new-small-downloads", small, AnyView(GlanceWidgetView(entry: glance, kind: .downloads)), false),
+            ("new-small-week", small, AnyView(GlanceWidgetView(entry: glance, kind: .week)), true),
+            ("new-medium-servers", medium, AnyView(GlanceWidgetView(entry: glance, kind: .servers)), false),
+            ("new-medium-pick", medium, AnyView(GlanceWidgetView(entry: glance, kind: .pick)), false),
+        ]
+        // Empty and error states.
+        tiles += [
+            ("state-cw-empty", small, AnyView(ContinueWidgetView(entry: ContinueEntry(date: Date(), content: .empty), family: .systemSmall)), false),
+            ("state-cw-cantshare", medium, AnyView(ContinueWidgetView(entry: ContinueEntry(date: Date(), content: .cantShare), family: .systemMedium)), false),
+            ("state-air-nothing", small, AnyView(AiringWidgetView(entry: AiringEntry(date: Date(), content: .snapshot(AiringSnapshot(items: []))), family: .systemSmall)), false),
+        ]
+        var count = 0
+        for look in Look.allCases {
+            for (name, size, view, inverted) in tiles {
+                if write(framed(view, size: size, look: look, inverted: inverted), to: out.appendingPathComponent("\(name)-\(look.rawValue).png")) { count += 1 }
+            }
+        }
+        // The Lock Screen's, on a dark wallpaper as iOS draws them (vibrant).
+        let lock: [(String, CGSize, AnyView)] = [
+            ("lock-cw-rect", CGSize(width: 172, height: 76), AnyView(ContinueWidgetView(entry: cont, family: .accessoryRectangular))),
+            ("lock-cw-circle", CGSize(width: 76, height: 76), AnyView(ContinueWidgetView(entry: cont, family: .accessoryCircular))),
+            ("lock-cw-inline", CGSize(width: 260, height: 22), AnyView(ContinueWidgetView(entry: cont, family: .accessoryInline))),
+            ("lock-air-rect", CGSize(width: 172, height: 76), AnyView(AiringWidgetView(entry: air, family: .accessoryRectangular))),
+            ("lock-air-circle", CGSize(width: 76, height: 76), AnyView(AiringWidgetView(entry: air, family: .accessoryCircular))),
+            ("lock-air-inline", CGSize(width: 260, height: 22), AnyView(AiringWidgetView(entry: air, family: .accessoryInline))),
+        ]
+        for (name, size, view) in lock {
+            let v = view.environment(\.colorScheme, .dark).environment(\.widgetRenderingMode, .vibrant)
+                .foregroundStyle(.white).frame(width: size.width, height: size.height)
+                .padding(10).background(Color(hex: 0x2A2F3A))
+            if write(v, to: out.appendingPathComponent("\(name).png")) { count += 1 }
+        }
+        dlog("lab", "widgets: \(count) pictures in Documents/LabWidgets (Continue Watching: \(cont.hasItems ? "the app's snapshot" : "sample"), \(glance.downloads == nil ? "no" : "with") downloads file)")
+    }
+
+    private static func framed(_ view: AnyView, size: CGSize, look: Look, inverted: Bool) -> some View {
+        let scheme: ColorScheme = look == .dark ? .dark : .light
+        let mode: WidgetRenderingMode = look == .clear || look == .tinted ? .accented : .fullColor
+        let t = WidgetPalette(scheme: scheme, mode: mode)
+        let tint = Color(hex: 0x7FB3E6)
+        let content = view
+            .environment(\.colorScheme, scheme)
+            .environment(\.widgetRenderingMode, mode)
+            .frame(width: size.width, height: size.height)
+        let card = RoundedRectangle(cornerRadius: 22, style: .continuous)
+        return ZStack {
+            switch look {
+            case .light, .dark:
+                card.fill(inverted ? t.ink : t.card)
+                content.clipShape(card)
+            case .clear:
+                card.fill(.white.opacity(0.14)).overlay(card.strokeBorder(.white.opacity(0.32)))
+                content.saturation(0).clipShape(card)
+            case .tinted:
+                card.fill(tint.opacity(0.16)).overlay(card.strokeBorder(tint.opacity(0.35)))
+                content.saturation(0).colorMultiply(Color(hex: 0xB2D1F0)).clipShape(card)
+            }
+        }
+        .frame(width: size.width, height: size.height)
+        .padding(18)
+        .background(wallpaper(look))
+    }
+
+    @ViewBuilder
+    private static func wallpaper(_ look: Look) -> some View {
+        switch look {
+        case .light: Color(hex: 0xE6E0D6)
+        case .dark: Color(hex: 0x0B0A09)
+        case .clear: LinearGradient(colors: [Color(hex: 0x8C6B4A), Color(hex: 0x3E3127), Color(hex: 0x2F4A55)], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .tinted: LinearGradient(colors: [Color(hex: 0x22344A), Color(hex: 0x141D26)], startPoint: .topLeading, endPoint: .bottomTrailing)
+        }
+    }
+
+    private static func write(_ view: some View, to url: URL) -> Bool {
+        let r = ImageRenderer(content: view)
+        r.scale = 3
+        guard let data = r.uiImage?.pngData() else { return false }
+        return (try? data.write(to: url)) != nil
+    }
+
+    // MARK: What the widgets would read
+
+    private static func continueEntry() -> ContinueEntry {
+        let dir = WidgetStore.continueWatching()
+        guard let snap = ContinueSnapshot.read(from: dir), !snap.items.isEmpty else { return .sample }
+        var pictures: [String: UIImage] = [:]
+        for name in snap.items.flatMap({ [$0.picture, $0.poster] }).compactMap({ $0 }) {
+            if let d = dir?.read(name), let img = UIImage(data: d) { pictures[name] = img }
+        }
+        return ContinueEntry(date: Date(), content: .items(snap.items), pictures: pictures)
+    }
+
+    private static func airingEntry() -> AiringEntry {
+        let dir = WidgetStore.airing()
+        guard let snap = AiringSnapshot.read(from: dir), !snap.items.isEmpty else { return .sample() }
+        var pictures: [String: UIImage] = [:]
+        for name in snap.items.compactMap(\.picture) + (snap.recent ?? []).compactMap(\.picture) {
+            if let d = dir?.read(name), let img = UIImage(data: d) { pictures[name] = img }
+        }
+        return AiringEntry(date: Date(), content: .snapshot(snap), pictures: pictures)
+    }
+
+    private static func glanceEntry() -> GlanceEntry {
+        let store = WidgetStore.glance()
+        var e = GlanceEntry.sample()
+        if let d = DownloadsGlance.read(from: store) { e.downloads = d }
+        if let w = WeekGlance.read(from: store), w.seconds > 0 { e.week = w }
+        if let s = ServersGlance.read(from: store) { e.servers = s }
+        if let p = PicksGlance.read(from: store), !p.picks.isEmpty { e.picks = p }
+        var names = (e.servers?.releases ?? []).map(ServersTile.pictureName)
+        names += (e.picks?.picks ?? []).compactMap(\.picture)
+        for n in names { if let d = store?.read(n), let img = UIImage(data: d) { e.pictures[n] = img } }
+        return e
+    }
+}

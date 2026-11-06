@@ -50,6 +50,10 @@ struct SettingsView: View {
             }
             // The airing tracker (1.21.0): the tracked shows and their notifications.
             TrackingSettingsSection()
+            // 1.24.0: the engagement notifications.
+            Section {
+                row("Reminders", "quote.bubble", .orange) { EngagementSettings() }
+            }
             Section {
                 row("mpv", "slider.horizontal.3", .teal) { MPVSettings() }
             } footer: {

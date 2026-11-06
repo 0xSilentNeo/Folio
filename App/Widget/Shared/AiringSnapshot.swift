@@ -68,6 +68,26 @@ struct AiringSnapshot: Codable, Equatable {
     }
 
     var items: [Item]
+    /// 1.24.0 (nil in older snapshots): how many shows are tracked, and the
+    /// episodes out in the last week, newest first, each with where you can
+    /// watch it if Folio found it in your library or on a server.
+    var tracked: Int? = nil
+    var recent: [Recent]? = nil
+
+    /// An episode that's out (the Out now widget).
+    struct Recent: Codable, Equatable, Identifiable {
+        var showID: String
+        var show: String
+        var label: String
+        var title: String?
+        var airDate: Date
+        var season: Int?
+        var number: Int?
+        /// "in your library", "on Real-Debrid"; nil when Folio didn't find it.
+        var available: String?
+        var picture: String?
+        var id: String { showID + "|" + label }
+    }
 
     /// The large widget shows seven; a few more so one that ends doesn't leave a gap.
     static let limit = 12
@@ -150,6 +170,18 @@ struct AiringSnapshot: Codable, Equatable {
 /// encoded anyway, as ContinueLink does.
 enum TrackLink {
     private static let unreserved = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
+
+    /// The Tracking list (1.24.0): the Airing widgets with nothing tracked.
+    static let list = URL(string: "folio://track")!
+
+    /// folio://aired?id=<show>&s=2&e=1 (1.24.0): plays an episode that's out
+    /// from wherever Folio finds it then (the Out now widget's Play). The
+    /// widget carries the show and the episode's number, never a file's
+    /// address; Folio looks the file up when it's tapped.
+    static func aired(id: String, season: Int?, episode: Int) -> URL {
+        let encoded = id.addingPercentEncoding(withAllowedCharacters: unreserved) ?? ""
+        return URL(string: "folio://aired?id=\(encoded)" + (season.map { "&s=\($0)" } ?? "") + "&e=\(episode)") ?? list
+    }
 
     static func url(id: String) -> URL {
         let encoded = id.addingPercentEncoding(withAllowedCharacters: unreserved) ?? ""

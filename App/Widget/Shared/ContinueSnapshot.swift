@@ -77,12 +77,24 @@ struct ContinueSnapshot: Codable, Equatable {
         var remaining: Double
         /// A picture's file name next to the snapshot, if there is one.
         var picture: String?
+        /// 1.24.0, for the redesigned widgets (nil in older snapshots):
+        /// "S2 · E3" (nil for a film), the episode's title, the whole length
+        /// in seconds, the next episode's number when Folio knows it ("E6",
+        /// "S3 · E1"), a portrait poster's file name, and the year of a film.
+        var episode: String? = nil
+        var episodeTitle: String? = nil
+        var duration: Double? = nil
+        var next: String? = nil
+        var poster: String? = nil
+        var year: String? = nil
+
+        var isFilm: Bool { episode == nil }
     }
 
     var items: [Item]
 
-    /// The medium widget shows three; one more for the next size up.
-    static let limit = 4
+    /// The poster shelf shows six (1.24.0; four until then).
+    static let limit = 6
     /// The widget's kind (WidgetKit), the same in the app and the extension.
     static let widgetKind = "ContinueWatching"
     /// Pictures are kept this big on their long side: about a small widget's
@@ -128,6 +140,20 @@ struct ContinueSnapshot: Codable, Equatable {
 }
 
 extension ContinueSnapshot.Item {
+    /// "9m", "1h 12m": the large widget's column.
+    var shortRemaining: String {
+        let minutes = Int((remaining / 60).rounded(.up))
+        if minutes < 1 { return "<1m" }
+        if minutes < 60 { return "\(minutes)m" }
+        let h = minutes / 60, m = minutes % 60
+        return m == 0 ? "\(h)h" : "\(h)h \(m)m"
+    }
+
+    /// "S2 · E3 · 18 min left", or a film's "1 h 5 min left".
+    var placeAndRemaining: String {
+        [episode, remainingText].compactMap { $0 }.joined(separator: " · ")
+    }
+
     /// "24 min left", "1 h 5 min left". In minutes, not Home's "23:41 left":
     /// a widget is a still picture and a ticking-looking time would be wrong
     /// a minute later.
@@ -149,6 +175,16 @@ enum ContinueLink {
     static func url(id: String) -> URL {
         let encoded = id.addingPercentEncoding(withAllowedCharacters: unreserved) ?? ""
         return URL(string: "folio://continue?id=" + encoded) ?? URL(string: "folio://continue")!
+    }
+
+    /// The episode after the entry, from its start (1.24.0): the Episode
+    /// widget's second button.
+    static func nextURL(id: String) -> URL {
+        URL(string: url(id: id).absoluteString + "&next=1") ?? url(id: id)
+    }
+
+    static func wantsNext(_ url: URL) -> Bool {
+        URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.contains { $0.name == "next" && $0.value == "1" } ?? false
     }
 
     static func id(from url: URL) -> String? {

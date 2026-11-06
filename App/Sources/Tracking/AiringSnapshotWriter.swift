@@ -31,7 +31,33 @@ enum AiringSnapshotWriter {
                                        episodes: eps.map { AiringSnapshot.Episode(label: $0.label, title: $0.title, airDate: $0.airDate!, day: $0.day) })
         }
         let sorted = items.sorted { ($0.headline(at: now)?.airDate ?? .distantFuture) < ($1.headline(at: now)?.airDate ?? .distantFuture) }
-        return AiringSnapshot(items: Array(sorted.prefix(AiringSnapshot.limit)))
+        var snap = AiringSnapshot(items: Array(sorted.prefix(AiringSnapshot.limit)))
+        // 1.24.0: how many are tracked, and what came out in the last week
+        // (the Out now widget), newest first.
+        snap.tracked = shows.count
+        let week = now.addingTimeInterval(-7 * 86400)
+        snap.recent = Array(shows.flatMap { s in
+            s.schedule.filter { $0.airDate! > week && $0.airDate! <= now }.map {
+                AiringSnapshot.Recent(showID: s.id, show: s.name, label: $0.label, title: $0.title, airDate: $0.airDate!,
+                                      season: $0.season, number: $0.number)
+            }
+        }.sorted { $0.airDate > $1.airDate }.prefix(6))
+        return snap
+    }
+
+    /// Where each recent episode is, if Folio has it: the library or a
+    /// server's saved library (EpisodeFinder; no network).
+    static func locate(_ snap: inout AiringSnapshot, shows: [TrackedShow]) async {
+        guard let recent = snap.recent, !recent.isEmpty else { return }
+        let files = await ContinueQueue.libraryFiles()
+        for server in ServerStore.shared.servers { await LibraryIndexStore.shared.load(server) }
+        snap.recent = recent.map { r in
+            var r = r
+            if let n = r.number, let show = shows.first(where: { $0.id == r.showID }) {
+                r.available = EpisodeFinder.find(show, season: r.season, episode: n, libraryFiles: files)?.place
+            }
+            return r
+        }
     }
 
     private static func write(_ shows: [TrackedShow]) async {
@@ -43,10 +69,18 @@ enum AiringSnapshotWriter {
             return
         }
         var snap = snapshot(shows, now: Date())
+        await locate(&snap, shows: shows)
         let posters = Dictionary(shows.map { ($0.id, $0.poster) }, uniquingKeysWith: { a, _ in a })
         for i in snap.items.indices {
             snap.items[i].picture = await picture(posters[snap.items[i].id] ?? nil, in: dir)
             guard !Task.isCancelled else { return }
+        }
+        if var recent = snap.recent {
+            for i in recent.indices {
+                recent[i].picture = await picture(posters[recent[i].showID] ?? nil, in: dir)
+                guard !Task.isCancelled else { return }
+            }
+            snap.recent = recent
         }
         // Compared, written and swept off the main thread. Nil: not written.
         let previous = written, final = snap
@@ -57,14 +91,14 @@ enum AiringSnapshotWriter {
                 return nil
             }
             // Posters no show uses any more.
-            let keep = Set(final.items.compactMap(\.picture))
+            let keep = Set(final.items.compactMap(\.picture) + (final.recent ?? []).compactMap(\.picture))
             for f in dir.names() where f.hasSuffix(".jpg") && !keep.contains(f) { dir.remove(f) }
             return true
         }.value
         guard let wrote else { return }
         written = snap
         guard wrote else { return }
-        WidgetCenter.shared.reloadTimelines(ofKind: AiringSnapshot.widgetKind)
+        for kind in WidgetKind.airingKinds { WidgetCenter.shared.reloadTimelines(ofKind: kind) }
         dlog("tracking", "Airing widget: \(snap.items.count) show(s)\(dir.isKeychain ? " (Keychain)" : "")")
     }
 

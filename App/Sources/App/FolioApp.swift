@@ -23,6 +23,9 @@ struct FolioApp: App {
         // The airing tracker (1.21.0): its background refresh and the
         // notification delegate, which iOS needs set before launch ends.
         MainActor.assumeIsolated { AiringTracker.start() }
+        // The engagement notifications (1.24.0): planned each time Folio
+        // leaves the screen, cleared when it's back.
+        MainActor.assumeIsolated { EngagementNotifications.start() }
         if !["-uiTest", "-uiTestLibrary", "-labDiscover", "-shots"].contains(where: CommandLine.arguments.contains) { IMDbSource.warmUp() }
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
@@ -123,6 +126,7 @@ struct RootView: View {
             searchFrom = old
         }
         .onOpenURL(perform: handle)
+        .onReceive(HomeRouter.shared.showHome) { tab = 0 }
         .alert("Add this addon?", isPresented: Binding(get: { linkAddon != nil }, set: { if !$0 { linkAddon = nil } }), presenting: linkAddon) { target in
             Button("Add") { installLinkedAddon(target) }
             Button("Cancel", role: .cancel) {}
@@ -244,19 +248,32 @@ struct RootView: View {
         case "continue":
             // The Continue Watching widget (1.20.3): plays the entry as Home's
             // card does. The widget's copy can be a moment behind; an entry
-            // removed since then is only logged.
+            // removed since then is only logged. With next=1 (the Episode
+            // widget, 1.24.0): the episode after it.
             guard let id = ContinueLink.id(from: url), let entry = HistoryStore.shared.entry(for: id) else {
                 dlog("open", "folio://continue for an entry that's no longer in the history")
                 return
             }
-            ContinueQueue.play(entry.item)
+            if ContinueLink.wantsNext(url) { ContinueQueue.playNext(entry.item) } else { ContinueQueue.play(entry.item) }
         case "track":
             // folio://track?id=<tracked show id>: a new-episode notification
-            // or the Airing widget (1.21.0) opens the show's tracking page.
-            guard let id = TrackLink.id(from: url) else { return }
-            TrackingPresenter.open(id)
+            // or the Airing widget (1.21.0) opens the show's tracking page;
+            // without an id (1.24.0), the Tracking list.
+            TrackingPresenter.open(TrackLink.id(from: url))
+        case "aired":
+            // The Out now widget's Play (1.24.0): the episode, found again now.
+            EpisodeFinder.open(url)
+        case "library":
+            // The Pick for tonight widget's Play (1.24.0).
+            WidgetOpen.libraryFile(url)
+        case "release":
+            // New on your server (1.24.0): the release's folder on Home.
+            WidgetOpen.release(url)
+        case "home":
+            // A widget with nothing to show yet (1.24.0): Folio on Home.
+            tab = 0
         case "downloads":
-            // folio://downloads: the downloads Live Activity (1.22.0).
+            // folio://downloads: the downloads Live Activity (1.22.0) and widget (1.24.0).
             DownloadsPresenter.open()
         default:
             dlog("open", "folio:// link with an unknown action: \(url.host ?? "none")")

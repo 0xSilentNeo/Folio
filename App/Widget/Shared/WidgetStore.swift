@@ -20,6 +20,9 @@ enum WidgetStore: Sendable {
     static func continueWatching(create: Bool = false) -> WidgetStore? { store(area: "Widget", create: create) }
     /// The Airing widget's files ("Airing").
     static func airing(create: Bool = false) -> WidgetStore? { store(area: "Airing", create: create) }
+    /// The 1.24.0 widgets' files ("Glance"): downloads, your week, new on
+    /// your servers, a pick for tonight (GlanceSnapshot).
+    static func glance(create: Bool = false) -> WidgetStore? { store(area: "Glance", create: create) }
 
     private static func store(area: String, create: Bool) -> WidgetStore? {
         if let container = FolioGroup.container {

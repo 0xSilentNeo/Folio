@@ -15,6 +15,7 @@ enum UILab {
     static var keepControls: Bool { (uiTest || uiTestLibrary) && !CommandLine.arguments.contains("-labAutoHide") }
 
     static func start() {
+        WidgetLab.start()
         if LabDAV.on { LabDAV.seed() }
         LabDAV.seedServer()
         if ShotsSeed.enabled { ShotsSeed.run(); return }
