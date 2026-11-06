@@ -24,7 +24,8 @@ enum LabDAV {
         guard let play = CommandLine.arguments.first(where: { $0.hasPrefix("-labPlayDAV=") }),
               let server = ServerStore.shared.servers.first(where: { $0.baseURL == base }),
               let url = URL(string: base.trimmingCharacters(in: CharacterSet(charactersIn: "/")) + String(play.dropFirst("-labPlayDAV=".count))) else { return }
-        UserDefaults.standard.set(false, forKey: SettingsKey.resumePlayback)
+        // No settings written: pass "-resumePlayback NO" for a fresh open
+        // (the launch's argument domain, gone at the next launch).
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             let item = WebDAVClient(server: server).mediaItem(for: DAVItem(url: url, name: url.lastPathComponent, isDirectory: false, size: nil, modified: nil, contentType: nil), cleanTitles: true)
             dlog("lab", "playing \(url.lastPathComponent) from the lab server")
