@@ -123,10 +123,23 @@ final class AddonStore: ObservableObject {
     @Published var installing = false
 
     private init() {
-        if let data = UserDefaults.standard.data(forKey: "addons"),
-           let list = try? JSONDecoder().decode([InstalledAddon].self, from: data) {
-            addons = list
+        if let data = UserDefaults.standard.data(forKey: "addons") {
+            if let list = try? JSONDecoder().decode([InstalledAddon].self, from: data) {
+                addons = list
+            } else {
+                // 1.23.4: one entry this version couldn't read left the whole
+                // list empty, and the next change saved the empty list over
+                // it. Each addon is read on its own now, and the list as it
+                // was is kept aside ("addonsUnreadable") instead of lost.
+                let all = (try? JSONSerialization.jsonObject(with: data) as? [Any])?.count ?? -1
+                addons = JSONDecoder().decodeLossy(InstalledAddon.self, from: data) ?? []
+                if UserDefaults.standard.data(forKey: "addonsUnreadable") == nil {
+                    UserDefaults.standard.set(data, forKey: "addonsUnreadable")
+                }
+                dlog("addons", "the saved list couldn't be read whole: \(addons.count) of \(all) read; the list as saved is kept")
+            }
         }
+        dlog("addons", "\(addons.count) installed\(addons.isEmpty ? "" : ": " + addons.map(\.manifest.name).joined(separator: ", "))")
         // 1.6: metadata is built in (IMDb); the metadata catalog addon that
         // earlier versions installed automatically is removed once.
         if !UserDefaults.standard.bool(forKey: "cinemetaRemoved") {

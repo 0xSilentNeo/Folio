@@ -244,6 +244,7 @@ struct SubtitleAudioSettings: View {
     @AppStorage(SettingsKey.nightMode) private var nightMode = false
     @AppStorage(SettingsKey.dialogueBoost) private var dialogueBoost = false
     @AppStorage(SettingsKey.subStyle) private var subStyle = SubtitleStyle.standard.rawValue
+    @AppStorage(SettingsKey.subFollowZoom) private var subFollowZoom = "auto"
 
     var body: some View {
         Form {
@@ -302,6 +303,14 @@ struct SubtitleAudioSettings: View {
                 }
                 Explained("100 is the normal place near the bottom; lower numbers move subtitles up, higher numbers further down.") {
                     Stepper("Position  \(subPos)", value: $subPos, in: 50...150)
+                }
+                Explained(subFollowZoom == "manual"
+                          ? "Subtitles stay where Position puts them on the video. When you zoom in or fill the screen, a subtitle near the bottom can go past the screen's edge: move it up with Position."
+                          : "When you zoom in or fill the screen, subtitles move and resize so they keep their place on what you can see.") {
+                    Picker("When the picture is zoomed", selection: $subFollowZoom) {
+                        Text("Adjust automatically").tag("auto")
+                        Text("Stay as set").tag("manual")
+                    }
                 }
                 Toggle("Bold", isOn: $subBold)
                 Explained("A dark box behind the text keeps subtitles readable on bright scenes.") {

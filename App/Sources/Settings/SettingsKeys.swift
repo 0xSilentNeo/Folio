@@ -68,6 +68,10 @@ enum SettingsKey {
     static let subBold = "subBold"
     static let subBox = "subBox"
     static let subPos = "subPos"
+    /// 1.23.4: "auto" — subtitles keep their place on the visible picture
+    /// when it's zoomed or filled; "manual" — they stay where the position
+    /// setting puts them on the video, even if that's off the screen.
+    static let subFollowZoom = "subFollowZoom"
     static let subStyle = "subStyle"                    // default | large | yellow | boxed (SubtitleStyle)
     static let nightMode = "nightMode"                  // 1.20.3: audio range compression (AudioFilters)
     static let dialogueBoost = "dialogueBoost"          // 1.20.3: centre channel / voice band up (AudioFilters)
@@ -179,6 +183,7 @@ enum SettingsKey {
             subBold: true,
             subBox: false,
             subPos: 100,
+            subFollowZoom: "auto",
             subStyle: "default",
             nightMode: false,
             dialogueBoost: false,

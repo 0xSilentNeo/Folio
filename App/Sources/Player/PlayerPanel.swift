@@ -195,6 +195,7 @@ struct SettingsPanelContent: View {
     @AppStorage(SettingsKey.surroundAudio) private var spatial = true
     @AppStorage(SettingsKey.subScale) private var subScale = 1.0
     @AppStorage(SettingsKey.subPos) private var subPos = 100
+    @AppStorage(SettingsKey.subFollowZoom) private var subFollowZoom = "auto"
     @AppStorage("screenshotSubs") private var screenshotSubs = true
 
     var body: some View {
@@ -312,8 +313,13 @@ struct SettingsPanelContent: View {
             }
             PanelRow(icon: "arrow.up.and.down.text.horizontal", title: "Position") {
                 Stepper3(text: "\(subPos)",
-                         minus: { subPos = max(50, subPos - 5); model.run(command: "set sub-pos \(subPos)") },
-                         plus: { subPos = min(150, subPos + 5); model.run(command: "set sub-pos \(subPos)") })
+                         minus: { subPos = max(50, subPos - 5); model.setSubPos(subPos) },
+                         plus: { subPos = min(150, subPos + 5); model.setSubPos(subPos) })
+            }
+            PanelRow(icon: "arrow.up.left.and.arrow.down.right", title: "When zoomed",
+                     subtitle: subFollowZoom == "manual" ? "Stay as set" : "Keep on screen") {
+                ValueMenu(options: [("auto", "Adjust automatically"), ("manual", "Stay as set")],
+                          selection: Binding(get: { subFollowZoom }, set: { subFollowZoom = $0; model.applySubtitleFraming() }))
             }
             PanelRow(icon: "timer", title: "Delay") {
                 Stepper3(text: String(format: "%+.1f s", model.subDelay),
