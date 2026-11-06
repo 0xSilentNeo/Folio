@@ -106,6 +106,9 @@ enum SettingsKey {
     // Tracking (1.21.0)
     static let airingAlerts = "airingAlerts"            // air | hour | off: new-episode notifications (AiringAlerts)
 
+    // Engagement notifications (1.24.0): a line now and then about what you're watching (EngagePlanner)
+    static let engageNotes = "engageNotes"
+
     // Library
     static let cleanTitles = "cleanTitles"
     static let searchServerLayout = "searchServerLayout"   // files | posters: what the search shows of the servers' files (1.23.0)
@@ -209,6 +212,7 @@ enum SettingsKey {
             cleanTitles: true,
             showOnlyMedia: false,
             airingAlerts: "air",
+            engageNotes: true,
         ])
         // 1.22.1: Metal is the default again. 1.22.0 moved everyone to the
         // OpenGL renderer, which some files didn't play on (user report,

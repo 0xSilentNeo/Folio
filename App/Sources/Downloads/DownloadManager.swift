@@ -1416,6 +1416,10 @@ final class DownloadManager: ObservableObject {
         let c = UNMutableNotificationContent()
         c.title = "Downloads finished"
         c.body = done.count == 1 ? done[0].fileName : "\(done.count) files are in your library."
+        // One episode, with the engagement notifications on (1.24.0): in their voice.
+        if done.count == 1, EngagementNotifications.isOn, let w = EngagePlanner.downloadWording(fileName: done[0].fileName) {
+            (c.title, c.body) = w
+        }
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "downloads-done", content: c, trigger: nil))
     }
 

@@ -40,7 +40,19 @@ enum ContinueSnapshotWriter {
         // The first snapshot after an install or an update, before anything
         // changes. On the next turn of the main loop: this runs while
         // HistoryStore.shared is still being made.
-        DispatchQueue.main.async { MainActor.assumeIsolated { schedule() } }
+        DispatchQueue.main.async { MainActor.assumeIsolated {
+            schedule()
+            // The 1.24.0 widgets' files, and the Resume control's action.
+            GlanceWriter.start()
+            ResumeHook.run = {
+                guard !KidsProfile.isOnNow, let e = HistoryStore.shared.continueWatching.first else {
+                    dlog("intents", "Resume control: nothing to continue\(KidsProfile.isOnNow ? " (kids profile)" : "")")
+                    return
+                }
+                dlog("intents", "Resume control: \(ShowCatalog.name(of: e))")
+                IntentPlayback.start(e.item)
+            }
+        } }
     }
 
     static func schedule() {
@@ -98,6 +110,8 @@ enum ContinueSnapshotWriter {
             let meta = await meta(for: e.item)
             var item = item(for: e, meta: meta)
             item.picture = await picture(for: e, meta: meta, in: dir)
+            item.poster = await poster(for: e, meta: meta, in: dir)
+            if item.episode != nil { item.next = await NextUp.label(for: e) }
             guard !Task.isCancelled else { return }
             items.append(item)
         }
@@ -109,8 +123,8 @@ enum ContinueSnapshotWriter {
                 return
             }
             written = snapshot
-            sweep(dir, keeping: Set(items.compactMap(\.picture)))
-            WidgetCenter.shared.reloadTimelines(ofKind: ContinueSnapshot.widgetKind)
+            sweep(dir, keeping: Set(items.flatMap { [$0.picture, $0.poster] }.compactMap { $0 }))
+            for kind in WidgetKind.continueKinds { WidgetCenter.shared.reloadTimelines(ofKind: kind) }
             dlog("widget", "snapshot: \(items.count) item(s), \(items.filter { $0.picture != nil }.count) with a picture\(dir.isKeychain ? " (Keychain)" : "")")
         }
     }
@@ -119,8 +133,17 @@ enum ContinueSnapshotWriter {
     static func item(for e: HistoryEntry, meta: MediaMeta?) -> ContinueSnapshot.Item {
         // A film's line is its synopsis: the widget shows one line of it.
         let line = HeroCard.line(e.item, meta: meta).map { $0.count > 200 ? String($0.prefix(200)) : $0 }
-        return ContinueSnapshot.Item(id: e.id, title: meta?.name ?? e.item.displayTitle, line: line,
-                                     progress: e.progress, remaining: max(0, e.duration - e.position))
+        let parts = HeroCard.parts(e.item, meta: meta)
+        // An episode's title is its show's (1.24.0): the widgets show the
+        // episode's number and title on their own lines.
+        let title = meta?.name ?? (parts.number != nil ? ShowCatalog.name(of: e) : e.item.displayTitle)
+        var item = ContinueSnapshot.Item(id: e.id, title: title, line: line,
+                                         progress: e.progress, remaining: max(0, e.duration - e.position))
+        item.episode = parts.number
+        item.episodeTitle = parts.title
+        item.duration = e.duration > 0 ? e.duration : nil
+        if parts.number == nil { item.year = meta?.year ?? TitleParser.parse(e.item.fileName).year.map(String.init) }
+        return item
     }
 
     /// The metadata Home's card has (ThumbLoader): by file name, cached on
@@ -155,6 +178,20 @@ enum ContinueSnapshotWriter {
         guard let img = await ImageCache.shared.image(url, maxPixel: ContinueSnapshot.picturePixels) else { return nil }
         return await Task.detached(priority: .utility) { save(img, name, in: dir) }.value
     }
+
+    /// A portrait poster for the shelf widget (1.24.0): the title's poster
+    /// (an addon item's own art is its poster), small: a third of a large
+    /// widget's width at 3x.
+    private static func poster(for e: HistoryEntry, meta: MediaMeta?, in dir: WidgetStore) async -> String? {
+        let art = e.item.addonRef == nil ? meta?.poster : (e.item.artwork ?? meta?.poster)
+        guard let art, let url = URL(string: art) else { return nil }
+        let name = "\(hash(e.id))-p-\(hash(art)).jpg"
+        if dir.exists(name) { return name }
+        guard let img = await ImageCache.shared.image(url, maxPixel: posterPixels) else { return nil }
+        return await Task.detached(priority: .utility) { save(img, name, in: dir) }.value
+    }
+
+    static let posterPixels: CGFloat = 330
 
     nonisolated private static func save(_ img: UIImage, _ name: String, in dir: WidgetStore) -> String? {
         guard let jpeg = img.jpegData(compressionQuality: 0.8), (try? dir.write(jpeg, name)) != nil else { return nil }

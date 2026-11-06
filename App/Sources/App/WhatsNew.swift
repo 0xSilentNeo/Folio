@@ -20,6 +20,16 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.24.0", items: [
+            Item(icon: "rectangle.3.group", title: "New widgets",
+                 text: "Continue Watching in four styles, Airing in three, and Downloads, Your week, New on your server and Pick for tonight. Each follows your Home Screen's look: light, dark, clear or tinted."),
+            Item(icon: "play.circle", title: "Straight from the widget",
+                 text: "Resume, go on to the next episode, play an episode that's just out, or shuffle tonight's pick, without opening a menu first."),
+            Item(icon: "switch.2", title: "A Resume control",
+                 text: "Add Resume to Control Center, the Lock Screen or the Action button: one tap plays what you watched last."),
+            Item(icon: "quote.bubble", title: "Reminders, with some cheek",
+                 text: "Now and then a line about what you're watching, at most one a day and never at night. Turn them off in Settings → Reminders."),
+        ]),
         Release(version: "1.23.4", items: [
             Item(icon: "captions.bubble", title: "Subtitles stay in view",
                  text: "Fill and pinching no longer push subtitles off the screen: they move and resize with the picture. Turn it off in the player's Subtitles menu (When zoomed)."),

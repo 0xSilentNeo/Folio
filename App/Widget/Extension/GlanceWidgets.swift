@@ -1,0 +1,104 @@
+import SwiftUI
+import UIKit
+import WidgetKit
+
+// The 1.24.0 widgets that read GlanceSnapshot: Downloads, Your week, New on
+// your servers and Pick for tonight. Each reloads when the app writes its
+// file (GlanceWriter); Your week also at midnight, when its week moves on.
+
+struct DownloadsWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: WidgetKind.downloads, provider: GlanceProvider(kind: .downloads)) { entry in
+            GlanceWidgetView(entry: entry, kind: .downloads)
+        }
+        .configurationDisplayName("Downloads")
+        .description("How far, how fast, how long; when idle, what's ready offline.")
+        .supportedFamilies([.systemSmall])
+        .contentMarginsDisabled()
+    }
+}
+
+struct YourWeekWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: WidgetKind.yourWeek, provider: GlanceProvider(kind: .week)) { entry in
+            GlanceWidgetView(entry: entry, kind: .week)
+        }
+        .configurationDisplayName("Your Week")
+        .description("What you watched in the last seven days. Counted on your phone; nothing leaves it.")
+        .supportedFamilies([.systemSmall])
+        .contentMarginsDisabled()
+    }
+}
+
+struct NewOnServersWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: WidgetKind.newOnServers, provider: GlanceProvider(kind: .servers)) { entry in
+            GlanceWidgetView(entry: entry, kind: .servers)
+        }
+        .configurationDisplayName("New on Your Server")
+        .description("The newest releases in your server's library, with their quality.")
+        .supportedFamilies([.systemMedium])
+        .contentMarginsDisabled()
+    }
+}
+
+struct PickTonightWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: WidgetKind.pickTonight, provider: GlanceProvider(kind: .pick)) { entry in
+            GlanceWidgetView(entry: entry, kind: .pick)
+        }
+        .configurationDisplayName("Pick for Tonight")
+        .description("Something in your library you haven't started. Shuffle for another.")
+        .supportedFamilies([.systemMedium])
+        .contentMarginsDisabled()
+    }
+}
+
+struct GlanceProvider: TimelineProvider {
+    let kind: GlanceKind
+
+    func placeholder(in context: Context) -> GlanceEntry { .sample() }
+
+    func getSnapshot(in context: Context, completion: @escaping (GlanceEntry) -> Void) {
+        let entry = load(Date())
+        completion(context.isPreview && entry.access != .ok ? .sample() : entry)
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<GlanceEntry>) -> Void) {
+        let now = Date()
+        var entries = [load(now)]
+        // Your week: again at midnight, when a day leaves the week.
+        if kind == .week, let midnight = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: now)) {
+            var next = entries[0]
+            next = GlanceEntry(date: midnight, access: next.access, week: next.week)
+            entries.append(next)
+        }
+        completion(Timeline(entries: entries, policy: kind == .week ? .atEnd : .never))
+    }
+
+    func load(_ now: Date) -> GlanceEntry {
+        let store = WidgetStore.glance()
+        var e = GlanceEntry(date: now)
+        switch kind {
+        case .downloads: e.downloads = DownloadsGlance.read(from: store)
+        case .week: e.week = WeekGlance.read(from: store)
+        case .servers: e.servers = ServersGlance.read(from: store)
+        case .pick:
+            e.picks = PicksGlance.read(from: store)
+            e.pickIndex = PickIndex.current(store)
+        }
+        let has = e.downloads != nil || e.week != nil || e.servers != nil || e.picks != nil
+        if !has {
+            // Downloads and Your week still draw with nothing written: "Nothing downloading", "0 min".
+            if WidgetAccess.cantShare(store) { e.access = .cantShare }
+            else if kind == .servers || kind == .pick { e.access = ContinueSnapshot.read(from: WidgetStore.continueWatching()) == nil ? .openFolio : .ok }
+        }
+        if let store {
+            var names: [String] = []
+            if let s = e.servers { names += s.releases.prefix(4).map(ServersTile.pictureName) }
+            if let p = e.picks?.picks, !p.isEmpty { names += [p[e.pickIndex % p.count].picture].compactMap { $0 } }
+            for n in names { if let d = store.read(n), let img = UIImage(data: d) { e.pictures[n] = img } }
+        }
+        return e
+    }
+}
