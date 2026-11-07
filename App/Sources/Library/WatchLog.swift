@@ -21,6 +21,9 @@ struct WatchDay: Codable, Equatable {
     /// Episodes of each show that day (show key: ids).
     var showEpisodes: [String: [String]] = [:]
     var last: Date?
+    /// Seconds watched in each hour of the day ("20": 1800), for when the
+    /// notifications come (1.25.0). Optional: older logs don't have it.
+    var hours: [String: Double]?
 }
 
 @MainActor
@@ -59,6 +62,7 @@ final class WatchLog {
         var d = days.last(where: { $0.day == key }) ?? WatchDay(day: key)
         d.seconds += seconds
         let hour = calendar.component(.hour, from: at)
+        d.hours = (d.hours ?? [:]).merging(["\(hour)": seconds], uniquingKeysWith: +)
         if hour < 5 {
             d.lateSeconds += seconds
             d.lateUntil = max(d.lateUntil ?? .distantPast, at)

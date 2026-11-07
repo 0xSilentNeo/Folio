@@ -110,6 +110,16 @@ enum SettingsKey {
     static let engageNotes = "engageNotes"
     /// Testing (1.24.1): the reminders come seconds after you leave Folio, not on their days.
     static let engageQuick = "engageQuick"
+    // Notifications (1.25.0, NotifyCenter). engageNotes is the Continue watching group's switch.
+    static let notifyGroupsOff = "notifyGroupsOff"      // [group]
+    static let notifyKindsOff = "notifyKindsOff"        // [kind]
+    static let notifyTone = "notifyTone"                // subtle | balanced | unhinged
+    static let notifyQuietStart = "notifyQuietStart"    // minutes from midnight
+    static let notifyQuietEnd = "notifyQuietEnd"
+    static let notifyMaxPerDay = "notifyMaxPerDay"      // 1…5, besides new episodes and downloads
+    static let notifySounds = "notifySounds"            // group: default | none | folio:x | apple:path | custom:file
+    static let notifyTest = "notifyTest"                // every kind, 20 s apart, after leaving Folio
+    static let notifyPlace = "notifyPlace"              // the weather's city (WeatherFeed.Place)
 
     // Library
     static let cleanTitles = "cleanTitles"
@@ -215,8 +225,13 @@ enum SettingsKey {
             showOnlyMedia: false,
             airingAlerts: "air",
             engageNotes: true,
-            // On in the 1.24.1 test build, so they can be tried (the user, 7 Nov).
-            engageQuick: true,
+            engageQuick: false,
+            notifyTone: "balanced",
+            notifyQuietStart: 22 * 60,
+            notifyQuietEnd: 9 * 60,
+            notifyMaxPerDay: 1,
+            // On in the 1.25.0 test build, so every notification can be tried (the user, 7 Nov).
+            notifyTest: true,
         ])
         // 1.22.1: Metal is the default again. 1.22.0 moved everyone to the
         // OpenGL renderer, which some files didn't play on (user report,

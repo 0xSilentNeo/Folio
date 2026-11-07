@@ -323,7 +323,9 @@ struct HomeView: View {
                         HeroCard(entry: e, height: cardW * 9 / 16 + 8)
                             .frame(width: cardW)
                             .onTapGesture { ContinueQueue.play(e.item) }
-                            .contextMenu { historyMenu(e) }
+                            // Each card's own menu (1.25.0): `.contextMenu` in Home's
+                            // List belongs to the whole row, as tiles' did before 1.24.1.
+                            .tileContextMenu(cornerRadius: 22) { historyActions(e) }
                             .accessibilityIdentifier("continue:" + e.item.title)
                     }
                 }
@@ -753,11 +755,10 @@ struct HomeView: View {
         .padding(.horizontal, margin)
     }
 
-    @ViewBuilder
-    private func historyMenu(_ e: HistoryEntry) -> some View {
-        Button { ContinueQueue.play(e.item) } label: { Label(e.canResume ? "Resume" : "Play", systemImage: "play") }
-        Button { history.markWatched(e) } label: { Label("Mark as watched", systemImage: "checkmark.circle") }
-        Button(role: .destructive) { history.remove(e) } label: { Label("Remove", systemImage: "trash") }
+    private func historyActions(_ e: HistoryEntry) -> [TileMenuAction] {
+        [TileMenuAction(title: e.canResume ? "Resume" : "Play", systemImage: "play") { ContinueQueue.play(e.item) },
+         TileMenuAction(title: "Mark as watched", systemImage: "checkmark.circle") { history.markWatched(e) },
+         TileMenuAction(title: "Remove", systemImage: "trash", destructive: true) { history.remove(e) }]
     }
 
     private func pasteAndPlay() {

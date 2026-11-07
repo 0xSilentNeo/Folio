@@ -108,12 +108,12 @@ struct DownloadsTile: View {
         return ([glance?.network] + [run.speed > 0 ? run.speedText : nil]).compactMap { $0 }.joined(separator: " · ")
     }
 
-    /// "Your show E4 · 3 min left", the time left counting down by itself.
+    /// "Your show E4 · 3 min left", the time left counting down by itself;
+    /// "finishing" once the estimate has run out (1.25.0: it counted up).
     private func detail(_ run: DownloadActivityAttributes.ContentState) -> Text {
-        if let end = run.finishBy, end > now, !run.waiting {
-            return Text(run.title + " · ") + Text(end, style: .relative)
-        }
-        return Text(run.title)
+        guard let end = run.finishBy, !run.waiting, !run.done else { return Text(run.title) }
+        if end > now { return Text(run.title + " · ") + Text(end, style: .relative) }
+        return Text(run.title + " · finishing")
     }
 }
 
@@ -130,7 +130,7 @@ struct WeekTile: View {
             VStack(alignment: .leading, spacing: 0) {
                 WidgetLeaf().fill(ink).frame(width: 20, height: 20).widgetAccentable()
                 Spacer(minLength: 4)
-                Text(WeekGlance.duration(glance?.seconds ?? 0)).font(.system(size: 30, weight: .heavy)).tracking(-1).monospacedDigit()
+                Text(WeekGlance.duration(glance?.seconds(at: now) ?? 0)).font(.system(size: 30, weight: .heavy)).tracking(-1).monospacedDigit()
                     .foregroundStyle(ink).lineLimit(1).minimumScaleFactor(0.6)
                 Text(since).font(.system(size: 11)).foregroundStyle(ink.opacity(0.75)).padding(.top, 2)
                 Spacer(minLength: 4)
@@ -150,6 +150,8 @@ struct WeekTile: View {
 
     private var counts: String {
         guard let g = glance else { return "Starts counting when you watch" }
+        // A day or more old: the time rolls on by itself, the counts can't (they aren't kept per day).
+        if g.daysOld(at: now) > 0 { return g.seconds(at: now) > 0 ? "Open Folio for the counts" : "Nothing yet this week" }
         var parts: [String] = []
         if g.shows > 0 { parts.append(g.shows == 1 ? "1 show" : "\(g.shows) shows") }
         if g.films > 0 { parts.append(g.films == 1 ? "1 film" : "\(g.films) films") }

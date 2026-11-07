@@ -49,12 +49,20 @@ enum AiringNotifications {
     /// `voice`: the engagement notifications are on (1.24.0), and an episode
     /// out in the day (9:00 to 22:00) says so in their voice; at night, and
     /// for "1 hour before" or a day-only episode, the plain wording stays.
+    /// 1.25.0: `tone` is Settings → Notifications' personality (each
+    /// voiced one takes the kind's next line), `kinds` says whether new
+    /// episodes and new seasons are on (a season premiere with new seasons
+    /// off comes as a new episode).
     static func plan(_ shows: [TrackedShow], now: Date, mode: AiringAlerts, limit: Int = limit, voice: Bool = false,
+                     tone: NotifyTone = .balanced, kinds: (episodes: Bool, seasons: Bool) = (true, true),
                      calendar: Calendar = .autoupdatingCurrent) -> [PlannedAlert] {
         guard mode != .off else { return [] }
         var out: [PlannedAlert] = []
+        var voiced = 0
         for s in shows {
             for e in s.upcoming(after: now) {
+                let premiere = e.number == 1 && (e.season ?? 0) >= 2
+                guard premiere ? (kinds.seasons || kinds.episodes) : kinds.episodes else { continue }
                 let what = e.number == nil && e.season == nil ? "A new episode of \(s.name)" : "\(s.name) \(e.label)"
                 let fire: Date
                 var title: String
@@ -70,8 +78,11 @@ enum AiringNotifications {
                 }
                 guard fire > now else { continue }
                 var body = [e.title, s.network.map { "On \($0)" }].compactMap { $0 }.joined(separator: " · ")
-                if voice, mode == .air, e.day == nil, !EngagePlanner.isQuiet(fire, calendar: calendar) {
-                    (title, body) = EngagePlanner.airingWording(show: s.name, episode: e)
+                if voice, mode == .air, e.day == nil, !EngagePlanner.isQuiet(fire, calendar: calendar),
+                   !(premiere && !kinds.seasons),
+                   let w = NotifyCenter.airingWording(show: s.name, episode: e, tone: tone, variation: voiced) {
+                    (title, body) = w
+                    voiced += 1
                 }
                 let key = e.number.map { "\(e.season ?? 0).\($0)" } ?? "\(Int(e.airDate!.timeIntervalSince1970))"
                 out.append(PlannedAlert(id: "\(prefix)\(s.id).\(key)", showID: s.id, fire: fire, title: title, body: body))
@@ -86,7 +97,9 @@ enum AiringNotifications {
 
     @MainActor
     static func reschedule(_ shows: [TrackedShow]) {
-        let planned = plan(shows, now: Date(), mode: .current, voice: EngagementNotifications.isOn)
+        // While Test is on (1.25.0) these are held: Test sends their samples.
+        let planned = NotifyPrefs.test ? [] : plan(shows, now: Date(), mode: .current, voice: NotifyPrefs.tone != .subtle,
+                                                 tone: NotifyPrefs.tone, kinds: (NotifyPrefs.kindOn(.newEpisode), NotifyPrefs.kindOn(.newSeason)))
         let previous = running
         running = Task {
             await previous?.value
@@ -110,7 +123,7 @@ enum AiringNotifications {
             let c = UNMutableNotificationContent()
             c.title = p.title
             c.body = p.body
-            c.sound = .default
+            c.sound = NotifySounds.sound(for: .newReleases)
             c.threadIdentifier = prefix + p.showID
             c.userInfo = ["track": p.showID]
             // An interval, not a calendar date: the moment stays right if you change time zone before it.
@@ -152,21 +165,29 @@ final class AiringNotificationDelegate: NSObject, UNUserNotificationCenterDelega
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         let id = notification.request.identifier
-        // The engagement ones (1.24.0) aren't pending while Folio is open; the lab's are shown over it.
-        let show = id.hasPrefix(AiringNotifications.prefix) || id == EngagementNotifications.testID
-            || (EngagementNotifications.lab && id.hasPrefix(EngagementNotifications.prefix))
+        // Folio's own (1.25.0) aren't pending while it's open, except Test's and the lab's, shown over it.
+        let show = id.hasPrefix(AiringNotifications.prefix) || NotifyCenter.showsOverApp(notification)
         completionHandler(show ? [.banner, .list, .sound] : [])
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
+        if response.notification.request.content.userInfo["notify"] != nil {
+            // Folio's own notifications and their buttons (1.25.0). The
+            // delegate isn't promised the main thread: handled there, then done.
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { _ = NotifyCenter.handle(response) }
+                completionHandler()
+            }
+            return
+        }
         if response.actionIdentifier == UNNotificationDefaultActionIdentifier,
            let id = response.notification.request.content.userInfo["track"] as? String {
             DispatchQueue.main.async { MainActor.assumeIsolated { TrackingPresenter.open(id) } }
         } else if response.actionIdentifier == UNNotificationDefaultActionIdentifier,
                   let link = response.notification.request.content.userInfo["engage"] as? String {
-            // An engagement notification (1.24.0): plays what it was about.
-            DispatchQueue.main.async { MainActor.assumeIsolated { EngagementNotifications.open(link) } }
+            // A 1.24 reminder delivered after the update: plays what it was about.
+            DispatchQueue.main.async { MainActor.assumeIsolated { NotifyCenter.open(link) } }
         }
         completionHandler()
     }

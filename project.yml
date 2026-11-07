@@ -32,6 +32,10 @@ targets:
       - path: App/Resources/lab
         type: folder
         buildPhase: resources
+      # Folio's notification sounds (1.25.0), copied to Library/Sounds at launch.
+      - path: App/Resources/sounds
+        type: folder
+        buildPhase: resources
       - path: App/Assets.xcassets
     info:
       path: App/Info.plist

@@ -50,9 +50,9 @@ struct SettingsView: View {
             }
             // The airing tracker (1.21.0): the tracked shows and their notifications.
             TrackingSettingsSection()
-            // 1.24.0: the engagement notifications.
+            // Folio's own notifications (1.25.0; 1.24.0's Reminders).
             Section {
-                row("Reminders", "quote.bubble", .orange) { EngagementSettings() }
+                row("Notifications", "app.badge", .orange) { NotifySettingsView() }
             }
             Section {
                 row("mpv", "slider.horizontal.3", .teal) { MPVSettings() }

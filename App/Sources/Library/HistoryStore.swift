@@ -337,21 +337,38 @@ final class HistoryStore: ObservableObject {
         scheduleSave()
     }
 
+    /// Saves one at a time, in order (1.25.0: on the global queue two could
+    /// run at once and an older list could be written last).
+    private static let saveQueue = DispatchQueue(label: "dev.silentneo.folio.history-save", qos: .utility)
+
+    private static func write(_ list: [HistoryEntry], to url: URL) {
+        if let data = try? JSONEncoder().encode(list) {
+            try? data.write(to: url, options: .atomic)
+        }
+    }
+
     private func scheduleSave() {
         saveWork?.cancel()
         let snapshot = entries
         let url = fileURL
-        let work = DispatchWorkItem {
-            if let data = try? JSONEncoder().encode(snapshot) {
-                try? data.write(to: url, options: .atomic)
-            }
-        }
+        let work = DispatchWorkItem { Self.write(snapshot, to: url) }
         saveWork = work
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.5, execute: work)
+        Self.saveQueue.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
-    func flush() {
-        saveWork?.perform()
+    /// The pending save now. Off the main thread (1.25.0: closing the player
+    /// encoded and wrote up to 500 entries on it), except when the app is
+    /// about to end (`wait`).
+    func flush(wait: Bool = false) {
+        guard let pending = saveWork else { return }
         saveWork = nil
+        pending.cancel()
+        let snapshot = entries
+        let url = fileURL
+        if wait {
+            Self.saveQueue.sync { Self.write(snapshot, to: url) }
+        } else {
+            Self.saveQueue.async { Self.write(snapshot, to: url) }
+        }
     }
 }

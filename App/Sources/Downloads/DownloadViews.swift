@@ -10,10 +10,13 @@ struct DownloadButton: View {
     let package: String
     /// Subtitle files in the same folder; the ones that match come along.
     var siblings: [DAVItem] = []
-    @ObservedObject private var dm = DownloadManager.shared
+    private var dm: DownloadManager { .shared }
+    /// This file's download, as last seen (1.25.0). Until then each button
+    /// watched the whole manager, so every row of a folder (and the Network
+    /// tab) redrew on each progress tick of any download, about 5 times a second.
+    @State private var d: DownloadItem?
 
     var body: some View {
-        let d = dm.item(for: item.url)
         Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             guard let d else {
@@ -45,6 +48,17 @@ struct DownloadButton: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label(d))
+        .onAppear(perform: look)
+        .onReceive(DownloadManager.shared.objectWillChange
+            .throttle(for: .seconds(0.4), scheduler: DispatchQueue.main, latest: true)
+            .receive(on: DispatchQueue.main)) { _ in look() }
+    }
+
+    /// Redraws only when this file's state or whole percent changed.
+    private func look() {
+        let now = dm.item(for: item.url)
+        func key(_ x: DownloadItem?) -> String? { x.map { "\($0.id)|\($0.state.rawValue)|\(Int($0.progress * 100))" } }
+        if key(now) != key(d) { d = now }
     }
 
     private func icon(_ d: DownloadItem?) -> String {
@@ -191,14 +205,20 @@ private struct ZoomSource2: ViewModifier {
     }
 }
 
+/// 1.25.0: the pulse starts whenever downloads start. It ran only from the
+/// dot's first appearance, so a dot that appeared grey (all paused) stayed
+/// still after Resume all.
 struct PulsingDot: View {
     let active: Bool
-    @State private var on = false
     var body: some View {
-        Circle().fill(active ? Theme.accent : Color.secondary).frame(width: 8, height: 8)
-            .opacity(active && on ? 0.35 : 1).scaleEffect(active && on ? 0.7 : 1)
-            .animation(active ? .easeInOut(duration: 0.7).repeatForever(autoreverses: true) : .default, value: on)
-            .onAppear { on = true }
+        if active {
+            Circle().fill(Theme.accent).frame(width: 8, height: 8)
+                .phaseAnimator([false, true]) { dot, dim in
+                    dot.opacity(dim ? 0.35 : 1).scaleEffect(dim ? 0.7 : 1)
+                } animation: { _ in .easeInOut(duration: 0.7) }
+        } else {
+            Circle().fill(Color.secondary).frame(width: 8, height: 8)
+        }
     }
 }
 

@@ -490,18 +490,29 @@ final class DownloadManager: ObservableObject {
         save(); pump()
     }
 
-    func pauseAll() { for it in items where it.state == .running || it.state == .queued { pause(it.id) } }
-    func resumeAll() { for it in items where it.state == .paused { resume(it.id) } }
+    /// Several at once without starting the queued ones in between (1.25.0:
+    /// pausing a running file freed its slot, so `pump` started a queued one
+    /// that was paused a moment later, opening its connections for nothing).
+    private var batching = false
+    private func batch(_ work: () -> Void) {
+        batching = true
+        work()
+        batching = false
+        pump()
+    }
+
+    func pauseAll() { batch { for it in items where it.state == .running || it.state == .queued { pause(it.id) } } }
+    func resumeAll() { batch { for it in items where it.state == .paused { resume(it.id) } } }
     func clearFinished() { items.removeAll { $0.state == .done }; save() }
 
     /// Cancels every download not finished yet (paused, queued, running,
     /// failed), deleting what was downloaded of them.
     func cancelUnfinished(package: String? = nil) {
-        for it in items where it.state != .done && (package == nil || it.package == package) { remove(it.id) }
+        batch { for it in items where it.state != .done && (package == nil || it.package == package) { remove(it.id) } }
     }
     /// A removed server's unfinished downloads (finished files stay).
     func cancelUnfinished(server: UUID) {
-        for it in items where it.state != .done && it.serverID == server { remove(it.id) }
+        batch { for it in items where it.state != .done && it.serverID == server { remove(it.id) } }
     }
     /// Finished downloads: off the list (deleteFiles: their files too).
     func removeFinished(package: String, deleteFiles: Bool) {
@@ -551,8 +562,8 @@ final class DownloadManager: ObservableObject {
     /// Tests (DownloadRemoveTests): items put in the list as they are; nothing starts.
     func insertForTests(_ list: [DownloadItem]) { items.append(contentsOf: list) }
 
-    func pausePackage(_ name: String) { for it in items where it.package == name && (it.state == .running || it.state == .queued) { pause(it.id) } }
-    func resumePackage(_ name: String) { for it in items where it.package == name && (it.state == .paused || it.state == .failed) { resume(it.id) } }
+    func pausePackage(_ name: String) { batch { for it in items where it.package == name && (it.state == .running || it.state == .queued) { pause(it.id) } } }
+    func resumePackage(_ name: String) { batch { for it in items where it.package == name && (it.state == .paused || it.state == .failed) { resume(it.id) } } }
 
     // MARK: Queue
 
@@ -581,6 +592,7 @@ final class DownloadManager: ObservableObject {
     /// Starts queued files up to the limit; holds running ones when Low Power
     /// Mode or "only while charging" says so.
     private func pump() {
+        guard !batching else { return }
         if !conditionsOK {
             var held = 0
             for i in items.indices where items[i].state == .running {
@@ -1444,15 +1456,31 @@ final class DownloadManager: ObservableObject {
         let done = items.filter { $0.state == .done && ($0.finished ?? .distantPast) > Date().addingTimeInterval(-3600) }
         guard !done.isEmpty else { return }
         notifiedRun = true
-        guard UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify), UIApplication.shared.applicationState != .active else { return }
+        guard UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify), NotifyPrefs.kindOn(.downloadFinished),
+              UIApplication.shared.applicationState != .active else { return }
         let c = UNMutableNotificationContent()
         c.title = "Downloads finished"
         c.body = done.count == 1 ? done[0].fileName : "\(done.count) files are in your library."
-        // One episode, with the engagement notifications on (1.24.0): in their voice.
-        if done.count == 1, EngagementNotifications.isOn, let w = EngagePlanner.downloadWording(fileName: done[0].fileName) {
-            (c.title, c.body) = w
+        // One file, in Settings → Notifications' personality (1.25.0; an
+        // episode's name as "Show S2 · E6", a film's cleaned title), each
+        // time the kind's next line.
+        if done.count == 1, let what = Self.downloadName(done[0].fileName), NotifyPrefs.tone != .subtle,
+           let w = NotifyWording.text(.downloadFinished, NotifyPrefs.tone, ["what": what], variation: NotifyCenter.bumpVariation(.downloadFinished)) {
+            c.title = w.title ?? c.title
+            c.body = w.body
         }
+        c.sound = NotifySounds.sound(for: .downloads)
+        c.threadIdentifier = "folio.downloads"
+        NotifyCenter.appendLog(.init(id: "downloads-done.\(Int(Date().timeIntervalSince1970))", kind: .downloadFinished, at: Date(),
+                                     title: c.title, body: c.body, reason: "\(done.count) download\(done.count == 1 ? "" : "s") finished", test: false))
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "downloads-done", content: c, trigger: nil))
+    }
+
+    /// "Harbor Lights S2 · E6" for an episode, the cleaned title for anything else.
+    static func downloadName(_ fileName: String) -> String? {
+        if let w = EngagePlanner.downloadWording(fileName: fileName) { return String(w.title.dropLast(" is downloaded".count)) }
+        let t = TitleParser.parse(fileName).title
+        return t.isEmpty ? nil : t
     }
 
     static func askForNotifications() {

@@ -85,6 +85,8 @@ enum EngagePlanner {
         var link: String?
         /// For the three-days rule.
         var showKey: String?
+        /// What the wording fills in (1.25.0, NotifyWording).
+        var facts: [String: String] = [:]
     }
 
     static func isQuiet(_ date: Date, calendar: Calendar) -> Bool {
@@ -95,6 +97,12 @@ enum EngagePlanner {
     // MARK: Plan
 
     static func plan(_ s: State, now: Date, calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> [Planned] {
+        choose(candidates(s, now: now, calendar: calendar, locale: locale), s, now: now, calendar: calendar)
+    }
+
+    /// Every moment the state has, before the rules (1.25.0: the engine
+    /// applies its own rules to these, NotifyPlanner).
+    static func candidates(_ s: State, now: Date, calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> [Planned] {
         var c: [Planned] = []
 
         // Paused mid-episode, two days on, 19:00.
@@ -102,7 +110,7 @@ enum EngagePlanner {
            let fire = at(19, 0, daysAfter: 2, e.updated, calendar) {
             c.append(Planned(id: "paused.\(key(e.id)).\(Int(e.updated.timeIntervalSince1970))", moment: .paused, fire: fire,
                              body: Text.paused(e.name, at: e.position),
-                             link: continueLink(e.id), showKey: e.showKey))
+                             link: continueLink(e.id), showKey: e.showKey, facts: ["show": e.name, "time": clock(e.position)]))
         }
 
         // An episode watched to its end, the next one in the library, the next day at 19:00.
@@ -111,7 +119,7 @@ enum EngagePlanner {
            let fire = at(19, 0, daysAfter: 1, e.updated, calendar) {
             c.append(Planned(id: "cliff.\(key(e.id)).\(Int(e.updated.timeIntervalSince1970))", moment: .cliffhanger, fire: fire,
                              body: Text.cliffhanger(e.name),
-                             link: continueLink(e.id, next: true), showKey: e.showKey))
+                             link: continueLink(e.id, next: true), showKey: e.showKey, facts: ["show": e.name]))
         }
 
         // A film more than half watched, the next day at 20:00.
@@ -120,7 +128,7 @@ enum EngagePlanner {
             if minutes >= 5, let fire = at(20, 0, daysAfter: 1, e.updated, calendar) {
                 c.append(Planned(id: "film.\(key(e.id)).\(Int(e.updated.timeIntervalSince1970))", moment: .filmNearlyDone, fire: fire,
                                  body: Text.filmNearlyDone(e.name, minutes: minutes),
-                                 link: continueLink(e.id), showKey: "film|" + e.id))
+                                 link: continueLink(e.id), showKey: "film|" + e.id, facts: ["film": e.name, "minutes": "\(minutes)"]))
             }
         }
 
@@ -129,7 +137,7 @@ enum EngagePlanner {
            let left = e.episodesLeft, let fire = at(19, 0, daysAfter: 3, e.updated, calendar) {
             c.append(Planned(id: "left.\(key(e.id)).\(left).\(Int(e.updated.timeIntervalSince1970))", moment: .showNearlyDone, fire: fire,
                              body: Text.showNearlyDone(e.name, left: left),
-                             link: continueLink(e.id), showKey: e.showKey))
+                             link: continueLink(e.id), showKey: e.showKey, facts: ["show": e.name, "left": "\(left)"]))
         }
 
         // Friday at 18:00, for a show watched in the last three weeks with episodes left in the library.
@@ -137,7 +145,7 @@ enum EngagePlanner {
            let left = e.episodesLeft, let friday = nextWeekday(6, hour: 18, after: now, calendar) {
             c.append(Planned(id: "friday.\(WatchLog.dayKey(friday, calendar: calendar)).\(key(e.id))", moment: .friday, fire: friday,
                              body: Text.friday(e.name, left: left),
-                             link: continueLink(e.id), showKey: e.showKey))
+                             link: continueLink(e.id), showKey: e.showKey, facts: ["show": e.name, "left": "\(left)"]))
         }
 
         // A late night: the same day at 12:30.
@@ -145,7 +153,8 @@ enum EngagePlanner {
            let fire = at(12, 30, daysAfter: 0, late.until, calendar) {
             c.append(Planned(id: "late.\(WatchLog.dayKey(late.until, calendar: calendar))", moment: .lateNight, fire: fire,
                              body: Text.lateNight(late.name, until: timeOfDay(late.until, calendar: calendar, locale: locale)),
-                             link: nil, showKey: late.showKey))
+                             link: nil, showKey: late.showKey,
+                             facts: ["show": late.name, "time": timeOfDay(late.until, calendar: calendar, locale: locale)]))
         }
 
         // A binge (today's or yesterday's), the day after at 18:00.
@@ -153,7 +162,7 @@ enum EngagePlanner {
             guard let day = date(of: d.day, calendar), let fire = at(18, 0, daysAfter: 1, day, calendar) else { continue }
             c.append(Planned(id: "binge.\(d.day)", moment: .binge, fire: fire,
                              body: Text.binge(d.episodes.count),
-                             link: nil, showKey: nil))
+                             link: nil, showKey: nil, facts: ["n": "\(d.episodes.count)"]))
         }
 
         // Away a week, then (darker) twelve days, at 19:00. Only with something to come back to.
@@ -166,11 +175,11 @@ enum EngagePlanner {
             if let fire = at(19, 0, daysAfter: 12, last, calendar) {
                 c.append(Planned(id: "plants.\(Int(last.timeIntervalSince1970))", moment: .houseplants, fire: fire,
                                  body: Text.houseplants(top.name),
-                                 link: continueLink(top.id), showKey: top.showKey))
+                                 link: continueLink(top.id), showKey: top.showKey, facts: ["show": top.name]))
             }
         }
 
-        return choose(c, s, now: now, calendar: calendar)
+        return c
     }
 
     /// The rules: in the future and within the horizon, not quiet, not sent,
