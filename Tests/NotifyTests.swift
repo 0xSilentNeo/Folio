@@ -296,6 +296,35 @@ final class NotifyTests: XCTestCase {
         }
     }
 
+    /// 1.25.2: Test sends only what your settings would send for real.
+    func testTestFollowsTheSettings() {
+        let d = UserDefaults.standard
+        let keys = [SettingsKey.notifyGroupsOff, SettingsKey.notifyKindsOff, SettingsKey.notifyTone, SettingsKey.notifyPlace, "notifyMemory"]
+        let saved = keys.map { d.object(forKey: $0) }
+        defer { for (k, v) in zip(keys, saved) { d.set(v, forKey: k) } }
+        d.removeObject(forKey: SettingsKey.notifyPlace)
+        d.removeObject(forKey: "notifyMemory")
+        d.set(["fun", "trending"], forKey: SettingsKey.notifyGroupsOff)
+        d.set([NotifyKind.paused.rawValue], forKey: SettingsKey.notifyKindsOff)
+        d.set(NotifyTone.balanced.rawValue, forKey: SettingsKey.notifyTone)
+        var kinds = Set(NotifyCenter.testKinds())
+        XCTAssertFalse(kinds.contains { $0.group == .fun || $0.group == .trending })
+        XCTAssertFalse(kinds.contains(.paused))
+        XCTAssertTrue(kinds.contains(.cliffhanger))
+        // Weather needs a city; a kind dismissed three times rests.
+        d.set([String](), forKey: SettingsKey.notifyGroupsOff)
+        var m = NotifyCenter.memory
+        m[NotifyKind.forgotten.rawValue] = .init(restUntil: Date().addingTimeInterval(86400))
+        NotifyCenter.memory = m
+        kinds = Set(NotifyCenter.testKinds())
+        XCTAssertFalse(kinds.contains(.rainy))
+        XCTAssertTrue(kinds.contains(.movieNight))
+        XCTAssertFalse(kinds.contains(.forgotten))
+        // Subtle leaves out Just for fun.
+        d.set(NotifyTone.subtle.rawValue, forKey: SettingsKey.notifyTone)
+        XCTAssertFalse(NotifyCenter.testKinds().contains { $0.group == .fun })
+    }
+
     func testWatchDayDecodesWithoutHours() throws {
         let old = #"[{"day":"2026-11-01","seconds":60,"lateSeconds":0,"episodes":[],"films":[],"shows":{},"showEpisodes":{}}]"#
         let d = try JSONDecoder().decode([WatchDay].self, from: Data(old.utf8))
