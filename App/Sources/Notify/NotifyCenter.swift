@@ -56,6 +56,10 @@ enum NotifyCenter {
             }
         }
         if lab { Task { await runLab() } }
+        // `-openNotifyLink <folio://…>` (lab): what a tap on a notification with that link does.
+        if let i = CommandLine.arguments.firstIndex(of: "-openNotifyLink"), i + 1 < CommandLine.arguments.count {
+            open(CommandLine.arguments[i + 1])
+        }
         // `-openNotify` (lab, UI tests): Settings → Notifications over Home.
         if CommandLine.arguments.contains("-openNotify") {
             HandoffPresenter.present(AnyView(NavigationStack { NotifySettingsView() }.tint(Theme.accent)))
@@ -364,14 +368,38 @@ enum NotifyCenter {
 
     static func testCandidates(now: Date) async -> [NotifyCandidate] {
         let real = await candidates(now: now)
-        let names = await sampleNames()
+        let s = await samples()
         return testOrder().map { k in
             if var c = real.first(where: { $0.kind == k }) {
                 c.reason = "Test, from your own: " + c.reason
                 return c
             }
-            return NotifyCandidate(kind: k, key: "sample.\(k.rawValue)", facts: NotifyWording.sample(k, show: names.show, film: names.film, file: names.file),
-                                   link: names.link, image: names.image, reason: "Test, a sample: nothing of yours fits this one yet")
+            // A sample's picture and tap are those of the title its text names
+            // (1.25.1: every sample had the first Continue Watching title's).
+            let about: SampleTitle? = switch sampleSubject(k) {
+            case .show: s.show
+            case .film: s.film
+            case .none: nil
+            }
+            return NotifyCandidate(kind: k, key: "sample.\(k.rawValue)",
+                                   facts: NotifyWording.sample(k, show: s.show.name, film: s.film.name, file: s.file),
+                                   link: about?.link, image: about?.image, reason: "Test, a sample: nothing of yours fits this one yet")
+        }
+    }
+
+    enum SampleSubject { case show, film, none }
+
+    /// Which title a kind's sample text names (NotifyWording.sample).
+    static func sampleSubject(_ k: NotifyKind) -> SampleSubject {
+        switch k {
+        case .paused, .lateNight, .cliffhanger, .houseplants, .showNearlyDone, .friday, .newEpisode, .newSeason,
+             .trendingSeries, .risingFast, .viral, .highlyRatedSeries, .ratingMilestone, .weeklyBriefing, .monthlyRecap, .downloadFinished:
+            return .show
+        case .filmNearlyDone, .trendingMovie, .forYouPick, .forgotten, .unwatchedClassic, .rediscovery, .topRated, .hiddenGem,
+             .lowRatedPopular, .comeback, .freshTitles:
+            return .film
+        default:
+            return .none
         }
     }
 
@@ -389,18 +417,30 @@ enum NotifyCenter {
         dlog("notify", "test: \(records.count) notifications, 20 s apart, from \(list.first?.kind.rawValue ?? "none")")
     }
 
-    /// Names from your own library and history for Test's samples.
-    private static func sampleNames() async -> (show: String, film: String, file: String, link: String?, image: NotifyImage?) {
-        let cw = HistoryStore.shared.continueWatching
-        let show = cw.first { HistoryStore.episodeNumber($0) != nil }.map(ShowCatalog.name(of:))
+    struct SampleTitle {
+        var name: String
+        var image: NotifyImage?
+        var link: String?
+    }
+
+    /// Titles from your own library and history for Test's samples, each with its own picture and tap.
+    private static func samples() async -> (show: SampleTitle, film: SampleTitle, file: String) {
+        let index = LibraryMetaIndex.shared
         let files = await ContinueQueue.libraryFiles()
         let groups = LibraryOrganizer.groups(files)
-        let filmGroup = groups.first { !$0.isSeries }
-        let film = filmGroup.flatMap { g in g.files.first.flatMap { LibraryMetaIndex.shared.meta(for: $0)?.name } ?? g.title }
-        let series = groups.first(where: \.isSeries)?.title
-        let image: NotifyImage? = cw.first.map { .history($0.id) } ?? filmGroup?.files.first.map { .file($0.path) }
-        return (show ?? series ?? "Harbor Lights", film ?? "The Quiet Orchard", files.first?.lastPathComponent ?? "VID_20250614_183022.mp4",
-                cw.first.map { EngagePlanner.continueLink($0.id) }, image)
+        var show = SampleTitle(name: "Harbor Lights")
+        if let e = HistoryStore.shared.continueWatching.first(where: { HistoryStore.episodeNumber($0) != nil }) {
+            show = SampleTitle(name: ShowCatalog.name(of: e), image: .history(e.id), link: EngagePlanner.continueLink(e.id))
+        } else if let g = groups.first(where: \.isSeries), let f = g.files.first {
+            show = SampleTitle(name: index.meta(for: f)?.name ?? g.title, image: .file(f.path), link: LibraryLink.url(f.path))
+        }
+        var film = SampleTitle(name: "The Quiet Orchard")
+        if let g = groups.first(where: { !$0.isSeries }), let f = g.files.first {
+            film = SampleTitle(name: index.meta(for: f)?.name ?? g.title, image: .file(f.path), link: LibraryLink.url(f.path))
+        }
+        // A file Folio really found no title for, else an example name.
+        let mystery = index.complete ? LibraryMetaIndex.lookupFiles(files).first { index.meta(for: $0) == nil } : nil
+        return (show, film, mystery?.lastPathComponent ?? "VID_20250614_183022.mp4")
     }
 
     /// Settings → Notifications → Send the next one: the next kind in Test's order, in 5 seconds, shown over Folio too.
@@ -625,7 +665,9 @@ enum NotifyCenter {
     }
 
     /// folio://continue plays the entry as Home's card does (with &next=1 the
-    /// episode after it); other folio:// links go where the app's link handling sends them.
+    /// episode after it); a title, a library title or a tracked show opens
+    /// its page. Handled here, inside Folio (1.25.1: handing folio:// back to
+    /// iOS made it ask "Open in “Folio”?" while Folio was already open).
     static func open(_ link: String) {
         guard let url = URL(string: link) else { return }
         guard !KidsProfile.isOnNow else {
@@ -639,10 +681,16 @@ enum NotifyCenter {
                 try? await Task.sleep(nanoseconds: 100_000_000)
                 waited += 1
             }
-            guard url.host == "continue", let id = ContinueLink.id(from: url) else {
-                _ = await UIApplication.shared.open(url)
+            switch url.host?.lowercased() {
+            case "continue": break
+            case "title": openTitle(url); return
+            case "libtitle": openLibraryTitle(url); return
+            case "track": TrackingPresenter.open(TrackLink.id(from: url)); return
+            default:
+                dlog("notify", "notification link opens Folio only: \(url.host ?? "none")")
                 return
             }
+            guard let id = ContinueLink.id(from: url) else { return }
             guard let entry = HistoryStore.shared.entry(for: id) else {
                 dlog("notify", "notification for an entry that's no longer in the history")
                 return
@@ -656,6 +704,21 @@ enum NotifyCenter {
             }
             ContinueQueue.play(entry.item)
         }
+    }
+
+    /// folio://title?id=tt…: the title's page (trending, picks).
+    static func openTitle(_ url: URL) {
+        guard let m = TitleLink.meta(from: url) else { return }
+        HandoffPresenter.present(AnyView(MetaDetailView(preview: m, sourceAddon: nil)))
+    }
+
+    /// folio://libtitle?path=…: the library title's page.
+    static func openLibraryTitle(_ url: URL) {
+        guard let path = LibraryLink.path(from: url), FileManager.default.fileExists(atPath: path) else {
+            dlog("open", "folio://libtitle for a file that's gone")
+            return
+        }
+        HandoffPresenter.present(AnyView(TitleHeroView(file: URL(fileURLWithPath: path))))
     }
 
     /// Shown over Folio too: Test's, and the lab's.
