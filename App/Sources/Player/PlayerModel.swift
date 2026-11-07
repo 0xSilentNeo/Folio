@@ -128,6 +128,10 @@ final class PlaybackClock: ObservableObject {
     @Published var position: Double = 0
     @Published var duration: Double = 0
     @Published var cacheAhead: Double = 0
+    /// Where a scrub on the bar or the video is (1.24.1; on PlayerUIState
+    /// until then): set on every touch move, so it lives with what only the
+    /// time bar watches, not with the whole player's chrome.
+    @Published var scrubTime: Double?
 }
 
 @MainActor
@@ -635,6 +639,7 @@ final class PlayerModel: ObservableObject {
         c.observe("time-pos", .double)
         c.observe("duration", .double)
         c.observe("pause", .flag)
+        c.observe("mute", .flag)
         c.observe("paused-for-cache", .flag)
         c.observe("seeking", .flag)
         c.observe("eof-reached", .flag)
@@ -1583,11 +1588,17 @@ final class PlayerModel: ObservableObject {
 
     // MARK: Transport
 
+    // Asynchronous (1.24.1): mpv's reply isn't needed, the button follows
+    // the "pause" property's event.
     func togglePause() {
-        if ended { seek(to: 0); client?.set("pause", false); ended = false; return }
-        client?.set("pause", !paused)
+        if ended { seek(to: 0); client?.setAsync("pause", false); ended = false; return }
+        client?.setAsync("pause", !paused)
     }
-    func setPaused(_ p: Bool) { client?.set("pause", p) }
+    func setPaused(_ p: Bool) { client?.setAsync("pause", p) }
+
+    /// mpv's own "mute", as its event last said (1.24.1): read here instead of
+    /// asking mpv on the main thread before a skip.
+    private var mpvMuted = false
 
     // Seeks are queued asynchronously: a synchronous mpv_command waits for
     // the core, which on a network file can take long enough to freeze the
@@ -1597,8 +1608,8 @@ final class PlayerModel: ObservableObject {
         // The sound is off until the picture lands, so quick skips don't
         // play a few milliseconds from each place on the way (4 Nov
         // recording: seven +10 s taps in 2 s, the sound cutting in and out).
-        if !mutedForSkip, !paused, c.flag("mute") == false {
-            _ = c.set("mute", true)
+        if !mutedForSkip, !paused, !mpvMuted {
+            _ = c.setAsync("mute", true)
             mutedForSkip = true
         }
         // A skip while one is still landing is added to the next one: one
@@ -1655,7 +1666,7 @@ final class PlayerModel: ObservableObject {
         }
         if mutedForSkip {
             mutedForSkip = false
-            _ = client?.set("mute", false)
+            _ = client?.setAsync("mute", false)
         }
     }
 
@@ -3641,6 +3652,8 @@ extension PlayerModel: MPVClientDelegate {
             saveHistory()
         case "duration":
             applyDuration(value.double ?? 0)
+        case "mute":
+            mpvMuted = value.bool ?? false
         case "pause":
             paused = value.bool ?? false
             pipState.paused = paused

@@ -231,4 +231,12 @@ final class EngagementTests: XCTestCase {
     func testLabSamplesCoverEveryText() {
         XCTAssertEqual(EngagePlanner.labSamples().count, 12)
     }
+
+    /// Quick timing (1.24.1): 20 s after leaving, then a minute apart, in order.
+    func testQuickTimingSpacesThemAMinuteApart() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let t = EngagePlanner.quickTimes(3, from: now)
+        XCTAssertEqual(t.map { $0.timeIntervalSince(now) }, [20, 80, 140])
+        XCTAssertTrue(EngagePlanner.quickTimes(0, from: now).isEmpty)
+    }
 }

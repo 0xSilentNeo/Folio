@@ -611,6 +611,19 @@ enum IMDbSource {
         found = Array(Set(found)).sorted()
         dlog("imdb", "seasons \(id): \(found)")
         if !found.isEmpty { store(key, SeasonList(seasons: found)) }
+        // The same page lists one season's episodes (1.24.1): kept, so the
+        // title page doesn't download it again for its first season (6 Nov
+        // report: 2.5 s, then 1.5 s for the same page). Filed under the
+        // season the episodes themselves say, whichever IMDb shows.
+        let eps = parseEpisodes(page, id: id, season: nil)
+        let shown = Set(eps.compactMap(\.season))
+        if shown.count == 1, let s = shown.first, found.contains(s) {
+            let epKey = "episodes2|\(id)|\(s)|\(language)"
+            if cached(epKey, ttl: 86400, as: [MetaVideo].self) == nil {
+                store(epKey, eps)
+                dlog("imdb", "episodes \(id) S\(s): \(eps.count), from the seasons page")
+            }
+        }
         return found
     }
 
@@ -627,6 +640,15 @@ enum IMDbSource {
         let key = "episodes2|\(id)|\(season)|\(language)"
         if let hit = cached(key, ttl: 86400, as: [MetaVideo].self) { return hit }
         guard let page = await html("/title/\(id)/episodes/", ["season": String(season)]) else { return [] }
+        let out = parseEpisodes(page, id: id, season: season)
+        dlog("imdb", "episodes \(id) S\(season): \(out.count)")
+        if !out.isEmpty { store(key, out) }
+        return out
+    }
+
+    /// The episodes listed on an episodes page. `season`: the one asked for,
+    /// used when an episode doesn't say its own; nil keeps only those that do.
+    private static func parseEpisodes(_ page: String, id: String, season: Int?) -> [MetaVideo] {
         var out: [MetaVideo] = []
         if let next = nextData(page) {
             walk(next) { d in
@@ -638,8 +660,7 @@ enum IMDbSource {
                 guard let title = localized ?? original else { return true }
                 let numbers = (d["series"] as? [String: Any])?["episodeNumber"] as? [String: Any]
                 let ep = int(d["episode"]) ?? int(numbers?["episodeNumber"])
-                let se = int(d["season"]) ?? int(numbers?["seasonNumber"]) ?? season
-                guard let ep else { return true }
+                guard let ep, let se = int(d["season"]) ?? int(numbers?["seasonNumber"]) ?? season else { return true }
                 var v = MetaVideo(id: "\(id):\(se):\(ep)", title: unescape(title) as String, season: se, episode: ep)
                 if let original, original != title { v.originalTitle = unescape(original) as String }
                 v.thumbnail = sized(imageURL(d["image"]) ?? imageURL(d["primaryImage"]), width: 480)
@@ -654,10 +675,7 @@ enum IMDbSource {
             }
         }
         var seen = Set<String>()
-        out = out.filter { seen.insert($0.id).inserted }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
-        dlog("imdb", "episodes \(id) S\(season): \(out.count)")
-        if !out.isEmpty { store(key, out) }
-        return out
+        return out.filter { seen.insert($0.id).inserted }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
     }
 
     // MARK: - Parsers

@@ -28,14 +28,21 @@ struct DownloadActivityWidget: Widget {
                     DownloadTimeLeft(state: s, stale: context.isStale, compact: false)
                         .padding(.trailing, 6).padding(.top, 6)
                 }
+                // Centred under the camera (1.24.1): until then the two lines
+                // sat left in the middle region, nearer neither the ring nor
+                // the time (7 Nov: "the text is not centered"), and the
+                // second line ran out ("… · 1.3 MB/s…") repeating the title's
+                // file count.
                 DynamicIslandExpandedRegion(.center) {
-                    VStack(alignment: .leading, spacing: 3) {
+                    VStack(alignment: .center, spacing: 3) {
                         Text(s.headline).font(.subheadline.weight(.semibold)).lineLimit(1)
-                        Text(DownloadLines.meta(s, stale: context.isStale))
+                        Text(DownloadLines.meta(s, stale: context.isStale, island: true))
                             .font(.caption.monospacedDigit()).foregroundStyle(LiquidGlass.secondary).lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 6)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 4)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     if !s.done {
@@ -84,15 +91,19 @@ private struct DownloadLockScreen: View {
 }
 
 private enum DownloadLines {
-    /// Under the name: speed and files, what's left once done, or (stale:
+    /// Under the name: the size and the speed next to it ("1.21 GB of 3.04
+    /// GB · 25.2 MB/s", 1.24.1), and files; what's left once done; or (stale:
     /// Folio hasn't been heard from past the estimate) that it carries on.
-    static func meta(_ s: DownloadActivityAttributes.ContentState, stale: Bool) -> String {
+    /// `island`: the Dynamic Island's narrower line, without the file count
+    /// (its title already says "2 files" when there are several).
+    static func meta(_ s: DownloadActivityAttributes.ContentState, stale: Bool, island: Bool = false) -> String {
         if s.done { return s.detailText ?? "" }
-        if stale { return s.filesLeft > 1 ? "Downloading in the background · \(s.filesLeft) files" : "Downloading in the background" }
+        if stale { return s.filesLeft > 1 && !island ? "Downloading in the background · \(s.filesLeft) files" : "Downloading in the background" }
         if s.waiting { return s.filesText ?? "Waiting" }
         var parts: [String] = []
+        if let bytes = s.bytesText { parts.append(bytes) }
         if s.speed > 0 { parts.append(s.speedText) }
-        if let files = s.filesText { parts.append(files) }
+        if !island, let files = s.filesText { parts.append(files) }
         // The time left only: detailText repeats the file count (review,
         // 5 Nov: "3 files · 3 files").
         if s.timerRange == nil, !s.waiting, let left = s.secondsLeft { parts.append(ActivityFormat.minutesLeft(left)) }

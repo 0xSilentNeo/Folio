@@ -149,7 +149,7 @@ struct VideoSurface: UIViewRepresentable {
             // of the scrub, or the time label stayed frozen (review, 2 Nov).
             if [.ended, .cancelled, .failed].contains(g.state), panMode != .none, ui.locked || longPressActive {
                 ui.scrubbing = false
-                ui.scrubTime = nil
+                model.clock.scrubTime = nil
                 hideHUD(after: 0.3)
                 panMode = .none
                 return
@@ -195,7 +195,7 @@ struct VideoSurface: UIViewRepresentable {
                     let range = min(max(model.duration * 0.25, 90), 360)
                     let delta = Double(t.x / max(v.bounds.width, 1)) * range
                     let target = min(max(0, panStartValue + delta), model.duration)
-                    ui.scrubTime = target
+                    model.clock.scrubTime = target
                     model.scrub(to: target)
                     let sign = delta >= 0 ? "+" : "-"
                     setHUD(.init(icon: delta >= 0 ? "forward" : "backward",
@@ -218,11 +218,11 @@ struct VideoSurface: UIViewRepresentable {
                 case .none: break
                 }
             case .ended, .cancelled, .failed:
-                if panMode == .seek, let target = ui.scrubTime, g.state == .ended {
+                if panMode == .seek, let target = model.clock.scrubTime, g.state == .ended {
                     model.seek(to: target)
                 }
                 ui.scrubbing = false
-                ui.scrubTime = nil
+                model.clock.scrubTime = nil
                 hideHUD(after: panMode == .seek ? 0.5 : 0.9)
                 panMode = .none
             default: break

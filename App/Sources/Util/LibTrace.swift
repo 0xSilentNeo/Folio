@@ -120,12 +120,13 @@ struct ZoomProbe: UIViewRepresentable {
         LibTrace.zoom.log("\(when): \(list.count) source(s) for \(id)" + (parts.isEmpty ? "" : ": " + parts.joined(separator: "; ")))
     }
 
-    /// `dump` every 100 ms for `seconds` (a page going back and after).
+    /// `dump` every 250 ms for `seconds` (a page going back and after);
+    /// every 100 ms until 1.24.1, 26 walks of every probe's views during a zoom.
     @MainActor static func timeline(_ id: AnyHashable, _ what: String, seconds: Double = 2.5) {
         guard LibTrace.on else { return }
         let start = CACurrentMediaTime()
-        for i in 0...Int(seconds * 10) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.1) {
+        for i in 0...Int(seconds * 4) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.25) {
                 MainActor.assumeIsolated { dump(id, "\(what) +\(LibTrace.ms(since: start)) ms") }
             }
         }
@@ -149,11 +150,25 @@ struct GridProbe: ViewModifier {
     /// Where the view is in the window, not in its grid row (a whole row).
     var inWindow = false
 
+    /// The last place seen, logged once it has held for 0.3 s (1.24.1): rows
+    /// outside the grid (List and Details) have no "homeGrid" space, so their
+    /// place changed on every scrolled frame and logged two lines each time
+    /// (6 Nov report: 254 pairs in 3 s, each a UserDefaults read and a date
+    /// format on the main thread). A box, so noting it doesn't redraw.
+    @State private var pending = Pending()
+    final class Pending { var task: DispatchWorkItem? }
+
     @ViewBuilder
     func body(content: Content) -> some View {
         if LibTrace.on {
             content.onGeometryChange(for: CGRect.self, of: { $0.frame(in: inWindow ? .global : .named(GridProbe.space)).integral }) { r in
-                LibTrace.layout.log("\(name) at (\(Int(r.minX)), \(Int(r.minY)), \(Int(r.width)), \(Int(r.height)))")
+                pending.task?.cancel()
+                let name = name
+                let work = DispatchWorkItem {
+                    LibTrace.layout.log("\(name) at (\(Int(r.minX)), \(Int(r.minY)), \(Int(r.width)), \(Int(r.height)))")
+                }
+                pending.task = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
             }
         } else {
             content

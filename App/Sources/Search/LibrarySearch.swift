@@ -80,6 +80,8 @@ struct LibrarySearchPage: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                // Room under the last row for the downloads pill (1.24.1).
+                .downloadPillRoom()
                 .scrollDismissesKeyboard(.immediately)
             }
         }

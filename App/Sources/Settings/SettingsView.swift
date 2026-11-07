@@ -959,15 +959,26 @@ struct LogView: View {
     @State private var text = ""
     @State private var errorsOnly = false
     @State private var shareCopy: URL?
+    /// The lines shown, worked out once when the log or the filter changes
+    /// (1.24.1). Until then one Text held up to 400 000 characters and every
+    /// redraw split and lowercased all of them: the screen froze on open.
+    @State private var lines: [String] = []
 
     var body: some View {
         ScrollView {
-            Text(shown.isEmpty ? "No log yet — play something first." : shown)
-                .font(.system(size: 11, design: .monospaced))
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
+            LazyVStack(alignment: .leading, spacing: 0) {
+                if lines.isEmpty {
+                    Text("No log yet — play something first.")
+                }
+                ForEach(lines.indices, id: \.self) { i in
+                    Text(lines[i]).textSelection(.enabled)
+                }
+            }
+            .font(.system(size: 11, design: .monospaced))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
         }
+        .onChange(of: errorsOnly) { _, _ in lines = Self.lines(text, errorsOnly: errorsOnly) }
         .background(Theme.background)
         .brandListBackground()
         .navigationTitle("Last log")
@@ -991,16 +1002,18 @@ struct LogView: View {
                 return (s, (try? s.write(to: url, atomically: true, encoding: .utf8)) != nil ? url : nil)
             }.value
             text = shown
+            lines = Self.lines(shown, errorsOnly: errorsOnly)
             shareCopy = copy
         }
     }
 
-    private var shown: String {
-        guard errorsOnly else { return text }
-        return text.split(separator: "\n").filter {
+    static func lines(_ text: String, errorsOnly: Bool) -> [String] {
+        let all = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        guard errorsOnly else { return text.isEmpty ? [] : all }
+        return all.filter {
             let l = $0.lowercased()
             return l.contains("[e]") || l.contains("[w]") || l.contains("error") || l.contains("fail") || l.contains("lua")
-        }.joined(separator: "\n")
+        }
     }
 }
 
@@ -1066,9 +1079,18 @@ struct DiagnosticsView: View {
         .brandListBackground()
         .navigationTitle("Diagnostics")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            let s = (try? String(contentsOf: Diagnostics.shared.appLog, encoding: .utf8)) ?? ""
-            tail = s.split(separator: "\n").suffix(80).joined(separator: "\n")
+        .task {
+            // Off the main thread, and only the end of the file (1.24.1): the
+            // whole app.log (up to 2 MB) was read and split on main to show 80 lines.
+            let url = Diagnostics.shared.appLog
+            tail = await Task.detached(priority: .userInitiated) { () -> String in
+                guard let h = try? FileHandle(forReadingFrom: url) else { return "" }
+                defer { try? h.close() }
+                let end = (try? h.seekToEnd()) ?? 0
+                try? h.seek(toOffset: end > 65_536 ? end - 65_536 : 0)
+                let s = String(decoding: (try? h.readToEnd()) ?? Data(), as: UTF8.self)
+                return s.split(separator: "\n").suffix(80).joined(separator: "\n")
+            }.value
         }
     }
 }

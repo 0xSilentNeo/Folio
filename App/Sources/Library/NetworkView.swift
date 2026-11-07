@@ -64,6 +64,8 @@ struct NetworkView: View {
                 }
             }
             .brandListBackground()
+            // Room under the last row for the downloads pill (1.24.1).
+            .downloadPillRoom()
             .navigationTitle("Network")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

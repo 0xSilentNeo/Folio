@@ -246,6 +246,8 @@ struct AddonSearchView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        // Room under the last row for the downloads pill (1.24.1).
+        .downloadPillRoom()
         .background(Theme.background.ignoresSafeArea())
         .scrollDismissesKeyboard(.immediately)
         .navigationTitle("Search")

@@ -73,13 +73,13 @@ struct PlayerScreen: View {
                 if model.holdSpeedActive {
                     topPill(Label(String(format: "%g×", model.holdSpeed), systemImage: "forward.fill"), top: geo.safeAreaInsets.top)
                 }
-                if let hud = ui.gestureHUD, hud.kind == .brightness || hud.kind == .volume {
-                    LevelHUD(hud: hud, top: geo.safeAreaInsets.top)
+                if let kind = ui.gestureHUDKind, kind == .brightness || kind == .volume {
+                    LiveHUD(live: ui.hud) { LevelHUD(hud: $0, top: geo.safeAreaInsets.top) }
                         .id("levelhud")
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
-                if let hud = ui.gestureHUD, hud.kind != .brightness && hud.kind != .volume {
-                    GestureHUDView(hud: hud).allowsHitTesting(false)
+                if let kind = ui.gestureHUDKind, kind != .brightness && kind != .volume {
+                    LiveHUD(live: ui.hud) { GestureHUDView(hud: $0) }.allowsHitTesting(false)
                         .id("gesturehud")
                         .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
@@ -87,7 +87,7 @@ struct PlayerScreen: View {
                     MediaCard(model: model, ui: ui)
                         .transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
                 }
-                if let toast = model.toast, ui.gestureHUD == nil, !model.holdSpeedActive {
+                if let toast = model.toast, ui.gestureHUDKind == nil, !model.holdSpeedActive {
                     topPill(Text(toast), top: geo.safeAreaInsets.top + (ui.controlsVisible ? 56 : 0))
                 }
 
@@ -158,8 +158,8 @@ struct PlayerScreen: View {
             .animation(.spring(response: 0.36, dampingFraction: 0.86), value: model.pickRequest)
             .animation(.spring(response: 0.36, dampingFraction: 0.86), value: model.subtitleSearch?.id)
             .animation(.easeOut(duration: 0.18), value: ui.controlsVisible)
-            .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD != nil)
-            .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUD?.kind)
+            .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUDKind != nil)
+            .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUDKind)
             .animation(.spring(response: 0.42, dampingFraction: 0.84), value: ui.showStats || ui.showInfo)
             .animation(.spring(response: 0.4, dampingFraction: 0.84), value: ui.showTune)
             .animation(.easeOut(duration: 0.18), value: model.toast)
@@ -611,12 +611,12 @@ struct TimeBar: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(PlayerModel.format(ui.scrubTime ?? clock.position))
+            Text(PlayerModel.format(clock.scrubTime ?? clock.position))
                 .font(.caption.monospacedDigit().weight(.semibold))
                 .frame(minWidth: 38, alignment: .leading)
             SeekTrack(model: model, ui: ui, clock: clock)
             Button { ui.showRemaining.toggle() } label: {
-                Text(ui.showRemaining ? "-" + PlayerModel.format(max(0, clock.duration - (ui.scrubTime ?? clock.position))) : PlayerModel.format(clock.duration))
+                Text(ui.showRemaining ? "-" + PlayerModel.format(max(0, clock.duration - (clock.scrubTime ?? clock.position))) : PlayerModel.format(clock.duration))
                     .font(.caption.monospacedDigit().weight(.semibold))
                     .frame(minWidth: 38, alignment: .trailing)
             }
@@ -645,7 +645,7 @@ struct SeekTrack: View {
         GeometryReader { geo in
             let w = max(geo.size.width, 1)
             let d = max(clock.duration, 0.001)
-            let shown = ui.scrubTime ?? clock.position
+            let shown = clock.scrubTime ?? clock.position
             let frac = min(1, max(0, shown / d))
             let cacheFrac = min(1, max(0, (clock.position + clock.cacheAhead) / d))
             let h: CGFloat = dragging ? 7 : 4
@@ -705,14 +705,14 @@ struct SeekTrack: View {
                         guard clock.duration > 0 else { return }
                         if !dragging { dragging = true; ui.scrubbing = true }
                         let t = min(1, max(0, v.location.x / w)) * clock.duration
-                        ui.scrubTime = t
+                        clock.scrubTime = t
                         model.scrub(to: t)
                     }
                     .onEnded { v in
                         if clock.duration > 0 { model.seek(to: min(1, max(0, v.location.x / w)) * clock.duration) }
                         dragging = false
                         ui.scrubbing = false
-                        ui.scrubTime = nil
+                        clock.scrubTime = nil
                         ui.scheduleHide()
                     }
             )
@@ -722,7 +722,7 @@ struct SeekTrack: View {
                 guard !now, dragging else { return }
                 dragging = false
                 ui.scrubbing = false
-                ui.scrubTime = nil
+                clock.scrubTime = nil
                 ui.scheduleHide()
             }
         }
@@ -1016,6 +1016,16 @@ struct LevelHUD: View {
 
 /// Centre indicator for seeks: icon, target time and a slim position strip.
 /// The video underneath already shows the frame being scrubbed to.
+/// A swipe HUD drawn from its live value (1.24.1): only this redraws as a swipe moves.
+struct LiveHUD<Content: View>: View {
+    @ObservedObject var live: PlayerUIState.GestureHUDLive
+    @ViewBuilder let content: (PlayerUIState.GestureHUD) -> Content
+
+    var body: some View {
+        if let hud = live.value { content(hud) }
+    }
+}
+
 struct GestureHUDView: View {
     let hud: PlayerUIState.GestureHUD
     var body: some View {

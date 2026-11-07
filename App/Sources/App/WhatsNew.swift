@@ -20,6 +20,18 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.24.1", items: [
+            Item(icon: "rectangle.3.group", title: "Widgets that fit in",
+                 text: "Glass in light mode, tinted in dark mode, and artwork in full colour in Clear and Tinted too."),
+            Item(icon: "arrow.down.circle", title: "Downloads, smoother",
+                 text: "Groups unfold in place, swipe to delete is iOS's own, each file shows its speed, and the Dynamic Island shows it too."),
+            Item(icon: "hand.tap", title: "One tile, its own menu",
+                 text: "Holding a title lifts just that title, with the right Watched wording. Swipe to delete is back in List and Details."),
+            Item(icon: "speedometer", title: "Quicker in places",
+                 text: "Play and pause no longer wait, series pages load once, and posters stop flashing."),
+            Item(icon: "quote.bubble", title: "Try the reminders",
+                 text: "Settings → Reminders: send a test, or turn on quick timing to get them seconds after you leave Folio."),
+        ]),
         Release(version: "1.24.0", items: [
             Item(icon: "rectangle.3.group", title: "New widgets",
                  text: "Continue Watching in four styles, Airing in three, and Downloads, Your week, New on your server and Pick for tonight. Each follows your Home Screen's look: light, dark, clear or tinted."),

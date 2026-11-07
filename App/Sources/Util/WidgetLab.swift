@@ -86,24 +86,26 @@ enum WidgetLab {
     private static func framed(_ view: AnyView, size: CGSize, look: Look, inverted: Bool) -> some View {
         let scheme: ColorScheme = look == .dark ? .dark : .light
         let mode: WidgetRenderingMode = look == .clear || look == .tinted ? .accented : .fullColor
-        let t = WidgetPalette(scheme: scheme, mode: mode)
-        let tint = Color(hex: 0x7FB3E6)
+        let tint = WidgetPalette.tint
+        // In the app a container background isn't drawn: widgetLab puts the
+        // look's backdrop behind the content instead (1.24.1).
         let content = view
             .environment(\.colorScheme, scheme)
             .environment(\.widgetRenderingMode, mode)
+            .environment(\.widgetLab, true)
             .frame(width: size.width, height: size.height)
         let card = RoundedRectangle(cornerRadius: 22, style: .continuous)
         return ZStack {
             switch look {
             case .light, .dark:
-                card.fill(inverted ? t.ink : t.card)
                 content.clipShape(card)
             case .clear:
+                // iOS's glass, roughly; artwork keeps its colours (full colour), text is white.
                 card.fill(.white.opacity(0.14)).overlay(card.strokeBorder(.white.opacity(0.32)))
-                content.saturation(0).clipShape(card)
+                content.clipShape(card)
             case .tinted:
                 card.fill(tint.opacity(0.16)).overlay(card.strokeBorder(tint.opacity(0.35)))
-                content.saturation(0).colorMultiply(Color(hex: 0xB2D1F0)).clipShape(card)
+                content.clipShape(card)
             }
         }
         .frame(width: size.width, height: size.height)
@@ -114,7 +116,7 @@ enum WidgetLab {
     @ViewBuilder
     private static func wallpaper(_ look: Look) -> some View {
         switch look {
-        case .light: Color(hex: 0xE6E0D6)
+        case .light: LinearGradient(colors: [Color(hex: 0xDCE6F0), Color(hex: 0xF4EEE6)], startPoint: .top, endPoint: .bottom)
         case .dark: Color(hex: 0x0B0A09)
         case .clear: LinearGradient(colors: [Color(hex: 0x8C6B4A), Color(hex: 0x3E3127), Color(hex: 0x2F4A55)], startPoint: .topLeading, endPoint: .bottomTrailing)
         case .tinted: LinearGradient(colors: [Color(hex: 0x22344A), Color(hex: 0x141D26)], startPoint: .topLeading, endPoint: .bottomTrailing)

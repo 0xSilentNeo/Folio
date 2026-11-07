@@ -17,6 +17,16 @@ enum ScriptCommandStore {
         ScriptCommand(name: "Frame step", command: "frame-step"),
     ]
 
+    /// `all`, decoded again at most every two seconds (1.24.1): the player's
+    /// settings panel built its menu from it on every redraw.
+    @MainActor static var recent: [ScriptCommand] {
+        if let c = memo, Date().timeIntervalSince(c.at) < 2 { return c.list }
+        let list = all
+        memo = (Date(), list)
+        return list
+    }
+    @MainActor private static var memo: (at: Date, list: [ScriptCommand])?
+
     static var all: [ScriptCommand] {
         get {
             guard let data = UserDefaults.standard.data(forKey: SettingsKey.scriptCommands),

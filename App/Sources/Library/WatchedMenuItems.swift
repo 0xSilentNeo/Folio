@@ -1,10 +1,15 @@
 import SwiftUI
 
-/// The watched actions of a menu (title page, episode rows, Home's titles,
-/// WebDAV files), from the same history the eye marks read:
+/// The watched actions of a menu (title page, episode rows, WebDAV and
+/// server files), from the same history the eye marks read:
 /// "Mark … as watched" only when at least one item isn't watched, and
-/// "Mark … as unwatched" only when at least one is. Built when the menu
-/// opens, so it's right straight after any change.
+/// "Mark … as unwatched" only when at least one is.
+///
+/// It watches the history (1.24.1). Until then it only read it, and SwiftUI
+/// keeps a menu's items from when they were last built: on 7 Nov in the lab
+/// an episode marked watched from its menu still offered "Mark as watched"
+/// (the title page's own badge already said Watched), and a watched show on
+/// Home offered "Mark all as watched" (the user's 11:02 screenshot).
 struct WatchedMenuItems: View {
     enum Scope {
         /// One file: "Mark as watched".
@@ -17,6 +22,7 @@ struct WatchedMenuItems: View {
 
     let keys: [String]
     var scope: Scope = .one
+    @ObservedObject private var history = HistoryStore.shared
     /// The history item for a key that was never played (to mark it watched).
     let item: (String) -> MediaItem
 
@@ -37,7 +43,6 @@ struct WatchedMenuItems: View {
     }
 
     var body: some View {
-        let history = HistoryStore.shared
         let offers = Self.offers(watched: keys.filter { history.isWatched(key: $0) }.count, total: keys.count)
         if offers.markWatched {
             Button { history.setWatched(keys, true, item: item) } label: { Label(title(watched: true), systemImage: "eye") }

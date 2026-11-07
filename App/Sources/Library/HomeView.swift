@@ -56,6 +56,8 @@ struct HomeView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                // Room under the last row for the downloads pill (1.24.1).
+                .downloadPillRoom()
                 .scrollIndicators(.hidden)
                 .environment(\.defaultMinListRowHeight, 0)
                 .animation(.smooth(duration: 0.35), value: realDebridSummary != nil)
@@ -533,10 +535,12 @@ struct HomeView: View {
         PlayerPresenter.play(m)
     }
 
-    /// Thumbnails: one row holding the grid. List and Details: one list row
-    /// per title. 1.17.2: no swipe actions on Home (27 Oct report: swiping a
-    /// title's card to delete it "doesn't look right"); a long press has
-    /// the same actions (Delete asks first).
+    /// Thumbnails: rows of tiles. List and Details: one list row per title.
+    /// 1.17.2 took Home's swipe actions out (27 Oct report: swiping a title's
+    /// card to delete it "doesn't look right"); 1.24.1 brings them back on
+    /// List and Details ("Swipe to delete is not working anymore", 7 Nov),
+    /// the system's own (deleteSwipe, watchedSwipe). Thumbnails have none:
+    /// a long press has the same actions.
     @ViewBuilder
     private func libraryRows(_ groups: [LibraryGroup], width: CGFloat, margin: CGFloat) -> some View {
         let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
@@ -545,12 +549,13 @@ struct HomeView: View {
         } else {
             let posters = tileArtwork == "poster"
             let style = ListTransition.current
+            let menu = MenuShape(cornerRadius: mode == .details ? 16 : 12)
             ForEach(groups) { g in
                 askToDelete(g, Group {
                     if let folder = g.folder {
-                        folderLink(g, folder) { FolderRow(group: g, detail: mode == .details, zoom: style == .push ? nil : ZoomSource(zoomID(g.id), zoomNS), zoomWholeRow: style == .row) }
+                        folderLink(g, folder, menu: menu) { FolderRow(group: g, detail: mode == .details, zoom: style == .push ? nil : ZoomSource(zoomID(g.id), zoomNS), zoomWholeRow: style == .row) }
                     } else {
-                        groupLink(g) {
+                        groupLink(g, menu: menu) {
                             LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
                                        fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
                                        poster: posters, zoom: opensPage(g) && style != .push ? ZoomSource(zoomID(g.id), zoomNS) : nil,
@@ -564,6 +569,8 @@ struct HomeView: View {
                 .padding(.horizontal, margin)
                 .padding(.vertical, mode == .details ? 6 : 2)
                 .homeRow()
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) { deleteSwipe(g) }
+                .swipeActions(edge: .leading, allowsFullSwipe: true) { watchedSwipe(g) }
             }
         }
     }
@@ -608,11 +615,13 @@ struct HomeView: View {
 
     @ViewBuilder
     private func gridTile(_ g: LibraryGroup, posters: Bool) -> some View {
+        // Each tile its own menu (1.24.1): a row of tiles is one List row.
+        let menu = MenuShape(cornerRadius: posters ? 12 : 16, outset: 8)
         askToDelete(g, Group {
             if let folder = g.folder {
-                folderLink(g, folder) { FolderTile(group: g, poster: posters, zoom: ZoomSource(zoomID(g.id), zoomNS)) }
+                folderLink(g, folder, menu: menu) { FolderTile(group: g, poster: posters, zoom: ZoomSource(zoomID(g.id), zoomNS)) }
             } else {
-                groupLink(g) {
+                groupLink(g, menu: menu) {
                     MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
                               key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
                               progress: history.entry(forURL: g.nextUp.path)?.progress,
@@ -624,15 +633,64 @@ struct HomeView: View {
         })
     }
 
+    /// A title's long-press menu (Home's tiles and rows), built when it
+    /// opens: Play, Mark … as watched / unwatched (whichever applies now,
+    /// both when some are), Delete (asks first).
+    private func menuActions(_ g: LibraryGroup) -> [TileMenuAction] {
+        if g.folder != nil {
+            return [TileMenuAction(title: "Delete folder", systemImage: "trash", destructive: true) { pendingDelete = g }]
+        }
+        let watched = g.files.filter { history.isWatched($0) }.count
+        let offers = WatchedMenuItems.offers(watched: watched, total: g.files.count)
+        let all = g.isSeries ? "all " : ""
+        var a = [TileMenuAction(title: g.isSeries ? "Play next episode" : "Play", systemImage: "play") { playLocal(g.nextUp) }]
+        if offers.markWatched {
+            a.append(TileMenuAction(title: "Mark \(all)as watched", systemImage: "eye") { history.setWatched(g.files, true) })
+        }
+        if offers.markUnwatched {
+            a.append(TileMenuAction(title: "Mark \(all)as unwatched", systemImage: "eye.slash") { history.setWatched(g.files, false) })
+        }
+        a.append(TileMenuAction(title: g.isSeries ? "Delete all episodes" : "Delete", systemImage: "trash", destructive: true) { pendingDelete = g })
+        return a
+    }
+
+    /// List and Details (1.24.1, back after 1.17.2 took them out): swipe left
+    /// to delete (it asks first, so the row stays put: red by tint, not the
+    /// destructive role), right for watched / unwatched.
+    @ViewBuilder
+    private func deleteSwipe(_ g: LibraryGroup) -> some View {
+        Button { pendingDelete = g } label: { Label("Delete", systemImage: "trash") }.tint(.red)
+    }
+
+    @ViewBuilder
+    private func watchedSwipe(_ g: LibraryGroup) -> some View {
+        if g.folder == nil {
+            if allWatched(g) {
+                Button { history.setWatched(g.files, false) } label: { Label("Unwatched", systemImage: "eye.slash") }.tint(.gray)
+            } else {
+                Button { history.setWatched(g.files, true) } label: { Label("Watched", systemImage: "eye") }.tint(Theme.swipeTint)
+            }
+        }
+    }
+
     // Pushed through the path, not NavigationLink: inside a List a
     // NavigationLink row gets a disclosure chevron and the list's highlight.
-    private func folderLink<L: View>(_ g: LibraryGroup, _ folder: URL, @ViewBuilder label: () -> L) -> some View {
-        Button { if !TouchTracker.wasSwipe("home: folder") { open(.folder(folder.path)) } } label: { label() }
-            .buttonStyle(PressStyle(scale: 0.97))
-            .accessibilityLabel("\(g.title), folder, \(g.count) items, \(g.size.byteString)")
-            .contextMenu {
-                Button(role: .destructive) { pendingDelete = g } label: { Label("Delete folder", systemImage: "trash") }
-            }
+    private func folderLink<L: View>(_ g: LibraryGroup, _ folder: URL, menu: MenuShape, @ViewBuilder label: () -> L) -> some View {
+        Button { if !TouchTracker.wasSwipe("home: folder") { open(.folder(folder.path)) } } label: {
+            label().tileContextMenu(cornerRadius: menu.cornerRadius, outset: menu.outset) { menuActions(g) }
+        }
+        .buttonStyle(PressStyle(scale: 0.97))
+        .accessibilityLabel("\(g.title), folder, \(g.count) items, \(g.size.byteString)")
+        .modifier(MenuAccessibility(actions: menuActions(g)))
+    }
+
+    /// Where a title's long-press menu lifts from (1.24.1): the tile's or the
+    /// row's corners, and room around a tile. The menu sits in the button's
+    /// label so the title stays one button for VoiceOver and the UI tests
+    /// (outside it, "home:Lab Show" became a container nothing could tap).
+    struct MenuShape {
+        var cornerRadius: CGFloat
+        var outset: CGFloat = 0
     }
 
     private func seriesSubtitle(_ g: LibraryGroup) -> String {
@@ -651,26 +709,24 @@ struct HomeView: View {
     private func allWatched(_ g: LibraryGroup) -> Bool { !g.files.isEmpty && g.files.allSatisfy { history.isWatched($0) } }
 
     @ViewBuilder
-    private func groupLink<L: View>(_ g: LibraryGroup, @ViewBuilder label: () -> L) -> some View {
+    private func groupLink<L: View>(_ g: LibraryGroup, menu: MenuShape, @ViewBuilder label: () -> L) -> some View {
+        let label = label().tileContextMenu(cornerRadius: menu.cornerRadius, outset: menu.outset) { menuActions(g) }
         Group {
             if opensPage(g) {
-                // A swipe across a tile (no swipe actions on Home any more)
-                // is not a tap: it neither opens the title nor plays it.
-                Button { if !TouchTracker.wasSwipe("home: \(g.title)") { dlog("nav", "home: open \(g.title)"); open(.group(g.id)) } } label: { label() }
+                // A swipe across a tile is not a tap: it neither opens the
+                // title nor plays it.
+                Button { if !TouchTracker.wasSwipe("home: \(g.title)") { dlog("nav", "home: open \(g.title)"); open(.group(g.id)) } } label: { label }
                     .buttonStyle(PressStyle(scale: 0.97, onPress: {
                         let mode = LibraryViewMode(rawValue: UserDefaults.standard.string(forKey: "heroView") ?? "") ?? .grid
                         ThumbLoader.prefetch(firstEpisodes(g), points: LibraryList.picturePoints(mode))
+                        ThumbLoader.prefetchHero(g.nextUp)
                     }))
             } else {
-                Button { if !TouchTracker.wasSwipe("home: \(g.title)") { playLocal(g.nextUp) } } label: { label() }
+                Button { if !TouchTracker.wasSwipe("home: \(g.title)") { playLocal(g.nextUp) } } label: { label }
                     .buttonStyle(PressStyle(scale: 0.97))
             }
         }
-        .contextMenu {
-            Button { playLocal(g.nextUp) } label: { Label(g.isSeries ? "Play next episode" : "Play", systemImage: "play") }
-            WatchedMenuItems(files: g.files, scope: g.isSeries ? .all : .one)
-            Button(role: .destructive) { pendingDelete = g } label: { Label(g.isSeries ? "Delete all episodes" : "Delete", systemImage: "trash") }
-        }
+        .modifier(MenuAccessibility(actions: menuActions(g)))
     }
 
     // MARK: Helpers
@@ -705,7 +761,10 @@ struct HomeView: View {
     }
 
     private func pasteAndPlay() {
-        guard let s = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else {
+        // Nothing to paste: said without reading it, so no "allow paste"
+        // prompt for an empty clipboard (1.24.1).
+        guard UIPasteboard.general.hasStrings || UIPasteboard.general.hasURLs,
+              let s = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else {
             FileOpener.showAlert("Nothing to play", "Copy a video link first, then tap Paste & play.")
             return
         }
@@ -739,6 +798,18 @@ extension View {
         listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
+    }
+}
+
+/// The long-press menu's actions for VoiceOver (1.24.1): the UIKit menu
+/// over a tile isn't an accessibility element.
+private struct MenuAccessibility: ViewModifier {
+    let actions: [TileMenuAction]
+
+    func body(content: Content) -> some View {
+        content.accessibilityActions {
+            ForEach(actions) { a in Button(a.title, action: a.handler) }
+        }
     }
 }
 
@@ -874,6 +945,9 @@ struct HeroCard: View {
             .padding(14)
         }
         .frame(height: height)
+        // The card keeps its height (1.24.1): at the largest text sizes its
+        // title, line and Resume row were taller and wider than it, and cut.
+        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.hairline))
         // Text and glass sit on a dark scrim over the picture: dark in both appearances.
@@ -1046,7 +1120,8 @@ struct HistoryRow: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
+                // The memory copy first (1.24.1): a rebuilt row showed generated art for a frame.
+                if let img = thumb.image ?? ThumbLoader.cached(key: entry.item.id, points: 96) { Image(uiImage: img).resizable().scaledToFill() }
                 else { GeneratedArt(seed: entry.item.displayTitle) }
             }
             .frame(width: 96, height: 54)
@@ -1104,7 +1179,10 @@ struct OpenURLSheet: View {
                             }
                             return true
                         }
-                    Button("Paste") { url = UIPasteboard.general.string ?? "" }
+                    // The system's paste button (1.24.1): no "allow paste" prompt.
+                    PasteButton(payloadType: String.self) { strings in
+                        if let s = strings.first { url = s.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    }
                 } header: { Text("Stream URL") } footer: { Text("HTTP(S), HLS (.m3u8), DASH, RTSP, RTMP, FTP, SMB and SFTP.") }
                 Section("Optional headers") {
                     TextField("User-Agent", text: $userAgent).textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -1254,7 +1332,10 @@ private struct FolderThumb: View {
     var body: some View {
         Color.clear
             .overlay {
-                if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() } else { GeneratedArt(seed: file.lastPathComponent) }
+                // The memory copy first (1.24.1): collages showed gradients for a frame when rebuilt.
+                if let img = thumb.image ?? ThumbLoader.cached(key: file.path, art: poster ? .poster : .wide, points: 100) {
+                    Image(uiImage: img).resizable().scaledToFill()
+                } else { GeneratedArt(seed: file.lastPathComponent) }
             }
             .clipped()
             .onAppear { thumb.load(key: file.path, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, art: poster ? .poster : .wide, points: 100) }

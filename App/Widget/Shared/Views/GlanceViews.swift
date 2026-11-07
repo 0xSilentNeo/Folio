@@ -97,7 +97,7 @@ struct DownloadsTile: View {
                 }
             }
             .padding(14)
-            .widgetCard(t)
+            .widgetCard(t, seed: glance?.run?.title ?? "downloads")
             .widgetURL(GlanceLink.downloads)
         }
     }
@@ -126,7 +126,7 @@ struct WeekTile: View {
 
     var body: some View {
         Looked { t in
-            let ink = t.accented ? Color.white : t.card
+            let ink = t.ink
             VStack(alignment: .leading, spacing: 0) {
                 WidgetLeaf().fill(ink).frame(width: 20, height: 20).widgetAccentable()
                 Spacer(minLength: 4)
@@ -138,7 +138,7 @@ struct WeekTile: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .containerBackground(for: .widget) { t.accented ? Color.clear : t.ink }
+            .widgetCard(t, seed: "your week")
             .widgetURL(GlanceLink.home)
         }
     }
@@ -199,7 +199,7 @@ struct ServersTile: View {
                 }
             }
             .padding(14)
-            .widgetCard(t)
+            .widgetCard(t, art: glance.releases.first.flatMap { entry.picture(Self.pictureName($0)) }, seed: glance.releases.first?.title ?? "")
             .widgetURL(GlanceLink.server(glance.server))
         }
     }
@@ -239,7 +239,7 @@ struct PickTile: View {
                 .frame(maxWidth: 250, maxHeight: .infinity, alignment: .leading)
                 .padding(.leading, 16).padding(.top, 16).padding(.bottom, 14)
             }
-            .widgetCard(t)
+            .widgetCard(t, art: entry.picture(pick.picture), seed: pick.title)
             .widgetURL(GlanceLink.library(file: pick.file))
         }
     }

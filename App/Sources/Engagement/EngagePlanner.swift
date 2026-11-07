@@ -205,6 +205,12 @@ enum EngagePlanner {
         ContinueLink.url(id: id).absoluteString + (next ? "&next=1" : "")
     }
 
+    /// Quick timing (1.24.1, for trying them): the planned reminders, in
+    /// their order, 20 seconds after `now` and then a minute apart.
+    static func quickTimes(_ count: Int, from now: Date) -> [Date] {
+        (0..<count).map { now.addingTimeInterval(20 + Double($0) * 60) }
+    }
+
     /// `hour`:`minute` on the day `days` after `date`'s day.
     static func at(_ hour: Int, _ minute: Int, daysAfter days: Int, _ date: Date, _ calendar: Calendar) -> Date? {
         guard let day = calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: date)) else { return nil }

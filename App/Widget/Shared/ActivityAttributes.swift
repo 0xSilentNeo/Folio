@@ -35,6 +35,11 @@ struct DownloadActivityAttributes: ActivityAttributes {
         /// activity. Each time Folio runs it corrects them.
         var measuredAt: Date?
         var finishBy: Date?
+        /// The run's bytes in and in all (1.24.1), for "1.2 GB of 3 GB · 25
+        /// MB/s" beside the speed. Optional: a state saved by an older build
+        /// (the widgets' downloads file) still reads.
+        var received: Int64? = nil
+        var total: Int64? = nil
     }
 }
 
@@ -42,6 +47,13 @@ extension DownloadActivityAttributes.ContentState {
     var percentText: String { "\(Int((min(1, max(0, progress)) * 100).rounded(.down)))%" }
 
     var speedText: String { ByteCountFormatter.string(fromByteCount: Int64(max(0, speed)), countStyle: .file) + "/s" }
+
+    /// "1.21 GB of 3.04 GB" (1.24.1); nil when the size isn't known.
+    var bytesText: String? {
+        guard let total, total > 0 else { return nil }
+        let got = min(max(0, received ?? 0), total)
+        return ByteCountFormatter.string(fromByteCount: got, countStyle: .file) + " of " + ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+    }
 
     /// "12 min left · 3 files", "Waiting to retry", or nil (nothing known yet).
     var detailText: String? {

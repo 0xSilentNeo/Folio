@@ -153,7 +153,8 @@ final class AiringNotificationDelegate: NSObject, UNUserNotificationCenterDelega
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         let id = notification.request.identifier
         // The engagement ones (1.24.0) aren't pending while Folio is open; the lab's are shown over it.
-        let show = id.hasPrefix(AiringNotifications.prefix) || (EngagementNotifications.lab && id.hasPrefix(EngagementNotifications.prefix))
+        let show = id.hasPrefix(AiringNotifications.prefix) || id == EngagementNotifications.testID
+            || (EngagementNotifications.lab && id.hasPrefix(EngagementNotifications.prefix))
         completionHandler(show ? [.banner, .list, .sound] : [])
     }
 

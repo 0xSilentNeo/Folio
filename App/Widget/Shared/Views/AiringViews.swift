@@ -95,7 +95,7 @@ struct AiringWidgetView: View {
                 AiringDayTile(row: rows.first { !$0.isOut } ?? rows[0], picture: entry.picture((rows.first { !$0.isOut } ?? rows[0]).item.picture), now: entry.date)
             } else {
                 switch family {
-                case .systemSmall: AiringCountdownTile(row: rows[0], now: entry.date)
+                case .systemSmall: AiringCountdownTile(row: rows[0], picture: entry.picture(rows[0].item.picture), now: entry.date)
                 case .systemLarge: AiringAgendaTile(entry: entry, rows: rows)
                 default: AiringWeekTile(entry: entry, rows: rows)
                 }
@@ -147,6 +147,7 @@ enum AiringText {
 /// "Out now". A day-only episode says its day.
 struct AiringCountdownTile: View {
     let row: AiringSnapshot.Row
+    var picture: UIImage? = nil
     let now: Date
 
     var body: some View {
@@ -170,7 +171,7 @@ struct AiringCountdownTile: View {
                 Text(AiringText.episode(row.episode)).font(.system(size: 11)).foregroundStyle(t.sub).lineLimit(1).padding(.top, 2)
             }
             .padding(14)
-            .widgetCard(t)
+            .widgetCard(t, art: picture, seed: row.item.name)
             .widgetURL(TrackLink.url(id: row.item.id))
         }
     }
@@ -231,7 +232,7 @@ struct AiringDayTile: View {
                 }
                 .padding(12)
             }
-            .widgetCard(t)
+            .widgetCard(t, art: picture, seed: row.item.name)
             .widgetURL(TrackLink.url(id: row.item.id))
         }
     }
@@ -265,7 +266,7 @@ struct AiringWeekTile: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 16).padding(.vertical, 14)
-            .widgetCard(t)
+            .widgetCard(t, art: entry.picture(rows.first?.item.picture), seed: rows.first?.item.name ?? "")
         }
     }
 }
@@ -350,7 +351,7 @@ struct AiringAgendaTile: View {
                 }
             }
             .padding(.horizontal, 16).padding(.vertical, 14)
-            .widgetCard(t)
+            .widgetCard(t, art: entry.picture(rows.first?.item.picture), seed: rows.first?.item.name ?? "")
         }
     }
 
@@ -423,7 +424,7 @@ struct AiringOutNowTile: View {
             .frame(maxWidth: 250, maxHeight: .infinity, alignment: .leading)
             .padding(.leading, 16).padding(.top, 16).padding(.bottom, 14)
         }
-        .widgetCard(t)
+        .widgetCard(t, art: picture, seed: show)
         .widgetURL(showURL)
     }
 }
