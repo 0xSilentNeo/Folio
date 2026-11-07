@@ -162,6 +162,18 @@ final class MPVClient {
         return mpv_set_property(handle, name, MPV_FORMAT_FLAG, &v)
     }
 
+    /// The property set without waiting for mpv's core (1.24.1): the reply
+    /// comes as an event Folio doesn't need. mpv copies the value at once
+    /// ("The value will be copied by the function", client.h). A synchronous
+    /// set waits for the core, which unpausing a stream holds while audio
+    /// output restarts: the 6 Nov report's play.fill tap froze 359 ms.
+    @discardableResult
+    func setAsync(_ name: String, _ value: Bool) -> Int32 {
+        guard !isShutDown else { return MPV_ERROR_UNINITIALIZED.rawValue }
+        var v: Int32 = value ? 1 : 0
+        return mpv_set_property_async(handle, 0, name, MPV_FORMAT_FLAG, &v)
+    }
+
     @discardableResult
     func set(_ name: String, _ value: Double) -> Int32 {
         guard !isShutDown else { return MPV_ERROR_UNINITIALIZED.rawValue }

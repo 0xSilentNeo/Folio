@@ -42,8 +42,22 @@ final class PlayerUIState: ObservableObject {
         scheduleHide()
     }
     @Published var scrubbing = false
-    @Published var scrubTime: Double?
-    @Published var gestureHUD: GestureHUD?
+    /// Which swipe HUD shows (1.24.1): changes when one appears, goes or
+    /// changes kind. Its value, which a swipe changes on every move, is in
+    /// `hud`, watched by the HUD alone: the whole player redrew at touch rate.
+    @Published private(set) var gestureHUDKind: GestureHUD.Kind?
+    let hud = GestureHUDLive()
+    var gestureHUD: GestureHUD? {
+        get { hud.value }
+        set {
+            hud.value = newValue
+            if gestureHUDKind != newValue?.kind { gestureHUDKind = newValue?.kind }
+        }
+    }
+
+    final class GestureHUDLive: ObservableObject {
+        @Published var value: GestureHUD?
+    }
     @Published var rotationLocked = false
     @Published var showRemaining = false
     @Published var showConsole = false

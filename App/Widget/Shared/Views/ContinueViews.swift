@@ -54,7 +54,7 @@ struct ContinueWidgetView: View {
             case .accessoryInline: ContinueInline(item: items[0])
             default:
                 switch style {
-                case .ring: ContinueRingTile(item: items[0])
+                case .ring: ContinueRingTile(item: items[0], picture: entry.picture(items[0].picture))
                 case .episode: ContinueEpisodeTile(item: items[0], picture: entry.picture(items[0].picture))
                 case .shelf: ContinueShelfTile(items: Array(items.prefix(6)), entry: entry)
                 case .hero:
@@ -121,7 +121,7 @@ struct ContinueHeroTile: View {
             .overlay(alignment: .topTrailing) {
                 WidgetPill(text: "", icon: "play.fill", primary: false, height: 30).padding(12)
             }
-            .widgetCard(t)
+            .widgetCard(t, art: picture, seed: item.title)
             .widgetURL(ContinueLink.url(id: item.id))
         }
     }
@@ -176,7 +176,7 @@ struct ContinueMediumTile: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(8)
-            .widgetCard(t)
+            .widgetCard(t, art: entry.picture(items[0].picture), seed: items[0].title)
         }
     }
 }
@@ -229,7 +229,7 @@ struct ContinueLargeTile: View {
                 .padding(.horizontal, 14).padding(.vertical, 12)
                 .frame(maxHeight: .infinity)
             }
-            .widgetCard(t)
+            .widgetCard(t, art: entry.picture(items[0].picture), seed: items[0].title)
         }
     }
 
@@ -245,6 +245,7 @@ struct ContinueLargeTile: View {
 /// No artwork needed: the progress ring and the episode's name.
 struct ContinueRingTile: View {
     let item: ContinueSnapshot.Item
+    var picture: UIImage? = nil
 
     var body: some View {
         Looked { t in
@@ -273,7 +274,7 @@ struct ContinueRingTile: View {
                 Text(item.episodeTitle ?? item.year ?? item.remainingText).font(.system(size: 11)).foregroundStyle(t.sub).lineLimit(1).padding(.top, 2)
             }
             .padding(14)
-            .widgetCard(t)
+            .widgetCard(t, art: picture, seed: item.title)
             .widgetURL(ContinueLink.url(id: item.id))
         }
     }
@@ -321,7 +322,7 @@ struct ContinueEpisodeTile: View {
                 .frame(maxWidth: 240, maxHeight: .infinity, alignment: .leading)
                 .padding(.leading, 16).padding(.top, 16).padding(.bottom, 14)
             }
-            .widgetCard(t)
+            .widgetCard(t, art: picture, seed: item.title)
             .widgetURL(ContinueLink.url(id: item.id))
         }
     }
@@ -354,41 +355,41 @@ struct ContinueShelfTile: View {
                     Spacer()
                     Text("\(items.count) in progress").font(.system(size: 11)).foregroundStyle(t.sub)
                 }
-                if items.count > 3 {
-                    Grid(horizontalSpacing: 10, verticalSpacing: 10) {
-                        ForEach(0..<2, id: \.self) { row in
-                            GridRow {
+                // Each poster's size worked out from the widget's (1.24.1): a
+                // row of pictures without an explicit height took whatever
+                // the stills gave, landscape, with a gap under the first row
+                // (the user's 7 Nov Home Screen).
+                GeometryReader { g in
+                    let rows = items.count > 3 ? 2 : 1
+                    let w = (g.size.width - 20) / 3
+                    let label: CGFloat = rows == 2 ? 18 : 34
+                    let h = min(w * 1.5, (g.size.height - CGFloat(rows - 1) * 10) / CGFloat(rows) - label)
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach(0..<rows, id: \.self) { row in
+                            HStack(alignment: .top, spacing: 10) {
                                 ForEach(0..<3, id: \.self) { col in
                                     let i = row * 3 + col
-                                    if i < items.count { poster(items[i], t) } else { Color.clear }
+                                    if i < items.count { poster(items[i], t, size: CGSize(width: w, height: h), detail: rows == 1) }
+                                    else { Color.clear.frame(width: w, height: h) }
                                 }
                             }
                         }
                     }
-                } else {
-                    // Three or fewer: one row of posters, each with its place
-                    // under it, not an empty half.
-                    HStack(alignment: .top, spacing: 10) {
-                        ForEach(0..<3, id: \.self) { i in
-                            if i < items.count { poster(items[i], t, detail: true) } else { Color.clear.frame(maxWidth: .infinity) }
-                        }
-                    }
-                    Spacer(minLength: 0)
                 }
             }
             .padding(14)
-            .widgetCard(t)
+            .widgetCard(t, art: entry.picture(items.first?.picture), seed: items.first?.title ?? "")
         }
     }
 
-    private func poster(_ it: ContinueSnapshot.Item, _ t: WidgetPalette, detail: Bool = false) -> some View {
+    private func poster(_ it: ContinueSnapshot.Item, _ t: WidgetPalette, size: CGSize, detail: Bool) -> some View {
         Link(destination: ContinueLink.url(id: it.id)) {
             VStack(alignment: .leading, spacing: 5) {
                 ZStack(alignment: .bottom) {
-                    WidgetArt(image: entry.picture(it.poster ?? it.picture), seed: it.title, accentedOpacity: 0.5)
+                    WidgetArt(image: entry.picture(it.poster ?? it.picture), seed: it.title)
                     WidgetBar(progress: it.progress, track: .white.opacity(0.3), fill: .white).padding(6)
                 }
-                .aspectRatio(detail ? 2.0 / 3.0 : nil, contentMode: .fit)
+                .frame(width: size.width, height: size.height)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 Text(it.title).font(.system(size: detail ? 12 : 10, weight: .semibold)).foregroundStyle(t.ink).lineLimit(1)
                 if detail {
@@ -396,7 +397,7 @@ struct ContinueShelfTile: View {
                         .font(.system(size: 10)).foregroundStyle(t.sub).lineLimit(1)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(width: size.width, alignment: .leading)
         }
     }
 }

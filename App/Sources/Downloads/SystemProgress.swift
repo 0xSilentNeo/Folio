@@ -88,8 +88,13 @@ final class SystemProgress {
     private init() {}
 
     /// The texts iOS shows, as Safari's: `Downloading "Name"` (or "3 files"
-    /// at once) over `102.9 MB of 137.1 MB` for the run.
-    nonisolated static func texts(running: [String], next: String?, waiting: Bool, received: Int64, total: Int64) -> (title: String, subtitle: String) {
+    /// at once) over `102.9 MB of 137.1 MB` for the run, and the speed now
+    /// next to it (1.24.1: "102.9 MB of 137.1 MB · 8.4 MB/s"). The title and
+    /// subtitle are all of iOS's progress view an app sets
+    /// (BGContinuedProcessingTask.updateTitle(_:subtitle:)); where and how
+    /// iOS lays them out is its own.
+    nonisolated static func texts(running: [String], next: String?, waiting: Bool, received: Int64, total: Int64,
+                                  speed: Double? = nil) -> (title: String, subtitle: String) {
         let title: String
         switch running.count {
         case 0: title = next.map { "Downloading \u{201C}\($0)\u{201D}" } ?? "Downloading"
@@ -99,7 +104,8 @@ final class SystemProgress {
         let f = ByteCountFormatter()
         f.countStyle = .file
         f.allowsNonnumericFormatting = false
-        let bytes = total > 0 ? "\(f.string(fromByteCount: min(max(0, received), total))) of \(f.string(fromByteCount: total))" : "Starting"
+        var bytes = total > 0 ? "\(f.string(fromByteCount: min(max(0, received), total))) of \(f.string(fromByteCount: total))" : "Starting"
+        if !waiting, let speed, speed >= 1, total > 0 { bytes += " · " + f.string(fromByteCount: Int64(speed)) + "/s" }
         return (title, waiting ? "Waiting to retry · \(bytes)" : bytes)
     }
 

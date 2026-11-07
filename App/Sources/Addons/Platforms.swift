@@ -291,6 +291,8 @@ struct DiscoverView: View {
                     .padding(.bottom, 90)
                 }
                 .scrollIndicators(.hidden)
+                // Room under the last row for the downloads pill (1.24.1).
+                .downloadPillRoom()
             }
             .background(HomeBackdrop().ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)

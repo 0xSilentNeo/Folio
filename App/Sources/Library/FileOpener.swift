@@ -281,6 +281,9 @@ final class ThumbLoader: ObservableObject {
         // the saved player frame is the fallback, not the default.
         let preferMeta = art == .poster || (preferMeta ?? (UserDefaults.standard.string(forKey: SettingsKey.tileArtwork) != "frame"))
         if let c = ImageCache.shared.picture(forKey: cacheKey) { image = c }
+        // A picture already made for this very key (1.24.1): the lookup below
+        // only fetched the same art again and redrew the tile with it.
+        let memoryHit = image != nil
         LibTrace.image.log("loader #\(serial) \(Self.short(cacheKey)): \(image == nil ? "not in memory, loading" : "from memory at once")")
         let pixels = self.pixels
         Task {
@@ -296,7 +299,7 @@ final class ThumbLoader: ObservableObject {
                         if let img = await ImageCache.shared.poster(id: m.id, url: u, maxPixel: CGFloat(pixels)) { set(img, cacheKey, from: "poster \(m.id)") }
                     }
                     let pick = art == .poster ? (m.poster ?? m.background) : m.wideArt
-                    if (self.image == nil || (preferMeta && art != .poster)), let pick, let u = URL(string: pick) { await self.fetch(u, cacheKey) }
+                    if (self.image == nil || (preferMeta && art != .poster && !memoryHit)), let pick, let u = URL(string: pick) { await self.fetch(u, cacheKey) }
                 }
             }
             if art == .poster, image == nil, let artwork, let u = URL(string: artwork) { await fetch(u, cacheKey) }
@@ -333,6 +336,17 @@ final class ThumbLoader: ObservableObject {
             prefetched[key] = now
             ThumbLoader().load(key: key, fileURL: f, artwork: nil, lookupName: f.lastPathComponent, art: .wide, points: points)
         }
+    }
+
+    /// A title page's backdrop, started when the finger goes down on its
+    /// tile (1.24.1): the same key and size as TitleHeroView's. It came 629
+    /// ms after the page began to open (6 Nov report), most of the zoom.
+    static func prefetchHero(_ file: URL) {
+        let key = file.path
+        guard cached(key: key, points: 0, hero: HeroMetrics.pixels) == nil,
+              Date().timeIntervalSince(prefetched["hero|" + key] ?? .distantPast) > 30 else { return }
+        prefetched["hero|" + key] = Date()
+        ThumbLoader().load(key: key, fileURL: file, artwork: nil, lookupName: file.lastPathComponent, preferMeta: true, hero: HeroMetrics.pixels)
     }
 
     /// Addon items ("type|metaId|videoId"): a 16:9 picture from IMDb by id —
@@ -376,6 +390,7 @@ final class ThumbLoader: ObservableObject {
     }
 
     private func set(_ img: UIImage, _ key: String, from: String = "") {
+        guard img !== image else { return }
         LibTrace.image.log("loader #\(serial) \(Self.short(key)): picture (\(from)) after \(LibTrace.ms(since: started)) ms\(image == nil ? "" : ", replacing one already shown")")
         ImageCache.shared.remember(img, forKey: key)
         if image == nil { withAnimation(.easeOut(duration: 0.2)) { image = img } } else { image = img }

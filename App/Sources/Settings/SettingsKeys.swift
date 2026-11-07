@@ -108,6 +108,8 @@ enum SettingsKey {
 
     // Engagement notifications (1.24.0): a line now and then about what you're watching (EngagePlanner)
     static let engageNotes = "engageNotes"
+    /// Testing (1.24.1): the reminders come seconds after you leave Folio, not on their days.
+    static let engageQuick = "engageQuick"
 
     // Library
     static let cleanTitles = "cleanTitles"
@@ -213,6 +215,8 @@ enum SettingsKey {
             showOnlyMedia: false,
             airingAlerts: "air",
             engageNotes: true,
+            // On in the 1.24.1 test build, so they can be tried (the user, 7 Nov).
+            engageQuick: true,
         ])
         // 1.22.1: Metal is the default again. 1.22.0 moved everyone to the
         // OpenGL renderer, which some files didn't play on (user report,

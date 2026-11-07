@@ -199,7 +199,8 @@ final class DownloadActivity {
                      finished: mine.filter { $0.state == .done }.count,
                      failed: mine.filter { $0.state == .failed }.count,
                      measuredAt: seconds == nil ? nil : now,
-                     finishBy: seconds.map { now.addingTimeInterval($0) })
+                     finishBy: seconds.map { now.addingTimeInterval($0) },
+                     received: got, total: total)
     }
 
     /// Whether the activity would read differently (what an update is for).
@@ -300,7 +301,7 @@ final class DownloadActivity {
         labMode = true
         let now = Date()
         let s = State(title: "Lab Show · S01E04", filesLeft: 3, progress: 0.42, speed: 2_400_000, secondsLeft: 760,
-                      measuredAt: now, finishBy: now.addingTimeInterval(760))
+                      measuredAt: now, finishBy: now.addingTimeInterval(760), received: 1_310_000_000, total: 3_120_000_000)
         if let activity { push(s, to: activity, now: now) } else { request(s) }
     }
 }

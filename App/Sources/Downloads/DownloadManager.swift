@@ -214,6 +214,11 @@ final class DownloadManager: ObservableObject {
     /// Total speed now (bytes per second) and the last 30 readings (sparkline).
     @Published private(set) var speed: Double = 0
     @Published private(set) var speedHistory: [Double] = Array(repeating: 0, count: 30)
+    /// Each running file's speed (1.24.1), over the same few seconds as the
+    /// total (SpeedMeter), so the Downloads list shows how the total is
+    /// shared out without the numbers jumping from one reading to the next.
+    @Published private(set) var itemSpeeds: [UUID: Double] = [:]
+    private var itemMeters: [UUID: SpeedMeter] = [:]
     /// The speed the Live Activity estimates the time left from: 0 until it
     /// has settled (SpeedMeter, 1.22.3).
     private(set) var estimateSpeed: Double = 0
@@ -519,6 +524,21 @@ final class DownloadManager: ObservableObject {
     /// Lab: `-labDownloadURL=<link>` queues that link as a stream download
     /// (a local test server, to measure speed and parts in the simulator).
     private func labArguments() {
+        // `-labDownloadsDone=N` (1.24.1): a package of N finished files, as a
+        // season downloaded earlier, to check the list with many rows.
+        if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-labDownloadsDone=") }), let n = Int(arg.dropFirst("-labDownloadsDone=".count)),
+           !items.contains(where: { $0.package == "Lab Season" }) {
+            let dir = MPVFiles.mediaDir
+            for e in 1...max(1, n) {
+                let name = String(format: "Lab.Season.S01E%02d.1080p.WEB-DL.mkv", e)
+                var d = DownloadItem(url: URL(string: "https://example.invalid/lab/\(name)")!, fileName: name,
+                                     package: "Lab Season", expected: 900_000_000 + Int64(e) * 7_000_000, destination: dir.appendingPathComponent(name))
+                d.state = .done
+                d.received = d.expected
+                d.finished = Date()
+                items.append(d)
+            }
+        }
         for arg in CommandLine.arguments where arg.hasPrefix("-labDownloadURL=") {
             guard let url = URL(string: String(arg.dropFirst("-labDownloadURL=".count))) else { continue }
             let name = url.lastPathComponent
@@ -1077,7 +1097,8 @@ final class DownloadManager: ObservableObject {
         let got = mine.reduce(Int64(0)) { $0 + ($1.state == .done ? max(0, $1.expected) : min(max(0, $1.received), max(0, $1.expected))) }
         let running = pending.filter { $0.state == .running }
         let texts = SystemProgress.texts(running: running.map { TitleParser.clean($0.fileName) }, next: pending.first.map { TitleParser.clean($0.fileName) },
-                                         waiting: running.isEmpty && !pending.isEmpty, received: got, total: total)
+                                         waiting: running.isEmpty && !pending.isEmpty, received: got, total: total,
+                                         speed: running.isEmpty ? nil : speed)
         let done = !systemRun.isEmpty && systemRun.allSatisfy { id in items.first { $0.id == id }.map { $0.state == .done } ?? true }
         SystemProgress.shared.sync(.init(busy: busy, allDone: !busy && done, received: got, total: total, title: texts.title, subtitle: texts.subtitle))
         if !busy { systemRun = [] }
@@ -1376,6 +1397,8 @@ final class DownloadManager: ObservableObject {
             estimateSpeed = 0
             meter.reset()
             speedHistory = Array(repeating: 0, count: 30)
+            itemMeters = [:]
+            itemSpeeds = [:]
         }
     }
 
@@ -1393,10 +1416,19 @@ final class DownloadManager: ObservableObject {
         let now = CACurrentMediaTime()
         lastTick = now
         var delta: Int64 = 0
+        var meters: [UUID: SpeedMeter] = [:]
         for it in items where it.state == .running {
-            delta += max(0, it.received - (lastBytes[it.id] ?? it.received))
+            let d = max(0, it.received - (lastBytes[it.id] ?? it.received))
+            delta += d
             lastBytes[it.id] = it.received
+            var m = itemMeters[it.id] ?? SpeedMeter()
+            m.add(d, at: now)
+            meters[it.id] = m
         }
+        // Files no longer running drop out of the list of speeds.
+        itemMeters = meters
+        let perFile = meters.mapValues(\.rate)
+        if perFile != itemSpeeds { itemSpeeds = perFile }
         meter.add(delta, at: now)
         speed = meter.rate
         estimateSpeed = meter.estimate(at: now)

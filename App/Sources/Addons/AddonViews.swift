@@ -403,7 +403,11 @@ struct AddonsManagerView: View {
                     .disabled(url.isEmpty || store.installing)
                 }
                 if let error { Text(error).font(.caption).foregroundStyle(.orange) }
-                Button("Paste from clipboard") { url = UIPasteboard.general.string ?? "" }
+                // The system's paste button (1.24.1): no "allow paste" prompt, and
+                // no main thread waiting on one (a 1.6 s stall, 3 Nov report).
+                PasteButton(payloadType: String.self) { strings in
+                    if let s = strings.first { url = s.trimmingCharacters(in: .whitespacesAndNewlines) }
+                }
             } header: { Text("Add addon") } footer: {
                 Text("Works with addons that have a manifest link (Torrentio/Comet/MediaFusion with your debrid key, OpenSubtitles, Kitsu/anime catalogs…). Configure an addon on its website, then paste the manifest link here. Only direct HTTP(S) streams can play; raw torrents need a debrid-configured addon. Titles, posters and ratings come from IMDb; addons only need to provide streams.")
             }

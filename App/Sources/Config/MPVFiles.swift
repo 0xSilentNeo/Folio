@@ -152,6 +152,17 @@ enum MPVFiles {
             .sorted { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending }
     }
 
+    /// The shaders, listed again at most every two seconds (1.24.1): the
+    /// player's settings panel asked four times a redraw, and redraws on
+    /// every control change while open (6 Nov report: 78–88 ms taps).
+    @MainActor static func shadersRecent() -> [URL] {
+        if let c = shaderMemo, Date().timeIntervalSince(c.at) < 2 { return c.list }
+        let list = shaders()
+        shaderMemo = (Date(), list)
+        return list
+    }
+    @MainActor private static var shaderMemo: (at: Date, list: [URL])?
+
     /// Active shader file names, in order.
     static var activeShaderNames: [String] {
         get { UserDefaults.standard.stringArray(forKey: SettingsKey.activeShaders) ?? [] }

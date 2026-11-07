@@ -256,7 +256,17 @@ struct ReleasePoster: View {
     /// The poster and the release it's for: a view kept while its release
     /// changes (a reused row) never shows the one before.
     @State private var shown: (raw: String, image: UIImage)?
-    private var image: UIImage? { shown?.raw == release.raw ? shown?.image : nil }
+    private var image: UIImage? {
+        if shown?.raw == release.raw { return shown?.image }
+        // A release already matched this run (1.24.1): its poster from memory
+        // in the first frame. Rows rebuilt while scrolling, or Home's row
+        // after a page, showed the initials and faded the poster in again.
+        guard let id = Self.posterIDs[release.raw] else { return nil }
+        return ImageCache.shared.cachedPoster(id: id, maxPixel: pixels)
+    }
+    private var pixels: CGFloat { width * 1.5 * UIScreen.main.scale }
+    /// Release → the id its poster is cached under, for the run.
+    @MainActor private static var posterIDs: [String: String] = [:]
 
     var body: some View {
         ZStack {
@@ -274,12 +284,14 @@ struct ReleasePoster: View {
         // Only rows on screen look up (a row that scrolls away before its
         // turn drops its lookup: ReleaseMatcher).
         .task(id: release.raw) {
-            guard UserDefaults.standard.bool(forKey: SettingsKey.metadataFetching) else { return }
+            guard image == nil, UserDefaults.standard.bool(forKey: SettingsKey.metadataFetching) else { return }
             let raw = release.raw
-            let px = width * 1.5 * UIScreen.main.scale
+            let px = pixels
             guard let m = await ReleaseMatcher.shared.match(release), m.confident, let poster = m.poster, let url = URL(string: poster) else { return }
-            let img = await ImageCache.shared.poster(id: m.imdbID ?? poster, url: url, maxPixel: px)
+            let id = m.imdbID ?? poster
+            let img = await ImageCache.shared.poster(id: id, url: url, maxPixel: px)
             guard !Task.isCancelled, let img else { return }
+            Self.posterIDs[raw] = id
             withAnimation(.easeOut(duration: 0.2)) { shown = (raw, img) }
         }
     }

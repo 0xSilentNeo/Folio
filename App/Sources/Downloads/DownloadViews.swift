@@ -74,21 +74,33 @@ struct DownloadButton: View {
 
 /// Bottom of the screen while anything downloads: speed, file count, a
 /// sparkline and pause / resume. Tap: the Downloads screen.
+/// Whether the Downloads page is on screen as a page (pushed from Network):
+/// the pill stays away then, as it would sit on the page's own speed bar
+/// (1.24.1). The sheet covers the pill by itself.
+@MainActor
+final class DownloadsPage: ObservableObject {
+    static let shared = DownloadsPage()
+    @Published private(set) var shown = 0
+    func appeared() { shown += 1 }
+    func disappeared() { shown = max(0, shown - 1) }
+}
+
 struct DownloadPillOverlay: View {
     @ObservedObject private var dm = DownloadManager.shared
+    @ObservedObject private var page = DownloadsPage.shared
     @State private var showing = false
     @Namespace private var ns
 
     var body: some View {
         VStack {
             Spacer()
-            if dm.hasWork {
+            if dm.hasWork && page.shown == 0 {
                 pill
                     .padding(.bottom, 74)
                     .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.7)))
             }
         }
-        .animation(.spring(response: 0.42, dampingFraction: 0.8), value: dm.hasWork)
+        .animation(.spring(response: 0.42, dampingFraction: 0.8), value: dm.hasWork && page.shown == 0)
         .sheet(isPresented: $showing) {
             NavigationStack { DownloadsView(inSheet: true) }
                 .modifier(ZoomSheet(id: "downloads", ns: ns))
@@ -123,6 +135,43 @@ struct DownloadPillOverlay: View {
         .shadow(color: Theme.shadow, radius: 12, y: 6)
         .modifier(ZoomSource2(id: "downloads", ns: ns))
     }
+}
+
+/// Room at the bottom of a page's list for the downloads pill while it
+/// shows (1.24.1). The pill floats over every tab (DownloadPillOverlay) and
+/// no page left room for it, so the end of a list stopped under it (7 Nov,
+/// Home in the simulator: the last row under the pill). The pill's bottom
+/// sits 74 pt above the screen's safe area and it's 44 pt tall; a page's own
+/// safe area already ends at the tab bar (iPhone 17 Pro Max, iOS 26.5
+/// simulator: pill 803 to 848 pt, tab bar from 873 pt), so the extra room is
+/// what's left above it, with a little air.
+///
+/// Put on the page's List or ScrollView itself: an inset around a tab's
+/// NavigationStack doesn't reach the list inside it (tried on Home: the
+/// room was there, above the tab bar, and the list's end still went under).
+struct DownloadPillRoom: ViewModifier {
+    @ObservedObject private var page = DownloadsPage.shared
+    /// Whether the pill shows, noted only when it changes (1.24.1): the
+    /// download manager announces each progress tick, many a second, and
+    /// this sits on whole pages (Home, Discover, Search).
+    @State private var working = DownloadManager.shared.hasWork
+    static let height: CGFloat = 78
+
+    func body(content: Content) -> some View {
+        content.safeAreaInset(edge: .bottom, spacing: 0) {
+            if working && page.shown == 0 { Color.clear.frame(height: Self.height).allowsHitTesting(false) }
+        }
+        .onReceive(DownloadManager.shared.objectWillChange
+            .throttle(for: .seconds(0.5), scheduler: DispatchQueue.main, latest: true)
+            .receive(on: DispatchQueue.main)) { _ in
+            let now = DownloadManager.shared.hasWork
+            if now != working { working = now }
+        }
+    }
+}
+
+extension View {
+    func downloadPillRoom() -> some View { modifier(DownloadPillRoom()) }
 }
 
 /// The sheet zooms out of the pill (as Add files does from its button).
@@ -179,19 +228,43 @@ func speedString(_ bps: Double) -> String {
 
 /// Packages (one per server folder) with their files, filters at the top and
 /// the speed card at the bottom.
+///
+/// A List since 1.24.1 (a ScrollView of every card and row until then):
+/// - Its rows are made as they scroll in, and each row redraws only when its
+///   own file changes (FileRow and PackageHeader are Equatable). Before, every
+///   progress report (each running file twice a second, plus the speed once
+///   a second) redrew every card and every row, finished ones included: 26
+///   rows seven times a second while three files ran (7 Nov recordings:
+///   scrolling and swiping stuttered).
+/// - Folding a package removes its rows as rows: they leave in place. Until
+///   1.24.1 the file list came and went as one block moved from its top edge
+///   (move(edge: .top)), so a long package's files flew in from above the
+///   screen, and the page jumped while the block changed size.
+/// - Swipe actions are the system's (Delete, Remove, Cancel), with a full
+///   swipe for the first, as in Mail and Files. Until 1.24.1 they were drawn
+///   by hand (SwipeRow): the buttons stretched with the drag.
 struct DownloadsView: View {
     var inSheet = false
     @ObservedObject private var dm = DownloadManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var filter: Filter = .all
     @State private var details = false
-    /// The file row whose swipe actions are open.
-    @State private var openRow: String?
     @State private var confirmCancelAll = false
+    /// A finished file to delete from the library, after asking.
+    @State private var deleteAsk: DownloadItem?
+    /// A package's question: cancel its unfinished files, or delete its files.
+    @State private var packageAsk: PackageQuestion?
     /// Packages folded to their header (1.22.3), kept between launches.
     @State private var collapsed = DownloadCollapse.load()
 
     enum Filter: String, CaseIterable { case all = "All", active = "Active", queued = "Queued", done = "Done", failed = "Failed" }
+
+    struct PackageQuestion: Identifiable {
+        enum Kind { case cancel, deleteFiles }
+        let name: String
+        let kind: Kind
+        var id: String { name + (kind == .cancel ? "|c" : "|d") }
+    }
 
     private func matches(_ d: DownloadItem, _ f: Filter) -> Bool {
         switch f {
@@ -220,37 +293,82 @@ struct DownloadsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                filters
-                if packages.isEmpty {
-                    VStack(spacing: 10) {
-                        Image(systemName: "arrow.down.circle").font(.system(size: 40, weight: .light)).foregroundStyle(.secondary)
-                        Text(dm.items.isEmpty ? "Nothing downloaded yet" : "Nothing here").font(.headline)
-                        if dm.items.isEmpty {
-                            Text("Open a folder on a WebDAV server and tap the download button next to a file.")
-                                .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+        let list = packages
+        let speeds = dm.itemSpeeds
+        List {
+            filters
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 0, trailing: 16))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            if list.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "arrow.down.circle").font(.system(size: 40, weight: .light)).foregroundStyle(.secondary)
+                    Text(dm.items.isEmpty ? "Nothing downloaded yet" : "Nothing here").font(.headline)
+                    if dm.items.isEmpty {
+                        Text("Open a folder on a WebDAV server and tap the download button next to a file.")
+                            .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    }
+                }
+                .frame(maxWidth: .infinity).padding(.top, 60).padding(.horizontal, 20)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            }
+            ForEach(list) { p in
+                let folded = collapsed.contains(p.name)
+                Section {
+                    PackageHeader(name: p.name, all: p.all, collapsed: folded,
+                                  onToggle: { toggle(p) },
+                                  onAsk: { packageAsk = PackageQuestion(name: p.name, kind: $0) })
+                        .equatable()
+                        .listRowSeparator(.hidden, edges: .bottom)
+                        .listRowInsets(EdgeInsets(top: 14, leading: 14, bottom: 12, trailing: 14))
+                    if !folded {
+                        ForEach(p.shown) { d in
+                            FileRow(item: d, speed: d.state == .running ? speeds[d.id] : nil,
+                                    connections: d.state == .running ? dm.connectionCount(d) : 0)
+                                .equatable()
+                                .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 6))
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) { swipeActions(d) }
+                                .contextMenu { menu(d) }
                         }
                     }
-                    .frame(maxWidth: .infinity).padding(.top, 60).padding(.horizontal, 20)
                 }
-                ForEach(packages) { p in
-                    PackageCard(name: p.name, all: p.all, shown: p.shown, openRow: $openRow, collapsed: collapsed.contains(p.name)) {
-                        toggle(p)
-                    }
-                }
+                .listRowBackground(Theme.card)
+                .listRowSeparatorTint(Theme.hairline)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 120)
         }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(16)
+        .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
+        .environment(\.defaultMinListRowHeight, 0)
         // Packages no longer listed are forgotten.
-        .onAppear { collapsed = DownloadCollapse.prune(keeping: Set(dm.items.map(\.package))) }
+        .onAppear {
+            collapsed = DownloadCollapse.prune(keeping: Set(dm.items.map(\.package)))
+            if !inSheet { DownloadsPage.shared.appeared() }
+        }
+        .onDisappear { if !inSheet { DownloadsPage.shared.disappeared() } }
         .confirmationDialog("Cancel all downloads that haven't finished? What they've downloaded so far is deleted.", isPresented: $confirmCancelAll, titleVisibility: .visible) {
             Button("Cancel all downloads", role: .destructive) { dm.cancelUnfinished() }
             Button("Keep them", role: .cancel) {}
         }
-        .safeAreaInset(edge: .bottom) { if dm.hasWork || !dm.items.isEmpty { speedCard.padding(.horizontal, 16).padding(.bottom, 8) } }
+        .confirmationDialog(deleteAsk.map { "Delete \($0.fileName) from your library?" } ?? "",
+                            isPresented: Binding(get: { deleteAsk != nil }, set: { if !$0 { deleteAsk = nil } }),
+                            titleVisibility: .visible, presenting: deleteAsk) { d in
+            Button("Delete file", role: .destructive) { dm.remove(d.id, deleteFile: true) }
+        }
+        .confirmationDialog(packageAsk.map { $0.kind == .cancel
+                                ? "Cancel the downloads of \($0.name) that haven't finished? What they've downloaded so far is deleted."
+                                : "Delete the downloaded files of \($0.name) from your library?" } ?? "",
+                            isPresented: Binding(get: { packageAsk != nil }, set: { if !$0 { packageAsk = nil } }),
+                            titleVisibility: .visible, presenting: packageAsk) { q in
+            if q.kind == .cancel {
+                Button("Cancel downloads", role: .destructive) { dm.cancelUnfinished(package: q.name) }
+            } else {
+                Button("Delete files", role: .destructive) { dm.removeFinished(package: q.name, deleteFiles: true) }
+            }
+        }
+        .modifier(SpeedBar(show: dm.hasWork || !dm.items.isEmpty) { speedCard.padding(.horizontal, 16).padding(.bottom, 8) })
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Downloads")
         .toolbar {
@@ -275,12 +393,39 @@ struct DownloadsView: View {
         }
     }
 
+    /// Swipe left (27 Oct report: no way to delete a download): Delete (asks
+    /// first) and Remove from the list for a finished file; Cancel for one
+    /// that hasn't finished (what it downloaded is deleted). A full swipe
+    /// runs the first.
+    @ViewBuilder
+    private func swipeActions(_ d: DownloadItem) -> some View {
+        if d.state == .done {
+            Button { deleteAsk = d } label: { Label("Delete", systemImage: "trash") }
+                .tint(.red)
+            Button { dm.remove(d.id) } label: { Label("Remove", systemImage: "xmark") }
+                .tint(.gray)
+        } else {
+            Button(role: .destructive) { dm.remove(d.id) } label: { Label("Cancel", systemImage: "xmark") }
+        }
+    }
+
+    @ViewBuilder
+    private func menu(_ d: DownloadItem) -> some View {
+        if d.state == .done, d.isMedia {
+            Button { FileRow.play(d) } label: { Label("Play", systemImage: "play") }
+        }
+        if d.state == .running || d.state == .queued { Button { dm.pause(d.id) } label: { Label("Pause", systemImage: "pause") } }
+        if d.state == .paused || d.state == .failed { Button { dm.resume(d.id) } label: { Label(d.state == .failed ? "Retry" : "Resume", systemImage: "arrow.clockwise") } }
+        Button(role: .destructive) { dm.remove(d.id) } label: { Label(d.state == .done ? "Remove from list" : "Cancel", systemImage: "xmark") }
+        if d.state == .done {
+            Button(role: .destructive) { deleteAsk = d } label: { Label("Delete file", systemImage: "trash") }
+        }
+    }
+
     /// Folds a package to its header, or opens it again.
     private func toggle(_ p: Package) {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        // A row's open swipe actions close with it.
-        if let open = openRow, p.all.contains(where: { $0.id.uuidString == open }) { openRow = nil }
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.86)) { collapsed = DownloadCollapse.toggle(p.name) }
+        withAnimation(.snappy(duration: 0.3)) { collapsed = DownloadCollapse.toggle(p.name) }
     }
 
     private var filters: some View {
@@ -288,7 +433,7 @@ struct DownloadsView: View {
             HStack(spacing: 8) {
                 ForEach(Filter.allCases, id: \.self) { f in
                     let on = filter == f
-                    Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { filter = f } } label: {
+                    Button { withAnimation(.snappy(duration: 0.3)) { filter = f } } label: {
                         HStack(spacing: 6) {
                             Text(f.rawValue)
                             Text("\(dm.items.filter { matches($0, f) }.count)").opacity(0.6)
@@ -302,7 +447,7 @@ struct DownloadsView: View {
                 }
             }
         }
-        .padding(.top, 4)
+        .scrollClipDisabled()
     }
 
     private var speedCard: some View {
@@ -343,6 +488,9 @@ struct DownloadsView: View {
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
+        // Card colour inside the glass (1.24.1): the rows passing under it
+        // no longer read through it.
+        .background(Theme.card.opacity(0.78), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
         .glass(cornerRadius: 26)
     }
 
@@ -360,22 +508,48 @@ struct DownloadsView: View {
     }
 }
 
-private struct PackageCard: View {
+/// The speed card under the list. On iOS 26 a scroll view's own bar
+/// (safeAreaBar, 1.24.1): rows passing under the card fade and blur behind
+/// it, as under the system's toolbars. Until then a plain inset, and the
+/// rows' text showed through the glass (7 Nov screenshot: a file name
+/// across "25.2 MB/s · 3 active").
+private struct SpeedBar<Bar: View>: ViewModifier {
+    let show: Bool
+    @ViewBuilder let bar: () -> Bar
+
+    func body(content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content
+                .safeAreaBar(edge: .bottom) { if show { bar() } }
+                .scrollEdgeEffectStyle(.soft, for: .bottom)
+        } else {
+            content.safeAreaInset(edge: .bottom) { if show { bar() } }
+        }
+        #else
+        content.safeAreaInset(edge: .bottom) { if show { bar() } }
+        #endif
+    }
+}
+
+/// A package's first row: its picture, name, what's in and how much, its
+/// pause or resume button and its menu, and the bar. A tap on the name folds
+/// the package or opens it again.
+private struct PackageHeader: View, Equatable {
     let name: String
     let all: [DownloadItem]
-    let shown: [DownloadItem]
-    @Binding var openRow: String?
-    /// Folded to its header (1.22.3): a tap on the header folds or opens it.
-    var collapsed = false
-    var onToggle: () -> Void = {}
-    @ObservedObject private var dm = DownloadManager.shared
+    /// Folded to its header (1.22.3).
+    let collapsed: Bool
+    var onToggle: () -> Void
+    var onAsk: (DownloadsView.PackageQuestion.Kind) -> Void
     @StateObject private var thumb = ThumbLoader()
-    @State private var ask: Question?
 
-    /// Questions before anything is deleted.
-    enum Question: Identifiable { case cancel, deleteFiles; var id: Int { self == .cancel ? 0 : 1 } }
+    static func == (a: PackageHeader, b: PackageHeader) -> Bool {
+        a.name == b.name && a.collapsed == b.collapsed && a.all == b.all
+    }
 
     var body: some View {
+        let dm = DownloadManager.shared
         let total = all.reduce(Int64(0)) { $0 + $1.expected }
         let got = all.reduce(Int64(0)) { $0 + min($1.received, $1.expected) }
         let done = all.filter { $0.state == .done }.count
@@ -420,27 +594,6 @@ private struct PackageCard: View {
                 packageMenu(running: running, resumable: resumable, done: done)
             }
             ThinBar(progress: total > 0 ? Double(got) / Double(total) : 0, height: 4)
-            if !collapsed {
-                VStack(spacing: 0) {
-                    ForEach(shown) { d in
-                        Divider().overlay(Theme.hairline)
-                        FileRow(item: d, openRow: $openRow)
-                    }
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-        }
-        .padding(14)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .shadow(color: Theme.shadow.opacity(0.5), radius: 10, y: 4)
-        .confirmationDialog(ask == .cancel ? "Cancel the downloads of \(name) that haven't finished? What they've downloaded so far is deleted."
-                                               : "Delete the downloaded files of \(name) from your library?",
-                            isPresented: Binding(get: { ask != nil }, set: { if !$0 { ask = nil } }), titleVisibility: .visible) {
-            if ask == .cancel {
-                Button("Cancel downloads", role: .destructive) { dm.cancelUnfinished(package: name) }
-            } else {
-                Button("Delete files", role: .destructive) { dm.removeFinished(package: name, deleteFiles: true) }
-            }
         }
         .onAppear {
             if let first = all.first(where: \.isMedia) {
@@ -448,21 +601,20 @@ private struct PackageCard: View {
             }
         }
     }
-}
 
-private extension PackageCard {
     /// Everything for the package in one place (27 Oct report: there was no
     /// visible way to delete downloads, paused or running).
-    func packageMenu(running: Bool, resumable: Bool, done: Int) -> some View {
-        Menu {
+    private func packageMenu(running: Bool, resumable: Bool, done: Int) -> some View {
+        let dm = DownloadManager.shared
+        return Menu {
             if running { Button { dm.pausePackage(name) } label: { Label("Pause all", systemImage: "pause") } }
             if resumable { Button { dm.resumePackage(name) } label: { Label("Resume all", systemImage: "play") } }
             if done > 0 {
                 Button { dm.removeFinished(package: name, deleteFiles: false) } label: { Label("Remove finished from the list", systemImage: "checkmark.circle") }
-                Button(role: .destructive) { ask = .deleteFiles } label: { Label("Delete downloaded files", systemImage: "trash") }
+                Button(role: .destructive) { onAsk(.deleteFiles) } label: { Label("Delete downloaded files", systemImage: "trash") }
             }
             if all.contains(where: { $0.state != .done }) {
-                Button(role: .destructive) { ask = .cancel } label: { Label("Cancel downloads", systemImage: "xmark.circle") }
+                Button(role: .destructive) { onAsk(.cancel) } label: { Label("Cancel downloads", systemImage: "xmark.circle") }
             }
         } label: {
             Image(systemName: "ellipsis").font(.system(size: 14, weight: .bold))
@@ -476,31 +628,15 @@ private extension PackageCard {
     }
 }
 
-private struct FileRow: View {
+/// One file of a package. Equatable (1.24.1): it redraws when its own file,
+/// speed or connections change, not on every report of another file.
+private struct FileRow: View, Equatable {
     let item: DownloadItem
-    @Binding var openRow: String?
-    @ObservedObject private var dm = DownloadManager.shared
-    @State private var confirmDelete = false
-
-    /// Swipe left (27 Oct report: no way to delete a download): Cancel for
-    /// one that hasn't finished (what it downloaded is deleted), Delete
-    /// (asks first) and Remove from the list for a finished one.
-    private var swipe: [SwipeAction] {
-        if item.state == .done {
-            return [SwipeAction(title: "Delete", icon: "trash", tint: .red) { confirmDelete = true },
-                    SwipeAction(title: "Remove", icon: "xmark", tint: .gray) { dm.remove(item.id) }]
-        }
-        return [SwipeAction(title: "Cancel", icon: "xmark", tint: .red) { dm.remove(item.id) }]
-    }
+    /// Bytes per second while it runs (DownloadManager.itemSpeeds), 1.24.1.
+    let speed: Double?
+    let connections: Int
 
     var body: some View {
-        SwipeRow(id: item.id.uuidString, openID: $openRow, actions: swipe) { row }
-            .confirmationDialog("Delete \(item.fileName) from your library?", isPresented: $confirmDelete, titleVisibility: .visible) {
-                Button("Delete file", role: .destructive) { dm.remove(item.id, deleteFile: true) }
-            }
-    }
-
-    private var row: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.fileName).font(.subheadline.weight(.semibold)).lineLimit(1).truncationMode(.middle)
@@ -518,26 +654,20 @@ private struct FileRow: View {
             .disabled(item.state == .done && !item.isMedia)
             .accessibilityLabel(actionLabel)
         }
+        .padding(.vertical, 10)
         .frame(minHeight: 61)
-        .background(Theme.card)
-        .contextMenu {
-            if item.state == .done, item.isMedia {
-                Button { play() } label: { Label("Play", systemImage: "play") }
-            }
-            if item.state == .running || item.state == .queued { Button { dm.pause(item.id) } label: { Label("Pause", systemImage: "pause") } }
-            if item.state == .paused || item.state == .failed { Button { dm.resume(item.id) } label: { Label(item.state == .failed ? "Retry" : "Resume", systemImage: "arrow.clockwise") } }
-            Button(role: .destructive) { dm.remove(item.id) } label: { Label(item.state == .done ? "Remove from list" : "Cancel", systemImage: "xmark") }
-            if item.state == .done {
-                Button(role: .destructive) { dm.remove(item.id, deleteFile: true) } label: { Label("Delete file", systemImage: "trash") }
-            }
-        }
     }
 
+    /// "74.5 MB of 1.52 GB · 8.4 MB/s · 8 connections": a running file's
+    /// own speed (1.24.1) beside its bytes, so the total under the list can
+    /// be seen shared out.
     private var meta: String {
         switch item.state {
         case .running:
-            let n = dm.connectionCount(item)
-            return "\(item.received.byteString) of \(item.expected.byteString)" + (n > 1 ? " · \(n) connections" : "")
+            var parts = ["\(item.received.byteString) of \(item.expected.byteString)"]
+            if let speed, speed >= 1 { parts.append(speedString(speed)) }
+            if connections > 1 { parts.append("\(connections) connections") }
+            return parts.joined(separator: " · ")
         case .queued: return "Queued · \(item.expected.byteString)" + (item.held ? " · waiting" : "")
         case .paused: return "Paused · \(item.received.byteString) of \(item.expected.byteString)"
         case .failed: return item.error ?? "Failed"
@@ -565,14 +695,15 @@ private struct FileRow: View {
     }
 
     private func act() {
+        let dm = DownloadManager.shared
         switch item.state {
         case .running, .queued: dm.pause(item.id)
         case .paused, .failed: dm.resume(item.id)
-        case .done: play()
+        case .done: Self.play(item)
         }
     }
 
-    private func play() {
+    static func play(_ item: DownloadItem) {
         var m = MediaItem(url: item.destination.path, title: TitleParser.clean(item.fileName), source: .local)
         m.historyKey = item.destination.path
         PlayerPresenter.play(m)

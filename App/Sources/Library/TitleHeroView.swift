@@ -94,8 +94,17 @@ struct TitleHeroView: View {
     }
     @State private var memo = Memo()
     private var shownEpisodes: [URL] {
-        guard seasons.count > 1, let season else { return siblings }
+        guard seasons.count > 1, let season = shownSeason else { return siblings }
         return siblings.filter { TitleParser.parse($0.lastPathComponent).season == season }
+    }
+    /// The season the episode list shows: the one picked, else this file's,
+    /// else the first (1.24.1). Until a chip's onAppear set it, the page
+    /// built every season's rows, then swapped to this file's mid-zoom (6 Nov
+    /// report: S01 rows made and loading, 19 ms later the S03 ones).
+    private var shownSeason: Int? {
+        if let season { return season }
+        if let s = parsed.season, seasons.contains(s) { return s }
+        return seasons.first
     }
 
     /// The kids profile's answer for this title when it isn't "allowed"
@@ -208,8 +217,11 @@ struct TitleHeroView: View {
 
     private func backdrop(_ size: CGSize) -> some View {
         HeroHeader(height: HeroMetrics.height(size)) {
-            if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
-            else { GeneratedArt(seed: title) }
+            // The picture from memory in the first frame (1.24.1): Home starts
+            // loading it when your finger goes down (ThumbLoader.prefetchHero).
+            if let img = thumb.image ?? ThumbLoader.cached(key: file.path, points: 0, hero: HeroMetrics.pixels) {
+                Image(uiImage: img).resizable().scaledToFill()
+            } else { GeneratedArt(seed: title) }
         } content: {
                 // Accessibility text sizes: the title block goes under the
                 // poster, with the whole width, instead of a narrow column.
@@ -254,9 +266,6 @@ struct TitleHeroView: View {
         guard isShow, let s = tracking.tracked(like: trackedShow) else { return nil }
         return EpisodeAiring(show: s, now: Date(), newestSeason: seasons.last)
     }
-
-    /// The season the episode list shows (nil: one list for all).
-    private var shownSeason: Int? { seasons.count > 1 ? (season ?? seasons.first) : seasons.first }
 
     /// The episodes not out yet that have no file here, for the season shown.
     private var untiledEpisodes: [AiringEpisode] {
@@ -345,7 +354,7 @@ struct TitleHeroView: View {
                     HStack(spacing: 8) {
                         ForEach(seasons, id: \.self) { s in
                             Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { season = s } } label: {
-                                let on = (season ?? seasons[0]) == s
+                                let on = shownSeason == s
                                 Text(s == 0 ? "Specials" : "Season \(s)").font(.subheadline.weight(.semibold))
                                     .foregroundStyle(on ? Theme.onAccent : .primary)
                                     .padding(.horizontal, 14).frame(height: 34)

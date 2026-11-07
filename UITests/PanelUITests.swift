@@ -662,7 +662,9 @@ final class PanelUITests: XCTestCase {
         XCTAssertTrue(app.buttons["ep:Lab Show S01E02.mp4"].exists, "Cancel deleted the episode")
         app.terminate()
 
-        // Home, List view: system swipe actions
+        // Home, List view: the system's swipe actions again (1.24.1, "Swipe
+        // to delete is not working anymore", 7 Nov): left Delete (asks
+        // first), right Watched / Unwatched.
         app = XCUIApplication()
         app.launchArguments = ["-uiTestLibrary", "-libraryView", "list"]
         app.launch()
@@ -670,12 +672,18 @@ final class PanelUITests: XCTestCase {
         XCTAssertTrue(tile.waitForExistence(timeout: 25), "library row not found")
         sleep(2)
         tile.swipeLeft(); sleep(1)
-        let left = app.buttons["Delete"].exists
-        tile.swipeRight(); sleep(1)
+        let left = app.buttons["Delete"].firstMatch
+        print("SWIPE home list: left shows Delete \(left.exists)")
+        XCTAssertTrue(left.exists, "no Delete after swiping a Home row left")
+        if left.exists {
+            left.tap(); sleep(1)
+            cancelDelete(app, "home list")
+        }
+        XCTAssertTrue(app.staticTexts["Lab Show"].firstMatch.exists, "Cancel deleted the title")
+        app.staticTexts["Lab Show"].firstMatch.swipeRight(); sleep(1)
         let right = app.buttons["Unwatched"].exists || app.buttons["Watched"].exists
-        print("SWIPE home list: left shows Delete \(left), right shows Watched \(right)")
-        XCTAssertFalse(left || right, "a Home row still has swipe actions")
-        XCTAssertTrue(app.staticTexts["Lab Show"].firstMatch.exists, "the row is gone")
+        print("SWIPE home list: right shows Watched \(right)")
+        XCTAssertTrue(right, "no Watched after swiping a Home row right")
     }
 
     /// The delete question must show; then cancel it (Cancel button, or a tap
@@ -1253,6 +1261,44 @@ final class PanelUITests: XCTestCase {
         }
         print("NATIVE OPENINGSWITCH \(ok)/\(pairs.count)")
         XCTAssertEqual(ok, pairs.count)
+    }
+
+    /// 7 Nov (1.24.1): a long press on one Thumbnails tile is that tile's
+    /// menu. A row of tiles is one List row, and SwiftUI's menu there was the
+    /// row's: Lab Show's tile showed Lab Other's menu (the row's first). And
+    /// the watched item says what's true right after a change.
+    func test51TileMenuIsTheTiles() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-uiTestTwoTitles", "-libraryView", "grid"]
+        app.launch()
+        XCUIDevice.shared.orientation = .portrait
+        let show = app.staticTexts["Lab Show"].firstMatch
+        XCTAssertTrue(show.waitForExistence(timeout: 25), "library tile not found")
+        sleep(2)
+        // Lab Show sorts after Lab Other: the second tile of the row.
+        show.press(forDuration: 1.2); sleep(1)
+        let delete = app.buttons["Delete all episodes"].firstMatch
+        XCTAssertTrue(delete.waitForExistence(timeout: 3), "no menu on Lab Show's tile")
+        delete.tap(); sleep(1)
+        let q = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Delete'")).firstMatch
+        XCTAssertTrue(q.waitForExistence(timeout: 3), "Delete did not ask first")
+        print("TILEMENU question: \(q.label)")
+        XCTAssertTrue(q.label.contains("Lab Show"), "the menu was another title's: \(q.label)")
+        if app.buttons["Cancel"].exists { app.buttons["Cancel"].tap() }
+        else { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap() }
+        sleep(1)
+        XCTAssertTrue(show.exists, "Cancel deleted the title")
+
+        show.press(forDuration: 1.2); sleep(1)
+        let mark = app.buttons["Mark all as watched"].firstMatch
+        XCTAssertTrue(mark.waitForExistence(timeout: 3), "no Mark all as watched for an unwatched show")
+        mark.tap(); sleep(1)
+        show.press(forDuration: 1.2); sleep(1)
+        let unmark = app.buttons["Mark all as unwatched"].firstMatch
+        print("TILEMENU after marking: watched=\(app.buttons["Mark all as watched"].exists) unwatched=\(unmark.exists)")
+        XCTAssertTrue(unmark.waitForExistence(timeout: 3), "the menu still offers the old state")
+        XCTAssertFalse(app.buttons["Mark all as watched"].exists, "the menu still offers Mark all as watched")
+        unmark.tap(); sleep(1)
     }
 }
 

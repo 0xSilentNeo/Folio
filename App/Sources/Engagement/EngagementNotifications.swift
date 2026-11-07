@@ -75,9 +75,14 @@ enum EngagementNotifications {
         }
         let state = await gather(now: now)
         let planned = Array(EngagePlanner.plan(state, now: now).prefix(maxPending))
+        // Quick timing (1.24.1): what would come over the next two weeks comes
+        // now, a minute apart, and isn't counted as sent, so leaving Folio
+        // again brings them again.
+        let quick = UserDefaults.standard.bool(forKey: SettingsKey.engageQuick)
+        let fires = quick ? EngagePlanner.quickTimes(planned.count, from: Date()) : planned.map(\.fire)
         var scheduled: [EngagePlanner.Sent] = []
-        for p in planned {
-            let wait = p.fire.timeIntervalSince(Date())
+        for (p, fire) in zip(planned, fires) {
+            let wait = fire.timeIntervalSince(Date())
             guard wait > 1 else { continue }
             let c = UNMutableNotificationContent()
             c.body = p.body
@@ -93,10 +98,11 @@ enum EngagementNotifications {
                 dlog("engage", "not scheduled: \(error.localizedDescription)")
             }
         }
-        save(scheduled, scheduledKey)
+        save(quick ? [] : scheduled, scheduledKey)
         let f = DateFormatter()
         f.dateFormat = "EEE d MMM HH:mm"
-        dlog("engage", "\(scheduled.count) planned (\(reason))" + (planned.isEmpty ? "" : ": " + planned.map { "\($0.moment.rawValue) \(f.string(from: $0.fire))" }.joined(separator: ", ")))
+        dlog("engage", "\(scheduled.count) planned (\(reason))\(quick ? ", quick timing: from 20 s, a minute apart" : "")"
+             + (planned.isEmpty ? "" : ": " + planned.map { "\($0.moment.rawValue) \(f.string(from: $0.fire))" }.joined(separator: ", ")))
     }
 
     /// The ones due by `now` went out (or would have): kept as sent for the
@@ -112,7 +118,8 @@ enum EngagementNotifications {
 
     private static func removePending() async {
         let center = UNUserNotificationCenter.current()
-        let ours = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) }
+        // A test (1.24.1) stays: it was asked for, and comes in seconds.
+        let ours = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) && $0 != testID }
         if !ours.isEmpty { center.removePendingNotificationRequests(withIdentifiers: ours) }
     }
 
@@ -221,6 +228,48 @@ enum EngagementNotifications {
             ContinueQueue.play(entry.item)
         }
     }
+
+    // MARK: Trying them (1.24.1)
+
+    /// The reminder Folio would send next and when, from what you've watched;
+    /// nil when nothing would come in the next two weeks.
+    static func next() async -> EngagePlanner.Planned? {
+        let now = Date()
+        return EngagePlanner.plan(await gather(now: now), now: now).first
+    }
+
+    /// How many reminders leaving Folio now would plan.
+    static func plannedCount() async -> Int {
+        let now = Date()
+        return min(maxPending, EngagePlanner.plan(await gather(now: now), now: now).count)
+    }
+
+    /// Settings → Reminders → Send a test: the next reminder's line (or a
+    /// sample when none is planned) ten seconds from now, so it can be seen
+    /// without waiting for its day. It shows over Folio too.
+    static func sendTest() async -> Bool {
+        let center = UNUserNotificationCenter.current()
+        guard [.authorized, .provisional, .ephemeral].contains(await center.notificationSettings().authorizationStatus) else { return false }
+        let planned = await next()
+        let sample = EngagePlanner.labSamples().randomElement()
+        let c = UNMutableNotificationContent()
+        c.body = planned?.body ?? sample?.body ?? EngagePlanner.Text.weekAway
+        if planned == nil, let t = sample?.title { c.title = t }
+        c.sound = .default
+        c.threadIdentifier = "engage"
+        if let link = planned?.link { c.userInfo = ["engage": link] }
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+        do {
+            try await center.add(UNNotificationRequest(identifier: testID, content: c, trigger: trigger))
+            dlog("engage", "test reminder in 10 s (\(planned.map { "the next planned, \($0.moment.rawValue)" } ?? "a sample"))")
+            return true
+        } catch {
+            dlog("engage", "test reminder not scheduled: \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    static let testID = prefix + "test"
 
     // MARK: Lab
 

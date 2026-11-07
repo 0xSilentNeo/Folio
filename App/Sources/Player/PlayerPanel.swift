@@ -237,13 +237,13 @@ struct SettingsPanelContent: View {
             PanelRow(icon: "arrow.up.left.and.arrow.down.right", title: "Fill screen") {
                 Toggle("", isOn: Binding(get: { model.zoomToFill }, set: { _ in model.toggleZoom() })).labelsHidden()
             }
-            if !MPVFiles.shaders().isEmpty {
+            if !MPVFiles.shadersRecent().isEmpty {
                 PanelRow(icon: "square.stack.3d.up", title: "Your shaders", subtitle: model.activeShaders.isEmpty ? "Off" : "\(model.activeShaders.count) active") {
                     Menu {
                         Button { model.setShaders([]) } label: {
                             if model.activeShaders.isEmpty { Label("Off", systemImage: "checkmark") } else { Text("Off") }
                         }
-                        ForEach(MPVFiles.shaders(), id: \.self) { f in
+                        ForEach(MPVFiles.shadersRecent(), id: \.self) { f in
                             let name = f.lastPathComponent
                             Button {
                                 var list = model.activeShaders
@@ -361,7 +361,7 @@ struct SettingsPanelContent: View {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.84)) { ui.showTune = true }
             }
             Menu {
-                ForEach(ScriptCommandStore.all) { c in Button(c.name) { model.run(command: c.command) } }
+                ForEach(ScriptCommandStore.recent) { c in Button(c.name) { model.run(command: c.command) } }
                 Divider()
                 Button { ui.closePanel(); ui.showConsole = true } label: { Label("Run mpv command…", systemImage: "terminal") }
             } label: {
@@ -573,7 +573,10 @@ struct NowPlayingPanelContent: View {
         VStack(alignment: .leading, spacing: 12) {
             switch tab {
             case 0:
-                ForEach(Array(model.queue.enumerated()), id: \.offset) { i, item in
+                // Rows known by their file (1.24.1), not their place: when a
+                // queue is replaced (adoptQueue) a row at the same place kept
+                // the old file's picture and title.
+                ForEach(Array(model.queue.enumerated()), id: \.element.id) { i, item in
                     PlaylistRow(item: item, active: i == model.queueIndex, state: model.episodeStates[i]) {
                         model.playFromPlaylist(i)
                     }
@@ -665,8 +668,10 @@ struct PlaylistRow: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 ZStack {
-                    if let img = thumb.image { Image(uiImage: img).resizable().scaledToFill() }
-                    else { GeneratedArt(seed: item.displayTitle) }
+                    // The memory copy first (1.24.1): a rebuilt row showed generated art for a frame.
+                    if let img = thumb.image ?? ThumbLoader.cached(key: item.historyKey ?? item.url, points: 64) {
+                        Image(uiImage: img).resizable().scaledToFill()
+                    } else { GeneratedArt(seed: item.displayTitle) }
                     if active { Image(systemName: "play.fill").font(.system(size: 12, weight: .bold)).shadow(radius: 3) }
                 }
                 .frame(width: 64, height: 36)
@@ -691,7 +696,7 @@ struct PlaylistRow: View {
         }
         .buttonStyle(PressStyle(scale: 0.97))
         .accessibilityAddTraits(active ? .isSelected : [])
-        .onAppear {
+        .task(id: item.id) {
             thumb.load(key: item.historyKey ?? item.url, fileURL: item.url.hasPrefix("/") ? URL(fileURLWithPath: item.url) : nil,
                        artwork: item.artwork, lookupName: item.resolvedURL?.lastPathComponent ?? item.title, points: 64)
         }
