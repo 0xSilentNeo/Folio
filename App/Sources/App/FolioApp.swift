@@ -23,9 +23,9 @@ struct FolioApp: App {
         // The airing tracker (1.21.0): its background refresh and the
         // notification delegate, which iOS needs set before launch ends.
         MainActor.assumeIsolated { AiringTracker.start() }
-        // The engagement notifications (1.24.0): planned each time Folio
-        // leaves the screen, cleared when it's back.
-        MainActor.assumeIsolated { EngagementNotifications.start() }
+        // Folio's notifications (1.25.0): planned each time Folio leaves the
+        // screen, cleared when it's back.
+        MainActor.assumeIsolated { NotifyCenter.start() }
         if !["-uiTest", "-uiTestLibrary", "-labDiscover", "-shots"].contains(where: CommandLine.arguments.contains) { IMDbSource.warmUp() }
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
@@ -55,7 +55,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
-        MainActor.assumeIsolated { HistoryStore.shared.flush() }
+        MainActor.assumeIsolated { HistoryStore.shared.flush(wait: true) }
     }
 }
 
@@ -275,6 +275,19 @@ struct RootView: View {
         case "downloads":
             // folio://downloads: the downloads Live Activity (1.22.0) and widget (1.24.0).
             DownloadsPresenter.open()
+        case "title":
+            // A trending or picks notification (1.25.0): the title's page.
+            guard let m = TitleLink.meta(from: url) else { return }
+            HandoffPresenter.present(AnyView(MetaDetailView(preview: m, sourceAddon: nil)))
+        case "libtitle":
+            // A library notification (1.25.0): the library title's page.
+            guard let path = LibraryLink.path(from: url) else { return }
+            let file = URL(fileURLWithPath: path)
+            guard FileManager.default.fileExists(atPath: path) else {
+                dlog("open", "folio://libtitle for a file that's gone")
+                return
+            }
+            HandoffPresenter.present(AnyView(TitleHeroView(file: file)))
         default:
             dlog("open", "folio:// link with an unknown action: \(url.host ?? "none")")
         }

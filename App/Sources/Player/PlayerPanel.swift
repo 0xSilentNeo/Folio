@@ -468,6 +468,8 @@ struct NowPlayingPanelContent: View {
     /// (until 1.14.1 the whole panel scrolled and the tabs went off screen).
     var pinnedHeader = false
     @State private var tab: Int
+    /// A tab picked by hand stays (1.25.0: otherwise Chapters is chosen once they arrive).
+    @State private var picked = false
     @AppStorage("screenshotSubs") private var screenshotSubs = true
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
 
@@ -493,6 +495,16 @@ struct NowPlayingPanelContent: View {
     }
 
     var body: some View {
+        content
+            // A stream's chapters can come after the panel was built (it's
+            // kept between openings): one file with chapters opens on them
+            // unless a tab was picked by hand (1.25.0).
+            .onChange(of: model.chapters.isEmpty) { _, empty in
+                if !picked, !empty, model.queue.count <= 1, tab == 0 { tab = 1 }
+            }
+    }
+
+    private var content: some View {
         Group {
             if pinnedHeader {
                 VStack(alignment: .leading, spacing: 12) {
@@ -555,7 +567,8 @@ struct NowPlayingPanelContent: View {
             Text(playlistNames == "filename" ? model.item.fileName : model.item.displayTitle)
                 .font(playlistNames == "filename" ? .subheadline.weight(.semibold) : .headline).lineLimit(3)
             HStack(spacing: 10) {
-                SegmentPicker(options: [(0, "Playlist"), (1, "Chapters"), (2, "Markers")], selection: $tab)
+                SegmentPicker(options: [(0, "Playlist"), (1, "Chapters"), (2, "Markers")],
+                              selection: Binding(get: { tab }, set: { tab = $0; picked = true }))
                     .frame(maxWidth: .infinity)
                 Button {
                     model.takeScreenshot(subtitles: screenshotSubs)
@@ -598,7 +611,8 @@ struct NowPlayingPanelContent: View {
                         .contextMenu { Button(role: .destructive) { model.removeMarker(m) } label: { Label("Remove", systemImage: "trash") } }
                 }
                 Button { model.addMarker() } label: {
-                    Label("Add marker at \(PlayerModel.format(model.clock.position))", systemImage: "plus")
+                    // Follows the clock itself (1.25.0: it kept the time the tab was opened at).
+                    AddMarkerLabel(clock: model.clock)
                         .font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).frame(height: 40)
                         .background(.white.opacity(0.12), in: Capsule())
                 }
@@ -703,3 +717,12 @@ struct PlaylistRow: View {
     }
 }
 
+
+
+/// "Add marker at 12:34", following the playback clock (1.25.0).
+private struct AddMarkerLabel: View {
+    @ObservedObject var clock: PlaybackClock
+    var body: some View {
+        Label("Add marker at \(PlayerModel.format(clock.position))", systemImage: "plus")
+    }
+}

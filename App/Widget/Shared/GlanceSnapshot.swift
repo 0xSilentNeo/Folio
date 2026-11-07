@@ -73,6 +73,21 @@ struct WeekGlance: GlanceFile {
     /// The day this is about: the widget says "this week" only until it changes.
     var day: Date
 
+    /// Days since this was written (0 the same day).
+    func daysOld(at now: Date, calendar: Calendar = .current) -> Int {
+        max(0, calendar.dateComponents([.day], from: calendar.startOfDay(for: day), to: calendar.startOfDay(for: now)).day ?? 0)
+    }
+
+    /// The last seven days' time at `now` (1.25.0): each midnight without
+    /// Folio the oldest day leaves the week, from `perDay`. Until 1.25.0 the
+    /// widget kept the week it was given until Folio wrote again.
+    func seconds(at now: Date, calendar: Calendar = .current) -> Double {
+        let k = daysOld(at: now, calendar: calendar)
+        guard k > 0 else { return seconds }
+        guard k < perDay.count else { return 0 }
+        return perDay.dropFirst(k).reduce(0, +)
+    }
+
     /// "4 h 20", "35 min", "0 min".
     static func duration(_ seconds: Double) -> String {
         let minutes = Int(seconds / 60)

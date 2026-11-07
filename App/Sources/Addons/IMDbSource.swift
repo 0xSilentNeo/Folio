@@ -47,7 +47,7 @@ enum IMDbSource {
     /// Page HTML. Plain request first (with WebKit's user agent and the WAF
     /// token cookie once we have one); when IMDb answers with its JavaScript
     /// challenge (HTTP 202) the page is loaded through the hidden web view.
-    private static func html(_ path: String, _ query: [String: String] = [:]) async -> String? {
+    static func html(_ path: String, _ query: [String: String] = [:]) async -> String? {
         var comps = URLComponents(string: "https://www.imdb.com" + path)!
         if !query.isEmpty { comps.queryItems = query.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) } }
         guard let url = comps.url else { return nil }
@@ -865,4 +865,37 @@ enum IMDbSource {
     /// them: until 1.19.0 a short list, and episode plots weren't decoded).
     static func unescape(_ s: String?) -> String? { s?.decodingHTMLEntities }
     static func unescape(_ s: String) -> String { unescape(Optional(s)) ?? s }
+}
+
+// MARK: - Trends (1.25.0)
+
+extension IMDbSource {
+    /// A Most Popular chart with what moved: each title's rank, places moved
+    /// (`meterRanking.rankChange`: changeDirection UP / DOWN / FLAT and
+    /// difference), rating, number of ratings, genres and year. Nil when
+    /// the page couldn't be read. For the notifications (TrendFeed).
+    static func trendEntries(_ path: String, type: String) async -> [TrendEntry]? {
+        guard let page = await html(path), let data = nextData(page) else { return nil }
+        return trendEntries(data, type: type)
+    }
+
+    static func trendEntries(_ data: Any, type: String) -> [TrendEntry] {
+        var out: [TrendEntry] = []
+        var seen = Set<String>()
+        walk(data) { d in
+            guard let meter = d["meterRanking"] as? [String: Any], let rank = int(meter["currentRank"]),
+                  let m = titleItem(d, type: type), m.type != "episode", seen.insert(m.id).inserted else { return true }
+            let change = meter["rankChange"] as? [String: Any]
+            let diff = int(change?["difference"]) ?? 0
+            let dir = change?["changeDirection"] as? String
+            let ratings = (d["ratingsSummary"] as? [String: Any]) ?? (d["ratingSummary"] as? [String: Any])
+            out.append(TrendEntry(id: m.id, title: m.name, type: m.type, rank: rank,
+                                  change: dir == "UP" ? diff : dir == "DOWN" ? -diff : 0,
+                                  rating: m.imdbRating.flatMap(Double.init), votes: int(ratings?["voteCount"]),
+                                  genres: m.genres ?? [], year: m.releaseInfo.flatMap { Int($0.prefix(4)) },
+                                  poster: sized(imageURL(d["primaryImage"]), width: 600) ?? m.poster))
+            return false
+        }
+        return out.sorted { $0.rank < $1.rank }
+    }
 }

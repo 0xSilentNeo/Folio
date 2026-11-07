@@ -20,6 +20,16 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.25.0", items: [
+            Item(icon: "app.badge", title: "Notifications, rebuilt",
+                 text: "Settings → Notifications: a switch for each group and each kind, a personality from Subtle to Unhinged, quiet hours and how many a day."),
+            Item(icon: "chart.line.uptrend.xyaxis", title: "What's trending",
+                 text: "IMDb's charts: what's climbing, what's rated high or oddly low, the Friday briefing and the month's recap. Plus your library, picks for you and a few jokes."),
+            Item(icon: "speaker.wave.2", title: "Sounds and pictures",
+                 text: "A sound for each group: Folio's own, Apple's alert tones or yours from Files. Posters on notifications, and Play, Tomorrow and Fewer Like This."),
+            Item(icon: "testtube.2", title: "Test them all",
+                 text: "With Test on, leave Folio and every notification comes, one every 20 seconds. Sent shows what came and why."),
+        ]),
         Release(version: "1.24.1", items: [
             Item(icon: "rectangle.3.group", title: "Widgets that fit in",
                  text: "Glass in light mode, tinted in dark mode, and artwork in full colour in Clear and Tinted too."),

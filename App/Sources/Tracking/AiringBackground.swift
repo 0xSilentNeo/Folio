@@ -79,6 +79,11 @@ enum AiringBackground {
             // In the background a schedule an hour old is fetched again:
             // these runs are few, and the next episode may just have aired.
             await store.refresh(maxAge: 3600, reason: "background")
+            // The notifications' charts and forecast (1.25.0), then planned again with them.
+            if !Task.isCancelled, UIApplication.shared.applicationState == .background {
+                await NotifyCenter.refreshFeedsNow()
+                NotifyCenter.replan("background refresh")
+            }
             task.setTaskCompleted(success: !Task.isCancelled)
         }
         task.expirationHandler = { work.cancel() }
@@ -91,7 +96,9 @@ enum AiringBackground {
     /// Asks iOS for the next background refresh (it decides when; this is the earliest).
     @MainActor
     static func schedule(_ shows: [TrackedShow]) {
-        let earliest = shows.isEmpty ? nil : earliest(shows, now: Date())
+        // The notifications' charts and forecast (1.25.0) want a refresh every 12 hours or so.
+        let feeds: Date? = TrendFeed.wanted || WeatherFeed.wanted ? Date().addingTimeInterval(12 * 3600) : nil
+        let earliest = [shows.isEmpty ? nil : earliest(shows, now: Date()), feeds].compactMap { $0 }.min()
         queue.async {
             guard let earliest else {
                 BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: taskID)

@@ -67,11 +67,21 @@ struct GlanceProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<GlanceEntry>) -> Void) {
         let now = Date()
         var entries = [load(now)]
-        // Your week: again at midnight, when a day leaves the week.
-        if kind == .week, let midnight = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: now)) {
-            var next = entries[0]
-            next = GlanceEntry(date: midnight, access: next.access, week: next.week)
-            entries.append(next)
+        // Your week: again at each of the next seven midnights, when a day
+        // leaves the week (the tile works the week out from its days).
+        if kind == .week {
+            let today = Calendar.current.startOfDay(for: now)
+            for d in 1...7 {
+                guard let midnight = Calendar.current.date(byAdding: .day, value: d, to: today) else { continue }
+                entries.append(GlanceEntry(date: midnight, access: entries[0].access, week: entries[0].week))
+            }
+        }
+        // Downloads (1.25.0): again when the estimate runs out, so its
+        // "3 min" doesn't go on counting up past it until Folio writes again.
+        if kind == .downloads, let run = entries[0].downloads?.run, let end = run.finishBy, end > now, !run.done {
+            var at = entries[0]
+            at = GlanceEntry(date: end, access: at.access, downloads: at.downloads, pictures: at.pictures)
+            entries.append(at)
         }
         completion(Timeline(entries: entries, policy: kind == .week ? .atEnd : .never))
     }

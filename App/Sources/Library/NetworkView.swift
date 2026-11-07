@@ -3,7 +3,9 @@ import SwiftUI
 struct NetworkView: View {
     @ObservedObject private var store = ServerStore.shared
     @ObservedObject private var mediaServers = MediaServerStore.shared
-    @ObservedObject private var downloads = DownloadManager.shared
+    /// Running downloads, for the Downloads row (1.25.0: a throttled count,
+    /// not the whole manager, which redrew the tab on every progress tick).
+    @State private var activeDownloads = 0
     @State private var editing: WebDAVServer?
     @State private var adding = false
     /// SMB, Jellyfin and Plex (1.20.3): their own list and form.
@@ -58,12 +60,20 @@ struct NetworkView: View {
                         HStack {
                             Label("Downloads", systemImage: "arrow.down.circle")
                             Spacer()
-                            if downloads.hasWork { Text("\(downloads.active.count) active").font(.subheadline).foregroundStyle(.secondary) }
+                            if activeDownloads > 0 { Text("\(activeDownloads) active").font(.subheadline).foregroundStyle(.secondary) }
                         }
                     }
                 }
             }
             .brandListBackground()
+            .onReceive(DownloadManager.shared.objectWillChange
+                .throttle(for: .seconds(0.5), scheduler: DispatchQueue.main, latest: true)
+                .receive(on: DispatchQueue.main)
+                .prepend(())) { _ in
+                let dm = DownloadManager.shared
+                let n = dm.hasWork ? dm.active.count : 0
+                if n != activeDownloads { activeDownloads = n }
+            }
             // Room under the last row for the downloads pill (1.24.1).
             .downloadPillRoom()
             .navigationTitle("Network")

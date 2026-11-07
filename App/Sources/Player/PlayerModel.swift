@@ -1073,9 +1073,13 @@ final class PlayerModel: ObservableObject {
         let t = Timer(timeInterval: 2, repeats: true) { [weak self] timer in
             MainActor.assumeIsolated {
                 guard let self, let c = self.client, !self.closed, self.appended != nil else { timer.invalidate(); return }
-                guard self.fileReadToEnd(c) else { return }
-                timer.invalidate()
-                dlog("player", String(format: "next episode: this file read to the end at %.0f s, %.0f s before the Up Next card; mpv opens the next file now", self.position, cardAt - self.position))
+                // Asked off the main thread (1.25.0): a property read waits for
+                // mpv's core, and this ran every 2 s for minutes on slow streams.
+                c.query({ Self.fileReadToEnd($0) }) { [weak self] done in
+                    guard done, let self, timer.isValid else { return }
+                    timer.invalidate()
+                    dlog("player", String(format: "next episode: this file read to the end at %.0f s, %.0f s before the Up Next card; mpv opens the next file now", self.position, cardAt - self.position))
+                }
             }
         }
         RunLoop.main.add(t, forMode: .common)
@@ -1083,7 +1087,7 @@ final class PlayerModel: ObservableObject {
     }
 
     /// mpv's reader has hit the end of this file (demuxer-cache-state "eof").
-    private func fileReadToEnd(_ c: MPVClient) -> Bool {
+    nonisolated private static func fileReadToEnd(_ c: MPVClient) -> Bool {
         (c.string("demuxer-cache-state") ?? "").range(of: #""eof"\s*:\s*true"#, options: .regularExpression) != nil
     }
 
@@ -2042,6 +2046,7 @@ final class PlayerModel: ObservableObject {
         let stored = playingItem ?? item
         let e = HistoryEntry(item: stored, position: 0, duration: 0, updated: Date())
         let episode = HeroCard.parts(stored, meta: nil).number != nil
+        HabitLog.shared.playedSomething()
         WatchLog.shared.add(seconds: watchPending, id: e.id, isEpisode: episode,
                             showKey: episode ? HistoryStore.showKey(e) : nil, showName: episode ? ShowCatalog.name(of: e) : nil)
         watchPending = 0
@@ -2400,7 +2405,7 @@ final class PlayerModel: ObservableObject {
                 // Whether Play Next will be instant: the next file is in mpv's
                 // playlist, and this one has been read to the end (mpv opens the
                 // next one only then).
-                let read = client.map(fileReadToEnd) ?? false
+                let read = client.map(Self.fileReadToEnd) ?? false
                 dlog("player", "up next card at \(Int(position)) s: next episode \(appended?.index == queueIndex + 1 ? "prepared" : preparing == queueIndex + 1 ? "still being prepared" : "not prepared"), this file \(read ? "read to the end" : "not read to the end yet")")
             }
             if trigger.autoplay, !paused, position >= trigger.time + Self.upNextCountdown {
@@ -3490,9 +3495,13 @@ final class PlayerModel: ObservableObject {
         add(cc.playCommand) { [weak self] _ in self?.setPaused(false); return .success }
         add(cc.pauseCommand) { [weak self] _ in self?.setPaused(true); return .success }
         add(cc.togglePlayPauseCommand) { [weak self] _ in self?.togglePause(); return .success }
-        let step = NSNumber(value: defaults.integer(forKey: SettingsKey.seekStep))
+        // Forward and back as in the player (1.25.0: back used the forward
+        // step, so the Lock Screen, Control Center and AirPods went back 30 s
+        // with Backward skip at 10 s).
+        let step = NSNumber(value: max(1, defaults.integer(forKey: SettingsKey.seekStep)))
+        let back = NSNumber(value: max(1, defaults.integer(forKey: SettingsKey.seekBackStep)))
         cc.skipForwardCommand.preferredIntervals = [step]
-        cc.skipBackwardCommand.preferredIntervals = [step]
+        cc.skipBackwardCommand.preferredIntervals = [back]
         add(cc.skipForwardCommand) { [weak self] e in
             self?.seek(by: (e as? MPSkipIntervalCommandEvent)?.interval ?? 10); return .success
         }
