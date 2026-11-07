@@ -175,12 +175,23 @@ struct HeroHeader<Art: View, Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(alignment: .top) {
+            // 1.25.1: the picture reaches the screen's edges in landscape
+            // (it stopped at the side safe areas, a box with hard sides) and
+            // fades itself out instead of into a flat page colour, so it
+            // melts into the page's backdrop and its corner glows (the flat
+            // colour made a darker band beside and under the poster).
             Color.clear
                 .frame(height: height)
                 .overlay { art() }
                 .clipped()
-                .overlay(LinearGradient(colors: [Theme.topScrim, .clear, Theme.background.opacity(0.9), Theme.background],
-                                        startPoint: .top, endPoint: .bottom))
+                .mask(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.34),
+                                             .init(color: .black.opacity(0.1), location: 0.67), .init(color: .clear, location: 1)],
+                                     startPoint: .top, endPoint: .bottom))
+                .overlay(alignment: .top) {
+                    LinearGradient(colors: [Theme.topScrim, .clear], startPoint: .top, endPoint: .bottom)
+                        .frame(height: height * 0.34)
+                }
+                .ignoresSafeArea(.container, edges: .horizontal)
         }
     }
 }

@@ -276,18 +276,11 @@ struct RootView: View {
             // folio://downloads: the downloads Live Activity (1.22.0) and widget (1.24.0).
             DownloadsPresenter.open()
         case "title":
-            // A trending or picks notification (1.25.0): the title's page.
-            guard let m = TitleLink.meta(from: url) else { return }
-            HandoffPresenter.present(AnyView(MetaDetailView(preview: m, sourceAddon: nil)))
+            // A title's page (1.25.0; the notifications open it themselves).
+            NotifyCenter.openTitle(url)
         case "libtitle":
-            // A library notification (1.25.0): the library title's page.
-            guard let path = LibraryLink.path(from: url) else { return }
-            let file = URL(fileURLWithPath: path)
-            guard FileManager.default.fileExists(atPath: path) else {
-                dlog("open", "folio://libtitle for a file that's gone")
-                return
-            }
-            HandoffPresenter.present(AnyView(TitleHeroView(file: file)))
+            // A library title's page (1.25.0).
+            NotifyCenter.openLibraryTitle(url)
         default:
             dlog("open", "folio:// link with an unknown action: \(url.host ?? "none")")
         }

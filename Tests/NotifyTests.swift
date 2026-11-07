@@ -277,6 +277,25 @@ final class NotifyTests: XCTestCase {
         XCTAssertEqual(NotifySound.apple("New/Sherwood_Forest.caf").label, "Sherwood Forest")
     }
 
+    /// 1.25.1: a Test sample's picture and tap are those of the title its
+    /// text names first (every sample had the first Continue Watching title's).
+    func testSamplePictureIsTheTitleItNames() {
+        for k in NotifyKind.allCases {
+            let facts = NotifyWording.sample(k, show: "SHOWX", film: "FILMY", file: "FILEZ")
+            guard let t = NotifyWording.text(k, .balanced, facts, variation: 0) else { continue }
+            let text = (t.title ?? "") + " " + t.body
+            let s = text.range(of: "SHOWX")?.lowerBound, f = text.range(of: "FILMY")?.lowerBound
+            let expected: NotifyCenter.SampleSubject
+            switch (s, f) {
+            case let (s?, f?): expected = s < f ? .show : .film
+            case (_?, nil): expected = .show
+            case (nil, _?): expected = .film
+            default: expected = .none
+            }
+            XCTAssertEqual(NotifyCenter.sampleSubject(k), expected, "\(k.rawValue): \(text)")
+        }
+    }
+
     func testWatchDayDecodesWithoutHours() throws {
         let old = #"[{"day":"2026-11-01","seconds":60,"lateSeconds":0,"episodes":[],"films":[],"shows":{},"showEpisodes":{}}]"#
         let d = try JSONDecoder().decode([WatchDay].self, from: Data(old.utf8))
