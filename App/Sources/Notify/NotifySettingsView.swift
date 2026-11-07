@@ -115,10 +115,9 @@ struct NotifySettingsView: View {
                 NavigationLink("Sent") { NotifyLogView() }
                     .accessibilityIdentifier("notifySent")
             } header: { Text("Testing") } footer: {
-                Text(test
-                     ? "Test is on: leave Folio and every notification that's switched on comes, one every 20 seconds, in your personality and with its group's sound. Your own titles where Folio has them, samples where it doesn't. Opening Folio stops the run; leaving again carries on where it stopped, each kind with its next line. New-episode notifications wait while Test is on. Turn it off for the real thing."
-                     : "Folio's notifications are planned when you leave Folio and taken back when you open it, so what you do next counts.")
+                Text(test ? testFooter : "Folio's notifications are planned when you leave Folio and taken back when you open it, so what you do next counts.")
             }
+            .id(bump)
         }
         .brandListBackground()
         .navigationTitle("Notifications")
@@ -126,6 +125,26 @@ struct NotifySettingsView: View {
         .task { await refresh() }
         .onChange(of: phase) { _, p in if p == .active { Task { await refresh() } } }
         .onDisappear { NotifyCenter.refreshFeeds() }
+    }
+
+    /// What a Test run sends with the settings above (1.25.2).
+    private var testFooter: String {
+        let kinds = NotifyCenter.testKinds()
+        let all = NotifyKind.allCases.count
+        let minutes = max(1, Int((Double(kinds.count) * 20 / 60).rounded()))
+        let which = kinds.count == all
+            ? "all \(all) kinds of notification come"
+            : kinds.isEmpty ? "nothing comes: every kind is switched off above"
+            : "the \(kinds.count) kinds of \(all) that your settings above allow come"
+        var notes: [String] = []
+        if WeatherFeed.place == nil, NotifyKind.allCases.contains(where: { $0.needsWeather && NotifyPrefs.switchedOn($0) }) {
+            notes.append("Rain, cold and heat need a city (Just for fun → Weather).")
+        }
+        let resting = NotifyKind.allCases.filter { NotifyCenter.resting($0) != nil }.count
+        if resting > 0 { notes.append("\(resting) resting after being dismissed are left out.") }
+        return "Test is on: leave Folio and \(which), one every 20 seconds (about \(minutes) min), in your personality and with each group's sound. "
+            + (notes.isEmpty ? "" : notes.joined(separator: " ") + " ")
+            + "Your own titles where Folio has them, samples where it doesn't. Quiet hours and the daily limit don't apply to Test. Opening Folio stops the run; leaving again carries on where it stopped, each kind with its next line. New-episode notifications wait while Test is on. Turn it off for the real thing."
     }
 
     private var example: String {

@@ -357,10 +357,19 @@ enum NotifyCenter {
         dlog("notify", "test: \(delivered.count) delivered, \(with) with a picture, \(readable) readable")
     }
 
-    /// Every kind that's on, in the Notifications page's order, from where
+    /// The kinds Test sends: the ones your settings would send for real
+    /// (1.25.2): their group and their own switch on, allowed by the
+    /// personality (Just for fun is off in Subtle), what they need set up
+    /// (rain, cold and heat need a city), and not resting after three
+    /// dismissals or turned off with Fewer Like This.
+    static func testKinds(now: Date = Date()) -> [NotifyKind] {
+        NotifyKind.allCases.filter { NotifyPrefs.allowed($0) && resting($0, now: now) == nil }
+    }
+
+    /// Every kind Test sends, in the Notifications page's order, from where
     /// the last run stopped.
     static func testOrder() -> [NotifyKind] {
-        let on = NotifyKind.allCases.filter(NotifyPrefs.switchedOn)
+        let on = testKinds()
         guard let next = UserDefaults.standard.string(forKey: "notifyTestNext").flatMap(NotifyKind.init(rawValue:)),
               let i = on.firstIndex(of: next) else { return on }
         return Array(on[i...] + on[..<i])
@@ -449,7 +458,7 @@ enum NotifyCenter {
         guard [.authorized, .provisional, .ephemeral].contains(await center.notificationSettings().authorizationStatus) else { return nil }
         guard let c = await testCandidates(now: Date()).first else { return nil }
         guard await schedule(c, at: Date().addingTimeInterval(5), test: true, requestID: prefix + "now.\(c.kind.rawValue)") != nil else { return nil }
-        let on = NotifyKind.allCases.filter(NotifyPrefs.switchedOn)
+        let on = testKinds()
         if let i = on.firstIndex(of: c.kind) { UserDefaults.standard.set(on[(i + 1) % on.count].rawValue, forKey: "notifyTestNext") }
         return c.kind
     }
@@ -476,7 +485,7 @@ enum NotifyCenter {
         }
         let tests = scheduled.filter(\.test).sorted { $0.at < $1.at }
         if !tests.isEmpty {
-            let on = NotifyKind.allCases.filter(NotifyPrefs.switchedOn)
+            let on = testKinds()
             if let last = tests.last(where: { $0.at <= now }), let i = on.firstIndex(of: last.kind) {
                 // The run carries on after the last one that came; a whole run done starts again.
                 let finished = tests.allSatisfy { $0.at <= now }
