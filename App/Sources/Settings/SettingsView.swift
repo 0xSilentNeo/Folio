@@ -29,82 +29,52 @@ struct SettingsView: View {
                         .transition(.opacity)
                 }
             }
-            .onAppear { covered = false }
-            .onDisappear { covered = true }
-            // The lock covers this list, not a page pushed from it: one left
-            // open (Presets, mpv → Scripts, Addons) stayed usable with no
-            // passcode after Folio came back (review, 9 Nov). Settings close
-            // instead, all of them; opening them again asks.
-            .onChange(of: kids.relockedAt) {
-                if kids.isOn && covered { dismiss() }
-            }
     }
 
-    /// A page is pushed over the list.
-    @State private var covered = false
-
+    /// 1.26.1: five sections, every row opens a page (eight sections, four
+    /// of them a single row, and an inline picker until then: almost two
+    /// screens on a 17 Pro). The version is under About.
     private var list: some View {
         List {
             Section {
-                row("General", "gearshape", .gray) { GeneralSettings() }
-                row("Library", "film.stack", .green) { LibrarySettings() }
+                SettingsRow(.general)
+                SettingsRow(.notifications)
+                SettingsRow(.kids) { Text(kids.isOn ? "On" : "Off") }
             }
             Section {
-                row("Playback", "play.rectangle", .pink) { PlaybackSettings() }
-                row("Audio & Subtitles", "captions.bubble", .orange) { SubtitleAudioSettings() }
-                row("Skip Intro & Credits", "forward.end", .purple) { SkipSettings() }
-                row("Discover", "sparkles.tv", .cyan) { DiscoverSettings() }
-                row("Sync", "arrow.triangle.2.circlepath", .red) { SyncSettingsView() }
-                row("Downloads", "arrow.down.circle", .mint) { DownloadSettingsView() }
-            }
-            // 1.22.0: titles rated for kids only, Settings behind a passcode.
-            Section {
-                row("Kids Profile", "figure.and.child.holdinghands", .indigo) { KidsProfileSettings() }
-            }
-            // The airing tracker (1.21.0): the tracked shows and their notifications.
-            TrackingSettingsSection()
-            // Folio's own notifications (1.25.0; 1.24.0's Reminders).
-            Section {
-                row("Notifications", "app.badge", .orange) { NotifySettingsView() }
+                SettingsRow(.playback)
+                SettingsRow(.audioSubtitles)
+                SettingsRow(.skip)
+                SettingsRow(.engine)
             }
             Section {
-                row("mpv", "slider.horizontal.3", .teal) { MPVSettings() }
-            } footer: {
-                Text("The video engine, scripts, shaders and config files.")
+                SettingsRow(.library)
+                SettingsRow(.discover)
+                SettingsRow(.downloads)
+                TrackedShowsRow()
+                SettingsRow(.sync)
             }
             Section {
-                row("Presets", "square.and.arrow.down.on.square", .blue) { PresetsView() }
-                row("Help & Diagnostics", "stethoscope", .gray) { AdvancedSettings() }
+                SettingsRow(.importExport)
+                SettingsRow(.help)
             }
             Section {
-                HStack {
-                    HStack(spacing: 8) {
-                        FolioLeaf().frame(width: 22, height: 22)
-                        Wordmark(size: 15)
-                    }
-                    Spacer()
+                SettingsRow(.about) {
                     Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
-                        .foregroundStyle(.secondary)
                 }
-            } footer: {
-                Text("Your mpv folder is in Files → On My iPhone → Folio → mpv.")
             }
         }
-        .brandListBackground()
-        .background(TopEdgeNoBounce().frame(width: 0, height: 0).accessibilityHidden(true))
+        .settingsPage()
+        .background { TopEdgeNoBounce().frame(width: 0, height: 0).accessibilityHidden(true) }
     }
+}
 
-    private func row<D: View>(_ title: String, _ icon: String, _ color: Color, @ViewBuilder destination: @escaping () -> D) -> some View {
-        NavigationLink(destination: destination) {
-            Label {
-                Text(title)
-            } icon: {
-                Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 28, height: 28)
-                    .background(color.gradient, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-            }
+/// The root's Tracked Shows row, with how many shows are tracked.
+private struct TrackedShowsRow: View {
+    @ObservedObject private var store = TrackingStore.shared
+    var body: some View {
+        SettingsRow(.trackedShows) {
+            if !store.shows.isEmpty { Text("\(store.shows.count)") }
         }
     }
 }
@@ -126,7 +96,6 @@ struct PlaybackSettings: View {
     @AppStorage(SettingsKey.pipReturnOnOpen) private var pipReturnOnOpen = true
     @AppStorage(SettingsKey.playlistNames) private var playlistNames = "episode"
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
-    @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
     @AppStorage(SettingsKey.prepareNext) private var prepareNext = true
     @AppStorage(SettingsKey.upNextEnabled) private var upNext = true
     @AppStorage(SettingsKey.seekBackStep) private var seekBackStep = 10
@@ -199,11 +168,6 @@ struct PlaybackSettings: View {
                     Picker("Playlist names", selection: $playlistNames) {
                         Text("Episode number & title").tag("episode")
                         Text("File name").tag("filename")
-                    }
-                }
-                if #available(iOS 26.0, *) {
-                    Explained("The player's menus grow out of their button with Apple's own glass animation. Off: the app's own glass menus, which can be interrupted at any moment.") {
-                        Toggle("Native menu morph", isOn: $nativePanelMorph)
                     }
                 }
                 Explained("How much of the screen's width the controls use in landscape.") {
@@ -464,14 +428,48 @@ struct SkipSettings: View {
 }
 
 /// A setting with a plain-language line under it (1.17.0).
+/// A setting with what it does under it. A long explanation shows its first
+/// two lines and More (1.26.1): every switch carried its whole paragraph,
+/// and Playback was a wall of text (simulator, 9 Nov). More shows only when
+/// the text really is cut, at this width and text size.
 struct Explained<Content: View>: View {
     let text: String
     @ViewBuilder var content: Content
+    @State private var expanded = false
+    @State private var fullHeight: CGFloat = 0
+    @State private var shownHeight: CGFloat = 0
     init(_ text: String, @ViewBuilder content: () -> Content) { self.text = text; self.content = content() }
+
+    private var cut: Bool { fullHeight > shownHeight + 1 }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             content
-            Text(text).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text(text)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .lineLimit(expanded ? nil : 2)
+                .fixedSize(horizontal: false, vertical: true)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { if !expanded { shownHeight = $0 } }
+                .background(alignment: .topLeading) {
+                    // The whole text, unseen, at the same width: its height says whether two lines cut it.
+                    Text(text)
+                        .font(.footnote)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .hidden()
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { fullHeight = $0 }
+                        .accessibilityHidden(true)
+                }
+            if cut || expanded {
+                Button(expanded ? "Less" : "More") {
+                    withAnimation(.snappy(duration: 0.25)) { expanded.toggle() }
+                }
+                .font(.footnote.weight(.semibold))
+                .buttonStyle(.borderless)
+                .frame(minHeight: 30, alignment: .leading)
+                .contentShape(.rect)
+                .accessibilityLabel(expanded ? "Show Less" : "Show More")
+            }
         }
     }
 }
@@ -488,13 +486,13 @@ struct MPVSettings: View {
 
     private var rendererText: String {
         renderer == "gl"
-            ? "OpenGL: one picture for the screen and Picture in Picture, so PiP and leaving the app don't pause the video. Some files may not play; HDR and Dolby Vision show at normal brightness (SDR); compute shaders don't run."
+            ? "OpenGL: one picture for the screen and Picture in Picture, so PiP and leaving the app never pause the video. HDR shows with HDR brightness; compute shaders don't run, and some files may not play."
             : "Metal (recommended): plays every file, with real HDR and Dolby Vision brightness and every shader. Picture in Picture and leaving the app pause the picture for a moment."
     }
     private var pictureText: String {
         switch picture {
-        case .efficient: "Efficient: simple scaling with no extra passes. Coolest phone, longest battery; the right choice for most videos."
-        case .balanced: "Balanced: a sharper scaler when the video is enlarged. A little more power."
+        case .efficient: "Efficient: simple scaling with no extra passes, and with OpenGL, HDR drawn straight from the video chip. Coolest phone, longest battery: the one for long watching."
+        case .balanced: "Balanced: a sharper scaler when the video is enlarged, and with OpenGL, smoother HDR gradients (each frame copied out at full 10 bits). A little more power."
         case .enhanced: "Enhanced: the best scaling plus banding removal, several extra passes on every frame. Noticeably more power and heat."
         }
     }
@@ -559,35 +557,32 @@ struct MPVSettings: View {
             }
         }
         .brandListBackground()
-        .navigationTitle("mpv")
+        .navigationTitle("Video Engine")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 struct AdvancedSettings: View {
-    @State private var confirmClear = false
-    @State private var whatsNew = false
+    @AppStorage(SettingsKey.tabZoom) private var tabZoom = false
+    @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
 
     var body: some View {
         Form {
             Section {
-                NavigationLink { DiagnosticsView() } label: { Label("Diagnostics & report", systemImage: "stethoscope") }
+                NavigationLink { DiagnosticsView() } label: { Label("Diagnostics & Report", systemImage: "stethoscope") }
             } footer: { Text("A report bundles the logs and your settings (passwords removed) to send when something goes wrong.") }
+            // 1.26.1: the experiments, from General and Playback.
             Section {
-                // 1.22.0: the sheet shown after an update, every version's list.
-                Button { whatsNew = true } label: { Label("What's new", systemImage: "sparkles") }
+                Toggle("Zoom between tabs", isOn: $tabZoom)
+                if #available(iOS 26.0, *) {
+                    Toggle("Native menu morph", isOn: $nativePanelMorph)
+                }
+            } header: { Text("Experimental") } footer: {
+                Text("Zoom between tabs: the page zooms in as you switch tabs. Native menu morph: the player's menus grow out of their button with Apple's own glass animation; off, Folio's own glass menus.")
             }
-            Section {
-                Button("Clear watch history", role: .destructive) { confirmClear = true }
-                    .confirmationDialog("Clear all history and resume positions?", isPresented: $confirmClear, titleVisibility: .visible) {
-                        Button("Clear", role: .destructive) { HistoryStore.shared.clear() }
-                    }
-            } footer: { Text("Forgets where you stopped every video, what you've watched, and empties Continue Watching.") }
         }
-        .brandListBackground()
         .navigationTitle("Help & Diagnostics")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $whatsNew) { WhatsNewSheet(all: true) }
     }
 }
 
@@ -611,7 +606,7 @@ struct ScriptsView: View {
                             if !s.enabled { Text("Disabled").font(.caption).foregroundStyle(.secondary) }
                         }
                         Spacer()
-                        Toggle("", isOn: Binding(get: { s.enabled }, set: { on in
+                        Toggle(s.name, isOn: Binding(get: { s.enabled }, set: { on in
                             try? MPVFiles.setEnabled(s, on)
                             reload()
                         }))
@@ -708,6 +703,7 @@ struct ScriptOptsView: View {
         .onAppear { files = MPVFiles.scriptOptFiles() }
         .toolbar {
             Button { showNew = true } label: { ToolbarGlyph("plus") }
+                .accessibilityLabel("Add")
         }
         .alert("New option file", isPresented: $showNew) {
             TextField("scriptname", text: $newName).textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -780,7 +776,7 @@ struct ShadersView: View {
                 }
                 if files.isEmpty { Text("No shaders installed.").foregroundStyle(.secondary) }
                 if !active.isEmpty {
-                    Button("Turn all off", role: .destructive) { active = []; MPVFiles.activeShaderNames = [] }
+                    Button("Turn All Off") { active = []; MPVFiles.activeShaderNames = [] }
                 }
             } header: { Text("Installed — tap to toggle, order = apply order") } footer: {
                 Text("Active shaders apply to every video and can be switched per video from the player's Shaders menu. Compute shaders need the Metal renderer.")
@@ -799,7 +795,10 @@ struct ShadersView: View {
                         } else if downloading.contains(e.file) {
                             FolioSpinner(size: .small)
                         } else {
-                            Button { download(e) } label: { Image(systemName: "arrow.down.circle") }
+                            Button { download(e) } label: {
+                                Image(systemName: "arrow.down.circle").frame(minWidth: 44, minHeight: 44).contentShape(.rect)
+                            }
+                            .accessibilityLabel("Download \(e.file)")
                         }
                     }
                 }
@@ -859,6 +858,7 @@ struct ShadersView: View {
 struct CommandsEditorView: View {
     @State private var commands = ScriptCommandStore.all
     @State private var editing: ScriptCommand?
+    @State private var confirmRestore = false
 
     var body: some View {
         List {
@@ -878,7 +878,12 @@ struct CommandsEditorView: View {
                 Text("Shown in the player's Commands menu. Use input.conf syntax, e.g. script-binding uosc/menu, script-message-to myscript action, cycle-values sub-scale 1 1.3 1.6, or several separated by ;")
             }
             Section {
-                Button("Restore defaults") { commands = ScriptCommandStore.defaults; save() }
+                Button("Restore Defaults", role: .destructive) { confirmRestore = true }
+                    .confirmationDialog("Restore the default commands?", isPresented: $confirmRestore, titleVisibility: .visible) {
+                        Button("Restore Defaults", role: .destructive) { commands = ScriptCommandStore.defaults; save() }
+                    } message: {
+                        Text("Your own commands are replaced by Folio's.")
+                    }
             }
         }
         .brandListBackground()
@@ -987,7 +992,7 @@ struct LogView: View {
                     Text(lines[i]).textSelection(.enabled)
                 }
             }
-            .font(.system(size: 11, design: .monospaced))
+            .font(.caption2.monospaced())
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
         }
@@ -1001,7 +1006,7 @@ struct LogView: View {
                 Toggle(isOn: $errorsOnly) { Image(systemName: "exclamationmark.triangle") }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                if let shareCopy { ShareLink(item: shareCopy) { Image(systemName: "square.and.arrow.up") } }
+                if let shareCopy { ShareLink(item: shareCopy) { Label("Share", systemImage: "square.and.arrow.up") } }
             }
         }
         .task {
@@ -1076,7 +1081,7 @@ struct DiagnosticsView: View {
             }
             Section("Recent app log") {
                 Text(tail.isEmpty ? "No entries yet." : tail)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.caption2.monospaced())
                     .textSelection(.enabled)
             }
             Section {
@@ -1132,8 +1137,11 @@ struct DiscoverSettings: View {
                 Text("A row at the top of Discover with series that have new episodes this week (from TVmaze) or anime airing this season (from AniList). The pill on the row switches between them.")
             }
             Section {
-                TextField("Language (e.g. en-US, de-DE, ja-JP)", text: $language)
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                LabeledContent("Language") {
+                    TextField("Language", text: $language, prompt: Text("en-US"))
+                        .multilineTextAlignment(.trailing)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                }
                 Picker("Top Rated: minimum votes", selection: $minVotes) {
                     ForEach([1000, 5000, 10000, 25000, 50000, 100000], id: \.self) { Text($0.formatted()).tag($0) }
                 }
@@ -1143,10 +1151,18 @@ struct DiscoverSettings: View {
                 Text("Titles, posters, synopses, ratings, charts and episode lists are read from IMDb's own pages — the same numbers you see on imdb.com. Trending is IMDb's Most Popular list; Top Rated is the Top 250 (with a genre: IMDb's user-rating ranking with at least the chosen number of votes). Language changes titles and synopses where IMDb has translations.")
             }
             Section {
-                SecureField("TMDB API key (v3)", text: $tmdbKey)
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                LabeledContent("API Key (v3)") {
+                    SecureField("TMDB API Key", text: $tmdbKey, prompt: Text("Optional"))
+                        .multilineTextAlignment(.trailing)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                }
                 if !tmdbKey.isEmpty {
-                    Label("Discover uses TMDB instead of IMDb", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.footnote)
+                    Label {
+                        Text("Discover uses TMDB instead of IMDb")
+                    } icon: {
+                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                    }
+                    .font(.footnote)
                 }
             } header: { Text("TMDB (optional)") } footer: {
                 Text("Optional alternative source. Free for personal use with your own key; leave empty to use IMDb.")
@@ -1166,7 +1182,6 @@ struct DiscoverSettings: View {
 
 struct GeneralSettings: View {
     @AppStorage(SettingsKey.startupTab) private var startupTab = 0
-    @AppStorage(SettingsKey.tabZoom) private var tabZoom = false
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
@@ -1197,9 +1212,6 @@ struct GeneralSettings: View {
                 }
                 Explained("Tapping a film opens its page first. Off: a tap plays it straight away (shows always open their page).") {
                     Toggle("Open title page on tap", isOn: $openTitlePage)
-                }
-                Explained("An experiment: the page zooms in as you switch between Home, Discover, Network and Search.") {
-                    Toggle("Zoom between tabs", isOn: $tabZoom)
                 }
             }
             Section {
@@ -1234,7 +1246,9 @@ struct LibrarySettings: View {
     @AppStorage(SettingsKey.titlePageStyle) private var titlePageStyle = "full"
     @State private var cacheBytes: Int64 = 0
     @State private var working = false
+    @State private var confirmClear = false
 
+    /// Worked out once per body (1.26.1: three times, each parsing every file name).
     private var counts: (movies: Int, episodes: Int, other: Int) {
         var m = 0, e = 0, o = 0
         let audio: Set<String> = ["mp3", "flac", "m4a", "aac", "ogg", "opus", "wav", "alac", "wma", "ape", "mka"]
@@ -1249,17 +1263,18 @@ struct LibrarySettings: View {
     var body: some View {
         Form {
             Section {
+                let c = counts
                 HStack(spacing: 10) {
-                    stat(counts.movies, "Movies")
-                    stat(counts.episodes, "TV Episodes")
-                    stat(counts.other, "Other")
+                    stat(c.movies, "Movies")
+                    stat(c.episodes, "TV Episodes")
+                    stat(c.other, "Other")
                 }
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
             }
             Section {
-                Button("Scan for changes") { store.refresh() }
-                Button("Refresh metadata") {
+                Button("Scan for Changes") { store.refresh() }
+                Button("Refresh Metadata") {
                     working = true
                     Task {
                         await MetadataService.shared.clear()
@@ -1286,18 +1301,25 @@ struct LibrarySettings: View {
                     Text("Episode still").tag("still")
                     Text("Last frame watched").tag("frame")
                 }
-                HStack {
-                    Text("Library cache")
-                    Spacer()
-                    Text(ByteCountFormatter.string(fromByteCount: cacheBytes, countStyle: .file)).foregroundStyle(.secondary)
-                    Button(role: .destructive) {
-                        ImageCache.shared.clear()
-                        Task { await measure() }
-                    } label: { Image(systemName: "trash") }
-                    .buttonStyle(.borderless)
+            } header: { Text("Metadata & Artwork") } footer: {
+                Text("Titles, posters and episode names come from IMDb, looked up from the file names and kept on this device.")
+            }
+            // 1.26.1: the artwork cache as a labelled row (an icon-only bin
+            // until then), and watch history, from Help & Diagnostics.
+            Section {
+                LabeledContent("Artwork cache", value: ByteCountFormatter.string(fromByteCount: cacheBytes, countStyle: .file))
+                Button("Clear Artwork Cache") {
+                    ImageCache.shared.clear()
+                    Task { await measure() }
                 }
-            } header: { Text("Metadata & artwork") } footer: {
-                Text("Titles, posters and episode names come from IMDb, looked up from the file names and kept on this device. The cache holds downloaded artwork; it refills as you browse.")
+                Button("Clear Watch History", role: .destructive) { confirmClear = true }
+                    .confirmationDialog("Clear all history and resume positions?", isPresented: $confirmClear, titleVisibility: .visible) {
+                        Button("Clear Watch History", role: .destructive) { HistoryStore.shared.clear() }
+                    } message: {
+                        Text("Forgets where you stopped every video and what you've watched, and empties Continue Watching. This can't be undone.")
+                    }
+            } header: { Text("Storage & History") } footer: {
+                Text("The artwork cache refills as you browse.")
             }
         }
         .brandListBackground()

@@ -22,7 +22,8 @@ final class SeekBarPrefs: ObservableObject {
 
     var color: Color {
         switch markerColor {
-        case "accent": return Theme.accent
+        // Shown as "Pink": the accent is cream in the always-dark player (review, 9 Nov).
+        case "accent": return .pink
         case "yellow": return .yellow
         case "cyan": return .cyan
         default: return .white

@@ -75,6 +75,13 @@ struct HomeView: View {
             .task(id: local.files) { metaIndex.update(local.files) }
             .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
+            // The kids profile locked again (turned on, or Folio came back):
+            // Settings and every page opened from it go, so none stays usable
+            // without the passcode; opening Settings again asks (1.26.1).
+            .onChange(of: kids.relockedAt) {
+                guard kids.isOn, let i = path.firstIndex(where: { if case .settings = $0 { return true }; return false }) else { return }
+                path.removeSubrange(i...)
+            }
             .onAppear {
                 LaunchTiming.homeAppeared()
                 if let r = HomeRouter.shared.take() { open(r) }

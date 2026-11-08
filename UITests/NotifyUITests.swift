@@ -10,13 +10,23 @@ final class NotifyUITests: XCTestCase {
         app.launchArguments = ["-uiTest", "-openNotify"]
         app.launch()
 
+        // 1.26.1: a group's row says On or Off and opens its page, where its switch is.
         let trending = app.buttons["notifyGroup.trending"]
         XCTAssertTrue(trending.waitForExistence(timeout: 15), "no Trending now row")
-        XCTAssertEqual(trending.label, "Trending now, on")
+        XCTAssertEqual(trending.value as? String, "On")
         trending.tap()
-        XCTAssertTrue(app.buttons["Trending now, off"].waitForExistence(timeout: 5), "Trending now didn't turn off")
+        let toggle = app.switches["notifyGroupToggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5), "Trending now's page didn't open")
+        toggle.tap()
+        app.buttons["Back"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["notifyGroup.trending"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["notifyGroup.trending"].value as? String, "Off", "Trending now didn't turn off")
         app.buttons["notifyGroup.trending"].tap()
-        XCTAssertTrue(app.buttons["Trending now, on"].waitForExistence(timeout: 5), "Trending now didn't turn back on")
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        toggle.tap()
+        app.buttons["Back"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["notifyGroup.trending"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["notifyGroup.trending"].value as? String, "On", "Trending now didn't turn back on")
 
         // Every group has its row.
         for g in ["watching", "newReleases", "recommendations", "library", "briefing", "fun", "downloads"] {

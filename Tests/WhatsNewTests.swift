@@ -34,7 +34,7 @@ final class WhatsNewTests: XCTestCase {
 
     func testTheList() {
         let versions = WhatsNew.releases.map(\.version)
-        XCTAssertEqual(Array(versions.prefix(2)), ["1.26.0", "1.25.0"])
+        XCTAssertEqual(Array(versions.prefix(2)), ["1.26.1", "1.26.0"])
         XCTAssertEqual(versions, versions.sorted { $0.compare($1, options: .numeric) == .orderedDescending }, "newest first")
         for r in WhatsNew.releases { XCTAssertFalse(r.items.isEmpty, r.version) }
         XCTAssertNotNil(WhatsNew.release("1.21.0"))

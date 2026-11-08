@@ -24,19 +24,25 @@ struct ClientIDField: View {
     }
 
     var body: some View {
-        TextField("Client ID", text: $clientID)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .font(.body.monospaced())
-        if service == .trakt {
-            SecureField("Client Secret", text: $secret)
+        LabeledContent("Client ID") {
+            TextField("Client ID", text: $clientID, prompt: Text("Paste here"))
+                .multilineTextAlignment(.trailing)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .onAppear { secret = Keychain.get(SyncService.traktSecretAccount) ?? "" }
-                .onChange(of: secret) { _, v in
-                    let t = v.trimmingCharacters(in: .whitespacesAndNewlines)
-                    Keychain.set(t.isEmpty ? nil : t, for: SyncService.traktSecretAccount)
-                }
+                .font(.body.monospaced())
+        }
+        if service == .trakt {
+            LabeledContent("Client Secret") {
+                SecureField("Client Secret", text: $secret, prompt: Text("Paste here"))
+                    .multilineTextAlignment(.trailing)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            }
+            .onAppear { secret = Keychain.get(SyncService.traktSecretAccount) ?? "" }
+            .onChange(of: secret) { _, v in
+                let t = v.trimmingCharacters(in: .whitespacesAndNewlines)
+                Keychain.set(t.isEmpty ? nil : t, for: SyncService.traktSecretAccount)
+            }
         }
         Button(action: connect) {
             if busy { ProgressView() } else { Text("Connect \(service.name)") }

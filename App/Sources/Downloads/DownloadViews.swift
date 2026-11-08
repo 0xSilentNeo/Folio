@@ -794,6 +794,10 @@ struct DownloadSettingsView: View {
     @AppStorage(SettingsKey.downloadRetries) private var retries = 3
     @AppStorage(SettingsKey.downloadNextEpisodes) private var nextEpisodes = 0
     @AppStorage(SettingsKey.downloadDeleteWatched) private var deleteWatched = 0
+    /// The Delete watched value waiting for a yes, and the yes.
+    @State private var askDelete: Int?
+    @State private var askingDelete = false
+    @State private var deleteConfirmed = false
     @AppStorage(SettingsKey.liveActivities) private var liveActivities = true
 
     var body: some View {
@@ -852,6 +856,24 @@ struct DownloadSettingsView: View {
         .onChange(of: lowPower) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: charging) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: liveActivities) { _, _ in LiveActivities.settingChanged() }
-        .onChange(of: deleteWatched) { _, _ in WatchedCleanup.run() }
+        // Turning it on deletes finished downloads at once: asked first (1.26.1).
+        .onChange(of: deleteWatched) { old, new in
+            if old == 0, new > 0, !deleteConfirmed {
+                askDelete = new
+                askingDelete = true
+                deleteWatched = 0
+                return
+            }
+            deleteConfirmed = false
+            if new > 0 { WatchedCleanup.run() }
+        }
+        .confirmationDialog("Delete watched downloads?", isPresented: $askingDelete, titleVisibility: .visible, presenting: askDelete) { days in
+            Button(days == 1 ? "Delete After 1 Day" : "Delete After \(days) Days", role: .destructive) {
+                deleteConfirmed = true
+                deleteWatched = days
+            }
+        } message: { days in
+            Text("Downloaded videos you finished more than \(days == 1 ? "a day" : "\(days) days") ago are deleted now, and others that long after you finish them. Files you added yourself are never deleted.")
+        }
     }
 }

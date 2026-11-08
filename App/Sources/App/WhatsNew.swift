@@ -20,6 +20,12 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.26.1", items: [
+            Item(icon: "battery.100percent", title: "Longer watching, cooler phone",
+                 text: "With Picture → Efficient, HDR plays straight from the video chip, and AV1 never falls back to the processor. Less work in the background while a film plays."),
+            Item(icon: "gearshape", title: "Settings, tidied",
+                 text: "Fewer sections, every row opens a page, short explanations with More, About Folio with what Folio is built on, and a question before anything is deleted."),
+        ]),
         Release(version: "1.26.0", items: [
             Item(icon: "bookmark", title: "A watchlist",
                  text: "Tap the bookmark on a title's page, or hold any poster in Discover, to save it for later. Your list is at the top of Discover."),

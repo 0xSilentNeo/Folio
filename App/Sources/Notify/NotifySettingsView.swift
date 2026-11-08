@@ -47,6 +47,7 @@ struct NotifySettingsView: View {
                     } label: {
                         groupRow(g)
                     }
+                    .accessibilityIdentifier("notifyGroup.\(g.rawValue)")
                 }
             } header: { Text("Notifications") } footer: {
                 Text("Made on this iPhone from what you watch, your library and IMDb's charts; nothing about what you watch is sent anywhere.")
@@ -152,32 +153,27 @@ struct NotifySettingsView: View {
         return NotifyWording.text(.paused, t, ["show": "Your show", "time": "31:04"], variation: 0)?.body ?? ""
     }
 
+    /// A group's row says whether it's on; its page has the switch (1.26.1:
+    /// a checkmark button inside the row, a second control in a navigation
+    /// row and a ~28 pt target).
     private func groupRow(_ g: NotifyGroup) -> some View {
         let on = NotifyPrefs.groupOn(g)
-        return HStack(spacing: 12) {
-            Image(systemName: g.symbol)
-                .foregroundStyle(Theme.accent)
-                .frame(width: 26)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(g.title)
-                Text(g == .fun && tone == NotifyTone.subtle.rawValue ? "Off in Subtle" : g.subtitle)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+        return LabeledContent {
+            Text(on ? "On" : "Off")
+        } label: {
+            Label {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(g.title)
+                    Text(g == .fun && tone == NotifyTone.subtle.rawValue ? "Off in Subtle" : g.subtitle)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            } icon: {
+                Image(systemName: g.symbol).foregroundStyle(Theme.accent)
             }
-            Spacer(minLength: 8)
-            Button {
-                NotifyPrefs.setGroup(g, on: !on)
-                if g == .newReleases { AiringNotifications.reschedule(TrackingStore.shared.shows) }
-                bump += 1
-            } label: {
-                Image(systemName: on ? "checkmark.circle.fill" : "circle")
-                    .font(.title2)
-                    .foregroundStyle(on ? Theme.accent : .secondary)
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel(on ? "\(g.title), on" : "\(g.title), off")
-            .accessibilityIdentifier("notifyGroup.\(g.rawValue)")
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(on ? "On" : "Off")
     }
 
     private func radioRow(_ title: String, on: Bool) -> some View {
