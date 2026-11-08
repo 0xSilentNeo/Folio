@@ -21,6 +21,15 @@ final class ClearPopoverBackground: UIPopoverBackgroundView {
     required init?(coder: NSCoder) { fatalError() }
 }
 
+extension Notification.Name {
+    /// A player panel is opening (1.26.2): the popover is being presented, or
+    /// the glass grows into a panel. Panels are built ahead of time and kept,
+    /// so SwiftUI's onAppear came once, at the prebuild, and never again:
+    /// Now Playing opened wherever its list was left (user's 8 Nov log:
+    /// "now playing opens on" only next to "prebuilt", none at "open").
+    static let playerPanelOpening = Notification.Name("FolioPlayerPanelOpening")
+}
+
 enum PanelSource {
     case item(UIBarButtonItem)
     case view(UIView)
@@ -101,6 +110,14 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
         guard size.width > 0 else { return }
         if host.view.bounds.size != size { host.view.bounds.size = size }
         host.view.center = CGPoint(x: view.bounds.midX, y: view.bounds.midY)
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        NotificationCenter.default.post(name: .playerPanelOpening, object: nil)
+        // Again once the popover is in its window and laid out, in case the
+        // first came before (a no-op when the list is already there).
+        DispatchQueue.main.async { NotificationCenter.default.post(name: .playerPanelOpening, object: nil) }
     }
 
     /// Lays the content out ahead of time (called while the player is idle).

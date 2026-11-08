@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// The whole watchlist (1.26.0): every saved title, filtered by kind and
-/// sorted by when it was added or by name. A long press removes one.
+/// The whole watchlist (1.26.0; in its own sheet since 1.26.2): every saved
+/// title, filtered by kind and sorted by when it was added or by name. A long
+/// press removes one. Another filter or sort starts the list from its top.
 struct WatchlistView: View {
     @ObservedObject private var store = WatchlistStore.shared
     @ObservedObject private var kids = KidsProfile.shared
@@ -18,11 +19,18 @@ struct WatchlistView: View {
     enum Sort: String, CaseIterable, Identifiable {
         case added, name
         var id: String { rawValue }
-        var title: String { self == .added ? "Recently added" : "Name" }
+        var title: String { self == .added ? "Recently Added" : "Name" }
     }
 
-    private var shown: [WatchlistItem] {
-        var items = kids.activeLimits.map { l in store.items.filter { KidsRules.allows($0.meta, limits: l) } } ?? store.items
+    private static let top = "watchlistTop"
+
+    /// Saved titles the kids profile allows (all of them when it's off).
+    private var allowed: [WatchlistItem] {
+        kids.activeLimits.map { l in store.items.filter { KidsRules.allows($0.meta, limits: l) } } ?? store.items
+    }
+
+    private func shown(_ all: [WatchlistItem]) -> [WatchlistItem] {
+        var items = all
         switch filter {
         case .all: break
         case .series: items = items.filter(\.isSeries)
@@ -33,38 +41,43 @@ struct WatchlistView: View {
     }
 
     var body: some View {
-        let items = shown
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Picker("Show", selection: $filter) {
-                    ForEach(Filter.allCases) { Text($0.title).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
-                    ForEach(items) { item in
-                        let m = item.meta
-                        NavigationLink {
-                            MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS)
-                        } label: {
-                            PosterCard(meta: m, width: nil, zoom: ZoomSource(m.id, zoomNS))
+        let all = allowed
+        let items = shown(all)
+        ScrollViewReader { scroller in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Picker("Show", selection: $filter) {
+                        ForEach(Filter.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .id(Self.top)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
+                        ForEach(items) { item in
+                            let m = item.meta
+                            NavigationLink {
+                                MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS)
+                            } label: {
+                                PosterCard(meta: m, width: nil, zoom: ZoomSource(m.id, zoomNS))
+                            }
+                            .buttonStyle(.plain)
+                            .contextMenu { WatchlistMenuButton(meta: m) }
                         }
-                        .buttonStyle(.plain)
-                        .contextMenu { WatchlistMenuButton(meta: m) }
+                    }
+                    if items.isEmpty {
+                        empty(nothingSaved: all.isEmpty)
+                            .padding(.top, 40)
                     }
                 }
-                if items.isEmpty {
-                    ContentUnavailableView("Nothing saved", systemImage: "bookmark",
-                                           description: Text("Tap Watchlist on a title's page, or press and hold a poster, to save it for later."))
-                        .padding(.top, 40)
-                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 40)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 40)
+            .onChange(of: filter) { scroller.scrollTo(Self.top, anchor: .top) }
+            .onChange(of: sort) { withAnimation(.snappy) { scroller.scrollTo(Self.top, anchor: .top) } }
         }
         .background(HomeBackdrop().ignoresSafeArea())
         .navigationTitle("Watchlist")
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .primaryAction) {
                 Menu {
                     Picker("Sort", selection: $sort) {
                         ForEach(Sort.allCases) { Text($0.title).tag($0) }
@@ -73,6 +86,17 @@ struct WatchlistView: View {
                     Label("Sort", systemImage: "arrow.up.arrow.down")
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func empty(nothingSaved: Bool) -> some View {
+        if nothingSaved {
+            ContentUnavailableView("Nothing Saved", systemImage: "bookmark",
+                                   description: Text("Tap the bookmark on a title's page, or press and hold a poster, to save it for later."))
+        } else {
+            ContentUnavailableView(filter == .series ? "No Series Saved" : "No Movies Saved", systemImage: "bookmark",
+                                   description: Text("Saved \(filter == .series ? "films" : "series") are under All."))
         }
     }
 }

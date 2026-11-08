@@ -246,6 +246,12 @@ struct StreamsView: View {
                                     Button { play(s, from: g.addon) } label: { Label("Play", systemImage: "play") }
                                     Button { download(s) } label: { Label("Download", systemImage: "arrow.down.circle") }
                                 }
+                            } preview: {
+                                // All of it, also held upright (1.26.2).
+                                StreamRow(stream: s, full: true)
+                                    .padding(14)
+                                    .frame(width: 360)
+                                    .background(Theme.background)
                             }
                     }
                     if g.streams.isEmpty && g.error == nil && !loading {
@@ -356,6 +362,17 @@ struct StreamsView: View {
 
 struct StreamRow: View {
     let stream: AddonStream
+    /// Every line whatever the width (the long-press preview).
+    var full = false
+    @Environment(\.verticalSizeClass) private var vertical
+    @Environment(\.horizontalSizeClass) private var horizontal
+
+    /// Every line of the addon's description where there's room for it (1.26.2):
+    /// a phone held sideways, or an iPad. Held upright, six (until then six
+    /// everywhere, so a sideways phone still cut the file name and what
+    /// followed it). Ellipses inside a line come from the addon itself.
+    private var lineLimit: Int? { full || vertical == .compact || horizontal == .regular ? nil : 6 }
+
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Text(stream.displayName)
@@ -366,7 +383,8 @@ struct StreamRow: View {
                 .background(stream.isPlayable ? Theme.accentSoft : Theme.card, in: RoundedRectangle(cornerRadius: 10))
             VStack(alignment: .leading, spacing: 4) {
                 Text(stream.displayTitle.isEmpty ? (stream.behaviorHints?.filename ?? "Stream") : stream.displayTitle)
-                    .font(.caption).lineLimit(6)
+                    .font(.caption).lineLimit(lineLimit)
+                    .fixedSize(horizontal: false, vertical: lineLimit == nil)
                 if !stream.isPlayable {
                     Text(stream.infoHash != nil ? "Torrent stream — use a debrid-enabled addon config" : "Not a direct link")
                         .font(.caption2).foregroundStyle(.orange)

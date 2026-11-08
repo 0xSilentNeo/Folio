@@ -20,6 +20,14 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.26.2", items: [
+            Item(icon: "bookmark", title: "Watchlist in its own sheet",
+                 text: "The bookmark at the top of Discover opens it; titles open and play from there. Discover starts with Airing now again."),
+            Item(icon: "arrow.up.to.line", title: "New lists start at the top",
+                 text: "Another kind, sort or genre on Discover takes you to the first title of the new list, and Airing now's Series and Anime each start from their first."),
+            Item(icon: "list.bullet", title: "Now Playing on what's playing",
+                 text: "Playlist and Chapters open on the episode and chapter playing now, every time."),
+        ]),
         Release(version: "1.26.1", items: [
             Item(icon: "battery.100percent", title: "Longer watching, cooler phone",
                  text: "With Picture → Efficient, HDR plays straight from the video chip, and AV1 never falls back to the processor. Less work in the background while a film plays."),
