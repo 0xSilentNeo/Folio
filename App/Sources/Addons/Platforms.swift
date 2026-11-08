@@ -241,8 +241,6 @@ struct DiscoverView: View {
     @StateObject private var browse = BrowseModel()
     @StateObject private var forYou = ForYouModel()
     @State private var showPlatformSettings = false
-    /// The grid's heading has scrolled up out of sight.
-    @State private var gridHeadingAbove = false
     /// Pulls to refresh so far (the Airing now row reloads on each).
     @State private var refreshCount = 0
 
@@ -260,60 +258,10 @@ struct DiscoverView: View {
                     // scrolled up by hand (8 Nov report).
                     VStack(alignment: .leading, spacing: 24) {
                         header(margin)
-                        WatchlistRow(margin: margin, zoomNS: zoomNS)
                         AiringNowRow(margin: margin, zoomNS: zoomNS, refresh: refreshCount)
                         forYouRow(margin)
                         platformStrip(margin)
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(alignment: .firstTextBaseline) {
-                                Text(gridTitle).font(.title3.weight(.bold))
-                                Spacer()
-                                if browse.loading && browse.metas.isEmpty { FolioSpinner(size: .small) }
-                            }
-                            if let f = browse.sort.footnote { Text(f).font(.caption).foregroundStyle(.secondary) }
-                            if let limits = kids.activeLimits { KidsFilterNote(limits: limits).padding(.top, 2) }
-                        }
-                        .padding(.horizontal, margin)
-                        .id(Self.gridTop)
-                        .background {
-                            GeometryReader { g in
-                                Color.clear.onChange(of: g.frame(in: .scrollView).minY < 0, initial: true) { _, above in
-                                    // Not while a new list empties the grid: the page
-                                    // only seems to move back up because it got shorter.
-                                    guard gridHeadingAbove != above, above || !(browse.loading && browse.metas.isEmpty) else { return }
-                                    gridHeadingAbove = above
-                                }
-                            }
-                        }
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: cols), spacing: 18) {
-                            ForEach(shown) { m in
-                                NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS) } label: {
-                                    PosterCard(meta: m, width: nil, zoom: ZoomSource(m.id, zoomNS))
-                                }
-                                    .buttonStyle(.plain)
-                                    .contextMenu { WatchlistMenuButton(meta: m) }
-                                    .onAppear { if m.id == shown.last?.id { Task { await browse.loadMore() } } }
-                            }
-                        }
-                        .padding(.horizontal, margin)
-                        if browse.loading && !browse.metas.isEmpty { FolioSpinner().frame(maxWidth: .infinity).padding(.vertical, 8) }
-                        if !browse.loading, let note = browse.endNote {
-                            Text(note).font(.footnote).foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity).padding(.vertical, 6)
-                                .accessibilityIdentifier("discoverEnd")
-                        }
-                        if !browse.loading && shown.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(browse.failed ? "IMDb didn't answer." : kids.isOn && !browse.metas.isEmpty ? "Nothing here rated for the kids profile." : "Nothing here.")
-                                    .foregroundStyle(.secondary)
-                                if browse.failed {
-                                    Text("Check the connection, then pull to retry. The diagnostics log (Settings → Help & Diagnostics) records the HTTP status.")
-                                        .font(.caption).foregroundStyle(.secondary)
-                                    Button("Retry") { browse.reload() }.buttonStyle(.bordered).tint(Theme.accent)
-                                }
-                            }
-                            .padding(.horizontal, margin)
-                        }
+                        gridSection(margin: margin, cols: cols, shown: shown, minHeight: geo.size.height)
                     }
                     .padding(.top, 6)
                     .padding(.bottom, 90)
@@ -321,10 +269,12 @@ struct DiscoverView: View {
                 .scrollIndicators(.hidden)
                 // Room under the last row for the downloads pill (1.24.1).
                 .downloadPillRoom()
-                // Another genre, sort or year while scrolled down the grid:
-                // back to its heading, where the new list starts.
+                // Another kind, sort, genre or year (1.26.2: wherever the page
+                // is): the grid's heading goes to the top, where the new list
+                // starts. Until then only when the heading was above the
+                // screen, and the emptied grid left too little page under it
+                // to get there: the new list loaded below where you were.
                 .onChange(of: browse.filterKey) {
-                    guard gridHeadingAbove else { return }
                     withAnimation(.snappy) { scroller.scrollTo(Self.gridTop, anchor: .top) }
                 }
                 }
@@ -348,6 +298,62 @@ struct DiscoverView: View {
         }
     }
 
+    /// The grid with its heading. At least `minHeight` (the screen) tall, with
+    /// placeholder tiles while a new list loads, so the heading can always be
+    /// scrolled to the top.
+    private func gridSection(margin: CGFloat, cols: Int, shown: [MetaItem], minHeight: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(gridTitle).font(.title3.weight(.bold))
+                    Spacer()
+                    if browse.loading && browse.metas.isEmpty { FolioSpinner(size: .small) }
+                }
+                if let f = browse.sort.footnote { Text(f).font(.caption).foregroundStyle(.secondary) }
+                if let limits = kids.activeLimits { KidsFilterNote(limits: limits).padding(.top, 2) }
+            }
+            .padding(.horizontal, margin)
+            .id(Self.gridTop)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: cols), spacing: 18) {
+                if shown.isEmpty && browse.loading {
+                    ForEach(0..<(cols * 3), id: \.self) { _ in
+                        RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.card)
+                            .aspectRatio(2 / 3, contentMode: .fit)
+                    }
+                    .accessibilityHidden(true)
+                }
+                ForEach(shown) { m in
+                    NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS) } label: {
+                        PosterCard(meta: m, width: nil, zoom: ZoomSource(m.id, zoomNS))
+                    }
+                        .buttonStyle(.plain)
+                        .contextMenu { WatchlistMenuButton(meta: m) }
+                        .onAppear { if m.id == shown.last?.id { Task { await browse.loadMore() } } }
+                }
+            }
+            .padding(.horizontal, margin)
+            if browse.loading && !browse.metas.isEmpty { FolioSpinner().frame(maxWidth: .infinity).padding(.vertical, 8) }
+            if !browse.loading, let note = browse.endNote {
+                Text(note).font(.footnote).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity).padding(.vertical, 6)
+                    .accessibilityIdentifier("discoverEnd")
+            }
+            if !browse.loading && shown.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(browse.failed ? "IMDb didn't answer." : kids.isOn && !browse.metas.isEmpty ? "Nothing here rated for the kids profile." : "Nothing here.")
+                        .foregroundStyle(.secondary)
+                    if browse.failed {
+                        Text("Check the connection, then pull to retry. The diagnostics log (Settings → Help & Diagnostics) records the HTTP status.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        Button("Retry") { browse.reload() }.buttonStyle(.bordered).tint(Theme.accent)
+                    }
+                }
+                .padding(.horizontal, margin)
+            }
+        }
+        .frame(minHeight: minHeight, alignment: .top)
+    }
+
     private static let gridTop = "discoverGridTop"
 
     private var gridTitle: String {
@@ -363,6 +369,7 @@ struct DiscoverView: View {
         HStack(spacing: 10) {
             Text("Discover").font(.system(size: 28, weight: .bold, design: .rounded))
             Spacer()
+            WatchlistSheetButton()
             // The search is the tab bar's search button now (1.22.4).
             // Addons and streaming services are settings: locked in the kids profile (1.22.0).
             if !kids.isOn {

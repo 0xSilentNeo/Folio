@@ -149,6 +149,9 @@ struct GlassPanelPill: View {
             var t = Transaction(); t.disablesAnimations = true
             withTransaction(t) { contentOpacity = 0; displayed = k }
         }
+        // Reopened while still closing, the panel is never re-inserted (no
+        // onAppear): Now Playing goes back to the current row on this instead.
+        NotificationCenter.default.post(name: .playerPanelOpening, object: nil)
         withAnimation(.easeOut(duration: 0.1)) { pillOpacity = 0 }
         // From wherever the glass is now: the pill, or a panel still shrinking
         // (a button tapped mid-close) — the same glass reshapes into this panel.

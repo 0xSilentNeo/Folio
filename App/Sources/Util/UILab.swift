@@ -65,6 +65,15 @@ enum UILab {
                         return m
                     }
                     PlayerPresenter.play(queue: queue, index: start - 1)
+                    // `-uiTestAdvanceTo=K` (1.26.2): episode K starts 5 s in, with
+                    // no panel open (the panels were prebuilt on `start`), as when
+                    // the next episode plays on its own.
+                    if let a = CommandLine.arguments.first(where: { $0.hasPrefix("-uiTestAdvanceTo=") }),
+                       let k = Int(a.dropFirst("-uiTestAdvanceTo=".count)), (1...n).contains(k) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                            PlayerPresenter.current?.model.playFromPlaylist(k - 1)
+                        }
+                    }
                     return
                 }
                 // `-labPlayFile=<name>`: a file from Media instead of the lab clip

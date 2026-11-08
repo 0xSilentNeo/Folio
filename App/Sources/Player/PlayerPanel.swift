@@ -520,7 +520,14 @@ struct NowPlayingPanelContent: View {
                         .contentMargins(.vertical, 14, for: .scrollContent)
                         .mask(edgeFade)
                         .onAppear {
-                            // Opening (the panel is kept between openings): on the current row, without animating.
+                            // Built (ahead of time, or the glass panel inserted): on the current row.
+                            scroll(proxy, animated: false)
+                            LibTrace.panel.log("now playing built on \(Self.current(model, tab: tab) ?? "no row") (tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), chapter \(model.currentChapter))")
+                        }
+                        // Every opening (1.26.2): the panel is kept between openings,
+                        // so onAppear doesn't come again. Without animating, before
+                        // it shows; whatever was scrolled to last time doesn't stay.
+                        .onReceive(NotificationCenter.default.publisher(for: .playerPanelOpening)) { _ in
                             scroll(proxy, animated: false)
                             LibTrace.panel.log("now playing opens on \(Self.current(model, tab: tab) ?? "no row") (tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), chapter \(model.currentChapter))")
                         }

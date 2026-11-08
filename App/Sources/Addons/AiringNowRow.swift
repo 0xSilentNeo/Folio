@@ -64,6 +64,9 @@ struct AiringNowRow: View {
                     .padding(.horizontal, margin)
                 }
                 .scrollIndicators(.hidden)
+                // A scroll view per kind (1.26.2): the other kind's list starts
+                // from its first title, not where this one was scrolled to.
+                .id(kind)
                 if entries.isEmpty && !model.loading.contains(kind) {
                     Text(kids.isOn && !all.isEmpty ? "Nothing airing that's rated for the kids profile." : "Couldn't load what's airing. Pull to refresh.")
                         .font(.footnote).foregroundStyle(.secondary)
