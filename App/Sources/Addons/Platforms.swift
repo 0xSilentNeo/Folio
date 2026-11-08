@@ -690,6 +690,7 @@ struct PlatformSettingsView: View {
                             Button { enabled.append(p) } label: {
                                 HStack { PlatformBadge(platform: p, size: 30); Text(p.name).foregroundStyle(.primary); Spacer(); Image(systemName: "plus.circle.fill") }
                             }
+                            .accessibilityLabel("Show \(p.name)")
                         }
                     }
                 }
@@ -703,10 +704,16 @@ struct PlatformSettingsView: View {
             .navigationTitle("Streaming Services")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // 1.26.1: Cancel, and no swipe away once something changed
+                // (a swipe dropped the changes without a word).
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { StreamingPlatform.enabled = enabled; dismiss() }
                 }
             }
         }
+        .interactiveDismissDisabled(enabled != StreamingPlatform.enabled)
     }
 }

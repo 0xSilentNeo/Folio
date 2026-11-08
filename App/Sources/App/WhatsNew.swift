@@ -24,7 +24,9 @@ enum WhatsNew {
             Item(icon: "battery.100percent", title: "Longer watching, cooler phone",
                  text: "With Picture → Efficient, HDR plays straight from the video chip, and AV1 never falls back to the processor. Less work in the background while a film plays."),
             Item(icon: "gearshape", title: "Settings, tidied",
-                 text: "Fewer sections, every row opens a page, short explanations with More, About Folio with what Folio is built on, and a question before anything is deleted."),
+                 text: "Search at the top, fewer sections, every row opens a page, short explanations with More, About Folio, and a question before anything is deleted."),
+            Item(icon: "bell.badge", title: "A clearer Notifications page",
+                 text: "Each kind says On or Off and opens its own page; Personality and Quiet Hours are simple lists; Test moved to Help & Diagnostics."),
         ]),
         Release(version: "1.26.0", items: [
             Item(icon: "bookmark", title: "A watchlist",

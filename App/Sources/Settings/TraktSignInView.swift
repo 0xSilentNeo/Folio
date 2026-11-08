@@ -11,6 +11,8 @@ struct TraktSignInView: View {
 
     var body: some View {
         NavigationStack {
+            // 1.26.1: scrolls, and the buttons stack, at large text sizes.
+            ScrollView {
             VStack(spacing: 22) {
                 if let code {
                     Text("Enter this code at \(code.verificationURL.host() ?? "trakt.tv")/activate")
@@ -19,27 +21,25 @@ struct TraktSignInView: View {
                         .font(.system(.largeTitle, design: .monospaced).weight(.bold))
                         .textSelection(.enabled)
                         .accessibilityLabel("Code \(code.userCode.map(String.init).joined(separator: " "))")
-                    HStack(spacing: 12) {
-                        Button(copied ? "Copied" : "Copy code", systemImage: copied ? "checkmark" : "doc.on.doc") {
-                            UIPasteboard.general.string = code.userCode
-                            copied = true
-                        }
-                        .buttonStyle(.bordered)
-                        Button("Open Trakt", systemImage: "safari") { openURL(code.verificationURL) }
-                            .buttonStyle(.borderedProminent)
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 12) { buttons(code) }
+                        VStack(spacing: 12) { buttons(code) }
                     }
                     HStack(spacing: 8) {
                         ProgressView()
                         Text("Waiting for you to allow Folio…").font(.footnote).foregroundStyle(.secondary)
                     }
                 } else if let problem {
-                    ContentUnavailableView("Couldn't sign in", systemImage: "exclamationmark.triangle", description: Text(problem))
+                    ContentUnavailableView("Couldn't Sign In", systemImage: "exclamationmark.triangle", description: Text(problem))
                 } else {
                     ProgressView("Asking Trakt for a code…")
                 }
             }
             .padding(24)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.top, 24)
+            .frame(maxWidth: .infinity)
+            }
+            .scrollBounceBehavior(.basedOnSize)
             .navigationTitle("Connect Trakt")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -47,6 +47,17 @@ struct TraktSignInView: View {
             }
         }
         .task { await signIn() }
+    }
+
+    @ViewBuilder
+    private func buttons(_ code: TraktClient.DeviceCode) -> some View {
+        Button(copied ? "Copied" : "Copy Code", systemImage: copied ? "checkmark" : "doc.on.doc") {
+            UIPasteboard.general.string = code.userCode
+            copied = true
+        }
+        .buttonStyle(.bordered)
+        Button("Open Trakt", systemImage: "safari") { openURL(code.verificationURL) }
+            .buttonStyle(.borderedProminent)
     }
 
     private func signIn() async {

@@ -10,7 +10,7 @@ struct SyncSettingsView: View {
         Form {
             Section {
                 ForEach(SyncService.allCases) { s in
-                    NavigationLink { SyncServiceView(service: s) } label: {
+                    NavigationLink(value: LibraryRoute.settingsSubpage(.syncService(s))) {
                         LabeledContent {
                             SyncStatusText(service: s)
                         } label: {

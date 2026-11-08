@@ -246,6 +246,8 @@ enum LibraryRoute: Hashable {
     case settings
     /// A page of Settings (1.26.1), pushed by value like the rest.
     case settingsPage(SettingsPage)
+    /// A page further into Settings (1.26.1).
+    case settingsSubpage(SettingsSubpage)
 
     /// How the log names a route: a WebDAV folder by its name only, never its
     /// address (an address typed with user:password@ would carry them).
@@ -258,6 +260,7 @@ enum LibraryRoute: Hashable {
         case .webdavFolder(_, _, let name): return "webdav folder(\(name))"
         case .settings: return "settings"
         case .settingsPage(let page): return "settings/\(page.rawValue)"
+        case .settingsSubpage(let page): return "settings/\(page.logName)"
         }
     }
 
@@ -267,7 +270,7 @@ enum LibraryRoute: Hashable {
         switch self {
         case .group(let id): return id
         case .folder(let path): return "d|" + path
-        case .settings, .settingsPage, .file, .webdav, .webdavFolder: return nil
+        case .settings, .settingsPage, .settingsSubpage, .file, .webdav, .webdavFolder: return nil
         }
     }
 
@@ -304,6 +307,8 @@ enum LibraryRoute: Hashable {
             SettingsView()
         case .settingsPage(let page):
             SettingsDestination(page: page)
+        case .settingsSubpage(let page):
+            SettingsSubpageDestination(page: page)
         }
     }
 }

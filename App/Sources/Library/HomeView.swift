@@ -75,10 +75,11 @@ struct HomeView: View {
             .task(id: local.files) { metaIndex.update(local.files) }
             .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
-            // The kids profile locked again (turned on, or Folio came back):
-            // Settings and every page opened from it go, so none stays usable
-            // without the passcode; opening Settings again asks (1.26.1).
-            .onChange(of: kids.relockedAt) {
+            // Folio went to the background with the kids profile on: Settings
+            // and every page opened from it go, so none stays usable without
+            // the passcode; opening Settings again asks (1.26.1). Not when the
+            // profile is turned on, on its own page.
+            .onChange(of: kids.backgroundedAt) {
                 guard kids.isOn, let i = path.firstIndex(where: { if case .settings = $0 { return true }; return false }) else { return }
                 path.removeSubrange(i...)
             }

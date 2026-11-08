@@ -32,13 +32,22 @@ final class KidsProfile: ObservableObject {
     /// longer opens them (SettingsView), even if Settings stayed open under
     /// a page pushed from them.
     @Published private(set) var relockedAt = Date()
+    /// When Folio last went to the background (1.26.1): Home then closes
+    /// Settings and every page opened from it while the profile is on. Not
+    /// on turning the profile on: the Kids Profile page stays, its buttons
+    /// asking for the passcode (relockedAt closed it then).
+    @Published private(set) var backgroundedAt = Date()
 
     private init() {
         isOn = Self.isOnNow
         limits = Self.currentLimits
         allowBiometrics = UserDefaults.standard.object(forKey: SettingsKey.kidsBiometrics) as? Bool ?? true
         NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { KidsProfile.shared.relockedAt = Date() }
+            MainActor.assumeIsolated {
+                let now = Date()
+                KidsProfile.shared.relockedAt = now
+                KidsProfile.shared.backgroundedAt = now
+            }
         }
     }
 

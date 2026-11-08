@@ -257,13 +257,14 @@ struct TrackingView: View {
             TrackingAlertsSection()
             if store.shows.isEmpty {
                 Section {
-                    ContentUnavailableView("Nothing tracked yet", systemImage: "bell",
+                    ContentUnavailableView("Nothing Tracked Yet", systemImage: "bell",
                                            description: Text("Tap Track on a show's page in Discover or your library to see when its next episodes air."))
                 }
                 .listRowBackground(Color.clear)
             }
-            ForEach(AiringGroup.grouped(store.shows, now: now)) { g in
-                Section(g.group.title) {
+            let groups = AiringGroup.grouped(store.shows, now: now)
+            ForEach(groups) { g in
+                Section {
                     ForEach(g.shows) { s in
                         TrackedShowRow(show: s, now: now) { open = s.id }
                             .swipeActions(edge: .trailing) {
@@ -276,11 +277,13 @@ struct TrackingView: View {
                                 Button(role: .destructive) { store.untrack(s.id) } label: { Label("Stop Tracking", systemImage: "bell.slash") }
                             }
                     }
-                }
-            }
-            if !store.shows.isEmpty {
-                Section {} footer: {
-                    Text("Times are in your time zone (\(TimeZone.autoupdatingCurrent.localizedName(for: .generic, locale: .current) ?? TimeZone.autoupdatingCurrent.identifier)). Schedules from TVmaze (tvmaze.com, CC BY-SA) and AniList.")
+                } header: {
+                    Text(g.group.title)
+                } footer: {
+                    // Under the last group (1.26.1; it had an empty section of its own).
+                    if g.id == groups.last?.id {
+                        Text("Times are in your time zone (\(TimeZone.autoupdatingCurrent.localizedName(for: .generic, locale: .current) ?? TimeZone.autoupdatingCurrent.identifier)). Schedules from TVmaze (tvmaze.com, CC BY-SA) and AniList.")
+                    }
                 }
             }
         }

@@ -78,6 +78,15 @@ struct LanguageListEditor: View {
     @Binding var list: String
     @State private var langs: [PlaybackLanguage] = []
     @State private var adding = false
+    @State private var query = ""
+
+    /// The languages not in the list yet, narrowed by what's typed in the sheet's search.
+    private var addable: [PlaybackLanguage] {
+        let rest = PlaybackLanguage.all.filter { !langs.contains($0) }
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return rest }
+        return rest.filter { $0.name.localizedStandardContains(q) || $0.codes.contains { $0.localizedCaseInsensitiveCompare(q) == .orderedSame } }
+    }
 
     var body: some View {
         List {
@@ -87,15 +96,18 @@ struct LanguageListEditor: View {
                 }
                 ForEach(Array(langs.enumerated()), id: \.element.id) { i, l in
                     HStack {
-                        Text("\(i + 1)").font(.subheadline.monospacedDigit().weight(.semibold)).foregroundStyle(Theme.accent).frame(width: 22)
+                        Text("\(i + 1)").font(.subheadline.monospacedDigit().weight(.semibold)).foregroundStyle(Theme.accent)
+                            .frame(minWidth: 22, alignment: .leading)
                         Text(l.name)
                         Spacer()
                         Text(l.codes.first ?? "").font(.caption.monospaced()).foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
                     }
+                    .accessibilityElement(children: .combine)
                 }
                 .onMove { from, to in langs.move(fromOffsets: from, toOffset: to); save() }
                 .onDelete { idx in langs.remove(atOffsets: idx); save() }
-                Button { adding = true } label: { Label("Add language", systemImage: "plus.circle.fill") }
+                Button { adding = true } label: { Label("Add Language", systemImage: "plus.circle.fill") }
             } footer: { Text(explanation) }
         }
         .environment(\.editMode, .constant(.active))
@@ -105,17 +117,20 @@ struct LanguageListEditor: View {
         .onAppear { langs = PlaybackLanguage.parse(list) }
         .sheet(isPresented: $adding) {
             NavigationStack {
-                List(PlaybackLanguage.all.filter { !langs.contains($0) }) { l in
+                List(addable) { l in
                     Button {
                         langs.append(l); save(); adding = false
                     } label: { Text(l.name).foregroundStyle(.primary) }
                 }
+                .overlay { if addable.isEmpty && !query.isEmpty { ContentUnavailableView.search(text: query) } }
+                .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Language or code")
                 .brandListBackground()
-                .navigationTitle("Add language")
+                .navigationTitle("Add Language")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { adding = false } } }
             }
             .presentationDetents([.medium, .large])
+            .onDisappear { query = "" }
         }
     }
 

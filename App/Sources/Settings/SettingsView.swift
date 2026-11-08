@@ -12,6 +12,8 @@ struct SettingsView: View {
     /// Until 1.22.1 Settings opened with the profile off stayed open after it
     /// was turned on, and Turn Off asked for nothing (reported on 1.22.0).
     @State private var unlockedAt: Date?
+    /// What's typed in the search field (1.26.1).
+    @State private var query = ""
     private var locked: Bool { kids.isOn && !(unlockedAt.map { $0 > kids.relockedAt } ?? false) }
 
     /// The lock goes over the list rather than in its place: swapping the
@@ -36,6 +38,53 @@ struct SettingsView: View {
     /// screens on a 17 Pro). The version is under About.
     private var list: some View {
         List {
+            Section {
+                SettingsSearchField(text: $query)
+            }
+            if query.trimmingCharacters(in: .whitespaces).isEmpty {
+                pages
+            } else {
+                results
+            }
+        }
+        .settingsPage()
+        .scrollDismissesKeyboard(.immediately)
+        .background { TopEdgeNoBounce().frame(width: 0, height: 0).accessibilityHidden(true) }
+    }
+
+    /// What the search found: each setting with its page's tile and name.
+    @ViewBuilder
+    private var results: some View {
+        let found = SettingsIndex.search(query)
+        if found.isEmpty {
+            Section {
+                ContentUnavailableView.search(text: query)
+                    .listRowBackground(Color.clear)
+            }
+        } else {
+            Section {
+                ForEach(found) { r in
+                    NavigationLink(value: r.route) {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(r.title)
+                                if r.title != r.location {
+                                    Text(r.location).font(.footnote).foregroundStyle(.secondary)
+                                }
+                            }
+                        } icon: {
+                            SettingsIcon(r.page.symbol, color: r.page.color)
+                        }
+                    }
+                }
+            } header: {
+                Text(found.count == 1 ? "1 Result" : "\(found.count) Results")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var pages: some View {
             Section {
                 SettingsRow(.general)
                 SettingsRow(.notifications)
@@ -63,9 +112,6 @@ struct SettingsView: View {
                     Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
                 }
             }
-        }
-        .settingsPage()
-        .background { TopEdgeNoBounce().frame(width: 0, height: 0).accessibilityHidden(true) }
     }
 }
 
@@ -82,7 +128,6 @@ private struct TrackedShowsRow: View {
 struct PlaybackSettings: View {
     @ObservedObject private var bar = SeekBarPrefs.shared
     @AppStorage(SettingsKey.resumePlayback) private var resume = true
-    @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
     @AppStorage(SettingsKey.autoplayNext) private var autoplayNext = true
     @AppStorage(SettingsKey.backgroundAudio) private var backgroundAudio = true
     @AppStorage(SettingsKey.landscapeOnOpen) private var landscapeOnOpen = true
@@ -112,7 +157,7 @@ struct PlaybackSettings: View {
                     Toggle("Remember per show", isOn: $rememberPerShow)
                 }
                 if rememberPerShow {
-                    NavigationLink { RememberedShowsView() } label: { Text("Remembered shows") }
+                    NavigationLink(value: LibraryRoute.settingsSubpage(.rememberedShows)) { Text("Remembered Shows") }
                 }
                 Explained("When an episode ends, or the Up Next countdown runs out, the next one in the list starts.") {
                     Toggle("Play next file automatically", isOn: $autoplayNext)
@@ -171,10 +216,7 @@ struct PlaybackSettings: View {
                     }
                 }
                 Explained("How much of the screen's width the controls use in landscape.") {
-                    LabeledContent("Controls width") {
-                        Slider(value: $controlsWidth, in: 0.6...1.0, step: 0.05).frame(maxWidth: 170)
-                        Text("\(Int(controlsWidth * 100))%").monospacedDigit().frame(width: 44, alignment: .trailing)
-                    }
+                    SliderRow("Controls width", value: $controlsWidth, in: 0.6...1.0, step: 0.05)
                 }
             }
             Section("Progress bar") {
@@ -197,11 +239,14 @@ struct PlaybackSettings: View {
                 Explained("The video can keep playing in a small floating window over other apps.") {
                     Toggle("Picture in Picture", isOn: $pipEnabled)
                 }
-                Explained("Going to the Home Screen while a video plays opens Picture in Picture by itself.") {
-                    Toggle("Start automatically when leaving", isOn: $pipAuto).disabled(!pipEnabled)
-                }
-                Explained("Opening the app while Picture in Picture is up closes the small window and carries on in the player.") {
-                    Toggle("Back to the player when you open the app", isOn: $pipReturnOnOpen).disabled(!pipEnabled)
+                // 1.26.1: shown only while Picture in Picture is on (they were greyed out).
+                if pipEnabled {
+                    Explained("Going to the Home Screen while a video plays opens Picture in Picture by itself.") {
+                        Toggle("Start automatically when leaving", isOn: $pipAuto)
+                    }
+                    Explained("Opening the app while Picture in Picture is up closes the small window and carries on in the player.") {
+                        Toggle("Back to the player when you open the app", isOn: $pipReturnOnOpen)
+                    }
                 }
             }
         }
@@ -230,12 +275,8 @@ struct SubtitleAudioSettings: View {
     var body: some View {
         Form {
             Section {
-                NavigationLink {
-                    LanguageListEditor(title: "Audio Languages",
-                                       explanation: "When a file has several audio tracks, the first language on this list that the file has is played. With none of them, the file's default track plays.",
-                                       list: $audioLangs)
-                } label: {
-                    LabeledContent("Preferred audio language", value: PlaybackLanguage.summary(audioLangs))
+                NavigationLink(value: LibraryRoute.settingsSubpage(.audioLanguages)) {
+                    LabeledContent("Audio Languages", value: PlaybackLanguage.summary(audioLangs))
                 }
                 Explained("Plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't used. Off: always stereo.") {
                     Toggle("Surround & Spatial Audio", isOn: $surround)
@@ -263,12 +304,8 @@ struct SubtitleAudioSettings: View {
                         Text("On").tag("on"); Text("Off").tag("off")
                     }
                 }
-                NavigationLink {
-                    LanguageListEditor(title: "Subtitle Languages",
-                                       explanation: "The first language on this list that the file has subtitles in is shown. Subtitles can always be switched in the player's Tracks menu.",
-                                       list: $subLangs)
-                } label: {
-                    LabeledContent("Preferred subtitle language", value: PlaybackLanguage.summary(subLangs))
+                NavigationLink(value: LibraryRoute.settingsSubpage(.subtitleLanguages)) {
+                    LabeledContent("Subtitle Languages", value: PlaybackLanguage.summary(subLangs))
                 }
                 .disabled(subtitlesDefault == "off")
             } header: { Text("Subtitles") }
@@ -278,12 +315,9 @@ struct SubtitleAudioSettings: View {
                         ForEach(SubtitleStyle.allCases) { Text($0.title).tag($0.rawValue) }
                     }
                 }
-                LabeledContent("Size") {
-                    Slider(value: $subScale, in: 0.5...2.5, step: 0.05).frame(maxWidth: 180)
-                    Text("\(Int(subScale * 100))%").monospacedDigit().frame(width: 48, alignment: .trailing)
-                }
+                SliderRow("Size", value: $subScale, in: 0.5...2.5, step: 0.05)
                 Explained("100 is the normal place near the bottom; lower numbers move subtitles up, higher numbers further down.") {
-                    Stepper("Position  \(subPos)", value: $subPos, in: 50...150)
+                    Stepper(value: $subPos, in: 50...150) { LabeledContent("Position", value: "\(subPos)") }
                 }
                 Explained(subFollowZoom == "manual"
                           ? "Subtitles stay where Position puts them on the video. When you zoom in or fill the screen, a subtitle near the bottom can go past the screen's edge: move it up with Position."
@@ -311,9 +345,8 @@ struct RememberedShowsView: View {
     @ObservedObject private var store = ShowMemoryStore.shared
     @State private var confirmAll = false
 
-    private var shows: [ShowMemoryStore.Entry] { store.entries.sorted { $0.updated > $1.updated } }
-
     var body: some View {
+        let shows = store.entries.sorted { $0.updated > $1.updated }
         List {
             Section {
                 ForEach(shows) { e in
@@ -325,21 +358,28 @@ struct RememberedShowsView: View {
                         Button("Forget", role: .destructive) { store.forget(e.id) }
                     }
                 }
-                if shows.isEmpty { Text("Nothing remembered yet.").foregroundStyle(.secondary) }
             } footer: {
-                Text("Swipe a show to forget its settings; it then plays with your defaults again. Up to 500 shows are kept; the ones not watched for longest go first.")
+                if !shows.isEmpty {
+                    Text("Swipe a show to forget its settings; it then plays with your defaults again. Up to 500 shows are kept; the ones not watched for longest go first.")
+                }
             }
             if !shows.isEmpty {
                 Section {
-                    Button("Forget all", role: .destructive) { confirmAll = true }
+                    Button("Forget All", role: .destructive) { confirmAll = true }
                         .confirmationDialog("Forget the settings of every show?", isPresented: $confirmAll, titleVisibility: .visible) {
-                            Button("Forget all", role: .destructive) { store.forgetAll() }
+                            Button("Forget All", role: .destructive) { store.forgetAll() }
                         }
                 }
             }
         }
+        .overlay {
+            if shows.isEmpty {
+                ContentUnavailableView("Nothing Remembered Yet", systemImage: "rectangle.stack.badge.person.crop",
+                                       description: Text("The tracks, delays, Fill and Anime4K you pick in the player are kept here for each show."))
+            }
+        }
         .brandListBackground()
-        .navigationTitle("Remembered shows")
+        .navigationTitle("Remembered Shows")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -396,7 +436,9 @@ struct SkipSettings: View {
                         Toggle("Add found markers as chapters", isOn: $injectChapters)
                     }
                     Explained("Open Anime Timestamps only knows where a part starts, so its length is assumed.") {
-                        Stepper("OAT segment length  \(Int(oatLength)) s", value: $oatLength, in: 60...150, step: 5)
+                        Stepper(value: $oatLength, in: 60...150, step: 5) {
+                            LabeledContent("OAT segment length", value: Duration.seconds(oatLength).formatted(.units(allowed: [.seconds], width: .abbreviated)))
+                        }
                     }
                 }
                 Section {
@@ -411,7 +453,7 @@ struct SkipSettings: View {
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Button("Show again") { memory.showIntrosAgain(e.id) }
+                            Button("Show Again") { memory.showIntrosAgain(e.id) }
                                 .buttonStyle(.borderless)
                                 .accessibilityIdentifier("introShowAgain:" + e.name)
                         }
@@ -537,23 +579,25 @@ struct MPVSettings: View {
             } header: { Text("Video") } footer: { Text("Changes apply to the next video you open.") }
             Section("Streaming") {
                 Explained("How much of a stream is kept in memory, ahead of where you are (and a third of that behind). More means fewer pauses on a slow connection and quicker jumps back, but uses more memory.") {
-                    Stepper("Cache  \(cacheMB) MB", value: $cacheMB, in: 32...1024, step: 32)
+                    Stepper(value: $cacheMB, in: 32...1024, step: 32) {
+                        LabeledContent("Cache", value: Measurement(value: Double(cacheMB), unit: UnitInformationStorage.megabytes).formatted(.measurement(width: .abbreviated, usage: .asProvided)))
+                    }
                 }
             }
             Section {
-                NavigationLink { ScriptsView() } label: { Label("Scripts", systemImage: "chevron.left.forwardslash.chevron.right") }
-                NavigationLink { ShadersView() } label: { Label("Shaders", systemImage: "wand.and.stars") }
-                NavigationLink { ConfigEditorView(url: MPVFiles.mpvConf, title: "mpv.conf") } label: { Label("mpv.conf", systemImage: "doc.text") }
-                NavigationLink { ConfigEditorView(url: MPVFiles.inputConf, title: "input.conf") } label: { Label("input.conf", systemImage: "keyboard") }
-                NavigationLink { ScriptOptsView() } label: { Label("script-opts", systemImage: "slider.horizontal.below.square.filled.and.square") }
-                NavigationLink { CommandsEditorView() } label: { Label("Player commands", systemImage: "command") }
+                NavigationLink(value: LibraryRoute.settingsSubpage(.scripts)) { Label("Scripts", systemImage: "chevron.left.forwardslash.chevron.right") }
+                NavigationLink(value: LibraryRoute.settingsSubpage(.shaders)) { Label("Shaders", systemImage: "wand.and.stars") }
+                NavigationLink(value: LibraryRoute.settingsSubpage(.config(MPVFiles.mpvConf, "mpv.conf", true))) { Label("mpv.conf", systemImage: "doc.text") }
+                NavigationLink(value: LibraryRoute.settingsSubpage(.config(MPVFiles.inputConf, "input.conf", true))) { Label("input.conf", systemImage: "keyboard") }
+                NavigationLink(value: LibraryRoute.settingsSubpage(.scriptOptions)) { Label("script-opts", systemImage: "slider.horizontal.below.square.filled.and.square") }
+                NavigationLink(value: LibraryRoute.settingsSubpage(.commands)) { Label("Player Commands", systemImage: "command") }
             } header: { Text("Customise") } footer: {
                 Text("Scripts and shaders load with every video. mpv.conf holds mpv options, input.conf keyboard shortcuts, script-opts each script's options; player commands appear in the player's Commands menu. Your mpv folder is in Files → On My iPhone → Folio → mpv.")
             }
             // No Log level any more (1.23.0): mpv writes its log file at debug
             // detail whatever it's set to, so all four choices did nothing (review).
             Section("Logs") {
-                NavigationLink { LogView() } label: { Label("Last playback log", systemImage: "text.alignleft") }
+                NavigationLink(value: LibraryRoute.settingsSubpage(.playbackLog)) { Label("Last Playback Log", systemImage: "text.alignleft") }
             }
         }
         .brandListBackground()
@@ -563,13 +607,22 @@ struct MPVSettings: View {
 }
 
 struct AdvancedSettings: View {
+    @AppStorage(SettingsKey.notifyTest) private var notifyTest = true
     @AppStorage(SettingsKey.tabZoom) private var tabZoom = false
     @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
 
     var body: some View {
         Form {
             Section {
-                NavigationLink { DiagnosticsView() } label: { Label("Diagnostics & Report", systemImage: "stethoscope") }
+                NavigationLink(value: LibraryRoute.settingsSubpage(.diagnostics)) { Label("Diagnostics & Report", systemImage: "stethoscope") }
+                // 1.26.1: Test, from Notifications.
+                NavigationLink(value: LibraryRoute.settingsSubpage(.notifyTest)) {
+                    LabeledContent {
+                        Text(notifyTest ? "On" : "Off")
+                    } label: {
+                        Label("Notification Test", systemImage: "testtube.2")
+                    }
+                }
             } footer: { Text("A report bundles the logs and your settings (passwords removed) to send when something goes wrong.") }
             // 1.26.1: the experiments, from General and Playback.
             Section {
@@ -594,6 +647,7 @@ struct ScriptsView: View {
     @State private var showURL = false
     @State private var remoteURL = ""
     @State private var message: String?
+    @State private var editing: MPVFiles.Script?
 
     var body: some View {
         List {
@@ -613,9 +667,10 @@ struct ScriptsView: View {
                         .labelsHidden()
                     }
                     .contextMenu {
-                        if !s.isDirectory {
-                            NavigationLink { ConfigEditorView(url: s.url, title: s.name, monospaced: true) } label: { Label("Edit", systemImage: "pencil") }
-                        }
+                        if !s.isDirectory { Button("Edit", systemImage: "pencil") { editing = s } }
+                    }
+                    .swipeActions(edge: .leading) {
+                        if !s.isDirectory { Button("Edit", systemImage: "pencil") { editing = s }.tint(Theme.action) }
                     }
                 }
                 .onDelete { idx in
@@ -630,7 +685,7 @@ struct ScriptsView: View {
             }
 
             Section {
-                Button { importing = true } label: { Label("Import .lua files…", systemImage: "square.and.arrow.down") }
+                Button { importing = true } label: { Label("Import .lua Files…", systemImage: "square.and.arrow.down") }
                 Button { showURL = true } label: { Label("Install from URL…", systemImage: "link") }
                 if let message { Text(message).font(.caption).foregroundStyle(.secondary) }
             } header: { Text("Add") } footer: {
@@ -643,6 +698,9 @@ struct ScriptsView: View {
         }
         .brandListBackground()
         .navigationTitle("Scripts")
+        .navigationDestination(item: $editing) { s in
+            ConfigEditorView(url: s.url, title: s.name, monospaced: true).settingsPage()
+        }
         .onAppear(perform: reload)
         .toolbar { EditButton() }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
@@ -688,7 +746,7 @@ struct ScriptOptsView: View {
     var body: some View {
         List {
             ForEach(files, id: \.self) { f in
-                NavigationLink { ConfigEditorView(url: f, title: f.lastPathComponent) } label: {
+                NavigationLink(value: LibraryRoute.settingsSubpage(.config(f, f.lastPathComponent, true))) {
                     Text(f.lastPathComponent).font(.body.monospaced())
                 }
             }
@@ -765,6 +823,8 @@ struct ShadersView: View {
                             }
                         }
                     }
+                    .accessibilityValue(idx.map { "On, applied \($0 + 1) of \(active.count)" } ?? "Off")
+                    .accessibilityAddTraits(idx != nil ? .isSelected : [])
                 }
                 .onDelete { idx in
                     for i in idx {
@@ -778,8 +838,8 @@ struct ShadersView: View {
                 if !active.isEmpty {
                     Button("Turn All Off") { active = []; MPVFiles.activeShaderNames = [] }
                 }
-            } header: { Text("Installed — tap to toggle, order = apply order") } footer: {
-                Text("Active shaders apply to every video and can be switched per video from the player's Shaders menu. Compute shaders need the Metal renderer.")
+            } header: { Text("Installed") } footer: {
+                Text("Tap a shader to turn it on or off; they apply in the order you turn them on (the number). Active shaders apply to every video and can be switched per video from the player's Shaders menu. Compute shaders need the Metal renderer.")
             }
 
             Section("Download") {
@@ -787,11 +847,12 @@ struct ShadersView: View {
                     HStack {
                         VStack(alignment: .leading) {
                             Text(e.file).font(.footnote.monospaced())
-                            Text(e.group).font(.caption2).foregroundStyle(.secondary)
+                            Text(e.group).font(.footnote).foregroundStyle(.secondary)
                         }
                         Spacer()
                         if files.contains(where: { $0.lastPathComponent == e.file }) {
                             Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accent)
+                                .accessibilityLabel("Installed")
                         } else if downloading.contains(e.file) {
                             FolioSpinner(size: .small)
                         } else {
@@ -802,13 +863,13 @@ struct ShadersView: View {
                         }
                     }
                 }
-                Button("Download all Anime4K + FSRCNNX") {
+                Button("Download All (Anime4K & FSRCNNX)") {
                     for e in ShaderCatalog.entries where !files.contains(where: { $0.lastPathComponent == e.file }) { download(e) }
                 }
             }
 
             Section {
-                Button { importing = true } label: { Label("Import shader files…", systemImage: "square.and.arrow.down") }
+                Button { importing = true } label: { Label("Import Shader Files…", systemImage: "square.and.arrow.down") }
                 Button { showURL = true } label: { Label("Install from URL…", systemImage: "link") }
                 if let message { Text(message).font(.caption).foregroundStyle(.secondary) }
             }
@@ -887,7 +948,7 @@ struct CommandsEditorView: View {
             }
         }
         .brandListBackground()
-        .navigationTitle("Commands")
+        .navigationTitle("Player Commands")
         .toolbar { EditButton() }
         .sheet(item: $editing) { c in
             CommandEditSheet(command: c) { updated in
@@ -908,10 +969,16 @@ struct CommandEditSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("Name", text: $command.name)
-                TextField("mpv command", text: $command.command, axis: .vertical)
-                    .font(.body.monospaced())
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                Section("Name") {
+                    TextField("Name", text: $command.name, prompt: Text("Next Chapter"))
+                }
+                Section {
+                    TextField("mpv Command", text: $command.command, prompt: Text("add chapter 1"), axis: .vertical)
+                        .font(.body.monospaced())
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                } header: { Text("mpv Command") } footer: {
+                    Text("Any input.conf command; separate several with a semicolon.")
+                }
             }
             .brandListBackground()
             .navigationTitle(command.name.isEmpty ? "New Command" : command.name)
@@ -985,9 +1052,6 @@ struct LogView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
-                if lines.isEmpty {
-                    Text("No log yet — play something first.")
-                }
                 ForEach(lines.indices, id: \.self) { i in
                     Text(lines[i]).textSelection(.enabled)
                 }
@@ -996,17 +1060,26 @@ struct LogView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
         }
+        .overlay {
+            if lines.isEmpty {
+                if text.isEmpty {
+                    ContentUnavailableView("No Log Yet", systemImage: "text.alignleft", description: Text("Play something first."))
+                } else {
+                    ContentUnavailableView("No Errors", systemImage: "checkmark.circle", description: Text("The last playback logged no errors or warnings."))
+                }
+            }
+        }
         .onChange(of: errorsOnly) { _, _ in lines = Self.lines(text, errorsOnly: errorsOnly) }
         .background(Theme.background)
         .brandListBackground()
-        .navigationTitle("Last log")
+        .navigationTitle("Last Playback Log")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Toggle(isOn: $errorsOnly) { Image(systemName: "exclamationmark.triangle") }
+                Toggle("Errors Only", systemImage: "exclamationmark.triangle", isOn: $errorsOnly)
             }
             ToolbarItem(placement: .topBarTrailing) {
-                if let shareCopy { ShareLink(item: shareCopy) { Label("Share", systemImage: "square.and.arrow.up") } }
+                if let shareCopy { ShareLink(item: shareCopy) }
             }
         }
         .task {
@@ -1085,7 +1158,7 @@ struct DiagnosticsView: View {
                     .textSelection(.enabled)
             }
             Section {
-                Button("Clear logs", role: .destructive) {
+                Button("Clear Logs", role: .destructive) {
                     // Through the logger itself, which closes its open file
                     // first: deleting app.log under it left later lines going
                     // to a file that was gone (1.20.3, 2 Nov).
@@ -1095,7 +1168,7 @@ struct DiagnosticsView: View {
             }
         }
         .brandListBackground()
-        .navigationTitle("Diagnostics")
+        .navigationTitle("Diagnostics & Report")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             // Off the main thread, and only the end of the file (1.24.1): the
@@ -1168,8 +1241,8 @@ struct DiscoverSettings: View {
                 Text("Optional alternative source. Free for personal use with your own key; leave empty to use IMDb.")
             }
             Section {
-                Button("Streaming services…") { showPlatforms = true }
-                NavigationLink("Addons") { AddonsManagerView() }
+                Button("Streaming Services…") { showPlatforms = true }
+                NavigationLink("Addons", value: LibraryRoute.settingsSubpage(.addons))
             }
         }
         .brandListBackground()
@@ -1369,15 +1442,20 @@ struct AppIconPicker: View {
                 } label: {
                     VStack(spacing: 6) {
                         Image(o.preview).resizable().frame(width: 58, height: 58)
-                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(Theme.hairline))
+                            .clipShape(.rect(cornerRadius: 13, style: .continuous))
+                            .overlay { RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(Theme.hairline) }
                             .padding(3)
-                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(current == o.id ? Theme.accent : .clear, lineWidth: 2))
-                        Text(o.title).font(.caption).foregroundStyle(current == o.id ? Color.primary : Color.secondary)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(current == o.id ? Theme.accent : .clear, lineWidth: 2)
+                            }
+                        Text(o.title).font(.caption)
+                            .foregroundStyle(current == o.id ? Color.primary : Color.secondary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
+                    .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(o.title) icon")

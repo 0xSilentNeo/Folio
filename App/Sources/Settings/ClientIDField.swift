@@ -29,7 +29,8 @@ struct ClientIDField: View {
                 .multilineTextAlignment(.trailing)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .font(.body.monospaced())
+                // The id in monospace, the prompt like the secret's.
+                .font(clientID.isEmpty ? .body : .body.monospaced())
         }
         if service == .trakt {
             LabeledContent("Client Secret") {
@@ -39,14 +40,24 @@ struct ClientIDField: View {
                     .autocorrectionDisabled()
             }
             .onAppear { secret = Keychain.get(SyncService.traktSecretAccount) ?? "" }
-            .onChange(of: secret) { _, v in
-                let t = v.trimmingCharacters(in: .whitespacesAndNewlines)
-                Keychain.set(t.isEmpty ? nil : t, for: SyncService.traktSecretAccount)
-            }
+            .onSubmit(saveSecret)
+            .onDisappear(perform: saveSecret)
         }
-        Button(action: connect) {
+        Button {
+            saveSecret()
+            connect()
+        } label: {
             if busy { ProgressView() } else { Text("Connect \(service.name)") }
         }
         .disabled(!ready || blocked)
+    }
+
+    /// Into the Keychain when you're done with the field, or connect (1.26.1):
+    /// until then every keystroke of a paste was a Keychain write.
+    private func saveSecret() {
+        guard service == .trakt else { return }
+        let t = secret.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard t != (Keychain.get(SyncService.traktSecretAccount) ?? "") else { return }
+        Keychain.set(t.isEmpty ? nil : t, for: SyncService.traktSecretAccount)
     }
 }

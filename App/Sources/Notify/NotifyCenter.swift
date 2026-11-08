@@ -62,7 +62,11 @@ enum NotifyCenter {
         }
         // `-openNotify` (lab, UI tests): Settings → Notifications over Home.
         if CommandLine.arguments.contains("-openNotify") {
-            HandoffPresenter.present(AnyView(NavigationStack { NotifySettingsView() }.tint(Theme.accent)))
+            HandoffPresenter.present(AnyView(NavigationStack {
+                NotifySettingsView()
+                    .settingsPage()
+                    .navigationDestination(for: LibraryRoute.self) { LibraryRoute.destination($0) }
+            }.tint(Theme.accent)))
         }
     }
 

@@ -12,6 +12,9 @@ struct SyncServiceView: View {
     @State private var traktSignIn = false
     @State private var busy: SyncService?
     @State private var message: String?
+    /// Why connecting failed, in an alert (1.26.1; it was a line at the page's end).
+    @State private var problem: String?
+    @State private var showProblem = false
     @State private var importing = false
     @State private var confirmDisconnect = false
 
@@ -26,6 +29,14 @@ struct SyncServiceView: View {
         .navigationTitle(service.name)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $traktSignIn) { TraktSignInView() }
+        .alert("Couldn't Connect \(service.name)", isPresented: $showProblem, presenting: problem) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { Text($0) }
+    }
+
+    private func fail(_ why: String) {
+        problem = why
+        showProblem = true
     }
 
     @ViewBuilder
@@ -40,7 +51,7 @@ struct SyncServiceView: View {
                         importing = true
                         Task { message = await center.importTraktWatchlist(); importing = false }
                     } label: {
-                        Label(importing ? "Importing…" : "Import Trakt watchlist", systemImage: "square.and.arrow.down")
+                        Label(importing ? "Importing…" : "Import Trakt Watchlist", systemImage: "square.and.arrow.down")
                     }
                     .disabled(importing)
                 }
@@ -91,11 +102,11 @@ struct SyncServiceView: View {
                 defer { busy = nil }
                 do {
                     let back = try await webAuth.authenticate(using: url, callbackURLScheme: "folio")
-                    guard var t = AniListClient.tokens(fromCallback: back) else { message = "AniList didn't send a sign-in back."; return }
+                    guard var t = AniListClient.tokens(fromCallback: back) else { fail("AniList didn't send a sign-in back."); return }
                     t.user = await AniListClient.viewerName(token: t.access)
                     center.connected(.anilist, t)
                 } catch {
-                    if (error as? ASWebAuthenticationSessionError)?.code != .canceledLogin { message = "AniList: \(error.localizedDescription)" }
+                    if (error as? ASWebAuthenticationSessionError)?.code != .canceledLogin { fail(error.localizedDescription) }
                 }
             }
         case .mal:
@@ -110,14 +121,14 @@ struct SyncServiceView: View {
                     let items = URLComponents(url: back, resolvingAgainstBaseURL: false)?.queryItems ?? []
                     guard items.first(where: { $0.name == "state" })?.value == state,
                           let code = items.first(where: { $0.name == "code" })?.value else {
-                        message = "MyAnimeList didn't send a sign-in back."
+                        fail("MyAnimeList didn't send a sign-in back.")
                         return
                     }
                     var t = try await MALClient.exchange(code: code, verifier: verifier)
                     t.user = await MALClient.userName(token: t.access)
                     center.connected(.mal, t)
                 } catch {
-                    if (error as? ASWebAuthenticationSessionError)?.code != .canceledLogin { message = "MyAnimeList: \(error.localizedDescription)" }
+                    if (error as? ASWebAuthenticationSessionError)?.code != .canceledLogin { fail(error.localizedDescription) }
                 }
             }
         }
