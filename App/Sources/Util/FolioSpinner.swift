@@ -31,7 +31,10 @@ struct FolioSpinner: View {
 
     var body: some View {
         let side = size.points
-        TimelineView(.animation) { context in
+        // 30 frames a second is smooth for a 16–40 pt leaf; unbounded, every
+        // spinner on screen (one over the video while it buffers) redrew at
+        // 120 Hz (review, 9 Nov). Reduce Motion only breathes: 10.
+        TimelineView(.animation(minimumInterval: reduceMotion ? 0.1 : 1.0 / 30)) { context in
             let t = context.date.timeIntervalSinceReferenceDate
             let phase = CGFloat(t.truncatingRemainder(dividingBy: Self.lap) / Self.lap)
             // 0…1…0 over two laps: the leaf's fill and the light's strength.

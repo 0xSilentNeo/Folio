@@ -80,7 +80,7 @@ enum PlatformCatalogs {
         do {
             let metas = try await AddonAPI.get(AddonAPI.CatalogResponse.self, "\(base)/catalog/\(type)/\(id).json").metas ?? []
             LibTrace.discover.log("catalog \(key): \(metas.count) title(s) after \(Int(Date().timeIntervalSince(t0) * 1000)) ms")
-            lock.lock(); cache[key] = (Date(), metas); lock.unlock()
+            lock.withLock { cache[key] = (Date(), metas) }
             return metas
         } catch {
             LibTrace.discover.log("catalog \(key): failed (\((error as NSError).domain) \((error as NSError).code)) after \(Int(Date().timeIntervalSince(t0) * 1000)) ms; nothing kept")
@@ -112,10 +112,15 @@ final class BrowseModel: ObservableObject {
     static var genres: [String] { IMDbSource.genres }
     static let years: [String] = (0..<30).map { String(Calendar.current.component(.year, from: Date()) - $0) }
 
-    @Published var sort: Sort = .trending { didSet { reload() } }
-    @Published var type = "movie" { didSet { reload() } }
-    @Published var genre: String? { didSet { reload() } }
-    @Published var year: String = BrowseModel.years[0] { didSet { if sort == .new { reload() } } }
+    // Only a real change reloads: picking the genre already shown emptied
+    // the grid and fetched it again.
+    @Published var sort: Sort = .trending { didSet { if sort != oldValue { reload() } } }
+    @Published var type = "movie" { didSet { if type != oldValue { reload() } } }
+    @Published var genre: String? { didSet { if genre != oldValue { reload() } } }
+    @Published var year: String = BrowseModel.years[0] { didSet { if sort == .new, year != oldValue { reload() } } }
+
+    /// What the grid is a list of: changes with each filter (the page scrolls back to the grid's top).
+    var filterKey: String { "\(type)|\(sort.rawValue)|\(genre ?? "")|\(sort == .new ? year : "")" }
     @Published var metas: [MetaItem] = []
     @Published var loading = false
     @Published var failed = false
@@ -236,6 +241,10 @@ struct DiscoverView: View {
     @StateObject private var browse = BrowseModel()
     @StateObject private var forYou = ForYouModel()
     @State private var showPlatformSettings = false
+    /// The grid's heading has scrolled up out of sight.
+    @State private var gridHeadingAbove = false
+    /// Pulls to refresh so far (the Airing now row reloads on each).
+    @State private var refreshCount = 0
 
     var body: some View {
         NavigationStack {
@@ -243,9 +252,16 @@ struct DiscoverView: View {
                 let margin: CGFloat = geo.size.width > 700 ? 28 : 20
                 let cols = max(3, Int((geo.size.width - margin * 2 + 12) / 122))
                 let shown = browse.shown(kids.activeLimits)
+                ScrollViewReader { scroller in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 24) {
+                    // A plain stack around the lazy grid (1.26.0): a lazy grid in
+                    // a lazy stack drew nothing after a new genre emptied and
+                    // refilled it while scrolled down, until the page was
+                    // scrolled up by hand (8 Nov report).
+                    VStack(alignment: .leading, spacing: 24) {
                         header(margin)
+                        WatchlistRow(margin: margin, zoomNS: zoomNS)
+                        AiringNowRow(margin: margin, zoomNS: zoomNS, refresh: refreshCount)
                         forYouRow(margin)
                         platformStrip(margin)
                         VStack(alignment: .leading, spacing: 2) {
@@ -258,12 +274,24 @@ struct DiscoverView: View {
                             if let limits = kids.activeLimits { KidsFilterNote(limits: limits).padding(.top, 2) }
                         }
                         .padding(.horizontal, margin)
+                        .id(Self.gridTop)
+                        .background {
+                            GeometryReader { g in
+                                Color.clear.onChange(of: g.frame(in: .scrollView).minY < 0, initial: true) { _, above in
+                                    // Not while a new list empties the grid: the page
+                                    // only seems to move back up because it got shorter.
+                                    guard gridHeadingAbove != above, above || !(browse.loading && browse.metas.isEmpty) else { return }
+                                    gridHeadingAbove = above
+                                }
+                            }
+                        }
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: cols), spacing: 18) {
                             ForEach(shown) { m in
                                 NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS) } label: {
                                     PosterCard(meta: m, width: nil, zoom: ZoomSource(m.id, zoomNS))
                                 }
                                     .buttonStyle(.plain)
+                                    .contextMenu { WatchlistMenuButton(meta: m) }
                                     .onAppear { if m.id == shown.last?.id { Task { await browse.loadMore() } } }
                             }
                         }
@@ -293,6 +321,13 @@ struct DiscoverView: View {
                 .scrollIndicators(.hidden)
                 // Room under the last row for the downloads pill (1.24.1).
                 .downloadPillRoom()
+                // Another genre, sort or year while scrolled down the grid:
+                // back to its heading, where the new list starts.
+                .onChange(of: browse.filterKey) {
+                    guard gridHeadingAbove else { return }
+                    withAnimation(.snappy) { scroller.scrollTo(Self.gridTop, anchor: .top) }
+                }
+                }
             }
             .background(HomeBackdrop().ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
@@ -302,7 +337,7 @@ struct DiscoverView: View {
                 if browse.metas.isEmpty { browse.reload() }
                 forYou.load()
             }
-            .refreshable { browse.reload(); forYou.load(force: true) }
+            .refreshable { browse.reload(); forYou.load(force: true); refreshCount += 1 }
             // The kids profile turned on or off: the lists start from another
             // genre, and For you shows only titles whose rating is known (1.22.1).
             .onChange(of: kids.isOn) { _, on in
@@ -312,6 +347,8 @@ struct DiscoverView: View {
             .sheet(isPresented: $showPlatformSettings) { PlatformSettingsView() }
         }
     }
+
+    private static let gridTop = "discoverGridTop"
 
     private var gridTitle: String {
         let t = browse.type == "movie" ? "Movies" : "Series"
@@ -373,6 +410,7 @@ struct DiscoverView: View {
                                 PosterCard(meta: m, width: 118, zoom: ZoomSource("fy|" + m.id, zoomNS))
                             }
                             .buttonStyle(.plain)
+                            .contextMenu { WatchlistMenuButton(meta: m) }
                         }
                     }
                     .padding(.horizontal, margin)
@@ -617,6 +655,7 @@ struct PlatformDetailView: View {
                             PosterCard(meta: m, width: 108, zoom: ZoomSource(m.id, zoomNS))
                         }
                             .buttonStyle(.plain)
+                            .contextMenu { WatchlistMenuButton(meta: m) }
                     }
                 }
                 .padding(.horizontal, 20)

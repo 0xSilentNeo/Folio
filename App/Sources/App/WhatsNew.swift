@@ -20,6 +20,18 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.26.0", items: [
+            Item(icon: "bookmark", title: "A watchlist",
+                 text: "Tap the bookmark on a title's page, or hold any poster in Discover, to save it for later. Your list is at the top of Discover."),
+            Item(icon: "dot.radiowaves.left.and.right", title: "Airing now",
+                 text: "A row on Discover with what's out this week: series or anime, one tap apart. Hide it in Settings → Discover."),
+            Item(icon: "arrow.triangle.2.circlepath", title: "Trakt, AniList, MyAnimeList",
+                 text: "Settings → Sync: what you finish can be marked watched there, and your watchlist goes to Trakt. Off until you connect one."),
+            Item(icon: "pip", title: "PiP after the next episode",
+                 text: "Leaving the app starts Picture in Picture again after the player has moved on to the next episode."),
+            Item(icon: "rectangle.portrait", title: "Portrait videos stay portrait",
+                 text: "Videos shot upright open upright, and HDR ones no longer stay black until the phone is turned."),
+        ]),
         Release(version: "1.25.0", items: [
             Item(icon: "app.badge", title: "Notifications, rebuilt",
                  text: "Settings → Notifications: a switch for each group and each kind, a personality from Subtle to Unhinged, quiet hours and how many a day."),

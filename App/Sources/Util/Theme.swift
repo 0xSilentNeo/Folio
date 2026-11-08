@@ -76,10 +76,14 @@ struct TopScrollScrim: ViewModifier {
                     // Solid behind the Back / ⋯ buttons (to ~56 pt below the safe
                     // area), then fades out: 64 pt left the Resume button showing
                     // under Back (screenshot run 2).
+                    // Edge to edge (1.26.0): on a phone on its side it stopped
+                    // at the side safe areas, a box with hard sides that stayed
+                    // at the top as the page scrolled (8 Nov screenshot).
                     LinearGradient(stops: [.init(color: Theme.background, location: 0), .init(color: Theme.background, location: 0.62),
                                            .init(color: Theme.background.opacity(0), location: 1)], startPoint: .top, endPoint: .bottom)
                         .frame(height: 92)
-                        .ignoresSafeArea(edges: .top)
+                        .frame(maxWidth: .infinity)
+                        .ignoresSafeArea(edges: [.top, .horizontal])
                         .opacity(shown ? 1 : 0)
                         .allowsHitTesting(false)
                 }

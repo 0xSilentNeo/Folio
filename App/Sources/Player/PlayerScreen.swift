@@ -727,6 +727,19 @@ struct SeekTrack: View {
             }
         }
         .frame(height: 46)
+        // VoiceOver and Switch Control (1.26.0): the bar was shapes and a
+        // drag, with no value to read and no way to move it.
+        .accessibilityElement()
+        .accessibilityLabel("Playback position")
+        .accessibilityValue("\(PlayerModel.format(clock.position)) of \(PlayerModel.format(clock.duration))")
+        .accessibilityAdjustableAction { direction in
+            let step = Double(max(1, UserDefaults.standard.integer(forKey: SettingsKey.seekStep)))
+            switch direction {
+            case .increment: model.seek(by: step)
+            case .decrement: model.seek(by: -step)
+            @unknown default: break
+            }
+        }
     }
 
     private func chapterTitle(at t: Double) -> String? {

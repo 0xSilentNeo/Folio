@@ -283,6 +283,19 @@ actor SkipService {
         return []
     }
 
+    /// An anime's AniList and MyAnimeList ids for its season, as the skip
+    /// lookup finds them (1.26.0: the sync services use the same answer,
+    /// from the same cache). A later season must be found as itself, or nil.
+    func animeIDs(_ hint: AnimeHint, season: Int?) async -> AnimeHint? {
+        var h = hint
+        if let season, season > 1, h.malId == nil, h.anilistId == nil, h.kitsuId == nil, let t = h.title {
+            guard let found = await aniListSearch("\(t) Season \(season)", requireSeason: season) else { return nil }
+            h.anilistId = found.0; h.malId = found.1
+        }
+        let ids = await resolveIDs(h)
+        return ids.anilistId != nil || ids.malId != nil ? ids : nil
+    }
+
     private func resolveIDs(_ hint: AnimeHint) async -> AnimeHint {
         var h = hint
         if h.malId != nil && h.anidbId != nil { return h }

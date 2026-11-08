@@ -258,10 +258,26 @@ final class HistoryStore: ObservableObject {
         } else {
             entries.append(entry)
         }
-        if entries.count > 500 {
-            entries = Array(entries.sorted { $0.updated > $1.updated }.prefix(500))
-        }
+        trim()
         scheduleSave()
+    }
+
+    /// At most 500 entries in progress and 5,000 watched marks (1.26.0).
+    /// The 500 most recent of all used to be kept, so marking a long show
+    /// watched, or 500 plays later, silently unmarked older episodes: a
+    /// watched mark lives only here (review, 9 Nov).
+    private static let openCap = 500
+    private static let watchedCap = 5000
+
+    private func trim() {
+        guard entries.count > Self.openCap else { return }
+        var open = 0, done = 0
+        let kept = entries.sorted { $0.updated > $1.updated }.filter { e in
+            if e.isFinished { done += 1; return done <= Self.watchedCap }
+            open += 1
+            return open <= Self.openCap
+        }
+        if kept.count != entries.count { entries = kept }
     }
 
     func remove(_ entry: HistoryEntry) {
@@ -321,6 +337,7 @@ final class HistoryStore: ObservableObject {
                 entries.append(HistoryEntry(item: Self.stored(item(key)), position: 0, duration: 0, updated: Date(), watched: true))
             }
         }
+        trim()
         scheduleSave()
     }
 

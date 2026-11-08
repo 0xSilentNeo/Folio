@@ -55,7 +55,8 @@ final class PiPManager: NSObject {
     private var possibleObservation: NSKeyValueObservation?
     private let enqueueLock = NSLock()
     private var formatDescription: CMVideoFormatDescription?
-    private var lastDims: (Int32, Int32) = (0, 0)
+    /// The last sample-buffer error (enqueue lock): logged once per change.
+    private var lastEnqueueError: OSStatus = noErr
 
     var onPossibleChanged: ((Bool) -> Void)?
     /// The size PiP draws its window at, in pixels, as it changes.
@@ -125,6 +126,21 @@ final class PiPManager: NSObject {
         controller?.canStartPictureInPictureAutomaticallyFromInline = on
     }
 
+    /// Arms automatic PiP again and has AVKit read the playback state anew
+    /// (1.26.0). After the player went on to the next episode, or after a
+    /// panel had been open, leaving the app often didn't start PiP: the
+    /// 7–8 Nov logs have it fail on every trip away after an episode
+    /// change (18:06, 19:12, 19:29, 19:42, 20:31, 20:44) and work on the
+    /// first file of each session. Called when a file starts playing, when
+    /// play resumes, and as the app is about to leave; it also picks up the
+    /// setting changed while the player is open.
+    func rearmAutoStart(_ on: Bool) {
+        guard let c = controller else { return }
+        if c.canStartPictureInPictureAutomaticallyFromInline { c.canStartPictureInPictureAutomaticallyFromInline = false }
+        c.canStartPictureInPictureAutomaticallyFromInline = on
+        c.invalidatePlaybackState()
+    }
+
     /// Fill (pinch, the Fill button, a show's memory) for the sample-buffer
     /// renderer: its frames have the video's shape, so mpv's panscan has
     /// nothing to crop; the layer fills the view instead. PiP's window always
@@ -169,20 +185,33 @@ final class PiPManager: NSObject {
     func enqueue(_ pixelBuffer: CVPixelBuffer) {
         enqueueLock.lock()
         defer { enqueueLock.unlock() }
-        let w = Int32(CVPixelBufferGetWidth(pixelBuffer)), h = Int32(CVPixelBufferGetHeight(pixelBuffer))
-        if formatDescription == nil || lastDims != (w, h) {
+        // A new description whenever the buffer no longer matches it, not only
+        // when its size changes (1.26.0). HDR output switches the frames from
+        // 8-bit to half-float at the same size: the 8-bit description stayed,
+        // every sample buffer was refused, and the picture stayed black until
+        // a turn of the phone changed the size (8 Nov: a portrait AV1 HLG
+        // video drawn 742×1320 in landscape — sound, no picture).
+        if formatDescription.map({ !CMVideoFormatDescriptionMatchesImageBuffer($0, imageBuffer: pixelBuffer) }) ?? true {
             var fd: CMVideoFormatDescription?
             CMVideoFormatDescriptionCreateForImageBuffer(allocator: kCFAllocatorDefault, imageBuffer: pixelBuffer, formatDescriptionOut: &fd)
             formatDescription = fd
-            lastDims = (w, h)
         }
         guard let fd = formatDescription else { return }
         let pts = timebase.map { CMTimebaseGetTime($0) } ?? .zero
         var timing = CMSampleTimingInfo(duration: .invalid, presentationTimeStamp: pts, decodeTimeStamp: .invalid)
         var sb: CMSampleBuffer?
-        CMSampleBufferCreateReadyWithImageBuffer(allocator: kCFAllocatorDefault, imageBuffer: pixelBuffer,
-                                                 formatDescription: fd, sampleTiming: &timing, sampleBufferOut: &sb)
-        guard let sb else { return }
+        let made = CMSampleBufferCreateReadyWithImageBuffer(allocator: kCFAllocatorDefault, imageBuffer: pixelBuffer,
+                                                            formatDescription: fd, sampleTiming: &timing, sampleBufferOut: &sb)
+        guard made == noErr, let sb else {
+            // Never silently again: one line per failure code in a row.
+            if made != lastEnqueueError {
+                lastEnqueueError = made
+                Task { @MainActor in PiPTrace.event("frame refused by the layer (\(made))") }
+            }
+            formatDescription = nil
+            return
+        }
+        lastEnqueueError = noErr
         if let attachments = CMSampleBufferGetSampleAttachmentsArray(sb, createIfNecessary: true), CFArrayGetCount(attachments) > 0 {
             let dict = unsafeBitCast(CFArrayGetValueAtIndex(attachments, 0), to: CFMutableDictionary.self)
             CFDictionarySetValue(dict,
