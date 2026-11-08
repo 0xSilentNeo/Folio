@@ -51,4 +51,32 @@ final class KidsPasscodeUITests: XCTestCase {
         type("2580", in: app)
         XCTAssertTrue(app.buttons["kidsTurnOn"].waitForExistence(timeout: 5))
     }
+
+    /// 1.26.1: going to the background with the profile on closes Settings and
+    /// the page opened from it; turning the profile on doesn't (test1).
+    func test2BackgroundClosesSettings() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-labNoEngine", "-noSplash", "-labKidsReset", "-appearance", "dark"]
+        app.launch()
+        app.buttons["Settings"].firstMatch.tap()
+        app.staticTexts["Kids Profile"].firstMatch.tap()
+        app.buttons["kidsTurnOn"].tap()
+        XCTAssertTrue(app.staticTexts["Enter New Passcode"].waitForExistence(timeout: 5))
+        type("2580", in: app)
+        XCTAssertTrue(app.staticTexts["Re-enter New Passcode"].waitForExistence(timeout: 3))
+        type("2580", in: app)
+        XCTAssertTrue(app.buttons["kidsTurnOff"].waitForExistence(timeout: 5), "turning on closed the page")
+
+        XCUIDevice.shared.press(.home)
+        sleep(2)
+        app.activate()
+        XCTAssertTrue(app.buttons["Settings"].firstMatch.waitForExistence(timeout: 5), "not back on Home")
+        XCTAssertFalse(app.buttons["kidsTurnOff"].exists, "the Kids Profile page stayed open after the background")
+
+        // The next test starts with the profile off and no passcode.
+        app.terminate()
+        app.launchArguments = ["-uiTestLibrary", "-labNoEngine", "-noSplash", "-labKidsReset"]
+        app.launch()
+        app.terminate()
+    }
 }

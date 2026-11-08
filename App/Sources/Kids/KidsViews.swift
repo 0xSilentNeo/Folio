@@ -446,10 +446,6 @@ struct KidsProfileSettings: View {
                 if kids.isOn {
                     Label("The kids profile is on", systemImage: "figure.and.child.holdinghands")
                     changePasscodeButton
-                    Button("Turn Off Kids Profile", role: .destructive) {
-                        KidsGate.open($gate, .unlock(reason: "To turn off the kids profile")) { _ in kids.turnOff() }
-                    }
-                    .accessibilityIdentifier("kidsTurnOff")
                 } else {
                     Button {
                         // The passcode chosen the first time stays (1.22.2): turning on asks for nothing.
@@ -483,6 +479,15 @@ struct KidsProfileSettings: View {
                 Section {
                     Toggle("Unlock with \(name)", isOn: biometrics)
                 } footer: { Text("\(name) can stand in for the passcode. Anyone whose face or finger this device knows can then unlock.") }
+            }
+            // 1.26.1: on its own at the end, away from Change Passcode.
+            if kids.isOn {
+                Section {
+                    Button("Turn Off Kids Profile", role: .destructive) {
+                        KidsGate.open($gate, .unlock(reason: "To turn off the kids profile")) { _ in kids.turnOff() }
+                    }
+                    .accessibilityIdentifier("kidsTurnOff")
+                }
             }
         }
         .brandListBackground()

@@ -75,6 +75,8 @@ final class PiPManager: NSObject {
 
     /// PiP trace: when each of the last frames went into the layer.
     private var frameTimes: [CFTimeInterval] = []
+    /// Diagnostics → PiP trace, as it was when this player opened.
+    private let tracing = UserDefaults.standard.bool(forKey: SettingsKey.pipTrace)
 
     /// PiP trace: the frames that went into the layer since `start`, and the
     /// longest gaps between them (what the picture did through a transition).
@@ -222,7 +224,7 @@ final class PiPManager: NSObject {
         displayLayer.enqueue(sb)
         lastEnqueue = CACurrentMediaTime()
         enqueued += 1
-        if UserDefaults.standard.bool(forKey: SettingsKey.pipTrace) {   // PiPTrace.on, off the main thread
+        if tracing {   // PiPTrace.on, read once (not a settings lookup per frame)
             frameTimes.append(lastEnqueue)
             if frameTimes.count > 600 { frameTimes.removeFirst(frameTimes.count - 600) }
         }

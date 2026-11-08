@@ -247,15 +247,24 @@ struct TrackingView: View {
             list(now: ctx.date)
         }
         .brandListBackground()
-        .navigationTitle("Tracking")
+        .navigationTitle("Tracked Shows")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $open) { TrackingDetailView(id: $0) }
     }
 
     private func list(now: Date) -> some View {
         List {
-            ForEach(AiringGroup.grouped(store.shows, now: now)) { g in
-                Section(g.group.title) {
+            TrackingAlertsSection()
+            if store.shows.isEmpty {
+                Section {
+                    ContentUnavailableView("Nothing Tracked Yet", systemImage: "bell",
+                                           description: Text("Tap Track on a show's page in Discover or your library to see when its next episodes air."))
+                }
+                .listRowBackground(Color.clear)
+            }
+            let groups = AiringGroup.grouped(store.shows, now: now)
+            ForEach(groups) { g in
+                Section {
                     ForEach(g.shows) { s in
                         TrackedShowRow(show: s, now: now) { open = s.id }
                             .swipeActions(edge: .trailing) {
@@ -268,18 +277,14 @@ struct TrackingView: View {
                                 Button(role: .destructive) { store.untrack(s.id) } label: { Label("Stop Tracking", systemImage: "bell.slash") }
                             }
                     }
+                } header: {
+                    Text(g.group.title)
+                } footer: {
+                    // Under the last group (1.26.1; it had an empty section of its own).
+                    if g.id == groups.last?.id {
+                        Text("Times are in your time zone (\(TimeZone.autoupdatingCurrent.localizedName(for: .generic, locale: .current) ?? TimeZone.autoupdatingCurrent.identifier)). Schedules from TVmaze (tvmaze.com, CC BY-SA) and AniList.")
+                    }
                 }
-            }
-            if !store.shows.isEmpty {
-                Section {} footer: {
-                    Text("Times are in your time zone (\(TimeZone.autoupdatingCurrent.localizedName(for: .generic, locale: .current) ?? TimeZone.autoupdatingCurrent.identifier)). Schedules from TVmaze (tvmaze.com, CC BY-SA) and AniList.")
-                }
-            }
-        }
-        .overlay {
-            if store.shows.isEmpty {
-                ContentUnavailableView("Nothing tracked yet", systemImage: "bell",
-                                       description: Text("Tap Track on a show's page in Discover or your library to see when its next episodes air."))
             }
         }
         .refreshable { await store.refresh(force: true, reason: "pull to refresh") }
@@ -605,38 +610,25 @@ private struct AiringCard: View {
 // MARK: - Settings
 
 /// Settings' Tracking section: the tracked shows, and when the notifications come.
-struct TrackingSettingsSection: View {
+/// Tracked Shows' "Notify me" (1.26.1; on Settings' root until then, the
+/// only row there that didn't open a page).
+struct TrackingAlertsSection: View {
     @ObservedObject private var store = TrackingStore.shared
     @AppStorage(SettingsKey.airingAlerts) private var alerts = AiringAlerts.air.rawValue
     @State private var denied = false
 
     var body: some View {
         Section {
-            NavigationLink { TrackingView() } label: {
-                Label {
-                    HStack {
-                        Text("Tracking")
-                        Spacer()
-                        if !store.shows.isEmpty { Text("\(store.shows.count)").foregroundStyle(.secondary) }
-                    }
-                } icon: {
-                    Image(systemName: "bell.badge")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 28, height: 28)
-                        .background(Color.red.gradient, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-                }
-            }
-            Picker("New episodes", selection: $alerts) {
+            Picker("Notify me", selection: $alerts) {
                 ForEach(AiringAlerts.allCases) { Text($0.title).tag($0.rawValue) }
             }
             if denied, alerts != AiringAlerts.off.rawValue {
-                Button("Allow notifications in Settings") {
+                Button("Allow Notifications in Settings") {
                     if let u = URL(string: UIApplication.openNotificationSettingsURLString) { UIApplication.shared.open(u) }
                 }
             }
         } footer: {
-            Text("Tap Track on a show's page to know when its new episodes air, in your time zone. Schedules from TVmaze (tvmaze.com, CC BY-SA) and AniList.")
+            Text("When a tracked show's new episode comes out, in your time zone.")
         }
         .onChange(of: alerts) { _, v in
             if v != AiringAlerts.off.rawValue { AiringNotifications.askPermissionIfNeeded() }

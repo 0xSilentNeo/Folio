@@ -794,13 +794,17 @@ struct DownloadSettingsView: View {
     @AppStorage(SettingsKey.downloadRetries) private var retries = 3
     @AppStorage(SettingsKey.downloadNextEpisodes) private var nextEpisodes = 0
     @AppStorage(SettingsKey.downloadDeleteWatched) private var deleteWatched = 0
+    /// The Delete watched value waiting for a yes, and the yes.
+    @State private var askDelete: Int?
+    @State private var askingDelete = false
+    @State private var deleteConfirmed = false
     @AppStorage(SettingsKey.liveActivities) private var liveActivities = true
 
     var body: some View {
         Form {
             Section {
-                Stepper("Simultaneous downloads: \(concurrent)", value: $concurrent, in: 1...6)
-                Stepper("Connections per file: \(parts)", value: $parts, in: 1...8)
+                Stepper(value: $concurrent, in: 1...6) { LabeledContent("Simultaneous downloads", value: "\(concurrent)") }
+                Stepper(value: $parts, in: 1...8) { LabeledContent("Connections per file", value: "\(parts)") }
                 Toggle("Start automatically", isOn: $autoStart)
             } header: { Text("Queue") } footer: {
                 Text("Connections: a file downloads over up to that many connections at once when the server allows it. One that finishes early takes over half of the biggest part left, and one far slower than the others starts again. That helps most with a server that is slow per connection. Start automatically off: a tapped file waits, paused, until you start it on the Downloads screen.")
@@ -818,7 +822,7 @@ struct DownloadSettingsView: View {
                 Toggle("Use mobile data", isOn: $cellular)
                 Toggle("Pause in Low Power Mode", isOn: $lowPower)
                 Toggle("Only while charging", isOn: $charging)
-                Stepper("Retries on error: \(retries)", value: $retries, in: 0...10)
+                Stepper(value: $retries, in: 0...10) { LabeledContent("Retries on error", value: "\(retries)") }
             } header: { Text("Network & battery") } footer: {
                 Text("Folio downloads files itself, not through iOS's background downloads. On iOS 26 and later they carry on in the background with iOS's own progress on the Lock Screen and in the Dynamic Island; its stop button pauses them. On older iOS they pause a little after you leave Folio and carry on when you're back. A paused file continues where it stopped.")
             }
@@ -841,8 +845,12 @@ struct DownloadSettingsView: View {
             Section {
                 Toggle("Live Activities", isOn: $liveActivities)
             } footer: {
-                Text("Downloads, on the Lock Screen and in the Dynamic Island. What's playing shows in Control Center and on the Lock Screen."
-                     + (liveActivities && LiveActivities.blockedBySystem ? " They're turned off for Folio in iOS Settings → Folio." : ""))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Downloads, on the Lock Screen and in the Dynamic Island. What's playing shows in Control Center and on the Lock Screen.")
+                    if liveActivities && LiveActivities.blockedBySystem {
+                        Text("They're turned off for Folio in iOS Settings → Folio.")
+                    }
+                }
             }
         }
         .brandListBackground()
@@ -852,6 +860,24 @@ struct DownloadSettingsView: View {
         .onChange(of: lowPower) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: charging) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: liveActivities) { _, _ in LiveActivities.settingChanged() }
-        .onChange(of: deleteWatched) { _, _ in WatchedCleanup.run() }
+        // Turning it on deletes finished downloads at once: asked first (1.26.1).
+        .onChange(of: deleteWatched) { old, new in
+            if old == 0, new > 0, !deleteConfirmed {
+                askDelete = new
+                askingDelete = true
+                deleteWatched = 0
+                return
+            }
+            deleteConfirmed = false
+            if new > 0 { WatchedCleanup.run() }
+        }
+        .confirmationDialog("Delete watched downloads?", isPresented: $askingDelete, titleVisibility: .visible, presenting: askDelete) { days in
+            Button(days == 1 ? "Delete After 1 Day" : "Delete After \(days) Days", role: .destructive) {
+                deleteConfirmed = true
+                deleteWatched = days
+            }
+        } message: { days in
+            Text("Downloaded videos you finished more than \(days == 1 ? "a day" : "\(days) days") ago are deleted now, and others that long after you finish them. Files you added yourself are never deleted.")
+        }
     }
 }

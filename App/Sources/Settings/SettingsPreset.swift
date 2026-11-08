@@ -261,6 +261,7 @@ struct PresetsView: View {
     @State private var includeSecrets = false
     @State private var exportURL: URL?
     @State private var importing = false
+    @State private var confirmLoad = false
     @State private var message: String?
     @State private var error: String?
 
@@ -268,18 +269,25 @@ struct PresetsView: View {
         Form {
             Section {
                 Toggle("Include passwords and keys", isOn: $includeSecrets)
-                Button { makeExport() } label: { Label("Save settings to a file…", systemImage: "square.and.arrow.up") }
+                Button { makeExport() } label: { Label("Save Settings to a File…", systemImage: "square.and.arrow.up") }
             } header: { Text("Save") } footer: {
                 Text("Saves every setting, your WebDAV servers and your mpv files (mpv.conf, input.conf, scripts, script options, shaders) in one file. With passwords and keys on, it also has your server passwords, your TMDB key and your addons (addon links usually contain your debrid key) — anyone with the file can read them.")
             }
             Section {
-                Button { importing = true } label: { Label("Load settings from a file…", systemImage: "square.and.arrow.down") }
+                Button { confirmLoad = true } label: { Label("Load Settings from a File…", systemImage: "square.and.arrow.down") }
+                    // Asked first (1.26.1): a file replaced settings, mpv.conf and
+                    // input.conf, and installed and turned on its scripts, at once.
+                    .confirmationDialog("Load settings from a file?", isPresented: $confirmLoad, titleVisibility: .visible) {
+                        Button("Choose File…") { importing = true }
+                    } message: {
+                        Text("Its settings replace yours, and its mpv.conf, input.conf and scripts are installed and turned on. Load only files you made or trust.")
+                    }
             } header: { Text("Load") } footer: {
                 Text("Settings in the file replace yours; anything the file doesn't have stays as it is. Addons and servers are added next to the ones you have. Settings an older or newer version of Folio had that this one doesn't use are skipped, not an error.")
             }
         }
         .brandListBackground()
-        .navigationTitle("Presets")
+        .navigationTitle("Import & Export")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: Binding(get: { exportURL.map(ShareURL.init) }, set: { exportURL = $0?.url })) { s in
             ShareSheet(items: [s.url])

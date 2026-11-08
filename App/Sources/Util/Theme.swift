@@ -37,6 +37,11 @@ enum Theme {
     /// Switch track when on. Ink on light; on dark a warm taupe, not the cream
     /// accent: the white knob vanished on a cream track (screenshot run).
     static let switchTint = Color(light: 0x1B1A18, dark: 0xA08D77)
+    /// Tappable text in lists and forms: button rows, links, More (1.26.1).
+    /// In ink, a Settings button looked exactly like plain text ("Scan for
+    /// changes", "Connect Trakt"). A warm clay that stays in the palette:
+    /// 5.9:1 on white rows, 5.1:1 on the cream page, 7.9:1 on dark rows.
+    static let action = Color(light: 0xA4482A, dark: 0xE8A07E)
     /// Swipe-action buttons whose icon and label are white (system swipe
     /// actions draw them white on the tint): dark enough in both modes. The
     /// cream accent left a white eye on cream (27 Oct screenshots).
@@ -421,7 +426,7 @@ private struct LeavingProbe: UIViewControllerRepresentable {
             // Your log can then show tap → the page starts to move (with
             // "home: open") and how long the move runs.
             dlog("nav", "page opening: its move started")
-            let l = CADisplayLink(target: Ticker(self), selector: #selector(Ticker.tick))
+            let l = CADisplayLink(target: Ticker(self), selector: #selector(Ticker.tick(_:)))
             l.add(to: .main, forMode: .common)
             opening = l
         }
@@ -430,7 +435,12 @@ private struct LeavingProbe: UIViewControllerRepresentable {
         private final class Ticker: NSObject {
             weak var probe: Probe?
             init(_ p: Probe) { probe = p }
-            @objc func tick() { probe?.openingTick() }
+            /// A page gone before its move ended stops the link too: it ran on,
+            /// a frame at a time at up to 120 Hz, for as long as Folio ran.
+            @objc func tick(_ link: CADisplayLink) {
+                guard let probe else { link.invalidate(); return }
+                probe.openingTick()
+            }
         }
 
         fileprivate func openingTick() {
