@@ -421,7 +421,7 @@ private struct LeavingProbe: UIViewControllerRepresentable {
             // Your log can then show tap → the page starts to move (with
             // "home: open") and how long the move runs.
             dlog("nav", "page opening: its move started")
-            let l = CADisplayLink(target: Ticker(self), selector: #selector(Ticker.tick))
+            let l = CADisplayLink(target: Ticker(self), selector: #selector(Ticker.tick(_:)))
             l.add(to: .main, forMode: .common)
             opening = l
         }
@@ -430,7 +430,12 @@ private struct LeavingProbe: UIViewControllerRepresentable {
         private final class Ticker: NSObject {
             weak var probe: Probe?
             init(_ p: Probe) { probe = p }
-            @objc func tick() { probe?.openingTick() }
+            /// A page gone before its move ended stops the link too: it ran on,
+            /// a frame at a time at up to 120 Hz, for as long as Folio ran.
+            @objc func tick(_ link: CADisplayLink) {
+                guard let probe else { link.invalidate(); return }
+                probe.openingTick()
+            }
         }
 
         fileprivate func openingTick() {

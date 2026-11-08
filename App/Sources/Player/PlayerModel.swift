@@ -330,7 +330,7 @@ final class PlayerModel: ObservableObject {
         }
         metalView?.onResize = { [weak self] in self?.nudgeRedraw(); self?.refitAnime4K() }
         observers.append(NotificationCenter.default.addObserver(forName: ProcessInfo.thermalStateDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refitAnime4K() }
+            MainActor.assumeIsolated { self?.refitAnime4K(); self?.applyHDRDecode() }
         })
         mode = .main
 
@@ -517,6 +517,7 @@ final class PlayerModel: ObservableObject {
             PictureMode.current = pictureMode
             for (k, v) in pictureMode.options { client?.set(k, v) }
             dlog("player", "picture mode \(pictureMode.rawValue)")
+            applyHDRDecode()
         }
     }
     /// Chosen here, it's also the mode for titles with none remembered (as
@@ -725,6 +726,7 @@ final class PlayerModel: ObservableObject {
         mediaTitle = item.displayTitle
         lastGamma = ""
         glHDRFailedForFile = false
+        hardwareSeenForFile = false
 
         if let old = scopedURL { old.stopAccessingSecurityScopedResource(); scopedURL = nil }
         if let u = item.resolvedURL, u.isFileURL, !u.path.hasPrefix(MPVFiles.documents.path) {
@@ -1562,19 +1564,22 @@ final class PlayerModel: ObservableObject {
             let hlg = gamma == "hlg"
             c.set("target-prim", "bt.2020")
             c.set("target-trc", hlg ? "hlg" : "pq")
-            // All 10 bits: copy decoding gives mpv the 10-bit frames in memory,
-            // which OpenGL ES can draw; zero-copy ones it can't (see applyOptions).
-            if autoDecode { c.set("hwdec-image-format", "no"); c.set("hwdec", "videotoolbox-copy") }
+            // All 10 bits need copy decoding (OpenGL ES can't draw the
+            // hardware decoder's 10-bit frames, see applyOptions); whether it's
+            // worth its cost is decided by applyHDRDecode (1.26.1).
+            hdrCopyActive = false
+            if autoDecode { applyHDRDecode() }
             let info = SampleBufferRenderer.HDROutput(hlg: hlg, maxCLL: c.int("video-params/max-cll").map(Int.init), maxFALL: c.int("video-params/max-fall").map(Int.init),
                                                        maxLuma: c.double("video-params/max-luma"), minLuma: c.double("video-params/min-luma"))
             gl.onHDRFailed = { [weak self] in self?.glHDRFailed() }
             gl.setHDR(info)
             pip.setHDR(true)
-            dlog("player", "OpenGL: HDR output \(hlg ? "HLG" : "PQ") BT.2020, 10-bit copy decoding\(autoDecode ? "" : " (your decoding setting kept)"), MaxCLL \(info.maxCLL.map(String.init) ?? "?"), mastering \(info.maxLuma.map { "\(Int($0))" } ?? "?") nits")
+            dlog("player", "OpenGL: HDR output \(hlg ? "HLG" : "PQ") BT.2020, \(hdrCopyActive ? "10-bit copy decoding" : "hardware frames")\(autoDecode ? "" : " (your decoding setting kept)"), MaxCLL \(info.maxCLL.map(String.init) ?? "?"), mastering \(info.maxLuma.map { "\(Int($0))" } ?? "?") nits")
         } else {
             c.set("target-prim", "auto")
             c.set("target-trc", "auto")
-            if autoDecode { c.set("hwdec", "videotoolbox,videotoolbox-copy"); c.set("hwdec-image-format", "nv12") }
+            if autoDecode && hdrCopyActive { c.set("hwdec", "videotoolbox,videotoolbox-copy"); c.set("hwdec-image-format", "nv12") }
+            hdrCopyActive = false
             gl.setHDR(nil)
             pip.setHDR(false)
             dlog("player", "OpenGL: SDR output\(hdrVideo ? " (HDR video tone-mapped: HDR output off or no HDR screen)" : "")")
@@ -1590,6 +1595,67 @@ final class PlayerModel: ObservableObject {
         c.set("target-trc", "auto")
         pip.setHDR(false)
         dlog("player/error", "OpenGL: HDR frames not possible here; tone-mapped to SDR")
+    }
+
+    // MARK: HDR decoding on the OpenGL renderer, 1.26.1
+
+    /// HDR is decoded by copying each frame out of the hardware decoder (all
+    /// 10 bits), or drawn from the hardware's own frames (8 bits, no copy).
+    /// The copy is a 4K frame through memory 24–60 times a second: on your
+    /// 7–8 Nov logs a 4K HDR film ran at ~50% CPU against ~6% for a 1080p
+    /// one without it, and the switch to it mid-file sent an AV1 HDR video
+    /// to software decoding for good (dav1d at ~190% CPU). So for long
+    /// watching:
+    /// - Picture → Efficient ("Coolest, longest battery") never copies: HDR
+    ///   brightness stays, with 8-bit steps in gradients.
+    /// - Balanced and Enhanced copy, unless the phone is hot (serious or
+    ///   critical), or copying failed for this codec in this player.
+    /// - Your own decoding choice in Settings is never changed.
+    private var hdrCopyActive = false
+    /// Codecs whose copy decoding fell back to software in this player.
+    private var copyFailedCodecs: Set<String> = []
+    /// The hardware decoder has decoded this file (a software decoder after
+    /// that is a fallback, not the start).
+    private var hardwareSeenForFile = false
+
+    private var hdrWantsCopy: Bool {
+        guard (defaults.string(forKey: SettingsKey.hwdec) ?? "auto") == "auto", PictureMode.current != .efficient else { return false }
+        let thermal = ProcessInfo.processInfo.thermalState
+        if thermal == .serious || thermal == .critical { return false }
+        if let codec = client?.string("video-format"), copyFailedCodecs.contains(codec) { return false }
+        return true
+    }
+
+    /// Copy decoding on or off for the HDR file playing, as hdrWantsCopy says now.
+    private func applyHDRDecode() {
+        guard renderer == .gl, glHDROn, let c = client,
+              (defaults.string(forKey: SettingsKey.hwdec) ?? "auto") == "auto" else { return }
+        let copy = hdrWantsCopy
+        guard copy != hdrCopyActive else { return }
+        hdrCopyActive = copy
+        if copy {
+            c.set("hwdec-image-format", "no")
+            c.set("hwdec", "videotoolbox-copy")
+        } else {
+            c.set("hwdec", "videotoolbox,videotoolbox-copy")
+            c.set("hwdec-image-format", "nv12")
+        }
+        dlog("player", "OpenGL HDR: \(copy ? "10-bit copy decoding" : "hardware frames, no copy") (picture \(PictureMode.current.rawValue), thermal \(ProcessInfo.processInfo.thermalState.rawValue))")
+    }
+
+    /// The decoder went to software after the switch to copy decoding (AV1:
+    /// the hardware decoder restarted mid-stream and gave up). Still so a
+    /// second later: back to the hardware's own frames, and this codec
+    /// isn't copied again in this player.
+    private func checkCopyFallback() {
+        guard hdrCopyActive, hardwareSeenForFile else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            guard let self, self.hdrCopyActive, self.hwdecCurrent.isEmpty || self.hwdecCurrent == "no" else { return }
+            let codec = self.client?.string("video-format") ?? "?"
+            self.copyFailedCodecs.insert(codec)
+            dlog("player/error", "OpenGL HDR: copy decoding fell back to software for \(codec); hardware frames instead")
+            self.applyHDRDecode()
+        }
     }
 
     // MARK: Transport
@@ -2022,8 +2088,13 @@ final class PlayerModel: ObservableObject {
         var stored = playingItem ?? item
         if stored.title.isEmpty { stored.title = mediaTitle }
         HistoryStore.shared.record(stored, position: leftFinished && duration > 0 ? duration : position, duration: duration)
-        // Handoff: the other device can pick up here (Handoff.swift).
-        HandoffActivity.playing(item: stored, position: position, duration: duration)
+        // Handoff: the other device can pick up here (Handoff.swift). Every
+        // 30 s is near enough for picking up; each update has iOS encode and
+        // advertise the activity (1.26.1: it was every 5 s for the whole film).
+        if force || Date().timeIntervalSince(lastHandoff) >= 30 {
+            lastHandoff = Date()
+            HandoffActivity.playing(item: stored, position: position, duration: duration)
+        }
         // Next episodes downloaded on Wi-Fi, when that's on (AutoDownload; once per file a run).
         if duration > 0, position / duration >= AutoDownload.threshold {
             AutoDownload.watched(item: stored, progress: position / duration)
@@ -2070,6 +2141,8 @@ final class PlayerModel: ObservableObject {
                                                 anime: isMovie ? nil : hint, looksLikeAnime: anime && !isMovie, watchedAt: Date()))
         }
     }
+
+    private var lastHandoff = Date.distantPast
 
     // MARK: Watch time (WatchLog, 1.24.0)
 
@@ -3772,7 +3845,9 @@ extension PlayerModel: MPVClientDelegate {
             pendingH = Int(value.int ?? 0); applyVideoSize()
         case "hwdec-current":
             hwdecCurrent = value.string ?? ""
-            dlog("player", "decoder: \(hwdecCurrent.isEmpty || hwdecCurrent == "no" ? "software" : hwdecCurrent)")
+            let software = hwdecCurrent.isEmpty || hwdecCurrent == "no"
+            dlog("player", "decoder: \(software ? "software" : hwdecCurrent)")
+            if !software { hardwareSeenForFile = true } else { checkCopyFallback() }
             EnergyMonitor.shared.note = "renderer=\(renderer) picture=\(PictureMode.current.rawValue) decoder=\(hwdecCurrent.isEmpty ? "sw" : hwdecCurrent)"
             // A minute into playback: one line that says what this file costs
             // (once per file, not once per decoder change).

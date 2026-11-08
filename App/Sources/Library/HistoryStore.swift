@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Combine
 
 struct HistoryEntry: Codable, Identifiable, Hashable {
@@ -74,6 +75,7 @@ final class HistoryStore: ObservableObject {
     var deferPublishing = false {
         didSet {
             if !deferPublishing && changedWhileDeferred { changedWhileDeferred = false; objectWillChange.send() }
+            if !deferPublishing && deferredSave != nil { flush() }     // the player's last positions, now
         }
     }
     private var changedWhileDeferred = false
@@ -95,6 +97,10 @@ final class HistoryStore: ObservableObject {
         }
         // The widget's copy of Continue Watching follows these entries (1.20.3, FolioIntents.swift).
         ContinueSnapshotWriter.watch(self)
+        // What waits for its 30 s write (scheduleSave) is written as Folio leaves the screen.
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { HistoryStore.shared.flush() }
+        }
     }
 
     /// One card per show: the most recently watched resumable episode of each.
@@ -257,8 +263,8 @@ final class HistoryStore: ObservableObject {
             entries[i] = entry          // the same library file under another path (1.23.2)
         } else {
             entries.append(entry)
+            trim()                      // only a new entry can take it over a cap
         }
-        trim()
         scheduleSave()
     }
 
@@ -364,7 +370,32 @@ final class HistoryStore: ObservableObject {
         }
     }
 
+    /// While the player is up (deferPublishing) the file is written at most
+    /// every 30 s, not 0.5 s after each change (1.26.1): the player records
+    /// its position every 5 s, and each save encoded and rewrote the whole
+    /// history, ~1,400 times through a two-hour film. The 30 s write takes
+    /// the entries as they are then; leaving the app and closing the player
+    /// (flush) write at once.
     private func scheduleSave() {
+        if deferPublishing {
+            guard deferredSave == nil else { return }
+            let w = DispatchWorkItem { [weak self] in
+                MainActor.assumeIsolated {
+                    guard let self, self.deferredSave != nil else { return }
+                    self.deferredSave = nil
+                    self.writeSoon()
+                }
+            }
+            deferredSave = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + 30, execute: w)
+            return
+        }
+        writeSoon()
+    }
+
+    private var deferredSave: DispatchWorkItem?
+
+    private func writeSoon() {
         saveWork?.cancel()
         let snapshot = entries
         let url = fileURL
@@ -377,9 +408,12 @@ final class HistoryStore: ObservableObject {
     /// encoded and wrote up to 500 entries on it), except when the app is
     /// about to end (`wait`).
     func flush(wait: Bool = false) {
-        guard let pending = saveWork else { return }
+        let deferred = deferredSave != nil
+        deferredSave?.cancel()
+        deferredSave = nil
+        guard saveWork != nil || deferred else { return }
+        saveWork?.cancel()
         saveWork = nil
-        pending.cancel()
         let snapshot = entries
         let url = fileURL
         if wait {

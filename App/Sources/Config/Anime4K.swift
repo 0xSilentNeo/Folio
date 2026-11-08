@@ -149,7 +149,9 @@ enum EnhancedQuality {
 
 /// Picture processing level. Efficient is the default: hardware-filtered
 /// (bilinear) scaling and no extra passes, which is what keeps the GPU — and
-/// the phone — cool. Balanced uses a sharper 4-tap scaler; Enhanced is the
+/// the phone — cool. On the OpenGL renderer it also draws HDR from the
+/// hardware decoder's own frames instead of copying each one out for all
+/// 10 bits (1.26.1, PlayerModel.applyHDRDecode). Balanced uses a sharper 4-tap scaler; Enhanced is the
 /// desktop "high quality" set (several full-resolution passes per frame).
 enum PictureMode: String, CaseIterable, Identifiable {
     case efficient, balanced, enhanced
@@ -160,7 +162,7 @@ enum PictureMode: String, CaseIterable, Identifiable {
     var hint: String {
         switch self {
         case .efficient: "Coolest, longest battery"
-        case .balanced: "Sharper scaling"
+        case .balanced: "Sharper scaling, smoother HDR"
         case .enhanced: "Best scaling, debanding · uses more power"
         }
     }
