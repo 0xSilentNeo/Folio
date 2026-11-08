@@ -289,9 +289,13 @@ enum NotifySignals {
         }
         // The forecast: rain, cold or heat on a day, at your usual time that day.
         for d in x.forecast {
+            // A day already over is left out before its range is made: a
+            // range whose start (now) is after its end traps (review, 9 Nov:
+            // a forecast cached before midnight, or a city west of the phone).
             guard let start = EngagePlanner.date(of: d.day, cal) else { continue }
-            let window = max(start, x.now)...start.addingTimeInterval(86400 - 1)
-            guard window.upperBound > x.now else { continue }
+            let end = start.addingTimeInterval(86400 - 1)
+            guard end > x.now else { continue }
+            let window = max(start, x.now)...end
             if d.rain >= 70 {
                 out.append(NotifyCandidate(kind: .rainy, key: "rain.\(d.day)", window: window, facts: ["chance": "\(d.rain)"], reason: "\(d.rain)% chance of rain on \(d.day)"))
             } else if d.maxC <= 8 {

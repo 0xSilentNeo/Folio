@@ -144,13 +144,19 @@ struct FlowLayout: Layout {
 /// Title page backdrop size.
 enum HeroMetrics {
     /// 16:9 of the width on a phone held upright, 360 pt on iPad, and at most
-    /// 60% of the screen's height in landscape. (Until 1.16.0 a phone in
+    /// 68% of the screen's height in landscape (60% until 1.26.0). (Until 1.16.0 a phone in
     /// landscape got 360 pt of a 440 pt-tall screen: a thin, hugely zoomed
     /// slice of the picture.)
     static func height(_ size: CGSize) -> CGFloat {
         let base = size.width > 700 ? 360 : size.width * 9 / 16 + 40
-        return size.width > size.height ? min(base, size.height * 0.6) : base
+        return size.width > size.height ? min(base, size.height * 0.68) : base
     }
+
+    /// Where a backdrop too tall for its band is cut (1.26.0): 0 keeps its
+    /// top, 0.5 its middle. Faces sit in the upper part of a still; cut from
+    /// the middle, a phone on its side lost the heads (8 Nov screenshot,
+    /// The Gentlemen).
+    static let focusY: CGFloat = 0.22
 
     /// Pixel width to fetch a backdrop at: the screen's long side (so it stays
     /// sharp in landscape), capped. 1.16.0 used IMDb episode stills 480 px
@@ -159,6 +165,15 @@ enum HeroMetrics {
         let b = UIScreen.main.nativeBounds
         return Int(min(2400, max(b.width, b.height)))
     }
+}
+
+extension VerticalAlignment {
+    /// A backdrop's focus line, `HeroMetrics.focusY` of the way down: lined
+    /// up in the band and in the picture, the overflow is cut 22 / 78.
+    private enum HeroFocus: AlignmentID {
+        static func defaultValue(in d: ViewDimensions) -> CGFloat { d.height * HeroMetrics.focusY }
+    }
+    static let heroFocus = VerticalAlignment(HeroFocus.self)
 }
 
 struct HeroHeader<Art: View, Content: View>: View {
@@ -180,9 +195,14 @@ struct HeroHeader<Art: View, Content: View>: View {
             // fades itself out instead of into a flat page colour, so it
             // melts into the page's backdrop and its corner glows (the flat
             // colour made a darker band beside and under the poster).
+            // 1.26.0: a picture taller than the band (a phone on its side, a
+            // 16:9 still across 956 pt) is cut near its top, not its middle:
+            // centred, it lost its top 137 pt there, people's heads with it.
+            // The alignment guide puts the same fraction of the overflow above
+            // the band whatever the picture's shape.
             Color.clear
                 .frame(height: height)
-                .overlay { art() }
+                .overlay(alignment: Alignment(horizontal: .center, vertical: .heroFocus)) { art() }
                 .clipped()
                 .mask(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.34),
                                              .init(color: .black.opacity(0.1), location: 0.67), .init(color: .clear, location: 1)],

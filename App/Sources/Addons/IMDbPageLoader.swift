@@ -17,7 +17,7 @@ final class IMDbPageLoader: NSObject, WKNavigationDelegate {
 
     private var webView: WKWebView?
     private var rulesReady = false
-    private struct Job { let url: URL; let continuation: CheckedContinuation<String?, Never> }
+    private struct Job { var id = UUID(); let url: URL; let continuation: CheckedContinuation<String?, Never> }
     private var queue: [Job] = []
     private var current: Job?
     private var navigations = 0
@@ -42,9 +42,26 @@ final class IMDbPageLoader: NSObject, WKNavigationDelegate {
     """
 
     func load(_ url: URL) async -> String? {
-        await withCheckedContinuation { c in
-            queue.append(Job(url: url, continuation: c))
-            pump()
+        // A caller that goes away (another genre, a page closed, the next
+        // search letter) takes its page out of the queue (1.26.0): until
+        // then each waited its turn, up to 25 s, ahead of newer ones.
+        let id = UUID()
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { c in
+                queue.append(Job(id: id, url: url, continuation: c))
+                pump()
+            }
+        } onCancel: {
+            Task { @MainActor in IMDbPageLoader.shared.cancel(id) }
+        }
+    }
+
+    private func cancel(_ id: UUID) {
+        if let i = queue.firstIndex(where: { $0.id == id }) {
+            queue.remove(at: i).continuation.resume(returning: nil)
+        } else if current?.id == id {
+            dlog("imdb", "webkit load given up by its caller")
+            finish(nil)
         }
     }
 
@@ -139,6 +156,10 @@ final class IMDbPageLoader: NSObject, WKNavigationDelegate {
     }
 
     func webView(_ wv: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        // A load stopped on purpose (a timeout, the next page) says so late:
+        // it mustn't end the page now loading (review, 9 Nov).
+        if (error as NSError).code == NSURLErrorCancelled { return }
+        guard current != nil else { return }
         dlog("imdb/error", "webkit failed: \(error.localizedDescription)")
         finish(nil)
     }

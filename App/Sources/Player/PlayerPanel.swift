@@ -211,7 +211,7 @@ struct SettingsPanelContent: View {
                     if model.holdEnabled {
                         ValueMenu(options: [1.5, 2.0, 2.5, 3.0, 4.0].map { ($0, String(format: "%g×", $0)) }, selection: $model.holdSpeed)
                     }
-                    Toggle("", isOn: $model.holdEnabled).labelsHidden()
+                    Toggle("Hold to speed up", isOn: $model.holdEnabled).labelsHidden()
                 }
             }
             PanelRow(icon: "rectangle.on.rectangle", title: "Mode") {
@@ -235,7 +235,7 @@ struct SettingsPanelContent: View {
                           selection: Binding(get: { model.aspectOverride }, set: { model.setAspect($0) }))
             }
             PanelRow(icon: "arrow.up.left.and.arrow.down.right", title: "Fill screen") {
-                Toggle("", isOn: Binding(get: { model.zoomToFill }, set: { _ in model.toggleZoom() })).labelsHidden()
+                Toggle("Fill screen", isOn: Binding(get: { model.zoomToFill }, set: { _ in model.toggleZoom() })).labelsHidden()
             }
             if !MPVFiles.shadersRecent().isEmpty {
                 PanelRow(icon: "square.stack.3d.up", title: "Your shaders", subtitle: model.activeShaders.isEmpty ? "Off" : "\(model.activeShaders.count) active") {
@@ -260,17 +260,18 @@ struct SettingsPanelContent: View {
 
             PanelHeader(title: "Audio")
             PanelRow(icon: "person.wave.2", title: "Spatial Audio", subtitle: "Surround output, head-tracked on AirPods") {
-                Toggle("", isOn: $spatial).labelsHidden()
+                Toggle("Spatial Audio", isOn: $spatial).labelsHidden()
+                    .onChange(of: spatial) { _, on in model.setSurround(on) }
             }
             PanelRow(icon: "speaker.wave.3", title: "Boost") {
                 ValueMenu(options: [(0, "Off"), (50, "+50%"), (100, "+100%")], selection: $model.audioBoost)
             }
             // 1.20.3: for this player session (the defaults are in Settings → Audio & Subtitles).
             PanelRow(icon: "moon.zzz", title: "Night mode", subtitle: model.nightMode ? model.audioFilterPlan?.night ?? "On" : "Loud scenes softer") {
-                Toggle("", isOn: $model.nightMode).labelsHidden()
+                Toggle("Night mode", isOn: $model.nightMode).labelsHidden()
             }
             PanelRow(icon: "quote.bubble", title: "Dialogue boost", subtitle: model.dialogueBoost ? model.audioFilterPlan?.dialogue ?? "On" : "Voices clearer") {
-                Toggle("", isOn: $model.dialogueBoost).labelsHidden()
+                Toggle("Dialogue boost", isOn: $model.dialogueBoost).labelsHidden()
             }
             PanelRow(icon: "timer", title: "Audio delay") {
                 Stepper3(text: String(format: "%+.0f ms", model.audioDelay * 1000),
@@ -291,7 +292,7 @@ struct SettingsPanelContent: View {
                     .frame(width: 200)
             }
             PanelRow(icon: "rectangle.landscape.rotate", title: "Auto-Rotate", subtitle: ui.rotationLocked ? "Locked" : nil) {
-                Toggle("", isOn: Binding(get: { !ui.rotationLocked }, set: { on in
+                Toggle("Auto-Rotate", isOn: Binding(get: { !ui.rotationLocked }, set: { on in
                     ui.rotationLocked = !on
                     onRotationLock(ui.rotationLocked)
                 })).labelsHidden()
@@ -330,7 +331,7 @@ struct SettingsPanelContent: View {
             // 1.22.0: openings skipped by themselves for this show only.
             if let show = model.memoryShowName, UserDefaults.standard.bool(forKey: SettingsKey.rememberPerShow) {
                 PanelRow(icon: "forward.end", title: "Always skip openings", subtitle: show) {
-                    Toggle("", isOn: Binding(get: { model.showAutoSkip.contains(SkipSegment.Kind.intro.rawValue) },
+                    Toggle("Always skip openings", isOn: Binding(get: { model.showAutoSkip.contains(SkipSegment.Kind.intro.rawValue) },
                                              set: { model.setAlwaysSkip(.intro, $0) })).labelsHidden()
                 }
             }

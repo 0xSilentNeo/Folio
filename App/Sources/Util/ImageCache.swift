@@ -31,6 +31,13 @@ final class ImageCache: @unchecked Sendable {
         cfg.httpMaximumConnectionsPerHost = 6
         cfg.timeoutIntervalForRequest = 20
         session = URLSession(configuration: cfg)
+        // Decoded pictures are the first thing to give back when memory runs
+        // short (1.26.0): they come again from disk at once. Nothing let go
+        // of them, and the app was ended for memory during playback.
+        NotificationCenter.default.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: nil) { [weak self] _ in
+            self?.memory.removeAllObjects()
+            dlog("image", "memory warning: decoded pictures dropped")
+        }
     }
 
     private func fileKey(_ url: URL) -> String {

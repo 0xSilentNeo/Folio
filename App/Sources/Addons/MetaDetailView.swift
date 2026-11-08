@@ -35,7 +35,10 @@ struct MetaDetailView: View {
     private var isSeries: Bool { m.type != "movie" }
     private var seasonEpisodes: [MetaVideo] {
         let now = Date()
-        return allVideos.filter { allSeasons.isEmpty || $0.season == season }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
+        // Once, not per episode: `m.seasons` builds a set and sorts it each
+        // time (quadratic for an addon anime with a thousand episodes).
+        let anySeason = allSeasons.isEmpty
+        return allVideos.filter { anySeason || $0.season == season }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
             .map { checkedDate($0, now: now) }
     }
 
@@ -91,7 +94,6 @@ struct MetaDetailView: View {
 
     private var page: some View {
         GeometryReader { geo in
-            let wide = geo.size.width > 700
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     backdrop(geo.size)
@@ -136,7 +138,7 @@ struct MetaDetailView: View {
             .topScrollScrim()
         }
         .background(Theme.background.ignoresSafeArea())
-        .pageButtons(zooms: zooms, back: { dismiss() }) { EmptyView() }
+        .pageButtons(zooms: zooms, back: { dismiss() }) { WatchlistButton(meta: m) }
         .landscapeTopGap()
         // Landscape phone: the floating tab bar sat on Track and the episodes,
         // as it did on the library's title page (1.22.1).
@@ -176,15 +178,31 @@ struct MetaDetailView: View {
 
     // MARK: Header
 
+    /// The backdrop picture's address for a title: its wide art, else its poster.
+    private func backdropURL(_ meta: MetaItem) -> URL? {
+        (meta.background.flatMap { IMDbSource.sized($0, width: HeroMetrics.pixels) } ?? meta.poster).flatMap(URL.init(string:))
+    }
+
     private func backdrop(_ size: CGSize) -> some View {
         HeroHeader(height: HeroMetrics.height(size)) {
-            if let art = m.background.flatMap({ IMDbSource.sized($0, width: HeroMetrics.pixels) }) ?? m.poster, let u = URL(string: art) {
-                CachedImage(url: u, maxPixel: CGFloat(HeroMetrics.pixels)) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
+            if let u = backdropURL(m) {
+                // While a better backdrop loads, the one the page opened with
+                // stays (1.26.0): until then the page went blank between the two.
+                CachedImage(url: u, maxPixel: CGFloat(HeroMetrics.pixels)) { $0.resizable().scaledToFill() } placeholder: {
+                    if let first = backdropURL(preview), first != u {
+                        CachedImage(url: first, maxPixel: CGFloat(HeroMetrics.pixels)) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
+                    } else { Theme.card }
+                }
             } else { Theme.card }
         } content: {
                 HStack(alignment: .bottom, spacing: 14) {
                     if let poster = m.poster, let u = URL(string: poster) {
-                        CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
+                        // The tile's own picture shows while its sharper copy loads.
+                        CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: {
+                            if let first = preview.poster.flatMap(URL.init(string:)), first != u {
+                                CachedImage(url: first, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
+                            } else { Theme.card }
+                        }
                             .frame(width: 122, height: 191)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .shadow(color: Theme.shadow, radius: 12, y: 6)
@@ -333,6 +351,11 @@ struct MetaDetailView: View {
             guard let imdb = await TMDB.imdbID(for: preview) else { return }
             id = imdb
         }
+        // Discover's Airing now anime (1.26.0): its IMDb title, by name.
+        if id.hasPrefix("anilist:") {
+            guard let imdb = await AnimeLink.imdbID(for: preview) else { return }
+            id = imdb
+        }
         if id.hasPrefix("tt") {
             let t0 = CACurrentMediaTime()
             let signpost = LibTrace.title.begin("title page data")
@@ -347,8 +370,18 @@ struct MetaDetailView: View {
             let seasonsTask: Task<[Int], Never>? = preview.type == "movie" ? nil : Task { await IMDbSource.seasons(id: id) }
             defer { seasonsTask?.cancel() }
             if var full = await IMDbSource.details(id: id, type: preview.type) {
-                if full.poster == nil { full.poster = preview.poster }
-                if full.background == nil { full.background = preview.background }
+                // The poster you tapped stays the page's poster, only sharper
+                // (1.26.0). IMDb's title page often has other artwork than its
+                // lists or TMDB's, and the page swapped to it a moment after
+                // opening (8 Nov recording: 9-1-1, The Lowdown).
+                full.poster = TileArt.sharper(poster: preview.poster) ?? full.poster
+                // A list's wide picture is kept too; a list that only has the
+                // poster (IMDb's) gets the title page's real backdrop.
+                if let b = preview.background, !TileArt.sameImage(b, preview.poster) {
+                    full.background = TileArt.sharper(backdrop: b)
+                } else if full.background == nil {
+                    full.background = preview.background
+                }
                 if full.type == "movie" && preview.type == "series" { full.type = "series" }
                 meta = full
             } else {
@@ -380,7 +413,7 @@ struct MetaDetailView: View {
         } else {
             guard let addon = AddonStore.shared.metaAddon(type: preview.type, id: id, preferred: sourceAddon) else { return }
             if var full = try? await AddonAPI.meta(addon, type: preview.type, id: id) {
-                if full.poster == nil { full.poster = preview.poster }
+                full.poster = preview.poster ?? full.poster
                 meta = full
             }
             if let first = meta?.seasons.first { season = first }

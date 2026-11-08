@@ -1269,6 +1269,8 @@ final class PlayerModel: ObservableObject {
         readAudioLayoutLater()
         findMoreEpisodes()
         startPassLog()
+        // Each new file: automatic PiP armed again from its state (1.26.0).
+        if !isPiPActive { pip.rearmAutoStart(defaults.bool(forKey: SettingsKey.pipAuto)) }
     }
 
     /// The last episode in the queue, on a WebDAV server: the show's later
@@ -2026,6 +2028,47 @@ final class PlayerModel: ObservableObject {
         if duration > 0, position / duration >= AutoDownload.threshold {
             AutoDownload.watched(item: stored, progress: position / duration)
         }
+        // Trakt, AniList, MyAnimeList (1.26.0): once per file a session, at
+        // the point history counts it as watched (HistoryEntry.isFinished).
+        if duration > 0, !syncSent.contains(stored.id), SyncCenter.shared.anyOn,
+           leftFinished || position / duration > 0.92 || (duration >= 600 && duration - position < 90) {
+            syncSent.insert(stored.id)
+            sendWatched(stored)
+        }
+    }
+
+    // MARK: Sync (1.26.0)
+
+    /// Files already sent to the sync services in this player.
+    private var syncSent: Set<String> = []
+    /// The playing file's IMDb identity ("tt…:1:3", "tt…"), found from its name (resolveShowKey).
+    private var fileIdentity: (id: String, identity: String?)?
+
+    private func sendWatched(_ it: MediaItem) {
+        var identity: String?
+        if case .addon = it.source { identity = TitleIdentity.fromAddonKey(it.historyKey ?? "") }
+        else if fileIdentity?.id == it.id { identity = fileIdentity?.identity }
+        let parts = identity?.split(separator: ":").map(String.init) ?? []
+        let season = parts.count == 3 ? Int(parts[1]) : nil
+        let episode = parts.count == 3 ? Int(parts[2]) : nil
+        let name = it.resolvedURL?.lastPathComponent ?? it.title
+        let fileName = TitleParser.isMedia(name) ? name : it.title
+        let parsed = TitleParser.parse(fileName)
+        var hint = it.anime ?? AnimeHint()
+        if hint.title == nil { hint.title = it.streamPick?.context.name ?? parsed.title }
+        if hint.episode == nil { hint.episode = it.streamPick?.context.episode ?? parsed.episode ?? episode }
+        let isMovie = identity.map { _ in parts.count == 1 } ?? (hint.episode == nil)
+        let fansub = fileName.hasPrefix("[") || fileName.range(of: #" - \d{1,4}\b"#, options: .regularExpression) != nil
+        let known = hint.hasAnimeID || it.streamPick?.context.isAnime == true || fansub
+        let title = memoryShowName ?? it.streamPick?.context.name ?? hint.title ?? it.displayTitle
+        Task {
+            var anime = known
+            if !anime, !isMovie, let meta = await MetadataService.shared.lookup(filename: fileName) {
+                anime = meta.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false
+            }
+            SyncCenter.shared.watched(SyncEvent(title: title, imdb: parts.first, season: season, episode: episode, isMovie: isMovie,
+                                                anime: isMovie ? nil : hint, looksLikeAnime: anime && !isMovie, watchedAt: Date()))
+        }
     }
 
     // MARK: Watch time (WatchLog, 1.24.0)
@@ -2099,6 +2142,7 @@ final class PlayerModel: ObservableObject {
                 guard let m = await ReleaseMatcher.shared.saved(release), m.confident else { return nil }
                 return m.imdbID
             }
+            self?.fileIdentity = (id, identity)
             self?.setShowKey(ShowKey.make(item: item, imdb: showID(identity)), for: id)
         }
     }
@@ -3151,6 +3195,14 @@ final class PlayerModel: ObservableObject {
     /// goes into the layer first; the switch to PiP's renderer waits for it
     /// (switchToSoftware: snapshotQueue.sync).
     private func aboutToLeave() {
+        if renderer == .gl, !isPiPActive {
+            // AVKit decides on automatic PiP from the playback state it last
+            // read: the current one, and the setting as it is now (1.26.0).
+            pipState.paused = paused
+            pip.updatePlayback(position: position, rate: paused ? 0 : speed)
+            pip.rearmAutoStart(defaults.bool(forKey: SettingsKey.pipAuto))
+            return
+        }
         guard renderer == .metal, isPiPPossible, defaults.bool(forKey: SettingsKey.pipAuto), !isPiPActive else { return }
         PiPTrace.event("app about to leave: the PiP layer gets the current frame (its last one came \(pip.lastFrameAge.map { "\(Int($0 * 1000)) ms ago" } ?? "never"))")
         takeSnapshot(leaving: true)
@@ -3442,6 +3494,15 @@ final class PlayerModel: ObservableObject {
         updateOutputChannels()
     }
 
+    /// Spatial Audio switched in the player's panel (1.26.0): applied now,
+    /// not at the next session. The switch only wrote the setting.
+    func setSurround(_ on: Bool) {
+        _ = client?.set("audio-channels", on ? "auto" : "stereo")
+        try? AVAudioSession.sharedInstance().setSupportsMultichannelContent(on)
+        updateOutputChannels()
+        dlog("player", "spatial audio \(on ? "on" : "off") for this session")
+    }
+
     private func updateOutputChannels() {
         guard defaults.bool(forKey: SettingsKey.surroundAudio) else { return }
         let s = AVAudioSession.sharedInstance()
@@ -3667,7 +3728,7 @@ extension PlayerModel: MPVClientDelegate {
             paused = value.bool ?? false
             pipState.paused = paused
             pip.updatePlayback(position: position, rate: paused ? 0 : speed)
-            pip.invalidate()
+            if paused || isPiPActive { pip.invalidate() } else { pip.rearmAutoStart(defaults.bool(forKey: SettingsKey.pipAuto)) }
             updateNowPlaying()
             UIApplication.shared.isIdleTimerDisabled = !paused
             if paused { saveHistory(force: true); scheduleSnapshot(after: 0.3) } else { resumedInBackground() }
@@ -3737,7 +3798,10 @@ extension PlayerModel: MPVClientDelegate {
             let v = value.double ?? 0
             if abs(v - clock.cacheAhead) > 1 { clock.cacheAhead = v }
         case "panscan":
-            zoomToFill = (value.double ?? 0) > 0.5
+            // Only a change publishes: Metal's pinch sets panscan on every
+            // frame, and each echo redrew the whole player (review, 9 Nov).
+            let fill = (value.double ?? 0) > 0.5
+            if fill != zoomToFill { zoomToFill = fill }
             // Fill did nothing on the sample-buffer renderer (review, 2 Nov).
             if renderer == .gl { pip.setFill(zoomToFill) }
             applySubtitleFraming()
@@ -3867,6 +3931,10 @@ extension PlayerModel: PiPManagerDelegate {
             self.showToast("PiP failed: \(message)")
             self.setPiPLayerOnTop(false)
             if self.mode == .sw { self.switchToMain() }
+            // Failed after the app had already left: as if it left without
+            // PiP, so no GPU work goes on in the background (iOS ends apps
+            // for that) and Metal's output isn't rebuilt there (review, 9 Nov).
+            if UIApplication.shared.applicationState == .background { self.didEnterBackground() }
         }
     }
 

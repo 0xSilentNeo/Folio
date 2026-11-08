@@ -73,9 +73,11 @@ final class PanelPillUIView: UIView {
             stack.topAnchor.constraint(equalTo: effect.contentView.topAnchor),
             stack.bottomAnchor.constraint(equalTo: effect.contentView.bottomAnchor),
         ])
-        let items: [(PlayerUIState.Panel, String)] = [(.tracks, "switch.2"), (.settings, "slider.horizontal.3"), (.nowPlaying, "list.bullet")]
-        for (kind, symbol) in items {
+        let items: [(PlayerUIState.Panel, String, String)] = [(.tracks, "switch.2", "Tracks"), (.settings, "slider.horizontal.3", "Settings"),
+                                                              (.nowPlaying, "list.bullet", "Now Playing")]
+        for (kind, symbol, title) in items {
             let b = UIButton(type: .system)
+            b.accessibilityLabel = title          // as on iOS 26's bar (VoiceOver read nothing on iOS 17 and 18)
             b.setImage(UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold)), for: .normal)
             b.tintColor = .white
             b.layer.cornerRadius = height / 2

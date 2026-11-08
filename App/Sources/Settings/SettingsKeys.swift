@@ -38,6 +38,18 @@ enum SettingsKey {
     static let prepareNext = "prepareNext"              // addon seasons: find and load the next episode before it's needed
     static let rememberPerShow = "rememberPerShow"      // 1.20.3: tracks, delays, Fill, Anime4K per show (ShowMemory)
 
+    // Discover (1.26.0)
+    static let discoverAiring = "discoverAiring"            // the "Airing now" row on Discover
+    static let discoverAiringKind = "discoverAiringKind"    // series | anime: the row's pill
+
+    // Sync (1.26.0): Trakt, AniList, MyAnimeList (SyncCenter)
+    static let syncTrakt = "syncTrakt"
+    static let syncAniList = "syncAniList"
+    static let syncMAL = "syncMAL"
+    static let syncTraktClientID = "syncTraktClientID"      // your Trakt app's Client ID
+    static let syncMALClientID = "syncMALClientID"          // your MyAnimeList app's Client ID
+    static let syncAniListClientID = "syncAniListClientID"  // your AniList app's client id
+
     // Downloads (WebDAV)
     static let downloadConcurrent = "downloadConcurrent"
     static let downloadAutoStart = "downloadAutoStart"
@@ -171,6 +183,11 @@ enum SettingsKey {
             nativePanelMorph: true,
             tileArtwork: "poster",
             castPosition: "bottom",
+            discoverAiring: true,
+            discoverAiringKind: "series",
+            syncTrakt: false,
+            syncAniList: false,
+            syncMAL: false,
             episodeTitleLanguage: "english",
             playlistNames: "episode",
             titlePageStyle: "full",

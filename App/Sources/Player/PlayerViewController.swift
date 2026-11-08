@@ -1,5 +1,6 @@
 import UIKit
 import SwiftUI
+import Combine
 
 /// UI-only state for the player screen.
 @MainActor
@@ -132,10 +133,58 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
             // portrait while playing (the phone still flips between the two landscapes).
             orientationMask = .landscape
             requestOrientation(.landscape)
-        } else if UserDefaults.standard.bool(forKey: SettingsKey.landscapeOnOpen), UIDevice.current.userInterfaceIdiom == .phone,
-           model.videoSize == .zero || model.videoSize.width >= model.videoSize.height {
-            requestOrientation(.landscape)
+        } else if Self.followsVideoShape {
+            // The video's shape isn't known yet here (start() has only asked
+            // for the file). Until 1.26.0 every video turned the screen to
+            // landscape, a portrait one too. A file on the phone opens in a
+            // tenth of a second: its shape decides. A stream can take seconds:
+            // landscape at once (most video is), turned back for a portrait one.
+            if model.item.source == .local {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+                    guard let self, self.shapePortrait == nil, self.view.window != nil else { return }
+                    self.requestOrientation(.landscape)
+                }
+            } else {
+                requestOrientation(.landscape)
+            }
         }
+        watchVideoShape()
+    }
+
+    // MARK: Portrait and landscape videos (1.26.0)
+
+    /// Settings → Playback → Landscape on open: the player turns to the
+    /// video's shape (phones only; iPads are turned by hand).
+    private static var followsVideoShape: Bool {
+        UIDevice.current.userInterfaceIdiom == .phone && UserDefaults.standard.bool(forKey: SettingsKey.landscapeOnOpen)
+    }
+
+    /// The shape of the video playing, once mpv has said (nil: not yet).
+    private var shapePortrait: Bool?
+    private var shapeWatch: AnyCancellable?
+
+    private func watchVideoShape() {
+        guard shapeWatch == nil else { return }
+        shapeWatch = model.$videoSize.removeDuplicates().sink { [weak self] size in
+            // @Published sends before it stores: act on the next turn of the run loop.
+            DispatchQueue.main.async { self?.videoShapeChanged(size) }
+        }
+    }
+
+    /// A video of the other shape (the first file, or the next episode):
+    /// the screen turns to it, unless rotation is locked, Stay in landscape
+    /// is on, or the app is away.
+    private func videoShapeChanged(_ size: CGSize) {
+        guard size.width > 0, size.height > 0 else { return }
+        let portrait = size.height > size.width
+        guard portrait != shapePortrait else { return }
+        shapePortrait = portrait
+        guard Self.followsVideoShape, !Self.stayLandscape, !ui.rotationLocked, !heldWhileAway,
+              UIApplication.shared.applicationState == .active,
+              let current = view.window?.windowScene?.interfaceOrientation else { return }
+        guard current.isPortrait != portrait else { return }
+        dlog("player", "video is \(portrait ? "portrait" : "landscape") (\(Int(size.width))×\(Int(size.height))): the screen turns to it")
+        requestOrientation(portrait ? .portrait : .landscape)
     }
 
     override var canBecomeFirstResponder: Bool { true }
@@ -153,6 +202,7 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
         if !awayObservers.isEmpty { UIDevice.current.endGeneratingDeviceOrientationNotifications() }
         awayObservers.forEach { NotificationCenter.default.removeObserver($0) }
         awayObservers = []
+        shapeWatch = nil
         // The screen's panel opener holds the screen, and with it this state
         // and the model: let go of it, or the whole session stays in memory
         // after closing (AuditUITests: no "player model freed" line).

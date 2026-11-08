@@ -29,7 +29,19 @@ struct SettingsView: View {
                         .transition(.opacity)
                 }
             }
+            .onAppear { covered = false }
+            .onDisappear { covered = true }
+            // The lock covers this list, not a page pushed from it: one left
+            // open (Presets, mpv → Scripts, Addons) stayed usable with no
+            // passcode after Folio came back (review, 9 Nov). Settings close
+            // instead, all of them; opening them again asks.
+            .onChange(of: kids.relockedAt) {
+                if kids.isOn && covered { dismiss() }
+            }
     }
+
+    /// A page is pushed over the list.
+    @State private var covered = false
 
     private var list: some View {
         List {
@@ -42,6 +54,7 @@ struct SettingsView: View {
                 row("Audio & Subtitles", "captions.bubble", .orange) { SubtitleAudioSettings() }
                 row("Skip Intro & Credits", "forward.end", .purple) { SkipSettings() }
                 row("Discover", "sparkles.tv", .cyan) { DiscoverSettings() }
+                row("Sync", "arrow.triangle.2.circlepath", .red) { SyncSettingsView() }
                 row("Downloads", "arrow.down.circle", .mint) { DownloadSettingsView() }
             }
             // 1.22.0: titles rated for kids only, Settings behind a passcode.
@@ -1101,11 +1114,23 @@ struct DiscoverSettings: View {
     @AppStorage(IMDbSource.Key.language) private var language = "en-US"
     @AppStorage(IMDbSource.Key.minVotes) private var minVotes = 25000
     @AppStorage(IMDbSource.Key.animeJapan) private var animeJapan = true
+    @AppStorage(SettingsKey.discoverAiring) private var airing = true
+    @AppStorage(SettingsKey.discoverAiringKind) private var airingKind = AiringCatalog.Kind.series.rawValue
     @State private var showPlatforms = false
     @State private var cleared = false
 
     var body: some View {
         Form {
+            Section {
+                Toggle("Airing now", isOn: $airing)
+                if airing {
+                    Picker("Show", selection: $airingKind) {
+                        ForEach(AiringCatalog.Kind.allCases) { Text($0.title).tag($0.rawValue) }
+                    }
+                }
+            } header: { Text("Rows") } footer: {
+                Text("A row at the top of Discover with series that have new episodes this week (from TVmaze) or anime airing this season (from AniList). The pill on the row switches between them.")
+            }
             Section {
                 TextField("Language (e.g. en-US, de-DE, ja-JP)", text: $language)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()

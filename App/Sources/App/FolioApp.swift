@@ -26,6 +26,8 @@ struct FolioApp: App {
         // Folio's notifications (1.25.0): planned each time Folio leaves the
         // screen, cleared when it's back.
         MainActor.assumeIsolated { NotifyCenter.start() }
+        // Trakt, AniList, MyAnimeList (1.26.0): what waited to be sent goes now.
+        MainActor.assumeIsolated { SyncCenter.shared.start() }
         if !["-uiTest", "-uiTestLibrary", "-labDiscover", "-shots"].contains(where: CommandLine.arguments.contains) { IMDbSource.warmUp() }
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
