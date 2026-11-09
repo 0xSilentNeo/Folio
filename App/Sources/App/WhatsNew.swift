@@ -20,6 +20,10 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.0", items: [
+            Item(icon: "cpu", title: "Metal without the stutter",
+                 text: "The Metal renderer now draws into the same picture as Picture in Picture: no stall when PiP starts, and no reload after Notification Centre or the Home Screen. Settings → Video Engine → Renderer → Metal to try it."),
+        ]),
         Release(version: "1.27.1", items: [
             Item(icon: "square.grid.3x3", title: "Discover from Cinemeta or TMDB",
                  text: "Install Cinemeta in one tap, or add your TMDB key, in Addons: Discover's grid comes from them, past IMDb's 250 titles. Drag to choose which goes first."),
