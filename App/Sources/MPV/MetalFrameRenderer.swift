@@ -58,6 +58,9 @@ final class MetalFrameRenderer: FrameRenderer {
     private var pool: CVPixelBufferPool?
     private var poolKey = (0, 0, false)
     private var lastSkip: String?
+    /// Frames handed to the layer, and frames the engine didn't finish.
+    private var shown = 0
+    private var dropped = 0
 
     // Main thread.
     private var viewSize = (0, 0)
@@ -233,7 +236,15 @@ final class MetalFrameRenderer: FrameRenderer {
         lock.unlock()
         guard let token else { return }
         let frame = Unmanaged<Frame>.fromOpaque(token).takeRetainedValue()
-        guard ok, !gone else { return }
+        guard ok, !gone else {
+            dropped += 1
+            if dropped == 1 { trace("Metal: the engine gave back a frame undrawn (\(gone ? "detached" : "not drawn"))") }
+            return
+        }
+        shown += 1
+        if shown == 1 {
+            trace("Metal: first frame into the video layer, \(CVPixelBufferGetWidth(frame.buffer))×\(CVPixelBufferGetHeight(frame.buffer))\(frame.hdr != nil ? ", HDR" : "")")
+        }
         if let hdr = frame.hdr { SampleBufferRenderer.tag(frame.buffer, hdr) }
         output(frame.buffer)
     }
@@ -261,5 +272,9 @@ final class MetalFrameRenderer: FrameRenderer {
         return nil
     }
 
-    private func trace(_ line: String) { Task { @MainActor in PiPTrace.event(line) } }
+    /// In the app log always (a new path), and in the PiP trace.
+    private func trace(_ line: String) {
+        dlog("metal", line)
+        Task { @MainActor in PiPTrace.event(line) }
+    }
 }
