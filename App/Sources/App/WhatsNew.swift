@@ -20,6 +20,14 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.26.3", items: [
+            Item(icon: "gearshape", title: "Settings, the iOS way",
+                 text: "Each setting's explanation sits under it, as in iOS Settings; tap a long one to read it all. New icons in Folio's own colours."),
+            Item(icon: "bell.badge", title: "Personality slider",
+                 text: "Slide from Subtle to Unhinged and see a notification worded each way. Quiet Hours is one switch with your own times."),
+            Item(icon: "rectangle.split.3x1", title: "Chapters as segments",
+                 text: "The progress bar shows chapters as segments by default."),
+        ]),
         Release(version: "1.26.2", items: [
             Item(icon: "bookmark", title: "Watchlist in its own sheet",
                  text: "The bookmark at the top of Discover opens it; titles open and play from there. Discover starts with Airing now again."),

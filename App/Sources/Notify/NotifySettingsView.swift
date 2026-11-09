@@ -3,10 +3,11 @@ import UniformTypeIdentifiers
 import UserNotifications
 
 /// Settings → Notifications (1.25.0; 1.24.0's Reminders). 1.26.1, from a
-/// design review: each group's row says On or Off and opens its page,
-/// Personality and Quiet hours are standard checkmark lists, the daily limit
-/// and sounds share a section, and Test moved to its own page (Help &
-/// Diagnostics → Notification Test), shown here only while it's on.
+/// design review: each group's row says On or Off and opens its page, the
+/// daily limit and sounds share a section, and Test moved to its own page
+/// (Help & Diagnostics → Notification Test), shown here only while it's on.
+/// 1.26.3: Personality is a slider over a worded example, and Quiet Hours a
+/// switch with your own times (the presets were five rows for one choice).
 struct NotifySettingsView: View {
     @State private var status: UNAuthorizationStatus?
     @Bindable private var prefs = NotifyPrefsModel.shared
@@ -15,16 +16,10 @@ struct NotifySettingsView: View {
     @AppStorage(SettingsKey.notifyTest) private var test = true
     @AppStorage(SettingsKey.notifyQuietStart) private var quietStart = 22 * 60
     @AppStorage(SettingsKey.notifyQuietEnd) private var quietEnd = 9 * 60
-    @State private var quietChoice: QuietChoice = .preset(.standard)
+    @State private var quietOn = true
     @State private var from = Date()
     @State private var to = Date()
     @Environment(\.scenePhase) private var phase
-
-    /// A preset's hours, or your own.
-    enum QuietChoice: Hashable {
-        case preset(QuietHours)
-        case custom
-    }
 
     private var allowed: Bool { status.map { [.authorized, .provisional, .ephemeral].contains($0) } ?? true }
 
@@ -70,35 +65,22 @@ struct NotifySettingsView: View {
             }
 
             Section {
-                Picker("Personality", selection: $tone) {
-                    ForEach(NotifyTone.allCases) { t in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(t.title)
-                            Text(t.subtitle).font(.footnote).foregroundStyle(.secondary)
-                        }
-                        .tag(t.rawValue)
-                        .accessibilityIdentifier("notifyTone.\(t.rawValue)")
-                    }
-                }
-                .pickerStyle(.inline)
-                .labelsHidden()
+                NotifyToneSlider(tone: $tone)
             } header: { Text("Personality") } footer: {
-                Text(tone == NotifyTone.subtle.rawValue ? "Plain facts. Just for fun is off in Subtle." : "Example: \(example)")
+                Text(toneNote)
             }
 
             Section {
-                Picker("Quiet Hours", selection: $quietChoice) {
-                    ForEach(QuietHours.presets, id: \.self) { q in Text(q.label()).tag(QuietChoice.preset(q)) }
-                    Text("Custom").tag(QuietChoice.custom)
-                }
-                .pickerStyle(.inline)
-                .labelsHidden()
-                if quietChoice == .custom {
+                Toggle("Quiet Hours", isOn: $quietOn.animation(.smooth))
+                    .accessibilityIdentifier("notifyQuiet")
+                if quietOn {
                     DatePicker("From", selection: $from, displayedComponents: .hourAndMinute)
                     DatePicker("To", selection: $to, displayedComponents: .hourAndMinute)
                 }
-            } header: { Text("Quiet Hours") } footer: {
-                Text("Nothing comes in these hours except new episodes and finished downloads you asked for.")
+            } footer: {
+                Text(quietOn && Self.minutes(from) == Self.minutes(to)
+                     ? "From and To are the same time, so there are no quiet hours."
+                     : "Nothing comes in these hours except new episodes and finished downloads you asked for.")
             }
 
             Section {
@@ -123,17 +105,22 @@ struct NotifySettingsView: View {
             AiringNotifications.reschedule(TrackingStore.shared.shows)
             prefs.changed()
         }
-        .onChange(of: quietChoice) { _, c in
-            if case .preset(let q) = c { quietStart = q.start; quietEnd = q.end }
+        // Off is stored as no hours (start == end); on again, the times shown.
+        .onChange(of: quietOn) { _, on in
+            quietStart = on ? Self.minutes(from) : 0
+            quietEnd = on ? Self.minutes(to) : 0
         }
-        .onChange(of: from) { _, d in quietStart = Self.minutes(d) }
-        .onChange(of: to) { _, d in quietEnd = Self.minutes(d) }
+        .onChange(of: from) { _, d in if quietOn { quietStart = Self.minutes(d) } }
+        .onChange(of: to) { _, d in if quietOn { quietEnd = Self.minutes(d) } }
         .onDisappear { NotifyCenter.refreshFeeds() }
     }
 
-    private var example: String {
-        let t = NotifyTone(rawValue: tone) ?? .balanced
-        return NotifyWording.text(.paused, t, ["show": "Your show", "time": "31:04"], variation: 0)?.body ?? ""
+    private var toneNote: String {
+        switch NotifyTone(rawValue: tone) ?? .balanced {
+        case .subtle: "Plain facts. Just for fun is off in Subtle."
+        case .balanced: "A joke now and then, the facts first."
+        case .unhinged: "Every notification with full personality."
+        }
     }
 
     /// A group's row: its symbol, name and what it is, and On or Off on the right.
@@ -161,11 +148,12 @@ struct NotifySettingsView: View {
         .accessibilityValue(on ? "On" : "Off")
     }
 
+    /// Off: the switch off, and 10 PM – 9 AM ready for when it's turned on.
     private func loadQuiet() {
         let q = QuietHours(start: quietStart, end: quietEnd)
-        quietChoice = QuietHours.presets.contains(q) ? .preset(q) : .custom
-        from = Self.date(quietStart)
-        to = Self.date(quietEnd)
+        quietOn = !q.isOff
+        from = Self.date(q.isOff ? QuietHours.standard.start : q.start)
+        to = Self.date(q.isOff ? QuietHours.standard.end : q.end)
     }
 
     private static func date(_ minutes: Int) -> Date {
@@ -228,12 +216,6 @@ struct NotifyGroupView: View {
                         }
                         .onChange(of: alerts) { _, _ in AiringNotifications.reschedule(TrackingStore.shared.shows) }
                     } footer: { Text("For the shows you track (Settings → Tracked Shows).") }
-                }
-
-                Section {
-                    NavigationLink(value: LibraryRoute.settingsSubpage(.notifySound(group))) {
-                        LabeledContent("Sound", value: NotifySounds.choice(for: group).label)
-                    }
                 }
 
                 if group == .fun {

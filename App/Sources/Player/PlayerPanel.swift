@@ -469,6 +469,8 @@ struct NowPlayingPanelContent: View {
     /// (until 1.14.1 the whole panel scrolled and the tabs went off screen).
     var pinnedHeader = false
     @State private var tab: Int
+    /// Rows' frames in the list (1.26.3): where the marker for the current row goes.
+    @State private var rowFrames: [String: CGRect] = [:]
     /// A tab picked by hand stays (1.25.0: otherwise Chapters is chosen once they arrive).
     @State private var picked = false
     @AppStorage("screenshotSubs") private var screenshotSubs = true
@@ -513,6 +515,8 @@ struct NowPlayingPanelContent: View {
                     ScrollViewReader { proxy in
                         ScrollView {
                             list.padding(.horizontal, 16)
+                                .coordinateSpace(.named(Self.space))
+                                .background(alignment: .topLeading) { marker }
                         }
                         .scrollIndicators(.hidden)
                         // Rows fade out under the tabs and at the bottom edge instead
@@ -527,13 +531,15 @@ struct NowPlayingPanelContent: View {
                         // Every opening (1.26.2): the panel is kept between openings,
                         // so onAppear doesn't come again. Without animating, before
                         // it shows; whatever was scrolled to last time doesn't stay.
-                        .onReceive(NotificationCenter.default.publisher(for: .playerPanelOpening)) { _ in
+                        .onReceive(NotificationCenter.default.publisher(for: .playerPanelOpening)) { n in
                             scroll(proxy, animated: false)
-                            LibTrace.panel.log("now playing opens on \(Self.current(model, tab: tab) ?? "no row") (tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), chapter \(model.currentChapter))")
+                            LibTrace.panel.log("now playing opens on \(Self.current(model, tab: tab) ?? "no row") at \(n.object as? String ?? "glass"), row at \(rowFrames[Self.current(model, tab: tab) ?? ""].map { "y \(Int($0.minY))" } ?? "not laid out") (tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), chapter \(model.currentChapter))")
                         }
-                        .onChange(of: model.queueIndex) { _, _ in scroll(proxy, animated: true) }
-                        .onChange(of: model.currentChapter) { _, _ in scroll(proxy, animated: true) }
-                        .onChange(of: tab) { _, _ in scroll(proxy, animated: false) }
+                        .modifier(ScrollOffsetTrace(label: "now playing"))
+                        // The marker moves to the new row in this update; scrolled to in the next.
+                        .onChange(of: model.queueIndex) { _, _ in DispatchQueue.main.async { scroll(proxy, animated: true) } }
+                        .onChange(of: model.currentChapter) { _, _ in DispatchQueue.main.async { scroll(proxy, animated: true) } }
+                        .onChange(of: tab) { _, _ in DispatchQueue.main.async { scroll(proxy, animated: false) } }
                     }
                 }
             } else {
@@ -550,14 +556,36 @@ struct NowPlayingPanelContent: View {
     ///
     /// 1.19.0 lab run: an initial scrollPosition(id:) value left the list at
     /// the top when the panel opened on episode 6 ("opens on q5", the row
-    /// not on screen); ScrollViewReader.scrollTo on appear moves it.
+    /// not on screen). 1.26.3: scrolled to through `marker` on every opening
+    /// (`.playerPanelOpening`), since the panel is built ahead of time and kept.
     private func scroll(_ proxy: ScrollViewProxy, animated: Bool) {
-        guard let id = Self.current(model, tab: tab) else { return }
+        guard let key = Self.current(model, tab: tab), rowFrames[key] != nil else { return }
+        let id = Self.markerID
         if animated {
             withAnimation(.smooth(duration: 0.35)) { proxy.scrollTo(id, anchor: .center) }
         } else {
             var t = Transaction(); t.disablesAnimations = true
             withTransaction(t) { proxy.scrollTo(id, anchor: .center) }
+        }
+    }
+
+    private static let space = "nowPlayingList"
+    private static let markerID = "nowPlayingCurrent"
+
+    /// An empty view where the current row is, outside the ForEach, with an id
+    /// of its own: what the list scrolls to (1.26.3). An .id() on the row
+    /// itself, inside a ForEach with ids of its own, wasn't found on iOS 27
+    /// (lab run: scrolled to at every step of opening, even once on screen,
+    /// the list never moved), nor was the ForEach's own id; the marker was.
+    @ViewBuilder
+    private var marker: some View {
+        if let key = Self.current(model, tab: tab), let f = rowFrames[key] {
+            VStack(spacing: 0) {
+                Color.clear.frame(width: 1, height: max(0, f.minY))
+                Color.clear.frame(width: 1, height: max(1, f.height)).id(Self.markerID)
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
         }
     }
 
@@ -597,12 +625,14 @@ struct NowPlayingPanelContent: View {
                 // Rows known by their file (1.24.1), not their place: when a
                 // queue is replaced (adoptQueue) a row at the same place kept
                 // the old file's picture and title.
+                // 1.26.3: scrolled to through a marker at the row's place (see
+                // `marker`), not an .id() on the row.
                 ForEach(Array(model.queue.enumerated()), id: \.element.id) { i, item in
                     PlaylistRow(item: item, active: i == model.queueIndex, state: model.episodeStates[i]) {
                         model.playFromPlaylist(i)
                     }
-                    .id("q\(i)")
                     .accessibilityIdentifier("q\(i)")
+                    .modifier(RowFrame(key: "q\(i)", frames: $rowFrames))
                 }
             case 1:
                 if model.chapters.isEmpty { Text("No chapters").foregroundStyle(.white.opacity(0.5)).padding(.vertical, 8) }
@@ -610,8 +640,8 @@ struct NowPlayingPanelContent: View {
                     ListRow(icon: "bookmark", title: ch.title, trailing: PlayerModel.format(ch.time), active: ch.id == model.currentChapter) {
                         model.jump(to: ch)
                     }
-                    .id("c\(ch.id)")
                     .accessibilityIdentifier("c\(ch.id)")
+                    .modifier(RowFrame(key: "c\(ch.id)", frames: $rowFrames))
                 }
             default:
                 ForEach(model.userMarkers) { m in

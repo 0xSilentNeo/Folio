@@ -73,7 +73,7 @@ struct SettingsView: View {
                                 }
                             }
                         } icon: {
-                            SettingsIcon(r.page.symbol, color: r.page.color)
+                            SettingsIcon(r.page)
                         }
                     }
                 }
@@ -149,104 +149,92 @@ struct PlaybackSettings: View {
 
     var body: some View {
         Form {
-            Section {
-                Explained("Every video starts where you stopped it last time.") {
-                    Toggle("Resume where I left off", isOn: $resume)
-                }
-                Explained("The audio and subtitle tracks, subtitle and audio delay, Fill and Anime4K you choose in the player are used again for the next episode of that show (or the next time you watch that film). Tracks are found by language and name, so it works when episodes number their tracks differently.") {
-                    Toggle("Remember per show", isOn: $rememberPerShow)
-                }
+            SettingGroup(footer: "Every video starts where you stopped it last time.") {
+                Toggle("Resume where I left off", isOn: $resume)
+            }
+            SettingGroup(footer: "The audio and subtitle tracks, subtitle and audio delay, Fill and Anime4K you choose in the player are used again for the next episode of that show (or the next time you watch that film). Tracks are found by language and name, so it works when episodes number their tracks differently.") {
+                Toggle("Remember per show", isOn: $rememberPerShow)
                 if rememberPerShow {
                     NavigationLink(value: LibraryRoute.settingsSubpage(.rememberedShows)) { Text("Remembered Shows") }
                 }
-                Explained("When an episode ends, or the Up Next countdown runs out, the next one in the list starts.") {
-                    Toggle("Play next file automatically", isOn: $autoplayNext)
-                }
-                Explained("A card with the next episode appears when the credits start (from the file's chapters or online skip data), otherwise 30 seconds before the end. It counts down only when nothing is known to follow the credits.") {
-                    Toggle("Up Next card at the credits", isOn: $upNext)
-                }
-                Explained("For streamed episodes (addons, WebDAV): near the end of an episode the next one is found and starts loading, so Play on the Up Next card starts it right away. For a season from an addon, the app also checks which episodes have the same release, and asks you to pick for the ones that don't. Note: this opens the next episode's link early, so your debrid service adds that episode even if you don't watch it.") {
-                    Toggle("Get the next episode ready", isOn: $prepareNext)
+            }
+            SettingGroup(footer: "When an episode ends, or the Up Next countdown runs out, the next one in the list starts.") {
+                Toggle("Play next file automatically", isOn: $autoplayNext)
+            }
+            SettingGroup(footer: "A card with the next episode appears when the credits start (from the file's chapters or online skip data), otherwise 30 seconds before the end. It counts down only when nothing is known to follow the credits.") {
+                Toggle("Up Next card at the credits", isOn: $upNext)
+            }
+            SettingGroup(footer: "For streamed episodes (addons, WebDAV): near the end of an episode the next one is found and starts loading, so Play on the Up Next card starts it right away. For a season from an addon, the app also checks which episodes have the same release, and asks you to pick for the ones that don't. Note: this opens the next episode's link early, so your debrid service adds that episode even if you don't watch it.") {
+                Toggle("Get the next episode ready", isOn: $prepareNext)
+            }
+            SettingGroup(footer: "The screen turns to landscape when a landscape video starts.") {
+                Toggle("Open in landscape", isOn: $landscapeOnOpen)
+            }
+            SettingGroup(footer: "Playback stays in landscape even when you hold the phone upright (it still flips between the two landscape sides).") {
+                Toggle("Stay in landscape", isOn: $stayLandscape)
+            }
+            SettingGroup(footer: "The sound keeps playing when you leave the app or lock the phone; the picture comes back when you return.") {
+                Toggle("Keep audio playing in background", isOn: $backgroundAudio)
+            }
+            SettingGroup("Gestures", footer: "How far a double-tap on the right side of the video and the forward button jump.") {
+                Picker("Forward skip", selection: $seekStep) {
+                    ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
                 }
             }
-            Section {
-                Explained("The screen turns to landscape when a landscape video starts.") {
-                    Toggle("Open in landscape", isOn: $landscapeOnOpen)
-                }
-                Explained("Playback stays in landscape even when you hold the phone upright (it still flips between the two landscape sides).") {
-                    Toggle("Stay in landscape", isOn: $stayLandscape)
-                }
-                Explained("The sound keeps playing when you leave the app or lock the phone; the picture comes back when you return.") {
-                    Toggle("Keep audio playing in background", isOn: $backgroundAudio)
+            SettingGroup(footer: "How far a double-tap on the left side and the back button jump.") {
+                Picker("Backward skip", selection: $seekBackStep) {
+                    ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
                 }
             }
-            Section("Gestures") {
-                Explained("How far a double-tap on the right side of the video and the forward button jump.") {
-                    Picker("Forward skip", selection: $seekStep) {
-                        ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
-                    }
-                }
-                Explained("How far a double-tap on the left side and the back button jump.") {
-                    Picker("Backward skip", selection: $seekBackStep) {
-                        ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) s").tag($0) }
-                    }
-                }
-                Explained("Swipe sideways to scrub; swipe up or down along the left edge for brightness and along the right edge for volume.") {
-                    Toggle("Swipe for seek, volume & brightness", isOn: $gestures)
-                }
-                Explained("Press and hold the video to play faster until you let go.") {
-                    Toggle("Hold to speed up", isOn: $holdToSpeed)
-                }
+            SettingGroup(footer: "Swipe sideways to scrub; swipe up or down along the left edge for brightness and along the right edge for volume.") {
+                Toggle("Swipe for seek, volume & brightness", isOn: $gestures)
+            }
+            SettingGroup(footer: "Press and hold the video to play faster until you let go.") {
+                Toggle("Hold to speed up", isOn: $holdToSpeed)
                 if holdToSpeed {
                     Picker("Hold speed", selection: $holdSpeedValue) {
                         ForEach([1.5, 2.0, 2.5, 3.0, 4.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
                     }
                 }
-                Explained("The speed every video starts at.") {
-                    Picker("Default speed", selection: $defaultSpeed) {
-                        ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
-                    }
+            }
+            SettingGroup(footer: "The speed every video starts at.") {
+                Picker("Default speed", selection: $defaultSpeed) {
+                    ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { Text(String(format: "%g×", $0)).tag($0) }
                 }
             }
-            Section("Player") {
-                Explained("How episodes are listed in the player's Now Playing menu.") {
-                    Picker("Playlist names", selection: $playlistNames) {
-                        Text("Episode number & title").tag("episode")
-                        Text("File name").tag("filename")
-                    }
-                }
-                Explained("How much of the screen's width the controls use in landscape.") {
-                    SliderRow("Controls width", value: $controlsWidth, in: 0.6...1.0, step: 0.05)
+            SettingGroup("Player", footer: "How episodes are listed in the player's Now Playing menu.") {
+                Picker("Playlist names", selection: $playlistNames) {
+                    Text("Episode number & title").tag("episode")
+                    Text("File name").tag("filename")
                 }
             }
-            Section("Progress bar") {
-                Explained("How chapters show on the progress bar.") {
-                    Picker("Chapter markers", selection: $bar.markerStyle) {
-                        Text("Ticks").tag("ticks"); Text("Dots").tag("dots"); Text("Segments").tag("segments"); Text("Hidden").tag("none")
-                    }
+            SettingGroup(footer: "How much of the screen's width the controls use in landscape.") {
+                SliderRow("Controls width", value: $controlsWidth, in: 0.6...1.0, step: 0.05)
+            }
+            SettingGroup("Progress bar", footer: "How chapters show on the progress bar.") {
+                Picker("Chapter markers", selection: $bar.markerStyle) {
+                    Text("Segments").tag("segments"); Text("Ticks").tag("ticks"); Text("Dots").tag("dots"); Text("Hidden").tag("none")
                 }
                 Picker("Marker colour", selection: $bar.markerColor) {
                     Text("White").tag("white"); Text("Pink").tag("accent"); Text("Yellow").tag("yellow"); Text("Cyan").tag("cyan")
                 }
-                Explained("While you drag along the progress bar, the name of the chapter under your finger shows.") {
-                    Toggle("Chapter name while scrubbing", isOn: $bar.showChapterTitle)
-                }
-                Explained("Intros, credits, recaps and previews are marked on the progress bar.") {
-                    Toggle("Show skip segments", isOn: $bar.showSkipSegments)
-                }
             }
-            Section("Picture in Picture") {
-                Explained("The video can keep playing in a small floating window over other apps.") {
-                    Toggle("Picture in Picture", isOn: $pipEnabled)
+            SettingGroup(footer: "While you drag along the progress bar, the name of the chapter under your finger shows.") {
+                Toggle("Chapter name while scrubbing", isOn: $bar.showChapterTitle)
+            }
+            SettingGroup(footer: "Intros, credits, recaps and previews are marked on the progress bar.") {
+                Toggle("Show skip segments", isOn: $bar.showSkipSegments)
+            }
+            SettingGroup("Picture in Picture", footer: "The video can keep playing in a small floating window over other apps.") {
+                Toggle("Picture in Picture", isOn: $pipEnabled)
+            }
+            // 1.26.1: shown only while Picture in Picture is on (they were greyed out).
+            if pipEnabled {
+                SettingGroup(footer: "Going to the Home Screen while a video plays opens Picture in Picture by itself.") {
+                    Toggle("Start automatically when leaving", isOn: $pipAuto)
                 }
-                // 1.26.1: shown only while Picture in Picture is on (they were greyed out).
-                if pipEnabled {
-                    Explained("Going to the Home Screen while a video plays opens Picture in Picture by itself.") {
-                        Toggle("Start automatically when leaving", isOn: $pipAuto)
-                    }
-                    Explained("Opening the app while Picture in Picture is up closes the small window and carries on in the player.") {
-                        Toggle("Back to the player when you open the app", isOn: $pipReturnOnOpen)
-                    }
+                SettingGroup(footer: "Opening the app while Picture in Picture is up closes the small window and carries on in the player.") {
+                    Toggle("Back to the player when you open the app", isOn: $pipReturnOnOpen)
                 }
             }
         }
@@ -274,62 +262,58 @@ struct SubtitleAudioSettings: View {
 
     var body: some View {
         Form {
-            Section {
+            Section("Audio") {
                 NavigationLink(value: LibraryRoute.settingsSubpage(.audioLanguages)) {
                     LabeledContent("Audio Languages", value: PlaybackLanguage.summary(audioLangs))
                 }
-                Explained("Plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't used. Off: always stereo.") {
-                    Toggle("Surround & Spatial Audio", isOn: $surround)
+            }
+            SettingGroup(footer: "Plays Dolby Digital (Plus), TrueHD, Atmos, DTS, DTS-HD MA and DTS:X tracks as 5.1/7.1 to AirPlay or HDMI, and as Spatial Audio on AirPods. Atmos and DTS:X play their surround channels; object metadata isn't used. Off: always stereo.") {
+                Toggle("Surround & Spatial Audio", isOn: $surround)
+            }
+            SettingGroup(footer: downmixNormalize
+                         ? "Normalized: surround sound mixed down to stereo never distorts, but plays quieter."
+                         : "Original: surround sound mixed down to stereo keeps its full loudness; very loud scenes can distort.") {
+                Picker("Downmix volume", selection: $downmixNormalize) {
+                    Text("Original").tag(false); Text("Normalized").tag(true)
                 }
-                Explained(downmixNormalize
-                          ? "Normalized: surround sound mixed down to stereo never distorts, but plays quieter."
-                          : "Original: surround sound mixed down to stereo keeps its full loudness; very loud scenes can distort.") {
-                    Picker("Downmix volume", selection: $downmixNormalize) {
-                        Text("Original").tag(false); Text("Normalized").tag(true)
-                    }
-                }
-                Explained("Mixes the subwoofer channel into stereo, for more bass when surround sound plays on headphones or two speakers.") {
-                    Toggle("LFE in stereo downmix", isOn: $lfe)
-                }
-                Explained("Softens loud scenes for late-night listening: less bass and LFE, where most of a film's loudness is, and Dolby Digital (Plus) tracks use their own range compression. Also in the player's Settings menu.") {
-                    Toggle("Night mode", isOn: $nightMode)
-                }
-                Explained("Makes voices easier to follow: on 5.1 and 7.1 the centre channel, where the dialogue is, gets louder and the rest quieter; on stereo the voice frequencies are raised. Also in the player's Settings menu.") {
-                    Toggle("Dialogue boost", isOn: $dialogueBoost)
-                }
-            } header: { Text("Audio") } footer: { Text("Night mode and dialogue boost: what every video starts with; the player's menu changes them while you watch.") }
-            Section {
-                Explained("Whether a subtitle track is turned on when a video starts. You can always switch in the player's Tracks menu.") {
-                    Picker("Show subtitles", selection: $subtitlesDefault) {
-                        Text("On").tag("on"); Text("Off").tag("off")
-                    }
+            }
+            SettingGroup(footer: "Mixes the subwoofer channel into stereo, for more bass when surround sound plays on headphones or two speakers.") {
+                Toggle("LFE in stereo downmix", isOn: $lfe)
+            }
+            SettingGroup(footer: "Softens loud scenes for late-night listening: less bass and LFE, where most of a film's loudness is, and Dolby Digital (Plus) tracks use their own range compression. What every video starts with; the player's Settings menu changes it while you watch.") {
+                Toggle("Night mode", isOn: $nightMode)
+            }
+            SettingGroup(footer: "Makes voices easier to follow: on 5.1 and 7.1 the centre channel, where the dialogue is, gets louder and the rest quieter; on stereo the voice frequencies are raised. What every video starts with; the player's Settings menu changes it while you watch.") {
+                Toggle("Dialogue boost", isOn: $dialogueBoost)
+            }
+            SettingGroup("Subtitles", footer: "Whether a subtitle track is turned on when a video starts. You can always switch in the player's Tracks menu.") {
+                Picker("Show subtitles", selection: $subtitlesDefault) {
+                    Text("On").tag("on"); Text("Off").tag("off")
                 }
                 NavigationLink(value: LibraryRoute.settingsSubpage(.subtitleLanguages)) {
                     LabeledContent("Subtitle Languages", value: PlaybackLanguage.summary(subLangs))
                 }
                 .disabled(subtitlesDefault == "off")
-            } header: { Text("Subtitles") }
-            Section("Subtitle style") {
-                Explained("\(SubtitleStyle(rawValue: subStyle)?.hint ?? ""). Plain-text subtitles (SRT, WebVTT) take the style; styled ASS subtitles keep their own look. Large makes your size a third bigger; Background box adds the box to any style.") {
-                    Picker("Style", selection: $subStyle) {
-                        ForEach(SubtitleStyle.allCases) { Text($0.title).tag($0.rawValue) }
-                    }
+            }
+            SettingGroup("Subtitle style", footer: "\(SubtitleStyle(rawValue: subStyle)?.hint ?? ""). Plain-text subtitles (SRT, WebVTT) take the style; styled ASS subtitles keep their own look. Large makes your size a third bigger; Background box adds the box to any style.") {
+                Picker("Style", selection: $subStyle) {
+                    ForEach(SubtitleStyle.allCases) { Text($0.title).tag($0.rawValue) }
                 }
                 SliderRow("Size", value: $subScale, in: 0.5...2.5, step: 0.05)
-                Explained("100 is the normal place near the bottom; lower numbers move subtitles up, higher numbers further down.") {
-                    Stepper(value: $subPos, in: 50...150) { LabeledContent("Position", value: "\(subPos)") }
-                }
-                Explained(subFollowZoom == "manual"
-                          ? "Subtitles stay where Position puts them on the video. When you zoom in or fill the screen, a subtitle near the bottom can go past the screen's edge: move it up with Position."
-                          : "When you zoom in or fill the screen, subtitles move and resize so they keep their place on what you can see.") {
-                    Picker("When the picture is zoomed", selection: $subFollowZoom) {
-                        Text("Adjust automatically").tag("auto")
-                        Text("Stay as set").tag("manual")
-                    }
-                }
                 Toggle("Bold", isOn: $subBold)
-                Explained("A dark box behind the text keeps subtitles readable on bright scenes.") {
-                    Toggle("Background box", isOn: $subBox)
+            }
+            SettingGroup(footer: "A dark box behind the text keeps subtitles readable on bright scenes.") {
+                Toggle("Background box", isOn: $subBox)
+            }
+            SettingGroup(footer: "100 is the normal place near the bottom; lower numbers move subtitles up, higher numbers further down.") {
+                Stepper(value: $subPos, in: 50...150) { LabeledContent("Position", value: "\(subPos)") }
+            }
+            SettingGroup(footer: subFollowZoom == "manual"
+                         ? "Subtitles stay where Position puts them on the video. When you zoom in or fill the screen, a subtitle near the bottom can go past the screen's edge: move it up with Position."
+                         : "When you zoom in or fill the screen, subtitles move and resize so they keep their place on what you can see.") {
+                Picker("When the picture is zoomed", selection: $subFollowZoom) {
+                    Text("Adjust automatically").tag("auto")
+                    Text("Stay as set").tag("manual")
                 }
             }
         }
@@ -414,10 +398,8 @@ struct SkipSettings: View {
 
     var body: some View {
         Form {
-            Section {
-                Explained("A Skip button appears during intros, credits, recaps and previews. They come from the file's chapters; otherwise from IntroDB and TheIntroDB for TV and films (community databases looked up by IMDb id), and AniSkip / Open Anime Timestamps for anime.") {
-                    Toggle("Show Skip button", isOn: $skipEnabled)
-                }
+            SettingGroup(footer: "A Skip button appears during intros, credits, recaps and previews. They come from the file's chapters; otherwise from IntroDB and TheIntroDB for TV and films (community databases looked up by IMDb id), and AniSkip / Open Anime Timestamps for anime.") {
+                Toggle("Show Skip button", isOn: $skipEnabled)
             }
             if skipEnabled {
                 Section {
@@ -428,23 +410,21 @@ struct SkipSettings: View {
                 } header: { Text("Skip automatically") } footer: {
                     Text("Skipped without a tap, once per episode. Seeking back into a part doesn't skip it again.")
                 }
-                Section("Sources") {
-                    Explained("Files that name their chapters (Opening, Ending, Credits…) are skipped by those chapters first.") {
-                        Toggle("Use file chapters", isOn: $useChapters)
-                    }
-                    Explained("Intros and credits found online show as chapters too: on the progress bar, in Now Playing, and to Lua scripts.") {
-                        Toggle("Add found markers as chapters", isOn: $injectChapters)
-                    }
-                    Explained("Open Anime Timestamps only knows where a part starts, so its length is assumed.") {
-                        Stepper(value: $oatLength, in: 60...150, step: 5) {
-                            LabeledContent("OAT segment length", value: Duration.seconds(oatLength).formatted(.units(allowed: [.seconds], width: .abbreviated)))
-                        }
+                SettingGroup("Sources", footer: "Files that name their chapters (Opening, Ending, Credits…) are skipped by those chapters first.") {
+                    Toggle("Use file chapters", isOn: $useChapters)
+                }
+                SettingGroup(footer: "Intros and credits found online show as chapters too: on the progress bar, in Now Playing, and to Lua scripts.") {
+                    Toggle("Add found markers as chapters", isOn: $injectChapters)
+                }
+                SettingGroup(footer: "Open Anime Timestamps only knows where a part starts, so its length is assumed.") {
+                    Stepper(value: $oatLength, in: 60...150, step: 5) {
+                        LabeledContent("OAT segment length", value: Duration.seconds(oatLength).formatted(.units(allowed: [.seconds], width: .abbreviated)))
                     }
                 }
+                SettingGroup("Intros you watch", footer: "Watch an intro to its end in \(PlayerModel.introEpisodesToHide) episodes of a show without skipping it, and its Skip button stops showing for that show. Some releases call the episode's first scene the intro.") {
+                    Toggle("Hide intros I watch", isOn: $learnIntros)
+                }
                 Section {
-                    Explained("Watch an intro to its end in \(PlayerModel.introEpisodesToHide) episodes of a show without skipping it, and its Skip button stops showing for that show. Some releases call the episode's first scene the intro.") {
-                        Toggle("Hide intros I watch", isOn: $learnIntros)
-                    }
                     ForEach(memory.hiddenIntroShows) { e in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
@@ -458,7 +438,7 @@ struct SkipSettings: View {
                                 .accessibilityIdentifier("introShowAgain:" + e.name)
                         }
                     }
-                } header: { Text("Intros you watch") } footer: {
+                } footer: {
                     if learnIntros, memory.hiddenIntroShows.isEmpty { Text("No show has its intro hidden yet.") }
                 }
             }
@@ -466,53 +446,6 @@ struct SkipSettings: View {
         .brandListBackground()
         .navigationTitle("Skip Intro & Credits")
         .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-/// A setting with a plain-language line under it (1.17.0).
-/// A setting with what it does under it. A long explanation shows its first
-/// two lines and More (1.26.1): every switch carried its whole paragraph,
-/// and Playback was a wall of text (simulator, 9 Nov). More shows only when
-/// the text really is cut, at this width and text size.
-struct Explained<Content: View>: View {
-    let text: String
-    @ViewBuilder var content: Content
-    @State private var expanded = false
-    @State private var fullHeight: CGFloat = 0
-    @State private var shownHeight: CGFloat = 0
-    init(_ text: String, @ViewBuilder content: () -> Content) { self.text = text; self.content = content() }
-
-    private var cut: Bool { fullHeight > shownHeight + 1 }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            content
-            Text(text)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .lineLimit(expanded ? nil : 2)
-                .fixedSize(horizontal: false, vertical: true)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { if !expanded { shownHeight = $0 } }
-                .background(alignment: .topLeading) {
-                    // The whole text, unseen, at the same width: its height says whether two lines cut it.
-                    Text(text)
-                        .font(.footnote)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .hidden()
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { fullHeight = $0 }
-                        .accessibilityHidden(true)
-                }
-            if cut || expanded {
-                Button(expanded ? "Less" : "More") {
-                    withAnimation(.snappy(duration: 0.25)) { expanded.toggle() }
-                }
-                .font(.footnote.weight(.semibold))
-                .buttonStyle(.borderless)
-                .frame(minHeight: 30, alignment: .leading)
-                .contentShape(.rect)
-                .accessibilityLabel(expanded ? "Show Less" : "Show More")
-            }
-        }
     }
 }
 
@@ -548,40 +481,36 @@ struct MPVSettings: View {
 
     var body: some View {
         Form {
-            Section {
-                Explained(rendererText) {
-                    Picker("Renderer", selection: $renderer) {
-                        Text("Metal").tag("metal")
-                        Text("OpenGL").tag("gl")
-                    }
+            SettingGroup("Video", footer: rendererText) {
+                Picker("Renderer", selection: $renderer) {
+                    Text("Metal").tag("metal")
+                    Text("OpenGL").tag("gl")
                 }
-                Explained(pictureText) {
-                    Picker("Picture", selection: $picture) {
-                        ForEach(PictureMode.allCases) { Text($0.title).tag($0) }
-                    }
-                    .onChange(of: picture) { _, m in PictureMode.current = m }
+            }
+            SettingGroup(footer: pictureText) {
+                Picker("Picture", selection: $picture) {
+                    ForEach(PictureMode.allCases) { Text($0.title).tag($0) }
                 }
-                Explained("HDR and Dolby Vision videos play with real HDR brightness on screens that support it. Off: they are converted to normal brightness (SDR).") {
-                    Toggle("HDR output", isOn: $hdr)
+                .onChange(of: picture) { _, m in PictureMode.current = m }
+            }
+            SettingGroup(footer: "HDR and Dolby Vision videos play with real HDR brightness on screens that support it. Off: they are converted to normal brightness (SDR).") {
+                Toggle("HDR output", isOn: $hdr)
+            }
+            SettingGroup(footer: hwdecText) {
+                Picker("Hardware decoding", selection: $hwdec) {
+                    Text("Auto").tag("auto")
+                    Text("Copy-back").tag("copy")
+                    Text("Off").tag("no")
                 }
-                Explained(hwdecText) {
-                    Picker("Hardware decoding", selection: $hwdec) {
-                        Text("Auto").tag("auto")
-                        Text("Copy-back").tag("copy")
-                        Text("Off").tag("no")
-                    }
+            }
+            if renderer == "gl" {
+                SettingGroup(footer: "Turns the picture upside down, for devices where OpenGL shows it flipped.") {
+                    Toggle("Flip video", isOn: $flipVideo)
                 }
-                if renderer == "gl" {
-                    Explained("Turns the picture upside down, for devices where OpenGL shows it flipped.") {
-                        Toggle("Flip video", isOn: $flipVideo)
-                    }
-                }
-            } header: { Text("Video") } footer: { Text("Changes apply to the next video you open.") }
-            Section("Streaming") {
-                Explained("How much of a stream is kept in memory, ahead of where you are (and a third of that behind). More means fewer pauses on a slow connection and quicker jumps back, but uses more memory.") {
-                    Stepper(value: $cacheMB, in: 32...1024, step: 32) {
-                        LabeledContent("Cache", value: Measurement(value: Double(cacheMB), unit: UnitInformationStorage.megabytes).formatted(.measurement(width: .abbreviated, usage: .asProvided)))
-                    }
+            }
+            SettingGroup("Streaming", footer: "How much of a stream is kept in memory, ahead of where you are (and a third of that behind). More means fewer pauses on a slow connection and quicker jumps back, but uses more memory. Video settings apply to the next video you open.") {
+                Stepper(value: $cacheMB, in: 32...1024, step: 32) {
+                    LabeledContent("Cache", value: Measurement(value: Double(cacheMB), unit: UnitInformationStorage.megabytes).formatted(.measurement(width: .abbreviated, usage: .asProvided)))
                 }
             }
             Section {
@@ -1276,33 +1205,29 @@ struct GeneralSettings: View {
                 Text("Automatic follows your iPhone's Light or Dark setting. The player is always dark.")
             }
             Section {
-                Explained("The tab the app opens on.") {
-                    Picker("Startup page", selection: $startupTab) {
-                        Label("Home", systemImage: "play.rectangle.fill").tag(0)
-                        Label("Discover", systemImage: "sparkles.tv").tag(1)
-                        Label("Network", systemImage: "externaldrive.connected.to.line.below").tag(2)
-                    }
-                }
-                Explained("Tapping a film opens its page first. Off: a tap plays it straight away (shows always open their page).") {
-                    Toggle("Open title page on tap", isOn: $openTitlePage)
+                Picker("Startup page", selection: $startupTab) {
+                    Label("Home", systemImage: "play.rectangle.fill").tag(0)
+                    Label("Discover", systemImage: "sparkles.tv").tag(1)
+                    Label("Network", systemImage: "externaldrive.connected.to.line.below").tag(2)
                 }
             }
+            SettingGroup(footer: "Tapping a film opens its page first. Off: a tap plays it straight away (shows always open their page).") {
+                Toggle("Open title page on tap", isOn: $openTitlePage)
+            }
+            SettingGroup("Title Pages", footer: "Blurs the pictures and hides the description of episodes you haven't finished.") {
+                Toggle("Hide spoilers", isOn: $hideSpoilers)
+            }
             Section {
-                Explained("Blurs the pictures and hides the description of episodes you haven't finished.") {
-                    Toggle("Hide spoilers", isOn: $hideSpoilers)
-                }
-                Explained("Shows the IMDb rating on title pages.") {
-                    Toggle("Show IMDb ratings", isOn: $showRatings)
-                }
+                Toggle("Show IMDb ratings", isOn: $showRatings)
                 Picker("Cast on title pages", selection: $castPosition) {
                     Text("Above the episodes").tag("top")
                     Text("At the bottom").tag("bottom")
                 }
-                Explained("English titles come from TVmaze (tvmaze.com, CC BY-SA) when IMDb only has the original-language one. Original: the title in the show's own language.") {
-                    Picker("Episode titles", selection: $episodeTitles) {
-                        Text("English").tag("english")
-                        Text("Original language").tag("original")
-                    }
+            }
+            SettingGroup(footer: "English titles come from TVmaze (tvmaze.com, CC BY-SA) when IMDb only has the original-language one. Original: the title in the show's own language.") {
+                Picker("Episode titles", selection: $episodeTitles) {
+                    Text("English").tag("english")
+                    Text("Original language").tag("original")
                 }
             }
         }
