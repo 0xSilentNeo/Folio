@@ -20,6 +20,10 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.1", items: [
+            Item(icon: "thermometer.medium", title: "Cooler after a trip away",
+                 text: "Coming back from Notification Centre or the Home Screen, the video goes back to the hardware decoder. It could stay on the processor for the rest of the film, which made the phone hot."),
+        ]),
         Release(version: "1.28.0", items: [
             Item(icon: "cpu", title: "Metal without the stutter",
                  text: "The Metal renderer now draws into the same picture as Picture in Picture: no stall when PiP starts, and no reload after Notification Centre or the Home Screen. Settings → Video Engine → Renderer → Metal to try it."),
