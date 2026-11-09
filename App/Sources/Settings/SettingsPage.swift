@@ -29,41 +29,44 @@ enum SettingsPage: String, Hashable, CaseIterable, Codable {
         }
     }
 
-    /// The tile's symbol, drawn filled.
+    /// The tile's glyph, drawn filled where the symbol has a fill (1.26.3: Discover
+    /// and Home's own tab glyphs, and ones that say what's inside, e.g. the
+    /// engine's chip and the library's books).
     var symbol: String {
         switch self {
         case .general: "gearshape"
         case .notifications: "bell.badge"
         case .kids: "figure.and.child.holdinghands"
-        case .playback: "play.rectangle"
+        case .playback: "play"
         case .audioSubtitles: "captions.bubble"
         case .skip: "forward.end"
-        case .engine: "slider.horizontal.3"
-        case .library: "film.stack"
+        case .engine: "cpu"
+        case .library: "books.vertical"
         case .discover: "sparkles.tv"
         case .downloads: "arrow.down.circle"
         case .trackedShows: "calendar.badge.clock"
         case .sync: "arrow.triangle.2.circlepath"
-        case .importExport: "square.and.arrow.down.on.square"
+        case .importExport: "shippingbox"
         case .help: "stethoscope"
         case .about: "info.circle"
         }
     }
 
-    /// Distinct hues within each section of the root.
-    var color: Color {
+    /// The tile's colour, from Folio's palette (1.26.3), distinct within each
+    /// section of the root. White glyphs on them are at least 4:1.
+    var tint: Color {
         switch self {
-        case .general, .help: .gray
-        case .notifications, .trackedShows: .red
-        case .kids: .indigo
-        case .playback: .pink
-        case .audioSubtitles, .sync: .orange
-        case .skip: .purple
-        case .engine: .teal
-        case .library: .green
-        case .discover: .cyan
-        case .downloads, .importExport: .blue
-        case .about: Theme.graphite
+        case .general, .help: SettingsPalette.graphite
+        case .notifications, .discover: SettingsPalette.clay
+        case .kids: SettingsPalette.plum
+        case .playback, .trackedShows: SettingsPalette.brick
+        case .audioSubtitles: SettingsPalette.ochre
+        case .skip: SettingsPalette.sage
+        case .engine, .downloads: SettingsPalette.slate
+        case .library: SettingsPalette.pine
+        case .sync: SettingsPalette.olive
+        case .importExport: SettingsPalette.sand
+        case .about: Theme.accent
         }
     }
 }

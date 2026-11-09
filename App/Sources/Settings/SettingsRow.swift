@@ -19,7 +19,7 @@ struct SettingsRow<Value: View>: View {
                 Label {
                     Text(page.title)
                 } icon: {
-                    SettingsIcon(page.symbol, color: page.color)
+                    SettingsIcon(page)
                 }
             }
         }

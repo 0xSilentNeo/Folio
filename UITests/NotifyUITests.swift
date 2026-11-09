@@ -1,7 +1,8 @@
 import XCTest
 
 /// 1.25.0: Settings → Notifications. A group's page turns it off and on,
-/// the personality is picked, and Test's page opens from its row.
+/// the personality slider is moved, Quiet Hours has its times, and Test's
+/// page opens from its row.
 final class NotifyUITests: XCTestCase {
     override func setUp() { continueAfterFailure = false }
 
@@ -35,22 +36,25 @@ final class NotifyUITests: XCTestCase {
             XCTAssertTrue(row.exists, "no row for \(g)")
         }
 
-        // Subtle switches Just for fun off; Balanced brings it back. The
-        // personality is a checkmark list: its rows are buttons.
-        func tone(_ raw: String, _ title: String) -> XCUIElement {
-            app.buttons.matching(NSPredicate(format: "identifier == %@ OR label BEGINSWITH %@", "notifyTone.\(raw)", title)).firstMatch
-        }
+        // Subtle switches Just for fun off; Balanced brings it back. 1.26.3:
+        // the personality is a slider (Subtle, Balanced, Unhinged).
         let fun = app.buttons["notifyGroup.fun"]
-        let subtle = tone("subtle", "Subtle")
-        for _ in 0..<4 where !subtle.isHittable { app.swipeUp() }
-        subtle.tap()
-        XCTAssertTrue(subtle.isSelected, "Subtle isn't checked")
+        let slider = app.sliders["notifyTone"]
+        for _ in 0..<4 where !slider.isHittable { app.swipeUp() }
+        XCTAssertTrue(slider.exists, "no Personality slider")
+        slider.adjust(toNormalizedSliderPosition: 0)
+        XCTAssertTrue((slider.value as? String ?? "").hasPrefix("Subtle"), "the slider isn't on Subtle: \(String(describing: slider.value))")
         for _ in 0..<4 where !fun.isHittable { app.swipeDown() }
         XCTAssertTrue(fun.label.contains("Off in Subtle"), "Just for fun doesn't say it's off in Subtle: \(fun.label)")
-        let balanced = tone("balanced", "Balanced")
-        for _ in 0..<4 where !balanced.isHittable { app.swipeUp() }
-        balanced.tap()
-        XCTAssertTrue(balanced.isSelected, "Balanced isn't checked")
+        for _ in 0..<4 where !slider.isHittable { app.swipeUp() }
+        slider.adjust(toNormalizedSliderPosition: 0.5)
+        XCTAssertTrue((slider.value as? String ?? "").hasPrefix("Balanced"), "the slider isn't on Balanced: \(String(describing: slider.value))")
+
+        // Quiet Hours: one switch; its times show while it's on.
+        let quiet = app.switches["notifyQuiet"]
+        for _ in 0..<4 where !quiet.isHittable { app.swipeUp() }
+        XCTAssertTrue(quiet.exists, "no Quiet Hours switch")
+        XCTAssertTrue(app.datePickers.firstMatch.exists, "no From and To while Quiet Hours is on")
 
         // 1.26.1: Test has its own page; while it's on, a row at the top opens it.
         for _ in 0..<4 where !app.buttons["notifyTestRow"].isHittable { app.swipeDown() }

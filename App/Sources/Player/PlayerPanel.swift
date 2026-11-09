@@ -527,10 +527,11 @@ struct NowPlayingPanelContent: View {
                         // Every opening (1.26.2): the panel is kept between openings,
                         // so onAppear doesn't come again. Without animating, before
                         // it shows; whatever was scrolled to last time doesn't stay.
-                        .onReceive(NotificationCenter.default.publisher(for: .playerPanelOpening)) { _ in
+                        .onReceive(NotificationCenter.default.publisher(for: .playerPanelOpening)) { n in
                             scroll(proxy, animated: false)
-                            LibTrace.panel.log("now playing opens on \(Self.current(model, tab: tab) ?? "no row") (tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), chapter \(model.currentChapter))")
+                            LibTrace.panel.log("now playing opens on \(Self.current(model, tab: tab) ?? "no row") at \(n.object as? String ?? "glass") (tab \(tab), item \(model.queueIndex + 1) of \(model.queue.count), chapter \(model.currentChapter))")
                         }
+                        .modifier(ScrollOffsetTrace(label: "now playing"))
                         .onChange(of: model.queueIndex) { _, _ in scroll(proxy, animated: true) }
                         .onChange(of: model.currentChapter) { _, _ in scroll(proxy, animated: true) }
                         .onChange(of: tab) { _, _ in scroll(proxy, animated: false) }

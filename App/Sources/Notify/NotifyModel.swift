@@ -199,13 +199,6 @@ struct QuietHours: Hashable, Codable {
     var end: Int
 
     static let standard = QuietHours(start: 22 * 60, end: 9 * 60)
-    static let presets: [QuietHours] = [
-        QuietHours(start: 21 * 60, end: 8 * 60),
-        QuietHours(start: 22 * 60, end: 8 * 60),
-        .standard,
-        QuietHours(start: 23 * 60, end: 9 * 60),
-        QuietHours(start: 0, end: 0),
-    ]
 
     var isOff: Bool { start == end }
 
