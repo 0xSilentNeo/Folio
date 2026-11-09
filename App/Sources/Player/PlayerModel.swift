@@ -203,8 +203,20 @@ final class PlayerModel: ObservableObject {
     enum Renderer { case metal, gl }
     let renderer: Renderer
     let videoView: UIView
+    /// Metal on its own CAMetalLayer (engines before 3): PiP swaps mpv's
+    /// output, the background takes it down.
     private let metalView: MetalVideoView?
     private let glRenderer: SampleBufferRenderer?
+    /// Metal drawing into the video layer (1.28.0, engine 3).
+    private let metalFrames: MetalFrameRenderer?
+    /// The renderer whose frames go into the video layer PiP uses: OpenGL,
+    /// or Metal on engine 3. Nil only for Metal on its own layer.
+    private var frames: FrameRenderer? { glRenderer ?? metalFrames }
+    /// Frames go into the video layer (OpenGL, or Metal on engine 3): PiP,
+    /// the background, Fill and subtitles work the same for both.
+    var onLayer: Bool { frames != nil }
+    /// Metal on its own layer (classic).
+    private var ownLayerMetal: Bool { renderer == .metal && metalFrames == nil }
     let pip = PiPManager()
     nonisolated let pipState = PiPStateBox()
     private lazy var sw = MPVSoftwareRenderer(output: pip.makeSink())
@@ -233,7 +245,7 @@ final class PlayerModel: ObservableObject {
             traceSampler = s
             s.start(seconds: seconds) { [weak self] text in
                 // With the OpenGL renderer the layer is the picture: its frames too.
-                PiPTrace.event(text + (self?.renderer == .gl ? self?.pip.frameGaps(since: base) ?? "" : ""))
+                PiPTrace.event(text + (self?.onLayer == true ? self?.pip.frameGaps(since: base) ?? "" : ""))
                 if self?.traceSampler === s { self?.traceSampler = nil }
             }
         }
@@ -280,6 +292,14 @@ final class PlayerModel: ObservableObject {
         if UserDefaults.standard.string(forKey: SettingsKey.renderer) == "gl", let gl = SampleBufferRenderer.make(output: pip.makeSink()) {
             renderer = .gl
             glRenderer = gl
+            metalFrames = nil
+            metalView = nil
+            videoView = pip.view
+        } else if !CommandLine.arguments.contains("-metalOwnLayer"), let mf = MetalFrameRenderer(output: pip.makeSink()) {
+            // 1.28.0: Metal into the video layer, as OpenGL (engine 3).
+            renderer = .metal
+            metalFrames = mf
+            glRenderer = nil
             metalView = nil
             videoView = pip.view
         } else {
@@ -287,6 +307,7 @@ final class PlayerModel: ObservableObject {
             renderer = .metal
             metalView = mv
             glRenderer = nil
+            metalFrames = nil
             videoView = mv
         }
     }
@@ -323,9 +344,12 @@ final class PlayerModel: ObservableObject {
             do { try glRenderer.attach(to: c) } catch {
                 errorMessage = "Video output failed: \(error.localizedDescription)"
             }
-            pip.view.onLayout = { [weak glRenderer, weak self] pixels in glRenderer?.setViewSize(pixels); self?.refitAnime4K(); self?.applySubtitleFraming() }
-            let b = pip.view.bounds.size, n = pip.view.layouts
-            Task { @MainActor in PiPTrace.event("OpenGL renderer listening for the view's size: \(Int(b.width))×\(Int(b.height)) pt after \(n) layout(s)") }
+        }
+        if let frames {
+            pip.view.onLayout = { [weak frames, weak self] pixels in frames?.setViewSize(pixels); self?.refitAnime4K(); self?.applySubtitleFraming() }
+            metalFrames?.onResize = { [weak self] in self?.nudgeRedraw() }
+            let b = pip.view.bounds.size, n = pip.view.layouts, name = renderer == .gl ? "OpenGL" : "Metal (video layer)"
+            Task { @MainActor in PiPTrace.event("\(name) renderer listening for the view's size: \(Int(b.width))×\(Int(b.height)) pt after \(n) layout(s)") }
             // start() runs in viewDidAppear, after the view's layout: its size
             // now, not at the next layout (which may not come until the phone
             // turns).
@@ -390,14 +414,14 @@ final class PlayerModel: ObservableObject {
         captureThumbnail()
         // The OpenGL renderer first: it enqueues into PiP's layer from its own
         // queue, and the layer is flushed below (independent review, 1.20.0).
-        glRenderer?.detach()
+        frames?.detach()
         pip.tearDown()
         if mode == .sw { sw.detach() }
         mode = .none
         let scoped = scopedURL
         scopedURL = nil
         client?.delegate = nil
-        if renderer == .metal, let c = client {
+        if ownLayerMetal, let c = client {
             // mpv's Metal thread would end during the quit below, on mpv's own
             // time, while the player closes here; end it now, with the main
             // thread waiting (no video track and no forced window: mpv closes
@@ -405,8 +429,13 @@ final class PlayerModel: ObservableObject {
             settleBeforeMetalThreadEnds()
             c.set("vid", "no")
         }
+        // The Metal frames' hook stays until mpv is gone: its video output
+        // thread may still call it while it quits.
+        let metalFrames = self.metalFrames
+        if client == nil { metalFrames?.engineDone() }
         client?.shutdown {
             scoped?.stopAccessingSecurityScopedResource()
+            metalFrames?.engineDone()
         }
         client = nil
         UIApplication.shared.isIdleTimerDisabled = false
@@ -420,14 +449,23 @@ final class PlayerModel: ObservableObject {
     private func applyOptions(_ c: MPVClient) {
         switch renderer {
         case .metal:
-            c.setOption("wid", int64: metalView!.wid)
             c.setOption("vo", "gpu-next")
             c.setOption("gpu-api", "vulkan")
             c.setOption("gpu-context", "moltenvk")
-            let edr = UIScreen.main.potentialEDRHeadroom > 1.0
-            if defaults.bool(forKey: SettingsKey.hdrOutput) && edr {
-                // HDR / Dolby Vision passthrough to the EDR display.
-                c.setOption("target-colorspace-hint", "yes")
+            if let mf = metalFrames {
+                // 1.28.0: frames into Folio's buffers (the video layer); the
+                // layer given as the window is never shown. HDR is chosen per
+                // file (updateLayerHDR), not hinted to a swapchain.
+                c.setOption("wid", int64: mf.wid)
+                let r = c.setOption("folio-target", mf.targetAddress)
+                dlog("player", "Metal into the video layer: folio-target \(r >= 0 ? "set" : "refused (\(r))")")
+            } else {
+                c.setOption("wid", int64: metalView!.wid)
+                let edr = UIScreen.main.potentialEDRHeadroom > 1.0
+                if defaults.bool(forKey: SettingsKey.hdrOutput) && edr {
+                    // HDR / Dolby Vision passthrough to the EDR display.
+                    c.setOption("target-colorspace-hint", "yes")
+                }
             }
         case .gl:
             c.setOption("vo", "libmpv")
@@ -1543,6 +1581,33 @@ final class PlayerModel: ObservableObject {
         else if gamma == "hlg" { videoFormat = "HLG" }
         else { videoFormat = gamma.isEmpty ? "" : "SDR" }
         updateGLHDR(gamma: gamma)
+        updateMetalFramesHDR(gamma: gamma)
+    }
+
+    /// HDR on Metal in the video layer (1.28.0): libplacebo draws BT.2020 PQ
+    /// (or HLG) into half-float frames, tagged with the video's light levels,
+    /// as OpenGL's HDR frames are, but from the hardware decoder's own 10-bit
+    /// frames, with Dolby Vision applied: no copy decoding, no stripping.
+    private func updateMetalFramesHDR(gamma: String) {
+        guard let mf = metalFrames, let c = client else { return }
+        let hdrVideo = gamma == "pq" || gamma == "hlg"
+        let edr = UIScreen.main.potentialEDRHeadroom > 1 || CommandLine.arguments.contains("-labEDR")
+        let want = hdrVideo && defaults.bool(forKey: SettingsKey.hdrOutput) && edr && !glHDRFailedForFile
+        guard want != glHDROn else { return }
+        glHDROn = want
+        if want {
+            let hlg = gamma == "hlg"
+            let info = SampleBufferRenderer.HDROutput(hlg: hlg, maxCLL: c.int("video-params/max-cll").map(Int.init), maxFALL: c.int("video-params/max-fall").map(Int.init),
+                                                       maxLuma: c.double("video-params/max-luma"), minLuma: c.double("video-params/min-luma"))
+            mf.onHDRFailed = { [weak self] in self?.glHDRFailed() }
+            mf.setHDR(info)
+            pip.setHDR(true)
+            dlog("player", "Metal (video layer): HDR output \(hlg ? "HLG" : "PQ") BT.2020 from the hardware's 10-bit frames, MaxCLL \(info.maxCLL.map(String.init) ?? "?"), mastering \(info.maxLuma.map { "\(Int($0))" } ?? "?") nits")
+        } else {
+            mf.setHDR(nil)
+            pip.setHDR(false)
+            dlog("player", "Metal (video layer): SDR output\(hdrVideo ? " (HDR video tone-mapped: HDR output off or no HDR screen)" : "")")
+        }
     }
 
     // MARK: HDR on the sample-buffer (OpenGL) renderer, 1.22.1
@@ -1986,17 +2051,17 @@ final class PlayerModel: ObservableObject {
 
     func applySubtitleFraming() {
         guard let c = client else { return }
-        let framing = Self.subtitleFraming(gl: renderer == .gl, fill: zoomToFill, fillRatio: fillRatio, pinch: pinchScale,
+        let framing = Self.subtitleFraming(gl: onLayer, fill: zoomToFill, fillRatio: fillRatio, pinch: pinchScale,
                                            video: videoSize, view: videoView.bounds.size)
         let userScale = (defaults.object(forKey: SettingsKey.subScale) == nil ? 1 : defaults.double(forKey: SettingsKey.subScale)) * subtitleStyle.scaleFactor
         let userPos = defaults.object(forKey: SettingsKey.subPos) == nil ? 100 : Double(defaults.integer(forKey: SettingsKey.subPos))
-        let p = Self.subtitlePlacement(userPos: userPos, userScale: userScale, framing: framing, follow: subtitlesFollowZoom, gl: renderer == .gl)
+        let p = Self.subtitlePlacement(userPos: userPos, userScale: userScale, framing: framing, follow: subtitlesFollowZoom, gl: onLayer)
         guard lastSubPlacement.map({ $0.pos != p.pos || abs($0.scale - p.scale) > 0.005 }) ?? true else { return }
         lastSubPlacement = p
         if pinchScale == 1 {
             dlog("player", String(format: "subtitles %@: picture %.2f× fitted, %.0f%% of its height on screen (%@) → sub-pos %d, sub-scale %.2f",
                                   subtitlesFollowZoom ? "kept on screen" : "as set", framing.scale, framing.visible * 100,
-                                  renderer == .gl ? (zoomToFill ? "OpenGL Fill" : "OpenGL Fit") : (zoomToFill ? "Metal Fill" : "Metal Fit"), p.pos, p.scale))
+                                  (renderer == .gl ? "OpenGL" : onLayer ? "Metal (video layer)" : "Metal") + (zoomToFill ? " Fill" : " Fit"), p.pos, p.scale))
         }
         c.set("sub-pos", String(p.pos))
         c.set("sub-scale", String(format: "%.3f", p.scale))
@@ -2009,7 +2074,7 @@ final class PlayerModel: ObservableObject {
     /// 2 Nov), so it stops at the bottom edge.
     private func subtitleOptions() -> [(String, String)] {
         let options = SubtitleStyle.savedOptions(defaults)
-        guard renderer == .gl else { return options }
+        guard onLayer else { return options }
         return options.map { k, v in k == "sub-pos" ? (k, String(min(100, Int(v) ?? 100))) : (k, v) }
     }
 
@@ -2035,7 +2100,7 @@ final class PlayerModel: ObservableObject {
     /// OpenGL: the layer's framing alone, for a pinch out of Fill, which
     /// shrinks Fit scaled up rather than Fill (1.27.1).
     func setLayerFill(_ fill: Bool) {
-        if renderer == .gl { pip.setFill(fill) }
+        if onLayer { pip.setFill(fill) }
     }
 
     /// Fit or Fill. On OpenGL the layer's gravity changes here and now, in
@@ -2043,7 +2108,7 @@ final class PlayerModel: ObservableObject {
     /// pinch drops its stand-in scale in the same screen update (1.23.4; the
     /// 6 Nov recording had a frame of each framing at once).
     func setZoom(fill: Bool, toast: Bool = true) {
-        if renderer == .gl { pip.setFill(fill) }
+        if onLayer { pip.setFill(fill) }
         zoomToFill = fill
         client?.set("panscan", fill ? 1.0 : 0.0)
         if toast { showToast(fill ? "Fill" : "Fit") }
@@ -2679,7 +2744,7 @@ final class PlayerModel: ObservableObject {
 
     private func logPasses() {
         guard let c = client else { return }
-        let renderer = renderer == .metal ? "Metal" : "OpenGL"
+        let renderer = renderer == .gl ? "OpenGL" : onLayer ? "Metal, video layer" : "Metal"
         let a4k = anime4kMode == .off ? "Anime4K off" : "Anime4K \(anime4kMode.rawValue)/\(anime4kQuality.rawValue)\(anime4kRestoreOnly ? " restore only" : "")"
         c.query({ c -> (String?, Int64, Int64, Double) in
             (c.string("vo-passes"), c.int("frame-drop-count") ?? 0, c.int("vo-delayed-frame-count") ?? 0, c.double("display-fps") ?? 0)
@@ -2874,12 +2939,12 @@ final class PlayerModel: ObservableObject {
     private var pipStopping = false
 
     private func pipWindowSized(_ size: CMVideoDimensions) {
-        guard renderer == .gl, isPiPActive, !pipStopping else { return }
+        guard onLayer, isPiPActive, !pipStopping else { return }
         PiPTrace.event("PiP window renders at \(size.width)×\(size.height)")
         pipSizeWork?.cancel()
         let w = DispatchWorkItem { [weak self] in
             guard let self, self.isPiPActive, !self.pipStopping, self.pendingW > 0, self.pendingH > 0 else { return }
-            self.glRenderer?.setPiPSize(PiPFrameSize.pick(videoW: self.pendingW, videoH: self.pendingH))
+            self.frames?.setPiPSize(PiPFrameSize.pick(videoW: self.pendingW, videoH: self.pendingH))
         }
         pipSizeWork = w
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: w)
@@ -2917,7 +2982,7 @@ final class PlayerModel: ObservableObject {
         #if targetEnvironment(simulator)
         return                        // the simulator's Metal driver aborts on readback
         #endif
-        guard renderer == .metal, mode == .main, fileLoaded, !isPiPActive,
+        guard ownLayerMetal, mode == .main, fileLoaded, !isPiPActive,
               leaving || UIApplication.shared.applicationState == .active, let c = client else { return }
         // The frame only goes to the PiP layer: none with PiP off (it was read
         // back after every seek and pause regardless).
@@ -3002,7 +3067,7 @@ final class PlayerModel: ObservableObject {
     func labParkThenReturn() {
         if mode == .sw { sw.detach() }
         labLayoutPending()
-        if mode == .main, renderer == .metal { settleBeforeMetalThreadEnds() }   // vid=no ends mpv's Metal thread
+        if mode == .main, ownLayerMetal { settleBeforeMetalThreadEnds() }   // vid=no ends mpv's Metal thread
         mode = .none
         pendingMain = true
         client?.set("vid", "no")
@@ -3025,7 +3090,7 @@ final class PlayerModel: ObservableObject {
     /// OpenGL (1.20.0, SampleBufferRenderer): nothing to switch.
     private func switchToSoftware() {
         guard mode == .main, let c = client else { return }
-        if renderer == .gl {
+        if onLayer {
             // Nothing to switch: the frames already go into PiP's layer. Only
             // GPU work, if it was stopped for the background a moment before,
             // and the video track, if the app was away long enough for it to
@@ -3037,7 +3102,7 @@ final class PlayerModel: ObservableObject {
                 videoOffForBackground = false
                 c.set("vid", vidSaved ?? "auto")
             }
-            glRenderer?.setRenderingAllowed(true, why: "PiP up")
+            frames?.setRenderingAllowed(true, why: "PiP up")
             return
         }
         outputOffForAway = false            // PiP takes over the output from here
@@ -3066,7 +3131,7 @@ final class PlayerModel: ObservableObject {
     private func switchToMain() {
         guard let c = client else { return }
         defer { traceAV("renderer → main (PiP ended)") }
-        if renderer == .metal, mode == .sw, sw.isAttached, let vid = c.string("vid"), vid != "no" {
+        if ownLayerMetal, mode == .sw, sw.isAttached, let vid = c.string("vid"), vid != "no" {
             reattachMetalView()
             videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded()
             swapOutput(c, to: "gpu-next", label: "PiP ended: video output → Metal")
@@ -3077,15 +3142,14 @@ final class PlayerModel: ObservableObject {
             startPiPFeed()
             return
         }
-        if renderer == .metal, mode == .main { settleBeforeMetalThreadEnds() }   // vid=no ends mpv's Metal thread
+        if mode == .main, ownLayerMetal { settleBeforeMetalThreadEnds() }   // vid=no ends mpv's Metal thread
         c.set("vid", "no")
         if mode == .sw { sw.detach() }
-        switch renderer {
-        case .metal:
+        if let frames {
+            frames.setRenderingAllowed(true, why: "back on screen")
+        } else {
             reattachMetalView()
             c.set("vo", "gpu-next")
-        case .gl:
-            glRenderer?.setRenderingAllowed(true, why: "back on screen")
         }
         mode = .main
         pendingMain = false
@@ -3350,7 +3414,7 @@ final class PlayerModel: ObservableObject {
     /// goes into the layer first; the switch to PiP's renderer waits for it
     /// (switchToSoftware: snapshotQueue.sync).
     private func aboutToLeave() {
-        if renderer == .gl, !isPiPActive {
+        if onLayer, !isPiPActive {
             // AVKit decides on automatic PiP from the playback state it last
             // read: the current one, and the setting as it is now (1.26.0).
             pipState.paused = paused
@@ -3358,7 +3422,7 @@ final class PlayerModel: ObservableObject {
             pip.rearmAutoStart(defaults.bool(forKey: SettingsKey.pipAuto))
             return
         }
-        guard renderer == .metal, isPiPPossible, defaults.bool(forKey: SettingsKey.pipAuto), !isPiPActive else { return }
+        guard ownLayerMetal, isPiPPossible, defaults.bool(forKey: SettingsKey.pipAuto), !isPiPActive else { return }
         PiPTrace.event("app about to leave: the PiP layer gets the current frame (its last one came \(pip.lastFrameAge.map { "\(Int($0 * 1000)) ms ago" } ?? "never"))")
         takeSnapshot(leaving: true)
     }
@@ -3392,11 +3456,13 @@ final class PlayerModel: ObservableObject {
         guard mode == .main, !isPiPActive, let c = client else { return }
         let keepPlaying = defaults.bool(forKey: SettingsKey.backgroundAudio)
         if !keepPlaying { setPaused(true) }
-        if renderer == .metal {
+        if ownLayerMetal {
             outputOffForBackground(c)
             return
         }
-        glRenderer?.setRenderingAllowed(false, why: "app in the background without PiP")
+        // On the layer (OpenGL, Metal on engine 3): no more GPU work, and
+        // nothing taken down: coming back goes on drawing (1.28.0 for Metal).
+        frames?.setRenderingAllowed(false, why: "app in the background without PiP")
         if keepPlaying {
             if paused {
                 parkedPaused = true
@@ -3485,7 +3551,7 @@ final class PlayerModel: ObservableObject {
         guard let vid = c.string("vid"), vid != "no" else { return }
         vidSaved = vid
         videoOffForBackground = true
-        if renderer == .metal { settleBeforeMetalThreadEnds() }   // no video track: mpv ends its video output
+        if ownLayerMetal { settleBeforeMetalThreadEnds() }   // no video track: mpv ends its video output
         c.set("vid", "no")
         dlog("player", "background playback: video off (15 s away)")
     }
@@ -3524,7 +3590,7 @@ final class PlayerModel: ObservableObject {
             // 1.22.2: the picture and the main thread for 4 s after a trip
             // away (Notification Centre), so a report shows what holds the
             // picture up (4 Nov: "the stutter is back" on Metal).
-            traceTransition("coming forward (\(renderer == .metal ? "Metal: video output back" : "OpenGL"))")
+            traceTransition("coming forward (\(ownLayerMetal ? "Metal: video output back" : onLayer && renderer == .metal ? "Metal (video layer)" : "OpenGL"))")
             outputBackEarly(c)
             return
         }
@@ -3609,9 +3675,9 @@ final class PlayerModel: ObservableObject {
         }
         if pendingMain { switchToMain(); setPiPLayerOnTop(false); return }
         guard mode == .main else { return }
-        if renderer == .gl {
+        if onLayer {
             awayToken += 1              // back within 15 s: the track never went
-            glRenderer?.setRenderingAllowed(true, why: "app active")
+            frames?.setRenderingAllowed(true, why: "app active")
         }
         checkDecoderAfterEarlyReturn()
         if outputOffForAway, let c = client {
@@ -3619,7 +3685,7 @@ final class PlayerModel: ObservableObject {
         } else if videoOffForBackground, let c = client {
             videoOffForBackground = false
             parkedPaused = false
-            if renderer == .metal {
+            if ownLayerMetal {
                 reattachMetalView()
                 // The drawable must have the screen's current size before mpv
                 // builds its video output (26 Oct mpv log: built at the old
@@ -3630,7 +3696,7 @@ final class PlayerModel: ObservableObject {
             c.set("vid", vidSaved ?? "auto")
         } else if parkedPaused {
             parkedPaused = false
-            if renderer == .metal { reattachMetalView(); videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded() }
+            if ownLayerMetal { reattachMetalView(); videoContainer?.layoutIfNeeded(); metalView?.layoutIfNeeded() }
             dlog("player", "back while paused: video view back, \(metalView.map { "\(Int($0.bounds.width))×\(Int($0.bounds.height))" } ?? "-")")
         }
         videoView.setNeedsLayout()
@@ -3855,7 +3921,7 @@ extension PlayerModel: MPVClientDelegate {
             swapSeekQuietUntil = 0
             metalWaitRestarted = true
             PiPTrace.event("mpv: playback restart (first frame after the seek)")
-            if renderer == .metal { scheduleSnapshot(after: 0.8) }
+            if ownLayerMetal { scheduleSnapshot(after: 0.8) }
             updateNowPlaying()              // Control Center's time after a seek
         case .videoReconfig:
             PiPTrace.event("mpv: video reconfig")
@@ -3978,7 +4044,7 @@ extension PlayerModel: MPVClientDelegate {
             let fill = (value.double ?? 0) > 0.5
             if fill != zoomToFill { zoomToFill = fill }
             // Fill did nothing on the sample-buffer renderer (review, 2 Nov).
-            if renderer == .gl { pip.setFill(zoomToFill) }
+            if onLayer { pip.setFill(zoomToFill) }
             applySubtitleFraming()
         default:
             break
@@ -3988,10 +4054,10 @@ extension PlayerModel: MPVClientDelegate {
     private func applyVideoSize() {
         let size = CGSize(width: pendingW, height: pendingH)
         if size != videoSize { videoSize = size; refitAnime4K(); applySubtitleFraming() }
-        if pendingW > 0, pendingH > 0, renderer == .metal {
+        if pendingW > 0, pendingH > 0, ownLayerMetal {
             sw.setVideoSize(width: pendingW, height: pendingH)
         }
-        if pendingW > 0, pendingH > 0 { glRenderer?.setVideoSize(pendingW, pendingH) }
+        if pendingW > 0, pendingH > 0 { frames?.setVideoSize(pendingW, pendingH) }
     }
 
     private func handleEOF() {
@@ -4055,13 +4121,13 @@ extension PlayerModel: PiPManagerDelegate {
         onMain { [weak self] in
             PiPTrace.event("PiP will stop")
             guard let self else { return }
-            if self.renderer == .gl {
+            if self.onLayer {
                 // Full-size frames again as the window grows back (at
                 // willStop). A size change PiP reports while it closes is
                 // ignored (pipWindowSized), so none lands after this.
                 self.pipStopping = true
                 self.pipSizeWork?.cancel()
-                self.glRenderer?.setPiPSize(nil)
+                self.frames?.setPiPSize(nil)
             } else {
                 self.setPiPLayerOnTop(true)
             }
@@ -4083,13 +4149,13 @@ extension PlayerModel: PiPManagerDelegate {
             // because the "became active" event that un-parks had already fired.
             if state == .background && !self.pipRestoring {
                 if self.mode == .sw { self.sw.detach() }
-                self.glRenderer?.setRenderingAllowed(false, why: "PiP closed with the app in the background")
+                self.frames?.setRenderingAllowed(false, why: "PiP closed with the app in the background")
                 self.mode = .none
                 self.pendingMain = true
                 self.client?.set("vid", "no")
                 self.setPaused(true)
                 self.scheduleParkedCheck()
-            } else if self.renderer == .metal {
+            } else if self.ownLayerMetal {
                 self.waitForMetalFrame()
                 self.switchToMain()
             }

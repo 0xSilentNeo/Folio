@@ -78,7 +78,7 @@ struct MediaCard: View {
                 // FFmpeg decodes the channels under Atmos, not its objects.
                 row("Atmos", "Height objects aren't decoded; the channels under them play.", lines: 3)
             }
-            row("Renderer", model.renderer == .metal ? "Metal (libplacebo)" : "OpenGL ES")
+            row("Renderer", model.renderer == .gl ? "OpenGL ES" : model.onLayer ? "Metal (libplacebo), video layer" : "Metal (libplacebo)")
             row("Source", model.item.url)
         }
     }

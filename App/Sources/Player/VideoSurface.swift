@@ -260,7 +260,9 @@ struct VideoSurface: UIViewRepresentable {
         @objc private func pinch(_ g: UIPinchGestureRecognizer) {
             guard !ui.locked else { return }
             let v = model.videoView
-            let gl = model.renderer == .gl
+            // Frames in the video layer (OpenGL, Metal on engine 3): the
+            // layer's framing and a view scale; Metal on its own layer: panscan.
+            let gl = model.onLayer
             switch g.state {
             case .began:
                 panscanAnimation?.invalidate(); panscanAnimation = nil
