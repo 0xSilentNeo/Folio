@@ -18,6 +18,9 @@ on:
       device:
         description: 'Simulator model, a regular expression on its name (e.g. ^iPhone SE, Pro Max$)'
         default: '^iPhone [0-9]+ Pro$'
+      engine:
+        description: 'Engine: stock (MPVKit) or ours (this branch engine/VERSION release, with simulator slices)'
+        default: 'stock'
 
 permissions:
   contents: write
@@ -46,8 +49,14 @@ jobs:
           xcodebuild -version
           xcrun simctl list runtimes | grep -i ios || true
 
-      - name: Fetch engine (stock MPVKit — simulator slices)
-        run: ENGINE=stock SLICE=simulator bash scripts/fetch-engine.sh
+      - name: Fetch engine (stock MPVKit, or ours — simulator slices)
+        run: |
+          if [ "${{ github.event.inputs.engine || 'stock' }}" = "ours" ]; then
+            bash scripts/fetch-engine.sh
+          else
+            ENGINE=stock SLICE=simulator bash scripts/fetch-engine.sh
+          fi
+          cat Vendor/engine.txt || true
 
       - name: Generate project
         run: |

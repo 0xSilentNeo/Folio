@@ -308,7 +308,7 @@ final class SampleBufferRenderer {
     private func trace(_ line: String) { Task { @MainActor in PiPTrace.event(line) } }
 
     /// The colour and light levels iOS needs to show a frame as HDR.
-    private static func tag(_ pb: CVPixelBuffer, _ h: HDROutput) {
+    static func tag(_ pb: CVPixelBuffer, _ h: HDROutput) {
         CVBufferSetAttachment(pb, kCVImageBufferColorPrimariesKey, kCVImageBufferColorPrimaries_ITU_R_2020, .shouldPropagate)
         CVBufferSetAttachment(pb, kCVImageBufferTransferFunctionKey,
                               h.hlg ? kCVImageBufferTransferFunction_ITU_R_2100_HLG : kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, .shouldPropagate)
