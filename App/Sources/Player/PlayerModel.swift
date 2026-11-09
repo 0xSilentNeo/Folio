@@ -1780,7 +1780,9 @@ final class PlayerModel: ObservableObject {
     /// second later: back to the hardware's own frames, and this codec
     /// isn't copied again in this player.
     private func checkCopyFallback() {
-        guard hdrCopyActive, hardwareSeenForFile else { return }
+        // Not while away: iOS stops a background app's hardware decoder, which
+        // says nothing about copying (1.28.1).
+        guard hdrCopyActive, hardwareSeenForFile, UIApplication.shared.applicationState != .background else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             guard let self, self.hdrCopyActive, self.hwdecCurrent.isEmpty || self.hwdecCurrent == "no" else { return }
             let codec = self.client?.string("video-format") ?? "?"
@@ -3463,6 +3465,7 @@ final class PlayerModel: ObservableObject {
         // On the layer (OpenGL, Metal on engine 3): no more GPU work, and
         // nothing taken down: coming back goes on drawing (1.28.0 for Metal).
         frames?.setRenderingAllowed(false, why: "app in the background without PiP")
+        decoderBeforeAway = Self.isHardware(hwdecCurrent) ? hwdecCurrent : nil
         if keepPlaying {
             if paused {
                 parkedPaused = true
@@ -3538,6 +3541,51 @@ final class PlayerModel: ObservableObject {
     /// (m_config_set_option_raw only notifies a changed value), so it goes to
     /// another hardware value and straight back (both rebuild a VideoToolbox
     /// session; software decoding is never involved).
+    // MARK: The hardware decoder after a trip away (1.28.1)
+
+    /// The hardware decoder playing when the app went to the background.
+    /// iOS stops a background app's hardware decoder; with the sound playing
+    /// on, mpv kept decoding and, after three failed frames, fell back down
+    /// its list: to copy decoding, then on the next trip to software, and
+    /// stayed there. Dune in 4K: 14% CPU before Notification Centre, 110–155%
+    /// after, for the rest of the film, and a hot phone (9 Nov report; the
+    /// same drop to copy decoding is in the 1.27.1 OpenGL report).
+    private var decoderBeforeAway: String?
+
+    static func isHardware(_ hwdec: String) -> Bool { !hwdec.isEmpty && hwdec != "no" }
+
+    /// The decoder left the hardware while the app is away without PiP and
+    /// nothing is drawn: a file on the phone stops decoding video now (it's
+    /// read again at once on return); a stream waits the usual 15 s, its
+    /// buffer is costlier to read again.
+    private func decoderDroppedWhileAway() {
+        guard onLayer, decoderBeforeAway != nil, !isPiPActive, !Self.isHardware(hwdecCurrent) || hwdecCurrent != decoderBeforeAway,
+              UIApplication.shared.applicationState == .background, let c = client,
+              let vid = c.string("vid"), vid != "no" else { return }
+        guard (playingItem ?? item).resolvedURL?.isFileURL ?? false else {
+            dlog("player", "away: the decoder left the hardware (\(hwdecCurrent.isEmpty ? "software" : hwdecCurrent)); a stream keeps its buffer, video off after 15 s")
+            return
+        }
+        dlog("player", "away: iOS stopped the hardware decoder (now \(hwdecCurrent.isEmpty ? "software" : hwdecCurrent)); video off until you're back")
+        videoOffForPlayback(c)
+    }
+
+    /// Back on screen with the track still on but the decoder no longer the
+    /// hardware one it was: a new hardware decoder, from the buffer (a short
+    /// restart, no reading again). The video track coming back (above)
+    /// starts with the hardware decoder by itself.
+    private func restoreHardwareDecoderAfterAway() {
+        guard let before = decoderBeforeAway else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+            guard let self else { return }
+            defer { self.decoderBeforeAway = nil }
+            guard self.mode == .main, self.fileLoaded, UIApplication.shared.applicationState == .active,
+                  let vid = self.client?.string("vid"), vid != "no", self.hwdecCurrent != before else { return }
+            dlog("player/warn", "back: the decoder is \(self.hwdecCurrent.isEmpty ? "software" : self.hwdecCurrent), was \(before); building the hardware one again")
+            self.renewHardwareDecoder()
+        }
+    }
+
     private func renewHardwareDecoder() {
         guard let c = client, fileLoaded, let hw = c.string("hwdec"), hw != "no",
               let vid = c.string("vid"), vid != "no" else { return }
@@ -3678,6 +3726,7 @@ final class PlayerModel: ObservableObject {
         if onLayer {
             awayToken += 1              // back within 15 s: the track never went
             frames?.setRenderingAllowed(true, why: "app active")
+            restoreHardwareDecoderAfterAway()
         }
         checkDecoderAfterEarlyReturn()
         if outputOffForAway, let c = client {
@@ -4014,6 +4063,7 @@ extension PlayerModel: MPVClientDelegate {
             let software = hwdecCurrent.isEmpty || hwdecCurrent == "no"
             dlog("player", "decoder: \(software ? "software" : hwdecCurrent)")
             if !software { hardwareSeenForFile = true } else { checkCopyFallback() }
+            decoderDroppedWhileAway()
             EnergyMonitor.shared.note = "renderer=\(renderer) picture=\(PictureMode.current.rawValue) decoder=\(hwdecCurrent.isEmpty ? "sw" : hwdecCurrent)"
             // A minute into playback: one line that says what this file costs
             // (once per file, not once per decoder change).
