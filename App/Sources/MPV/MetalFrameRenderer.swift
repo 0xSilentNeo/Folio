@@ -76,7 +76,7 @@ final class MetalFrameRenderer: FrameRenderer {
         cache = c
         layer.device = device
         layer.pixelFormat = .bgra8Unorm
-        layer.drawableSize = CGSize(width: 64, height: 36)
+        Self.size(layer, 64, 36)
         target = .allocate(capacity: 1)
         // Retained until the engine has let go (engineDone): mpv's thread may
         // still call in while the player closes.
@@ -176,18 +176,35 @@ final class MetalFrameRenderer: FrameRenderer {
         frameSize = s
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        layer.drawableSize = CGSize(width: s.0, height: s.1)
+        Self.size(layer, s.0, s.1)
         CATransaction.commit()
         trace("Metal frames now \(s.0)×\(s.1)\(pipSize != nil ? " (PiP's size)" : videoSize != nil ? " (the video's shape in the player view)" : " (the player view's size)")")
         onResize?()
     }
 
+    /// The unseen layer's size: its bounds as well as its drawable size.
+    /// MoltenVK reads a surface's largest size from the layer's bounds (times
+    /// its scale); with none, it said 0×0, libplacebo took the window for
+    /// hidden, and mpv's stayed 1×1 (CI lab, 9 Nov).
+    private static func size(_ layer: CAMetalLayer, _ w: Int, _ h: Int) {
+        layer.contentsScale = 1
+        layer.bounds = CGRect(x: 0, y: 0, width: w, height: h)
+        layer.drawableSize = CGSize(width: w, height: h)
+    }
+
     // MARK: The engine's hook (mpv's video output thread)
 
+    private var askedToDraw = false
+    private var askedForBuffer = false
+
     private func mayDraw() -> Bool {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
         drawing = allowed && !detached
-        return drawing
+        let yes = drawing, first = !askedToDraw
+        askedToDraw = true
+        lock.unlock()
+        if first { trace("Metal: the engine asks to draw (\(yes ? "yes" : "not now"))") }
+        return yes
     }
 
     private final class Frame {
@@ -200,8 +217,10 @@ final class MetalFrameRenderer: FrameRenderer {
     private func acquire(_ w: Int, _ h: Int, _ fmt: UnsafeMutablePointer<Int32>?, _ trc: UnsafeMutablePointer<Int32>?,
                          _ token: UnsafeMutablePointer<UnsafeMutableRawPointer?>?) -> UnsafeMutableRawPointer? {
         lock.lock()
-        let hdr = self.hdr, go = allowed && !detached
+        let hdr = self.hdr, go = allowed && !detached, first = !askedForBuffer
+        askedForBuffer = true
         lock.unlock()
+        if first { trace("Metal: the engine asks for a \(w)×\(h) buffer") }
         guard go, w > 0, h > 0, let cache else { return nil }
         let half = hdr != nil
         guard let pool = ensurePool(w, h, half) else { return skip("no pixel buffer pool for \(w)×\(h)") }

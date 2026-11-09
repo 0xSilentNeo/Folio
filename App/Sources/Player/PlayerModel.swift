@@ -457,7 +457,8 @@ final class PlayerModel: ObservableObject {
                 // layer given as the window is never shown. HDR is chosen per
                 // file (updateLayerHDR), not hinted to a swapchain.
                 c.setOption("wid", int64: mf.wid)
-                c.setOption("folio-target", mf.targetAddress)
+                let r = c.setOption("folio-target", mf.targetAddress)
+                dlog("player", "Metal into the video layer: folio-target \(r >= 0 ? "set" : "refused (\(r))")")
             } else {
                 c.setOption("wid", int64: metalView!.wid)
                 let edr = UIScreen.main.potentialEDRHeadroom > 1.0
