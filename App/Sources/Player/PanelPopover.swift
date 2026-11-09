@@ -114,10 +114,25 @@ final class PanelPopoverController: UIViewController, UIPopoverPresentationContr
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        NotificationCenter.default.post(name: .playerPanelOpening, object: nil)
-        // Again once the popover is in its window and laid out, in case the
-        // first came before (a no-op when the list is already there).
-        DispatchQueue.main.async { NotificationCenter.default.post(name: .playerPanelOpening, object: nil) }
+        Self.opening("will appear")
+        DispatchQueue.main.async { Self.opening("will appear +1") }
+    }
+
+    /// In the window and laid out, not yet seen (1.26.3: on iOS 27 a scroll
+    /// before this didn't take; the lab run's list stayed at its start).
+    override func viewIsAppearing(_ animated: Bool) {
+        super.viewIsAppearing(animated)
+        Self.opening("is appearing")
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Self.opening("did appear")
+    }
+
+    /// `phase`: when in the opening (logged with the scroll, lab).
+    private static func opening(_ phase: String) {
+        NotificationCenter.default.post(name: .playerPanelOpening, object: phase)
     }
 
     /// Lays the content out ahead of time (called while the player is idle).

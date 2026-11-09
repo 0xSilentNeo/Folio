@@ -8,13 +8,14 @@ final class SeekBarPrefs: ObservableObject {
     static let shared = SeekBarPrefs()
     private let d = UserDefaults.standard
 
-    @Published var markerStyle: String { didSet { d.set(markerStyle, forKey: "seekMarkerStyle") } }      // ticks | dots | segments | none
+    @Published var markerStyle: String { didSet { d.set(markerStyle, forKey: "seekMarkerStyle") } }      // segments | ticks | dots | none
     @Published var markerColor: String { didSet { d.set(markerColor, forKey: "seekMarkerColor") } }      // white | accent | yellow | cyan
     @Published var showChapterTitle: Bool { didSet { d.set(showChapterTitle, forKey: "seekShowChapterTitle") } }
     @Published var showSkipSegments: Bool { didSet { d.set(showSkipSegments, forKey: "seekShowSkip") } }
 
     private init() {
-        markerStyle = d.string(forKey: "seekMarkerStyle") ?? "ticks"
+        // Segments by default (1.26.3; ticks until then). A style you picked stays.
+        markerStyle = d.string(forKey: "seekMarkerStyle") ?? "segments"
         markerColor = d.string(forKey: "seekMarkerColor") ?? "white"
         showChapterTitle = d.object(forKey: "seekShowChapterTitle") as? Bool ?? true
         showSkipSegments = d.object(forKey: "seekShowSkip") as? Bool ?? true
