@@ -2,16 +2,33 @@ import Foundation
 
 // Built into Folio and FolioPlay (1.27.0). Foundation only.
 
-/// A link sent with the share sheet's Play in Folio: the extension leaves it
-/// in the App Group and opens folio://shared?id=<id>; Folio takes it and
-/// plays it. Only a link left this way plays without asking: any web page
-/// can open folio://play, so that one asks first. If Folio couldn't be
-/// opened, the link waits, and Folio offers it when it's next opened.
+/// A link or video sent with the share sheet's Folio (1.27.0 as Play in
+/// Folio, an action; 1.27.1 a share extension, in the app row with Folio's
+/// icon, for videos from Files and Photos too). The extension leaves it in
+/// the App Group and opens folio://shared?id=<id>; Folio takes it and plays
+/// it. Only what's left this way plays without asking: any web page can
+/// open folio://play, so that one asks first. If Folio couldn't be opened,
+/// it waits, and Folio offers it when it's next opened.
 struct SharedPlayLink: Codable, Equatable {
     var url: String
     var title: String?
     var at: Date
     var id: String
+    /// A video file instead of a link: its path in the App Group, under
+    /// Share/Inbox (1.27.1).
+    var file: String?
+
+    init(url: String, title: String? = nil, at: Date, id: String, file: String? = nil) {
+        self.url = url; self.title = title; self.at = at; self.id = id; self.file = file
+    }
+
+    /// Where shared videos wait for Folio.
+    static var inbox: URL? {
+        FolioGroup.container?.appendingPathComponent("Share/Inbox", isDirectory: true)
+    }
+
+    /// A shared file's place in the App Group.
+    var fileURL: URL? { file.flatMap { f in FolioGroup.container?.appendingPathComponent(f) } }
 
     static let fileName = "play-link.json"
 
@@ -51,10 +68,12 @@ struct SharedPlayLink: Codable, Equatable {
         return accepts(link, maxAge: maxAge, now: now) ? link : nil
     }
 
-    /// Fresh enough, and a link Folio plays.
+    /// Fresh enough, and a link Folio plays (or a file, which the app checks).
     static func accepts(_ link: SharedPlayLink, maxAge: TimeInterval, now: Date) -> Bool {
         let age = now.timeIntervalSince(link.at)
-        guard age >= -60, age <= maxAge, let u = URL(string: link.url) else { return false }
+        guard age >= -60, age <= maxAge else { return false }
+        if let file = link.file { return !file.isEmpty && !file.contains("..") }
+        guard let u = URL(string: link.url) else { return false }
         return isPlayable(u)
     }
 

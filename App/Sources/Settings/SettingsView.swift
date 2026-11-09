@@ -537,7 +537,6 @@ struct MPVSettings: View {
 
 struct AdvancedSettings: View {
     @AppStorage(SettingsKey.notifyTest) private var notifyTest = true
-    @AppStorage(SettingsKey.tabZoom) private var tabZoom = false
     @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
 
     var body: some View {
@@ -555,12 +554,11 @@ struct AdvancedSettings: View {
             } footer: { Text("A report bundles the logs and your settings (passwords removed) to send when something goes wrong.") }
             // 1.26.1: the experiments, from General and Playback.
             Section {
-                Toggle("Zoom between tabs", isOn: $tabZoom)
                 if #available(iOS 26.0, *) {
                     Toggle("Native menu morph", isOn: $nativePanelMorph)
                 }
             } header: { Text("Experimental") } footer: {
-                Text("Zoom between tabs: the page zooms in as you switch tabs. Native menu morph: the player's menus grow out of their button with Apple's own glass animation; off, Folio's own glass menus.")
+                Text("Native menu morph: the player's menus grow out of their button with Apple's own glass animation; off, Folio's own glass menus.")
             }
         }
         .navigationTitle("Help & Diagnostics")
@@ -1117,7 +1115,6 @@ struct DiagnosticsView: View {
 
 
 struct DiscoverSettings: View {
-    @AppStorage("tmdbApiKey") private var tmdbKey = ""
     @AppStorage(IMDbSource.Key.language) private var language = "en-US"
     @AppStorage(IMDbSource.Key.minVotes) private var minVotes = 25000
     @AppStorage(IMDbSource.Key.animeJapan) private var animeJapan = true
@@ -1153,25 +1150,11 @@ struct DiscoverSettings: View {
                 Text("Titles, posters, synopses, ratings, charts and episode lists are read from IMDb's own pages — the same numbers you see on imdb.com. Trending is IMDb's Most Popular list; Top Rated is the Top 250 (with a genre: IMDb's user-rating ranking with at least the chosen number of votes). Language changes titles and synopses where IMDb has translations.")
             }
             Section {
-                LabeledContent("API Key (v3)") {
-                    SecureField("TMDB API Key", text: $tmdbKey, prompt: Text("Optional"))
-                        .multilineTextAlignment(.trailing)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                }
-                if !tmdbKey.isEmpty {
-                    Label {
-                        Text("Discover uses TMDB instead of IMDb")
-                    } icon: {
-                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                    }
-                    .font(.footnote)
-                }
-            } header: { Text("TMDB (optional)") } footer: {
-                Text("Optional alternative source. Free for personal use with your own key; leave empty to use IMDb.")
-            }
-            Section {
                 Button("Streaming Services…") { showPlatforms = true }
                 NavigationLink("Addons", value: LibraryRoute.settingsSubpage(.addons))
+            } footer: {
+                // 1.27.1: the TMDB key and Cinemeta moved to Addons, with their order.
+                Text("Cinemeta, your TMDB key and which one Discover uses first are in Addons.")
             }
         }
         .brandListBackground()

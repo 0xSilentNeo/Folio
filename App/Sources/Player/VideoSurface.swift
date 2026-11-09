@@ -250,6 +250,9 @@ struct VideoSurface: UIViewRepresentable {
         private var pinchFromFill = false
         private var pinchRatio: CGFloat = 1
         private var pinchPanscan: Double = 0
+        /// OpenGL: the view's scale that stands for 1 during this pinch:
+        /// Fill's ratio when it starts from Fill (see .began), else 1.
+        private var pinchBase: CGFloat = 1
         private var panscanAnimation: CADisplayLink?
         private var panscanFrom: Double = 0, panscanTo: Double = 0, panscanStart: CFTimeInterval = 0
         private var panscanDone: (() -> Void)?
@@ -264,13 +267,28 @@ struct VideoSurface: UIViewRepresentable {
                 pinchFromFill = model.zoomToFill
                 pinchRatio = model.fillRatio
                 pinchPanscan = pinchFromFill ? 1 : 0
+                pinchBase = 1
+                if gl, pinchFromFill, pinchRatio > 1.02 {
+                    // Out of Fill (1.27.1): the layer shows Fit, scaled up to
+                    // look just like Fill, and the pinch shrinks that. It
+                    // shrank the Fill layer itself: cropped to the view, the
+                    // picture came away from the screen's top and bottom
+                    // until the pinch ended (9 Nov recording). One update,
+                    // unanimated, so nothing moves as it starts.
+                    CATransaction.begin()
+                    CATransaction.setDisableActions(true)
+                    model.setLayerFill(false)
+                    v.transform = CGAffineTransform(scaleX: pinchRatio, y: pinchRatio)
+                    CATransaction.commit()
+                    pinchBase = pinchRatio
+                }
             case .changed:
                 guard pinchRatio > 1.02 else { return }
                 let lo: CGFloat = pinchFromFill ? 1 / pinchRatio : 1
                 let hi: CGFloat = pinchFromFill ? 1 : pinchRatio
                 if gl {
                     let s = Self.rubber(g.scale, lo, hi)
-                    v.transform = CGAffineTransform(scaleX: s, y: s)
+                    v.transform = CGAffineTransform(scaleX: s * pinchBase, y: s * pinchBase)
                     model.setPinchScale(s)
                 } else {
                     // Scale relative to Fit, within Fit…Fill → panscan 0…1.
@@ -287,21 +305,27 @@ struct VideoSurface: UIViewRepresentable {
                 }
                 let r = pinchRatio
                 if gl {
-                    let s = v.transform.a
+                    let base = pinchBase
+                    let s = v.transform.a / base
                     let toFill = pinchFromFill ? s >= (1 + 1 / r) / 2 : s > (1 + r) / 2
                     let changes = g.state == .ended && toFill != pinchFromFill
                     let target: CGFloat = changes ? (pinchFromFill ? 1 / r : r) : 1
+                    let backToFill = pinchFromFill && !changes
                     model.setPinchScale(target)
                     UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0,
                                    options: [.allowUserInteraction, .beginFromCurrentState]) {
-                        v.transform = CGAffineTransform(scaleX: target, y: target)
+                        v.transform = CGAffineTransform(scaleX: target * base, y: target * base)
                     } completion: { [weak model] _ in
                         guard let model else { v.transform = .identity; return }
-                        // The layer's Fill and the stand-in's removal in one update, unanimated.
+                        // The layer's framing and the stand-in's removal in one update, unanimated.
                         CATransaction.begin()
                         CATransaction.setDisableActions(true)
                         model.dropPinchScale()
-                        if changes { model.setZoom(fill: toFill) } else { model.applySubtitleFraming() }
+                        if changes { model.setZoom(fill: toFill) } else {
+                            // Stayed in Fill: the layer fills again.
+                            if backToFill { model.setLayerFill(true) }
+                            model.applySubtitleFraming()
+                        }
                         v.transform = .identity
                         CATransaction.commit()
                     }

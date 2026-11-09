@@ -155,6 +155,12 @@ enum SettingsKey {
     static let whatsNewShown = "whatsNewShown"
 
     static func registerDefaults() {
+        // 1.27.1: Zoom between tabs is on for everyone and has no switch; a
+        // saved "off" from the old switch is forgotten once.
+        if !UserDefaults.standard.bool(forKey: "tabZoomSwitchGone") {
+            UserDefaults.standard.set(true, forKey: "tabZoomSwitchGone")
+            UserDefaults.standard.removeObject(forKey: tabZoom)
+        }
         UserDefaults.standard.register(defaults: [
             hwdec: "auto",
             resumePlayback: true,
@@ -169,7 +175,7 @@ enum SettingsKey {
             downmixNormalize: false,
             lfeInDownmix: false,
             startupTab: 0,
-            tabZoom: false,
+            tabZoom: true,
             metadataFetching: true,
             showRatings: true,
             hideSpoilers: false,

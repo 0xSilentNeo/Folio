@@ -105,4 +105,72 @@ final class Fixes1270Tests: XCTestCase {
         XCTAssertFalse(FirstRun.isFirstInstall(lastShown: nil, usedBefore: true))
         XCTAssertFalse(FirstRun.isFirstInstall(lastShown: "1.26.3", usedBefore: false))
     }
+
+    // MARK: 1.27.1: Discover's sources
+
+    /// Your order of Cinemeta and TMDB, IMDb always last; junk and repeats ignored.
+    func testDiscoverSourceOrder() {
+        XCTAssertEqual(DiscoverSource.order(nil), [.cinemeta, .tmdb, .imdb])
+        XCTAssertEqual(DiscoverSource.order("tmdb,cinemeta"), [.tmdb, .cinemeta, .imdb])
+        XCTAssertEqual(DiscoverSource.order("imdb,tmdb,tmdb,nope"), [.tmdb, .cinemeta, .imdb])
+    }
+
+    private func cinemeta() throws -> AddonManifest {
+        let json = #"{"id":"com.linvo.cinemeta","name":"Cinemeta","version":"3.0.14","resources":["catalog","meta"],"types":["movie","series"],"catalogs":[{"type":"movie","id":"top","name":"Popular","extra":[{"name":"genre"},{"name":"skip"}]},{"type":"movie","id":"year","name":"New","extra":[{"name":"genre","isRequired":true}]},{"type":"movie","id":"imdbRating","name":"Featured","extra":[{"name":"genre"}]},{"type":"series","id":"top","name":"Popular"}]}"#
+        return try JSONDecoder().decode(AddonManifest.self, from: Data(json.utf8))
+    }
+
+    /// Trending is Popular, Top Rated is Featured, New is by year; Popular
+    /// when a catalog's missing (series has no Featured here).
+    func testCinemetaCatalogsForEachSort() throws {
+        let m = try cinemeta()
+        XCTAssertEqual(CinemetaBrowse.catalog(in: m, sort: .trending, type: "movie")?.id, "top")
+        XCTAssertEqual(CinemetaBrowse.catalog(in: m, sort: .topRated, type: "movie")?.id, "imdbRating")
+        XCTAssertEqual(CinemetaBrowse.catalog(in: m, sort: .new, type: "movie")?.id, "year")
+        XCTAssertEqual(CinemetaBrowse.catalog(in: m, sort: .topRated, type: "series")?.id, "top")
+    }
+
+    /// New's year goes as its genre; the next page starts after the titles so far.
+    func testCinemetaPageExtras() throws {
+        let m = try cinemeta()
+        let year = try XCTUnwrap(CinemetaBrowse.catalog(in: m, sort: .new, type: "movie"))
+        XCTAssertEqual(CinemetaBrowse.extra(for: year, genre: "Drama", year: "2025", skip: 0), ["genre": "2025"])
+        let top = try XCTUnwrap(CinemetaBrowse.catalog(in: m, sort: .trending, type: "movie"))
+        XCTAssertEqual(CinemetaBrowse.extra(for: top, genre: "Drama", year: "2025", skip: 48), ["genre": "Drama", "skip": "48"])
+        XCTAssertEqual(CinemetaBrowse.extra(for: top, genre: nil, year: "2025", skip: 0), [:])
+    }
+
+    /// No debrid libraries or "other" catalogs on Discover (9 Nov: clutter).
+    func testNoDebridLibraryOnDiscover() throws {
+        let json = #"[{"type":"other","id":"torrentio-realdebrid","name":"RealDebrid"},{"type":"movie","id":"mf-rd-watchlist","name":"Real-Debrid Watchlist"},{"type":"anime","id":"kitsu-trending","name":"Trending"},{"type":"series","id":"top","name":"Popular"}]"#
+        let cats = try JSONDecoder().decode([AddonManifest.Catalog].self, from: Data(json.utf8))
+        XCTAssertEqual(cats.filter(AddonStore.onDiscover).map(\.id), ["kitsu-trending", "top"])
+    }
+
+    func testCinemetaIsKnownByIDOrAddress() throws {
+        let a = try addon(#"{"transportURL":"https://v3-cinemeta.strem.io/manifest.json","manifest":\#(manifest)}"#)
+        XCTAssertTrue(AddonStore.isCinemeta(a))
+        let b = try addon(#"{"transportURL":"https://a.test/manifest.json","manifest":\#(manifest)}"#)
+        XCTAssertFalse(AddonStore.isCinemeta(b))
+    }
+
+    // MARK: 1.27.1: videos shared to Folio
+
+    func testSharedVideoIsAccepted() {
+        let now = Date()
+        let video = SharedPlayLink(url: "", at: now, id: "v", file: "Share/Inbox/v/Film.mkv")
+        XCTAssertTrue(SharedPlayLink.accepts(video, maxAge: 120, now: now))
+        var sneaky = video
+        sneaky.file = "Share/Inbox/../../Library/x"
+        XCTAssertFalse(SharedPlayLink.accepts(sneaky, maxAge: 120, now: now))
+    }
+
+    func testSharedVideoGetsAFreeName() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("inbox-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        XCTAssertEqual(SharedInbox.unique("Film.mkv", in: dir).lastPathComponent, "Film.mkv")
+        FileManager.default.createFile(atPath: dir.appendingPathComponent("Film.mkv").path, contents: Data())
+        XCTAssertEqual(SharedInbox.unique("Film.mkv", in: dir).lastPathComponent, "Film 2.mkv")
+    }
 }

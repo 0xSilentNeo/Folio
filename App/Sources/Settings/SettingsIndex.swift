@@ -140,7 +140,9 @@ enum SettingsIndex {
         e("Discover Rows", .discover, "sections trending popular"),
         e("Discover Language", .discover, "region country"),
         e("Top Rated Minimum Votes", .discover, "imdb rating votes"),
-        e("TMDB API Key", .discover, "themoviedb v3 key"),
+        e("TMDB API Key", .discover, "themoviedb v3 key discover source", .addons),
+        e("Discover's Titles", .discover, "source cinemeta tmdb imdb order 250", .addons),
+        e("Cinemeta", .discover, "install discover source catalog", .addons),
         e("Streaming Services", .discover, "platforms netflix disney prime"),
         e("Addons", .discover, "stremio catalogs streams", .addons),
 
@@ -163,7 +165,6 @@ enum SettingsIndex {
 
         // Help & Diagnostics
         e("Diagnostics & Report", .help, "bug report logs energy cpu battery", .diagnostics),
-        e("Zoom Between Tabs", .help, "experimental animation"),
         e("Native Menu Morph", .help, "experimental animation"),
 
         // About
