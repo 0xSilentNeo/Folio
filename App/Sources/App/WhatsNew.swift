@@ -20,6 +20,14 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.27.0", items: [
+            Item(icon: "puzzlepiece.extension", title: "Addons on Discover",
+                 text: "The puzzle piece at the top of Discover opens your addons: switch one off, see how fast it answered, and drag to set the order of the streams list. Their catalogs are rows on Discover."),
+            Item(icon: "square.and.arrow.up", title: "Play in Folio",
+                 text: "Share a link from Safari or Messages and choose Play in Folio. Shortcuts and the Action Button can play a link too."),
+            Item(icon: "arrow.down.circle", title: "Steadier downloads",
+                 text: "Downloads keep the Dynamic Island when you come back to Folio, run at a higher priority in the background, and the widget shows a speed only while it's current."),
+        ]),
         Release(version: "1.26.3", items: [
             Item(icon: "gearshape", title: "Settings, the iOS way",
                  text: "Each setting's explanation sits under it, as in iOS Settings; tap a long one to read it all. New icons in Folio's own colours."),
@@ -286,7 +294,10 @@ enum WhatsNew {
         let d = UserDefaults.standard
         let current = currentVersion
         let last = d.string(forKey: SettingsKey.whatsNewShown)
-        var decision = decide(current: current, lastShown: last, existingInstall: usedBefore(), hasEntries: release(current) != nil)
+        let used = usedBefore()
+        // The first install's welcome (1.27.0), from the same evidence.
+        FirstRun.decide(lastShown: last, usedBefore: used)
+        var decision = decide(current: current, lastShown: last, existingInstall: used, hasEntries: release(current) != nil)
         if CommandLine.arguments.contains("-whatsNew") { decision.show = true }
         if suppressed { decision.show = false }
         if let r = decision.remember { d.set(r, forKey: SettingsKey.whatsNewShown) }

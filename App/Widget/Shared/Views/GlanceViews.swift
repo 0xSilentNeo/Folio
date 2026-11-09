@@ -105,7 +105,12 @@ struct DownloadsTile: View {
     private var header: String {
         guard let run = glance?.run, !run.done else { return "Downloads" }
         if run.waiting { return "Waiting" }
-        return ([glance?.network] + [run.speed > 0 ? run.speedText : nil]).compactMap { $0 }.joined(separator: " · ")
+        // The speed only while it's fresh (1.27.0): with Folio in the
+        // background iOS lets it rewrite the widget every few minutes, and
+        // an old speed read as the speed now (9 Nov: "20.4 MB/s" while the
+        // Live Activity said 60). The time left counts down by itself.
+        let fresh = glance.map { now.timeIntervalSince($0.written) < DownloadsGlance.speedFresh } ?? false
+        return ([glance?.network] + [fresh && run.speed > 0 ? run.speedText : nil]).compactMap { $0 }.joined(separator: " · ")
     }
 
     /// "Your show E4 · 3 min left", the time left counting down by itself;

@@ -42,8 +42,10 @@ struct GlassPanelPill: View {
     @State private var measuring: PlayerUIState.Panel?
     @State private var generation = 0
 
-    /// SwiftUI's default animation.
-    private let morph = Animation.default
+    /// SwiftUI's default animation; with Reduce Motion a short fade instead of
+    /// the glass growing out of the pill (1.27.0).
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var morph: Animation { reduceMotion ? .easeInOut(duration: 0.15) : .default }
     private let panelRadius: CGFloat = 28
     private let gap: CGFloat = 8
 

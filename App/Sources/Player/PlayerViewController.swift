@@ -87,6 +87,9 @@ final class PlayerUIState: ObservableObject {
     func scheduleHide(after seconds: Double = 4) {
         hideWork?.cancel()
         if UILab.keepControls { return }   // keep controls up while the UI test taps
+        // VoiceOver and Switch Control (1.27.0): the controls stay. Hidden on a
+        // timer, nothing on screen was left to focus to bring them back.
+        if UIAccessibility.isVoiceOverRunning || UIAccessibility.isSwitchControlRunning { return }
         let w = DispatchWorkItem { [weak self] in
             guard let self, !self.showInfo, !self.showStats, !self.showTune, !self.scrubbing, !self.showConsole, !self.menuOpen, self.panel == nil else { return }
             withAnimation(.easeOut(duration: 0.25)) { self.controlsVisible = false }

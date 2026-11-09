@@ -31,11 +31,17 @@ struct SMBBrowserView: View {
 
     var body: some View {
         List {
+            // The system's error layout, as the other browsers (1.27.0: an
+            // orange label and a plain Retry row).
             if let error {
-                Section {
-                    Label(error, systemImage: offline ? "wifi.slash" : "exclamationmark.triangle").foregroundStyle(.orange)
-                    Button("Retry") { Task { await load() } }
+                ContentUnavailableView {
+                    Label(offline ? "You're Offline" : "Couldn't Open This", systemImage: offline ? "wifi.slash" : "exclamationmark.triangle")
+                } description: {
+                    Text(error)
+                } actions: {
+                    Button("Try Again") { Task { await load() } }.buttonStyle(.borderedProminent).tint(Theme.action)
                 }
+                .listRowBackground(Color.clear)
             }
             ForEach(visible) { item in
                 if item.isDirectory {
@@ -73,7 +79,8 @@ struct SMBBrowserView: View {
                 }
             }
             if !loading && visible.isEmpty && error == nil {
-                Text(path == "/" ? "No shares" : "Empty folder").foregroundStyle(.secondary)
+                ContentUnavailableView(path == "/" ? "No Shares" : "Empty Folder", systemImage: path == "/" ? "externaldrive" : "folder")
+                    .listRowBackground(Color.clear)
             }
         }
         .listStyle(.plain)

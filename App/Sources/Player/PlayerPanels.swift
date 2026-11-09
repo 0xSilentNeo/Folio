@@ -7,6 +7,7 @@ struct MediaCard: View {
     @ObservedObject var model: PlayerModel
     @ObservedObject var ui: PlayerUIState
     @StateObject private var stats = StatsModel()
+    @AppStorage(SettingsKey.surroundAudio) private var surround = true
 
     private var showingStats: Bool { ui.showStats }
 
@@ -62,8 +63,21 @@ struct MediaCard: View {
             if let v = model.tracks.first(where: { $0.type == "video" && $0.selected }) { row("Video", v.detail) }
             row("Picture", model.videoFormat.isEmpty ? "–" : model.videoFormat)
             row("Decoder", model.hwdecCurrent.isEmpty || model.hwdecCurrent == "no" ? "Software" : "Hardware (\(model.hwdecCurrent))")
-            if let a = model.tracks.first(where: { $0.type == "audio" && $0.selected }) { row("Audio", a.detail) }
-            if !model.audioOut.isEmpty { row("Output", model.audioOut) }
+            let audio = model.tracks.first(where: { $0.type == "audio" && $0.selected })
+            if let a = audio { row("Audio", a.detail) }
+            if !model.audioOut.isEmpty {
+                let route = model.audioRoute
+                row("Output", route?.output(layout: model.audioOut) ?? model.audioOut)
+                // Why there are fewer channels than the track has (1.27.0).
+                let trackChannels = audio.flatMap { $0.channelCount ?? $0.channels.flatMap(AudioRoute.channels(in:)) }
+                if let route, let why = route.mixdown(track: trackChannels, output: model.audioOut, surroundOn: surround) {
+                    row("", why, lines: 4)
+                }
+            }
+            if let a = audio, a.detail.localizedCaseInsensitiveContains("atmos") {
+                // FFmpeg decodes the channels under Atmos, not its objects.
+                row("Atmos", "Height objects aren't decoded; the channels under them play.", lines: 3)
+            }
             row("Renderer", model.renderer == .metal ? "Metal (libplacebo)" : "OpenGL ES")
             row("Source", model.item.url)
         }
@@ -75,10 +89,10 @@ struct MediaCard: View {
         }
     }
 
-    private func row(_ k: String, _ v: String) -> some View {
+    private func row(_ k: String, _ v: String, lines: Int = 2) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(k).foregroundStyle(.white.opacity(0.55)).frame(width: 82, alignment: .leading)
-            Text(v).lineLimit(2).textSelection(.enabled)
+            Text(v).lineLimit(lines).textSelection(.enabled)
         }
     }
 }

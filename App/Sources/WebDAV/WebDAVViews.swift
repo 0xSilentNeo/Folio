@@ -255,7 +255,8 @@ struct WebDAVBrowserView: View {
                 }
             }
             if !loading && visible.isEmpty && problem == nil {
-                Text("Empty folder").foregroundStyle(.secondary)
+                ContentUnavailableView("Empty Folder", systemImage: "folder")
+                    .listRowBackground(Color.clear)
             }
         }
         .listStyle(.plain)

@@ -23,6 +23,10 @@ struct TiltPlayButton: View {
     @State private var sweep: CGFloat = -1         // -1 (off left) … 1 (off right)
     @State private var rock: CGFloat = 0           // -1…1, the idle rock that goes with the sweep
     @StateObject private var motion = MotionTilt()
+    /// Reduce Motion (1.27.0): no tilt with the phone, no 3D turn, no sweep
+    /// or rock; a plain press.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .headline) private var height: CGFloat = 56
 
     /// Degrees at full tilt. The finger and the idle rock use all of it; the
     /// phone's own movement up to ~70% (it is always moving a little).
@@ -55,26 +59,31 @@ struct TiltPlayButton: View {
             )
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isButton)
+            // VoiceOver's activation: the button plays on a drag's end otherwise.
+            .accessibilityAction { action() }
             .accessibilityIdentifier("heroPlay")
-            .onAppear { motion.start() }
+            .onAppear { if !reduceMotion { motion.start() } }
             .onDisappear { motion.stop() }
-            .task { await runShimmer() }
+            .onChange(of: reduceMotion) { _, on in if on { motion.stop() } else { motion.start() } }
+            .task(id: reduceMotion) { if !reduceMotion { await runShimmer() } }
     }
 
     private var face: some View {
-        let tx = clamp(touch.width + motion.tilt.width * 0.7 + rock)
-        let ty = clamp(touch.height + motion.tilt.height * 0.7)
+        let tx = reduceMotion ? 0 : clamp(touch.width + motion.tilt.width * 0.7 + rock)
+        let ty = reduceMotion ? 0 : clamp(touch.height + motion.tilt.height * 0.7)
         let shape = Capsule(style: .continuous)
         return HStack(spacing: 12) {
             Image(systemName: icon).font(.system(size: 20, weight: .bold))
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.headline).lineLimit(1)
-                if let subtitle { Text(subtitle).font(.caption).foregroundStyle(Theme.onAccent.opacity(0.75)).lineLimit(1) }
+                // Two lines at large text sizes rather than cut ("Resume / from 1:02:13").
+                Text(title).font(.headline).lineLimit(2).minimumScaleFactor(0.9)
+                if let subtitle { Text(subtitle).font(.caption).foregroundStyle(Theme.onAccent.opacity(0.75)).lineLimit(2) }
             }
         }
         .foregroundStyle(Theme.onAccent)
         .shadow(color: Theme.labelEmboss, radius: 1, x: -tx * 1.5, y: 1 - ty * 1.5)   // label floats above the face
-        .padding(.horizontal, 26).frame(height: 56)
+        // At least 56 pt, growing with the text (it was a fixed 56).
+        .padding(.horizontal, 26).padding(.vertical, 6).frame(minHeight: height)
         .background {
             ZStack {
                 shape.fill(Theme.gradient)
@@ -84,7 +93,7 @@ struct TiltPlayButton: View {
                                           startPoint: UnitPoint(x: 0.5 - tx * 0.3, y: 0),
                                           endPoint: UnitPoint(x: 0.5 + tx * 0.3, y: 0.55)))
                 // The sweep: a soft diagonal band of light crossing the face.
-                if shimmer {
+                if shimmer && !reduceMotion {
                     GeometryReader { g in
                         let w = g.size.width
                         Rectangle()

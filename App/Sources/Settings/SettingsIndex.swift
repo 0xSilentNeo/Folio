@@ -170,7 +170,6 @@ enum SettingsIndex {
         e("Version", .about, "build number"),
         e("What's New", .about, "release notes changes"),
         e("mpv Folder", .about, "files location"),
-        e("Source Code", .about, "github open source"),
         e("Playback Engine & Data", .about, "acknowledgements licenses credits mpv ffmpeg libplacebo libass moltenvk anime4k tmdb tvmaze anilist imdb"),
     ]
 }

@@ -114,7 +114,7 @@ final class SubtitleSearch: ObservableObject, Identifiable {
     func cancel() { task?.cancel(); task = nil }
 
     private func run() async {
-        guard AddonStore.shared.addons.contains(where: { $0.manifest.has(resource: "subtitles") }) else {
+        guard AddonStore.shared.active.contains(where: { $0.manifest.has(resource: "subtitles") }) else {
             phase = .noAddon
             dlog("subs", "search: no subtitle addon installed")
             return

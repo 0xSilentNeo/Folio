@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 import AVKit
 import UniformTypeIdentifiers
 
@@ -23,6 +24,8 @@ struct PlayerScreen: View {
     @AppStorage(SettingsKey.controlsWidth) private var controlsWidth = 0.8
     @ObservedObject private var tune = UITune.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// A fade instead of a slide or a zoom with Reduce Motion on (1.27.0).
+    private func motion(_ t: AnyTransition) -> AnyTransition { reduceMotion ? .opacity : t }
     @Namespace private var glassNS
     /// Read once when the player opens: switching path mid-playback would
     /// leave a panel from the other path on screen.
@@ -70,22 +73,36 @@ struct PlayerScreen: View {
                 skipButton(geo)
                 upNextCard(geo)
 
+                // What the gestures do, in the first plays after installing
+                // (1.27.0); gone once one is used.
+                if ui.controlsVisible && ui.panel == nil && !ui.locked && model.errorMessage == nil {
+                    TipView(PlayerGesturesTip())
+                        .tipBackground(.ultraThinMaterial)
+                        .environment(\.colorScheme, .dark)
+                        .tint(.white)
+                        .frame(maxWidth: 420)
+                        .padding(.horizontal, 20)
+                        .padding(.top, geo.safeAreaInsets.top + 64)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .transition(.opacity)
+                }
+
                 if model.holdSpeedActive {
                     topPill(Label(String(format: "%g×", model.holdSpeed), systemImage: "forward.fill"), top: geo.safeAreaInsets.top)
                 }
                 if let kind = ui.gestureHUDKind, kind == .brightness || kind == .volume {
                     LiveHUD(live: ui.hud) { LevelHUD(hud: $0, top: geo.safeAreaInsets.top) }
                         .id("levelhud")
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(motion(.move(edge: .top).combined(with: .opacity)))
                 }
                 if let kind = ui.gestureHUDKind, kind != .brightness && kind != .volume {
                     LiveHUD(live: ui.hud) { GestureHUDView(hud: $0) }.allowsHitTesting(false)
                         .id("gesturehud")
-                        .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                        .transition(motion(.opacity.combined(with: .scale(scale: 0.8))))
                 }
                 if ui.showStats || ui.showInfo {
                     MediaCard(model: model, ui: ui)
-                        .transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
+                        .transition(motion(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity)))
                 }
                 if let toast = model.toast, ui.gestureHUDKind == nil, !model.holdSpeedActive {
                     topPill(Text(toast), top: geo.safeAreaInsets.top + (ui.controlsVisible ? 56 : 0))
@@ -94,11 +111,11 @@ struct PlayerScreen: View {
                 if let error = model.errorMessage { errorView(error) }
 
                 if ui.showTune {
-                    TuneCard(ui: ui).transition(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity))
+                    TuneCard(ui: ui).transition(motion(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity)))
                 }
 
                 if ui.showConsole {
-                    ConsoleBar(model: model, ui: ui).transition(.move(edge: .bottom).combined(with: .opacity))
+                    ConsoleBar(model: model, ui: ui).transition(motion(.move(edge: .bottom).combined(with: .opacity)))
                 }
 
                 // While a panel is open (or opening), every tap outside it lands
@@ -149,10 +166,10 @@ struct PlayerScreen: View {
                 // Above the menus' tap catcher, so it takes taps while a menu is
                 // still closing behind it.
                 // .id: a new request is a new picker (its stream list loads for that episode).
-                if let r = model.pickRequest { pickerCard(r, geo).id(r.id).transition(.opacity.combined(with: .scale(scale: 0.96))) }
+                if let r = model.pickRequest { pickerCard(r, geo).id(r.id).transition(motion(.opacity.combined(with: .scale(scale: 0.96)))) }
                 // "Search subtitles…" (Tracks menu): drawn in the player like the picker.
                 if let s = model.subtitleSearch, model.pickRequest == nil {
-                    subtitleSearchCard(s, geo).id(s.id).transition(.opacity.combined(with: .scale(scale: 0.96)))
+                    subtitleSearchCard(s, geo).id(s.id).transition(motion(.opacity.combined(with: .scale(scale: 0.96))))
                 }
             }
             .animation(.spring(response: 0.36, dampingFraction: 0.86), value: model.pickRequest)
@@ -201,6 +218,10 @@ struct PlayerScreen: View {
         .fileImporter(isPresented: $showSubtitlePicker, allowedContentTypes: [.item]) { result in
             if case .success(let url) = result { model.addSubtitle(url: url) }
         }
+        // VoiceOver (1.27.0): a two-finger double tap plays and pauses; the
+        // two-finger scrub closes the player.
+        .accessibilityAction(.magicTap) { model.togglePause() }
+        .accessibilityAction(.escape) { onClose() }
     }
 
     /// "Load subtitle file…" from the Tracks menu (1.23.0). The menu is a
@@ -423,12 +444,16 @@ struct PlayerScreen: View {
 
     private var transportPill: some View {
         GlassGroup(unionID: "transport", ns: glassNS) {
+            // Spoken names (1.27.0): VoiceOver guessed from the symbols.
             PillIcon("gobackward.\(icon(backStep))", size: 18, unionID: "transport", ns: glassNS) { model.seek(by: -Double(backStep)) }
+                .accessibilityLabel("Back \(backStep) seconds")
             PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 21, unionID: "transport", ns: glassNS) {
                 model.togglePause()
                 ui.showControls()
             }
+            .accessibilityLabel(model.ended ? "Play Again" : (model.paused ? "Play" : "Pause"))
             PillIcon("goforward.\(icon(step))", size: 18, unionID: "transport", ns: glassNS) { model.seek(by: Double(step)) }
+                .accessibilityLabel("Forward \(step) seconds")
         }
     }
 
@@ -538,7 +563,7 @@ struct PlayerScreen: View {
                 .padding(.bottom, ui.controlsVisible ? (geo.size.width < 640 ? 112 : 58) : 20)
             }
             .ignoresSafeArea(.container, edges: .horizontal)
-            .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottomTrailing)))
+            .transition(motion(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottomTrailing))))
             .animation(.spring(response: 0.3, dampingFraction: 0.85), value: model.activeSegment)
         }
     }
@@ -559,7 +584,7 @@ struct PlayerScreen: View {
                 .padding(.bottom, ui.controlsVisible ? (compact ? 122 : 74) : 24)
             }
             .ignoresSafeArea(.container, edges: .horizontal)
-            .transition(.move(edge: .trailing).combined(with: .opacity))
+            .transition(motion(.move(edge: .trailing).combined(with: .opacity)))
             .animation(.spring(response: 0.35, dampingFraction: 0.86), value: ui.controlsVisible)
         }
     }
@@ -621,12 +646,48 @@ struct TimeBar: View {
                     .frame(minWidth: 38, alignment: .trailing)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(ui.showRemaining ? "Time left" : "Length")
+            .accessibilityHint(ui.showRemaining ? "Shows the length" : "Shows the time left")
         }
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity)
         .frame(height: UITune.shared.pillHeight)
         .glass(cornerRadius: UITune.shared.pillHeight / 2, interactive: true)
+        // The scrub bubble (time and chapter) over the knob, drawn outside the
+        // glass (1.27.0): inside, the glass cut it off, so dragging showed
+        // neither the time nor the chapter's name (simulator recording, 9 Nov).
+        .overlayPreferenceValue(ScrubBubbleKey.self) { info in
+            if let info {
+                GeometryReader { g in
+                    let track = g[info.track]
+                    let x = track.minX + track.width * info.fraction
+                    ScrubBubble(time: info.time, chapter: info.chapter)
+                        .fixedSize()
+                        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { bubbleWidth = $0 }
+                        .position(x: min(max(x, bubbleWidth / 2), g.size.width - bubbleWidth / 2),
+                                  y: track.midY - 44)
+                }
+                .allowsHitTesting(false)
+            }
+        }
     }
+
+    @State private var bubbleWidth: CGFloat = 120
+}
+
+/// Where the knob is while it's dragged, and what the bubble over it says.
+struct ScrubBubbleInfo: Equatable {
+    /// The track's bounds, and how far along it the knob is (the knob is placed
+    /// with an offset, which its own frame doesn't follow).
+    let track: Anchor<CGRect>
+    let fraction: CGFloat
+    let time: Double
+    let chapter: String?
+}
+
+struct ScrubBubbleKey: PreferenceKey {
+    static let defaultValue: ScrubBubbleInfo? = nil
+    static func reduce(value: inout ScrubBubbleInfo?, nextValue: () -> ScrubBubbleInfo?) { value = nextValue() ?? value }
 }
 
 struct SeekTrack: View {
@@ -654,7 +715,11 @@ struct SeekTrack: View {
             ZStack(alignment: .leading) {
                 ZStack(alignment: .leading) {
                     Rectangle().fill(.white.opacity(0.22))
-                    Rectangle().fill(.white.opacity(0.30)).frame(width: w * cacheFrac)
+                    // How much is loaded ahead: only for streams (1.27.0); a
+                    // file on this iPhone is all there.
+                    if !playsLocalFile {
+                        Rectangle().fill(.white.opacity(0.30)).frame(width: w * cacheFrac)
+                    }
                     if prefs.showSkipSegments {
                         ForEach(model.segments) { s in
                             Rectangle().fill(Theme.accent.opacity(0.55))
@@ -689,14 +754,14 @@ struct SeekTrack: View {
                 Circle().fill(.white)
                     .frame(width: dragging ? 16 : 10, height: dragging ? 16 : 10)
                     .offset(x: w * frac - (dragging ? 8 : 5))
-                if dragging {
-                    ScrubBubble(time: shown, chapter: prefs.showChapterTitle ? chapterTitle(at: shown) : nil)
-                        .fixedSize()
-                        .offset(x: min(max(w * frac - 60, -10), w - 110), y: -54)
-                        .allowsHitTesting(false)
-                }
+
             }
             .frame(height: 46)
+            // The bubble is drawn by TimeBar, outside the glass.
+            .anchorPreference(key: ScrubBubbleKey.self, value: .bounds) { a in
+                dragging ? ScrubBubbleInfo(track: a, fraction: frac, time: shown,
+                                           chapter: prefs.showChapterTitle ? chapterTitle(at: shown) : nil) : nil
+            }
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -741,6 +806,8 @@ struct SeekTrack: View {
             }
         }
     }
+
+    private var playsLocalFile: Bool { model.item.resolvedURL?.isFileURL ?? false }
 
     private func chapterTitle(at t: Double) -> String? {
         if let m = model.userMarkers.last(where: { abs($0.time - t) < 3 }) { return m.title }

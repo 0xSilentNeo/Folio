@@ -41,10 +41,13 @@ final class SystemProgress {
     private var last: Snapshot?
     private var shownTitle = ""
     private var shownSubtitle = ""
-    /// Reasons already logged (each once per launch).
-    private var told = Set<String>()
-    /// iOS refused the task this launch (unavailable, not permitted, or not
-    /// registered).
+    /// When each reason was last logged (once a minute at most: 1.27.0, it
+    /// was once per launch, so a later refusal left no trace).
+    private var told: [String: Date] = [:]
+    /// iOS refused the task (unavailable, not permitted, or not registered).
+    /// 1.27.0: until `retryAfter`, not for the rest of the launch: a refusal
+    /// sent every later download to iOS's slower background session with no
+    /// progress in the Dynamic Island until Folio was relaunched (report, 9 Nov).
     private var refused = false
 
     /// iOS won't carry downloads in Folio while it's in the background:
@@ -85,7 +88,19 @@ final class SystemProgress {
         var subtitle: String
     }
 
-    private init() {}
+    private init() {
+        // Back on screen with nothing running: ask iOS again (a stop or a
+        // refusal earlier doesn't keep the Dynamic Island away for good).
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { SystemProgress.shared.cameBack() }
+        }
+    }
+
+    private func cameBack() {
+        guard task == nil, asked == nil else { return }
+        if declined { declined = false; dlog("dl", "back on screen: iOS's own progress may be asked for again") }
+        if refused, retryAfter != .distantFuture { refused = false; retryAfter = .distantPast }
+    }
 
     /// The texts iOS shows, as Safari's: `Downloading "Name"` (or "3 files"
     /// at once) over `102.9 MB of 137.1 MB` for the run, and the speed now
@@ -136,6 +151,8 @@ final class SystemProgress {
             report(t, s)
             return
         }
+        // A refusal is retried once its wait is over (except "unavailable").
+        if refused, retryAfter != .distantFuture, Date() >= retryAfter { refused = false }
         guard asked == nil, !declined, Date() >= retryAfter, UIApplication.shared.applicationState == .active else { return }
         submit(s)
     }
@@ -148,7 +165,7 @@ final class SystemProgress {
         }
         guard registered else {
             refused = true
-            retryAfter = Date().addingTimeInterval(300)
+            retryAfter = Date().addingTimeInterval(60)
             note("register", "iOS's own progress: the task wasn't registered (not in Info.plist's BGTaskSchedulerPermittedIdentifiers?)")
             return
         }
@@ -168,8 +185,9 @@ final class SystemProgress {
             // Codes 2 (too many pending) and 4 (not right now) pass: asked again later.
             if ns.code == 1 || ns.code == 3 { refused = true }
             // Unavailable (the simulator) won't change this launch; refused
-            // may once background activity is allowed again; busy soon.
-            retryAfter = ns.code == 1 ? .distantFuture : Date().addingTimeInterval(ns.code == 3 ? 600 : 60)
+            // may once background activity is allowed again (1.27.0: 2 min,
+            // was 10); busy soon.
+            retryAfter = ns.code == 1 ? .distantFuture : Date().addingTimeInterval(ns.code == 3 ? 120 : 60)
             let why: String
             switch ns.code {
             case 1: why = "unavailable, as in the simulator, which has no background processing"
@@ -237,7 +255,8 @@ final class SystemProgress {
     }
 
     private func note(_ key: String, _ message: String) {
-        guard told.insert(key).inserted else { return }
+        if let t = told[key], Date().timeIntervalSince(t) < 60 { return }
+        told[key] = Date()
         dlog("dl", message)
     }
 }

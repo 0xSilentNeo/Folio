@@ -88,8 +88,13 @@ jobs:
           APPEX="$APP/PlugIns/FolioWidget.appex"
           test -f "$APPEX/FolioWidget"
           ldid -S"App/Widget/FolioWidget.entitlements" "$APPEX/FolioWidget"
+          # Play in Folio (1.27.0): the share sheet's action, in the same group.
+          PLAY="$APP/PlugIns/FolioPlay.appex"
+          test -f "$PLAY/FolioPlay"
+          ldid -S"App/PlayExtension/FolioPlay.entitlements" "$PLAY/FolioPlay"
           ldid -S"App/Folio.entitlements" "$APP/Folio"
           ldid -e "$APPEX/FolioWidget"
+          ldid -e "$PLAY/FolioPlay"
           ldid -e "$APP/Folio"
 
       - name: Package unsigned IPA

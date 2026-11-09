@@ -82,7 +82,8 @@ enum AddonPlayback {
     /// which until 1.23.0 marked every next episode "unavailable" (review, 5 Nov).
     @MainActor
     static func addon(for pick: StreamPick) -> InstalledAddon? {
-        let addons = AddonStore.shared.addons
+        // Only addons switched on (1.27.0).
+        let addons = AddonStore.shared.active
         if let a = addons.first(where: { $0.id == pick.addonID }) { return a }
         let host = URL(string: pick.addonID)?.host
         let sameHost = addons.filter { URL(string: $0.transportURL)?.host == host }

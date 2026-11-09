@@ -36,7 +36,7 @@ struct LibrarySortMenu: View {
             if inToolbar {
                 ToolbarGlyph(Self.glyph)
             } else {
-                Image(systemName: Self.glyph).font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).menuLabelCircle()
+                Image(systemName: Self.glyph).font(.system(size: 15, weight: .semibold)).frame(width: 40, height: 40).menuLabelCircle()
             }
         }
         .glassMenuCircle(!inToolbar)

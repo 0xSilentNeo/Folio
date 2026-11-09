@@ -219,9 +219,12 @@ struct TitleHeroView: View {
         HeroHeader(height: HeroMetrics.height(size)) {
             // The picture from memory in the first frame (1.24.1): Home starts
             // loading it when your finger goes down (ThumbLoader.prefetchHero).
-            if let img = thumb.image ?? ThumbLoader.cached(key: file.path, points: 0, hero: HeroMetrics.pixels) {
-                Image(uiImage: img).resizable().scaledToFill()
-            } else { GeneratedArt(seed: title) }
+            Group {
+                if let img = thumb.image ?? ThumbLoader.cached(key: file.path, points: 0, hero: HeroMetrics.pixels) {
+                    Image(uiImage: img).resizable().scaledToFill()
+                } else { GeneratedArt(seed: title) }
+            }
+            .accessibilityHidden(true)      // pictures only: the title is read from the text
         } content: {
                 // Accessibility text sizes: the title block goes under the
                 // poster, with the whole width, instead of a narrow column.
@@ -231,6 +234,7 @@ struct TitleHeroView: View {
                 layout {
                     if let poster = meta?.poster, let u = URL(string: poster) {
                         CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
+                            .accessibilityHidden(true)
                             .frame(width: 122, height: 191)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .shadow(color: Theme.shadow, radius: 12, y: 6)
@@ -311,7 +315,7 @@ struct TitleHeroView: View {
                 Text(ep).font(.headline).foregroundStyle(.primary.opacity(0.8)).lineLimit(3)
             }
             FlowLayout(spacing: 8, lineSpacing: 8) {
-                if showRatings, let r = meta?.rating { chip("★ \(r)", strong: true) }
+                if showRatings, let r = meta?.rating { chip("★ \(r)", strong: true).accessibilityLabel("Rating \(r)") }
                 if let y = meta?.year ?? parsed.year.map(String.init) { chip(y) }
                 if let c = meta?.contentRating { chip(c) }
                 // The release's own details, read by the one release-name parser.
@@ -344,7 +348,7 @@ struct TitleHeroView: View {
         let airing = self.airing
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(group.isSeries || parsed.episode != nil ? "Episodes" : "Files").font(.title3.weight(.bold))
+                Text(group.isSeries || parsed.episode != nil ? "Episodes" : "Files").font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
                 Text("\(siblings.count)").font(.subheadline).foregroundStyle(.secondary)
                 Spacer()
                 ViewModeMenu(mode: $viewMode)
@@ -440,7 +444,9 @@ struct TitleHeroView: View {
     }
 
     private func play(_ f: URL, fromStart: Bool = false) {
-        let list = LibraryMetaIndex.shared.kidsQueue(siblings.count > 1 ? siblings : LibraryOrganizer.sorted(local.files), keeping: f)
+        // The title's own files; a single one on its own (1.27.0: it got the
+        // whole library as its playlist, and Up Next offered another show).
+        let list = LibraryMetaIndex.shared.kidsQueue(siblings.count > 1 ? siblings : [f], keeping: f)
         let queue = list.map { u -> MediaItem in
             var m = MediaItem(url: u.path, title: TitleParser.clean(u.lastPathComponent), source: .local)
             m.historyKey = u.path
@@ -493,7 +499,7 @@ struct ViewModeMenu: View {
             }
         } label: {
             Image(systemName: LibraryViewMode(rawValue: mode)?.icon ?? "square.grid.2x2")
-                .font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).menuLabelCircle()
+                .font(.system(size: 15, weight: .semibold)).frame(width: 40, height: 40).menuLabelCircle()
         }
         .glassMenuCircle()
         .foregroundStyle(.primary)

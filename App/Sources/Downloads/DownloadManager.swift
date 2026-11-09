@@ -232,6 +232,8 @@ final class DownloadManager: ObservableObject {
     private let engine = DownloadEngine.shared
     private var lastBytes: [UUID: Int64] = [:]
     private var lastTick: CFTimeInterval = 0
+    /// When the background speed was last logged (once a minute, 1.27.0).
+    private var lastBackgroundNote: CFTimeInterval = 0
     private var ticker: Timer?
     private var saveWork: DispatchWorkItem?
     private let file: URL
@@ -1445,7 +1447,18 @@ final class DownloadManager: ObservableObject {
         speed = meter.rate
         estimateSpeed = meter.estimate(at: now)
         speedHistory = Array((speedHistory + [speed]).suffix(30))
-        if background { checkGrace() }
+        if background {
+            checkGrace()
+            // A line a minute, so a report shows how fast it went with
+            // Folio away and with the phone locked (9 Nov: "locked, it more
+            // than halved").
+            if now - lastBackgroundNote >= 60 {
+                lastBackgroundNote = now
+                let running = items.filter { $0.state == .running }.count
+                let locked = UIApplication.shared.isProtectedDataAvailable ? "" : ", phone locked"
+                dlog("dl", "background: \(speedString(speed)), \(running) file(s), \(SystemProgress.shared.describe)\(locked)")
+            }
+        }
         syncSystemProgress()
     }
 
@@ -1553,7 +1566,11 @@ final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sen
     static var partialDir: URL {
         var d = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DownloadParts", isDirectory: true)
         if !FileManager.default.fileExists(atPath: d.path) {
-            try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+            // Writable while the phone is locked (iOS's default for apps, said
+            // here so the parts never get a stricter class, 1.27.0); files
+            // made in it take the folder's class.
+            try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true,
+                                                     attributes: [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication])
             var v = URLResourceValues()
             v.isExcludedFromBackup = true
             try? d.setResourceValues(v)

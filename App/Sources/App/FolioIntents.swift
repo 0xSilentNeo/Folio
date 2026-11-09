@@ -314,6 +314,18 @@ enum IntentPlayback {
             ContinueQueue.play(item)
         }
     }
+
+    /// A link (Play URL in Folio, Play in Folio), once Folio is on screen.
+    static func play(_ link: String) {
+        Task { @MainActor in
+            var waited = 0
+            while waited < 30, !UIApplication.shared.connectedScenes.contains(where: { $0.activationState == .foregroundActive }) {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                waited += 1
+            }
+            PlayerPresenter.play(MediaItem(url: link, title: "", source: .url))
+        }
+    }
 }
 
 /// What Siri says when an intent can't play anything. On success an intent
@@ -324,10 +336,12 @@ enum FolioIntentError: Error, CustomLocalizedStringResourceConvertible {
     case nothingToContinue
     case showGone(String)
     case kidsProfile
+    case notPlayable
 
     var localizedStringResource: LocalizedStringResource {
         switch self {
         case .kidsProfile: return "Folio is in the kids profile. Open Folio to choose something."
+        case .notPlayable: return "Folio plays links to video streams: http, https, rtsp, rtmp, smb, sftp or ftp."
         case .nothingToContinue: return "There's nothing to continue in Folio."
         case .showGone(let name): return "\(name) isn't in Folio's Continue Watching or library any more."
         }
@@ -452,6 +466,30 @@ struct NextEpisodeIntent: AppIntent {
     }
 }
 
+/// Play URL in Folio (1.27.0): for Shortcuts, the Action Button, and a
+/// shortcut shown in the share sheet. Plays at once: you set it up.
+struct PlayURLIntent: AppIntent {
+    static let title: LocalizedStringResource = "Play URL in Folio"
+    static let description: IntentDescription? = IntentDescription("Plays a link to a video stream in Folio's player.")
+    static let openAppWhenRun = true
+
+    @Parameter(title: "URL", requestValueDialog: "Which link?")
+    var url: URL
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Play \(\.$url) in Folio")
+    }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        guard !KidsProfile.isOnNow else { throw FolioIntentError.kidsProfile }
+        guard SharedPlayLink.isPlayable(url) else { throw FolioIntentError.notPlayable }
+        dlog("intents", "play URL: \(url.scheme ?? "?")://\(url.host ?? "")")
+        IntentPlayback.play(url.absoluteString)
+        return .result()
+    }
+}
+
 struct FolioShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(intent: ContinueWatchingIntent(), phrases: [
@@ -471,5 +509,9 @@ struct FolioShortcuts: AppShortcutsProvider {
             "When does \(\.$show) air in \(.applicationName)",
             "When's the next episode in \(.applicationName)",
         ], shortTitle: "Next Episode", systemImageName: "bell")
+        AppShortcut(intent: PlayURLIntent(), phrases: [
+            "Play a link in \(.applicationName)",
+            "Play a URL in \(.applicationName)",
+        ], shortTitle: "Play URL", systemImageName: "link")
     }
 }

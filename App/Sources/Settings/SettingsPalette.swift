@@ -17,4 +17,7 @@ enum SettingsPalette {
     static let plum = Color(light: 0x744866, dark: 0x8A5779)
     static let graphite = Color(light: 0x5A5550, dark: 0x6E6862)
     static let sand = Color(light: 0x8A7458, dark: 0x947E62)
+
+    /// Every one, in a fixed order (placeholder art picks from them).
+    static let all: [Color] = [clay, brick, ochre, olive, sage, pine, slate, plum, graphite, sand]
 }

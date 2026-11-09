@@ -24,7 +24,7 @@ struct PlayerPanel: View {
                 // Fixed height so switching tabs never resizes the panel. The
                 // header and tabs stay put; only the list under them scrolls.
                 NowPlayingPanelContent(model: model, ui: ui, pinnedHeader: true)
-                    .dynamicTypeSize(tune.typeSize)
+                    .modifier(PanelTypeSize(tune: tune))
                     .frame(width: width, height: maxHeight, alignment: .top)
             } else {
                 // Sized to its content on the very first layout (the popover reads
@@ -59,7 +59,7 @@ struct PlayerPanel: View {
     private var padded: some View {
         content
             .padding(.horizontal, 16).padding(.top, 22).padding(.bottom, 16)
-            .dynamicTypeSize(tune.typeSize)
+            .modifier(PanelTypeSize(tune: tune))
             .frame(width: width, alignment: .leading)
     }
 
@@ -135,14 +135,29 @@ struct PanelLink: View {
 }
 
 struct Stepper3: View {
+    /// What it changes, for VoiceOver ("Subtitle delay").
+    var label: String = ""
     let text: String
     let minus: () -> Void
     let plus: () -> Void
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 6) {
             RoundButton("minus", action: minus)
-            Text(text).font(.subheadline.monospacedDigit().weight(.medium)).frame(minWidth: 40)
+            // One line, whatever its width (1.27.0: "+0.0" and "s" were on two).
+            Text(text).font(.subheadline.monospacedDigit().weight(.medium))
+                .lineLimit(1).fixedSize()
+                .frame(minWidth: 44)
             RoundButton("plus", action: plus)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityValue(text)
+        .accessibilityAdjustableAction { d in
+            switch d {
+            case .increment: plus()
+            case .decrement: minus()
+            @unknown default: break
+            }
         }
     }
 }
@@ -156,6 +171,10 @@ struct RoundButton: View {
             Image(systemName: icon).font(.system(size: 12, weight: .bold))
                 .frame(width: 30, height: 30)
                 .background(.white.opacity(0.14), in: Circle())
+                // 44 pt to the finger, 30 to the eye.
+                .padding(7)
+                .contentShape(Circle())
+                .padding(-7)
         }
         .buttonStyle(PressStyle(scale: 0.85))
     }
@@ -202,7 +221,7 @@ struct SettingsPanelContent: View {
         VStack(alignment: .leading, spacing: 4) {
             PanelHeader(title: "Playback")
             PanelRow(icon: "gauge.with.dots.needle.67percent", title: "Speed") {
-                Stepper3(text: String(format: "%g×", (model.speed * 100).rounded() / 100),
+                Stepper3(label: "Speed", text: String(format: "%g×", (model.speed * 100).rounded() / 100),
                          minus: { model.chooseSpeed(max(0.25, model.speed - 0.25)) },
                          plus: { model.chooseSpeed(min(4, model.speed + 0.25)) })
             }
@@ -274,22 +293,24 @@ struct SettingsPanelContent: View {
                 Toggle("Dialogue boost", isOn: $model.dialogueBoost).labelsHidden()
             }
             PanelRow(icon: "timer", title: "Audio delay") {
-                Stepper3(text: String(format: "%+.0f ms", model.audioDelay * 1000),
+                Stepper3(label: "Audio delay", text: String(format: "%+.0f ms", model.audioDelay * 1000),
                          minus: { model.setAudioDelay(model.audioDelay - 0.05) }, plus: { model.setAudioDelay(model.audioDelay + 0.05) })
             }
 
             PanelHeader(title: "Interface")
-            PanelRow(icon: "arrow.counterclockwise", title: "Skip interval") {
+            // 1.27.0: "Skip" and a menu (the title wrapped over three lines
+            // beside a 200 pt segmented control).
+            PanelRow(icon: "goforward", title: "Skip") {
                 // 60 as Settings has it; the back step follows only when it
                 // was the same as this one (review, 5 Nov: it was overwritten,
                 // and 60 showed as 5).
-                SegmentPicker(options: [(5, "5"), (10, "10"), (15, "15"), (30, "30"), (60, "60")],
-                              selection: Binding(get: { seekStep }, set: { new in
-                                  let d = UserDefaults.standard
-                                  if d.integer(forKey: SettingsKey.seekBackStep) == seekStep { d.set(new, forKey: SettingsKey.seekBackStep) }
-                                  seekStep = new
-                              }))
-                    .frame(width: 200)
+                ValueMenu(options: [5, 10, 15, 30, 60].map { ($0, "\($0) s") },
+                          selection: Binding(get: { seekStep }, set: { new in
+                              let d = UserDefaults.standard
+                              if d.integer(forKey: SettingsKey.seekBackStep) == seekStep { d.set(new, forKey: SettingsKey.seekBackStep) }
+                              seekStep = new
+                          }))
+                    .accessibilityLabel("Skip interval")
             }
             PanelRow(icon: "rectangle.landscape.rotate", title: "Auto-Rotate", subtitle: ui.rotationLocked ? "Locked" : nil) {
                 Toggle("Auto-Rotate", isOn: Binding(get: { !ui.rotationLocked }, set: { on in
@@ -307,23 +328,28 @@ struct SettingsPanelContent: View {
             }
             PanelRow(icon: "textformat.size", title: "Size") {
                 HStack(spacing: 10) {
-                    Slider(value: Binding(get: { subScale }, set: { subScale = $0; model.setSubScale($0) }), in: 0.6...1.6)
-                        .frame(width: 120)
+                    Slider(value: Binding(get: { subScale }, set: { subScale = $0; model.setSubScale($0) }), in: 0.6...1.6) {
+                        Text("Subtitle size")
+                    }
+                    .frame(minWidth: 90, maxWidth: 140)
+                    .accessibilityValue(subScale.formatted(.percent.precision(.fractionLength(0))))
                     RoundButton("arrow.counterclockwise") { subScale = 1; model.setSubScale(1) }
+                        .accessibilityLabel("Reset Subtitle Size")
                 }
             }
             PanelRow(icon: "arrow.up.and.down.text.horizontal", title: "Position") {
-                Stepper3(text: "\(subPos)",
+                Stepper3(label: "Subtitle position", text: "\(subPos)",
                          minus: { subPos = max(50, subPos - 5); model.setSubPos(subPos) },
                          plus: { subPos = min(150, subPos + 5); model.setSubPos(subPos) })
             }
             PanelRow(icon: "arrow.up.left.and.arrow.down.right", title: "When zoomed",
-                     subtitle: subFollowZoom == "manual" ? "Stay as set" : "Keep on screen") {
-                ValueMenu(options: [("auto", "Adjust automatically"), ("manual", "Stay as set")],
+                     subtitle: subFollowZoom == "manual" ? "Stay where set" : "Keep on screen") {
+                // Short values: "Adjust automatically" took two lines (1.27.0).
+                ValueMenu(options: [("auto", "Auto"), ("manual", "Fixed")],
                           selection: Binding(get: { subFollowZoom }, set: { subFollowZoom = $0; model.applySubtitleFraming() }))
             }
             PanelRow(icon: "timer", title: "Delay") {
-                Stepper3(text: String(format: "%+.1f s", model.subDelay),
+                Stepper3(label: "Subtitle delay", text: String(format: "%+.1f s", model.subDelay),
                          minus: { model.setSubDelay(model.subDelay - 0.1) }, plus: { model.setSubDelay(model.subDelay + 0.1) })
             }
 
@@ -357,16 +383,21 @@ struct SettingsPanelContent: View {
                 ui.closePanel()
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.84)) { ui.showInfo = true }
             }
-            PanelLink(icon: "slider.horizontal.below.square.filled.and.square", title: "Tune UI", subtitle: "Sizes and animation, live") {
-                ui.closePanel()
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.84)) { ui.showTune = true }
-            }
+            // 1.27.0: the tools for tinkering in one row (they were two of the
+            // panel's rows for everyone).
             Menu {
-                ForEach(ScriptCommandStore.recent) { c in Button(c.name) { model.run(command: c.command) } }
-                Divider()
-                Button { ui.closePanel(); ui.showConsole = true } label: { Label("Run mpv command…", systemImage: "terminal") }
+                if !ScriptCommandStore.recent.isEmpty {
+                    Section("Your Commands") {
+                        ForEach(ScriptCommandStore.recent) { c in Button(c.name) { model.run(command: c.command) } }
+                    }
+                }
+                Button { ui.closePanel(); ui.showConsole = true } label: { Label("Run mpv Command…", systemImage: "terminal") }
+                Button {
+                    ui.closePanel()
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.84)) { ui.showTune = true }
+                } label: { Label("Tune UI…", systemImage: "slider.horizontal.below.square.filled.and.square") }
             } label: {
-                PanelRow(icon: "command", title: "Commands", subtitle: "Your saved mpv commands") { chevron }
+                PanelRow(icon: "wrench.and.screwdriver", title: "Advanced", subtitle: "mpv commands, UI tuning") { chevron }
                     .contentShape(Rectangle())
             }
             .tint(.white)
@@ -610,7 +641,8 @@ struct NowPlayingPanelContent: View {
                     model.takeScreenshot(subtitles: screenshotSubs)
                 } label: {
                     Image(systemName: "camera").font(.system(size: 15, weight: .semibold))
-                        .frame(width: 38, height: 38).background(Color.accentColor, in: Circle())
+                        .frame(width: 38, height: 38).background(Color.white.opacity(0.16), in: Circle())
+                        .padding(3).contentShape(Circle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Take screenshot")
@@ -680,7 +712,9 @@ struct ListRow: View {
             }
             .padding(.horizontal, 12)
             .frame(minHeight: 42)
-            .background(active ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            // A light tint, not accentColor: in the UIKit-hosted panel that's
+            // iOS blue (simulator, 9 Nov), and cream in the dark player under white text.
+            .background(active ? Color.white.opacity(0.16) : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .contentShape(Rectangle())
         }
         .buttonStyle(PressStyle(scale: 0.97))
@@ -743,7 +777,8 @@ struct PlaylistRow: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 8).padding(.vertical, 6)
-            .background(active ? Color.accentColor.opacity(0.9) : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            // The playing episode in a light tint (it was accentColor: iOS blue here).
+            .background(active ? Color.white.opacity(0.16) : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .contentShape(Rectangle())
         }
         .buttonStyle(PressStyle(scale: 0.97))
@@ -762,5 +797,19 @@ private struct AddMarkerLabel: View {
     @ObservedObject var clock: PlaybackClock
     var body: some View {
         Label("Add marker at \(PlayerModel.format(clock.position))", systemImage: "plus")
+    }
+}
+
+/// The panels' text size (1.27.0): the phone's, up to Accessibility 2 (they
+/// were pinned to Large whatever it was), unless Tune UI sets one.
+struct PanelTypeSize: ViewModifier {
+    @ObservedObject var tune: UITune
+
+    func body(content: Content) -> some View {
+        if abs(tune.textScale - UITune.Def.textScale) < 0.01 {
+            content.dynamicTypeSize(...DynamicTypeSize.accessibility2)
+        } else {
+            content.dynamicTypeSize(tune.typeSize)
+        }
     }
 }

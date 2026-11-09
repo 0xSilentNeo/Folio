@@ -114,7 +114,7 @@ final class RoundLabUITests: XCTestCase {
         XCTAssertTrue(prime.waitForExistence(timeout: 10), "no Prime Video")
         mark("open Prime Video")
         prime.tap()
-        let movies = app.segmentedControls.buttons["Movies"].firstMatch, shows = app.segmentedControls.buttons["Shows"].firstMatch
+        let movies = app.segmentedControls.buttons["Movies"].firstMatch, shows = app.segmentedControls.buttons["Series"].firstMatch
         XCTAssertTrue(movies.waitForExistence(timeout: 5), "no Movies tab")
         // Switch while the first load is still out, then back.
         usleep(300_000); mark("Movies (Shows still loading)"); movies.tap()

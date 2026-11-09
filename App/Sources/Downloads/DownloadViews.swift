@@ -100,8 +100,10 @@ final class DownloadsPage: ObservableObject {
 }
 
 struct DownloadPillOverlay: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject private var dm = DownloadManager.shared
     @ObservedObject private var page = DownloadsPage.shared
+    @ObservedObject private var lift = DownloadPillLift.shared
     @State private var showing = false
     @Namespace private var ns
 
@@ -110,11 +112,12 @@ struct DownloadPillOverlay: View {
             Spacer()
             if dm.hasWork && page.shown == 0 {
                 pill
-                    .padding(.bottom, 74)
-                    .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.7)))
+                    .padding(.bottom, 74 + lift.lift)
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.7)))
             }
         }
         .animation(.spring(response: 0.42, dampingFraction: 0.8), value: dm.hasWork && page.shown == 0)
+        .animation(.smooth(duration: 0.3), value: lift.lift)
         .sheet(isPresented: $showing) {
             NavigationStack { DownloadsView(inSheet: true) }
                 .modifier(ZoomSheet(id: "downloads", ns: ns))
@@ -210,8 +213,12 @@ private struct ZoomSource2: ViewModifier {
 /// still after Resume all.
 struct PulsingDot: View {
     let active: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
-        if active {
+        // Still with Reduce Motion on (1.27.0; it pulsed for as long as anything downloaded).
+        if active && reduceMotion {
+            Circle().fill(Theme.accent).frame(width: 8, height: 8)
+        } else if active {
             Circle().fill(Theme.accent).frame(width: 8, height: 8)
                 .phaseAnimator([false, true]) { dot, dim in
                     dot.opacity(dim ? 0.35 : 1).scaleEffect(dim ? 0.7 : 1)

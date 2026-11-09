@@ -1,8 +1,10 @@
 import SwiftUI
 
+/// A row of an addon's catalog (on Discover since 1.27.0).
 struct CatalogRow: View {
     let addon: InstalledAddon
     let catalog: AddonManifest.Catalog
+    var margin: CGFloat = 16
     @Namespace private var zoomNS
     @State private var metas: [MetaItem] = []
     @State private var failed = false
@@ -12,7 +14,7 @@ struct CatalogRow: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(catalogTitle).font(.title3.weight(.bold))
+                    Text(catalogTitle).font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
                     Text(addon.manifest.name).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -22,7 +24,7 @@ struct CatalogRow: View {
                     Text("See all").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, margin)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 12) {
@@ -41,7 +43,7 @@ struct CatalogRow: View {
                         Text("Couldn't load").font(.caption).foregroundStyle(.secondary).frame(height: 177)
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, margin)
             }
         }
         .task {
@@ -54,9 +56,22 @@ struct CatalogRow: View {
     }
 
     private var catalogShape: String? { metas.first?.posterShape }
-    private var catalogTitle: String {
-        let n = catalog.name ?? catalog.id
-        return "\(n) · \(catalog.type.capitalized)"
+    private var catalogTitle: String { Self.title(catalog) }
+
+    /// "Popular · Movie".
+    static func title(_ catalog: AddonManifest.Catalog) -> String {
+        "\(catalog.name ?? catalog.id) · \(typeName(catalog.type))"
+    }
+
+    /// "movie" → "Movies", as Discover's own headings say it.
+    static func typeName(_ type: String) -> String {
+        switch type.lowercased() {
+        case "movie": "Movies"
+        case "series": "Series"
+        case "channel": "Channels"
+        case "tv": "TV"
+        default: type.capitalized
+        }
     }
 }
 
@@ -82,10 +97,15 @@ struct PosterCard: View {
                 // on each scroll frame; a hairline edge reads the same on dark.
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 0.5))
                 .zoomSource(zoom)
-            Text(meta.name).font(.caption.weight(.medium)).lineLimit(1).frame(width: width, alignment: .leading)
-            let sub = [meta.imdbRating.map { "★ \($0)" }, meta.releaseInfo].compactMap { $0 }.joined(separator: " · ")
+            // Two lines for a long title (1.27.0: cut at one).
+            Text(meta.name).font(.caption.weight(.medium)).lineLimit(2).frame(width: width, alignment: .leading)
+            // An addon's empty rating ("") showed a lone star (1.27.0).
+            let rating = meta.imdbRating.flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 }
+            let year = meta.releaseInfo.flatMap { $0.isEmpty ? nil : $0 }
+            let sub = [rating.map { "★ \($0)" }, year].compactMap { $0 }.joined(separator: " · ")
             if !sub.isEmpty {
                 Text(sub).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                    .accessibilityLabel([rating.map { "Rated \($0)" }, year].compactMap { $0 }.joined(separator: ", "))
             }
         }
     }
@@ -190,6 +210,7 @@ struct EpisodeRow: View {
                 if let o = video.overview { Text(o).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
                 if video.rating != nil || video.released != nil {
                     Text([video.rating.map { "★ \($0)" }, video.released].compactMap { $0 }.joined(separator: " · ")).font(.caption2).foregroundStyle(.secondary)
+                        .accessibilityLabel([video.rating.map { "Rated \($0)" }, video.released].compactMap { $0 }.joined(separator: ", "))
                 }
                 if let entry, entry.isFinished {
                     Label("Watched", systemImage: "checkmark.circle.fill").font(.caption2).foregroundStyle(Theme.accent)
@@ -198,7 +219,8 @@ struct EpisodeRow: View {
             Spacer(minLength: 0)
         }
         .padding(8)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 14))
+        // The library's episode rows' radius (1.27.0: 14 here, 16 there).
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
@@ -260,8 +282,9 @@ struct StreamsView: View {
                 }
             }
             if !loading && groups.isEmpty {
-                Text("None of your addons provide streams for this title. Add a stream addon in Discover → Addons.")
-                    .foregroundStyle(.secondary)
+                ContentUnavailableView("No Streams", systemImage: "antenna.radiowaves.left.and.right.slash",
+                                       description: Text("None of your addons has streams for this title. Add a stream addon in Discover → Addons."))
+                    .listRowBackground(Color.clear)
             }
         }
         .overlay { if starting { FolioSpinner(size: .large).padding(20).glass() } }
@@ -394,74 +417,6 @@ struct StreamRow: View {
         }
         .padding(.vertical, 4)
         .opacity(stream.isPlayable ? 1 : 0.5)
-    }
-}
-
-// MARK: - Manager
-
-struct AddonsManagerView: View {
-    @ObservedObject private var store = AddonStore.shared
-    @State private var url = ""
-    @State private var error: String?
-    @Environment(\.openURL) private var openURL
-
-    var body: some View {
-        List {
-            Section {
-                HStack {
-                    TextField("https://…/manifest.json", text: $url)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
-                    Button {
-                        Task {
-                            do { try await store.install(url); url = ""; error = nil } catch { self.error = error.localizedDescription }
-                        }
-                    } label: {
-                        if store.installing { FolioSpinner(size: .small) } else { Text("Install").fontWeight(.semibold) }
-                    }
-                    .disabled(url.isEmpty || store.installing)
-                }
-                if let error { Text(error).font(.caption).foregroundStyle(.orange) }
-                // The system's paste button (1.24.1): no "allow paste" prompt, and
-                // no main thread waiting on one (a 1.6 s stall, 3 Nov report).
-                PasteButton(payloadType: String.self) { strings in
-                    if let s = strings.first { url = s.trimmingCharacters(in: .whitespacesAndNewlines) }
-                }
-            } header: { Text("Add addon") } footer: {
-                Text("Works with addons that have a manifest link (Torrentio/Comet/MediaFusion with your debrid key, OpenSubtitles, Kitsu/anime catalogs…). Configure an addon on its website, then paste the manifest link here. Only direct HTTP(S) streams can play; raw torrents need a debrid-configured addon. Titles, posters and ratings come from IMDb; addons only need to provide streams.")
-            }
-            Section("Installed") {
-                ForEach(store.addons) { a in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            if let logo = a.manifest.logo, let u = URL(string: logo) {
-                                CachedImage(url: u, maxPixel: 120) { $0.resizable().scaledToFit() } placeholder: { Color.clear }
-                                    .frame(width: 28, height: 28).clipShape(RoundedRectangle(cornerRadius: 6))
-                            }
-                            Text(a.manifest.name).font(.headline)
-                            if let v = a.manifest.version { Text("v\(v)").font(.caption).foregroundStyle(.secondary) }
-                        }
-                        Text(a.manifest.resources.map(\.name).joined(separator: " · ")).font(.caption).foregroundStyle(Theme.accent)
-                        if let d = a.manifest.description { Text(d).font(.caption).foregroundStyle(.secondary).lineLimit(3) }
-                    }
-                    .swipeActions {
-                        Button(role: .destructive) { store.remove(a) } label: { Label("Remove", systemImage: "trash") }
-                        if a.manifest.configurable {
-                            Button {
-                                if let u = URL(string: a.baseURL + "/configure") { openURL(u) }
-                            } label: { Label("Configure", systemImage: "gear") }
-                            .tint(.gray)
-                        }
-                    }
-                    .contextMenu {
-                        Button { UIPasteboard.general.string = a.transportURL } label: { Label("Copy manifest URL", systemImage: "doc.on.doc") }
-                    }
-                }
-                .onMove { store.move(from: $0, to: $1) }
-            }
-        }
-        .brandListBackground()
-        .navigationTitle("Addons")
-        .toolbar { EditButton() }
     }
 }
 

@@ -98,19 +98,39 @@ enum AddonAPI {
             let parts = extra.sorted { $0.key < $1.key }.map { "\(enc($0.key))=\(enc($0.value))" }
             path += "/" + parts.joined(separator: "&")
         }
-        return try await get(CatalogResponse.self, path + ".json").metas ?? []
+        return try await timed(addon, "catalog") { try await get(CatalogResponse.self, path + ".json").metas ?? [] }
     }
 
     static func meta(_ addon: InstalledAddon, type: String, id: String) async throws -> MetaItem? {
-        try await get(MetaResponse.self, "\(addon.baseURL)/meta/\(enc(type))/\(enc(id)).json").meta
+        try await timed(addon, "details") { try await get(MetaResponse.self, "\(addon.baseURL)/meta/\(enc(type))/\(enc(id)).json").meta }
     }
 
     static func streams(_ addon: InstalledAddon, type: String, id: String) async throws -> [AddonStream] {
-        try await get(StreamsResponse.self, "\(addon.baseURL)/stream/\(enc(type))/\(enc(id)).json").streams ?? []
+        try await timed(addon, "streams") { try await get(StreamsResponse.self, "\(addon.baseURL)/stream/\(enc(type))/\(enc(id)).json").streams ?? [] }
     }
 
     static func subtitles(_ addon: InstalledAddon, type: String, id: String) async throws -> [AddonSubtitle] {
-        try await get(SubtitlesResponse.self, "\(addon.baseURL)/subtitles/\(enc(type))/\(enc(id)).json").subtitles ?? []
+        try await timed(addon, "subtitles") { try await get(SubtitlesResponse.self, "\(addon.baseURL)/subtitles/\(enc(type))/\(enc(id)).json").subtitles ?? [] }
+    }
+
+    /// How long the addon took, for Addons' "answered in" line (1.27.0).
+    /// A request given up on (a page left) isn't the addon's doing.
+    private static func timed<T>(_ addon: InstalledAddon, _ what: String, _ work: () async throws -> T) async throws -> T {
+        let t0 = CFAbsoluteTimeGetCurrent()
+        let id = addon.id
+        do {
+            let result = try await work()
+            let ms = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)
+            Task { @MainActor in AddonHealth.shared.note(id, ms: ms, ok: true, what: what) }
+            return result
+        } catch {
+            let cancelled = error is CancellationError || (error as? URLError)?.code == .cancelled
+            if !cancelled {
+                let ms = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)
+                Task { @MainActor in AddonHealth.shared.note(id, ms: ms, ok: false, what: what) }
+            }
+            throw error
+        }
     }
 }
 
@@ -197,16 +217,50 @@ final class AddonStore: ObservableObject {
     func remove(_ a: InstalledAddon) { addons.removeAll { $0.id == a.id } }
     func move(from: IndexSet, to: Int) { addons.move(fromOffsets: from, toOffset: to) }
 
+    /// The addons switched on (1.27.0): the only ones asked for anything.
+    var active: [InstalledAddon] { addons.filter(\.enabled) }
+
+    func setEnabled(_ id: String, _ on: Bool) {
+        guard let i = addons.firstIndex(where: { $0.id == id }), addons[i].enabled != on else { return }
+        addons[i].enabled = on
+        dlog("addons", "\(addons[i].manifest.name) switched \(on ? "on" : "off")")
+    }
+
+    // MARK: Catalogs on Discover (1.27.0)
+
+    /// A catalog of an addon's, as a row on Discover.
+    struct CatalogRef: Identifiable, Hashable {
+        let addon: InstalledAddon
+        let catalog: AddonManifest.Catalog
+        var id: String { AddonStore.catalogKey(addon, catalog) }
+    }
+
+    nonisolated static func catalogKey(_ a: InstalledAddon, _ c: AddonManifest.Catalog) -> String { "\(a.id)|\(c.type)|\(c.id)" }
+
+    /// Catalogs taken off Discover in Addons, by catalogKey.
+    @Published var hiddenCatalogs: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "hiddenAddonCatalogs") ?? []) {
+        didSet { UserDefaults.standard.set(Array(hiddenCatalogs).sorted(), forKey: "hiddenAddonCatalogs") }
+    }
+
+    /// Every catalog Discover can show (one that needs no search words), in
+    /// the addons' order.
+    var browsableCatalogs: [CatalogRef] {
+        active.flatMap { a in a.manifest.catalogs.filter(\.isBrowsable).map { CatalogRef(addon: a, catalog: $0) } }
+    }
+
+    /// The ones shown on Discover.
+    var discoverCatalogs: [CatalogRef] { browsableCatalogs.filter { !hiddenCatalogs.contains($0.id) } }
+
     func metaAddon(type: String, id: String, preferred: InstalledAddon?) -> InstalledAddon? {
-        if let preferred, preferred.manifest.supports(resource: "meta", type: type, id: id) { return preferred }
-        return addons.first { $0.manifest.supports(resource: "meta", type: type, id: id) }
+        if let preferred, preferred.enabled, preferred.manifest.supports(resource: "meta", type: type, id: id) { return preferred }
+        return active.first { $0.manifest.supports(resource: "meta", type: type, id: id) }
     }
 
     func streamAddons(type: String, id: String) -> [InstalledAddon] {
-        addons.filter { $0.manifest.supports(resource: "stream", type: type, id: id) }
+        active.filter { $0.manifest.supports(resource: "stream", type: type, id: id) }
     }
 
     func subtitleAddons(type: String, id: String) -> [InstalledAddon] {
-        addons.filter { $0.manifest.supports(resource: "subtitles", type: type, id: id) }
+        active.filter { $0.manifest.supports(resource: "subtitles", type: type, id: id) }
     }
 }

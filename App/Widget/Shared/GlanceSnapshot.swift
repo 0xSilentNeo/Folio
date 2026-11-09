@@ -57,6 +57,9 @@ struct DownloadsGlance: GlanceFile {
     var ready: [String]
     var readyCount: Int
     var written: Date
+
+    /// How long a written speed stands for the speed now (1.27.0).
+    static let speedFresh: TimeInterval = 90
 }
 
 /// The Your week widget, from WatchLog.
