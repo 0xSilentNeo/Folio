@@ -1,0 +1,1261 @@
+[   0.825][v][cplayer] mpv v0.41.0-dirty Copyright © 2000-2025 mpv/MPlayer/mplayer2 projects
+[   0.825][v][cplayer]  built on Nov  9 2026 10:01:29
+[   0.825][v][cplayer] libplacebo version: v7.360.1 (v7.360.1)
+[   0.827][v][cplayer] FFmpeg version: n9.0.2
+[   0.827][v][cplayer] FFmpeg library versions:
+[   0.827][v][cplayer]    libavcodec      63.1.102
+[   0.827][v][cplayer]    libavdevice     63.1.102
+[   0.827][v][cplayer]    libavfilter     12.1.102
+[   0.827][v][cplayer]    libavformat     63.1.102
+[   0.827][v][cplayer]    libavutil       61.1.102
+[   0.827][v][cplayer]    libswresample   7.1.102
+[   0.827][v][cplayer]    libswscale      10.1.102
+[   0.827][v][cplayer] Configuration: -Dlibmpv=true -Dgl=enabled -Dplain-gl=enabled -Diconv=enabled -Duchardet=enabled -Dvulkan=enabled -Dmoltenvk=enabled -Djavascript=disabled -Dzimg=disabled -Djpeg=disabled -Dvapoursynth=disabled -Drubberband=disabled -Dgpl=true -Dlibbluray=enabled -Dcplayer=false -Dvideotoolbox-gl=disabled -Dvideotoolbox-pl=enabled -Dswift-build=disabled -Daudiounit=enabled -Davfoundation=enabled -Dcoreaudio=disabled -Dlua=luajit -Dios-gl=enabled --cross-file=/Users/runner/work/Folio/Folio/mpvkit/dist/libmpv/isimulator/scratch/arm64/crossFile.meson
+[   0.827][v][cplayer] List of enabled features: audiounit avfoundation bsd-fstatfs build-date cplugins darwin ffmpeg gl glob glob-posix gpl iconv ios-gl lcms2 libass libavdevice libbluray libdl libplacebo luajit mac-thread-name macos-10-15-4-features macos-11-3-features macos-11-features macos-12-features moltenvk posix posix-shm uchardet vector videotoolbox-pl vulkan zlib
+[   0.827][v][cplayer] mpv v0.41.0-dirty Copyright © 2000-2025 mpv/MPlayer/mplayer2 projects
+[   0.827][v][cplayer]  built on Nov  9 2026 10:01:29
+[   0.827][v][cplayer] libplacebo version: v7.360.1 (v7.360.1)
+[   0.827][v][cplayer] FFmpeg version: n9.0.2
+[   0.827][v][cplayer] FFmpeg library versions:
+[   0.827][v][cplayer]    libavcodec      63.1.102
+[   0.827][v][cplayer]    libavdevice     63.1.102
+[   0.827][v][cplayer]    libavfilter     12.1.102
+[   0.827][v][cplayer]    libavformat     63.1.102
+[   0.827][v][cplayer]    libavutil       61.1.102
+[   0.827][v][cplayer]    libswresample   7.1.102
+[   0.827][v][cplayer]    libswscale      10.1.102
+[   0.827][v][cplayer] Configuration: -Dlibmpv=true -Dgl=enabled -Dplain-gl=enabled -Diconv=enabled -Duchardet=enabled -Dvulkan=enabled -Dmoltenvk=enabled -Djavascript=disabled -Dzimg=disabled -Djpeg=disabled -Dvapoursynth=disabled -Drubberband=disabled -Dgpl=true -Dlibbluray=enabled -Dcplayer=false -Dvideotoolbox-gl=disabled -Dvideotoolbox-pl=enabled -Dswift-build=disabled -Daudiounit=enabled -Davfoundation=enabled -Dcoreaudio=disabled -Dlua=luajit -Dios-gl=enabled --cross-file=/Users/runner/work/Folio/Folio/mpvkit/dist/libmpv/isimulator/scratch/arm64/crossFile.meson
+[   0.827][v][cplayer] List of enabled features: audiounit avfoundation bsd-fstatfs build-date cplugins darwin ffmpeg gl glob glob-posix gpl iconv ios-gl lcms2 libass libavdevice libbluray libdl libplacebo luajit mac-thread-name macos-10-15-4-features macos-11-3-features macos-11-features macos-12-features moltenvk posix posix-shm uchardet vector videotoolbox-pl vulkan zlib
+[   0.827][d][global] home path: '' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv'
+[   0.827][d][global] user path: '~~home/' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv'
+[   0.827][d][global] user path: '~~old_home/' -> ''
+[   0.827][d][global] config path: 'encoding-profiles.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/encoding-profiles.conf'
+[   0.827][d][global] config path: 'mpv.conf' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/mpv.conf'
+[   0.827][d][global] config path: 'config' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/config'
+[   0.827][v][cplayer] Reading config file /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/mpv.conf
+[   0.827][v][bdmv/bluray] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/mpv.conf
+[   0.828][v][file] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/mpv.conf
+[   0.828][d][file] resize stream to 131072 bytes, drop 0 bytes
+[   0.828][d][file] Stream opened successfully.
+[   0.829][v][cplayer] Applying profile 'default'...
+[   0.829][d][global] config path: 'input.conf' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/input.conf'
+[   0.829][v][bdmv/bluray] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/input.conf
+[   0.830][v][file] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/input.conf
+[   0.830][d][file] resize stream to 131072 bytes, drop 0 bytes
+[   0.830][d][file] Stream opened successfully.
+[   0.831][v][input] Parsing input config file /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/input.conf
+[   0.831][v][input] Input config file /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/input.conf parsed: 0 binds
+[   0.831][d][console] Loading lua script @console.lua...
+[   0.831][d][auto_profiles] Loading lua script @auto_profiles.lua...
+[   0.831][d][select] Loading lua script @select.lua...
+[   0.831][d][positioning] Loading lua script @positioning.lua...
+[   0.831][d][commands] Loading lua script @commands.lua...
+[   0.831][d][context_menu] Loading lua script @context_menu.lua...
+[   0.831][v][clipboard] Initialized vo clipboard backend.
+[   0.831][d][global] config path: 'scripts' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/scripts'
+[   0.831][e][cplayer] Can't load unknown script: /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/scripts/README.txt
+[   0.831][d][cplayer] Run command: af, flags=64, args=[operation="add", value="@folio-audio-probe:acompressor"]
+[   0.833][e][cplayer] Option af-add: 'acompressor' isn't supported.
+[   0.833][d][cplayer] Run command: af, flags=64, args=[operation="add", value="@folio-audio-probe:alimiter"]
+[   0.833][e][cplayer] Option af-add: 'alimiter' isn't supported.
+[   0.833][d][cplayer] Run command: af, flags=64, args=[operation="add", value="@folio-audio-probe:dynaudnorm"]
+[   0.833][e][cplayer] Option af-add: 'dynaudnorm' isn't supported.
+[   0.833][d][cplayer] Run command: af, flags=64, args=[operation="add", value="@folio-audio-probe:dialoguenhance"]
+[   0.833][e][cplayer] Option af-add: 'dialoguenhance' isn't supported.
+[   0.833][v][cplayer] Waiting for scripts...
+[   0.836][v][cplayer] Set property: sub-pos="100" -> 1
+[   0.836][v][cplayer] Set property: sub-scale="1.000" -> 1
+[   0.841][d][select] loading mp.defaults
+[   0.841][d][positioning] loading mp.defaults
+[   0.841][d][context_menu] loading mp.defaults
+[   0.841][d][auto_profiles] loading mp.defaults
+[   0.841][d][console] loading mp.defaults
+[   0.841][d][commands] loading mp.defaults
+[   0.847][d][commands] loading @commands.lua
+[   0.847][d][auto_profiles] loading @auto_profiles.lua
+[   0.847][d][positioning] loading @positioning.lua
+[   0.847][d][positioning] reading options for positioning
+[   0.847][d][global] config path: 'script-opts/positioning.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/script-opts/positioning.conf'
+[   0.847][d][positioning] script-opts/positioning.conf not found.
+[   0.847][d][global] config path: 'lua-settings/positioning.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/lua-settings/positioning.conf'
+[   0.847][d][positioning] lua-settings/positioning.conf not found.
+[   0.847][d][cplayer] Run command: define-section, flags=64, args=[name="input_positioning", contents="", flags="default"]
+[   0.847][d][cplayer] Run command: enable-section, flags=64, args=[name="input_positioning", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.847][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_positioning", contents="", flags="force"]
+[   0.847][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_positioning", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.847][d][context_menu] loading @context_menu.lua
+[   0.847][d][context_menu] reading options for context_menu
+[   0.847][d][global] config path: 'script-opts/context_menu.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/script-opts/context_menu.conf'
+[   0.847][d][context_menu] script-opts/context_menu.conf not found.
+[   0.847][d][select] loading @select.lua
+[   0.847][d][global] config path: 'lua-settings/context_menu.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/lua-settings/context_menu.conf'
+[   0.847][d][context_menu] lua-settings/context_menu.conf not found.
+[   0.848][d][console] loading @console.lua
+[   0.848][d][select] reading options for select
+[   0.848][d][global] config path: 'script-opts/select.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/script-opts/select.conf'
+[   0.848][d][select] script-opts/select.conf not found.
+[   0.848][d][global] config path: 'lua-settings/select.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/lua-settings/select.conf'
+[   0.848][d][select] lua-settings/select.conf not found.
+[   0.848][d][cplayer] Run command: define-section, flags=64, args=[name="input_select", contents="", flags="default"]
+[   0.848][d][cplayer] Run command: enable-section, flags=64, args=[name="input_select", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.848][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_select", contents="", flags="force"]
+[   0.848][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_select", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.849][d][commands] reading options for commands
+[   0.849][d][global] config path: 'script-opts/commands.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/script-opts/commands.conf'
+[   0.849][d][commands] script-opts/commands.conf not found.
+[   0.849][d][global] config path: 'lua-settings/commands.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/lua-settings/commands.conf'
+[   0.849][d][commands] lua-settings/commands.conf not found.
+[   0.849][d][cplayer] Run command: define-section, flags=64, args=[name="input_commands", contents="", flags="default"]
+[   0.849][d][cplayer] Run command: enable-section, flags=64, args=[name="input_commands", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.849][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_commands", contents="", flags="force"]
+[   0.849][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_commands", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.850][d][console] reading options for console
+[   0.850][d][global] config path: 'script-opts/console.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/script-opts/console.conf'
+[   0.850][d][console] script-opts/console.conf not found.
+[   0.850][d][global] config path: 'lua-settings/console.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/lua-settings/console.conf'
+[   0.850][d][console] lua-settings/console.conf not found.
+[   0.850][d][cplayer] Run command: define-section, flags=64, args=[name="input_console", contents="", flags="default"]
+[   0.850][d][cplayer] Run command: enable-section, flags=64, args=[name="input_console", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.850][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_console", contents="", flags="force"]
+[   0.850][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_console", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.850][d][auto_profiles] Destroying client handle...
+[   0.850][v][cplayer] Done loading scripts.
+[   0.879][d][cplayer] Run command: change-list, flags=64, args=[name="http-header-fields", operation="clr", value=""]
+[   0.879][v][cplayer] Set property: http-header-fields -> 1
+[   0.879][v][cplayer] Set property: user-agent="libmpv" -> 1
+[   0.879][v][cplayer] Set property: referrer="" -> 1
+[   0.879][v][cplayer] Set property: demuxer-readahead-secs="60" -> 1
+[   0.880][d][cplayer] Run command: loadfile, flags=64, args=[url="/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/94DB59C1-8746-4E5A-AEDC-879FF6FBC522/Folio.app/lab/lab.mp4", flags="replace", index="-1", options=""]
+[   0.881][v][cplayer] Running hook: auto_profiles/on_before_start_file
+[   0.881][v][cplayer] Failed sending hook command auto_profiles/on_before_start_file. Removing hook.
+[   0.881][v][cplayer] Running hook: auto_profiles/on_load
+[   0.881][v][cplayer] Failed sending hook command auto_profiles/on_load. Removing hook.
+[   0.882][v][bdmv/bluray] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/94DB59C1-8746-4E5A-AEDC-879FF6FBC522/Folio.app/lab/lab.mp4
+[   0.882][v][file] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/94DB59C1-8746-4E5A-AEDC-879FF6FBC522/Folio.app/lab/lab.mp4
+[   0.882][d][file] resize stream to 131072 bytes, drop 0 bytes
+[   0.882][d][file] Stream opened successfully.
+[   0.882][v][demux] Trying demuxers for level=normal.
+[   0.883][d][demux] Trying demuxer: directory (force-level: normal)
+[   0.884][d][demux] Trying demuxer: disc (force-level: normal)
+[   0.884][d][demux] Trying demuxer: edl (force-level: normal)
+[   0.884][d][demux] Trying demuxer: cue (force-level: normal)
+[   0.884][d][demux] Trying demuxer: rawaudio (force-level: normal)
+[   0.884][d][demux] Trying demuxer: rawvideo (force-level: normal)
+[   0.884][d][demux] Trying demuxer: mkv (force-level: normal)
+[   0.885][d][demux] Trying demuxer: lavf (force-level: normal)
+[   0.909][v][lavf] Found 'mov,mp4,m4a,3gp,3g2,mj2' at score=100 size=2048.
+[   0.942][v][demux] Detected file format: mov,mp4,m4a,3gp,3g2,mj2 (libavformat)
+[   0.944][v][cplayer] Opening done: /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/94DB59C1-8746-4E5A-AEDC-879FF6FBC522/Folio.app/lab/lab.mp4
+[   0.990][v][find_files] Loading external files in /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/94DB59C1-8746-4E5A-AEDC-879FF6FBC522/Folio.app/lab/
+[   0.990][d][global] config path: 'sub' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/sub'
+[   0.992][v][cplayer] Running hook: auto_profiles/on_preloaded
+[   0.992][v][cplayer] Failed sending hook command auto_profiles/on_preloaded. Removing hook.
+[   0.992][v][lavf] select track 0
+[   0.992][i][cplayer] ● Video  --vid=1  (h264 480x270 24 fps) [default]
+[   0.993][v][vo/gpu-next/vulkan] Initializing GPU context 'moltenvk'
+[   0.995][v][vo/gpu-next/libplacebo] Initialized libplacebo v7.360.1 (v7.360.1) (API v360)
+[   1.000][d][vo/gpu-next/libplacebo] Available instance version: 1.4.357
+[   1.002][d][vo/gpu-next/libplacebo] Spent 1.828 ms enumerating instance layers
+[   1.002][d][vo/gpu-next/libplacebo] Available layers:
+[   1.002][d][vo/gpu-next/libplacebo]     MoltenVK (v1.4.357)
+[   1.002][d][vo/gpu-next/libplacebo] Spent 0.012 ms enumerating instance extensions
+[   1.002][d][vo/gpu-next/libplacebo] Available instance extensions:
+[   1.002][d][vo/gpu-next/libplacebo]     VK_KHR_device_group_creation
+[   1.002][d][vo/gpu-next/libplacebo]     VK_KHR_external_fence_capabilities
+[   1.002][d][vo/gpu-next/libplacebo]     VK_KHR_external_memory_capabilities
+[   1.002][d][vo/gpu-next/libplacebo]     VK_KHR_external_semaphore_capabilities
+[   1.002][d][vo/gpu-next/libplacebo]     VK_KHR_get_physical_device_properties2
+[   1.002][d][vo/gpu-next/libplacebo]     VK_KHR_get_surface_capabilities2
+[   1.002][d][vo/gpu-next/libplacebo]     VK_KHR_surface
+[   1.002][d][vo/gpu-next/libplacebo]     VK_KHR_surface_maintenance1
+[   1.002][d][vo/gpu-next/libplacebo]     VK_KHR_surface_protected_capabilities
+[   1.002][d][vo/gpu-next/libplacebo]     VK_EXT_debug_report
+[   1.002][d][vo/gpu-next/libplacebo]     VK_EXT_debug_utils
+[   1.002][d][vo/gpu-next/libplacebo]     VK_EXT_headless_surface
+[   1.002][d][vo/gpu-next/libplacebo]     VK_EXT_layer_settings
+[   1.002][d][vo/gpu-next/libplacebo]     VK_EXT_metal_surface
+[   1.002][d][vo/gpu-next/libplacebo]     VK_EXT_surface_maintenance1
+[   1.002][d][vo/gpu-next/libplacebo]     VK_EXT_swapchain_colorspace
+[   1.002][d][vo/gpu-next/libplacebo]     VK_MVK_ios_surface
+[   1.002][d][vo/gpu-next/libplacebo]     VK_MVK_moltenvk
+[   1.002][v][vo/gpu-next/libplacebo] Creating vulkan instance with extensions:
+[   1.002][v][vo/gpu-next/libplacebo]     VK_KHR_surface
+[   1.002][v][vo/gpu-next/libplacebo]     VK_EXT_swapchain_colorspace
+[   1.002][v][vo/gpu-next/libplacebo]     VK_KHR_get_surface_capabilities2
+[   1.002][v][vo/gpu-next/libplacebo]     VK_KHR_surface_maintenance1
+[   1.002][v][vo/gpu-next/libplacebo]     VK_EXT_surface_maintenance1
+[   1.002][v][vo/gpu-next/libplacebo]     VK_KHR_surface
+[   1.002][v][vo/gpu-next/libplacebo]     VK_EXT_metal_surface
+[   1.020][v][vo/gpu-next/libplacebo] Spent 18.572 ms creating vulkan instance
+[   1.020][v][vo/gpu-next/libplacebo] Probing for vulkan devices:
+[   1.020][d][vo/gpu-next/libplacebo] Spent 0.000 ms enumerating physical devices
+[   1.021][v][vo/gpu-next/libplacebo]     GPU 0: Apple iOS simulator GPU v1.4.357 (integrated)
+[   1.021][v][vo/gpu-next/libplacebo]            uuid: 00:00:10:6B:1B:02:00:02:00:00:00:00:00:00:00:00
+[   1.022][v][vo/gpu-next/libplacebo] Vulkan device properties:
+[   1.022][v][vo/gpu-next/libplacebo]     Device Name: Apple iOS simulator GPU
+[   1.022][v][vo/gpu-next/libplacebo]     Device ID: 106b:1b020002
+[   1.022][v][vo/gpu-next/libplacebo]     Device UUID: 00:00:10:6B:1B:02:00:02:00:00:00:00:00:00:00:00
+[   1.022][v][vo/gpu-next/libplacebo]     Driver version: 28a2
+[   1.022][v][vo/gpu-next/libplacebo]     API version: 1.4.357
+[   1.023][v][vo/gpu-next/libplacebo]     Driver ID: VK_DRIVER_ID_MOLTENVK
+[   1.023][v][vo/gpu-next/libplacebo]     Driver name: MoltenVK
+[   1.023][v][vo/gpu-next/libplacebo]     Driver info: 1.4.2
+[   1.023][v][vo/gpu-next/libplacebo]     Conformance version: 1.4.4.0
+[   1.023][v][vo/gpu-next/libplacebo]     Driver UUID: 4D:56:4B:00:00:00:28:A2:1B:02:00:02:00:00:00:00
+[   1.024][d][vo/gpu-next/libplacebo] Queue families supported by device:
+[   1.024][d][vo/gpu-next/libplacebo]     0: flags 0x7 num 1
+[   1.024][d][vo/gpu-next/libplacebo]     1: flags 0x7 num 1
+[   1.024][d][vo/gpu-next/libplacebo]     2: flags 0x7 num 1
+[   1.024][d][vo/gpu-next/libplacebo]     3: flags 0x7 num 1
+[   1.024][d][vo/gpu-next/libplacebo] Using graphics queue 0
+[   1.024][d][vo/gpu-next/libplacebo] Spent 0.007 ms enumerating device extensions
+[   1.024][d][vo/gpu-next/libplacebo] Available device extensions:
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_16bit_storage
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_8bit_storage
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_bind_memory2
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_calibrated_timestamps
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_copy_commands2
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_create_renderpass2
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_dedicated_allocation
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_deferred_host_operations
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_depth_stencil_resolve
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_descriptor_update_template
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_device_group
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_driver_properties
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_dynamic_rendering
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_dynamic_rendering_local_read
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_external_fence
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_external_memory
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_external_semaphore
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_format_feature_flags2
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_get_memory_requirements2
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_global_priority
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_image_format_list
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_imageless_framebuffer
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_incremental_present
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_index_type_uint8
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_line_rasterization
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_load_store_op_none
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_maintenance1
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_maintenance2
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_maintenance3
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_maintenance4
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_maintenance5
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_maintenance6
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_maintenance7
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_maintenance8
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_maintenance9
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_map_memory2
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_multiview
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_portability_subset
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_present_id
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_present_id2
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_present_wait
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_present_wait2
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_push_descriptor
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_relaxed_block_layout
+[   1.024][d][vo/gpu-next/libplacebo]     VK_KHR_robustness2
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_sampler_ycbcr_conversion
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_separate_depth_stencil_layouts
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_draw_parameters
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_expect_assume
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_float_controls
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_float_controls2
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_float16_int8
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_fma
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_integer_dot_product
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_maximal_reconvergence
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_non_semantic_info
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_relaxed_extended_instruction
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_subgroup_uniform_control_flow
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_shader_terminate_invocation
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_spirv_1_4
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_storage_buffer_storage_class
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_swapchain
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_swapchain_maintenance1
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_swapchain_mutable_format
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_synchronization2
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_timeline_semaphore
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_uniform_buffer_standard_layout
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_variable_pointers
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_vertex_attribute_divisor
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_vulkan_memory_model
+[   1.025][d][vo/gpu-next/libplacebo]     VK_KHR_zero_initialize_workgroup_memory
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_4444_formats
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_calibrated_timestamps
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_debug_marker
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_depth_clip_control
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_extended_dynamic_state
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_extended_dynamic_state2
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_extended_dynamic_state3
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_external_memory_host
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_external_memory_metal
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_global_priority
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_global_priority_query
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_host_image_copy
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_host_query_reset
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_image_2d_view_of_3d
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_image_robustness
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_index_type_uint8
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_inline_uniform_block
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_line_rasterization
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_load_store_op_none
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_memory_budget
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_metal_objects
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_pipeline_creation_cache_control
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_pipeline_creation_feedback
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_pipeline_robustness
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_private_data
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_robustness2
+[   1.025][d][vo/gpu-next/libplacebo]     VK_EXT_scalar_block_layout
+[   1.026][d][vo/gpu-next/libplacebo]     VK_EXT_separate_stencil_usage
+[   1.026][d][vo/gpu-next/libplacebo]     VK_EXT_shader_atomic_float
+[   1.026][d][vo/gpu-next/libplacebo]     VK_EXT_shader_demote_to_helper_invocation
+[   1.026][d][vo/gpu-next/libplacebo]     VK_EXT_shader_viewport_index_layer
+[   1.026][d][vo/gpu-next/libplacebo]     VK_EXT_subgroup_size_control
+[   1.026][d][vo/gpu-next/libplacebo]     VK_EXT_swapchain_maintenance1
+[   1.026][d][vo/gpu-next/libplacebo]     VK_EXT_texel_buffer_alignment
+[   1.026][d][vo/gpu-next/libplacebo]     VK_EXT_tooling_info
+[   1.026][d][vo/gpu-next/libplacebo]     VK_EXT_vertex_attribute_divisor
+[   1.026][d][vo/gpu-next/libplacebo]     VK_AMD_gpu_shader_half_float
+[   1.026][d][vo/gpu-next/libplacebo]     VK_AMD_negative_viewport_height
+[   1.026][d][vo/gpu-next/libplacebo]     VK_AMD_shader_image_load_store_lod
+[   1.026][d][vo/gpu-next/libplacebo]     VK_AMD_shader_trinary_minmax
+[   1.026][d][vo/gpu-next/libplacebo]     VK_GOOGLE_display_timing
+[   1.026][d][vo/gpu-next/libplacebo]     VK_IMG_format_pvrtc
+[   1.026][d][vo/gpu-next/libplacebo]     VK_INTEL_shader_integer_functions2
+[   1.027][v][vo/gpu-next/libplacebo] Creating vulkan device with extensions:
+[   1.028][v][vo/gpu-next/libplacebo]     VK_KHR_swapchain
+[   1.028][v][vo/gpu-next/libplacebo]     VK_KHR_swapchain
+[   1.028][v][vo/gpu-next/libplacebo]     VK_EXT_external_memory_host
+[   1.028][v][vo/gpu-next/libplacebo]     VK_KHR_portability_subset
+[   1.028][v][vo/gpu-next/libplacebo]     VK_EXT_metal_objects
+[   1.028][v][vo/gpu-next/libplacebo]     VK_KHR_swapchain_maintenance1
+[   1.028][v][vo/gpu-next/libplacebo]     VK_EXT_swapchain_maintenance1
+[   1.028][v][vo/gpu-next/libplacebo]     VK_EXT_shader_atomic_float
+[   1.028][v][vo/gpu-next/libplacebo]     VK_KHR_dynamic_rendering
+[   1.028][v][vo/gpu-next/libplacebo]     VK_KHR_zero_initialize_workgroup_memory
+[   1.028][v][vo/gpu-next/libplacebo]     VK_KHR_shader_expect_assume
+[   1.028][v][vo/gpu-next/libplacebo]     VK_KHR_shader_relaxed_extended_instruction
+[   4.155][w][vo/gpu-next/libplacebo] Spent 3128.265 ms creating vulkan device (slow!)
+[   4.158][v][vo/gpu-next/libplacebo] Memory heaps supported by device:
+[   4.158][v][vo/gpu-next/libplacebo]     0: flags 0x1 size 7168M
+[   4.158][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   4.158][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   4.158][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   4.158][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   4.158][v][vo/gpu-next/libplacebo] Memory summary:     0 used     0 res     0 alloc, efficiency 100.00%, utilization 100.00%, max page:  448M
+[   4.160][v][vo/gpu-next/libplacebo] shaderc SPIR-V version 1.6 rev 1
+[   4.160][v][vo/gpu-next/libplacebo] Initialized SPIR-V compiler 'shaderc'
+[   4.160][d][vo/gpu-next/libplacebo] Handle type VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT (0x10) is not exportable
+[   4.160][d][vo/gpu-next/libplacebo] Handle type VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT (0x10) is not exportable
+[   4.160][d][vo/gpu-next/libplacebo] Minimum texel alignment: 48
+[   4.161][v][vo/gpu-next/libplacebo] GPU information:
+[   4.161][v][vo/gpu-next/libplacebo]     GLSL version: 450 (vulkan)
+[   4.161][v][vo/gpu-next/libplacebo]       max_shmem_size:            16384
+[   4.161][v][vo/gpu-next/libplacebo]       max_group_threads:         512
+[   4.161][v][vo/gpu-next/libplacebo]       max_group_size[0]:         512
+[   4.161][v][vo/gpu-next/libplacebo]       max_group_size[1]:         512
+[   4.161][v][vo/gpu-next/libplacebo]       max_group_size[2]:         512
+[   4.161][v][vo/gpu-next/libplacebo]       subgroup_size:             0
+[   4.161][v][vo/gpu-next/libplacebo]       min_gather_offset:         -8
+[   4.161][v][vo/gpu-next/libplacebo]       max_gather_offset:         7
+[   4.161][v][vo/gpu-next/libplacebo]     Limits:
+[   4.161][v][vo/gpu-next/libplacebo]       thread_safe:               1
+[   4.161][v][vo/gpu-next/libplacebo]       callbacks:                 1
+[   4.161][v][vo/gpu-next/libplacebo]       max_buf_size:              7516192768
+[   4.161][v][vo/gpu-next/libplacebo]       max_ubo_size:              268435456
+[   4.161][v][vo/gpu-next/libplacebo]       max_ssbo_size:             268435456
+[   4.161][v][vo/gpu-next/libplacebo]       max_vbo_size:              7516192768
+[   4.161][v][vo/gpu-next/libplacebo]       max_mapped_size:           7516192768
+[   4.161][v][vo/gpu-next/libplacebo]       max_buffer_texels:         33554432
+[   4.161][v][vo/gpu-next/libplacebo]       align_host_ptr:            16384
+[   4.161][v][vo/gpu-next/libplacebo]       host_cached:               1
+[   4.161][v][vo/gpu-next/libplacebo]       max_tex_1d_dim:            8192
+[   4.161][v][vo/gpu-next/libplacebo]       max_tex_2d_dim:            8192
+[   4.161][v][vo/gpu-next/libplacebo]       max_tex_3d_dim:            2048
+[   4.161][v][vo/gpu-next/libplacebo]       blittable_1d_3d:           1
+[   4.161][v][vo/gpu-next/libplacebo]       buf_transfer:              1
+[   4.161][v][vo/gpu-next/libplacebo]       align_tex_xfer_pitch:      1
+[   4.161][v][vo/gpu-next/libplacebo]       align_tex_xfer_offset:     64
+[   4.161][v][vo/gpu-next/libplacebo]       max_variable_comps:        0
+[   4.161][v][vo/gpu-next/libplacebo]       max_constants:             18446744073709551615
+[   4.161][v][vo/gpu-next/libplacebo]       max_pushc_size:            4096
+[   4.161][v][vo/gpu-next/libplacebo]       align_vertex_stride:       4
+[   4.161][v][vo/gpu-next/libplacebo]       max_dispatch[0]:           1073741824
+[   4.161][v][vo/gpu-next/libplacebo]       max_dispatch[1]:           1073741824
+[   4.161][v][vo/gpu-next/libplacebo]       max_dispatch[2]:           1073741824
+[   4.161][v][vo/gpu-next/libplacebo]       fragment_queues:           1
+[   4.161][v][vo/gpu-next/libplacebo]       compute_queues:            1
+[   4.161][v][vo/gpu-next/libplacebo]     External API interop:
+[   4.161][v][vo/gpu-next/libplacebo]       UUID: 00:00:10:6B:1B:02:00:02:00:00:00:00:00:00:00:00
+[   4.161][v][vo/gpu-next/libplacebo]       PCI: 0000:00:00:0
+[   4.161][v][vo/gpu-next/libplacebo]       buf export caps: 0x0
+[   4.161][v][vo/gpu-next/libplacebo]       buf import caps: 0x10
+[   4.161][v][vo/gpu-next/libplacebo]       tex export caps: 0x0
+[   4.161][v][vo/gpu-next/libplacebo]       tex import caps: 0x70
+[   4.162][v][vo/gpu-next/libplacebo]       sync export caps: 0x0
+[   4.162][v][vo/gpu-next/libplacebo]       sync import caps: 0x0
+[   4.162][d][vo/gpu-next/libplacebo] GPU texture formats:
+[   4.162][d][vo/gpu-next/libplacebo]     NAME                 TYPE   SIZE COMP CAPS         EMU DEPTH         HOST_BITS     GLSL_TYPE  GLSL_FMT   FOURCC
+[   4.162][d][vo/gpu-next/libplacebo]     r8                   UNORM  1    R    SsLRbBVutHWG n   {8  0  0  0 } {8  0  0  0 } float      r8         R8    
+[   4.162][d][vo/gpu-next/libplacebo]     r8s                  SNORM  1    R    SsLRbBVutHWG n   {8  0  0  0 } {8  0  0  0 } float      r8_snorm         
+[   4.162][d][vo/gpu-next/libplacebo]     rg8                  UNORM  2    RG   SsLRbBVutHWG n   {8  8  0  0 } {8  8  0  0 } vec2       rg8        GR88  
+[   4.162][d][vo/gpu-next/libplacebo]     rg8s                 SNORM  2    RG   SsLRbBVutHWG n   {8  8  0  0 } {8  8  0  0 } vec2       rg8_snorm        
+[   4.162][d][vo/gpu-next/libplacebo]     rgba8                UNORM  4    RGBA SsLRbBVutHWG n   {8  8  8  8 } {8  8  8  8 } vec4       rgba8      AB24  
+[   4.162][d][vo/gpu-next/libplacebo]     rgba8s               SNORM  4    RGBA SsLRbBVutHWG n   {8  8  8  8 } {8  8  8  8 } vec4       rgba8_snorm       
+[   4.162][d][vo/gpu-next/libplacebo]     bgra8                UNORM  4    BGRA SsLRbBVutHWG n   {8  8  8  8 } {8  8  8  8 } vec4                  AR24  
+[   4.162][d][vo/gpu-next/libplacebo]     bgr10a2              UNORM  4    BGRA SsLRbB-utHWG n   {10 10 10 2 } {10 10 10 2 } vec4                  AR30  
+[   4.162][d][vo/gpu-next/libplacebo]     r16                  UNORM  2    R    SsLRbBVutHWG n   {16 0  0  0 } {16 0  0  0 } float      r16        R16   
+[   4.162][d][vo/gpu-next/libplacebo]     r16hf                FLOAT  2    R    SsLRbBVutHWG n   {16 0  0  0 } {16 0  0  0 } float      r16f             
+[   4.162][d][vo/gpu-next/libplacebo]     r16s                 SNORM  2    R    SsLRbBVutHWG n   {16 0  0  0 } {16 0  0  0 } float      r16_snorm        
+[   4.162][d][vo/gpu-next/libplacebo]     rg16                 UNORM  4    RG   SsLRbBVutHWG n   {16 16 0  0 } {16 16 0  0 } vec2       rg16       GR32  
+[   4.162][d][vo/gpu-next/libplacebo]     rg16hf               FLOAT  4    RG   SsLRbBVutHWG n   {16 16 0  0 } {16 16 0  0 } vec2       rg16f            
+[   4.162][d][vo/gpu-next/libplacebo]     rg16s                SNORM  4    RG   SsLRbBVutHWG n   {16 16 0  0 } {16 16 0  0 } vec2       rg16_snorm       
+[   4.162][d][vo/gpu-next/libplacebo]     rgba16               UNORM  8    RGBA SsLRbBVutHWG n   {16 16 16 16} {16 16 16 16} vec4       rgba16     AB48  
+[   4.162][d][vo/gpu-next/libplacebo]     rgba16hf             FLOAT  8    RGBA SsLRbBVutHWG n   {16 16 16 16} {16 16 16 16} vec4       rgba16f    AB4H  
+[   4.162][d][vo/gpu-next/libplacebo]     rgba16s              SNORM  8    RGBA SsLRbBVutHWG n   {16 16 16 16} {16 16 16 16} vec4       rgba16_snorm       
+[   4.162][d][vo/gpu-next/libplacebo]     r32f                 FLOAT  4    R    Ss-RbBVutHWG n   {32 0  0  0 } {32 0  0  0 } float      r32f             
+[   4.162][d][vo/gpu-next/libplacebo]     rg32f                FLOAT  8    RG   Ss-RbBVutHWG n   {32 32 0  0 } {32 32 0  0 } vec2       rg32f            
+[   4.162][d][vo/gpu-next/libplacebo]     rgb10a2              UNORM  4    RGBA S-LRbBVu-H-G n   {10 10 10 2 } {10 10 10 2 } vec4                  AB30  
+[   4.162][d][vo/gpu-next/libplacebo]     r8i                  SINT   1    R    Ss-R-BVutHWG n   {8  0  0  0 } {8  0  0  0 } int        r8i              
+[   4.162][d][vo/gpu-next/libplacebo]     r8u                  UINT   1    R    Ss-R-BVutHWG n   {8  0  0  0 } {8  0  0  0 } uint       r8ui             
+[   4.162][d][vo/gpu-next/libplacebo]     rg8i                 SINT   2    RG   Ss-R-BVutHWG n   {8  8  0  0 } {8  8  0  0 } ivec2      rg8i             
+[   4.162][d][vo/gpu-next/libplacebo]     rg8u                 UINT   2    RG   Ss-R-BVutHWG n   {8  8  0  0 } {8  8  0  0 } uvec2      rg8ui            
+[   4.162][d][vo/gpu-next/libplacebo]     rgba8i               SINT   4    RGBA Ss-R-BVutHWG n   {8  8  8  8 } {8  8  8  8 } ivec4      rgba8i           
+[   4.162][d][vo/gpu-next/libplacebo]     rgba8u               UINT   4    RGBA Ss-R-BVutHWG n   {8  8  8  8 } {8  8  8  8 } uvec4      rgba8ui          
+[   4.162][d][vo/gpu-next/libplacebo]     r16i                 SINT   2    R    Ss-R-BVutHWG n   {16 0  0  0 } {16 0  0  0 } int        r16i             
+[   4.162][d][vo/gpu-next/libplacebo]     r16u                 UINT   2    R    Ss-R-BVutHWG n   {16 0  0  0 } {16 0  0  0 } uint       r16ui            
+[   4.162][d][vo/gpu-next/libplacebo]     rg16i                SINT   4    RG   Ss-R-BVutHWG n   {16 16 0  0 } {16 16 0  0 } ivec2      rg16i            
+[   4.162][d][vo/gpu-next/libplacebo]     rg16u                UINT   4    RG   Ss-R-BVutHWG n   {16 16 0  0 } {16 16 0  0 } uvec2      rg16ui           
+[   4.162][d][vo/gpu-next/libplacebo]     rgba16i              SINT   8    RGBA Ss-R-BVutHWG n   {16 16 16 16} {16 16 16 16} ivec4      rgba16i          
+[   4.162][d][vo/gpu-next/libplacebo]     rgba16u              UINT   8    RGBA Ss-R-BVutHWG n   {16 16 16 16} {16 16 16 16} uvec4      rgba16ui         
+[   4.162][d][vo/gpu-next/libplacebo]     r32i                 SINT   4    R    Ss-R-BVutHWG n   {32 0  0  0 } {32 0  0  0 } int        r32i             
+[   4.162][d][vo/gpu-next/libplacebo]     r32u                 UINT   4    R    Ss-R-BVutHWG n   {32 0  0  0 } {32 0  0  0 } uint       r32ui            
+[   4.162][d][vo/gpu-next/libplacebo]     rg32i                SINT   8    RG   Ss-R-BVutHWG n   {32 32 0  0 } {32 32 0  0 } ivec2      rg32i            
+[   4.162][d][vo/gpu-next/libplacebo]     rg32u                UINT   8    RG   Ss-R-BVutHWG n   {32 32 0  0 } {32 32 0  0 } uvec2      rg32ui           
+[   4.162][d][vo/gpu-next/libplacebo]     rgba32f              FLOAT  16   RGBA Ss-R-BVutHWG n   {32 32 32 32} {32 32 32 32} vec4       rgba32f          
+[   4.162][d][vo/gpu-next/libplacebo]     rgba32i              SINT   16   RGBA Ss-R-BVutHWG n   {32 32 32 32} {32 32 32 32} ivec4      rgba32i          
+[   4.162][d][vo/gpu-next/libplacebo]     rgba32u              UINT   16   RGBA Ss-R-BVutHWG n   {32 32 32 32} {32 32 32 32} uvec4      rgba32ui         
+[   4.162][d][vo/gpu-next/libplacebo]     bgra8i               SINT   4    BGRA Ss---B---HWG n   {8  8  8  8 } {8  8  8  8 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     bgra8u               UINT   4    BGRA Ss---B---HWG n   {8  8  8  8 } {8  8  8  8 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     rgb10a2u             UINT   4    RGBA S--R-B-u-H-G n   {10 10 10 2 } {10 10 10 2 } uvec4                       
+[   4.162][d][vo/gpu-next/libplacebo]     rx10                 UNORM  2    R    S-L------H-G n   {10 0  0  0 } {16 0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     rxgx10               UNORM  4    RG   S-L------H-G n   {10 10 0  0 } {16 16 0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     rx12                 UNORM  2    R    S-L------H-G n   {12 0  0  0 } {16 0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     rxgx12               UNORM  4    RG   S-L------H-G n   {12 12 0  0 } {16 16 0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     a1rgb5               UNORM  2    ARGB ---------H-- n   {1  5  5  5 } {1  5  5  5 }                       BA15  
+[   4.162][d][vo/gpu-next/libplacebo]     a1bgr5               UNORM  2    ABGR ---------H-- n   {1  5  5  5 } {1  5  5  5 }                       RA15  
+[   4.162][d][vo/gpu-next/libplacebo]     gr4                  UNORM  1    GR   ---------H-- n   {4  4  0  0 } {4  4  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     argb4                UNORM  2    ARGB ---------H-- n   {4  4  4  4 } {4  4  4  4 }                       BA12  
+[   4.162][d][vo/gpu-next/libplacebo]     abgr4                UNORM  2    ABGR ---------H-- n   {4  4  4  4 } {4  4  4  4 }                       RA12  
+[   4.162][d][vo/gpu-next/libplacebo]     rgb565               UNORM  2    RGB  ---------H-- n   {5  6  5  0 } {5  6  5  0 }                       BG16  
+[   4.162][d][vo/gpu-next/libplacebo]     bgr5a1               UNORM  2    BGRA ---------H-- n   {5  5  5  1 } {5  5  5  1 }                       AR15  
+[   4.162][d][vo/gpu-next/libplacebo]     bgr565               UNORM  2    BGR  ---------H-- n   {5  6  5  0 } {5  6  5  0 }                       RG16  
+[   4.162][d][vo/gpu-next/libplacebo]     rgb8i                SINT   3    RGB  ------V--H-- n   {8  8  8  0 } {8  8  8  0 } ivec3                       
+[   4.162][d][vo/gpu-next/libplacebo]     rgb8s                SNORM  3    RGB  ------V--H-- n   {8  8  8  0 } {8  8  8  0 } vec3                        
+[   4.162][d][vo/gpu-next/libplacebo]     rgb8u                UINT   3    RGB  ------V--H-- n   {8  8  8  0 } {8  8  8  0 } uvec3                       
+[   4.162][d][vo/gpu-next/libplacebo]     bgr8                 UNORM  3    BGR  ---------H-- n   {8  8  8  0 } {8  8  8  0 }                       RG24  
+[   4.162][d][vo/gpu-next/libplacebo]     bgr8i                SINT   3    BGR  ---------H-- n   {8  8  8  0 } {8  8  8  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     bgr8u                UINT   3    BGR  ---------H-- n   {8  8  8  0 } {8  8  8  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     rgb10a2i             SINT   4    RGBA ---------H-- n   {10 10 10 2 } {10 10 10 2 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     rgb10a2s             SNORM  4    RGBA ------V--H-- n   {10 10 10 2 } {10 10 10 2 } vec4                        
+[   4.162][d][vo/gpu-next/libplacebo]     bgr10a2i             SINT   4    BGRA ---------H-- n   {10 10 10 2 } {10 10 10 2 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     bgr10a2s             SNORM  4    BGRA ---------H-- n   {10 10 10 2 } {10 10 10 2 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     bgr10a2u             UINT   4    BGRA ---------H-- n   {10 10 10 2 } {10 10 10 2 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     rgb16hf              FLOAT  6    RGB  ------V--H-- n   {16 16 16 0 } {16 16 16 0 } vec3                        
+[   4.162][d][vo/gpu-next/libplacebo]     rgb16i               SINT   6    RGB  ------V--H-- n   {16 16 16 0 } {16 16 16 0 } ivec3                       
+[   4.162][d][vo/gpu-next/libplacebo]     rgb16s               SNORM  6    RGB  ------V--H-- n   {16 16 16 0 } {16 16 16 0 } vec3                        
+[   4.162][d][vo/gpu-next/libplacebo]     rgb16u               UINT   6    RGB  ------V--H-- n   {16 16 16 0 } {16 16 16 0 } uvec3                       
+[   4.162][d][vo/gpu-next/libplacebo]     rgb32f               FLOAT  12   RGB  ------V--H-- n   {32 32 32 0 } {32 32 32 0 } vec3                        
+[   4.162][d][vo/gpu-next/libplacebo]     rgb32i               SINT   12   RGB  ------V--H-- n   {32 32 32 0 } {32 32 32 0 } ivec3                       
+[   4.162][d][vo/gpu-next/libplacebo]     rgb32u               UINT   12   RGB  ------V--H-- n   {32 32 32 0 } {32 32 32 0 } uvec3                       
+[   4.162][d][vo/gpu-next/libplacebo]     rgb8                 UNORM  3    RGB  SsLRbBV--HWG y   {8  8  8  0 } {8  8  8  0 } vec3       rgba8      BG24  
+[   4.162][d][vo/gpu-next/libplacebo]     rgb16                UNORM  6    RGB  SsLRbBV--HWG y   {16 16 16 0 } {16 16 16 0 } vec3       rgba16           
+[   4.162][d][vo/gpu-next/libplacebo]     r16f                 FLOAT  4    R    SsLRbB---HWG y   {16 0  0  0 } {32 0  0  0 }            r16f             
+[   4.162][d][vo/gpu-next/libplacebo]     rg16f                FLOAT  8    RG   SsLRbB---HWG y   {16 16 0  0 } {32 32 0  0 }            rg16f            
+[   4.162][d][vo/gpu-next/libplacebo]     rgba16f              FLOAT  16   RGBA SsLRbB---HWG y   {16 16 16 16} {32 32 32 32}            rgba16f          
+[   4.162][d][vo/gpu-next/libplacebo]     rgb16f               FLOAT  12   RGB  ---------H-- y   {16 16 16 0 } {32 32 32 0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     g8_b8_r8_420         UNORM  0         ------------ n   {8  8  8  0 } {0  0  0  0 }                       YU12  
+[   4.162][d][vo/gpu-next/libplacebo]     g8_b8_r8_422         UNORM  0         ------------ n   {8  8  8  0 } {0  0  0  0 }                       YU16  
+[   4.162][d][vo/gpu-next/libplacebo]     g8_b8_r8_444         UNORM  0         ------------ n   {8  8  8  0 } {0  0  0  0 }                       YU24  
+[   4.162][d][vo/gpu-next/libplacebo]     g8_br8_420           UNORM  0         ------------ n   {8  8  8  0 } {0  0  0  0 }                       NV12  
+[   4.162][d][vo/gpu-next/libplacebo]     g8_br8_422           UNORM  0         ------------ n   {8  8  8  0 } {0  0  0  0 }                       NV16  
+[   4.162][d][vo/gpu-next/libplacebo]     g8_br8_444           UNORM  0         ------------ n   {8  8  8  0 } {0  0  0  0 }                       NV24  
+[   4.162][d][vo/gpu-next/libplacebo]     gx10_bx10_rx10_420   UNORM  0         ------------ n   {10 10 10 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     gx10_bx10_rx10_422   UNORM  0         ------------ n   {10 10 10 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     gx10_bx10_rx10_444   UNORM  0         ------------ n   {10 10 10 0 } {0  0  0  0 }                       Q410  
+[   4.162][d][vo/gpu-next/libplacebo]     gx10_bxrx10_420      UNORM  0         ------------ n   {10 10 10 0 } {0  0  0  0 }                       P010  
+[   4.162][d][vo/gpu-next/libplacebo]     gx10_bxrx10_422      UNORM  0         ------------ n   {10 10 10 0 } {0  0  0  0 }                       P210  
+[   4.162][d][vo/gpu-next/libplacebo]     gx10_bxrx10_444      UNORM  0         ------------ n   {10 10 10 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     gx12_bx12_rx12_420   UNORM  0         ------------ n   {12 12 12 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     gx12_bx12_rx12_422   UNORM  0         ------------ n   {12 12 12 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     gx12_bx12_rx12_444   UNORM  0         ------------ n   {12 12 12 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     gx12_bxrx12_420      UNORM  0         ------------ n   {12 12 12 0 } {0  0  0  0 }                       P012  
+[   4.162][d][vo/gpu-next/libplacebo]     gx12_bxrx12_422      UNORM  0         ------------ n   {12 12 12 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     gx12_bxrx12_444      UNORM  0         ------------ n   {12 12 12 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     g16_b16_r16_420      UNORM  0         ------------ n   {16 16 16 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     g16_b16_r16_422      UNORM  0         ------------ n   {16 16 16 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     g16_b16_r16_444      UNORM  0         ------------ n   {16 16 16 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     g16_br16_420         UNORM  0         ------------ n   {16 16 16 0 } {0  0  0  0 }                       P016  
+[   4.162][d][vo/gpu-next/libplacebo]     g16_br16_422         UNORM  0         ------------ n   {16 16 16 0 } {0  0  0  0 }                             
+[   4.162][d][vo/gpu-next/libplacebo]     g16_br16_444         UNORM  0         ------------ n   {16 16 16 0 } {0  0  0  0 }                             
+[   4.163][v][vo/gpu-next/libplacebo] Available surface configurations:
+[   4.163][v][vo/gpu-next/libplacebo]     0: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+[   4.163][v][vo/gpu-next/libplacebo]     1: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+[   4.163][v][vo/gpu-next/libplacebo]     2: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+[   4.163][v][vo/gpu-next/libplacebo]     3: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+[   4.163][v][vo/gpu-next/libplacebo]     4: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+[   4.163][v][vo/gpu-next/libplacebo]     5: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     6: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     7: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     8: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     9: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     10: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_DCI_P3_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     11: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_DCI_P3_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     12: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_DCI_P3_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     13: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_DCI_P3_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     14: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_DCI_P3_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     15: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_BT709_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     16: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_BT709_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     17: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_BT709_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     18: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_BT709_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     19: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_BT709_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     20: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     21: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     22: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     23: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     24: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     25: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_PASS_THROUGH_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     26: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_PASS_THROUGH_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     27: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_PASS_THROUGH_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     28: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_PASS_THROUGH_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     29: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_PASS_THROUGH_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     30: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     31: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     32: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     33: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     34: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     35: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     36: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     37: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     38: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     39: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     40: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_BT2020_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     41: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_BT2020_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     42: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_BT2020_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     43: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_BT2020_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     44: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_BT2020_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     45: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_HDR10_HLG_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     46: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_HDR10_HLG_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     47: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_HDR10_HLG_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     48: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_HDR10_HLG_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     49: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_HDR10_HLG_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     50: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_HDR10_ST2084_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     51: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_HDR10_ST2084_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     52: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_HDR10_ST2084_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     53: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_HDR10_ST2084_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     54: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_HDR10_ST2084_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     55: VK_FORMAT_B8G8R8A8_UNORM                 VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     56: VK_FORMAT_B8G8R8A8_SRGB                  VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     57: VK_FORMAT_R16G16B16A16_SFLOAT            VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     58: VK_FORMAT_A2B10G10R10_UNORM_PACK32       VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo]     59: VK_FORMAT_A2R10G10B10_UNORM_PACK32       VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT
+[   4.163][v][vo/gpu-next/libplacebo] Picked surface configuration 4: VK_FORMAT_A2R10G10B10_UNORM_PACK32 + VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+[   4.163][d][global] cache path: '' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Library/Caches/io.mpv'
+[   4.163][d][global] cache path: '' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Library/Caches/io.mpv'
+[   4.165][d][vo/gpu-next] Render options updated, resetting render state.
+[   4.165][d][vo/gpu-next/libplacebo] Requested alpha compositing mode: VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR
+[   4.165][d][vo/gpu-next/libplacebo] Requested surface transform: VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+[   4.165][d][vo/gpu-next/libplacebo] Requested image count: 3 (min 2 max 3)
+[   4.165][d][vo/gpu-next/libplacebo] Requested image size: 2622x1206 (min 1x1 < cur 2622x1206 < max 8192x8192)
+[   4.165][d][vo/gpu-next/libplacebo] (Re)creating swapchain of size 2622x1206
+[   4.168][v][vd] Container reported FPS: 24.000000
+[   4.169][v][vd] Codec list:
+[   4.169][v][vd]     h264 - H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10
+[   4.169][v][vd] Opening decoder h264
+[   4.170][v][vd] Looking at hwdec h264-videotoolbox...
+[   4.170][v][vo/gpu-next] Loading hwdec drivers for format: 'videotoolbox'
+[   4.170][v][vo/gpu-next] Loading hwdec driver 'videotoolbox'
+[   4.170][v][vd] Trying hardware decoding via h264-videotoolbox.
+[   4.170][v][vd] Requesting 4 threads for decoding.
+[   4.175][v][vd] Selected decoder: h264 - H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10
+[   4.176][v][vf] User filter list:
+[   4.176][v][vf]   (empty)
+[   4.176][v][cplayer] Starting playback...
+[   4.177][d][cplayer] Run command: set, flags=64, args=[name="video-zoom", value="0.0001"]
+[   4.177][v][cplayer] Set property: video-zoom=0.0001 -> 1
+[   4.177][d][cplayer] Run command: set, flags=64, args=[name="video-zoom", value="0"]
+[   4.177][v][cplayer] Set property: video-zoom=0 -> 1
+[   4.178][d][lavf] stream 0: resize index to 128
+[   4.178][v][vd] Pixel formats supported by decoder: vulkan videotoolbox_vld yuv420p
+[   4.178][v][vd] Codec profile: High (0x64)
+[   4.178][v][lavf] EOF reached.
+[   4.184][v][vd] Requesting pixfmt 'videotoolbox_vld' from decoder.
+[   5.037][d][ffmpeg/video] h264: VideoToolbox decoder for this format not found.
+[   5.037][e][ffmpeg/video] h264: Failed setup for format videotoolbox_vld: hwaccel initialisation returned error.
+[   5.037][v][vd] Pixel formats supported by decoder: vulkan yuv420p yuv420p
+[   5.037][v][vd] Codec profile: High (0x64)
+[   5.037][v][vd] Requesting pixfmt '-' from decoder.
+[   5.037][e][ffmpeg/video] h264: no frame!
+[   5.037][v][vd] Pixel formats supported by decoder: vulkan videotoolbox_vld yuv420p
+[   5.037][v][vd] Codec profile: High (0x64)
+[   5.037][v][vd] Requesting pixfmt 'videotoolbox_vld' from decoder.
+[   5.044][d][ffmpeg/video] h264: VideoToolbox decoder for this format not found.
+[   5.044][e][ffmpeg/video] h264: Failed setup for format videotoolbox_vld: hwaccel initialisation returned error.
+[   5.044][v][vd] Pixel formats supported by decoder: vulkan yuv420p yuv420p
+[   5.044][v][vd] Codec profile: High (0x64)
+[   5.044][v][vd] Requesting pixfmt '-' from decoder.
+[   5.044][e][ffmpeg/video] h264: no frame!
+[   5.049][v][vd] Attempting next decoding method after failure of h264-videotoolbox.
+[   5.049][d][vd] Skipping previously attempted hwdec: h264-videotoolbox
+[   5.049][v][vd] Looking at hwdec h264-videotoolbox-copy...
+[   5.049][v][vd] Trying hardware decoding via h264-videotoolbox-copy.
+[   5.049][v][vd] Requesting 4 threads for decoding.
+[   5.050][v][vd] Pixel formats supported by decoder: vulkan videotoolbox_vld yuv420p
+[   5.050][v][vd] Codec profile: High (0x64)
+[   5.050][v][vd] Requesting pixfmt 'videotoolbox_vld' from decoder.
+[   5.050][d][ffmpeg/video] h264: VideoToolbox decoder for this format not found.
+[   5.050][e][ffmpeg/video] h264: Failed setup for format videotoolbox_vld: hwaccel initialisation returned error.
+[   5.052][v][vd] Pixel formats supported by decoder: vulkan yuv420p yuv420p
+[   5.052][v][vd] Codec profile: High (0x64)
+[   5.052][v][vd] Requesting pixfmt '-' from decoder.
+[   5.052][e][ffmpeg/video] h264: no frame!
+[   5.053][v][vd] Pixel formats supported by decoder: vulkan videotoolbox_vld yuv420p
+[   5.053][v][vd] Codec profile: High (0x64)
+[   5.053][v][vd] Requesting pixfmt 'videotoolbox_vld' from decoder.
+[   5.053][d][ffmpeg/video] h264: VideoToolbox decoder for this format not found.
+[   5.053][e][ffmpeg/video] h264: Failed setup for format videotoolbox_vld: hwaccel initialisation returned error.
+[   5.053][v][vd] Pixel formats supported by decoder: vulkan yuv420p yuv420p
+[   5.053][v][vd] Codec profile: High (0x64)
+[   5.053][v][vd] Requesting pixfmt '-' from decoder.
+[   5.053][e][ffmpeg/video] h264: no frame!
+[   5.054][v][vd] Attempting next decoding method after failure of h264-videotoolbox-copy.
+[   5.054][d][vd] Skipping previously attempted hwdec: h264-videotoolbox
+[   5.054][d][vd] Skipping previously attempted hwdec: h264-videotoolbox-copy
+[   5.054][v][vd] Using software decoding.
+[   5.054][v][vd] Detected 3 logical cores.
+[   5.054][v][vd] Requesting 4 threads for decoding.
+[   5.054][d][ffmpeg/video] h264: Reinit context to 480x272, pix_fmt: yuv420p
+[   5.054][d][vd] DR parameter change to 480x290 yuv420p align=64
+[   5.054][d][vd] Allocating new (host-cached) DR image...
+[   5.055][d][vo/gpu-next/libplacebo] Allocating 250368 memory of type 0xf (id 1) in heap 0: unknown
+[   5.055][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   5.055][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   5.055][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   5.055][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   5.055][d][vo/gpu-next/libplacebo] Spent 0.158 ms allocating slab
+[   5.056][d][vd] Allocating new (host-cached) DR image...
+[   5.056][d][vo/gpu-next/libplacebo] Allocating 500736 memory of type 0xf (id 1) in heap 0: unknown
+[   5.056][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   5.056][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   5.056][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   5.056][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   5.056][d][vo/gpu-next/libplacebo] Spent 0.097 ms allocating slab
+[   5.056][d][vd] Allocating new (host-cached) DR image...
+[   5.056][d][vd] Allocating new (host-cached) DR image...
+[   5.056][d][vo/gpu-next/libplacebo] Allocating 1001472 memory of type 0xf (id 1) in heap 0: unknown
+[   5.056][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   5.056][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   5.057][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   5.057][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   5.057][d][vo/gpu-next/libplacebo] Spent 0.198 ms allocating slab
+[   5.060][d][vd] Allocating new (host-cached) DR image...
+[   5.062][v][vd] Using software decoding.
+[   5.062][v][vd] Decoder format: 480x270 yuv420p auto/auto/auto/auto/auto CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   5.062][v][vd] Using container aspect ratio.
+[   5.062][v][vf] [in] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   5.062][v][vf] [userdeint] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   5.062][v][vf] [userdeint] (disabled)
+[   5.062][v][vf] [autovflip] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   5.062][v][vf] [autovflip] (disabled)
+[   5.062][v][vf] [autorotate] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   5.062][v][vf] [autorotate] (disabled)
+[   5.062][v][vf] [convert] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   5.062][d][vd] Allocating new (host-cached) DR image...
+[   5.062][v][vf] [convert] (disabled)
+[   5.062][v][vf] [out] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   5.063][i][cplayer] VO: [gpu-next] 480x270 yuv420p
+[   5.063][v][cplayer] VO: Description: Video output based on libplacebo
+[   5.063][d][vd] Allocating new (host-cached) DR image...
+[   5.063][v][vo/gpu-next] reconfig to 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   5.063][v][vo/gpu-next] Window size: 2622x1206 (Borders: l=0 t=0 r=0 b=0)
+[   5.063][v][vo/gpu-next] Video source: 480x270 (1:1)
+[   5.063][v][vo/gpu-next] Video display: (0, 0) 480x270 -> (239, 0) 2144x1206
+[   5.063][v][vo/gpu-next] Video scale: 4.466667/4.466667
+[   5.063][v][vo/gpu-next] OSD borders: l=239 t=0 r=239 b=0
+[   5.063][v][vo/gpu-next] Video borders: l=239 t=0 r=239 b=0
+[   5.074][d][vo/gpu-next/libplacebo] (Re)creating 480x270x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   5.076][d][vo/gpu-next/libplacebo] Allocating 204800 memory of type 0x1 (id 0) in heap 0: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   5.076][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   5.076][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   5.076][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   5.076][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   5.076][d][vo/gpu-next/libplacebo] Spent 0.145 ms allocating slab
+[   5.077][d][vo/gpu-next/libplacebo] (Re)creating 240x135x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   5.077][d][vo/gpu-next/libplacebo] Allocating 208896 memory of type 0x1 (id 0) in heap 0: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   5.077][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   5.077][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   5.077][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   5.077][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   5.077][d][vo/gpu-next/libplacebo] Spent 0.083 ms allocating slab
+[   5.078][d][vo/gpu-next/libplacebo] (Re)creating 240x135x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   5.078][d][vo/gpu-next/libplacebo] vertex shader source:
+[   5.078][d][vo/gpu-next/libplacebo] [  1] #version 450
+[   5.078][d][vo/gpu-next/libplacebo] [  2] #extension GL_ARB_texture_gather : enable
+[   5.078][d][vo/gpu-next/libplacebo] [  3] layout(std430, push_constant) uniform PushC {
+[   5.078][d][vo/gpu-next/libplacebo] [  4]     layout(offset=0) vec3 _8;
+[   5.078][d][vo/gpu-next/libplacebo] [  5]     layout(offset=16) mat3 _7;
+[   5.078][d][vo/gpu-next/libplacebo] [  6] };
+[   5.078][d][vo/gpu-next/libplacebo] [  7] layout(constant_id=0) const float _2 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [  8] layout(constant_id=1) const float _3 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [  9] layout(constant_id=2) const float _8004 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 10] layout(constant_id=3) const float _4 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 11] layout(constant_id=4) const float _4004 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 12] layout(constant_id=5) const float _5 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 13] layout(constant_id=6) const float _c004 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 14] layout(constant_id=7) const float _6 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 15] layout(constant_id=8) const float _9 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 16] layout(binding=0) uniform  sampler2D _8002;
+[   5.078][d][vo/gpu-next/libplacebo] [ 17] layout(binding=1) uniform  sampler2D _4002;
+[   5.078][d][vo/gpu-next/libplacebo] [ 18] layout(binding=2) uniform  sampler2D _c002;
+[   5.078][d][vo/gpu-next/libplacebo] [ 19] layout(location=0) in vec2 _d;
+[   5.078][d][vo/gpu-next/libplacebo] [ 20] layout(location=0) out vec2 _8003;
+[   5.078][d][vo/gpu-next/libplacebo] [ 21] layout(location=1) in vec2 _e;
+[   5.078][d][vo/gpu-next/libplacebo] [ 22] layout(location=1) out vec2 _4003;
+[   5.078][d][vo/gpu-next/libplacebo] [ 23] layout(location=2) in vec2 _f;
+[   5.078][d][vo/gpu-next/libplacebo] [ 24] layout(location=2) out vec2 _c003;
+[   5.078][d][vo/gpu-next/libplacebo] [ 25] layout(location=3) in vec2 _10;
+[   5.078][d][vo/gpu-next/libplacebo] [ 26] void main() {
+[   5.078][d][vo/gpu-next/libplacebo] [ 27] _8003 = _d;
+[   5.078][d][vo/gpu-next/libplacebo] [ 28] _4003 = _e;
+[   5.078][d][vo/gpu-next/libplacebo] [ 29] _c003 = _f;
+[   5.078][d][vo/gpu-next/libplacebo] [ 30] vec2 va_pos = _10; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 31] gl_Position = vec4(va_pos, 0.0, 1.0); 
+[   5.078][d][vo/gpu-next/libplacebo] [ 32] }
+[   5.078][d][vo/gpu-next/libplacebo] fragment shader source:
+[   5.078][d][vo/gpu-next/libplacebo] [  1] #version 450
+[   5.078][d][vo/gpu-next/libplacebo] [  2] #extension GL_ARB_texture_gather : enable
+[   5.078][d][vo/gpu-next/libplacebo] [  3] layout(std430, push_constant) uniform PushC {
+[   5.078][d][vo/gpu-next/libplacebo] [  4]     layout(offset=0) vec3 _8;
+[   5.078][d][vo/gpu-next/libplacebo] [  5]     layout(offset=16) mat3 _7;
+[   5.078][d][vo/gpu-next/libplacebo] [  6] };
+[   5.078][d][vo/gpu-next/libplacebo] [  7] layout(constant_id=0) const float _2 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [  8] layout(constant_id=1) const float _3 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [  9] layout(constant_id=2) const float _8004 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 10] layout(constant_id=3) const float _4 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 11] layout(constant_id=4) const float _4004 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 12] layout(constant_id=5) const float _5 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 13] layout(constant_id=6) const float _c004 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 14] layout(constant_id=7) const float _6 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 15] layout(constant_id=8) const float _9 = 1; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 16] layout(binding=0) uniform  sampler2D _8002;
+[   5.078][d][vo/gpu-next/libplacebo] [ 17] layout(binding=1) uniform  sampler2D _4002;
+[   5.078][d][vo/gpu-next/libplacebo] [ 18] layout(binding=2) uniform  sampler2D _c002;
+[   5.078][d][vo/gpu-next/libplacebo] [ 19] layout(location=0) in vec2 _8003;
+[   5.078][d][vo/gpu-next/libplacebo] [ 20] layout(location=1) in vec2 _4003;
+[   5.078][d][vo/gpu-next/libplacebo] [ 21] layout(location=2) in vec2 _c003;
+[   5.078][d][vo/gpu-next/libplacebo] [ 22] layout(location=0) out vec4 out_color;
+[   5.078][d][vo/gpu-next/libplacebo] [ 23] 
+[   5.078][d][vo/gpu-next/libplacebo] [ 24] vec4 _8001() {
+[   5.078][d][vo/gpu-next/libplacebo] [ 25] // pl_shader_sample_direct                                  
+[   5.078][d][vo/gpu-next/libplacebo] [ 26] vec4 color = vec4(_8004) * vec4(textureLod(_8002, _8003, 0.0));   
+[   5.078][d][vo/gpu-next/libplacebo] [ 27] return color;
+[   5.078][d][vo/gpu-next/libplacebo] [ 28] }
+[   5.078][d][vo/gpu-next/libplacebo] [ 29] 
+[   5.078][d][vo/gpu-next/libplacebo] [ 30] vec4 _4001() {
+[   5.078][d][vo/gpu-next/libplacebo] [ 31] // pl_shader_sample_direct                                  
+[   5.078][d][vo/gpu-next/libplacebo] [ 32] vec4 color = vec4(_4004) * vec4(textureLod(_4002, _4003, 0.0));   
+[   5.078][d][vo/gpu-next/libplacebo] [ 33] return color;
+[   5.078][d][vo/gpu-next/libplacebo] [ 34] }
+[   5.078][d][vo/gpu-next/libplacebo] [ 35] 
+[   5.078][d][vo/gpu-next/libplacebo] [ 36] vec4 _c001() {
+[   5.078][d][vo/gpu-next/libplacebo] [ 37] // pl_shader_sample_direct                                  
+[   5.078][d][vo/gpu-next/libplacebo] [ 38] vec4 color = vec4(_c004) * vec4(textureLod(_c002, _c003, 0.0));   
+[   5.078][d][vo/gpu-next/libplacebo] [ 39] return color;
+[   5.078][d][vo/gpu-next/libplacebo] [ 40] }
+[   5.078][d][vo/gpu-next/libplacebo] [ 41] 
+[   5.078][d][vo/gpu-next/libplacebo] [ 42] vec4 _1() {
+[   5.078][d][vo/gpu-next/libplacebo] [ 43] vec4 color = vec4(_2, vec2(_3), 1.0);   
+[   5.078][d][vo/gpu-next/libplacebo] [ 44] // pass_read_image                        
+[   5.078][d][vo/gpu-next/libplacebo] [ 45] {                                         
+[   5.078][d][vo/gpu-next/libplacebo] [ 46] vec4 tmp;                                 
+[   5.078][d][vo/gpu-next/libplacebo] [ 47] tmp = vec4(_4) * _8001(); 
+[   5.078][d][vo/gpu-next/libplacebo] [ 48] color[0] = tmp[0];
+[   5.078][d][vo/gpu-next/libplacebo] [ 49] tmp = vec4(_5) * _4001(); 
+[   5.078][d][vo/gpu-next/libplacebo] [ 50] color[1] = tmp[0];
+[   5.078][d][vo/gpu-next/libplacebo] [ 51] tmp = vec4(_6) * _c001(); 
+[   5.078][d][vo/gpu-next/libplacebo] [ 52] color[2] = tmp[0];
+[   5.078][d][vo/gpu-next/libplacebo] [ 53] }
+[   5.078][d][vo/gpu-next/libplacebo] [ 54] // pl_shader_decode_color 
+[   5.078][d][vo/gpu-next/libplacebo] [ 55] { 
+[   5.078][d][vo/gpu-next/libplacebo] [ 56] color.rgb = _7 * color.rgb + _8; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 57] }
+[   5.078][d][vo/gpu-next/libplacebo] [ 58] // pl_shader_encode_color 
+[   5.078][d][vo/gpu-next/libplacebo] [ 59] { 
+[   5.078][d][vo/gpu-next/libplacebo] [ 60] }
+[   5.078][d][vo/gpu-next/libplacebo] [ 61] color.rgba *= vec4(1.0 / _9); 
+[   5.078][d][vo/gpu-next/libplacebo] [ 62] vec4 _a = color;                 
+[   5.078][d][vo/gpu-next/libplacebo] [ 63] color = vec4(0.0, 0.0, 0.0, 1.0); 
+[   5.078][d][vo/gpu-next/libplacebo] [ 64] color[0] = _a[0]; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 65] color[1] = _a[1]; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 66] color[2] = _a[2]; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 67] color[3] = _a[3]; 
+[   5.078][d][vo/gpu-next/libplacebo] [ 68] return color;
+[   5.078][d][vo/gpu-next/libplacebo] [ 69] }
+[   5.078][d][vo/gpu-next/libplacebo] [ 70] 
+[   5.078][d][vo/gpu-next/libplacebo] [ 71] void main() {
+[   5.078][d][vo/gpu-next/libplacebo] [ 72] out_color = _1();
+[   5.079][d][vo/gpu-next/libplacebo] [ 73] }
+[   5.079][d][vo/gpu-next/libplacebo] Specialization constant values:
+[   5.079][d][vo/gpu-next/libplacebo]   constant_id=0: 0.062745
+[   5.079][d][vo/gpu-next/libplacebo]   constant_id=1: 0.501961
+[   5.079][d][vo/gpu-next/libplacebo]   constant_id=2: 1.000000
+[   5.079][d][vo/gpu-next/libplacebo]   constant_id=3: 1.000000
+[   5.079][d][vo/gpu-next/libplacebo]   constant_id=4: 1.000000
+[   5.079][d][vo/gpu-next/libplacebo]   constant_id=5: 1.000000
+[   5.079][d][vo/gpu-next/libplacebo]   constant_id=6: 1.000000
+[   5.079][d][vo/gpu-next/libplacebo]   constant_id=7: 1.000000
+[   5.079][d][vo/gpu-next/libplacebo]   constant_id=8: 1.000000
+[   6.020][d][vo/gpu-next/libplacebo] shaderc compile status 'success' (0 errors, 0 warnings)
+[   6.020][v][vo/gpu-next/libplacebo] Spent 941.123 ms translating SPIR-V (slow!)
+[   6.028][d][vo/gpu-next/libplacebo] shaderc compile status 'success' (0 errors, 0 warnings)
+[   6.028][d][vo/gpu-next/libplacebo] Spent 7.789 ms translating SPIR-V
+[   6.028][d][vo/gpu-next/libplacebo] Spent 0.009 ms compiling shader
+[   6.028][d][vo/gpu-next] cache_save_obj: key(676c95ac496c6781), size(948), save time(0.399 ms)
+[   6.029][d][vo/gpu-next] cache_save_obj: key(3ca1471933633a48), size(2216), save time(0.150 ms)
+[   6.713][v][vo/gpu-next/libplacebo] Spent 684.621 ms creating pipeline (slow!)
+[   6.713][d][vo/gpu-next] cache_save_obj: key(b89beaa7ed2dd8b1), size(6375), save time(0.474 ms)
+[   6.713][d][vo/gpu-next/libplacebo] Pass statistics: size 0, SPIR-V: vert 0 frag 0 comp 0
+[   6.713][d][vo/gpu-next/libplacebo] Allocating 258048 memory of type 0xf (id 1) in heap 0: ../../../../libplacebo-v7.360.1/src/gpu/utils.c:1179
+[   6.713][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   6.713][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   6.713][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   6.713][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   6.713][d][vo/gpu-next/libplacebo] Spent 0.146 ms allocating slab
+[   6.792][v][cplayer] first video frame after restart shown
+[   6.792][d][cplayer] starting video playback
+[   6.793][v][cplayer] playback restart complete @ 0.000000, audio=eof, video=playing
+[   6.797][d][global] config path: 'fonts' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/fonts'
+[   6.798][d][osd/libass] ASS library version: 0x1705000 (runtime 0x1705000)
+[   6.799][v][osd/libass] libass API version: 0x1705000
+[   6.799][v][osd/libass] libass source: meson, commit: 0.17.5-0-g4a05d8127f525943ebf45fdc6497c9e665947f0d
+[   6.804][v][osd/libass] Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.2.0 (COMPLEX)
+[   6.804][d][global] config path: 'subfont.ttf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/subfont.ttf'
+[   6.804][d][global] config path: 'fonts.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/6FD6CB49-9806-4E09-9A18-A943715176FE/Documents/mpv/fonts.conf'
+[   6.804][v][osd/libass] Setting up fonts...
+[   6.806][v][osd/libass] Using font provider coretext
+[   6.806][v][osd/libass] Done.
+[   6.806][d][vd] Allocating new (host-cached) DR image...
+[   6.806][d][vo/gpu-next/libplacebo] Allocating 2002944 memory of type 0xf (id 1) in heap 0: unknown
+[   6.806][d][vo/gpu-next/libplacebo] (Re)creating 2144x1206x0 texture with format rgba16hf: src/renderer.c:3871
+[   6.807][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   6.807][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   6.807][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   6.807][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   6.807][d][vo/gpu-next/libplacebo] Spent 0.360 ms allocating slab
+[   6.808][d][vo/gpu-next/libplacebo] Allocating 21168128 memory of type 0x1 (id 0) in heap 0: src/renderer.c:3871
+[   6.808][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   6.808][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   6.808][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   6.808][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   6.808][d][vo/gpu-next/libplacebo] Spent 0.010 ms allocating slab
+[   6.808][d][vo/gpu-next/libplacebo] vertex shader source:
+[   6.808][d][vo/gpu-next/libplacebo] [  1] #version 450
+[   6.808][d][vo/gpu-next/libplacebo] [  2] #extension GL_ARB_texture_gather : enable
+[   6.808][d][vo/gpu-next/libplacebo] [  3] layout(std430, push_constant) uniform PushC {
+[   6.808][d][vo/gpu-next/libplacebo] [  4]     layout(offset=0) vec3 _8;
+[   6.808][d][vo/gpu-next/libplacebo] [  5]     layout(offset=16) mat3 _7;
+[   6.808][d][vo/gpu-next/libplacebo] [  6] };
+[   6.808][d][vo/gpu-next/libplacebo] [  7] layout(constant_id=0) const float _2 = 1; 
+[   6.808][d][vo/gpu-next/libplacebo] [  8] layout(constant_id=1) const float _3 = 1; 
+[   6.808][d][vo/gpu-next/libplacebo] [  9] layout(constant_id=2) const float _8004 = 1; 
+[   6.808][d][vo/gpu-next/libplacebo] [ 10] layout(constant_id=3) const float _4 = 1; 
+[   6.808][d][vo/gpu-next/libplacebo] [ 11] layout(constant_id=4) const float _4004 = 1; 
+[   6.808][d][vo/gpu-next/libplacebo] [ 12] layout(constant_id=5) const float _5 = 1; 
+[   6.808][d][vo/gpu-next/libplacebo] [ 13] layout(constant_id=6) const float _c004 = 1; 
+[   6.808][d][vo/gpu-next/libplacebo] [ 14] layout(constant_id=7) const float _6 = 1; 
+[   6.808][d][vo/gpu-next/libplacebo] [ 15] layout(binding=0) uniform  sampler2D _8002;
+[   6.808][d][vo/gpu-next/libplacebo] [ 16] layout(binding=1) uniform  sampler2D _4002;
+[   6.808][d][vo/gpu-next/libplacebo] [ 17] layout(binding=2) uniform  sampler2D _c002;
+[   6.808][d][vo/gpu-next/libplacebo] [ 18] layout(location=0) in vec2 _b;
+[   6.808][d][vo/gpu-next/libplacebo] [ 19] layout(location=0) out vec2 _8003;
+[   6.808][d][vo/gpu-next/libplacebo] [ 20] layout(location=1) in vec2 _c;
+[   6.809][d][vo/gpu-next/libplacebo] [ 21] layout(location=1) out vec2 _4003;
+[   6.809][d][vo/gpu-next/libplacebo] [ 22] layout(location=2) in vec2 _d;
+[   6.809][d][vo/gpu-next/libplacebo] [ 23] layout(location=2) out vec2 _c003;
+[   6.809][d][vo/gpu-next/libplacebo] [ 24] layout(location=3) in vec2 _e;
+[   6.809][d][vo/gpu-next/libplacebo] [ 25] void main() {
+[   6.809][d][vo/gpu-next/libplacebo] [ 26] _8003 = _b;
+[   6.809][d][vo/gpu-next/libplacebo] [ 27] _4003 = _c;
+[   6.809][d][vo/gpu-next/libplacebo] [ 28] _c003 = _d;
+[   6.809][d][vo/gpu-next/libplacebo] [ 29] vec2 va_pos = _e; 
+[   6.809][d][vo/gpu-next/libplacebo] [ 30] gl_Position = vec4(va_pos, 0.0, 1.0); 
+[   6.809][d][vo/gpu-next/libplacebo] [ 31] }
+[   6.809][d][vo/gpu-next/libplacebo] fragment shader source:
+[   6.809][d][vo/gpu-next/libplacebo] [  1] #version 450
+[   6.809][d][vo/gpu-next/libplacebo] [  2] #extension GL_ARB_texture_gather : enable
+[   6.809][d][vo/gpu-next/libplacebo] [  3] layout(std430, push_constant) uniform PushC {
+[   6.809][d][vo/gpu-next/libplacebo] [  4]     layout(offset=0) vec3 _8;
+[   6.809][d][vo/gpu-next/libplacebo] [  5]     layout(offset=16) mat3 _7;
+[   6.809][d][vo/gpu-next/libplacebo] [  6] };
+[   6.809][d][vo/gpu-next/libplacebo] [  7] layout(constant_id=0) const float _2 = 1; 
+[   6.809][d][vo/gpu-next/libplacebo] [  8] layout(constant_id=1) const float _3 = 1; 
+[   6.809][d][vo/gpu-next/libplacebo] [  9] layout(constant_id=2) const float _8004 = 1; 
+[   6.809][d][vo/gpu-next/libplacebo] [ 10] layout(constant_id=3) const float _4 = 1; 
+[   6.809][d][vo/gpu-next/libplacebo] [ 11] layout(constant_id=4) const float _4004 = 1; 
+[   6.809][d][vo/gpu-next/libplacebo] [ 12] layout(constant_id=5) const float _5 = 1; 
+[   6.809][d][vo/gpu-next/libplacebo] [ 13] layout(constant_id=6) const float _c004 = 1; 
+[   6.809][d][vo/gpu-next/libplacebo] [ 14] layout(constant_id=7) const float _6 = 1; 
+[   6.809][d][vo/gpu-next/libplacebo] [ 15] layout(binding=0) uniform  sampler2D _8002;
+[   6.809][d][vo/gpu-next/libplacebo] [ 16] layout(binding=1) uniform  sampler2D _4002;
+[   6.809][d][vo/gpu-next/libplacebo] [ 17] layout(binding=2) uniform  sampler2D _c002;
+[   6.809][d][vo/gpu-next/libplacebo] [ 18] layout(location=0) in vec2 _8003;
+[   6.809][d][vo/gpu-next/libplacebo] [ 19] layout(location=1) in vec2 _4003;
+[   6.809][d][vo/gpu-next/libplacebo] [ 20] layout(location=2) in vec2 _c003;
+[   6.809][d][vo/gpu-next/libplacebo] [ 21] layout(location=0) out vec4 out_color;
+[   6.809][d][vo/gpu-next/libplacebo] [ 22] 
+[   6.809][d][vo/gpu-next/libplacebo] [ 23] vec4 _8001() {
+[   6.809][d][vo/gpu-next/libplacebo] [ 24] // pl_shader_sample_direct                                  
+[   6.809][d][vo/gpu-next/libplacebo] [ 25] vec4 color = vec4(_8004) * vec4(textureLod(_8002, _8003, 0.0));   
+[   6.809][d][vo/gpu-next/libplacebo] [ 26] return color;
+[   6.809][d][vo/gpu-next/libplacebo] [ 27] }
+[   6.809][d][vo/gpu-next/libplacebo] [ 28] 
+[   6.809][d][vo/gpu-next/libplacebo] [ 29] vec4 _4001() {
+[   6.809][d][vo/gpu-next/libplacebo] [ 30] // pl_shader_sample_direct                                  
+[   6.809][d][vo/gpu-next/libplacebo] [ 31] vec4 color = vec4(_4004) * vec4(textureLod(_4002, _4003, 0.0));   
+[   6.809][d][vo/gpu-next/libplacebo] [ 32] return color;
+[   6.809][d][vo/gpu-next/libplacebo] [ 33] }
+[   6.809][d][vo/gpu-next/libplacebo] [ 34] 
+[   6.810][d][vo/gpu-next/libplacebo] [ 35] vec4 _c001() {
+[   6.810][d][vo/gpu-next/libplacebo] [ 36] // pl_shader_sample_direct                                  
+[   6.810][d][vo/gpu-next/libplacebo] [ 37] vec4 color = vec4(_c004) * vec4(textureLod(_c002, _c003, 0.0));   
+[   6.810][d][vo/gpu-next/libplacebo] [ 38] return color;
+[   6.810][d][vo/gpu-next/libplacebo] [ 39] }
+[   6.810][d][vo/gpu-next/libplacebo] [ 40] 
+[   6.810][d][vo/gpu-next/libplacebo] [ 41] vec4 _1() {
+[   6.810][d][vo/gpu-next/libplacebo] [ 42] vec4 color = vec4(_2, vec2(_3), 1.0);   
+[   6.810][d][vo/gpu-next/libplacebo] [ 43] // pass_read_image                        
+[   6.810][d][vo/gpu-next/libplacebo] [ 44] {                                         
+[   6.810][d][vo/gpu-next/libplacebo] [ 45] vec4 tmp;                                 
+[   6.810][d][vo/gpu-next/libplacebo] [ 46] tmp = vec4(_4) * _8001(); 
+[   6.810][d][vo/gpu-next/libplacebo] [ 47] color[0] = tmp[0];
+[   6.810][d][vo/gpu-next/libplacebo] [ 48] tmp = vec4(_5) * _4001(); 
+[   6.810][d][vo/gpu-next/libplacebo] [ 49] color[1] = tmp[0];
+[   6.810][d][vo/gpu-next/libplacebo] [ 50] tmp = vec4(_6) * _c001(); 
+[   6.810][d][vo/gpu-next/libplacebo] [ 51] color[2] = tmp[0];
+[   6.810][d][vo/gpu-next/libplacebo] [ 52] }
+[   6.810][d][vo/gpu-next/libplacebo] [ 53] // pl_shader_decode_color 
+[   6.810][d][vo/gpu-next/libplacebo] [ 54] { 
+[   6.810][d][vo/gpu-next/libplacebo] [ 55] color.rgb = _7 * color.rgb + _8; 
+[   6.810][d][vo/gpu-next/libplacebo] [ 56] }
+[   6.810][d][vo/gpu-next/libplacebo] [ 57] return color;
+[   6.810][d][vo/gpu-next/libplacebo] [ 58] }
+[   6.810][d][vo/gpu-next/libplacebo] [ 59] 
+[   6.810][d][vo/gpu-next/libplacebo] [ 60] void main() {
+[   6.810][d][vo/gpu-next/libplacebo] [ 61] out_color = _1();
+[   6.810][d][vo/gpu-next/libplacebo] [ 62] }
+[   6.810][d][vo/gpu-next/libplacebo] Specialization constant values:
+[   6.810][d][vo/gpu-next/libplacebo]   constant_id=0: 0.062745
+[   6.810][d][vo/gpu-next/libplacebo]   constant_id=1: 0.501961
+[   6.810][d][vo/gpu-next/libplacebo]   constant_id=2: 1.000000
+[   6.810][d][vo/gpu-next/libplacebo]   constant_id=3: 1.000000
+[   6.810][d][vo/gpu-next/libplacebo]   constant_id=4: 1.000000
+[   6.810][d][vo/gpu-next/libplacebo]   constant_id=5: 1.000000
+[   6.810][d][vo/gpu-next/libplacebo]   constant_id=6: 1.000000
+[   6.810][d][vo/gpu-next/libplacebo]   constant_id=7: 1.000000
+[   6.811][d][vo/gpu-next/libplacebo] shaderc compile status 'success' (0 errors, 0 warnings)
+[   6.811][d][vo/gpu-next/libplacebo] Spent 2.931 ms translating SPIR-V
+[   6.816][d][vo/gpu-next/libplacebo] shaderc compile status 'success' (0 errors, 0 warnings)
+[   6.816][d][vo/gpu-next/libplacebo] Spent 4.433 ms translating SPIR-V
+[   6.816][d][vo/gpu-next/libplacebo] Spent 0.015 ms compiling shader
+[   6.817][d][vo/gpu-next] cache_save_obj: key(29ba2e0b8ca34015), size(948), save time(0.664 ms)
+[   6.817][d][vo/gpu-next] cache_save_obj: key(5af1b308ec496ef5), size(2116), save time(0.666 ms)
+[   6.868][d][vd] Allocating new (host-cached) DR image...
+[   7.279][d][cplayer] Run command: set, flags=64, args=[name="video-zoom", value="0.0001"]
+[   7.279][v][cplayer] Set property: video-zoom=0.0001 -> 1
+[   7.279][d][cplayer] Run command: set, flags=64, args=[name="video-zoom", value="0"]
+[   7.279][v][cplayer] Set property: video-zoom=0 -> 1
+[   7.358][v][vo/gpu-next/libplacebo] Spent 541.840 ms creating pipeline (slow!)
+[   7.359][d][vo/gpu-next] cache_save_obj: key(b8833ac0e2f4256c), size(6224), save time(0.584 ms)
+[   7.359][d][vo/gpu-next/libplacebo] Pass statistics: size 0, SPIR-V: vert 0 frag 0 comp 0
+[   7.362][d][vo/gpu-next/libplacebo] vertex shader source:
+[   7.362][d][vo/gpu-next/libplacebo] [  1] #version 450
+[   7.362][d][vo/gpu-next/libplacebo] [  2] #extension GL_ARB_texture_gather : enable
+[   7.362][d][vo/gpu-next/libplacebo] [  3] layout(std430, push_constant) uniform PushC {
+[   7.362][d][vo/gpu-next/libplacebo] [  4]     layout(offset=0) float _4;
+[   7.362][d][vo/gpu-next/libplacebo] [  5] };
+[   7.362][d][vo/gpu-next/libplacebo] [  6] layout(constant_id=0) const float _5 = 1; 
+[   7.362][d][vo/gpu-next/libplacebo] [  7] layout(binding=0) uniform  sampler2D _2;
+[   7.362][d][vo/gpu-next/libplacebo] [  8] layout(location=0) in vec2 _9;
+[   7.362][d][vo/gpu-next/libplacebo] [  9] layout(location=0) out vec2 _3;
+[   7.362][d][vo/gpu-next/libplacebo] [ 10] layout(location=1) in vec2 _a;
+[   7.362][d][vo/gpu-next/libplacebo] [ 11] void main() {
+[   7.362][d][vo/gpu-next/libplacebo] [ 12] _3 = _9;
+[   7.363][d][vo/gpu-next/libplacebo] [ 13] vec2 va_pos = _a; 
+[   7.363][d][vo/gpu-next/libplacebo] [ 14] gl_Position = vec4(va_pos, 0.0, 1.0); 
+[   7.363][d][vo/gpu-next/libplacebo] [ 15] }
+[   7.363][d][vo/gpu-next/libplacebo] fragment shader source:
+[   7.363][d][vo/gpu-next/libplacebo] [  1] #version 450
+[   7.363][d][vo/gpu-next/libplacebo] [  2] #extension GL_ARB_texture_gather : enable
+[   7.363][d][vo/gpu-next/libplacebo] [  3] layout(std430, push_constant) uniform PushC {
+[   7.363][d][vo/gpu-next/libplacebo] [  4]     layout(offset=0) float _4;
+[   7.363][d][vo/gpu-next/libplacebo] [  5] };
+[   7.363][d][vo/gpu-next/libplacebo] [  6] layout(constant_id=0) const float _5 = 1; 
+[   7.363][d][vo/gpu-next/libplacebo] [  7] layout(binding=0) uniform  sampler2D _2;
+[   7.363][d][vo/gpu-next/libplacebo] [  8] layout(location=0) in vec2 _3;
+[   7.363][d][vo/gpu-next/libplacebo] [  9] layout(location=0) out vec4 out_color;
+[   7.363][d][vo/gpu-next/libplacebo] [ 10] 
+[   7.363][d][vo/gpu-next/libplacebo] [ 11] vec4 _1() {
+[   7.363][d][vo/gpu-next/libplacebo] [ 12] vec4 color;                   
+[   7.363][d][vo/gpu-next/libplacebo] [ 13] // pl_render_image_mix        
+[   7.363][d][vo/gpu-next/libplacebo] [ 14] {                             
+[   7.363][d][vo/gpu-next/libplacebo] [ 15] vec4 mix_color = vec4(0.0);   
+[   7.363][d][vo/gpu-next/libplacebo] [ 16] color = textureLod(_2, _3, 0.0); 
+[   7.363][d][vo/gpu-next/libplacebo] [ 17] mix_color += vec4(_4) * color; 
+[   7.363][d][vo/gpu-next/libplacebo] [ 18] color = mix_color; 
+[   7.363][d][vo/gpu-next/libplacebo] [ 19] }                  
+[   7.363][d][vo/gpu-next/libplacebo] [ 20] // pl_shader_encode_color 
+[   7.363][d][vo/gpu-next/libplacebo] [ 21] { 
+[   7.363][d][vo/gpu-next/libplacebo] [ 22] }
+[   7.363][d][vo/gpu-next/libplacebo] [ 23] color.rgba *= vec4(1.0 / _5); 
+[   7.363][d][vo/gpu-next/libplacebo] [ 24] vec4 _6 = color;                 
+[   7.363][d][vo/gpu-next/libplacebo] [ 25] color = vec4(0.0, 0.0, 0.0, 1.0); 
+[   7.363][d][vo/gpu-next/libplacebo] [ 26] color[0] = _6[0]; 
+[   7.363][d][vo/gpu-next/libplacebo] [ 27] color[1] = _6[1]; 
+[   7.363][d][vo/gpu-next/libplacebo] [ 28] color[2] = _6[2]; 
+[   7.363][d][vo/gpu-next/libplacebo] [ 29] color[3] = _6[3]; 
+[   7.363][d][vo/gpu-next/libplacebo] [ 30] return color;
+[   7.363][d][vo/gpu-next/libplacebo] [ 31] }
+[   7.363][d][vo/gpu-next/libplacebo] [ 32] 
+[   7.363][d][vo/gpu-next/libplacebo] [ 33] void main() {
+[   7.363][d][vo/gpu-next/libplacebo] [ 34] out_color = _1();
+[   7.363][d][vo/gpu-next/libplacebo] [ 35] }
+[   7.363][d][vo/gpu-next/libplacebo] Specialization constant values:
+[   7.363][d][vo/gpu-next/libplacebo]   constant_id=0: 1.000000
+[   7.366][d][vo/gpu-next/libplacebo] shaderc compile status 'success' (0 errors, 0 warnings)
+[   7.366][d][vo/gpu-next/libplacebo] Spent 5.820 ms translating SPIR-V
+[   7.369][d][vo/gpu-next/libplacebo] shaderc compile status 'success' (0 errors, 0 warnings)
+[   7.369][d][vo/gpu-next/libplacebo] Spent 2.337 ms translating SPIR-V
+[   7.369][d][vo/gpu-next/libplacebo] Spent 0.008 ms compiling shader
+[   7.370][d][vo/gpu-next] cache_save_obj: key(66e081075b027942), size(748), save time(1.926 ms)
+[   7.371][d][vo/gpu-next] cache_save_obj: key(24dbd15c9c7b31f1), size(832), save time(0.722 ms)
+[   7.558][v][vo/gpu-next/libplacebo] Spent 189.842 ms creating pipeline (slow!)
+[   7.559][d][vo/gpu-next] cache_save_obj: key(fcb4e264f97cfb4e), size(3001), save time(0.883 ms)
+[   7.565][d][vo/gpu-next/libplacebo] Pass statistics: size 0, SPIR-V: vert 0 frag 0 comp 0
+[   7.578][d][vo/gpu-next/libplacebo] Requested alpha compositing mode: VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR
+[   7.578][d][vo/gpu-next/libplacebo] Requested surface transform: VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+[   7.578][d][vo/gpu-next/libplacebo] Requested image count: 3 (min 2 max 3)
+[   7.578][d][vo/gpu-next/libplacebo] Requested image size: 960x540 (min 1x1 < cur 960x540 < max 8192x8192)
+[   7.578][d][vo/gpu-next/libplacebo] (Re)creating swapchain of size 960x540
+[   7.581][v][vo/gpu-next] Window size: 960x540 (Borders: l=0 t=0 r=0 b=0)
+[   7.581][v][vo/gpu-next] Video source: 480x270 (1:1)
+[   7.581][v][vo/gpu-next] Video display: (0, 0) 480x270 -> (0, 0) 960x540
+[   7.581][v][vo/gpu-next] Video scale: 2.000000/2.000000
+[   7.581][v][vo/gpu-next] OSD borders: l=0 t=0 r=0 b=0
+[   7.581][v][vo/gpu-next] Video borders: l=0 t=0 r=0 b=0
+[   7.586][v][vo/gpu-next/libplacebo] Detected fps ratio 0.0000 below threshold 0.0100, disabling interpolation
+[   7.586][d][vo/gpu-next/libplacebo] (Re)creating 480x270x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   7.586][d][vo/gpu-next/libplacebo] Allocating 409600 memory of type 0x1 (id 0) in heap 0: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   7.587][d][vd] Allocating new (host-cached) DR image...
+[   7.587][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   7.587][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   7.587][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   7.587][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   7.587][d][vo/gpu-next/libplacebo] Spent 0.838 ms allocating slab
+[   7.587][d][vo/gpu-next/libplacebo] (Re)creating 240x135x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   7.587][d][vo/gpu-next/libplacebo] (Re)creating 240x135x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   7.587][d][vo/gpu-next/libplacebo] Allocating 208896 memory of type 0x1 (id 0) in heap 0: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   7.588][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   7.588][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   7.588][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   7.588][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   7.588][d][vo/gpu-next/libplacebo] Spent 0.138 ms allocating slab
+[   7.588][d][vo/gpu-next/libplacebo] vertex shader source:
+[   7.588][d][vo/gpu-next/libplacebo] [  1] #version 450
+[   7.588][d][vo/gpu-next/libplacebo] [  2] #extension GL_ARB_texture_gather : enable
+[   7.588][d][vo/gpu-next/libplacebo] [  3] layout(std430, push_constant) uniform PushC {
+[   7.588][d][vo/gpu-next/libplacebo] [  4]     layout(offset=0) vec3 _8;
+[   7.588][d][vo/gpu-next/libplacebo] [  5]     layout(offset=16) mat3 _7;
+[   7.588][d][vo/gpu-next/libplacebo] [  6] };
+[   7.588][d][vo/gpu-next/libplacebo] [  7] layout(constant_id=0) const float _2 = 1; 
+[   7.588][d][vo/gpu-next/libplacebo] [  8] layout(constant_id=1) const float _3 = 1; 
+[   7.588][d][vo/gpu-next/libplacebo] [  9] layout(constant_id=2) const float _8004 = 1; 
+[   7.588][d][vo/gpu-next/libplacebo] [ 10] layout(constant_id=3) const float _4 = 1; 
+[   7.588][d][vo/gpu-next/libplacebo] [ 11] layout(constant_id=4) const float _4004 = 1; 
+[   7.588][d][vo/gpu-next/libplacebo] [ 12] layout(constant_id=5) const float _5 = 1; 
+[   7.588][d][vo/gpu-next/libplacebo] [ 13] layout(constant_id=6) const float _c004 = 1; 
+[   7.588][d][vo/gpu-next/libplacebo] [ 14] layout(constant_id=7) const float _6 = 1; 
+[   7.588][d][vo/gpu-next/libplacebo] [ 15] layout(constant_id=8) const float _9 = 1; 
+[   7.588][d][vo/gpu-next/libplacebo] [ 16] layout(binding=0) uniform  sampler2D _8002;
+[   7.588][d][vo/gpu-next/libplacebo] [ 17] layout(binding=1) uniform  sampler2D _4002;
+[   7.588][d][vo/gpu-next/libplacebo] [ 18] layout(binding=2) uniform  sampler2D _c002;
+[   7.588][d][vo/gpu-next/libplacebo] [ 19] layout(location=0) in vec2 _d;
+[   7.588][d][vo/gpu-next/libplacebo] [ 20] layout(location=0) out vec2 _8003;
+[   7.588][d][vo/gpu-next/libplacebo] [ 21] layout(location=1) in vec2 _e;
+[   7.589][d][vo/gpu-next/libplacebo] [ 22] layout(location=1) out vec2 _4003;
+[   7.589][d][vo/gpu-next/libplacebo] [ 23] layout(location=2) in vec2 _f;
+[   7.589][d][vo/gpu-next/libplacebo] [ 24] layout(location=2) out vec2 _c003;
+[   7.589][d][vo/gpu-next/libplacebo] [ 25] layout(location=3) in vec2 _10;
+[   7.589][d][vo/gpu-next/libplacebo] [ 26] void main() {
+[   7.589][d][vo/gpu-next/libplacebo] [ 27] _8003 = _d;
+[   7.589][d][vo/gpu-next/libplacebo] [ 28] _4003 = _e;
+[   7.589][d][vo/gpu-next/libplacebo] [ 29] _c003 = _f;
+[   7.589][d][vo/gpu-next/libplacebo] [ 30] vec2 va_pos = _10; 
+[   7.589][d][vo/gpu-next/libplacebo] [ 31] gl_Position = vec4(va_pos, 0.0, 1.0); 
+[   7.589][d][vo/gpu-next/libplacebo] [ 32] }
+[   7.589][d][vo/gpu-next/libplacebo] fragment shader source:
+[   7.589][d][vo/gpu-next/libplacebo] [  1] #version 450
+[   7.589][d][vo/gpu-next/libplacebo] [  2] #extension GL_ARB_texture_gather : enable
+[   7.589][d][vo/gpu-next/libplacebo] [  3] layout(std430, push_constant) uniform PushC {
+[   7.589][d][vo/gpu-next/libplacebo] [  4]     layout(offset=0) vec3 _8;
+[   7.589][d][vo/gpu-next/libplacebo] [  5]     layout(offset=16) mat3 _7;
+[   7.589][d][vo/gpu-next/libplacebo] [  6] };
+[   7.589][d][vo/gpu-next/libplacebo] [  7] layout(constant_id=0) const float _2 = 1; 
+[   7.589][d][vo/gpu-next/libplacebo] [  8] layout(constant_id=1) const float _3 = 1; 
+[   7.589][d][vo/gpu-next/libplacebo] [  9] layout(constant_id=2) const float _8004 = 1; 
+[   7.589][d][vo/gpu-next/libplacebo] [ 10] layout(constant_id=3) const float _4 = 1; 
+[   7.589][d][vo/gpu-next/libplacebo] [ 11] layout(constant_id=4) const float _4004 = 1; 
+[   7.589][d][vo/gpu-next/libplacebo] [ 12] layout(constant_id=5) const float _5 = 1; 
+[   7.589][d][vo/gpu-next/libplacebo] [ 13] layout(constant_id=6) const float _c004 = 1; 
+[   7.589][d][vo/gpu-next/libplacebo] [ 14] layout(constant_id=7) const float _6 = 1; 
+[   7.589][d][vo/gpu-next/libplacebo] [ 15] layout(constant_id=8) const float _9 = 1; 
+[   7.589][d][vo/gpu-next/libplacebo] [ 16] layout(binding=0) uniform  sampler2D _8002;
+[   7.589][d][vo/gpu-next/libplacebo] [ 17] layout(binding=1) uniform  sampler2D _4002;
+[   7.589][d][vo/gpu-next/libplacebo] [ 18] layout(binding=2) uniform  sampler2D _c002;
+[   7.589][d][vo/gpu-next/libplacebo] [ 19] layout(location=0) in vec2 _8003;
+[   7.589][d][vo/gpu-next/libplacebo] [ 20] layout(location=1) in vec2 _4003;
+[   7.589][d][vo/gpu-next/libplacebo] [ 21] layout(location=2) in vec2 _c003;
+[   7.589][d][vo/gpu-next/libplacebo] [ 22] layout(location=0) out vec4 out_color;
+[   7.589][d][vo/gpu-next/libplacebo] [ 23] 
+[   7.590][d][vo/gpu-next/libplacebo] [ 24] vec4 _8001() {
+[   7.590][d][vo/gpu-next/libplacebo] [ 25] // pl_shader_sample_direct                                  
+[   7.590][d][vo/gpu-next/libplacebo] [ 26] vec4 color = vec4(_8004) * vec4(textureLod(_8002, _8003, 0.0));   
+[   7.590][d][vo/gpu-next/libplacebo] [ 27] return color;
+[   7.590][d][vo/gpu-next/libplacebo] [ 28] }
+[   7.590][d][vo/gpu-next/libplacebo] [ 29] 
+[   7.590][d][vo/gpu-next/libplacebo] [ 30] vec4 _4001() {
+[   7.590][d][vo/gpu-next/libplacebo] [ 31] // pl_shader_sample_direct                                  
+[   7.590][d][vo/gpu-next/libplacebo] [ 32] vec4 color = vec4(_4004) * vec4(textureLod(_4002, _4003, 0.0));   
+[   7.590][d][vo/gpu-next/libplacebo] [ 33] return color;
+[   7.590][d][vo/gpu-next/libplacebo] [ 34] }
+[   7.590][d][vo/gpu-next/libplacebo] [ 35] 
+[   7.590][d][vo/gpu-next/libplacebo] [ 36] vec4 _c001() {
+[   7.590][d][vo/gpu-next/libplacebo] [ 37] // pl_shader_sample_direct                                  
+[   7.590][d][vo/gpu-next/libplacebo] [ 38] vec4 color = vec4(_c004) * vec4(textureLod(_c002, _c003, 0.0));   
+[   7.590][d][vo/gpu-next/libplacebo] [ 39] return color;
+[   7.590][d][vo/gpu-next/libplacebo] [ 40] }
+[   7.590][d][vo/gpu-next/libplacebo] [ 41] 
+[   7.590][d][vo/gpu-next/libplacebo] [ 42] vec4 _1() {
+[   7.590][d][vo/gpu-next/libplacebo] [ 43] vec4 color = vec4(_2, vec2(_3), 1.0);   
+[   7.590][d][vo/gpu-next/libplacebo] [ 44] // pass_read_image                        
+[   7.590][d][vo/gpu-next/libplacebo] [ 45] {                                         
+[   7.590][d][vo/gpu-next/libplacebo] [ 46] vec4 tmp;                                 
+[   7.590][d][vo/gpu-next/libplacebo] [ 47] tmp = vec4(_4) * _8001(); 
+[   7.590][d][vo/gpu-next/libplacebo] [ 48] color[0] = tmp[0];
+[   7.590][d][vo/gpu-next/libplacebo] [ 49] tmp = vec4(_5) * _4001(); 
+[   7.590][d][vo/gpu-next/libplacebo] [ 50] color[1] = tmp[0];
+[   7.590][d][vo/gpu-next/libplacebo] [ 51] tmp = vec4(_6) * _c001(); 
+[   7.590][d][vo/gpu-next/libplacebo] [ 52] color[2] = tmp[0];
+[   7.590][d][vo/gpu-next/libplacebo] [ 53] }
+[   7.590][d][vo/gpu-next/libplacebo] [ 54] // pl_shader_decode_color 
+[   7.590][d][vo/gpu-next/libplacebo] [ 55] { 
+[   7.590][d][vo/gpu-next/libplacebo] [ 56] color.rgb = _7 * color.rgb + _8; 
+[   7.590][d][vo/gpu-next/libplacebo] [ 57] }
+[   7.590][d][vo/gpu-next/libplacebo] [ 58] // pl_shader_encode_color 
+[   7.590][d][vo/gpu-next/libplacebo] [ 59] { 
+[   7.590][d][vo/gpu-next/libplacebo] [ 60] }
+[   7.591][d][vo/gpu-next/libplacebo] [ 61] color.rgba *= vec4(1.0 / _9); 
+[   7.591][d][vo/gpu-next/libplacebo] [ 62] vec4 _a = color;                 
+[   7.591][d][vo/gpu-next/libplacebo] [ 63] color = vec4(0.0, 0.0, 0.0, 1.0); 
+[   7.591][d][vo/gpu-next/libplacebo] [ 64] color[0] = _a[0]; 
+[   7.591][d][vo/gpu-next/libplacebo] [ 65] color[1] = _a[1]; 
+[   7.591][d][vo/gpu-next/libplacebo] [ 66] color[2] = _a[2]; 
+[   7.591][d][vo/gpu-next/libplacebo] [ 67] color[3] = _a[3]; 
+[   7.591][d][vo/gpu-next/libplacebo] [ 68] return color;
+[   7.591][d][vo/gpu-next/libplacebo] [ 69] }
+[   7.591][d][vo/gpu-next/libplacebo] [ 70] 
+[   7.591][d][vo/gpu-next/libplacebo] [ 71] void main() {
+[   7.591][d][vo/gpu-next/libplacebo] [ 72] out_color = _1();
+[   7.591][d][vo/gpu-next/libplacebo] [ 73] }
+[   7.591][d][vo/gpu-next/libplacebo] Specialization constant values:
+[   7.591][d][vo/gpu-next/libplacebo]   constant_id=0: 0.062745
+[   7.591][d][vo/gpu-next/libplacebo]   constant_id=1: 0.501961
+[   7.591][d][vo/gpu-next/libplacebo]   constant_id=2: 1.000000
+[   7.591][d][vo/gpu-next/libplacebo]   constant_id=3: 1.000000
+[   7.591][d][vo/gpu-next/libplacebo]   constant_id=4: 1.000000
+[   7.591][d][vo/gpu-next/libplacebo]   constant_id=5: 1.000000
+[   7.591][d][vo/gpu-next/libplacebo]   constant_id=6: 1.000000
+[   7.591][d][vo/gpu-next/libplacebo]   constant_id=7: 1.000000
+[   7.591][d][vo/gpu-next/libplacebo]   constant_id=8: 1.000000
+[   7.591][d][vo/gpu-next/libplacebo] Re-using cached SPIR-V object 0x676c95ac496c6781
+[   7.591][d][vo/gpu-next/libplacebo] Re-using cached SPIR-V object 0x3ca1471933633a48
+[   7.592][d][vo/gpu-next/libplacebo] Spent 0.015 ms compiling shader
+[   7.592][d][vo/gpu-next] cache_save_obj: key(676c95ac496c6781), size(948)
+[   7.592][d][vo/gpu-next] cache_save_obj: key(3ca1471933633a48), size(2216)
+[   7.595][d][vo/gpu-next/libplacebo] Spent 4.582 ms creating pipeline
+[   7.595][d][vo/gpu-next] cache_save_obj: key(b89beaa7ed2dd8b1), size(6375)
+[   7.595][d][vo/gpu-next/libplacebo] Pass statistics: size 0, SPIR-V: vert 0 frag 0 comp 0
+[   7.615][d][vo/gpu-next/libplacebo] (Re)creating 480x270x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   7.615][d][vo/gpu-next/libplacebo] (Re)creating 240x135x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   7.615][d][vo/gpu-next/libplacebo] (Re)creating 240x135x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[   7.630][v][vo/gpu-next/libplacebo] Estimated source FPS: 24.000, display FPS: 24.000
+[   7.716][d][vd] Allocating new (host-cached) DR image...
+[   7.921][d][vd] Allocating new (host-cached) DR image...
+[   8.093][d][vd] Allocating new (host-cached) DR image...
+[   8.301][d][vd] Allocating new (host-cached) DR image...
+[   8.551][d][vd] Allocating new (host-cached) DR image...
+[   8.682][d][vd] Allocating new (host-cached) DR image...
+[   8.682][d][vo/gpu-next/libplacebo] Allocating 4005888 memory of type 0xf (id 1) in heap 0: unknown
+[   8.682][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[   8.682][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[   8.682][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[   8.682][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[   8.682][d][vo/gpu-next/libplacebo] Spent 0.108 ms allocating slab
+[   8.842][d][vd] Allocating new (host-cached) DR image...
+[   9.044][d][vd] Allocating new (host-cached) DR image...
+[   9.213][d][vd] Allocating new (host-cached) DR image...
+[   9.441][d][vd] Allocating new (host-cached) DR image...
+[   9.591][d][vd] Allocating new (host-cached) DR image...
+[   9.798][d][vd] Allocating new (host-cached) DR image...
+[   9.965][d][vd] Allocating new (host-cached) DR image...
+[  15.366][d][vd] Allocating new (host-cached) DR image...
+[  15.397][d][vo/gpu-next/libplacebo] (Re)creating 480x270x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[  15.399][d][vo/gpu-next/libplacebo] Allocating 819200 memory of type 0x1 (id 0) in heap 0: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[  15.399][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[  15.399][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[  15.399][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[  15.399][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[  15.399][d][vo/gpu-next/libplacebo] Spent 0.195 ms allocating slab
+[  15.399][d][vo/gpu-next/libplacebo] (Re)creating 240x135x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[  15.399][d][vo/gpu-next/libplacebo] Allocating 278528 memory of type 0x1 (id 0) in heap 0: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[  15.399][d][vo/gpu-next/libplacebo] Memory types supported by device:
+[  15.399][d][vo/gpu-next/libplacebo]     0: flags 0x1 heap 0
+[  15.399][d][vo/gpu-next/libplacebo]     1: flags 0xf heap 0
+[  15.399][d][vo/gpu-next/libplacebo]     2: flags 0x11 heap 0
+[  15.399][d][vo/gpu-next/libplacebo] Spent 0.049 ms allocating slab
+[  15.399][d][vo/gpu-next/libplacebo] (Re)creating 240x135x0 texture with format r8: ../../../../libplacebo-v7.360.1/src/utils/upload.c:246
+[  48.462][v][vf] filter input EOF
+[  48.462][v][vf] filter output EOF
+[  48.510][v][cplayer] using demuxer frame duration for last frame
+[  48.511][d][cplayer] video EOF (status=3)
+[  48.511][d][vo/gpu-next] Render queue underrun.
+[  48.568][d][cplayer] video EOF (status=3)
+[  48.591][v][cplayer] video EOF reached
+[  48.591][d][cplayer] video EOF (status=4)
+[  49.021][d][cplayer] Run command: quit, flags=64, args=[code="0"]
+[  49.021][v][cplayer] EOF code: 5  
+[  49.021][d][vd] Uninit decoder.
+[  49.026][d][cplayer] Terminating demuxers...
+[  49.031][d][cplayer] Done terminating demuxers.
+[  49.032][v][cplayer] finished playback, success (reason 3)
+[  49.032][d][main] Destroying client handle...
+[  49.032][d][context_menu] Destroying client handle...
+[  49.033][d][commands] Destroying client handle...
+[  49.033][d][positioning] Destroying client handle...
+[  49.033][d][select] Destroying client handle...
+[  49.033][d][cplayer] Run command: quit, flags=64, args=[code="0"]
+[  49.033][d][cplayer] Run command: del, flags=64, args=[name="user-data/mpv/console"]
+[  49.034][d][console] Destroying client handle...
+[  49.072][d][vo/gpu-next/libplacebo] Freeing slab of size   20M
+[  49.072][d][vo/gpu-next/libplacebo] Waiting for remaining commands...

@@ -1,0 +1,80 @@
+Timestamp               Ty Process[PID:TID]
+2026-11-09 11:41:55.517 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:41:55.522 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:41:55.526 E  Folio[33642:162a7] [com.apple.app_launch_measurement:General] <compose failure [shared UUID]>
+2026-11-09 11:41:55.575 E  Folio[33642:161be] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-11-09 11:41:55.580 F  Folio[33642:161be] [com.apple.runtime-issues:SwiftUI] <compose failure [shared UUID]>
+2026-11-09 11:41:55.764 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:41:55.765 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:41:55.765 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:41:55.838 E  Folio[33642:162a4] [com.apple.app_launch_measurement:General] <compose failure [shared UUID]>
+2026-11-09 11:41:58.390 E  Folio[33642:161be] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-11-09 11:41:58.463 F  Folio[33642:161be] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-11-09 11:41:58.744 E  Folio[33642:163f2] (C54AD6FA-9FF2-3EDB-9C8A-53A82682D342) <compose failure [shared UUID]>
+2026-11-09 11:42:01.853 E  Folio[33642:163f2] [com.apple.Metal:Metal Compiler Warning] <compose failure [shared UUID]>
+2026-11-09 11:42:01.935 F  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:01.945 E  Folio[33642:161be] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:01.945 E  Folio[33642:161be] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:01.946 E  Folio[33642:161be] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:01.946 E  Folio[33642:161be] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:02.092 F  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:02.734 E  Folio[33642:164b5] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-11-09 11:42:02.735 E  Folio[33642:164b6] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-11-09 11:42:02.747 E  Folio[33642:164c6] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-11-09 11:42:02.751 E  Folio[33642:164c7] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-11-09 11:42:03.063 F  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:03.166 E  Folio[33642:161be] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:03.166 E  Folio[33642:161be] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:03.168 E  Folio[33642:161be] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:03.168 E  Folio[33642:161be] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:03.169 E  Folio[33642:161be] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:03.172 E  Folio[33642:161be] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:03.172 E  Folio[33642:161be] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:03.172 E  Folio[33642:161be] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:03.172 E  Folio[33642:161be] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:03.172 E  Folio[33642:161be] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:04.041 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:42:04.042 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:42:04.267 E  Folio[33642:164de] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-11-09 11:42:04.376 E  Folio[33642:162a7] (C54AD6FA-9FF2-3EDB-9C8A-53A82682D342) <compose failure [shared UUID]>
+2026-11-09 11:42:04.491 E  Folio[33642:164de] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-09 11:42:04.493 E  Folio[33642:164de] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:04.495 E  Folio[33642:164de] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:04.763 F  Folio[33642:16421] [com.apple.defaults:User Defaults] <compose failure [shared UUID]>
+2026-11-09 11:42:04.877 E  Folio[33642:161be] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:04.890 E  Folio[33642:162a4] [com.apple.authkit:nto] <compose failure [shared UUID]>
+2026-11-09 11:42:06.963 E  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:06.963 E  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:06.963 E  Folio[33642:161be] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-11-09 11:42:06.969 E  Folio[33642:1633c] [com.apple.runningboard:assertion] <compose failure [shared UUID]>
+2026-11-09 11:42:06.969 E  Folio[33642:1633c] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-11-09 11:42:07.403 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:42:07.403 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:42:09.503 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:42:09.503 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:42:12.398 E  Folio[33642:164de] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:12.432 E  Folio[33642:161be] [com.apple.GenerativeModels:availability] <compose failure [shared UUID]>
+2026-11-09 11:42:12.433 E  Folio[33642:161be] [com.apple.GenerativeModels:availability] <compose failure [shared UUID]>
+2026-11-09 11:42:12.433 E  Folio[33642:161be] [com.apple.GenerativeModels:availability] <compose failure [shared UUID]>
+2026-11-09 11:42:12.441 E  Folio[33642:161be] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:13.087 E  Folio[33642:161be] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:14.850 F  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:15.654 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:42:15.654 E  Folio[33642:161be] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-09 11:42:29.631 E  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:29.631 E  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:29.631 E  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:29.636 E  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:29.636 E  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:29.636 E  Folio[33642:161be] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-11-09 11:42:29.646 E  Folio[33642:1633c] [com.apple.runningboard:assertion] <compose failure [shared UUID]>
+2026-11-09 11:42:29.648 E  Folio[33642:1633c] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-11-09 11:42:29.655 E  Folio[33642:1633c] [com.apple.runningboard:assertion] <compose failure [shared UUID]>
+2026-11-09 11:42:29.656 E  Folio[33642:1633c] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-11-09 11:42:30.053 E  Folio[33642:164de] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-11-09 11:42:30.057 E  Folio[33642:164de] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:30.079 E  Folio[33642:16333] [com.apple.authkit:nto] <compose failure [shared UUID]>
+2026-11-09 11:42:31.092 F  Folio[33642:161be] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-09 11:42:36.967 E  Folio[33642:161be] [com.apple.browserEngineKit:general] <compose failure [shared UUID]>
+2026-11-09 11:42:40.654 E  Folio[33642:164de] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-09 11:42:41.530 E  Folio[33642:16804] [com.apple.authkit:nto] <compose failure [shared UUID]>
