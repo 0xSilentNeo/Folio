@@ -1,0 +1,532 @@
+01:07:13.083 [app] what's new: 1.0.0, last shown none
+01:07:13.097 [app] launch v1.0.0 (1) iOS 27.2 arm64 free=29.44 GB
+01:07:13.133 [dl] list: 0 item(s), 0 done
+01:07:13.469 [scene] 204A1989 connects (portrait)
+01:07:13.472 [scene] 204A1989 will enter foreground (portrait)
+01:07:13.582 [addons] 0 installed
+01:07:14.035 [app] first screen 3626 ms after process start
+01:07:14.035 [app] root view appeared (1 in this run, splash on)
+01:07:14.035 [app] launch splash shown
+01:07:14.783 [scene] 204A1989 active (portrait)
+01:07:14.786 [app] active
+01:07:15.004 [widget] App Group group.dev.silentneo.folio
+01:07:15.006 [widget] snapshot: 0 item(s), 0 with a picture
+01:07:15.038 [app] Home: appeared 235 ms after the root view, next frame at 999 ms, main thread free at 1002 ms
+01:07:15.494 [library] metadata index: 0 of 1 title(s) found in 675 ms
+01:07:15.674 [tracking] 0 tracked show(s)
+01:07:15.791 [tracking] Airing widget: 0 show(s)
+01:07:15.827 [tracking] background refresh not scheduled: BGTaskScheduler is not available on this platform.
+01:07:19.896 [notify] holidays: 22 for US
+01:07:21.288 [imdb] HTTP 202 for /chart/tvmeter/ (1997 bytes) → web view
+01:07:21.288 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+01:07:21.288 [imdb] webkit load /chart/tvmeter
+01:07:22.405 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+01:07:51.519 [app] what's new: 1.0.0, last shown 1.0.0
+01:07:51.529 [app] launch v1.0.0 (1) iOS 27.2 arm64 free=29.34 GB
+01:07:51.550 [dl] list: 0 item(s), 0 done
+01:07:52.065 [scene] 204A1989 connects (portrait)
+01:07:52.067 [scene] 204A1989 will enter foreground (portrait)
+01:07:52.139 [history] library files: 20 entr(ies) moved to this install's folder, 9 duplicate(s) merged
+01:07:52.147 [addons] 0 installed
+01:07:52.288 [app] first screen 4657 ms after process start
+01:07:52.288 [app] root view appeared (1 in this run, splash on)
+01:07:52.288 [app] launch splash shown
+01:07:52.814 [image] loader #2 Daemons.of.the.Shadow.Realm.2026.S01E15.1080p.CR.WEB.DL.DUAL: not in memory, loading
+01:07:52.814 [image] loader #1 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+01:07:53.069 [scene] 204A1989 active (portrait)
+01:07:53.071 [app] active
+01:07:53.075 [widget] App Group group.dev.silentneo.folio
+01:07:53.080 [player] play requested: 10 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/CAD4F983-CE4C-41E7-84A5-DFFD6F0CF3CA/data/Containers/Bundle/Application/E5EF03F8-37FA-470E-ABC7-A7B8E5E99A60/Folio.app/lab/lab.mp4
+01:07:53.741 [ui] player toolbar 190 pt, its views:
+UICoreHostingView<RootView> x 0…190 w 190
+  _UIInheritedView x 20…170 w 150
+    _UIInheritedView x 20…170 w 150
+      _UIInheritedView x 20…20 w 0
+        UIPlatformGlassInteractionView x 62…110 w 48
+          _UIInheritedView x 62…110 w 48
+        UIPlatformGlassInteractionView x 122…170 w 48
+          _UIInheritedView x 122…170 w 48
+_UIPointerInteractionAssistantEffectContainerView x 0…0 w 0
+01:07:53.803 [tracking] 0 tracked show(s)
+01:07:53.816 [ui] player toolbar: capsule at 62…110 pt of the 190 pt toolbar
+01:07:54.048 [zoom] source 0|s|mobland added at (20.0, 722.0, 124.0, 187.0)
+01:07:54.054 [zoom] source 0|s|classroom of the elite added at (20.0, 470.0, 124.0, 187.0)
+01:07:54.054 [zoom] source 0|s|dragon ball super beerus added at (158.0, 470.0, 124.0, 187.0)
+01:07:54.055 [zoom] source 0|s|lab show added at (296.0, 470.0, 124.0, 187.0)
+01:07:54.073 [image] tile MobLand appeared (loader #6, picture none yet)
+01:07:54.073 [image] loader #6 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+01:07:54.073 [image] tile Lab Show appeared (loader #5, picture none yet)
+01:07:54.073 [image] loader #5 Lab Show S01E01.mp4|poster|504: not in memory, loading
+01:07:54.073 [image] tile Dragon Ball Super Beerus appeared (loader #4, picture none yet)
+01:07:54.100 [image] loader #4 Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.A: not in memory, loading
+01:07:54.100 [image] tile Classroom of the Elite appeared (loader #3, picture none yet)
+01:07:54.100 [image] loader #3 Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC: not in memory, loading
+01:07:54.490 [player] start renderer=metal
+01:07:54.490 [lab] engine not started (lab)
+01:07:54.529 [imdb] /title/tt31510819/: joined the same request already out
+01:07:54.552 [ui] player toolbar: its buttons didn't all fit; now 202 pt wide
+01:07:54.553 [layout] row 1 of 3 columns for 440 pt at (20, 722, 400, 234)
+01:07:54.554 [layout] MobLand at (0, 0, 124, 234)
+01:07:54.554 [layout] row 0 of 3 columns for 440 pt at (20, 470, 400, 235)
+01:07:54.554 [layout] Lab Show at (276, 0, 124, 234)
+01:07:54.554 [layout] Dragon Ball Super Beerus at (138, 0, 124, 234)
+01:07:54.554 [layout] Classroom of the Elite at (0, 0, 124, 234)
+01:07:54.555 [app] Home: appeared 228 ms after the root view, next frame at 2216 ms, main thread free at 2267 ms
+01:07:54.688 [imdb] /title/tt7263328/: joined the same request already out
+01:07:55.035 [ui] player toolbar: capsule at 30…182 pt of the 202 pt toolbar
+01:07:55.303 [imdb] HTTP 202 for /title/tt31510819/ (1997 bytes) → web view
+01:07:55.304 [imdb] HTTP 202 for /title/tt39395275/ (1997 bytes) → web view
+01:07:55.313 [imdb] HTTP 202 for /title/tt7263328/ (1997 bytes) → web view
+01:07:55.328 [imdb] HTTP 202 for /title/tt37532356/ (1997 bytes) → web view
+01:07:55.426 [imdb] webkit load /title/tt31510819
+01:07:55.797 [image] tile Lab Show disappeared (loader #5)
+01:07:55.797 [image] tile Dragon Ball Super Beerus disappeared (loader #4)
+01:07:55.797 [image] tile Classroom of the Elite disappeared (loader #3)
+01:07:55.798 [image] tile MobLand disappeared (loader #6)
+01:07:55.817 [image] tile MobLand appeared (loader #11, picture none yet)
+01:07:55.817 [image] loader #11 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+01:07:55.817 [image] tile Lab Show appeared (loader #10, picture none yet)
+01:07:55.817 [image] loader #10 Lab Show S01E01.mp4|poster|504: not in memory, loading
+01:07:55.817 [image] tile Dragon Ball Super Beerus appeared (loader #9, picture none yet)
+01:07:55.817 [image] loader #9 Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.A: not in memory, loading
+01:07:55.817 [image] tile Classroom of the Elite appeared (loader #8, picture none yet)
+01:07:56.133 [image] loader #8 Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC: not in memory, loading
+01:07:56.141 [zoom] source 0|s|classroom of the elite added at (90.0, 397.0, 118.0, 177.0)
+01:07:56.143 [zoom] source 0|s|dragon ball super beerus added at (221.0, 397.0, 119.0, 177.0)
+01:07:56.143 [zoom] source 0|s|lab show added at (353.0, 397.0, 118.0, 177.0)
+01:07:56.144 [zoom] source 0|s|mobland added at (485.0, 397.0, 118.0, 177.0)
+01:07:56.144 [zoom] source 0|s|mobland removed from the window
+01:07:56.152 [image] loader #7 The.Gentlemen.S01E08.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.2: not in memory, loading
+01:07:56.572 [layout] row 0 of 6 columns for 832 pt at (90, 397, 776, 225)
+01:07:56.572 [layout] MobLand at (395, 0, 118, 224)
+01:07:56.572 [layout] Lab Show at (263, 0, 118, 224)
+01:07:56.573 [layout] Dragon Ball Super Beerus at (131, 0, 119, 224)
+01:07:56.573 [layout] Classroom of the Elite at (0, 0, 118, 224)
+01:07:56.580 [ui] player toolbar: capsule at 40…192 pt of the 202 pt toolbar
+01:07:56.652 [perf] panel tracks prebuilt in 67 ms
+01:07:57.275 [perf] panel settings prebuilt in 474 ms
+01:07:57.368 [perf] panel nowPlaying prebuilt in 47 ms
+01:07:57.368 [ui] player toolbar: capsule at 38…192 pt of the 202 pt toolbar
+01:07:57.689 [panel] now playing offset 0 → 0
+01:07:57.689 [panel] now playing built on q0 (tab 0, item 1 of 10, chapter -1)
+01:07:57.693 [image] loader #21 lab-10|wide|192: not in memory, loading
+01:07:57.775 [image] loader #20 lab-9|wide|192: not in memory, loading
+01:07:57.776 [image] loader #19 lab-8|wide|192: not in memory, loading
+01:07:57.776 [image] loader #18 lab-7|wide|192: not in memory, loading
+01:07:57.776 [image] loader #17 lab-6|wide|192: not in memory, loading
+01:07:57.776 [image] loader #16 lab-5|wide|192: not in memory, loading
+01:07:57.776 [image] loader #15 lab-4|wide|192: not in memory, loading
+01:07:57.776 [image] loader #14 lab-3|wide|192: not in memory, loading
+01:07:57.777 [image] loader #13 lab-2|wide|192: not in memory, loading
+01:07:57.777 [image] loader #12 lab-1|wide|192: not in memory, loading
+01:07:57.797 [perf] panel tracks prebuilt in 0 ms
+01:07:57.839 [imdb] HTTP 202 for /title/tt13210838/ (1997 bytes) → web view
+01:07:57.988 [imdb] HTTP 202 for /chart/tvmeter/ (1997 bytes) → web view
+01:07:57.988 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+01:07:58.020 [imdb] HTTP 202 for /title/tt0091369/ (1997 bytes) → web view
+01:07:58.101 [perf] panel settings prebuilt in 0 ms
+01:07:58.405 [perf] panel nowPlaying prebuilt in 0 ms
+01:08:01.492 [tracking] background refresh not scheduled: BGTaskScheduler is not available on this platform.
+01:08:07.904 [ui] panel nowPlaying
+01:08:07.907 [ui] present panel nowPlaying from bar item 340×≤290
+01:08:07.907 [ui] panel: want nowPlaying (shown=none idle)
+01:08:07.937 [ui] panel: open nowPlaying
+01:08:08.017 [ui] present panel nowPlaying from bar item 340×≤290
+01:08:08.047 [panel] now playing opens on q8 at will appear, row at y 480 (tab 0, item 9 of 10, chapter -1)
+01:08:08.083 [panel] now playing opens on q8 at is appearing, row at y 480 (tab 0, item 9 of 10, chapter -1)
+01:08:08.090 [panel] now playing offset 0 → 424
+01:08:08.208 [panel] now playing opens on q8 at will appear +1, row at y 480 (tab 0, item 9 of 10, chapter -1)
+01:08:09.116 [ui] menu nowPlaying pressed: frames over 25 ms: 38 ms at +1044, 62 ms at +1083
+01:08:09.160 [panel] now playing opens on q8 at did appear, row at y 480 (tab 0, item 9 of 10, chapter -1)
+01:08:09.176 [ui] panel: opened nowPlaying
+01:08:09.176 [perf] panel open nowPlaying: 52 frames in 1238 ms, worst 63 ms, 2 late (frame 16.7 ms) · built in 30 ms, 31 ms after the tap
+01:08:09.741 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+01:08:16.647 [image] tile MobLand disappeared (loader #11)
+01:08:16.647 [image] tile Lab Show disappeared (loader #10)
+01:08:16.648 [image] tile Dragon Ball Super Beerus disappeared (loader #9)
+01:08:16.648 [image] tile Classroom of the Elite disappeared (loader #8)
+01:08:16.689 [image] tile Lab Show appeared (loader #24, picture none yet)
+01:08:16.689 [image] loader #24 Lab Show S01E01.mp4|poster|504: not in memory, loading
+01:08:16.689 [image] tile Dragon Ball Super Beerus appeared (loader #23, picture none yet)
+01:08:16.689 [image] loader #23 Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.A: not in memory, loading
+01:08:16.689 [image] tile Classroom of the Elite appeared (loader #22, picture none yet)
+01:08:16.689 [image] loader #22 Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC: not in memory, loading
+01:08:16.695 [zoom] source 0|s|classroom of the elite added at (20.0, 470.0, 124.0, 187.0)
+01:08:16.696 [zoom] source 0|s|dragon ball super beerus added at (158.0, 470.0, 124.0, 187.0)
+01:08:16.698 [zoom] source 0|s|lab show added at (296.0, 470.0, 124.0, 187.0)
+01:08:16.698 [zoom] source 0|s|mobland removed from the window
+01:08:16.699 [zoom] source 0|s|lab show removed from the window
+01:08:16.699 [zoom] source 0|s|dragon ball super beerus removed from the window
+01:08:16.699 [zoom] source 0|s|classroom of the elite removed from the window
+01:08:16.714 [image] tile MobLand appeared (loader #25, picture none yet)
+01:08:16.714 [image] loader #25 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+01:08:16.715 [zoom] source 0|s|mobland added at (20.0, 722.0, 124.0, 187.0)
+01:08:16.715 [zoom] source 0|s|lab show removed from the window
+01:08:16.715 [zoom] source 0|s|dragon ball super beerus removed from the window
+01:08:16.715 [zoom] source 0|s|classroom of the elite removed from the window
+01:08:17.001 [layout] row 0 of 3 columns for 440 pt at (20, 470, 400, 235)
+01:08:17.001 [layout] Lab Show at (276, 0, 124, 234)
+01:08:17.001 [layout] Dragon Ball Super Beerus at (138, 0, 124, 234)
+01:08:17.001 [layout] Classroom of the Elite at (0, 0, 124, 234)
+01:08:17.019 [layout] row 1 of 3 columns for 440 pt at (20, 722, 400, 234)
+01:08:17.020 [layout] MobLand at (0, 0, 124, 234)
+01:08:24.309 [app] what's new: 1.0.0, last shown 1.0.0
+01:08:24.320 [app] launch v1.0.0 (1) iOS 27.2 arm64 free=29.32 GB
+01:08:24.339 [dl] list: 0 item(s), 0 done
+01:08:24.922 [scene] 204A1989 connects (portrait)
+01:08:24.923 [scene] 204A1989 will enter foreground (portrait)
+01:08:25.007 [addons] 0 installed
+01:08:25.181 [app] first screen 5593 ms after process start
+01:08:25.182 [app] root view appeared (1 in this run, splash on)
+01:08:25.182 [app] launch splash shown
+01:08:25.705 [image] loader #2 Daemons.of.the.Shadow.Realm.2026.S01E15.1080p.CR.WEB.DL.DUAL: not in memory, loading
+01:08:25.705 [image] loader #1 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+01:08:25.983 [scene] 204A1989 active (portrait)
+01:08:25.997 [app] active
+01:08:26.028 [player] play requested: 10 item(s), index 5, first=/Users/runner/Library/Developer/CoreSimulator/Devices/CAD4F983-CE4C-41E7-84A5-DFFD6F0CF3CA/data/Containers/Bundle/Application/E5EF03F8-37FA-470E-ABC7-A7B8E5E99A60/Folio.app/lab/lab.mp4
+01:08:26.188 [widget] App Group group.dev.silentneo.folio
+01:08:26.241 [tracking] 0 tracked show(s)
+01:08:26.434 [tracking] background refresh not scheduled: BGTaskScheduler is not available on this platform.
+01:08:26.524 [ui] player toolbar 190 pt, its views:
+UICoreHostingView<RootView> x 0…190 w 190
+  _UIInheritedView x 20…170 w 150
+    _UIInheritedView x 20…170 w 150
+      _UIInheritedView x 20…20 w 0
+        UIPlatformGlassInteractionView x 62…110 w 48
+          _UIInheritedView x 62…110 w 48
+        UIPlatformGlassInteractionView x 122…170 w 48
+          _UIInheritedView x 122…170 w 48
+_UIPointerInteractionAssistantEffectContainerView x 0…0 w 0
+01:08:26.647 [ui] player toolbar: capsule at 62…110 pt of the 190 pt toolbar
+01:08:26.880 [image] tile MobLand appeared (loader #6, picture none yet)
+01:08:26.880 [image] loader #6 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+01:08:26.884 [zoom] source 0|s|mobland added at (20.0, 722.0, 124.0, 187.0)
+01:08:26.890 [image] tile Lab Show appeared (loader #5, picture none yet)
+01:08:26.890 [image] loader #5 Lab Show S01E01.mp4|poster|504: not in memory, loading
+01:08:26.890 [image] tile Dragon Ball Super Beerus appeared (loader #4, picture none yet)
+01:08:26.890 [image] loader #4 Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.A: not in memory, loading
+01:08:26.890 [image] tile Classroom of the Elite appeared (loader #3, picture none yet)
+01:08:26.891 [image] loader #3 Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC: not in memory, loading
+01:08:26.892 [zoom] source 0|s|classroom of the elite added at (20.0, 470.0, 124.0, 187.0)
+01:08:26.893 [zoom] source 0|s|dragon ball super beerus added at (158.0, 470.0, 124.0, 187.0)
+01:08:26.893 [zoom] source 0|s|lab show added at (296.0, 470.0, 124.0, 187.0)
+01:08:27.115 [player] start renderer=metal
+01:08:27.115 [lab] engine not started (lab)
+01:08:27.133 [imdb] /title/tt31510819/: joined the same request already out
+01:08:27.141 [imdb] /title/tt7263328/: joined the same request already out
+01:08:27.176 [ui] player toolbar: its buttons didn't all fit; now 202 pt wide
+01:08:27.254 [app] Home: appeared 234 ms after the root view, next frame at 1995 ms, main thread free at 2072 ms
+01:08:27.254 [layout] row 1 of 3 columns for 440 pt at (20, 722, 400, 234)
+01:08:27.254 [layout] MobLand at (0, 0, 124, 234)
+01:08:27.254 [layout] row 0 of 3 columns for 440 pt at (20, 470, 400, 235)
+01:08:27.255 [layout] Lab Show at (276, 0, 124, 234)
+01:08:27.255 [layout] Dragon Ball Super Beerus at (138, 0, 124, 234)
+01:08:27.255 [layout] Classroom of the Elite at (0, 0, 124, 234)
+01:08:27.594 [ui] player toolbar: capsule at 30…182 pt of the 202 pt toolbar
+01:08:27.798 [imdb] HTTP 202 for /title/tt31510819/ (1997 bytes) → web view
+01:08:27.798 [imdb] HTTP 202 for /title/tt7263328/ (1997 bytes) → web view
+01:08:27.798 [imdb] HTTP 202 for /title/tt37532356/ (1997 bytes) → web view
+01:08:27.803 [imdb] HTTP 202 for /title/tt39395275/ (1997 bytes) → web view
+01:08:27.881 [imdb] webkit load /title/tt31510819
+01:08:28.304 [image] tile MobLand disappeared (loader #6)
+01:08:28.305 [image] tile Lab Show disappeared (loader #5)
+01:08:28.305 [image] tile Dragon Ball Super Beerus disappeared (loader #4)
+01:08:28.305 [image] tile Classroom of the Elite disappeared (loader #3)
+01:08:28.327 [image] tile MobLand appeared (loader #11, picture none yet)
+01:08:28.327 [image] loader #11 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+01:08:28.335 [image] tile Lab Show appeared (loader #10, picture none yet)
+01:08:28.336 [image] loader #10 Lab Show S01E01.mp4|poster|504: not in memory, loading
+01:08:28.698 [image] tile Dragon Ball Super Beerus appeared (loader #9, picture none yet)
+01:08:28.698 [image] loader #9 Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.A: not in memory, loading
+01:08:28.698 [image] tile Classroom of the Elite appeared (loader #8, picture none yet)
+01:08:28.698 [image] loader #8 Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC: not in memory, loading
+01:08:28.705 [zoom] source 0|s|classroom of the elite added at (90.0, 397.0, 118.0, 177.0)
+01:08:28.707 [zoom] source 0|s|dragon ball super beerus added at (221.0, 397.0, 119.0, 177.0)
+01:08:28.708 [zoom] source 0|s|lab show added at (353.0, 397.0, 118.0, 177.0)
+01:08:28.709 [zoom] source 0|s|mobland added at (485.0, 397.0, 118.0, 177.0)
+01:08:29.020 [zoom] source 0|s|lab show removed from the window
+01:08:29.020 [zoom] source 0|s|dragon ball super beerus removed from the window
+01:08:29.021 [zoom] source 0|s|classroom of the elite removed from the window
+01:08:29.030 [image] loader #7 The.Gentlemen.S01E08.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.2: not in memory, loading
+01:08:29.184 [layout] row 0 of 6 columns for 832 pt at (90, 397, 776, 225)
+01:08:29.185 [layout] MobLand at (395, 0, 118, 224)
+01:08:29.185 [layout] Lab Show at (263, 0, 118, 224)
+01:08:29.185 [layout] Dragon Ball Super Beerus at (131, 0, 119, 224)
+01:08:29.185 [layout] Classroom of the Elite at (0, 0, 118, 224)
+01:08:29.197 [ui] player toolbar: capsule at 40…192 pt of the 202 pt toolbar
+01:08:29.250 [perf] panel tracks prebuilt in 49 ms
+01:08:29.699 [imdb] HTTP 202 for /title/tt13210838/ (1997 bytes) → web view
+01:08:29.846 [perf] panel settings prebuilt in 314 ms
+01:08:29.921 [ui] player toolbar: capsule at 38…192 pt of the 202 pt toolbar
+01:08:30.005 [perf] panel nowPlaying prebuilt in 71 ms
+01:08:30.104 [panel] now playing offset 0 → 0
+01:08:30.104 [panel] now playing built on q5 (tab 0, item 6 of 10, chapter -1)
+01:08:30.105 [image] loader #21 lab-10|wide|192: not in memory, loading
+01:08:30.105 [image] loader #20 lab-9|wide|192: not in memory, loading
+01:08:30.105 [image] loader #19 lab-8|wide|192: not in memory, loading
+01:08:30.105 [image] loader #18 lab-7|wide|192: not in memory, loading
+01:08:30.105 [image] loader #17 lab-6|wide|192: not in memory, loading
+01:08:30.105 [image] loader #16 lab-5|wide|192: not in memory, loading
+01:08:30.106 [image] loader #15 lab-4|wide|192: not in memory, loading
+01:08:30.111 [image] loader #14 lab-3|wide|192: not in memory, loading
+01:08:30.111 [image] loader #13 lab-2|wide|192: not in memory, loading
+01:08:30.111 [image] loader #12 lab-1|wide|192: not in memory, loading
+01:08:30.244 [perf] panel tracks prebuilt in 0 ms
+01:08:30.355 [imdb] HTTP 202 for /title/tt0091369/ (1997 bytes) → web view
+01:08:30.386 [imdb] HTTP 202 for /chart/tvmeter/ (1997 bytes) → web view
+01:08:30.392 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+01:08:30.550 [perf] panel settings prebuilt in 0 ms
+01:08:30.866 [perf] panel nowPlaying prebuilt in 0 ms
+01:08:33.852 [ui] panel nowPlaying
+01:08:33.855 [ui] present panel nowPlaying from bar item 340×≤290
+01:08:33.855 [ui] panel: want nowPlaying (shown=none idle)
+01:08:33.857 [ui] panel: open nowPlaying
+01:08:33.864 [ui] present panel nowPlaying from bar item 340×≤290
+01:08:33.911 [panel] now playing opens on q5 at will appear, row at y 300 (tab 0, item 6 of 10, chapter -1)
+01:08:33.938 [panel] now playing opens on q5 at is appearing, row at y 300 (tab 0, item 6 of 10, chapter -1)
+01:08:33.946 [panel] now playing offset 0 → 244
+01:08:34.009 [panel] now playing opens on q5 at will appear +1, row at y 300 (tab 0, item 6 of 10, chapter -1)
+01:08:34.962 [panel] now playing opens on q5 at did appear, row at y 300 (tab 0, item 6 of 10, chapter -1)
+01:08:34.977 [ui] panel: opened nowPlaying
+01:08:34.977 [perf] panel open nowPlaying: 57 frames in 1120 ms, worst 179 ms, 1 late (frame 16.7 ms) · built in 1 ms, 2 ms after the tap
+01:08:35.066 [ui] menu nowPlaying pressed: frames over 25 ms: 179 ms at +-20
+01:08:38.815 [panel] now playing offset 244 → 241
+01:08:38.818 [panel] now playing offset 241 → 234
+01:08:38.835 [panel] now playing offset 234 → 226
+01:08:38.850 [panel] now playing offset 226 → 218
+01:08:38.867 [panel] now playing offset 218 → 209
+01:08:38.884 [panel] now playing offset 209 → 200
+01:08:38.901 [panel] now playing offset 200 → 191
+01:08:38.917 [panel] now playing offset 191 → 182
+01:08:38.936 [panel] now playing offset 182 → 173
+01:08:38.950 [panel] now playing offset 173 → 164
+01:08:38.970 [panel] now playing offset 164 → 154
+01:08:38.984 [panel] now playing offset 154 → 145
+01:08:39.001 [panel] now playing offset 145 → 135
+01:08:39.019 [panel] now playing offset 135 → 126
+01:08:39.035 [panel] now playing offset 126 → 116
+01:08:39.050 [panel] now playing offset 116 → 106
+01:08:39.068 [panel] now playing offset 106 → 97
+01:08:39.084 [panel] now playing offset 97 → 88
+01:08:39.101 [panel] now playing offset 88 → 78
+01:08:39.117 [panel] now playing offset 78 → 69
+01:08:39.135 [panel] now playing offset 69 → 60
+01:08:39.150 [panel] now playing offset 60 → 56
+01:08:39.316 [panel] now playing offset 56 → 47
+01:08:39.334 [panel] now playing offset 47 → 39
+01:08:39.350 [panel] now playing offset 39 → 31
+01:08:39.367 [panel] now playing offset 31 → 23
+01:08:39.383 [panel] now playing offset 23 → 15
+01:08:39.401 [panel] now playing offset 15 → 8
+01:08:39.416 [panel] now playing offset 8 → 1
+01:08:39.433 [panel] now playing offset 1 → -6
+01:08:39.449 [panel] now playing offset -6 → -13
+01:08:39.467 [panel] now playing offset -13 → -18
+01:08:39.483 [panel] now playing offset -18 → -22
+01:08:39.500 [panel] now playing offset -22 → -25
+01:08:39.516 [panel] now playing offset -25 → -26
+01:08:39.533 [panel] now playing offset -26 → -27
+01:08:39.583 [panel] now playing offset -27 → -26
+01:08:39.600 [panel] now playing offset -26 → -25
+01:08:39.634 [panel] now playing offset -25 → -24
+01:08:39.650 [panel] now playing offset -24 → -23
+01:08:39.667 [panel] now playing offset -23 → -22
+01:08:39.683 [panel] now playing offset -22 → -21
+01:08:39.700 [panel] now playing offset -21 → -20
+01:08:39.733 [panel] now playing offset -20 → -19
+01:08:39.751 [panel] now playing offset -19 → -18
+01:08:39.783 [panel] now playing offset -18 → -17
+01:08:39.833 [panel] now playing offset -17 → -16
+01:08:39.900 [panel] now playing offset -16 → -15
+01:08:40.016 [panel] now playing offset -15 → -14
+01:08:41.535 [panel] now playing offset -14 → -16
+01:08:41.550 [panel] now playing offset -16 → -19
+01:08:41.568 [panel] now playing offset -19 → -23
+01:08:41.583 [panel] now playing offset -23 → -27
+01:08:41.601 [panel] now playing offset -27 → -31
+01:08:41.618 [panel] now playing offset -31 → -35
+01:08:41.635 [panel] now playing offset -35 → -39
+01:08:41.651 [panel] now playing offset -39 → -42
+01:08:41.667 [panel] now playing offset -42 → -45
+01:08:41.684 [panel] now playing offset -45 → -49
+01:08:41.701 [panel] now playing offset -49 → -52
+01:08:41.718 [panel] now playing offset -52 → -55
+01:08:41.735 [panel] now playing offset -55 → -58
+01:08:41.751 [panel] now playing offset -58 → -60
+01:08:41.767 [panel] now playing offset -60 → -63
+01:08:41.784 [panel] now playing offset -63 → -65
+01:08:41.802 [panel] now playing offset -65 → -68
+01:08:41.817 [panel] now playing offset -68 → -70
+01:08:41.834 [panel] now playing offset -70 → -72
+01:08:41.852 [panel] now playing offset -72 → -74
+01:08:41.869 [panel] now playing offset -74 → -76
+01:08:41.884 [panel] now playing offset -76 → -77
+01:08:42.049 [panel] now playing offset -77 → -75
+01:08:42.066 [panel] now playing offset -75 → -71
+01:08:42.083 [panel] now playing offset -71 → -67
+01:08:42.100 [panel] now playing offset -67 → -63
+01:08:42.116 [panel] now playing offset -63 → -59
+01:08:42.133 [panel] now playing offset -59 → -54
+01:08:42.149 [panel] now playing offset -54 → -50
+01:08:42.167 [panel] now playing offset -50 → -47
+01:08:42.183 [panel] now playing offset -47 → -43
+01:08:42.200 [panel] now playing offset -43 → -40
+01:08:42.216 [panel] now playing offset -40 → -37
+01:08:42.233 [panel] now playing offset -37 → -34
+01:08:42.249 [panel] now playing offset -34 → -32
+01:08:42.267 [panel] now playing offset -32 → -30
+01:08:42.283 [panel] now playing offset -30 → -28
+01:08:42.300 [panel] now playing offset -28 → -26
+01:08:42.316 [panel] now playing offset -26 → -24
+01:08:42.333 [panel] now playing offset -24 → -23
+01:08:42.349 [panel] now playing offset -23 → -22
+01:08:42.366 [panel] now playing offset -22 → -21
+01:08:42.382 [panel] now playing offset -21 → -20
+01:08:42.400 [panel] now playing offset -20 → -19
+01:08:42.416 [panel] now playing offset -19 → -18
+01:08:42.449 [panel] now playing offset -18 → -17
+01:08:42.483 [panel] now playing offset -17 → -16
+01:08:42.549 [panel] now playing offset -16 → -15
+01:08:42.667 [panel] now playing offset -15 → -14
+01:08:43.329 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+01:08:44.201 [panel] now playing offset -14 → -16
+01:08:44.218 [panel] now playing offset -16 → -19
+01:08:44.233 [panel] now playing offset -19 → -23
+01:08:44.250 [panel] now playing offset -23 → -27
+01:08:44.267 [panel] now playing offset -27 → -31
+01:08:44.283 [panel] now playing offset -31 → -39
+01:08:44.300 [panel] now playing offset -39 → -42
+01:08:44.334 [panel] now playing offset -42 → -45
+01:08:44.350 [panel] now playing offset -45 → -49
+01:08:44.367 [panel] now playing offset -49 → -52
+01:08:44.383 [panel] now playing offset -52 → -55
+01:08:44.402 [panel] now playing offset -55 → -58
+01:08:44.417 [panel] now playing offset -58 → -60
+01:08:44.434 [panel] now playing offset -60 → -63
+01:08:44.451 [panel] now playing offset -63 → -65
+01:08:44.467 [panel] now playing offset -65 → -68
+01:08:44.483 [panel] now playing offset -68 → -70
+01:08:44.501 [panel] now playing offset -70 → -74
+01:08:44.534 [panel] now playing offset -74 → -76
+01:08:44.550 [panel] now playing offset -76 → -77
+01:08:44.716 [panel] now playing offset -77 → -75
+01:08:44.734 [panel] now playing offset -75 → -71
+01:08:44.750 [panel] now playing offset -71 → -68
+01:08:44.767 [panel] now playing offset -68 → -63
+01:08:44.782 [panel] now playing offset -63 → -59
+01:08:44.799 [panel] now playing offset -59 → -55
+01:08:44.816 [panel] now playing offset -55 → -51
+01:08:44.833 [panel] now playing offset -51 → -47
+01:08:44.849 [panel] now playing offset -47 → -43
+01:08:44.867 [panel] now playing offset -43 → -40
+01:08:44.883 [panel] now playing offset -40 → -37
+01:08:44.900 [panel] now playing offset -37 → -34
+01:08:44.916 [panel] now playing offset -34 → -32
+01:08:44.933 [panel] now playing offset -32 → -30
+01:08:44.949 [panel] now playing offset -30 → -28
+01:08:44.967 [panel] now playing offset -28 → -26
+01:08:44.983 [panel] now playing offset -26 → -24
+01:08:45.000 [panel] now playing offset -24 → -23
+01:08:45.016 [panel] now playing offset -23 → -22
+01:08:45.033 [panel] now playing offset -22 → -21
+01:08:45.078 [panel] now playing offset -21 → -20
+01:08:45.083 [panel] now playing offset -20 → -18
+01:08:45.116 [panel] now playing offset -18 → -17
+01:08:45.149 [panel] now playing offset -17 → -16
+01:08:45.216 [panel] now playing offset -16 → -15
+01:08:45.333 [panel] now playing offset -15 → -14
+01:08:46.970 [panel] now playing offset -14 → -16
+01:08:47.002 [panel] now playing offset -16 → -19
+01:08:47.017 [panel] now playing offset -19 → -23
+01:08:47.035 [panel] now playing offset -23 → -27
+01:08:47.050 [panel] now playing offset -27 → -31
+01:08:47.069 [panel] now playing offset -31 → -35
+01:08:47.085 [panel] now playing offset -35 → -39
+01:08:47.101 [panel] now playing offset -39 → -42
+01:08:47.117 [panel] now playing offset -42 → -45
+01:08:47.135 [panel] now playing offset -45 → -49
+01:08:47.151 [panel] now playing offset -49 → -52
+01:08:47.169 [panel] now playing offset -52 → -55
+01:08:47.184 [panel] now playing offset -55 → -58
+01:08:47.202 [panel] now playing offset -58 → -60
+01:08:47.218 [panel] now playing offset -60 → -63
+01:08:47.235 [panel] now playing offset -63 → -68
+01:08:47.268 [panel] now playing offset -68 → -70
+01:08:47.283 [panel] now playing offset -70 → -72
+01:08:47.301 [panel] now playing offset -72 → -74
+01:08:47.317 [panel] now playing offset -74 → -76
+01:08:47.335 [panel] now playing offset -76 → -77
+01:08:47.500 [panel] now playing offset -77 → -75
+01:08:47.516 [panel] now playing offset -75 → -71
+01:08:47.533 [panel] now playing offset -71 → -67
+01:08:47.549 [panel] now playing offset -67 → -63
+01:08:47.566 [panel] now playing offset -63 → -59
+01:08:47.583 [panel] now playing offset -59 → -55
+01:08:47.600 [panel] now playing offset -55 → -51
+01:08:47.616 [panel] now playing offset -51 → -47
+01:08:47.633 [panel] now playing offset -47 → -43
+01:08:47.649 [panel] now playing offset -43 → -40
+01:08:47.667 [panel] now playing offset -40 → -37
+01:08:47.682 [panel] now playing offset -37 → -34
+01:08:47.700 [panel] now playing offset -34 → -32
+01:08:47.716 [panel] now playing offset -32 → -30
+01:08:47.733 [panel] now playing offset -30 → -28
+01:08:47.749 [panel] now playing offset -28 → -26
+01:08:47.767 [panel] now playing offset -26 → -24
+01:08:47.782 [panel] now playing offset -24 → -23
+01:08:47.800 [panel] now playing offset -23 → -22
+01:08:47.816 [panel] now playing offset -22 → -21
+01:08:47.833 [panel] now playing offset -21 → -20
+01:08:47.849 [panel] now playing offset -20 → -19
+01:08:47.867 [panel] now playing offset -19 → -18
+01:08:47.900 [panel] now playing offset -18 → -17
+01:08:47.933 [panel] now playing offset -17 → -16
+01:08:48.000 [panel] now playing offset -16 → -15
+01:08:48.117 [panel] now playing offset -15 → -14
+01:08:50.517 [ui] panel: tap outside
+01:08:50.541 [ui] panel: close nowPlaying
+01:08:51.811 [ui] panel: closed nowPlaying
+01:08:51.811 [perf] panel close nowPlaying: 72 frames in 1270 ms, worst 20 ms, 0 late (frame 16.7 ms)
+01:08:53.019 [imdb/error] webkit timeout for /title/tt31510819
+01:08:53.019 [imdb] webkit load /title/tt7263328
+01:08:53.021 [perf] imdb /title/tt31510819/ via web view 25772 ms
+01:08:53.021 [imdb] /title/tt31510819/episodes/: joined the same request already out
+01:08:53.164 [imdb] HTTP 202 for /title/tt31510819/episodes/ (1997 bytes) → web view
+01:08:54.033 [ui] panel nowPlaying
+01:08:54.033 [ui] present panel nowPlaying from bar item 340×≤290
+01:08:54.033 [ui] panel: want nowPlaying (shown=none idle)
+01:08:54.033 [ui] panel: open nowPlaying
+01:08:54.039 [ui] present panel nowPlaying from bar item 340×≤290
+01:08:54.057 [panel] now playing opens on q5 at will appear, row at y 300 (tab 0, item 6 of 10, chapter -1)
+01:08:54.066 [panel] now playing opens on q5 at is appearing, row at y 300 (tab 0, item 6 of 10, chapter -1)
+01:08:54.068 [panel] now playing built on q5 (tab 0, item 6 of 10, chapter -1)
+01:08:54.073 [panel] now playing offset -14 → 244
+01:08:54.112 [panel] now playing opens on q5 at will appear +1, row at y 300 (tab 0, item 6 of 10, chapter -1)
+01:08:54.609 [imdb] webkit nav 1: no data yet (waf=true, 2181 chars)
+01:08:55.077 [panel] now playing opens on q5 at did appear, row at y 300 (tab 0, item 6 of 10, chapter -1)
+01:08:55.089 [ui] panel: opened nowPlaying
+01:08:55.089 [perf] panel open nowPlaying: 58 frames in 1055 ms, worst 99 ms, 1 late (frame 16.7 ms) · built in 0 ms, 0 ms after the tap
+01:08:55.249 [ui] menu nowPlaying pressed: frames over 25 ms: 98 ms at +-18
+01:08:55.999 [energy] cpu 3% (main 3%) mem 80 MB (0 MB left) thermal=nominal playing=no
+01:08:57.727 [image] tile MobLand disappeared (loader #11)
+01:08:57.727 [image] tile Lab Show disappeared (loader #10)
+01:08:57.728 [image] tile Dragon Ball Super Beerus disappeared (loader #9)
+01:08:57.728 [image] tile Classroom of the Elite disappeared (loader #8)
+01:08:57.761 [image] tile Lab Show appeared (loader #24, picture none yet)
+01:08:57.761 [image] loader #24 Lab Show S01E01.mp4|poster|504: not in memory, loading
+01:08:57.762 [image] tile Dragon Ball Super Beerus appeared (loader #23, picture none yet)
+01:08:57.762 [image] loader #23 Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.A: not in memory, loading
+01:08:57.762 [image] tile Classroom of the Elite appeared (loader #22, picture none yet)
+01:08:57.762 [image] loader #22 Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC: not in memory, loading
+01:08:57.770 [zoom] source 0|s|classroom of the elite added at (20.0, 470.0, 124.0, 187.0)
+01:08:57.771 [zoom] source 0|s|dragon ball super beerus added at (158.0, 470.0, 124.0, 187.0)
+01:08:57.772 [zoom] source 0|s|lab show added at (296.0, 470.0, 124.0, 187.0)
+01:08:57.772 [zoom] source 0|s|mobland removed from the window
+01:08:57.773 [zoom] source 0|s|lab show removed from the window
+01:08:57.773 [zoom] source 0|s|dragon ball super beerus removed from the window
+01:08:57.773 [zoom] source 0|s|classroom of the elite removed from the window
+01:08:57.782 [image] tile MobLand appeared (loader #6, picture none yet)
+01:08:58.067 [layout] row 0 of 3 columns for 440 pt at (20, 470, 400, 235)
+01:08:58.068 [layout] Lab Show at (276, 0, 124, 234)
+01:08:58.068 [layout] Dragon Ball Super Beerus at (138, 0, 124, 234)
+01:08:58.068 [layout] Classroom of the Elite at (0, 0, 124, 234)

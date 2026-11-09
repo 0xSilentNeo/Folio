@@ -1,0 +1,178 @@
+Command line invocation:
+    /Applications/Xcode_27.2.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project Folio.xcodeproj -scheme Folio -configuration Release -destination id=CAD4F983-CE4C-41E7-84A5-DFFD6F0CF3CA -derivedDataPath build "-only-testing:FolioUITests/NowPlayingReopenUITests"
+
+2026-11-09 01:07:38.368208+0000 FolioUITests-Runner[27251:74251] [Default] Running tests...
+objc[27251]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.2.8117.0.4dsFuy/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x107f88310) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.2.8117.0.4dsFuy/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x107f1c398). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-11-09 01:07:44.835.
+Test Suite 'FolioUITests.xctest' started at 2026-11-09 01:07:44.837.
+Test Suite 'NowPlayingReopenUITests' started at 2026-11-09 01:07:44.838.
+Test Case '-[FolioUITests.NowPlayingReopenUITests testFirstOpeningAfterTheEpisodeChanged]' started.
+    t =     0.00s Start Test at 2026-11-09 01:07:44.841
+    t =     0.05s Set Up
+    t =     0.05s Open dev.silentneo.folio
+    t =     0.05s     Launch dev.silentneo.folio
+2026-11-09 01:07:45.535 xcodebuild[26810:73147] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-09 01:07:45.535 xcodebuild[26810:73147] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     3.88s         Setting up automation session
+    t =     7.11s         Wait for dev.silentneo.folio to idle
+<unknown>:0: warning: -[FolioUITests.NowPlayingReopenUITests testFirstOpeningAfterTheEpisodeChanged] : This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    10.95s Setting device orientation to Landscape Left
+    t =    10.95s     Interface orientation changed to Landscape Right
+    t =    10.98s     Device orientation changed to Landscape Left
+    t =    11.07s     Wait for dev.silentneo.folio to idle
+    t =    13.01s Waiting 20.0s for "Now Playing" Button to exist
+    t =    14.07s     Checking `Expect predicate `existsNoRetry == 1` for object "Now Playing" Button`
+    t =    14.07s         Checking existence of `"Now Playing" Button`
+    t =    22.67s Tap "Now Playing" Button
+    t =    22.67s     Wait for dev.silentneo.folio to idle
+    t =    22.67s     Find the "Now Playing" Button
+    t =    22.74s     Check for interrupting elements affecting "Now Playing" Button
+    t =    22.79s     Synthesize event
+    t =    23.26s     Wait for dev.silentneo.folio to idle
+    t =    24.36s Waiting 5.0s for "q8" Button to exist
+    t =    25.41s     Checking `Expect predicate `existsNoRetry == 1` for object "q8" Button`
+    t =    25.41s         Checking existence of `"q8" Button`
+    t =    28.70s Find the "q0" Button
+    t =    29.00s Find the "q8" Button
+    t =    30.00s Find the Window (First Match)
+NOWPLAYING first opening on E9: E1 (554.0, -238.66666666666663, 308.0, 47.99999999999997) E9 (554.0, 241.33333333333334, 308.0, 48.00000000000003) window (0.0, 0.0, 956.0, 440.0)
+    t =    30.02s Find the "q8" Button
+    t =    30.69s Find the Window (First Match)
+    t =    30.73s Find the "q8" Button
+    t =    31.09s Find the "q8" Button
+    t =    31.28s Find the "q8" Button
+    t =    31.46s Setting device orientation to Portrait
+    t =    31.46s     Device orientation changed to Portrait
+    t =    31.61s     Interface orientation changed to Portrait
+    t =    31.61s     Wait for dev.silentneo.folio to idle
+    t =    32.04s Tear Down
+Test Case '-[FolioUITests.NowPlayingReopenUITests testFirstOpeningAfterTheEpisodeChanged]' passed (33.255 seconds).
+Test Case '-[FolioUITests.NowPlayingReopenUITests testReopensOnThePlayingEpisode]' started.
+    t =     0.00s Start Test at 2026-11-09 01:08:18.097
+    t =     0.03s Set Up
+    t =     0.03s Open dev.silentneo.folio
+    t =     0.03s     Launch dev.silentneo.folio
+    t =     0.03s         Terminate dev.silentneo.folio:27715
+2026-11-09 01:08:19.168 xcodebuild[26810:73147] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-09 01:08:19.168 xcodebuild[26810:73147] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.20s         Setting up automation session
+    t =     6.71s         Wait for dev.silentneo.folio to idle
+<unknown>:0: warning: -[FolioUITests.NowPlayingReopenUITests testReopensOnThePlayingEpisode] : This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    10.33s Setting device orientation to Landscape Left
+    t =    10.33s     Interface orientation changed to Landscape Right
+    t =    10.62s     Device orientation changed to Landscape Left
+    t =    10.64s     Wait for dev.silentneo.folio to idle
+    t =    11.30s Waiting 20.0s for "Now Playing" Button to exist
+    t =    12.37s     Checking `Expect predicate `existsNoRetry == 1` for object "Now Playing" Button`
+    t =    12.37s         Checking existence of `"Now Playing" Button`
+    t =    15.46s Tap "Now Playing" Button
+    t =    15.46s     Wait for dev.silentneo.folio to idle
+    t =    15.46s     Find the "Now Playing" Button
+    t =    15.53s     Check for interrupting elements affecting "Now Playing" Button
+    t =    15.60s     Synthesize event
+    t =    15.96s     Wait for dev.silentneo.folio to idle
+    t =    16.90s Waiting 5.0s for "q5" Button to exist
+    t =    17.97s     Checking `Expect predicate `existsNoRetry == 1` for object "q5" Button`
+    t =    17.97s         Checking existence of `"q5" Button`
+    t =    20.13s Find the "q5" Button
+    t =    20.26s Find the "q5" Button
+    t =    20.35s Press Target Application 'dev.silentneo.folio'[0.00, 0.00] -> (708.0, 241.3) for 0.1 seconds, then drag to Target Application 'dev.silentneo.folio'[0.00, 0.00] -> (708.0, 501.3) with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    20.35s     Wait for dev.silentneo.folio to idle
+    t =    20.35s     Find the Target Application 'dev.silentneo.folio'
+    t =    20.39s     Check for interrupting elements affecting "Folio" Application
+    t =    20.42s     Synthesize event
+    t =    20.43s         Find the Target Application 'dev.silentneo.folio'
+    t =    20.47s         Find the Target Application 'dev.silentneo.folio'
+    t =    20.50s         Find the Target Application 'dev.silentneo.folio'
+    t =    20.52s         Find the Target Application 'dev.silentneo.folio'
+    t =    20.55s         Find the Target Application 'dev.silentneo.folio'
+    t =    21.41s     Wait for dev.silentneo.folio to idle
+    t =    23.10s Press Target Application 'dev.silentneo.folio'[0.00, 0.00] -> (708.0, 241.3) for 0.1 seconds, then drag to Target Application 'dev.silentneo.folio'[0.00, 0.00] -> (708.0, 501.3) with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    23.10s     Wait for dev.silentneo.folio to idle
+    t =    23.10s     Find the Target Application 'dev.silentneo.folio'
+    t =    23.13s     Check for interrupting elements affecting "Folio" Application
+    t =    23.17s     Synthesize event
+    t =    23.17s         Find the Target Application 'dev.silentneo.folio'
+    t =    23.19s         Find the Target Application 'dev.silentneo.folio'
+    t =    23.23s         Find the Target Application 'dev.silentneo.folio'
+    t =    23.26s         Find the Target Application 'dev.silentneo.folio'
+    t =    23.29s         Find the Target Application 'dev.silentneo.folio'
+    t =    24.14s     Wait for dev.silentneo.folio to idle
+    t =    25.72s Press Target Application 'dev.silentneo.folio'[0.00, 0.00] -> (708.0, 241.3) for 0.1 seconds, then drag to Target Application 'dev.silentneo.folio'[0.00, 0.00] -> (708.0, 501.3) with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    25.72s     Wait for dev.silentneo.folio to idle
+    t =    25.73s     Find the Target Application 'dev.silentneo.folio'
+    t =    25.76s     Check for interrupting elements affecting "Folio" Application
+    t =    25.79s     Synthesize event
+    t =    25.79s         Find the Target Application 'dev.silentneo.folio'
+    t =    25.82s         Find the Target Application 'dev.silentneo.folio'
+    t =    25.88s         Find the Target Application 'dev.silentneo.folio'
+    t =    25.91s         Find the Target Application 'dev.silentneo.folio'
+    t =    25.94s         Find the Target Application 'dev.silentneo.folio'
+    t =    26.80s     Wait for dev.silentneo.folio to idle
+    t =    28.39s Press Target Application 'dev.silentneo.folio'[0.00, 0.00] -> (708.0, 241.3) for 0.1 seconds, then drag to Target Application 'dev.silentneo.folio'[0.00, 0.00] -> (708.0, 501.3) with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    28.39s     Wait for dev.silentneo.folio to idle
+    t =    28.39s     Find the Target Application 'dev.silentneo.folio'
+    t =    28.46s     Check for interrupting elements affecting "Folio" Application
+    t =    28.53s     Synthesize event
+    t =    28.53s         Find the Target Application 'dev.silentneo.folio'
+    t =    28.57s         Find the Target Application 'dev.silentneo.folio'
+    t =    28.60s         Find the Target Application 'dev.silentneo.folio'
+    t =    28.68s         Find the Target Application 'dev.silentneo.folio'
+    t =    28.72s         Find the Target Application 'dev.silentneo.folio'
+    t =    29.58s     Wait for dev.silentneo.folio to idle
+    t =    31.18s Find the "q0" Button
+    t =    31.26s Find the "q5" Button
+NOWPLAYING after scrolling: E1 (554.0, 199.66666666666666, 308.0, 48.0) E6 (554.0, 499.66666666666663, 308.0, 48.0)
+    t =    31.36s Checking existence of `"q0" Button`
+    t =    31.44s Find the "q0" Button
+    t =    31.52s Find the Window (First Match)
+    t =    31.53s Find the "q0" Button
+    t =    31.61s Find the "q0" Button
+    t =    31.69s Find the "q0" Button
+    t =    31.79s Checking existence of `"q5" Button`
+    t =    31.88s Find the "q5" Button
+    t =    31.96s Find the Window (First Match)
+    t =    31.97s Find the "q5" Button
+    t =    32.07s Find the "q5" Button
+    t =    32.16s Tap Target Application 'dev.silentneo.folio'[0.15, 0.50]
+    t =    32.16s     Wait for dev.silentneo.folio to idle
+    t =    32.16s     Find the Target Application 'dev.silentneo.folio'
+    t =    32.19s     Check for interrupting elements affecting "Folio" Application
+    t =    32.22s     Synthesize event
+    t =    32.23s         Find the Target Application 'dev.silentneo.folio'
+    t =    32.25s         Find the Target Application 'dev.silentneo.folio'
+    t =    32.29s         Find the Target Application 'dev.silentneo.folio'
+    t =    32.62s     Wait for dev.silentneo.folio to idle
+    t =    35.75s Tap "Now Playing" Button
+    t =    35.75s     Wait for dev.silentneo.folio to idle
+    t =    35.76s     Find the "Now Playing" Button
+    t =    35.79s     Check for interrupting elements affecting "Now Playing" Button
+    t =    35.82s     Synthesize event
+    t =    36.14s     Wait for dev.silentneo.folio to idle
+    t =    39.01s Find the "q0" Button
+    t =    39.11s Find the "q5" Button
+NOWPLAYING reopened: E1 (554.0, -58.666666666666714, 308.0, 48.0) E6 (554.0, 241.3333333333333, 308.0, 47.99999999999997), first open E6 (554.0, 241.3333333333333, 308.0, 47.99999999999997)
+    t =    39.20s Find the "q5" Button
+    t =    39.30s Setting device orientation to Portrait
+    t =    39.31s     Device orientation changed to Portrait
+    t =    39.41s     Interface orientation changed to Portrait
+    t =    39.42s     Wait for dev.silentneo.folio to idle
+    t =    39.81s Tear Down
+Test Case '-[FolioUITests.NowPlayingReopenUITests testReopensOnThePlayingEpisode]' passed (40.090 seconds).
+Test Suite 'NowPlayingReopenUITests' passed at 2026-11-09 01:08:58.187.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 73.344 (73.349) seconds
+Test Suite 'FolioUITests.xctest' passed at 2026-11-09 01:08:58.196.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 73.344 (73.358) seconds
+Test Suite 'Selected tests' passed at 2026-11-09 01:08:58.235.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 73.344 (73.400) seconds
+2026-11-09 01:09:51.548 xcodebuild[26810:73147] [MT] IDETestOperationsObserverDebug: 137.639 elapsed -- Testing started completed.
+2026-11-09 01:09:51.548 xcodebuild[26810:73147] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-11-09 01:09:51.549 xcodebuild[26810:73147] [MT] IDETestOperationsObserverDebug: 137.639 sec, +137.639 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/Folio/Folio/build/Logs/Test/Test-Folio-2026.11.09_01-07-33-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
