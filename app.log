@@ -1,0 +1,237 @@
+00:20:25.566 [app] what's new: 1.0.0, last shown none
+00:20:25.599 [app] launch v1.0.0 (1) iOS 27.2 arm64 free=29.45 GB
+00:20:25.788 [dl] list: 0 item(s), 0 done
+00:20:27.348 [scene] 82EFD59B connects (portrait)
+00:20:27.359 [scene] 82EFD59B will enter foreground (portrait)
+00:20:27.568 [addons] 0 installed
+00:20:28.045 [hang] main thread unresponsive for 2.5 s
+00:20:28.289 [app] first screen 9215 ms after process start
+00:20:28.289 [app] root view appeared (1 in this run, splash on)
+00:20:28.290 [app] launch splash shown
+00:20:29.571 [scene] 82EFD59B active (portrait)
+00:20:29.574 [app] active
+00:20:29.578 [widget] App Group group.dev.silentneo.folio
+00:20:29.585 [widget] snapshot: 0 item(s), 0 with a picture
+00:20:30.103 [app] Home: appeared 428 ms after the root view, next frame at 1342 ms, main thread free at 1813 ms
+00:20:30.296 [tracking] 0 tracked show(s)
+00:20:30.352 [tracking] Airing widget: 0 show(s)
+00:20:30.560 [tracking] background refresh not scheduled: BGTaskScheduler is not available on this platform.
+00:20:30.969 [library] metadata index: 0 of 1 title(s) found in 930 ms
+00:20:35.227 [notify] holidays: 22 for US
+00:21:57.621 [app] what's new: 1.0.0, last shown 1.0.0
+00:21:57.649 [app] launch v1.0.0 (1) iOS 27.2 arm64 free=29.18 GB
+00:21:57.707 [dl] list: 0 item(s), 0 done
+00:21:59.667 [scene] 82EFD59B connects (portrait)
+00:21:59.668 [scene] 82EFD59B will enter foreground (portrait)
+00:21:59.857 [history] library files: 20 entr(ies) moved to this install's folder, 9 duplicate(s) merged
+00:21:59.881 [addons] 0 installed
+00:22:00.111 [hang] main thread unresponsive for 2.5 s
+00:22:00.621 [app] first screen 10356 ms after process start
+00:22:00.621 [app] root view appeared (1 in this run, splash on)
+00:22:00.621 [app] launch splash shown
+00:22:01.914 [image] loader #1 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+00:22:01.914 [image] loader #2 Daemons.of.the.Shadow.Realm.2026.S01E15.1080p.CR.WEB.DL.DUAL: not in memory, loading
+00:22:02.173 [player] play requested: 10 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/CAD4F983-CE4C-41E7-84A5-DFFD6F0CF3CA/data/Containers/Bundle/Application/0919F749-C25E-4140-9E84-4DDA3F25E750/Folio.app/lab/lab.mp4
+00:22:03.521 [ui] player toolbar 190 pt, its views:
+UICoreHostingView<RootView> x 0…190 w 190
+  _UIInheritedView x 20…170 w 150
+    _UIInheritedView x 20…170 w 150
+      _UIInheritedView x 20…20 w 0
+        UIPlatformGlassInteractionView x 62…110 w 48
+          _UIInheritedView x 62…110 w 48
+        UIPlatformGlassInteractionView x 122…170 w 48
+          _UIInheritedView x 122…170 w 48
+_UIPointerInteractionAssistantEffectContainerView x 0…0 w 0
+00:22:03.750 [scene] 82EFD59B active (portrait)
+00:22:03.777 [app] active
+00:22:03.869 [widget] App Group group.dev.silentneo.folio
+00:22:03.871 [tracking] 0 tracked show(s)
+00:22:03.888 [ui] player toolbar: capsule at 62…110 pt of the 190 pt toolbar
+00:22:04.045 [tracking] background refresh not scheduled: BGTaskScheduler is not available on this platform.
+00:22:04.565 [player] start renderer=metal
+00:22:04.565 [lab] engine not started (lab)
+00:22:05.486 [ui] player toolbar: its buttons didn't all fit; now 202 pt wide
+00:22:05.876 [image] tile MobLand appeared (loader #6, picture none yet)
+00:22:05.876 [image] loader #6 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+00:22:05.982 [zoom] source 0|s|mobland added at (20.0, 722.0, 124.0, 187.0)
+00:22:05.987 [image] tile Lab Show appeared (loader #5, picture none yet)
+00:22:05.987 [image] loader #5 Lab Show S01E01.mp4|poster|504: not in memory, loading
+00:22:05.987 [image] tile Dragon Ball Super Beerus appeared (loader #4, picture none yet)
+00:22:05.987 [image] loader #4 Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.A: not in memory, loading
+00:22:06.088 [image] tile Classroom of the Elite appeared (loader #3, picture none yet)
+00:22:06.088 [image] loader #3 Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC: not in memory, loading
+00:22:06.090 [zoom] source 0|s|classroom of the elite added at (20.0, 470.0, 124.0, 187.0)
+00:22:06.090 [zoom] source 0|s|dragon ball super beerus added at (158.0, 470.0, 124.0, 187.0)
+00:22:06.091 [zoom] source 0|s|lab show added at (296.0, 470.0, 124.0, 187.0)
+00:22:06.478 [ui] player toolbar: capsule at 30…182 pt of the 202 pt toolbar
+00:22:06.481 [app] Home: appeared 686 ms after the root view, next frame at 5567 ms, main thread free at 5860 ms
+00:22:06.482 [layout] row 1 of 3 columns for 440 pt at (20, 722, 400, 234)
+00:22:06.482 [layout] MobLand at (0, 0, 124, 234)
+00:22:06.489 [imdb] /title/tt31510819/: joined the same request already out
+00:22:06.513 [layout] row 0 of 3 columns for 440 pt at (20, 470, 400, 235)
+00:22:06.513 [layout] Lab Show at (276, 0, 124, 234)
+00:22:06.513 [layout] Dragon Ball Super Beerus at (138, 0, 124, 234)
+00:22:06.771 [layout] Classroom of the Elite at (0, 0, 124, 234)
+00:22:06.889 [perf] panel tracks prebuilt in 71 ms
+00:22:07.469 [perf] panel settings prebuilt in 557 ms
+00:22:07.525 [imdb] /title/tt7263328/: joined the same request already out
+00:22:07.729 [perf] panel nowPlaying prebuilt in 46 ms
+00:22:07.786 [panel] now playing built on q8 (tab 0, item 9 of 10, chapter -1)
+00:22:07.787 [image] loader #16 lab-10|wide|192: not in memory, loading
+00:22:07.787 [image] loader #15 lab-9|wide|192: not in memory, loading
+00:22:07.787 [image] loader #14 lab-8|wide|192: not in memory, loading
+00:22:07.787 [image] loader #13 lab-7|wide|192: not in memory, loading
+00:22:07.787 [image] loader #12 lab-6|wide|192: not in memory, loading
+00:22:07.787 [image] loader #11 lab-5|wide|192: not in memory, loading
+00:22:07.787 [image] loader #10 lab-4|wide|192: not in memory, loading
+00:22:07.848 [image] loader #9 lab-3|wide|192: not in memory, loading
+00:22:07.848 [image] loader #8 lab-2|wide|192: not in memory, loading
+00:22:07.849 [image] loader #7 lab-1|wide|192: not in memory, loading
+00:22:08.562 [image] tile MobLand disappeared (loader #6)
+00:22:08.820 [image] tile Lab Show disappeared (loader #5)
+00:22:08.820 [image] tile Dragon Ball Super Beerus disappeared (loader #4)
+00:22:08.820 [image] tile Classroom of the Elite disappeared (loader #3)
+00:22:08.860 [image] tile MobLand appeared (loader #21, picture none yet)
+00:22:08.860 [image] loader #21 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+00:22:08.860 [image] tile Lab Show appeared (loader #20, picture none yet)
+00:22:08.860 [image] loader #20 Lab Show S01E01.mp4|poster|504: not in memory, loading
+00:22:08.860 [image] tile Dragon Ball Super Beerus appeared (loader #19, picture none yet)
+00:22:08.967 [image] loader #19 Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.A: not in memory, loading
+00:22:08.967 [image] tile Classroom of the Elite appeared (loader #18, picture none yet)
+00:22:08.967 [image] loader #18 Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC: not in memory, loading
+00:22:08.968 [zoom] source 0|s|classroom of the elite added at (90.0, 397.0, 118.0, 177.0)
+00:22:08.969 [zoom] source 0|s|dragon ball super beerus added at (221.0, 397.0, 119.0, 177.0)
+00:22:08.970 [zoom] source 0|s|lab show added at (353.0, 397.0, 118.0, 177.0)
+00:22:08.970 [zoom] source 0|s|mobland added at (485.0, 397.0, 118.0, 177.0)
+00:22:08.971 [zoom] source 0|s|lab show removed from the window
+00:22:09.021 [zoom] source 0|s|dragon ball super beerus removed from the window
+00:22:09.022 [zoom] source 0|s|classroom of the elite removed from the window
+00:22:09.033 [image] loader #17 The.Gentlemen.S01E08.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.2: not in memory, loading
+00:22:09.454 [layout] row 0 of 6 columns for 832 pt at (90, 397, 776, 225)
+00:22:09.454 [layout] MobLand at (395, 0, 118, 224)
+00:22:09.454 [layout] Lab Show at (263, 0, 118, 224)
+00:22:09.455 [layout] Dragon Ball Super Beerus at (131, 0, 119, 224)
+00:22:09.455 [layout] Classroom of the Elite at (0, 0, 118, 224)
+00:22:09.456 [ui] player toolbar: capsule at 38…192 pt of the 202 pt toolbar
+00:22:10.403 [imdb] HTTP 202 for /title/tt13210838/ (1997 bytes) → web view
+00:22:10.403 [imdb] webkit load /title/tt13210838
+00:22:10.405 [imdb] HTTP 202 for /title/tt31510819/ (1997 bytes) → web view
+00:22:10.408 [imdb] HTTP 202 for /title/tt37532356/ (1997 bytes) → web view
+00:22:11.926 [perf] panel tracks prebuilt in 11 ms
+00:22:12.388 [perf] panel settings prebuilt in 165 ms
+00:22:12.546 [perf] panel nowPlaying prebuilt in 31 ms
+00:22:12.548 [panel] now playing built on q8 (tab 0, item 9 of 10, chapter -1)
+00:22:12.549 [image] loader #31 lab-10|wide|192: not in memory, loading
+00:22:12.549 [image] loader #30 lab-9|wide|192: not in memory, loading
+00:22:12.549 [image] loader #29 lab-8|wide|192: not in memory, loading
+00:22:12.549 [image] loader #28 lab-7|wide|192: not in memory, loading
+00:22:12.549 [image] loader #27 lab-6|wide|192: not in memory, loading
+00:22:12.550 [image] loader #26 lab-5|wide|192: not in memory, loading
+00:22:12.550 [image] loader #25 lab-4|wide|192: not in memory, loading
+00:22:12.550 [image] loader #24 lab-3|wide|192: not in memory, loading
+00:22:12.551 [image] loader #23 lab-2|wide|192: not in memory, loading
+00:22:12.551 [image] loader #22 lab-1|wide|192: not in memory, loading
+00:22:14.061 [imdb] HTTP 202 for /title/tt7263328/ (1997 bytes) → web view
+00:22:14.061 [imdb] HTTP 202 for /title/tt39395275/ (1997 bytes) → web view
+00:22:14.188 [imdb] HTTP 202 for /chart/tvmeter/ (1997 bytes) → web view
+00:22:14.189 [imdb] HTTP 202 for /title/tt0091369/ (1997 bytes) → web view
+00:22:14.202 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+00:22:15.328 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+00:22:20.886 [ui] panel nowPlaying
+00:22:20.890 [ui] present panel nowPlaying from bar item 340×≤290
+00:22:20.890 [ui] panel: want nowPlaying (shown=none idle)
+00:22:20.908 [ui] panel: open nowPlaying
+00:22:21.053 [ui] present panel nowPlaying from bar item 340×≤290
+00:22:21.113 [panel] now playing opens on q8 (tab 0, item 9 of 10, chapter -1)
+00:22:21.113 [panel] now playing opens on q8 (tab 0, item 9 of 10, chapter -1)
+00:22:21.336 [panel] now playing opens on q8 (tab 0, item 9 of 10, chapter -1)
+00:22:21.336 [panel] now playing opens on q8 (tab 0, item 9 of 10, chapter -1)
+00:22:22.098 [ui] menu nowPlaying pressed: frames over 25 ms: 71 ms at +944, 28 ms at +1015
+00:22:22.294 [ui] panel: opened nowPlaying
+00:22:22.297 [perf] panel open nowPlaying: 51 frames in 1386 ms, worst 71 ms, 2 late (frame 16.7 ms) · built in 18 ms, 18 ms after the tap
+00:22:39.085 [app] what's new: 1.0.0, last shown 1.0.0
+00:22:39.091 [app] launch v1.0.0 (1) iOS 27.2 arm64 free=29.17 GB
+00:22:39.120 [dl] list: 0 item(s), 0 done
+00:22:40.098 [scene] 82EFD59B connects (landscape)
+00:22:40.100 [scene] 82EFD59B will enter foreground (landscape)
+00:22:40.237 [history] library files: 20 entr(ies) moved to this install's folder, 9 duplicate(s) merged
+00:22:40.247 [addons] 0 installed
+00:22:40.439 [app] first screen 7343 ms after process start
+00:22:40.439 [app] root view appeared (1 in this run, splash on)
+00:22:40.440 [app] launch splash shown
+00:22:41.134 [image] loader #3 The.Gentlemen.S01E08.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.2: not in memory, loading
+00:22:41.134 [image] loader #2 Daemons.of.the.Shadow.Realm.2026.S01E15.1080p.CR.WEB.DL.DUAL: not in memory, loading
+00:22:41.134 [image] loader #1 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+00:22:41.571 [player] play requested: 10 item(s), index 5, first=/Users/runner/Library/Developer/CoreSimulator/Devices/CAD4F983-CE4C-41E7-84A5-DFFD6F0CF3CA/data/Containers/Bundle/Application/0919F749-C25E-4140-9E84-4DDA3F25E750/Folio.app/lab/lab.mp4
+00:22:41.635 [hang] main thread unresponsive for 2.5 s
+00:22:42.265 [ui] player toolbar 190 pt, its views:
+UICoreHostingView<RootView> x 0…190 w 190
+  _UIInheritedView x 10…180 w 170
+    _UIInheritedView x 10…180 w 170
+      _UIInheritedView x 10…10 w 0
+        UIPlatformGlassInteractionView x 26…180 w 154
+          _UIInheritedView x 26…72 w 46
+          _UIInheritedView x 80…126 w 46
+          _UIInheritedView x 134…180 w 46
+_UIPointerInteractionAssistantEffectContainerView x 0…0 w 0
+00:22:42.323 [scene] 82EFD59B active (landscape)
+00:22:42.356 [app] active
+00:22:42.485 [widget] App Group group.dev.silentneo.folio
+00:22:42.560 [tracking] 0 tracked show(s)
+00:22:42.609 [ui] player toolbar: capsule at 26…180 pt of the 190 pt toolbar
+00:22:42.898 [zoom] source 0|s|classroom of the elite added at (90.0, 397.0, 118.0, 177.0)
+00:22:42.899 [zoom] source 0|s|dragon ball super beerus added at (221.0, 397.0, 119.0, 177.0)
+00:22:42.899 [zoom] source 0|s|lab show added at (353.0, 397.0, 118.0, 177.0)
+00:22:42.900 [zoom] source 0|s|mobland added at (485.0, 397.0, 118.0, 177.0)
+00:22:42.918 [image] tile MobLand appeared (loader #7, picture none yet)
+00:22:42.918 [image] loader #7 MobLand.S01E04.Rat.Trap.1080p.Blu-ray.Remux.AVC.TrueHD.5.1-S: not in memory, loading
+00:22:42.918 [image] tile Lab Show appeared (loader #6, picture none yet)
+00:22:42.918 [image] loader #6 Lab Show S01E01.mp4|poster|504: not in memory, loading
+00:22:42.922 [image] tile Dragon Ball Super Beerus appeared (loader #5, picture none yet)
+00:22:42.923 [image] loader #5 Dragon.Ball.Super.Beerus.S01E02.REPACK.1080p.CR.WEB-DL.JPN.A: not in memory, loading
+00:22:42.923 [image] tile Classroom of the Elite appeared (loader #4, picture none yet)
+00:22:42.923 [image] loader #4 Classroom.of.the.Elite.S01E08.Man.is.a.poor.judge.1080p.FLAC: not in memory, loading
+00:22:43.254 [player] start renderer=metal
+00:22:43.254 [lab] engine not started (lab)
+00:22:43.270 [app] Home: appeared 349 ms after the root view, next frame at 2215 ms, main thread free at 2831 ms
+00:22:43.292 [imdb] /title/tt7263328/: joined the same request already out
+00:22:43.292 [imdb] /title/tt31510819/: joined the same request already out
+00:22:43.299 [layout] row 0 of 6 columns for 832 pt at (90, 397, 776, 225)
+00:22:43.299 [layout] MobLand at (395, 0, 118, 224)
+00:22:43.299 [layout] Lab Show at (263, 0, 118, 224)
+00:22:43.299 [layout] Dragon Ball Super Beerus at (131, 0, 119, 224)
+00:22:43.299 [layout] Classroom of the Elite at (0, 0, 118, 224)
+00:22:43.900 [tracking] background refresh not scheduled: BGTaskScheduler is not available on this platform.
+00:22:44.097 [imdb] HTTP 202 for /title/tt13210838/ (1997 bytes) → web view
+00:22:44.097 [imdb] HTTP 202 for /title/tt7263328/ (1997 bytes) → web view
+00:22:44.098 [imdb] HTTP 202 for /title/tt39395275/ (1997 bytes) → web view
+00:22:44.099 [imdb] HTTP 202 for /title/tt37532356/ (1997 bytes) → web view
+00:22:44.099 [imdb] HTTP 202 for /title/tt31510819/ (1997 bytes) → web view
+00:22:44.299 [imdb] webkit load /title/tt13210838
+00:22:44.492 [perf] panel tracks prebuilt in 70 ms
+00:22:45.085 [perf] panel settings prebuilt in 386 ms
+00:22:45.190 [perf] panel nowPlaying prebuilt in 73 ms
+00:22:45.275 [panel] now playing built on q5 (tab 0, item 6 of 10, chapter -1)
+00:22:45.275 [image] loader #17 lab-10|wide|192: not in memory, loading
+00:22:45.276 [image] loader #16 lab-9|wide|192: not in memory, loading
+00:22:45.276 [image] loader #15 lab-8|wide|192: not in memory, loading
+00:22:45.277 [image] loader #14 lab-7|wide|192: not in memory, loading
+00:22:45.277 [image] loader #13 lab-6|wide|192: not in memory, loading
+00:22:45.277 [image] loader #12 lab-5|wide|192: not in memory, loading
+00:22:45.278 [image] loader #11 lab-4|wide|192: not in memory, loading
+00:22:45.278 [image] loader #10 lab-3|wide|192: not in memory, loading
+00:22:45.344 [image] loader #9 lab-2|wide|192: not in memory, loading
+00:22:45.344 [image] loader #8 lab-1|wide|192: not in memory, loading
+00:22:45.507 [imdb] HTTP 202 for /title/tt0091369/ (1997 bytes) → web view
+00:22:46.788 [imdb] HTTP 202 for /chart/tvmeter/ (1997 bytes) → web view
+00:22:46.788 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+00:22:49.557 [ui] panel nowPlaying
+00:22:49.568 [ui] present panel nowPlaying from bar item 340×≤290
+00:22:49.568 [ui] panel: want nowPlaying (shown=none idle)
+00:22:49.570 [ui] panel: open nowPlaying
+00:22:49.591 [ui] present panel nowPlaying from bar item 340×≤290
+00:22:49.666 [panel] now playing opens on q5 (tab 0, item 6 of 10, chapter -1)
+00:22:49.819 [panel] now playing opens on q5 (tab 0, item 6 of 10, chapter -1)
+00:22:50.769 [ui] menu nowPlaying pressed: frames over 25 ms: 295 ms at +-24, 36 ms at +875
+00:22:50.777 [ui] panel: opened nowPlaying
+00:22:50.781 [perf] panel open nowPlaying: 55 frames in 1207 ms, worst 296 ms, 2 late (frame 16.7 ms) · built in 2 ms, 2 ms after the tap

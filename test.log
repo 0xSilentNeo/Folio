@@ -1,0 +1,97 @@
+Command line invocation:
+    /Applications/Xcode_27.2.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project Folio.xcodeproj -scheme Folio -configuration Release -destination id=CAD4F983-CE4C-41E7-84A5-DFFD6F0CF3CA -derivedDataPath build "-only-testing:FolioUITests/NowPlayingReopenUITests"
+
+2026-11-09 00:21:12.541541+0000 FolioUITests-Runner[65784:158182] [Default] Running tests...
+objc[65784]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.2.8117.0.mNGSuf/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x106138310) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.2.8117.0.mNGSuf/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x10616c398). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-11-09 00:21:34.424.
+Test Suite 'FolioUITests.xctest' started at 2026-11-09 00:21:34.450.
+Test Suite 'NowPlayingReopenUITests' started at 2026-11-09 00:21:34.451.
+Test Case '-[FolioUITests.NowPlayingReopenUITests testFirstOpeningAfterTheEpisodeChanged]' started.
+    t =     0.01s Start Test at 2026-11-09 00:21:34.460
+    t =     0.52s Set Up
+    t =     0.58s Open dev.silentneo.folio
+    t =     0.58s     Launch dev.silentneo.folio
+2026-11-09 00:21:39.570 xcodebuild[65079:156433] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-09 00:21:39.570 xcodebuild[65079:156433] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    17.43s         Setting up automation session
+    t =    24.56s         Wait for dev.silentneo.folio to idle
+<unknown>:0: warning: -[FolioUITests.NowPlayingReopenUITests testFirstOpeningAfterTheEpisodeChanged] : This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    32.32s             Interface orientation changed to Landscape Right
+    t =    36.37s Setting device orientation to Landscape Left
+    t =    36.45s     Device orientation changed to Landscape Left
+    t =    36.55s     Wait for dev.silentneo.folio to idle
+    t =    36.57s Waiting 20.0s for "Now Playing" Button to exist
+    t =    37.63s     Checking `Expect predicate `existsNoRetry == 1` for object "Now Playing" Button`
+    t =    37.63s         Checking existence of `"Now Playing" Button`
+    t =    45.83s Tap "Now Playing" Button
+    t =    45.83s     Wait for dev.silentneo.folio to idle
+    t =    45.83s     Find the "Now Playing" Button
+    t =    45.91s     Check for interrupting elements affecting "Now Playing" Button
+    t =    46.01s     Synthesize event
+    t =    46.58s     Wait for dev.silentneo.folio to idle
+    t =    47.86s Waiting 5.0s for "q8" Button to exist
+    t =    48.92s     Checking `Expect predicate `existsNoRetry == 1` for object "q8" Button`
+    t =    48.92s         Checking existence of `"q8" Button`
+    t =    52.12s Find the "q0" Button
+    t =    52.69s Find the "q8" Button
+    t =    53.30s Find the Window (First Match)
+NOWPLAYING first opening on E9: E1 (554.0, 199.66666666666666, 308.0, 48.0) E9 (554.0, 679.6666666666666, 308.0, 48.0) window (0.0, 0.0, 956.0, 440.0)
+    t =    53.36s Find the "q8" Button
+    t =    53.89s Find the Window (First Match)
+    t =    53.94s Find the "q8" Button
+    t =    54.44s Find the "q8" Button
+/Users/runner/work/Folio/Folio/UITests/NowPlayingReopenUITests.swift:69: error: -[FolioUITests.NowPlayingReopenUITests testFirstOpeningAfterTheEpisodeChanged] : XCTAssertTrue failed - E9 not on screen on the first opening (the list was left on E1)
+    t =    55.75s Tear Down
+Test Case '-[FolioUITests.NowPlayingReopenUITests testFirstOpeningAfterTheEpisodeChanged]' failed (56.230 seconds).
+Test Case '-[FolioUITests.NowPlayingReopenUITests testReopensOnThePlayingEpisode]' started.
+    t =     0.00s Start Test at 2026-11-09 00:22:30.692
+    t =     0.04s Set Up
+    t =     0.04s Open dev.silentneo.folio
+    t =     0.04s     Launch dev.silentneo.folio
+    t =     0.04s         Terminate dev.silentneo.folio:66854
+    t =     0.80s             Interface orientation changed to Portrait
+2026-11-09 00:22:32.798 xcodebuild[65079:156433] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-09 00:22:32.798 xcodebuild[65079:156433] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     2.63s         Interface orientation changed to Landscape Right
+    t =     2.64s         Setting up automation session
+    t =     9.20s         Wait for dev.silentneo.folio to idle
+<unknown>:0: warning: -[FolioUITests.NowPlayingReopenUITests testReopensOnThePlayingEpisode] : This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    13.76s Setting device orientation to Landscape Left
+    t =    13.77s     Wait for dev.silentneo.folio to idle
+    t =    13.87s Waiting 20.0s for "Now Playing" Button to exist
+    t =    14.90s     Checking `Expect predicate `existsNoRetry == 1` for object "Now Playing" Button`
+    t =    14.91s         Checking existence of `"Now Playing" Button`
+    t =    18.57s Tap "Now Playing" Button
+    t =    18.57s     Wait for dev.silentneo.folio to idle
+    t =    18.58s     Find the "Now Playing" Button
+    t =    18.70s     Check for interrupting elements affecting "Now Playing" Button
+    t =    18.73s     Synthesize event
+    t =    19.10s     Wait for dev.silentneo.folio to idle
+    t =    20.11s Waiting 5.0s for "q5" Button to exist
+    t =    21.14s     Checking `Expect predicate `existsNoRetry == 1` for object "q5" Button`
+    t =    21.14s         Checking existence of `"q5" Button`
+    t =    23.30s Find the "q5" Button
+/Users/runner/work/Folio/Folio/UITests/NowPlayingReopenUITests.swift:25: error: -[FolioUITests.NowPlayingReopenUITests testReopensOnThePlayingEpisode] : XCTAssertTrue failed - E6 not on screen when the panel first opens
+    t =    23.49s Tear Down
+Test Case '-[FolioUITests.NowPlayingReopenUITests testReopensOnThePlayingEpisode]' failed (23.768 seconds).
+Test Suite 'NowPlayingReopenUITests' failed at 2026-11-09 00:22:54.459.
+	 Executed 2 tests, with 2 failures (0 unexpected) in 79.997 (80.009) seconds
+Test Suite 'FolioUITests.xctest' failed at 2026-11-09 00:22:54.466.
+	 Executed 2 tests, with 2 failures (0 unexpected) in 79.997 (80.015) seconds
+Test Suite 'Selected tests' failed at 2026-11-09 00:22:54.467.
+	 Executed 2 tests, with 2 failures (0 unexpected) in 79.997 (80.042) seconds
+2026-11-09 00:24:56.229 xcodebuild[65079:156433] [MT] IDETestOperationsObserverDebug: 237.714 elapsed -- Testing started completed.
+2026-11-09 00:24:56.229 xcodebuild[65079:156433] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-11-09 00:24:56.230 xcodebuild[65079:156433] [MT] IDETestOperationsObserverDebug: 237.714 sec, +237.714 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/Folio/Folio/build/Logs/Test/Test-Folio-2026.11.09_00-20-57-+0000.xcresult
+
+Failing tests:
+	NowPlayingReopenUITests.testFirstOpeningAfterTheEpisodeChanged()
+	NowPlayingReopenUITests.testReopensOnThePlayingEpisode()
+
+** TEST EXECUTE FAILED **
+
+Testing started
