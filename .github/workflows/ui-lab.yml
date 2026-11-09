@@ -52,7 +52,20 @@ jobs:
       - name: Fetch engine (stock MPVKit, or ours — simulator slices)
         run: |
           if [ "${{ github.event.inputs.engine || 'stock' }}" = "ours" ]; then
-            bash scripts/fetch-engine.sh
+            # Ours, with the stock engine's simulator slices for anything ours
+            # builds for the device only (FFmpeg: same n9.0.2).
+            ENGINE=stock SLICE=simulator bash scripts/fetch-engine.sh
+            mv Vendor/Frameworks Vendor/StockFrameworks
+            SLICE=simulator bash scripts/fetch-engine.sh 2> fetch.err || true
+            cat fetch.err
+            for x in Vendor/Frameworks/*.xcframework; do
+              n=$(basename "$x")
+              if ! ls -d "$x"/ios-*simulator* >/dev/null 2>&1 && [ -d "Vendor/StockFrameworks/$n" ]; then
+                echo "simulator slice from the stock engine: $n"; rm -rf "$x"; cp -R "Vendor/StockFrameworks/$n" "$x"
+              fi
+            done
+            ls -d Vendor/Frameworks/Libmpv.xcframework/*
+            SLICE=simulator bash scripts/engine-xcconfig.sh
           else
             ENGINE=stock SLICE=simulator bash scripts/fetch-engine.sh
           fi
