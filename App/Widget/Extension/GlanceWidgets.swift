@@ -83,6 +83,12 @@ struct GlanceProvider: TimelineProvider {
             at = GlanceEntry(date: end, access: at.access, downloads: at.downloads, pictures: at.pictures)
             entries.append(at)
         }
+        // And when the speed it shows goes stale (1.27.0), so the tile drops it.
+        if kind == .downloads, let d = entries[0].downloads, let run = d.run, !run.done, run.speed > 0 {
+            let stale = d.written.addingTimeInterval(DownloadsGlance.speedFresh)
+            if stale > now { entries.append(GlanceEntry(date: stale, access: entries[0].access, downloads: d, pictures: entries[0].pictures)) }
+        }
+        entries.sort { $0.date < $1.date }
         completion(Timeline(entries: entries, policy: kind == .week ? .atEnd : .never))
     }
 

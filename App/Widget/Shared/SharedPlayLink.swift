@@ -1,0 +1,63 @@
+import Foundation
+
+// Built into Folio and FolioPlay (1.27.0). Foundation only.
+
+/// A link sent with the share sheet's Play in Folio: the extension leaves it
+/// in the App Group and opens folio://shared?id=<id>; Folio takes it and
+/// plays it. Only a link left this way plays without asking: any web page
+/// can open folio://play, so that one asks first. If Folio couldn't be
+/// opened, the link waits, and Folio offers it when it's next opened.
+struct SharedPlayLink: Codable, Equatable {
+    var url: String
+    var title: String?
+    var at: Date
+    var id: String
+
+    static let fileName = "play-link.json"
+
+    /// The schemes Folio hands to mpv from outside: network streams, not
+    /// mpv's own protocols (edl://, lavfi://) or a local path.
+    static let playableSchemes: Set<String> = ["http", "https", "rtsp", "rtmp", "smb", "sftp", "ftp"]
+
+    static func isPlayable(_ url: URL) -> Bool {
+        guard let s = url.scheme?.lowercased(), playableSchemes.contains(s) else { return false }
+        return url.host?.isEmpty == false
+    }
+
+    /// The first link in shared text (Messages, Notes), or the text itself
+    /// when it's one.
+    static func firstLink(in text: String) -> URL? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let u = URL(string: trimmed), isPlayable(u) { return u }
+        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else { return nil }
+        let range = NSRange(trimmed.startIndex..., in: trimmed)
+        return detector.matches(in: trimmed, range: range).compactMap(\.url).first(where: isPlayable)
+    }
+
+    /// Left for Folio. False when there's nowhere to leave it.
+    @discardableResult
+    static func leave(_ link: SharedPlayLink) -> Bool {
+        guard let store = WidgetStore.share(create: true), let data = try? JSONEncoder().encode(link) else { return false }
+        return (try? store.write(data, fileName)) != nil
+    }
+
+    /// The waiting link, taken (it's gone after): the one `id` names, or any
+    /// when `id` is nil; nil when there's none or it's older than `maxAge`.
+    static func take(id: String?, maxAge: TimeInterval, now: Date = Date()) -> SharedPlayLink? {
+        guard let store = WidgetStore.share(), let data = store.read(fileName),
+              let link = try? JSONDecoder().decode(SharedPlayLink.self, from: data) else { return nil }
+        if let id, link.id != id { return nil }
+        store.remove(fileName)
+        return accepts(link, maxAge: maxAge, now: now) ? link : nil
+    }
+
+    /// Fresh enough, and a link Folio plays.
+    static func accepts(_ link: SharedPlayLink, maxAge: TimeInterval, now: Date) -> Bool {
+        let age = now.timeIntervalSince(link.at)
+        guard age >= -60, age <= maxAge, let u = URL(string: link.url) else { return false }
+        return isPlayable(u)
+    }
+
+    /// What the extension opens.
+    var openURL: URL? { URL(string: "folio://shared?id=\(id)") }
+}

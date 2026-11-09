@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 
 /// Streaming-service catalogs (what's on Netflix, Prime Video, Max, Disney+…)
 /// from the public "Streaming Catalogs" addon. Items carry IMDb ids,
@@ -261,6 +262,13 @@ struct DiscoverView: View {
                         AiringNowRow(margin: margin, zoomNS: zoomNS, refresh: refreshCount)
                         forYouRow(margin)
                         platformStrip(margin)
+                        // Installed addons' catalogs (1.27.0), not in the kids
+                        // profile: what they carry isn't rated.
+                        if !kids.isOn {
+                            ForEach(store.discoverCatalogs) { ref in
+                                CatalogRow(addon: ref.addon, catalog: ref.catalog, margin: margin)
+                            }
+                        }
                         gridSection(margin: margin, cols: cols, shown: shown, minHeight: geo.size.height)
                     }
                     .padding(.top, 6)
@@ -282,8 +290,12 @@ struct DiscoverView: View {
             .background(HomeBackdrop().ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
             .safeAreaInset(edge: .bottom) { filterBar }
+            .onAppear { DownloadPillLift.shared.discoverShown = true }
+            .onDisappear { DownloadPillLift.shared.discoverShown = false }
             .task {
                 UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "discoverLastUsed")
+                // The addons tip waits for a second visit (1.27.0).
+                await AddonsTip.discoverOpened.donate()
                 if browse.metas.isEmpty { browse.reload() }
                 forYou.load()
             }
@@ -305,7 +317,7 @@ struct DiscoverView: View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(gridTitle).font(.title3.weight(.bold))
+                    Text(gridTitle).font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
                     Spacer()
                     if browse.loading && browse.metas.isEmpty { FolioSpinner(size: .small) }
                 }
@@ -338,14 +350,23 @@ struct DiscoverView: View {
                     .frame(maxWidth: .infinity).padding(.vertical, 6)
                     .accessibilityIdentifier("discoverEnd")
             }
+            // The system's empty and error layout, as elsewhere (1.27.0).
             if !browse.loading && shown.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(browse.failed ? "IMDb didn't answer." : kids.isOn && !browse.metas.isEmpty ? "Nothing here rated for the kids profile." : "Nothing here.")
-                        .foregroundStyle(.secondary)
+                Group {
                     if browse.failed {
-                        Text("Check the connection, then pull to retry. The diagnostics log (Settings → Help & Diagnostics) records the HTTP status.")
-                            .font(.caption).foregroundStyle(.secondary)
-                        Button("Retry") { browse.reload() }.buttonStyle(.bordered).tint(Theme.accent)
+                        ContentUnavailableView {
+                            Label("IMDb Didn't Answer", systemImage: "wifi.exclamationmark")
+                        } description: {
+                            Text("Check the connection and try again.")
+                        } actions: {
+                            Button("Try Again") { browse.reload() }.buttonStyle(.borderedProminent).tint(Theme.action)
+                        }
+                    } else if kids.isOn && !browse.metas.isEmpty {
+                        ContentUnavailableView("Nothing for the Kids Profile", systemImage: "figure.and.child.holdinghands",
+                                               description: Text("None of these titles is rated for its limits."))
+                    } else {
+                        ContentUnavailableView("Nothing Here", systemImage: "film.stack",
+                                               description: Text("Try another genre or sort."))
                     }
                 }
                 .padding(.horizontal, margin)
@@ -367,19 +388,27 @@ struct DiscoverView: View {
 
     private func header(_ margin: CGFloat) -> some View {
         HStack(spacing: 10) {
-            Text("Discover").font(.system(size: 28, weight: .bold, design: .rounded))
+            // Grows with the text size (1.27.0: a fixed 28 pt).
+            Text("Discover").font(.system(.title, design: .rounded, weight: .bold))
+                .accessibilityAddTraits(.isHeader)
             Spacer()
-            WatchlistSheetButton()
             // The search is the tab bar's search button now (1.22.4).
             // Addons and streaming services are settings: locked in the kids profile (1.22.0).
+            // 1.27.0: Addons a button of their own, its sheet growing out of
+            // it (was an item in a "…" menu, with Streaming services, which
+            // is now the only item, so a button too).
             if !kids.isOn {
-                Menu {
-                    Button { showPlatformSettings = true } label: { Label("Streaming services", systemImage: "rectangle.grid.2x2") }
-                    NavigationLink { AddonsManagerView() } label: { Label("Addons", systemImage: "puzzlepiece.extension") }
-                } label: {
-                    Image(systemName: "ellipsis").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44).menuLabelCircle()
+                AddonsSheetButton()
+            }
+            WatchlistSheetButton()
+            if !kids.isOn {
+                Button { showPlatformSettings = true } label: {
+                    Image(systemName: "rectangle.grid.2x2").font(.system(size: 16, weight: .semibold))
+                        .frame(width: 44, height: 44).glassCircle()
                 }
-                .glassMenuCircle()
+                .buttonStyle(PressStyle())
+                .foregroundStyle(.primary)
+                .accessibilityLabel("Streaming Services")
             }
         }
         .padding(.horizontal, margin)
@@ -396,7 +425,7 @@ struct DiscoverView: View {
         if forYou.hasSeeds && (!metas.isEmpty || (forYou.loading && forYou.metas.isEmpty)) {
             VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("For you").font(.title3.weight(.bold))
+                    Text("For you").font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
                     Text(TMDB.enabled ? "Like what you've watched, from IMDb and TMDB" : "Like what you've watched, from IMDb")
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -448,18 +477,43 @@ struct DiscoverView: View {
         }
     }
 
-    /// Floating Liquid Glass filter bar.
+    /// Floating Liquid Glass filter bar. 1.27.0: fits any iPhone's width. The
+    /// chips keep their whole titles ("Trending" was cut to "Trendi…" on a
+    /// 17 Pro) and Movies/Series gives way first; where even that isn't
+    /// enough (a 13 mini with a long genre), sort and genre become icons.
     private var filterBar: some View {
+        ViewThatFits(in: .horizontal) {
+            filterRow(compact: false)
+            filterRow(compact: true)
+        }
+        .padding(6)
+        .glass(cornerRadius: 28, interactive: true)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 6)
+        .tint(Theme.accent)
+        // The downloads pill sits above the bar while Discover shows (it covered it).
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { DownloadPillLift.shared.discoverBar = $0 }
+    }
+
+    private func filterRow(compact: Bool) -> some View {
         HStack(spacing: 6) {
             SegmentPicker(options: [("movie", "Movies"), ("series", "Series")], selection: $browse.type)
-                .frame(width: 160)
+                // Its smallest width is what the bar measures when it picks a
+                // layout; it takes more (up to 160) when there's room.
+                .frame(minWidth: compact ? 120 : 140, idealWidth: compact ? 120 : 140, maxWidth: 160)
             Menu {
                 Picker("Sort", selection: $browse.sort) { ForEach(BrowseModel.Sort.allCases) { Text($0.title).tag($0) } }
-            } label: { FilterChip(title: browse.sort.title, active: true) }
+            } label: {
+                FilterChip(title: browse.sort.title, active: true, icon: compact ? "arrow.up.arrow.down" : nil)
+            }
+            .accessibilityLabel("Sort")
+            .accessibilityValue(browse.sort.title)
             if browse.sort == .new {
                 Menu {
                     Picker("Year", selection: $browse.year) { ForEach(BrowseModel.years, id: \.self) { Text($0).tag($0) } }
                 } label: { FilterChip(title: browse.year, active: true) }
+                .accessibilityLabel("Year")
+                .accessibilityValue(browse.year)
             } else {
                 Menu {
                     Button { browse.genre = nil } label: { browse.genre == nil ? Label("All genres", systemImage: "checkmark") : Label("All genres", systemImage: "circle") }
@@ -467,27 +521,35 @@ struct DiscoverView: View {
                     ForEach(BrowseModel.genres, id: \.self) { g in
                         Button { browse.genre = g } label: { if browse.genre == g { Label(g, systemImage: "checkmark") } else { Text(g) } }
                     }
-                } label: { FilterChip(title: browse.genre ?? "Genre", active: browse.genre != nil) }
+                } label: {
+                    FilterChip(title: browse.genre ?? "Genre", active: browse.genre != nil, icon: compact ? "theatermasks" : nil)
+                }
+                .accessibilityLabel("Genre")
+                .accessibilityValue(browse.genre ?? "All genres")
             }
         }
-        .padding(6)
-        .glass(cornerRadius: 28, interactive: true)
-        .padding(.horizontal, 16)
-        .padding(.bottom, 6)
-        .tint(Theme.accent)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
 struct FilterChip: View {
     let title: String
     let active: Bool
+    /// Shown instead of the title where the bar is short of room (1.27.0).
+    var icon: String? = nil
     var body: some View {
         HStack(spacing: 4) {
-            Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
+            if let icon {
+                Image(systemName: icon).font(.subheadline.weight(.semibold))
+            } else {
+                Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
+            }
             Image(systemName: "chevron.down").font(.caption2.weight(.bold))
         }
+        // Whole, never cut: the bar picks a shorter layout instead (1.27.0).
+        .fixedSize()
         .foregroundStyle(active ? Color.primary : Color.secondary)
-        .padding(.horizontal, 12).frame(height: 38)
+        .padding(.horizontal, 12).frame(minHeight: 44)
         .background(active ? Theme.fill : Color.clear, in: Capsule())
         .contentShape(Capsule())          // a clear background isn't tappable: only the text was
     }
@@ -636,18 +698,27 @@ struct PlatformDetailView: View {
                     .background(LinearGradient(colors: [platform.color, platform.color2], startPoint: .top, endPoint: .bottom))
                     LinearGradient(colors: [platform.color2, Theme.background], startPoint: .top, endPoint: .bottom).frame(height: 36)
                 }
-                Picker("", selection: $type) {
-                    Text("Shows").tag("series")
-                    Text("Movies").tag("movie")
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 20)
+                // The same control, words and order as Discover's (1.27.0: "Shows |
+                // Movies" in the system's grey control).
+                SegmentPicker(options: [("movie", "Movies"), ("series", "Series")], selection: $type)
+                    .frame(height: 36)
+                    .accessibilityLabel("Movies or series")
+                    .padding(.horizontal, 20)
                 if let limits = kids.activeLimits { KidsFilterNote(limits: limits).padding(.horizontal, 20) }
                 if tab.loading && tab.metas.isEmpty { FolioSpinner().frame(maxWidth: .infinity).padding() }
-                if let error = tab.error {
+                if let error = tab.error, metas.isEmpty {
+                    // Nothing to show: the system's error layout (1.27.0).
+                    ContentUnavailableView {
+                        Label("Couldn't Load \(platform.name)", systemImage: "wifi.exclamationmark")
+                    } description: {
+                        Text(error)
+                    } actions: {
+                        Button("Try Again") { page.load(t) }.buttonStyle(.borderedProminent).tint(Theme.action)
+                    }
+                } else if let error = tab.error {
                     // Inline, over whatever the grid already has; never in its place.
                     HStack(spacing: 10) {
-                        Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
+                        Image(systemName: "exclamationmark.triangle").foregroundStyle(Theme.action)
                         Text(error).font(.subheadline)
                         Spacer(minLength: 0)
                         Button("Retry") { page.load(t) }.buttonStyle(.bordered).tint(Theme.accent)
@@ -667,8 +738,8 @@ struct PlatformDetailView: View {
                 }
                 .padding(.horizontal, 20)
                 if !tab.loading && metas.isEmpty && tab.error == nil {
-                    Text(tab.metas.isEmpty ? "Nothing here right now." : "Nothing here rated for the kids profile.")
-                        .font(.subheadline).foregroundStyle(.secondary).padding(.horizontal, 20)
+                    ContentUnavailableView(tab.metas.isEmpty ? "Nothing Here Right Now" : "Nothing for the Kids Profile",
+                                           systemImage: tab.metas.isEmpty ? "film.stack" : "figure.and.child.holdinghands")
                 }
             }
         }

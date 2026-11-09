@@ -46,11 +46,11 @@ struct WatchlistView: View {
         ScrollViewReader { scroller in
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Picker("Show", selection: $filter) {
-                        ForEach(Filter.allCases) { Text($0.title).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .id(Self.top)
+                    // Discover's control and order: All, Movies, Series (1.27.0).
+                    SegmentPicker(options: [(Filter.all, "All"), (Filter.movies, "Movies"), (Filter.series, "Series")], selection: $filter)
+                        .frame(height: 36)
+                        .accessibilityLabel("Show")
+                        .id(Self.top)
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
                         ForEach(items) { item in
                             let m = item.meta

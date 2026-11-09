@@ -529,7 +529,7 @@ struct AiringRow: View {
         if !slots.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Airing soon").font(.title3.weight(.bold))
+                    Text("Airing soon").font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
                     Spacer()
                     Button { go(nil) } label: {
                         HStack(spacing: 2) { Text("All"); Image(systemName: "chevron.right").font(.caption.weight(.bold)) }

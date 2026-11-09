@@ -8,7 +8,7 @@ struct CastStrip: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Cast").font(.title3.weight(.bold))
+                Text("Cast").font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
                 Text("\(credits.count)").font(.subheadline).foregroundStyle(.secondary)
             }
             .padding(.horizontal, 16)

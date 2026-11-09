@@ -1,4 +1,5 @@
 import Foundation
+import TipKit
 import UIKit
 import AVFoundation
 import MediaPlayer
@@ -151,6 +152,8 @@ final class PlayerModel: ObservableObject {
     @Published var hwdecCurrent = ""
     @Published var videoFormat = ""          // "Dolby Vision", "HDR10", "HLG", "SDR"
     @Published var audioOut = ""
+    /// Where the sound goes (Media info's Output, 1.27.0).
+    @Published var audioRoute: AudioRoute?
     @Published var ended = false
     @Published var errorMessage: String?
     /// Why a file on a server didn't play, from the server's own answer
@@ -1253,6 +1256,8 @@ final class PlayerModel: ObservableObject {
         guard let c = client else { return }
         dlog("player", "file loaded in \(String(format: "%.0f", Date().timeIntervalSince(loadStarted) * 1000)) ms")
         fileLoaded = true
+        // The gestures tip comes up in the first plays after installing (1.27.0).
+        Task { await PlayerGesturesTip.played.donate() }
         isLoading = false
         refreshTracks()
         refreshChapters()
@@ -2063,6 +2068,8 @@ final class PlayerModel: ObservableObject {
 
     func showToast(_ text: String) {
         toast = text
+        // Said aloud too (1.27.0): VoiceOver users never heard them.
+        if UIAccessibility.isVoiceOverRunning { UIAccessibility.post(notification: .announcement, argument: text) }
         toastWork?.cancel()
         let w = DispatchWorkItem { [weak self] in self?.toast = nil }
         toastWork = w
@@ -3255,8 +3262,15 @@ final class PlayerModel: ObservableObject {
                   let reason = AVAudioSession.RouteChangeReason(rawValue: raw) else { return }
             MainActor.assumeIsolated {
                 if reason == .oldDeviceUnavailable { self?.setPaused(true) }
-                if reason == .newDeviceAvailable || reason == .oldDeviceUnavailable { self?.updateOutputChannels() }
+                switch reason {
+                case .newDeviceAvailable, .oldDeviceUnavailable, .override, .routeConfigurationChange:
+                    self?.routeChanged("route change \(reason.rawValue)")
+                default: break
+                }
             }
+        })
+        observers.append(nc.addObserver(forName: AVAudioSession.spatialPlaybackCapabilitiesChangedNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.routeChanged("Spatial Audio switched") }
         })
     }
 
@@ -3565,6 +3579,24 @@ final class PlayerModel: ObservableObject {
         }
         try? s.setActive(true)
         updateOutputChannels()
+        audioRoute = AudioRoute.current()
+    }
+
+    /// A new route (1.27.0): its channel count asked for, and mpv's audio
+    /// output reopened when that changes. mpv opens its output for the route
+    /// it starts on, so HDMI or AirPlay to a receiver connected mid-film
+    /// stayed stereo until the next file.
+    private func routeChanged(_ why: String) {
+        updateOutputChannels()
+        let now = AudioRoute.current()
+        let was = audioRoute
+        guard now != was else { return }
+        audioRoute = now
+        dlog("player", "audio route: \(now.describe) (\(why))")
+        guard let was, was.maxChannels != now.maxChannels || was.spatial != now.spatial,
+              defaults.bool(forKey: SettingsKey.surroundAudio), let c = client, !closed else { return }
+        _ = c.command(["ao-reload"])
+        dlog("player", "audio output reopened for the new route")
     }
 
     /// Spatial Audio switched in the player's panel (1.26.0): applied now,
@@ -3678,7 +3710,7 @@ final class PlayerModel: ObservableObject {
             let a = AVAudioSession.sharedInstance()
             let cc = MPRemoteCommandCenter.shared()
             let enabled = [cc.playCommand, cc.pauseCommand, cc.togglePlayPauseCommand, cc.changePlaybackPositionCommand].filter(\.isEnabled).count
-            dlog("player", "Now Playing set: audio session \(a.category.rawValue), \(a.mode.rawValue), options \(a.categoryOptions.rawValue), route sharing \(a.routeSharingPolicy.rawValue); other audio playing \(a.isOtherAudioPlaying); output \(a.currentRoute.outputs.map(\.portType.rawValue).joined(separator: ", ")); \(enabled) of 4 commands on; \(info.count) fields")
+            dlog("player", "Now Playing set: audio session \(a.category.rawValue), \(a.mode.rawValue), options \(a.categoryOptions.rawValue), route sharing \(a.routeSharingPolicy.rawValue); other audio playing \(a.isOtherAudioPlaying); output \(a.currentRoute.outputs.map(\.portType.rawValue).joined(separator: ", ")) (\(AudioRoute.current().describe)); \(enabled) of 4 commands on; \(info.count) fields")
         }
     }
     private var nowPlayingLoggedFor: String?

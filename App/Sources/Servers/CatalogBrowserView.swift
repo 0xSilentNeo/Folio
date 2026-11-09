@@ -25,11 +25,17 @@ struct CatalogBrowserView: View {
 
     var body: some View {
         List {
+            // The system's error layout, as the other browsers (1.27.0: an
+            // orange label and a plain Retry row).
             if let error {
-                Section {
-                    Label(error, systemImage: offline ? "wifi.slash" : "exclamationmark.triangle").foregroundStyle(.orange)
-                    Button("Retry") { Task { await load() } }
+                ContentUnavailableView {
+                    Label(offline ? "You're Offline" : "Couldn't Open This", systemImage: offline ? "wifi.slash" : "exclamationmark.triangle")
+                } description: {
+                    Text(error)
+                } actions: {
+                    Button("Try Again") { Task { await load() } }.buttonStyle(.borderedProminent).tint(Theme.action)
                 }
+                .listRowBackground(Color.clear)
             }
             ForEach(visible) { e in
                 if e.isPlayable {
@@ -59,7 +65,8 @@ struct CatalogBrowserView: View {
                 }
             }
             if !loading && visible.isEmpty && error == nil {
-                Text(parent == nil ? "No libraries" : "Nothing here").foregroundStyle(.secondary)
+                ContentUnavailableView(parent == nil ? "No Libraries" : "Nothing Here", systemImage: parent == nil ? "server.rack" : "folder")
+                    .listRowBackground(Color.clear)
             }
         }
         .listStyle(.plain)

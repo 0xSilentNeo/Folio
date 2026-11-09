@@ -114,6 +114,7 @@ struct VideoSurface: UIViewRepresentable {
 
         @objc private func doubleTap(_ g: UITapGestureRecognizer) {
             guard !ui.locked, let v = view else { return }
+            FolioTips.gestureUsed()
             let x = g.location(in: v).x / max(v.bounds.width, 1)
             let step = Double(UserDefaults.standard.integer(forKey: SettingsKey.seekStep))
             let back = Double(max(1, UserDefaults.standard.integer(forKey: SettingsKey.seekBackStep)))
@@ -133,6 +134,7 @@ struct VideoSurface: UIViewRepresentable {
             switch g.state {
             case .began:
                 longPressActive = true
+                FolioTips.gestureUsed()
                 model.beginHoldSpeed()
                 if model.holdSpeedActive {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -158,6 +160,7 @@ struct VideoSurface: UIViewRepresentable {
             let t = g.translation(in: v)
             switch g.state {
             case .began:
+                FolioTips.gestureUsed()
                 let vel = g.velocity(in: v)
                 let start = g.location(in: v)
                 // A swipe that starts at the bottom edge is the home gesture (or

@@ -6,6 +6,7 @@ import QuartzCore
 struct MetaDetailView: View {
     let preview: MetaItem
     let sourceAddon: InstalledAddon?
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var meta: MetaItem?
     @State private var season: Int = 1
     @State private var seasons: [Int] = []
@@ -116,7 +117,7 @@ struct MetaDetailView: View {
                             episodeList
                         } else if !untiledEpisodes.isEmpty {
                             VStack(alignment: .leading, spacing: 10) {
-                                Text("Coming up").font(.title3.weight(.bold))
+                                Text("Coming up").font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
                                 ForEach(untiledEpisodes, id: \.self) { UpcomingEpisodeCard(episode: $0) }
                             }
                         }
@@ -195,7 +196,12 @@ struct MetaDetailView: View {
                 }
             } else { Theme.card }
         } content: {
-                HStack(alignment: .bottom, spacing: 14) {
+                // Accessibility text sizes: the title under the poster, as on the
+                // library's title page (1.27.0; a narrow column beside it).
+                let layout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 14))
+                    : AnyLayout(HStackLayout(alignment: .bottom, spacing: 14))
+                layout {
                     if let poster = m.poster, let u = URL(string: poster) {
                         // The tile's own picture shows while its sharper copy loads.
                         CachedImage(url: u, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: {
@@ -203,6 +209,7 @@ struct MetaDetailView: View {
                                 CachedImage(url: first, maxPixel: 400) { $0.resizable().scaledToFill() } placeholder: { Theme.card }
                             } else { Theme.card }
                         }
+                            .accessibilityHidden(true)
                             .frame(width: 122, height: 191)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .shadow(color: Theme.shadow, radius: 12, y: 6)
@@ -216,12 +223,13 @@ struct MetaDetailView: View {
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 6) {
-            DecipherText(text: m.name, font: .system(size: 28, weight: .bold, design: .rounded)).lineLimit(2)
+            // The text size's title style (1.27.0: a fixed 28 pt, two lines).
+            DecipherText(text: m.name, font: .system(.title, design: .rounded, weight: .bold)).lineLimit(5)
             if m.isAnime, let o = m.originalName, !o.isEmpty {
                 Text(o).font(.subheadline.weight(.medium)).foregroundStyle(.secondary).lineLimit(2)
             }
             FlowLayout(spacing: 8, lineSpacing: 8) {
-                if showRatings, let r = m.imdbRating { chip("★ \(r)", strong: true) }
+                if showRatings, let r = m.imdbRating { chip("★ \(r)", strong: true).accessibilityLabel("IMDb rating \(r)") }
                 if let y = m.releaseInfo { chip(y) }
                 if let c = m.contentRating { chip(c) }
                 if let r = m.runtime { chip(r) }
@@ -293,7 +301,7 @@ struct MetaDetailView: View {
     private var episodeList: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Episodes").font(.title3.weight(.bold))
+                Text("Episodes").font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
                 let n = seasonEpisodes.count
                 if n > 0 { Text("\(n)").font(.subheadline).foregroundStyle(.secondary) }
             }

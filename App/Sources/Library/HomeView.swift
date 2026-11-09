@@ -70,6 +70,8 @@ struct HomeView: View {
             .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
             .sheet(item: $editingServer) { ServerEditView(server: $0) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
+            // The welcome's "Add Your Videos" (1.27.0).
+            .onReceive(FirstRunRouter.shared.$request) { if $0 == .addFiles, FirstRunRouter.shared.take(.addFiles) { showAddFiles = true } }
             .sheet(item: $pick) { PickForMeSheet(candidates: $0.candidates) { playFilm($0) } }
             // Every title's metadata, for the filters, the kids profile and Pick (LibraryMetaIndex).
             .task(id: local.files) { metaIndex.update(local.files) }
@@ -334,6 +336,12 @@ struct HomeView: View {
                             // Each card's own menu (1.25.0): `.contextMenu` in Home's
                             // List belongs to the whole row, as tiles' did before 1.24.1.
                             .tileContextMenu(cornerRadius: 22) { historyActions(e) }
+                            // One button to VoiceOver, its menu as actions (1.27.0: five
+                            // separate pieces, and the long-press menu out of reach).
+                            .accessibilityElement(children: .combine)
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityAction { ContinueQueue.play(e.item) }
+                            .modifier(MenuAccessibility(actions: historyActions(e)))
                             .accessibilityIdentifier("continue:" + e.item.title)
                     }
                 }
@@ -483,11 +491,11 @@ struct HomeView: View {
         let facts = kidsGroups.flatMap { metaIndex.facts(of: $0) }
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("Library").font(.title3.weight(.bold))
+                Text("Library").font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
                 Text("\(count)").font(.subheadline).foregroundStyle(.secondary)
                 Spacer()
                 Button { pickSomething() } label: {
-                    Image(systemName: "dice").font(.system(size: 14, weight: .semibold)).frame(width: 34, height: 34).glassCircle()
+                    Image(systemName: "dice").font(.system(size: 15, weight: .semibold)).frame(width: 40, height: 40).glassCircle()
                 }
                 .buttonStyle(PressStyle())
                 .foregroundStyle(.primary)
@@ -743,7 +751,7 @@ struct HomeView: View {
 
     private func sectionTitle(_ t: String, _ margin: CGFloat, trailing: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(t).font(.title3.weight(.bold))
+            Text(t).font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
             if let trailing { Text(trailing).font(.subheadline).foregroundStyle(.secondary) }
             Spacer()
         }
@@ -752,7 +760,7 @@ struct HomeView: View {
 
     private func sectionTitle<D: View>(_ t: String, _ margin: CGFloat, trailing: String?, @ViewBuilder destination: @escaping () -> D) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(t).font(.title3.weight(.bold))
+            Text(t).font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
             if let trailing { Text(trailing).font(.subheadline).foregroundStyle(.secondary) }
             Spacer()
             NavigationLink(destination: destination) {
@@ -786,7 +794,10 @@ struct HomeView: View {
 
     private func playLocal(_ f: URL) {
         let group = allGroups.first { $0.files.contains(f) }
-        let list = LibraryMetaIndex.shared.kidsQueue(group?.isSeries == true ? group!.files : LibraryOrganizer.sorted(local.files), keeping: f)
+        // A show's episodes; anything else on its own (1.27.0: a single file
+        // got the whole library as its playlist, so Up Next offered another
+        // show and the player didn't close at its end).
+        let list = LibraryMetaIndex.shared.kidsQueue(group?.isSeries == true ? group!.files : [f], keeping: f)
         let queue = list.map { u -> MediaItem in
             var m = MediaItem(url: u.path, title: TitleParser.clean(u.lastPathComponent), source: .local)
             m.historyKey = u.path
@@ -1051,11 +1062,12 @@ struct GeneratedArt: View {
     var body: some View {
         // A fixed hash (FNV-1a): `hashValue` is seeded per launch, so a
         // title's placeholder colour changed every time the app opened.
-        let h = Double(seed.utf8.reduce(UInt32(2_166_136_261)) { ($0 ^ UInt32($1)) &* 16_777_619 } % 360) / 360
+        let h = Int(seed.utf8.reduce(UInt32(2_166_136_261)) { ($0 ^ UInt32($1)) &* 16_777_619 } % UInt32(SettingsPalette.all.count))
+        // Folio's earthy colours (1.27.0), darkened towards the corner: any hue
+        // on the wheel gave bright greens and purples next to the cream.
         ZStack {
-            LinearGradient(colors: [Color(hue: h, saturation: 0.5, brightness: 0.42),
-                                    Color(hue: (h + 0.12).truncatingRemainder(dividingBy: 1), saturation: 0.6, brightness: 0.16)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            SettingsPalette.all[h]
+            LinearGradient(colors: [.black.opacity(0.05), .black.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
             Image(systemName: "film").font(.system(size: 28, weight: .light)).foregroundStyle(.white.opacity(0.25))
         }
     }

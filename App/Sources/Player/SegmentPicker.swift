@@ -15,8 +15,12 @@ struct SegmentPicker<T: Hashable>: UIViewRepresentable {
         // Dynamic colours: ink thumb with cream text on light, the reverse on
         // dark (the player's window is always dark).
         c.selectedSegmentTintColor = Theme.uiAccent
-        c.setTitleTextAttributes([.foregroundColor: UIColor.label.withAlphaComponent(0.85), .font: UIFont.systemFont(ofSize: 14, weight: .semibold)], for: .normal)
-        c.setTitleTextAttributes([.foregroundColor: Theme.uiOnAccent, .font: UIFont.systemFont(ofSize: 14, weight: .semibold)], for: .selected)
+        // Grows with Dynamic Type (1.27.0; it was a fixed 14 pt), to 20 pt at most:
+        // the control sits in bars of a fixed height.
+        let font = UIFontMetrics(forTextStyle: .subheadline)
+            .scaledFont(for: .systemFont(ofSize: 14, weight: .semibold), maximumPointSize: 20)
+        c.setTitleTextAttributes([.foregroundColor: UIColor.label.withAlphaComponent(0.85), .font: font], for: .normal)
+        c.setTitleTextAttributes([.foregroundColor: Theme.uiOnAccent, .font: font], for: .selected)
         c.selectedSegmentIndex = options.firstIndex { $0.0 == selection } ?? 0
         c.addAction(UIAction { [weak c] _ in
             guard let c, c.selectedSegmentIndex >= 0, c.selectedSegmentIndex < context.coordinator.options.count else { return }

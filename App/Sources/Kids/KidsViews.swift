@@ -82,12 +82,13 @@ struct PasscodeScreen: View {
 
     private var header: some View {
         VStack(spacing: 0) {
-            Text(title).font(.system(size: 20)).multilineTextAlignment(.center)
+            // Text styles, not fixed sizes (1.27.0), so they grow up to the screen's cap.
+            Text(title).font(.title3).multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("passcodeTitle")
             dots.padding(.top, 20)
             // Two lines kept for it, so nothing moves when it appears.
-            Text(message ?? " ").font(.system(size: 15)).foregroundStyle(.white.opacity(0.75))
+            Text(message ?? " ").font(.subheadline).foregroundStyle(.white.opacity(0.75))
                 .multilineTextAlignment(.center)
                 .lineLimit(2, reservesSpace: true)
                 .padding(.top, 14).padding(.horizontal, 32)
@@ -155,7 +156,7 @@ struct PasscodeScreen: View {
             .frame(width: size)
             .accessibilityIdentifier(code.isEmpty ? "passcodeCancel" : "passcodeDelete")
         }
-        .font(.system(size: 17))
+        .font(.body)
         .lineLimit(1).minimumScaleFactor(0.7)
         .buttonStyle(.plain)
         .frame(height: 44)

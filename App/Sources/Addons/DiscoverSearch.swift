@@ -167,7 +167,7 @@ final class DiscoverSearch: ObservableObject {
         addonTask?.cancel()
         addonResults = []
         addonQuery = q
-        let targets = AddonStore.shared.addons.flatMap { a in a.manifest.catalogs.filter(\.supportsSearch).map { (a, $0) } }
+        let targets = AddonStore.shared.active.flatMap { a in a.manifest.catalogs.filter(\.supportsSearch).map { (a, $0) } }
         guard !targets.isEmpty else { addonsSearching = false; return }
         addonsSearching = true
         // The kids profile: an addon's titles go by what they carry (KidsRules; unknown is hidden).

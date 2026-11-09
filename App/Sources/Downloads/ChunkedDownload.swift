@@ -260,7 +260,11 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         self.onEvent = onEvent
         let q = OperationQueue()
         q.maxConcurrentOperationCount = 1
-        q.qualityOfService = .utility
+        // 1.27.0: user-initiated (was utility). A download you started is
+        // waited for; in the background iOS slows utility work the most, and
+        // receiving and writing ~60 MB/s all happens on this queue
+        // (9 Nov report: the speed fell once Folio left the screen).
+        q.qualityOfService = .userInitiated
         q.name = "folio.download.\(id.uuidString.prefix(8))"
         queue = q
         super.init()
@@ -376,6 +380,8 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         // Byte offsets mean bytes of the file, not of a compressed stream.
         req.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
         let task = session.dataTask(with: req)
+        // Ahead of other traffic of Folio's (1.27.0).
+        task.priority = URLSessionTask.highPriority
         tasks[task.taskIdentifier] = (task, index, Date(), 0)
         task.resume()
         return true
@@ -521,6 +527,18 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
             out[i].current = max(out[i].start, out[i].current - Int64(b.data.count))
         }
         return out
+    }
+
+    /// The protocol the server answered with, logged once per file (1.27.0):
+    /// over HTTP/2 the ranges share one connection, so more ranges don't add
+    /// connections' worth of speed.
+    private var protocolLogged = false
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didFinishCollecting metrics: URLSessionTaskMetrics) {
+        guard !protocolLogged, let p = metrics.transactionMetrics.last?.networkProtocolName else { return }
+        protocolLogged = true
+        let name = ["h2": "HTTP/2", "h3": "HTTP/3", "http/1.1": "HTTP/1.1"][p.lowercased()] ?? p
+        onEvent(.note("\(fileName): the server answers over \(name)"))
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {

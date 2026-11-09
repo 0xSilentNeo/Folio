@@ -24,5 +24,8 @@ struct SettingsPageStyle: ViewModifier {
             }
             .brandListBackground()
             .tint(Theme.action)
+            // A setting's text under its group is a row as tall as the text
+            // (SettingGroup), not the 44 pt rows are at least.
+            .environment(\.defaultMinListRowHeight, 1)
     }
 }

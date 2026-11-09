@@ -23,6 +23,8 @@ enum WidgetStore: Sendable {
     /// The 1.24.0 widgets' files ("Glance"): downloads, your week, new on
     /// your servers, a pick for tonight (GlanceSnapshot).
     static func glance(create: Bool = false) -> WidgetStore? { store(area: "Glance", create: create) }
+    /// A link from the share sheet's Play in Folio, waiting for Folio (1.27.0).
+    static func share(create: Bool = false) -> WidgetStore? { store(area: "Share", create: create) }
 
     private static func store(area: String, create: Bool) -> WidgetStore? {
         if let container = FolioGroup.container {

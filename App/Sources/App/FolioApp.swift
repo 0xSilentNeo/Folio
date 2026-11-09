@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 import UIKit
 
 @main
@@ -9,6 +10,8 @@ struct FolioApp: App {
         SettingsKey.registerDefaults()
         // Before anything this launch writes: whether Folio was used before (WhatsNew.usedBefore).
         MainActor.assumeIsolated { WhatsNew.noteLaunch() }
+        // Tips where they apply (1.27.0).
+        FolioTips.configure()
         Diagnostics.shared.start()
         MainThreadLayout.install()
         MainThreadLayout.lab()
@@ -68,6 +71,11 @@ struct RootView: View {
     @ObservedObject private var kids = KidsProfile.shared
     /// What's new (1.22.0): once after an update, when the splash has gone.
     @State private var whatsNew = false
+    /// The welcome (1.27.0): once after installing, when the splash has gone.
+    @State private var welcome = false
+    /// The setup card chosen in it, done once it has closed (a sheet can't
+    /// open while another is closing).
+    @State private var welcomePick: FirstRunRouter.Step?
 
     var body: some View {
         ZStack {
@@ -79,6 +87,9 @@ struct RootView: View {
         .background(AppearanceProbe(mode: appearance).frame(width: 1, height: 1))
         .toggleStyle(BrandSwitchStyle())
         .sheet(isPresented: $whatsNew) { WhatsNewSheet() }
+        .sheet(isPresented: $welcome, onDismiss: goToWelcomePick) {
+            WelcomeSheet { welcomePick = $0 }
+        }
         .onChange(of: splash) { _, on in if !on { showWhatsNew() } }
         // Handoff (1.22.0): a title page, or what was playing, from the other device.
         .onContinueUserActivity(HandoffActivity.titleType) { HandoffActivity.continueActivity($0) }
@@ -96,7 +107,26 @@ struct RootView: View {
     }
     @MainActor static var appearances = 0
 
+    /// The welcome's setup card: its tab, and what to open there.
+    private func goToWelcomePick() {
+        guard let step = welcomePick else { return }
+        welcomePick = nil
+        dlog("app", "first run: \(step.rawValue) from the welcome")
+        switch step {
+        case .addFiles: tab = 0
+        case .addServer: tab = kids.isOn ? 0 : 2
+        case .addons: tab = 1
+        }
+        FirstRunRouter.shared.request = step
+    }
+
     private func showWhatsNew() {
+        if FirstRun.pending {
+            FirstRun.pending = false
+            PlayerGesturesTip.isNewUser = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { welcome = true }
+            return
+        }
         guard WhatsNew.pending else { return }
         WhatsNew.pending = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { whatsNew = true }
@@ -128,6 +158,16 @@ struct RootView: View {
             searchFrom = old
         }
         .onOpenURL(perform: handle)
+        // A link Play in Folio couldn't open Folio with (1.27.0): offered,
+        // after a moment (the link that did open Folio is taken by
+        // onOpenURL first).
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                guard !KidsProfile.isOnNow, linkPlay == nil, let link = SharedPlayLink.take(id: nil, maxAge: 600) else { return }
+                dlog("open", "a link from Play in Folio was waiting")
+                linkPlay = link.url
+            }
+        }
         .onReceive(HomeRouter.shared.showHome) { tab = 0 }
         .alert("Add this addon?", isPresented: Binding(get: { linkAddon != nil }, set: { if !$0 { linkAddon = nil } }), presenting: linkAddon) { target in
             Button("Add") { installLinkedAddon(target) }
@@ -204,7 +244,7 @@ struct RootView: View {
 
     /// What a folio://play link may hand to mpv: network streams, not mpv's
     /// own protocols (edl://, lavfi://, a local path).
-    private static let playableSchemes: Set<String> = ["http", "https", "rtsp", "rtmp", "smb", "sftp", "ftp"]
+    private static let playableSchemes = SharedPlayLink.playableSchemes
 
     private func handle(_ url: URL) {
         // What the link does, not the link: an addon's address carries its
@@ -239,6 +279,17 @@ struct RootView: View {
         case "addon":
             guard let target else { return }
             linkAddon = target
+        case "shared":
+            // The share sheet's Play in Folio (1.27.0): plays at once, as
+            // you chose it there. Only the link the extension left, by its
+            // id: a page that opens folio://shared finds nothing.
+            let id = comps.queryItems?.first(where: { $0.name == "id" })?.value
+            guard let id, let link = SharedPlayLink.take(id: id, maxAge: 120), let u = URL(string: link.url) else {
+                dlog("open", "folio://shared with no link waiting")
+                return
+            }
+            dlog("open", "Play in Folio: \(u.scheme ?? "?")://\(u.host ?? "")")
+            IntentPlayback.play(link.url)
         case "play":
             guard let target, let s = URL(string: target)?.scheme?.lowercased(), Self.playableSchemes.contains(s) else {
                 dlog("open", "folio://play with a link Folio doesn't play: \(target.flatMap { URL(string: $0)?.scheme } ?? "no scheme")")

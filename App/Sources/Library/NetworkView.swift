@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 
 struct NetworkView: View {
     @ObservedObject private var store = ServerStore.shared
@@ -11,10 +12,25 @@ struct NetworkView: View {
     /// SMB, Jellyfin and Plex (1.20.3): their own list and form.
     @State private var addingServer: MediaServer.Kind?
     @State private var editingServer: MediaServer?
+    /// A server about to be deleted (1.27.0: it went on one swipe, with its
+    /// password, its library and its downloads, without a word).
+    @State private var deletingWebDAV: WebDAVServer?
+    @State private var deletingServer: MediaServer?
+    /// The welcome's "Connect a Server" (1.27.0): which kind.
+    @State private var choosingKind = false
+    @State private var serversTipShown = false
 
     var body: some View {
         NavigationStack {
             List {
+                // While there's no server (1.27.0). A row only while the tip
+                // shows: an empty TipView still took a row's height.
+                if serversTipShown {
+                    TipView(ServersTip())
+                        .tint(Theme.action)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                }
                 Section {
                     ForEach(store.servers) { s in
                         NavigationLink {
@@ -24,13 +40,13 @@ struct NetworkView: View {
                                 Text("Invalid server URL")
                             }
                         } label: { ServerRow(server: s) }
-                        .swipeActions {
-                            Button(role: .destructive) { store.remove(s) } label: { Label("Delete", systemImage: "trash") }
+                        .swipeActions(allowsFullSwipe: false) {
+                            Button(role: .destructive) { deletingWebDAV = s } label: { Label("Delete", systemImage: "trash") }
                             Button { editing = s } label: { Label("Edit", systemImage: "pencil") }.tint(.gray)
                         }
                         .contextMenu {
                             Button { editing = s } label: { Label("Edit", systemImage: "pencil") }
-                            Button(role: .destructive) { store.remove(s) } label: { Label("Delete", systemImage: "trash") }
+                            Button(role: .destructive) { deletingWebDAV = s } label: { Label("Delete…", systemImage: "trash") }
                         }
                     }
                     Button { adding = true } label: { Label("Add WebDAV server", systemImage: "plus.circle.fill") }
@@ -40,13 +56,13 @@ struct NetworkView: View {
                 Section {
                     ForEach(mediaServers.servers) { s in
                         NavigationLink { MediaServerBrowser(server: s) } label: { MediaServerRow(server: s) }
-                        .swipeActions {
-                            Button(role: .destructive) { mediaServers.remove(s) } label: { Label("Delete", systemImage: "trash") }
+                        .swipeActions(allowsFullSwipe: false) {
+                            Button(role: .destructive) { deletingServer = s } label: { Label("Delete", systemImage: "trash") }
                             Button { editingServer = s } label: { Label("Edit", systemImage: "pencil") }.tint(.gray)
                         }
                         .contextMenu {
                             Button { editingServer = s } label: { Label("Edit", systemImage: "pencil") }
-                            Button(role: .destructive) { mediaServers.remove(s) } label: { Label("Delete", systemImage: "trash") }
+                            Button(role: .destructive) { deletingServer = s } label: { Label("Delete…", systemImage: "trash") }
                         }
                     }
                     Menu { addServerButtons(webDAV: false) } label: {
@@ -83,6 +99,33 @@ struct NetworkView: View {
                         .accessibilityLabel("Add server")
                         .accessibilityIdentifier("addServerMenu")
                 }
+            }
+            .confirmationDialog("Delete \(deletingWebDAV?.name ?? "this server")?", isPresented: Binding(get: { deletingWebDAV != nil }, set: { if !$0 { deletingWebDAV = nil } }),
+                                titleVisibility: .visible, presenting: deletingWebDAV) { s in
+                Button("Delete Server", role: .destructive) { store.remove(s) }
+            } message: { _ in
+                Text("Its password, its place in your library and its unfinished downloads go too. Files you've already downloaded stay.")
+            }
+            .confirmationDialog("Delete \(deletingServer?.name ?? "this server")?", isPresented: Binding(get: { deletingServer != nil }, set: { if !$0 { deletingServer = nil } }),
+                                titleVisibility: .visible, presenting: deletingServer) { s in
+                Button("Delete Server", role: .destructive) { mediaServers.remove(s) }
+            } message: { _ in
+                Text("Its password or token and its place in your library go too. Files you've already downloaded stay.")
+            }
+            .onChange(of: store.servers.isEmpty && mediaServers.servers.isEmpty, initial: true) { _, none in ServersTip.noServers = none }
+            .task {
+                for await show in ServersTip().shouldDisplayUpdates {
+                    withAnimation(.smooth) { serversTipShown = show }
+                }
+            }
+            .onReceive(FirstRunRouter.shared.$request) { if $0 == .addServer, FirstRunRouter.shared.take(.addServer) { choosingKind = true } }
+            .confirmationDialog("Add a Server", isPresented: $choosingKind, titleVisibility: .visible) {
+                Button("WebDAV") { adding = true }
+                ForEach(MediaServer.Kind.allCases) { k in
+                    Button(k.title) { addingServer = k }
+                }
+            } message: {
+                Text("WebDAV for debrid services, Nextcloud or rclone; SMB for a NAS or computer's shared folder; or a Jellyfin or Plex server.")
             }
             .sheet(isPresented: $adding) { ServerEditView(server: nil) }
             .sheet(item: $editing) { s in ServerEditView(server: s) }

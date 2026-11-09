@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// Settings → About Folio (1.26.1): the version, what's new, where the mpv
-/// folder is, the source, and the work Folio is built on (the FOLIO card
-/// and scattered footers until then; the engine's licences had no home).
+/// folder is, and the work Folio is built on (the FOLIO card and scattered
+/// footers until then; the engine's licences had no home). 1.27.0: no link
+/// to Folio's own source.
 struct AboutSettings: View {
     @State private var whatsNew = false
 
@@ -32,13 +33,6 @@ struct AboutSettings: View {
                 LabeledContent("mpv folder") {
                     Text("Files → On My iPhone → Folio → mpv").multilineTextAlignment(.trailing)
                 }
-            }
-            Section {
-                Link(destination: URL(string: "https://github.com/0xSilentNeo/Folio")!) {
-                    Label("Source Code", systemImage: "chevron.left.forwardslash.chevron.right")
-                }
-            } footer: {
-                Text("Folio is free software under the GNU General Public License, version 3.")
             }
             Section {
                 ForEach(Self.engine, id: \.name) { credit($0) }

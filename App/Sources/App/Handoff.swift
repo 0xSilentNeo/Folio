@@ -195,7 +195,7 @@ enum HandoffActivity {
         switch p.target {
         case .discover(let id, let type, let name, let poster, let addon):
             let m = MetaItem(id: id, type: type, name: name, poster: poster, description: nil, releaseInfo: nil, imdbRating: nil, genres: nil)
-            let source = addon.flatMap { a in AddonStore.shared.addons.first { $0.manifest.id == a } }
+            let source = addon.flatMap { a in AddonStore.shared.active.first { $0.manifest.id == a } }
             HandoffPresenter.present(AnyView(MetaDetailView(preview: m, sourceAddon: source)))
         case .library(let fileName, let title):
             let files = await ContinueQueue.libraryFiles()

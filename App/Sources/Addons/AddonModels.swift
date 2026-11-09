@@ -188,6 +188,14 @@ struct InstalledAddon: Codable, Identifiable, Hashable {
     var id: String { transportURL }
     var transportURL: String      // .../manifest.json
     var manifest: AddonManifest
+    /// Switched off in Addons (1.27.0): kept, not asked. Optional so lists
+    /// saved before it read (nil is on).
+    var isOff: Bool?
+
+    var enabled: Bool {
+        get { isOff != true }
+        set { isOff = newValue ? nil : true }
+    }
 
     var baseURL: String {
         var s = transportURL
