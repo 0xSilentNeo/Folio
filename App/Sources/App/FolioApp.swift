@@ -102,6 +102,13 @@ struct RootView: View {
             dlog("app", "root view appeared (\(RootView.appearances) in this run, splash \(splash ? "on" : "off"))")
             if !splash { showWhatsNew() }
             if kids.isOn && tab == 2 { tab = 0 }          // Network started on, but it's hidden
+            // Addons up to date (1.27.1): once a launch, after it has settled.
+            if !FirstRun.automated {
+                Task {
+                    try? await Task.sleep(nanoseconds: 4_000_000_000)
+                    await AddonStore.shared.checkForUpdates()
+                }
+            }
             HandoffActivity.labStart()
         }
     }
@@ -163,9 +170,16 @@ struct RootView: View {
         // onOpenURL first).
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                guard !KidsProfile.isOnNow, linkPlay == nil, let link = SharedPlayLink.take(id: nil, maxAge: 600) else { return }
-                dlog("open", "a link from Play in Folio was waiting")
-                linkPlay = link.url
+                SharedInbox.cleanUp()
+                guard !KidsProfile.isOnNow, linkPlay == nil, sharedVideo == nil,
+                      let link = SharedPlayLink.take(id: nil, maxAge: 600) else { return }
+                dlog("open", "something shared to Folio was waiting")
+                if link.file != nil {
+                    // Kept in Media either way; asked whether to play it now.
+                    sharedVideo = SharedInbox.receive(link)
+                } else {
+                    linkPlay = link.url
+                }
             }
         }
         .onReceive(HomeRouter.shared.showHome) { tab = 0 }
@@ -180,6 +194,12 @@ struct RootView: View {
             Button("Cancel", role: .cancel) {}
         } message: { target in
             Text("A link asks Folio to play a stream from \(URL(string: target)?.host ?? "another app").")
+        }
+        .alert("Play the video you shared?", isPresented: Binding(get: { sharedVideo != nil }, set: { if !$0 { sharedVideo = nil } }), presenting: sharedVideo) { url in
+            Button("Play") { FileOpener.open([url]) }
+            Button("Not Now", role: .cancel) {}
+        } message: { url in
+            Text("\(url.lastPathComponent) is in Folio's Media folder.")
         }
         .alert("Couldn't add the addon", isPresented: Binding(get: { linkError != nil }, set: { if !$0 { linkError = nil } })) {
             Button("OK", role: .cancel) {}
@@ -231,6 +251,8 @@ struct RootView: View {
     @State private var linkError: String?
     /// A stream a folio://play link asked for, waiting for a yes (1.23.0).
     @State private var linkPlay: String?
+    /// A video shared to Folio that waited (1.27.1), now in Media.
+    @State private var sharedVideo: URL?
 
     private func installLinkedAddon(_ target: String) {
         tab = 1
@@ -284,12 +306,18 @@ struct RootView: View {
             // you chose it there. Only the link the extension left, by its
             // id: a page that opens folio://shared finds nothing.
             let id = comps.queryItems?.first(where: { $0.name == "id" })?.value
-            guard let id, let link = SharedPlayLink.take(id: id, maxAge: 120), let u = URL(string: link.url) else {
-                dlog("open", "folio://shared with no link waiting")
+            guard let id, let link = SharedPlayLink.take(id: id, maxAge: 120) else {
+                dlog("open", "folio://shared with nothing waiting")
                 return
             }
-            dlog("open", "Play in Folio: \(u.scheme ?? "?")://\(u.host ?? "")")
-            IntentPlayback.play(link.url)
+            if link.file != nil {
+                // A video (1.27.1): into Media, then played from there.
+                guard let saved = SharedInbox.receive(link) else { return }
+                FileOpener.open([saved])
+            } else if let u = URL(string: link.url) {
+                dlog("open", "shared link: \(u.scheme ?? "?")://\(u.host ?? "")")
+                IntentPlayback.play(link.url)
+            }
         case "play":
             guard let target, let s = URL(string: target)?.scheme?.lowercased(), Self.playableSchemes.contains(s) else {
                 dlog("open", "folio://play with a link Folio doesn't play: \(target.flatMap { URL(string: $0)?.scheme } ?? "no scheme")")

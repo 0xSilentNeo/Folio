@@ -255,12 +255,17 @@ struct NotifyGroupView: View {
 
 /// Settings → Notifications → Sounds: each group's.
 struct NotifySoundsList: View {
+    /// Each group's sound by name, read again when the list is back on
+    /// screen (1.27.1: it kept the names it opened with, so a sound picked
+    /// on a group's page still said Default here).
+    @State private var labels: [NotifyGroup: String] = [:]
+
     var body: some View {
         Form {
             Section {
                 ForEach(NotifyGroup.allCases) { g in
                     NavigationLink(value: LibraryRoute.settingsSubpage(.notifySound(g))) {
-                        LabeledContent(g.title, value: NotifySounds.choice(for: g).label)
+                        LabeledContent(g.title, value: labels[g] ?? NotifySounds.choice(for: g).label)
                     }
                 }
             } footer: {
@@ -270,6 +275,13 @@ struct NotifySoundsList: View {
         .brandListBackground()
         .navigationTitle("Sounds")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear(perform: readLabels)
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification).receive(on: DispatchQueue.main)) { _ in readLabels() }
+    }
+
+    private func readLabels() {
+        let now = Dictionary(uniqueKeysWithValues: NotifyGroup.allCases.map { ($0, NotifySounds.choice(for: $0).label) })
+        if now != labels { labels = now }
     }
 }
 

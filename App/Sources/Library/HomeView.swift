@@ -9,7 +9,6 @@ struct HomeView: View {
     @ObservedObject private var kids = KidsProfile.shared
     @ObservedObject private var metaIndex = LibraryMetaIndex.shared
     @State private var showOpenURL = false
-    @State private var addServer = false
     @State private var editingServer: WebDAVServer?
     @State private var showAddFiles = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -67,7 +66,6 @@ struct HomeView: View {
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { local.refresh() }
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
-            .sheet(isPresented: $addServer) { ServerEditView(server: nil) }
             .sheet(item: $editingServer) { ServerEditView(server: $0) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
             // The welcome's "Add Your Videos" (1.27.0).
@@ -260,8 +258,6 @@ struct HomeView: View {
                 if !kids.isOn {
                     Button { showOpenURL = true } label: { Label("Open URL", systemImage: "link") }
                     Button { pasteAndPlay() } label: { Label("Paste & play", systemImage: "doc.on.clipboard") }
-                    Divider()
-                    Button { addServer = true } label: { Label("Add WebDAV server", systemImage: "externaldrive.connected.to.line.below") }
                 }
             } label: {
                 Image(systemName: "plus").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44).menuLabelCircle()

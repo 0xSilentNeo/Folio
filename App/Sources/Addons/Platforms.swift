@@ -92,20 +92,25 @@ enum PlatformCatalogs {
 
 // MARK: - Discover
 
-/// Browse filters for the main grid. Data comes from IMDb (built in) or,
-/// when a key is set, TMDB.
+/// Browse filters for the main grid. Data comes from Cinemeta or TMDB when
+/// set up, in the order chosen in Addons, else IMDb (built in): see
+/// DiscoverSource (1.27.1).
 @MainActor
 final class BrowseModel: ObservableObject {
     enum Sort: String, CaseIterable, Identifiable {
         case trending, topRated, new
         var id: String { rawValue }
         var title: String { self == .trending ? "Trending" : self == .topRated ? "Top Rated" : "New" }
-        var footnote: String? {
-            if TMDB.enabled { return self == .topRated ? "TMDB top rated" : self == .trending ? "TMDB trending this week" : nil }
-            switch self {
-            case .trending: return "IMDb Most Popular (MOVIEmeter)"
-            case .topRated: return "IMDb Top 250, as rated by IMDb users"
-            case .new: return nil
+        func footnote(_ source: DiscoverSource) -> String? {
+            switch source {
+            case .cinemeta: return self == .topRated ? "Cinemeta Featured, by IMDb rating" : self == .trending ? "Cinemeta Popular" : nil
+            case .tmdb: return self == .topRated ? "TMDB top rated" : self == .trending ? "TMDB trending this week" : nil
+            case .imdb:
+                switch self {
+                case .trending: return "IMDb Most Popular (MOVIEmeter)"
+                case .topRated: return "IMDb Top 250, as rated by IMDb users"
+                case .new: return nil
+                }
             }
         }
         var imdb: IMDbSource.Sort { self == .trending ? .trending : self == .topRated ? .topRated : .new }
@@ -135,11 +140,18 @@ final class BrowseModel: ObservableObject {
     private var nextPage = 1
     /// IMDb's longer list has been asked for.
     private var askedMore = false
+    /// Where the list on screen comes from (1.27.1); more of it comes from there too.
+    @Published private(set) var source: DiscoverSource = .imdb
+    /// Cinemeta's titles received so far: where its next page starts.
+    private var cinemetaSkip = 0
+
+    /// The grid's heading note: where the list comes from.
+    var footnote: String? { sort.footnote(source) }
 
     func reload() {
         task?.cancel()
         generation += 1          // anything still in flight is stale now
-        metas = []; exhausted = false; failed = false; nextPage = 1; askedMore = false
+        metas = []; exhausted = false; failed = false; nextPage = 1; askedMore = false; cinemetaSkip = 0
         loading = true           // keep the spinner up through the gap, no empty-state flash
         task = Task { await load(initial: true) }
     }
@@ -159,27 +171,96 @@ final class BrowseModel: ObservableObject {
         // genre, and every title is checked by KidsRules where it's shown.
         let kids = KidsProfile.shared.isOn
         if kids && genre == nil { genre = "Family" }
-        if TMDB.enabled {
-            // A page that repeats only titles already shown: the next one,
-            // up to three in a row, so the grid never stalls on a repeat.
-            for _ in 0..<3 {
-                var page = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: nextPage)
-                if kids { page = Self.tagged(page, genre: genre) }
-                guard gen == generation else { return }
-                if page.isEmpty {
-                    // A failed page can be asked for again (scrolling back to the end).
-                    if !TMDB.lastError { exhausted = true }
-                    failed = metas.isEmpty && !Task.isCancelled && TMDB.lastError
-                    return
-                }
-                nextPage += 1
-                let known = Set(metas.map(\.id))
-                let new = page.filter { !known.contains($0.id) }
-                metas += new
-                if !new.isEmpty { return }
+        guard initial else {
+            switch source {
+            case .cinemeta: _ = await loadCinemeta(gen: gen, genre: genre, kids: kids, last: true)
+            case .tmdb: _ = await loadTMDB(gen: gen, genre: genre, kids: kids, last: true)
+            case .imdb: await loadIMDb(gen: gen, genre: genre, kids: kids, initial: false)
             }
             return
         }
+        // The sources in your order; one that fails with nothing to show
+        // hands over to the next (1.27.1). IMDb is last and always there.
+        let chain = DiscoverSource.chain
+        dlog("discover", "\(sort.rawValue) \(type)\(genre.map { " · " + $0 } ?? ""): from \(chain.map(\.name).joined(separator: ", then "))")
+        for (i, s) in chain.enumerated() {
+            guard gen == generation else { return }
+            source = s
+            exhausted = false; failed = false
+            let last = i == chain.count - 1
+            let done: Bool
+            switch s {
+            case .cinemeta: done = await loadCinemeta(gen: gen, genre: genre, kids: kids, last: last)
+            case .tmdb: done = await loadTMDB(gen: gen, genre: genre, kids: kids, last: last)
+            case .imdb: await loadIMDb(gen: gen, genre: genre, kids: kids, initial: true); done = true
+            }
+            if done { return }
+            dlog("discover", "\(s.name) didn't answer: trying \(chain.dropFirst(i + 1).first?.name ?? "nothing else")")
+        }
+    }
+
+    /// Cinemeta's next page(s). False when it failed with nothing on screen.
+    private func loadCinemeta(gen: Int, genre: String?, kids: Bool, last: Bool) async -> Bool {
+        guard let addon = AddonStore.shared.cinemetaAddon else { return false }
+        // A page of titles already shown: the next, up to three in a row.
+        for _ in 0..<3 {
+            var page: [MetaItem]
+            do {
+                page = try await CinemetaBrowse.page(addon, sort: sort, type: type, genre: genre, year: year, skip: cinemetaSkip)
+            } catch {
+                dlog("discover", "Cinemeta \(sort.rawValue) \(type) failed: \(error.localizedDescription)")
+                guard gen == generation else { return true }
+                if metas.isEmpty && !Task.isCancelled {
+                    if last { failed = true }
+                    return false
+                }
+                return true        // asked again on reaching the end
+            }
+            if kids { page = Self.tagged(page, genre: genre) }
+            dlog("discover", "Cinemeta \(sort.rawValue) \(type)\(genre.map { " · " + $0 } ?? ""): \(page.count) title(s) from \(cinemetaSkip)\(gen == generation ? "" : " (stale)")")
+            guard gen == generation else { return true }
+            if page.isEmpty {
+                exhausted = true
+                // Nothing at all for this sort or genre: the next source may have it.
+                if metas.isEmpty && !last { return false }
+                return true
+            }
+            cinemetaSkip += page.count
+            let known = Set(metas.map(\.id))
+            let new = page.filter { !known.contains($0.id) }
+            metas += new
+            if !new.isEmpty { return true }
+        }
+        return true
+    }
+
+    /// TMDB's next page(s). False when it failed with nothing on screen.
+    private func loadTMDB(gen: Int, genre: String?, kids: Bool, last: Bool) async -> Bool {
+        // A page that repeats only titles already shown: the next one,
+        // up to three in a row, so the grid never stalls on a repeat.
+        for _ in 0..<3 {
+            var page = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: nextPage)
+            if kids { page = Self.tagged(page, genre: genre) }
+            guard gen == generation else { return true }
+            if page.isEmpty {
+                // A failed page can be asked for again (scrolling back to the end).
+                if !TMDB.lastError { exhausted = true; return true }
+                if metas.isEmpty && !Task.isCancelled {
+                    if last { failed = true }
+                    return false
+                }
+                return true
+            }
+            nextPage += 1
+            let known = Set(metas.map(\.id))
+            let new = page.filter { !known.contains($0.id) }
+            metas += new
+            if !new.isEmpty { return true }
+        }
+        return true
+    }
+
+    private func loadIMDb(gen: Int, genre: String?, kids: Bool, initial: Bool) async {
         if !initial && !metas.isEmpty {
             // More (1.23.0): one IMDb page holds up to 250 titles, so the
             // grid goes on from its first 100 to IMDb's longer list once.
@@ -211,7 +292,7 @@ final class BrowseModel: ObservableObject {
 
     /// The grid's last line once it can't go on (IMDb lists, 1.23.0).
     var endNote: String? {
-        guard exhausted, !TMDB.enabled, !metas.isEmpty else { return nil }
+        guard exhausted, source == .imdb, !metas.isEmpty else { return nil }
         if genre == nil && sort == .topRated && sort != .new { return "That's IMDb's whole Top 250." }
         return "That's as far as IMDb's list goes: \(metas.count) titles."
     }
@@ -244,6 +325,10 @@ struct DiscoverView: View {
     @State private var showPlatformSettings = false
     /// Pulls to refresh so far (the Airing now row reloads on each).
     @State private var refreshCount = 0
+    /// What decides Discover's source (1.27.1): a change reloads the grid.
+    @AppStorage(DiscoverSource.orderKey) private var sourceOrder = ""
+    @AppStorage("tmdbApiKey") private var tmdbKey = ""
+    private var sourceSetup: String { "\(sourceOrder)|\(!tmdbKey.isEmpty)|\(store.cinemetaAddon != nil)" }
 
     var body: some View {
         NavigationStack {
@@ -295,7 +380,7 @@ struct DiscoverView: View {
             .task {
                 UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "discoverLastUsed")
                 // The addons tip waits for a second visit (1.27.0).
-                await AddonsTip.discoverOpened.donate()
+                FolioTips.note(AddonsTip.discoverOpened)
                 if browse.metas.isEmpty { browse.reload() }
                 forYou.load()
             }
@@ -305,6 +390,10 @@ struct DiscoverView: View {
             .onChange(of: kids.isOn) { _, on in
                 browse.reload()
                 if on { forYou.lookUpRatings() }
+            }
+            .onChange(of: sourceSetup) { _, _ in
+                dlog("discover", "source now \(DiscoverSource.current.name): reloading")
+                browse.reload()
             }
             .sheet(isPresented: $showPlatformSettings) { PlatformSettingsView() }
         }
@@ -321,7 +410,7 @@ struct DiscoverView: View {
                     Spacer()
                     if browse.loading && browse.metas.isEmpty { FolioSpinner(size: .small) }
                 }
-                if let f = browse.sort.footnote { Text(f).font(.caption).foregroundStyle(.secondary) }
+                if let f = browse.footnote { Text(f).font(.caption).foregroundStyle(.secondary) }
                 if let limits = kids.activeLimits { KidsFilterNote(limits: limits).padding(.top, 2) }
             }
             .padding(.horizontal, margin)

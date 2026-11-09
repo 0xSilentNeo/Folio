@@ -20,6 +20,14 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.27.1", items: [
+            Item(icon: "square.grid.3x3", title: "Discover from Cinemeta or TMDB",
+                 text: "Install Cinemeta in one tap, or add your TMDB key, in Addons: Discover's grid comes from them, past IMDb's 250 titles. Drag to choose which goes first."),
+            Item(icon: "square.and.arrow.up", title: "Folio in the share sheet",
+                 text: "Share a link, or a video from Files or Photos, and choose Folio: it opens and plays."),
+            Item(icon: "sparkles.tv", title: "HDR fixes",
+                 text: "Dolby Vision films no longer turn green in Balanced and Enhanced, and 4K HDR that can't keep up switches to smooth playback."),
+        ]),
         Release(version: "1.27.0", items: [
             Item(icon: "puzzlepiece.extension", title: "Addons on Discover",
                  text: "The puzzle piece at the top of Discover opens your addons: switch one off, see how fast it answered, and drag to set the order of the streams list. Their catalogs are rows on Discover."),

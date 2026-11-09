@@ -1,12 +1,14 @@
 import UIKit
 import UniformTypeIdentifiers
 
-/// Play in Folio (1.27.0): the share sheet's action for a link from Safari,
-/// Messages or anywhere that shares one. It leaves the link for Folio in the
-/// App Group and opens Folio, which plays it. Folio itself isn't loaded here
-/// (an extension gets a few dozen megabytes; the player needs far more).
-@objc(PlayActionViewController)
-final class PlayActionViewController: UIViewController {
+/// Folio in the share sheet (1.27.0 as the Play in Folio action, whose icon
+/// was blank; 1.27.1 a share extension, in the app row with Folio's icon).
+/// A link from Safari or Messages, or a video from Files or Photos, is left
+/// for Folio in the App Group, and Folio opens and plays it. Folio itself
+/// isn't loaded here (an extension gets a few dozen megabytes; the player
+/// needs far more).
+@objc(ShareViewController)
+final class ShareViewController: UIViewController {
     private let card = UIView()
     private let label = UILabel()
     private let spinner = UIActivityIndicatorView(style: .medium)
@@ -65,11 +67,23 @@ final class PlayActionViewController: UIViewController {
     }
 
     private func run() async {
-        guard let url = await sharedLink() else {
-            show("Folio plays links to video streams (http, https, rtsp, smb…). This isn't one.")
+        let id = UUID().uuidString
+        var link: SharedPlayLink
+        if let video = videoProvider() {
+            label.text = "Copying to Folio…"
+            guard let file = await copyVideo(video, id: id) else {
+                show(SharedPlayLink.inbox == nil
+                     ? "This install of Folio has no shared storage for its extensions. Open the video in Files and choose Folio there."
+                     : "Folio couldn't read this video.")
+                return
+            }
+            link = SharedPlayLink(url: "", at: Date(), id: id, file: file)
+        } else if let url = await sharedLink() {
+            link = SharedPlayLink(url: url.absoluteString, at: Date(), id: id)
+        } else {
+            show("Folio plays videos and links to video streams (http, https, rtsp, smb…). This isn't one.")
             return
         }
-        let link = SharedPlayLink(url: url.absoluteString, title: nil, at: Date(), id: UUID().uuidString)
         guard SharedPlayLink.leave(link), let open = link.openURL else {
             show("This install of Folio has no shared storage for its extensions. Copy the link, then use + → Open URL on Folio's Home.")
             return
@@ -92,6 +106,36 @@ final class PlayActionViewController: UIViewController {
 
     private func finish() {
         extensionContext?.completeRequest(returningItems: nil)
+    }
+
+    /// A shared video (Files, Photos), if that's what came.
+    private func videoProvider() -> NSItemProvider? {
+        let providers = (extensionContext?.inputItems as? [NSExtensionItem] ?? []).flatMap { $0.attachments ?? [] }
+        return providers.first { $0.hasItemConformingToTypeIdentifier(UTType.audiovisualContent.identifier) }
+    }
+
+    /// The video moved (or copied) into the App Group's Share/Inbox/<id>/.
+    /// Returns its path there.
+    private func copyVideo(_ provider: NSItemProvider, id: String) async -> String? {
+        guard let inbox = SharedPlayLink.inbox else { return nil }
+        let type = provider.registeredTypeIdentifiers.first { UTType($0)?.conforms(to: .audiovisualContent) == true }
+            ?? UTType.audiovisualContent.identifier
+        return await withCheckedContinuation { (done: CheckedContinuation<String?, Never>) in
+            _ = provider.loadFileRepresentation(forTypeIdentifier: type) { url, _ in
+                // The file is only there until this returns: moved now.
+                guard let url else { done.resume(returning: nil); return }
+                let dir = inbox.appendingPathComponent(id, isDirectory: true)
+                let name = url.lastPathComponent.isEmpty ? "Video.mov" : url.lastPathComponent
+                let dest = dir.appendingPathComponent(name)
+                do {
+                    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                    do { try FileManager.default.moveItem(at: url, to: dest) } catch { try FileManager.default.copyItem(at: url, to: dest) }
+                    done.resume(returning: "Share/Inbox/\(id)/\(name)")
+                } catch {
+                    done.resume(returning: nil)
+                }
+            }
+        }
     }
 
     /// The first web link, or the first link in shared text.

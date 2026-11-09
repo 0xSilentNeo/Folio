@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Play in Folio</string>
+	<string>Folio</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -25,17 +25,12 @@
 		<key>NSExtensionAttributes</key>
 		<dict>
 			<key>NSExtensionActivationRule</key>
-			<dict>
-				<key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
-				<integer>1</integer>
-			</dict>
-			<key>NSExtensionServiceRoleType</key>
-			<string>NSExtensionServiceRoleTypeViewer</string>
+			<string>SUBQUERY (extensionItems, $extensionItem, SUBQUERY ($extensionItem.attachments, $attachment, ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.audiovisual-content" OR ANY $attachment.registeredTypeIdentifiers UTI-EQUALS "public.url").@count &gt;= 1).@count &gt;= 1</string>
 		</dict>
 		<key>NSExtensionPointIdentifier</key>
-		<string>com.apple.ui-services</string>
+		<string>com.apple.share-services</string>
 		<key>NSExtensionPrincipalClass</key>
-		<string>PlayActionViewController</string>
+		<string>ShareViewController</string>
 	</dict>
 </dict>
 </plist>

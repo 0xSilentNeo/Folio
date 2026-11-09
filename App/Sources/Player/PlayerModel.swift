@@ -730,6 +730,8 @@ final class PlayerModel: ObservableObject {
         lastGamma = ""
         glHDRFailedForFile = false
         hardwareSeenForFile = false
+        copyTooSlowForFile = false
+        copyWatch?.cancel(); copyWatch = nil
 
         if let old = scopedURL { old.stopAccessingSecurityScopedResource(); scopedURL = nil }
         if let u = item.resolvedURL, u.isFileURL, !u.path.hasPrefix(MPVFiles.documents.path) {
@@ -1257,7 +1259,7 @@ final class PlayerModel: ObservableObject {
         dlog("player", "file loaded in \(String(format: "%.0f", Date().timeIntervalSince(loadStarted) * 1000)) ms")
         fileLoaded = true
         // The gestures tip comes up in the first plays after installing (1.27.0).
-        Task { await PlayerGesturesTip.played.donate() }
+        FolioTips.note(PlayerGesturesTip.played)
         isLoading = false
         refreshTracks()
         refreshChapters()
@@ -1585,6 +1587,8 @@ final class PlayerModel: ObservableObject {
             c.set("target-trc", "auto")
             if autoDecode && hdrCopyActive { c.set("hwdec", "videotoolbox,videotoolbox-copy"); c.set("hwdec-image-format", "nv12") }
             hdrCopyActive = false
+            setDolbyVisionStripped(false)
+            watchCopy(false)
             gl.setHDR(nil)
             pip.setHDR(false)
             dlog("player", "OpenGL: SDR output\(hdrVideo ? " (HDR video tone-mapped: HDR output off or no HDR screen)" : "")")
@@ -1627,6 +1631,7 @@ final class PlayerModel: ObservableObject {
         guard (defaults.string(forKey: SettingsKey.hwdec) ?? "auto") == "auto", PictureMode.current != .efficient else { return false }
         let thermal = ProcessInfo.processInfo.thermalState
         if thermal == .serious || thermal == .critical { return false }
+        if copyTooSlowForFile { return false }
         if let codec = client?.string("video-format"), copyFailedCodecs.contains(codec) { return false }
         return true
     }
@@ -1645,7 +1650,64 @@ final class PlayerModel: ObservableObject {
             c.set("hwdec", "videotoolbox,videotoolbox-copy")
             c.set("hwdec-image-format", "nv12")
         }
+        setDolbyVisionStripped(copy)
+        watchCopy(copy)
         dlog("player", "OpenGL HDR: \(copy ? "10-bit copy decoding" : "hardware frames, no copy") (picture \(PictureMode.current.rawValue), thermal \(ProcessInfo.processInfo.thermalState.rawValue))")
+    }
+
+    // MARK: Copy decoding's limits (1.27.1)
+
+    /// Copied frames carry the file's Dolby Vision metadata, which the
+    /// OpenGL renderer can't apply: it took the picture for Dolby Vision's
+    /// own colours and showed it green (Dune, a DV profile 7 remux, in
+    /// Balanced and Enhanced, 9 Nov recording). Without it the film is its
+    /// HDR10 base layer, as the hardware's own frames already showed it.
+    /// The Metal renderer applies Dolby Vision and keeps it.
+    private var dolbyVisionStripped = false
+
+    private func setDolbyVisionStripped(_ on: Bool) {
+        guard on != dolbyVisionStripped, let c = client else { return }
+        dolbyVisionStripped = on
+        _ = c.command(on ? ["vf", "add", "@foliodv:format=dolbyvision=no"] : ["vf", "remove", "@foliodv"])
+        if on { dlog("player", "OpenGL HDR: Dolby Vision metadata left out while copying (the base layer's HDR10 is shown)") }
+    }
+
+    /// Copying didn't keep up with this file: hardware frames for the rest
+    /// of it.
+    private var copyTooSlowForFile = false
+    private var copyWatch: Task<Void, Never>?
+
+    /// While copying, the decoder's dropped frames are counted every 5 s;
+    /// two windows in a row with more than one a second (after a few seconds
+    /// to settle) and the copy stops. Dune, 4K at 60 Mb/s: 85 dropped in
+    /// 20 s at 40–52% CPU and over 1 GB of memory, and it stuttered.
+    private func watchCopy(_ on: Bool) {
+        copyWatch?.cancel(); copyWatch = nil
+        guard on else { return }
+        let id = (playingItem ?? item).id
+        copyWatch = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 6_000_000_000)
+            var last: Int64?
+            var bad = 0
+            while !Task.isCancelled {
+                guard let self, !self.closed, self.hdrCopyActive, (self.playingItem ?? self.item).id == id, let c = self.client else { return }
+                let drops = await withCheckedContinuation { (k: CheckedContinuation<Int64, Never>) in
+                    c.query({ $0.int("frame-drop-count") ?? 0 }) { k.resume(returning: $0) }
+                }
+                if let last, !self.paused {
+                    bad = drops - last > 5 ? bad + 1 : 0
+                    if bad >= 2 {
+                        self.copyTooSlowForFile = true
+                        dlog("player/error", "OpenGL HDR: copy decoding dropped \(drops - last) frames in 5 s; hardware frames for the rest of this file")
+                        self.showToast("10-bit HDR couldn't keep up here: smoother 8-bit HDR")
+                        self.applyHDRDecode()
+                        return
+                    }
+                }
+                last = drops
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+            }
+        }
     }
 
     /// The decoder went to software after the switch to copy decoding (AV1:
@@ -1969,6 +2031,12 @@ final class PlayerModel: ObservableObject {
     }
 
     func toggleZoom() { setZoom(fill: !zoomToFill) }
+
+    /// OpenGL: the layer's framing alone, for a pinch out of Fill, which
+    /// shrinks Fit scaled up rather than Fill (1.27.1).
+    func setLayerFill(_ fill: Bool) {
+        if renderer == .gl { pip.setFill(fill) }
+    }
 
     /// Fit or Fill. On OpenGL the layer's gravity changes here and now, in
     /// the caller's transaction, not when mpv's echo of panscan arrives: a

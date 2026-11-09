@@ -392,12 +392,9 @@ struct SettingsPanelContent: View {
                     }
                 }
                 Button { ui.closePanel(); ui.showConsole = true } label: { Label("Run mpv Command…", systemImage: "terminal") }
-                Button {
-                    ui.closePanel()
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.84)) { ui.showTune = true }
-                } label: { Label("Tune UI…", systemImage: "slider.horizontal.below.square.filled.and.square") }
             } label: {
-                PanelRow(icon: "wrench.and.screwdriver", title: "Advanced", subtitle: "mpv commands, UI tuning") { chevron }
+                // 1.27.1: no Tune UI here (9 Nov: not needed).
+                PanelRow(icon: "wrench.and.screwdriver", title: "Advanced", subtitle: "mpv commands") { chevron }
                     .contentShape(Rectangle())
             }
             .tint(.white)

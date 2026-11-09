@@ -191,11 +191,46 @@ final class AddonStore: ObservableObject {
     }
 
     func refreshAll() async {
-        for (i, a) in addons.enumerated() {
-            if let m = try? await AddonAPI.manifest(a.transportURL), i < addons.count {
+        for a in addons {
+            guard let m = try? await AddonAPI.manifest(a.transportURL),
+                  let i = addons.firstIndex(where: { $0.id == a.id }) else { continue }
+            if addons[i].manifest != m { addons[i].manifest = m }
+        }
+    }
+
+    private var checkedThisLaunch = false
+
+    /// Each addon's manifest read again once per launch (1.27.1): an addon
+    /// that changed (a new version, new catalogs or types) is up to date
+    /// without being installed again. Your switch and order stay.
+    func checkForUpdates() async {
+        guard !checkedThisLaunch, !addons.isEmpty else { return }
+        checkedThisLaunch = true
+        var updated: [String] = [], failed = 0
+        await withTaskGroup(of: (String, AddonManifest?).self) { group in
+            for a in addons {
+                group.addTask { (a.id, try? await AddonAPI.manifest(a.transportURL)) }
+            }
+            for await (id, m) in group {
+                guard let i = addons.firstIndex(where: { $0.id == id }) else { continue }
+                guard let m else { failed += 1; continue }
+                let old = addons[i].manifest
+                guard old != m else { continue }
                 addons[i].manifest = m
+                updated.append(old.version != m.version ? "\(m.name) \(old.version ?? "?") → \(m.version ?? "?")" : m.name)
             }
         }
+        dlog("addons", "update check: \(addons.count) addon(s), \(updated.isEmpty ? "none changed" : "updated " + updated.joined(separator: ", "))\(failed > 0 ? ", \(failed) didn't answer" : "")")
+    }
+
+    /// Cinemeta, installed and switched on (a Discover source, 1.27.1).
+    var cinemetaAddon: InstalledAddon? { active.first(where: Self.isCinemeta) }
+    var cinemetaInstalled: InstalledAddon? { addons.first(where: Self.isCinemeta) }
+
+    /// Addons → Discover's Titles → Install: Cinemeta's own manifest.
+    func installCinemeta() async throws {
+        try await install(Self.cinemeta)
+        dlog("addons", "Cinemeta installed for Discover")
     }
 
     /// Settings preset import: adds the addons that aren't installed yet (by
@@ -243,9 +278,24 @@ final class AddonStore: ObservableObject {
     }
 
     /// Every catalog Discover can show (one that needs no search words), in
-    /// the addons' order.
+    /// the addons' order. 1.27.1: films, series and anime only: no debrid
+    /// library (Torrentio's "RealDebrid", type "other"), which was clutter
+    /// (9 Nov), and not Cinemeta's, which is a source for the whole grid.
     var browsableCatalogs: [CatalogRef] {
-        active.flatMap { a in a.manifest.catalogs.filter(\.isBrowsable).map { CatalogRef(addon: a, catalog: $0) } }
+        active.filter { !Self.isCinemeta($0) }.flatMap { a in
+            a.manifest.catalogs.filter { $0.isBrowsable && Self.onDiscover($0) }.map { CatalogRef(addon: a, catalog: $0) }
+        }
+    }
+
+    /// Cinemeta, Stremio's catalog of IMDb's titles (1.27.1: a Discover source).
+    nonisolated static func isCinemeta(_ a: InstalledAddon) -> Bool {
+        a.manifest.id == "com.linvo.cinemeta" || a.transportURL == "https://v3-cinemeta.strem.io/manifest.json"
+    }
+
+    nonisolated static func onDiscover(_ c: AddonManifest.Catalog) -> Bool {
+        guard ["movie", "series", "anime"].contains(c.type.lowercased()) else { return false }
+        let text = "\(c.id) \(c.name ?? "")".lowercased()
+        return !["debrid", "premiumize", "torbox", "offcloud", "easynews"].contains { text.contains($0) }
     }
 
     /// The ones shown on Discover.

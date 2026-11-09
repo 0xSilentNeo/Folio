@@ -6,13 +6,24 @@ import TipKit
 /// Network page, the player's gestures in your first plays. At most one an
 /// hour; none in UI tests or the lab.
 enum FolioTips {
+    /// TipKit is set up. Unset, an event's donate() never returns (1.27.1:
+    /// Discover waited on one before loading its grid, which stayed empty).
+    nonisolated(unsafe) private(set) static var configured = false
+
     static func configure() {
         guard !FirstRun.automated || FirstRun.forced else { return }
         do {
             try Tips.configure([.displayFrequency(.hourly)])
+            configured = true
         } catch {
             dlog("app", "tips not set up: \(error.localizedDescription)")
         }
+    }
+
+    /// Counts an event for a tip's rules, without anyone waiting on it.
+    static func note(_ event: Tips.Event<Tips.EmptyDonation>) {
+        guard configured else { return }
+        Task { await event.donate() }
     }
 
     /// A gesture was used: its tip has done its job.

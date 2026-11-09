@@ -12,7 +12,9 @@ import SwiftUI
 /// stuttered (5 Nov). Nothing with Reduce Motion, nor on the app's first
 /// page at launch.
 struct TabZoom: ViewModifier {
-    @AppStorage(SettingsKey.tabZoom) private var on = false
+    // 1.27.1: on for everyone, with no switch (a `-tabZoom NO` launch
+    // argument still turns it off for a test).
+    @AppStorage(SettingsKey.tabZoom) private var on = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var settled = true
     @State private var shownBefore = false

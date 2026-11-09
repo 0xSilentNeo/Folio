@@ -11,10 +11,18 @@ struct AddonsManagerView: View {
     @State private var error: String?
     @State private var removing: InstalledAddon?
     @Environment(\.openURL) private var openURL
+    /// Discover's sources (1.27.1): their order, the TMDB key (moved here
+    /// from Settings → Discover), Cinemeta being installed.
+    @AppStorage(DiscoverSource.orderKey) private var sourceOrder = ""
+    @AppStorage("tmdbApiKey") private var tmdbKey = ""
+    @State private var editingKey = false
+    @State private var keyDraft = ""
+    @State private var installingCinemeta = false
 
     var body: some View {
         List {
             addSection
+            sourcesSection
             if store.addons.isEmpty {
                 ContentUnavailableView("No Addons", systemImage: "puzzlepiece.extension",
                                        description: Text("Addons add streams, subtitles and catalogs. Paste an addon's manifest link above."))
@@ -26,7 +34,18 @@ struct AddonsManagerView: View {
         }
         .brandListBackground()
         .navigationTitle("Addons")
-        .toolbar { if !store.addons.isEmpty { EditButton() } }
+        .toolbar { EditButton() }
+        .alert("TMDB API Key", isPresented: $editingKey) {
+            SecureField("Key (v3)", text: $keyDraft)
+                .textInputAutocapitalization(.never).autocorrectionDisabled()
+            Button("Save") {
+                tmdbKey = keyDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                dlog("discover", tmdbKey.isEmpty ? "TMDB key removed" : "TMDB key added")
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Free for personal use: themoviedb.org → Settings → API. Discover then goes on past IMDb's 250 titles.")
+        }
         .confirmationDialog("Remove \(removing?.manifest.name ?? "Addon")?", isPresented: removingShown, titleVisibility: .visible, presenting: removing) { a in
             Button("Remove", role: .destructive) {
                 store.remove(a)
@@ -65,6 +84,79 @@ struct AddonsManagerView: View {
             }
         } header: { Text("Add Addon") } footer: {
             Text("Works with addons that have a manifest link (Torrentio, Comet or MediaFusion with your debrid key, OpenSubtitles, anime catalogs…). Configure an addon on its website, then paste its manifest link here. Only direct HTTP(S) streams play; torrents need an addon set up with a debrid service.")
+        }
+    }
+
+    // MARK: Discover's titles
+
+    private var sourceList: [DiscoverSource] { DiscoverSource.order(sourceOrder).filter { $0 != .imdb } }
+
+    private var sourcesSection: some View {
+        Section {
+            ForEach(sourceList) { s in sourceRow(s) }
+                .onMove { from, to in
+                    var list = sourceList
+                    list.move(fromOffsets: from, toOffset: to)
+                    sourceOrder = list.map(\.rawValue).joined(separator: ",")
+                    dlog("discover", "sources in order: \(list.map(\.name).joined(separator: ", ")), then IMDb")
+                }
+            SourceRow(name: "IMDb", detail: "Built in. Its lists stop at 250 titles.", inUse: DiscoverSource.current == .imdb) {
+                EmptyView()
+            }
+            .moveDisabled(true)
+        } header: {
+            Text("Discover's Titles")
+        } footer: {
+            Text("Discover's grid comes from the first of these that's set up, and from the next when it doesn't answer: tap Edit and drag to change the order. IMDb is used when neither Cinemeta nor TMDB is set up.")
+        }
+    }
+
+    @ViewBuilder
+    private func sourceRow(_ s: DiscoverSource) -> some View {
+        let inUse = DiscoverSource.current == s
+        switch s {
+        case .cinemeta:
+            let installed = store.cinemetaInstalled
+            SourceRow(name: "Cinemeta",
+                      detail: installed == nil ? "Stremio's catalog of IMDb's titles. No key needed."
+                          : installed!.enabled ? "Installed" : "Installed, switched off below",
+                      inUse: inUse) {
+                if installed == nil {
+                    Button {
+                        installingCinemeta = true
+                        Task {
+                            do { try await store.installCinemeta(); error = nil } catch { self.error = error.localizedDescription }
+                            installingCinemeta = false
+                        }
+                    } label: {
+                        if installingCinemeta { FolioSpinner(size: .small) } else { Text("Install") }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
+                    .tint(Theme.action)
+                    .disabled(installingCinemeta)
+                    .accessibilityIdentifier("installCinemeta")
+                }
+            }
+        case .tmdb:
+            SourceRow(name: "TMDB", detail: tmdbKey.isEmpty ? "Needs your free API key." : "Key added", inUse: inUse) {
+                Button(tmdbKey.isEmpty ? "Add Key" : "Change") {
+                    keyDraft = tmdbKey
+                    editingKey = true
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .controlSize(.small)
+                .accessibilityIdentifier("tmdbKey")
+            }
+            .swipeActions(allowsFullSwipe: false) {
+                if !tmdbKey.isEmpty {
+                    Button("Remove Key", systemImage: "key.slash", role: .destructive) { tmdbKey = "" }
+                }
+            }
+        case .imdb:
+            EmptyView()
         }
     }
 
@@ -129,6 +221,36 @@ struct AddonsManagerView: View {
         } set: { on in
             if on { store.hiddenCatalogs.remove(id) } else { store.hiddenCatalogs.insert(id) }
         }
+    }
+}
+
+/// One of Discover's sources: its name, how it's set up, a mark on the one
+/// in use, and an action (Install, Add Key).
+struct SourceRow<Action: View>: View {
+    let name: String
+    let detail: String
+    let inUse: Bool
+    @ViewBuilder var action: Action
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(name).font(.body.weight(.semibold))
+                    if inUse {
+                        Text("In Use")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Theme.action)
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(Theme.action.opacity(0.14), in: Capsule())
+                    }
+                }
+                Text(detail).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            action
+        }
+        .accessibilityElement(children: .contain)
     }
 }
 
@@ -231,11 +353,11 @@ struct AddonsSheet: View {
     }
 }
 
-/// Discover's addons button (1.27.0): the sheet grows out of it. Addons had
-/// no place of their own until then, only an item in the "…" menu.
+/// Discover's addons button (1.27.0). Addons had no place of their own
+/// until then, only an item in the "…" menu. 1.27.1: the sheet slides up,
+/// as the Watchlist's beside it does (it grew out of the button).
 struct AddonsSheetButton: View {
     @ObservedObject private var store = AddonStore.shared
-    @Namespace private var ns
     @State private var showing = false
 
     var body: some View {
@@ -252,11 +374,8 @@ struct AddonsSheetButton: View {
         .accessibilityLabel("Addons")
         .accessibilityValue(store.addons.isEmpty ? "None installed" : "\(on) of \(store.addons.count) on")
         .accessibilityIdentifier("addonsButton")
-        .zoomSource(ZoomSource("addons", ns), cornerRadius: 22)
         .popoverTip(AddonsTip(), arrowEdge: .top)
-        .sheet(isPresented: $showing) {
-            AddonsSheet().zoomDestination("addons", in: ns)
-        }
+        .sheet(isPresented: $showing) { AddonsSheet() }
         .onChange(of: showing) { _, open in if open { AddonsTip().invalidate(reason: .actionPerformed) } }
         // The welcome's "Add Addons" (1.27.0).
         .onReceive(FirstRunRouter.shared.$request) { if $0 == .addons, FirstRunRouter.shared.take(.addons) { showing = true } }
