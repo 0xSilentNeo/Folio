@@ -2,7 +2,10 @@
 # Customises an MPVKit checkout for Folio:
 #  - Lua (LuaJIT) enabled on iOS so external mpv scripts work
 #  - extra raw demuxers (DTS, TrueHD/MLP, W64, PGS .sup)
-#  - extra libmpv patches from engine/patches (applied after MPVKit's own)
+#  - extra libmpv patches from engine/patches (applied after MPVKit's own):
+#    0100 MoltenVK layer resizes reported at once; 0200 (engine 3) gpu-next
+#    drawing into buffers Folio hands over (--folio-target), for the Metal
+#    renderer on the same video layer as Picture in Picture
 set -euo pipefail
 MPVKIT="$1"
 HERE="$(cd "$(dirname "$0")" && pwd)"

@@ -1,0 +1,213 @@
+--- a/video/out/vo_gpu_next.c
++++ b/video/out/vo_gpu_next.c
+@@ -49,6 +49,27 @@
+ #include "sub/osd.h"
+ #include "gpu_next/context.h"
+ 
++// Folio: draw into buffers the host app hands over, instead of the
++// swapchain. Set with --folio-target=<address of a struct folio_target>;
++// the host keeps the struct alive while the player exists. All three
++// callbacks run on the VO thread.
++//  - allowed: drawing may touch the GPU now (false while the app is in the
++//    background without Picture in Picture: iOS refuses GPU work then).
++//    Checked before anything else in a draw, so a skipped frame does no GPU
++//    work at all.
++//  - acquire: a buffer of w x h to draw into, as an id<MTLTexture> on the
++//    system's default Metal device (usage: render target), or NULL to skip
++//    this frame. *fmt: 0 = bgra8 (SDR), 1 = rgba16f (HDR). *trc: 0 = SDR,
++//    1 = PQ, 2 = HLG (BT.2020). *token: handed back to present.
++//  - present: the GPU has finished drawing into the buffer (ok) or it
++//    won't be (not ok); pts is the frame's, in seconds.
++struct folio_target {
++    void *ctx;
++    bool (*allowed)(void *ctx);
++    void *(*acquire)(void *ctx, int w, int h, int *fmt, int *trc, void **token);
++    void (*present)(void *ctx, void *token, double pts, bool ok);
++};
++
+ #if HAVE_GL && defined(PL_HAVE_OPENGL)
+ #include <libplacebo/opengl.h>
+ #include "video/out/opengl/ra_gl.h"
+@@ -134,6 +155,12 @@
+     bool is_interpolated;
+     bool want_reset;
+     bool frame_pending;
++
++    // Folio: the host's buffer being drawn (see struct folio_target).
++    pl_tex ft_tex;
++    void *ft_token;
++    double ft_pts;
++    bool ft_valid;
+ 
+     pl_options pars;
+     struct m_config_cache *opts_cache;
+@@ -178,6 +205,7 @@
+     int target_hint_mode;
+     bool target_hint_strict;
+     char **raw_opts;
++    int64_t folio_target;
+ };
+ 
+ const struct m_opt_choice_alternatives lut_types[] = {
+@@ -218,6 +246,7 @@
+         {"target-colorspace-hint-strict", OPT_BOOL(target_hint_strict)},
+         // No `target-lut-type` because we don't support non-RGB targets
+         {"libplacebo-opts", OPT_KEYVALUELIST(raw_opts)},
++        {"folio-target", OPT_INT64(folio_target)},
+         {0},
+     },
+     .defaults = &(struct gl_next_opts) {
+@@ -1002,11 +1031,93 @@
+ static void update_hook_opts_dynamic(struct priv *p, const struct pl_hook *hook,
+                                      const struct mp_image *mpi);
+ 
++static struct folio_target *folio_target(struct priv *p)
++{
++    return (struct folio_target *)(intptr_t)p->next_opts->folio_target;
++}
++
++// Hands the buffer in flight back to the host, drawn (ok) or not.
++static void folio_finish(struct priv *p, struct folio_target *ft, bool ok)
++{
++    if (!p->ft_tex && !p->ft_token)
++        return;
++    if (ok)
++        pl_gpu_finish(p->gpu); // complete before the host's layer reads it
++    pl_tex_destroy(p->gpu, &p->ft_tex);
++    void *token = p->ft_token;
++    p->ft_token = NULL;
++    if (ft && ft->present)
++        ft->present(ft->ctx, token, p->ft_pts, ok);
++}
++
++// The host's buffer as this frame's target, in place of a swapchain image.
++static bool folio_start_frame(struct vo *vo, struct priv *p,
++                              struct folio_target *ft,
++                              struct pl_swapchain_frame *out)
++{
++    int w = vo->dwidth, h = vo->dheight;
++    if (w <= 0 || h <= 0 || !ft->acquire)
++        return false;
++    if (!(p->gpu->import_caps.tex & PL_HANDLE_MTL_TEX)) {
++        MP_ERR(vo, "folio-target: this GPU can't import Metal textures\n");
++        return false;
++    }
++    int fmt = 0, trc = 0;
++    void *token = NULL;
++    void *mtl = ft->acquire(ft->ctx, w, h, &fmt, &trc, &token);
++    if (!mtl) {
++        if (token && ft->present)
++            ft->present(ft->ctx, token, 0, false);
++        return false;
++    }
++    pl_fmt plfmt = pl_find_named_fmt(p->gpu, fmt == 1 ? "rgba16f" : "bgra8");
++    pl_tex tex = NULL;
++    if (plfmt) {
++        tex = pl_tex_create(p->gpu, &(struct pl_tex_params) {
++            .w = w,
++            .h = h,
++            .format = plfmt,
++            .renderable = true,
++            .blit_dst = !!(plfmt->caps & PL_FMT_CAP_BLITTABLE),
++            .import_handle = PL_HANDLE_MTL_TEX,
++            .shared_mem = (struct pl_shared_mem) {
++                .handle = { .handle = mtl },
++            },
++        });
++    }
++    if (!tex) {
++        MP_ERR(vo, "folio-target: couldn't use the host's %dx%d %s buffer\n",
++               w, h, fmt == 1 ? "rgba16f" : "bgra8");
++        if (ft->present)
++            ft->present(ft->ctx, token, 0, false);
++        return false;
++    }
++    p->ft_tex = tex;
++    p->ft_token = token;
++    p->ft_valid = false;
++    *out = (struct pl_swapchain_frame) {
++        .fbo = tex,
++        .flipped = false,
++        .color_repr = pl_color_repr_rgb,
++        .color_space = trc == 1 ? pl_color_space_hdr10
++                     : trc == 2 ? pl_color_space_bt2020_hlg
++                     : pl_color_space_monitor,
++    };
++    return true;
++}
++
+ static bool draw_frame(struct vo *vo, struct vo_frame *frame)
+ {
+     struct priv *p = vo->priv;
+     pl_options pars = p->pars;
+     pl_gpu gpu = p->gpu;
++
++    // Folio: not now (the app is away). Before any GPU work, the queue's
++    // included: these frames are dropped.
++    struct folio_target *ft = folio_target(p);
++    if (ft && ft->allowed && !ft->allowed(ft->ctx))
++        return VO_FALSE;
++
+     update_options(vo);
+ 
+     struct pl_render_params params = pars->params;
+@@ -1230,17 +1341,24 @@
+         // Update again after possible max_luma change
+         if (p->icc_profile)
+             hint = p->icc_profile->csp;
+-        if (!pass_colorspace)
++        if (!pass_colorspace && !ft)
+             pl_swapchain_colorspace_hint(p->sw, &hint);
+     } else if (!target_hint) {
+         if (!hint.hdr.min_luma)
+             hint.hdr.min_luma = target_csp.hdr.min_luma;
+-        pl_swapchain_colorspace_hint(p->sw, NULL);
++        if (!ft)
++            pl_swapchain_colorspace_hint(p->sw, NULL);
+     }
+ 
+     struct pl_swapchain_frame swframe;
+     bool should_draw = sw->fns->start_frame(sw, NULL); // for wayland logic
+-    if (!should_draw || !pl_swapchain_start_frame(p->sw, &swframe)) {
++    if (should_draw && ft) {
++        folio_finish(p, ft, false); // one left over from a frame never flipped
++        should_draw = folio_start_frame(vo, p, ft, &swframe);
++        if (should_draw && frame->current)
++            p->ft_pts = frame->current->pts;
++    }
++    if (!should_draw || (!ft && !pl_swapchain_start_frame(p->sw, &swframe))) {
+         if (frame->current) {
+             // Advance the queue state to the current PTS to discard unused frames
+             struct pl_queue_params qparams = *pl_queue_params(
+@@ -1440,6 +1558,7 @@
+ 
+     pl_gpu_flush(gpu);
+     p->frame_pending = true;
++    p->ft_valid = valid;
+     return VO_TRUE;
+ }
+ 
+@@ -1447,6 +1566,15 @@
+ {
+     struct priv *p = vo->priv;
+     struct ra_swapchain *sw = p->ra_ctx->swapchain;
++
++    // Folio: the drawn buffer goes to the host (a frame that failed is
++    // dropped rather than shown purple); the swapchain isn't used.
++    struct folio_target *ft = folio_target(p);
++    if (ft) {
++        folio_finish(p, ft, p->frame_pending && p->ft_valid);
++        p->frame_pending = false;
++        return;
++    }
+ 
+     if (p->frame_pending) {
+         if (!pl_swapchain_submit_frame(p->sw))
+@@ -2080,6 +2208,7 @@
+ static void uninit(struct vo *vo)
+ {
+     struct priv *p = vo->priv;
++    folio_finish(p, folio_target(p), false);
+     pl_queue_destroy(&p->queue); // destroy this first
+     for (int i = 0; i < MP_ARRAY_SIZE(p->osd_state.entries); i++)
+         pl_tex_destroy(p->gpu, &p->osd_state.entries[i].tex);
