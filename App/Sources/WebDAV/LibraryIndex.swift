@@ -307,6 +307,18 @@ final class LibraryIndexStore: ObservableObject {
         }
     }
 
+    /// In iOS's background refresh (1.28.5): the library's changes read
+    /// again when it's older than `maxAge`, so New on Real-Debrid drops what
+    /// was removed elsewhere without Folio being opened (10 Nov: Ramayana
+    /// stayed on the widget until the next visit to Home, half an hour on).
+    func refreshInBackground(_ server: WebDAVServer, maxAge: TimeInterval) async {
+        await load(server)
+        let s = state(server.id)
+        guard !s.refreshing, let index = s.index else { return }
+        if let r = index.refreshed, Date().timeIntervalSince(r) < maxAge { return }
+        await refresh(server, full: false)
+    }
+
     /// A server just saved (added, or its login changed): its library is
     /// read now, whatever the time since the last check. Home asked again
     /// only when the address, user name or folder changed, so after fixing

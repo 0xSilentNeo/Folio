@@ -673,7 +673,16 @@ final class PlayerModel: ObservableObject {
     private func applyShaderList(force: Bool = true) {
         guard let c = client else { return }
         let restoreOnly = anime4kRestoreOnly
-        let list = Anime4K.paths(mode: anime4kMode, quality: anime4kQuality, restoreOnly: restoreOnly) + MPVFiles.activeShaderPaths
+        // Paused while the phone is hot (1.28.5): at "serious" the restore
+        // stages alone still took 14–18 ms of each frame, on top of software
+        // decoding, and frames dropped (10 Nov, Cowboy Bebop 1080i).
+        let held = anime4kMode != .off && Self.tooHotForAnime4K
+        if held != anime4kHeld {
+            anime4kHeld = held
+            dlog("player", held ? "Anime4K paused: the phone is hot (thermal \(ProcessInfo.processInfo.thermalState.rawValue))" : "Anime4K back: the phone has cooled")
+            showToast(held ? "Anime4K paused while the phone is hot" : "Anime4K back on")
+        }
+        let list = (held ? [] : Anime4K.paths(mode: anime4kMode, quality: anime4kQuality, restoreOnly: restoreOnly)) + MPVFiles.activeShaderPaths
         // A change of size or heat that changes nothing: no reload.
         guard force || list != appliedShaders else { return }
         if anime4kMode != .off, appliedShaders != list {
@@ -703,10 +712,18 @@ final class PlayerModel: ObservableObject {
         return min(px.width * scale / v.width, px.height * scale / v.height)
     }
 
+    /// Anime4K paused for heat (shown once each way).
+    private var anime4kHeld = false
+
+    /// Apple: at "serious", "reduce GPU usage"; Anime4K is the GPU work Folio can drop.
+    static var tooHotForAnime4K: Bool {
+        ProcessInfo.processInfo.thermalState.rawValue >= ProcessInfo.ThermalState.serious.rawValue
+    }
+
     /// The restore stages only: the video shown at under 1.5× (Anime4K.fullChainScale),
-    /// or the phone hot (Apple: at "serious", "reduce GPU usage").
+    /// or the phone warm (1.28.5: from "fair"; at "serious" Anime4K pauses).
     private var anime4kRestoreOnly: Bool {
-        if ProcessInfo.processInfo.thermalState.rawValue >= ProcessInfo.ThermalState.serious.rawValue { return true }
+        if ProcessInfo.processInfo.thermalState.rawValue >= ProcessInfo.ThermalState.fair.rawValue { return true }
         guard let s = anime4kScale else { return false }
         return s < Anime4K.fullChainScale
     }
@@ -1335,10 +1352,36 @@ final class PlayerModel: ObservableObject {
         goTo(queueIndex - 1)
     }
 
+    /// A file the hardware decoder can't take (1.28.5), said once: 10 Nov,
+    /// Cowboy Bebop's Blu-ray is interlaced 1080i H.264, which VideoToolbox
+    /// refuses ("VideoToolbox malfunction" in mpv's log), so mpv decoded it
+    /// on the processor, as it should, and the phone ran hot. It looked like
+    /// the decoder had failed.
+    private func noteSoftwareDecoding() {
+        guard !softwareNoted else { return }
+        let id = item.id
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard let self, !self.closed, self.item.id == id, self.mode == .main,
+                  UIApplication.shared.applicationState == .active,
+                  (self.defaults.string(forKey: SettingsKey.hwdec) ?? "auto") == "auto",
+                  !Self.isHardware(self.hwdecCurrent), self.client?.string("vid") != "no" else { return }
+            let codec = self.client?.string("video-codec") ?? self.client?.string("video-format") ?? "this video"
+            dlog("player", "software decoding: the hardware decoder can't take \(codec) as encoded here (interlaced video is one such case); it costs more battery and heat")
+            // Once a session: a season of such episodes doesn't repeat it.
+            guard !self.softwareNoted else { return }
+            self.softwareNoted = true
+            self.showToast("Decoded in software: this video can't use the hardware decoder")
+        }
+    }
+
+    private var softwareNoted = false
+
     private func onFileLoaded() {
         guard let c = client else { return }
         dlog("player", "file loaded in \(String(format: "%.0f", Date().timeIntervalSince(loadStarted) * 1000)) ms")
         fileLoaded = true
+        noteSoftwareDecoding()
         // The gestures tip comes up in the first plays after installing (1.27.0).
         FolioTips.note(PlayerGesturesTip.played)
         isLoading = false

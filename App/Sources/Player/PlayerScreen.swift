@@ -447,7 +447,7 @@ struct PlayerScreen: View {
             // Spoken names (1.27.0): VoiceOver guessed from the symbols.
             PillIcon("gobackward.\(icon(backStep))", size: 18, unionID: "transport", ns: glassNS) { model.seek(by: -Double(backStep)) }
                 .accessibilityLabel("Back \(backStep) seconds")
-            PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 21, morphs: false, unionID: "transport", ns: glassNS) {
+            PillIcon(model.ended ? "arrow.counterclockwise" : (model.paused ? "play.fill" : "pause.fill"), size: 21, unionID: "transport", ns: glassNS) {
                 model.togglePause()
                 ui.showControls()
             }
@@ -1009,10 +1009,6 @@ struct PillIcon: View {
     let icon: String
     var size: CGFloat = 18
     var active = false
-    /// The symbol morphs into the next one (SF Symbols' replace). Off for
-    /// play/pause (1.28.4): the morph took a moment to show the new symbol,
-    /// read as the button being slow.
-    var morphs = true
     let unionID: String
     let ns: Namespace.ID
     /// Receives the UIKit view behind the button (popover source).
@@ -1020,8 +1016,8 @@ struct PillIcon: View {
     let action: () -> Void
     @ObservedObject private var tune = UITune.shared
 
-    init(_ icon: String, size: CGFloat = 18, active: Bool = false, morphs: Bool = true, unionID: String, ns: Namespace.ID, onAnchor: ((UIView) -> Void)? = nil, action: @escaping () -> Void) {
-        self.icon = icon; self.size = size; self.active = active; self.morphs = morphs; self.unionID = unionID; self.ns = ns; self.onAnchor = onAnchor; self.action = action
+    init(_ icon: String, size: CGFloat = 18, active: Bool = false, unionID: String, ns: Namespace.ID, onAnchor: ((UIView) -> Void)? = nil, action: @escaping () -> Void) {
+        self.icon = icon; self.size = size; self.active = active; self.unionID = unionID; self.ns = ns; self.onAnchor = onAnchor; self.action = action
     }
 
     var body: some View {
@@ -1032,7 +1028,10 @@ struct PillIcon: View {
         }) {
             Image(systemName: icon)
                 .font(.system(size: size, weight: .semibold))
-                .contentTransition(morphs ? .symbolEffect(.replace) : .identity)
+                // The symbol morphs into the next (1.28.5: back, the user
+                // found the bare swap of 1.28.4 janky), a little quicker
+                // than SF Symbols' own pace.
+                .contentTransition(.symbolEffect(.replace, options: .speed(1.4)))
                 .frame(width: h, height: h)
                 .background(active ? Color.white.opacity(0.2) : Color.clear, in: Circle())
                 .contentShape(Circle())

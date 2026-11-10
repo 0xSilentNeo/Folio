@@ -227,8 +227,8 @@ enum IMDbSource {
             store("episodes2|\(show.id)|\(season)|\(lang)", eps)
         }
         // Live search as you type "lab" (and its first two letters).
-        for q in ["la", "lab", "lab m", "lab mo", "lab mov", "lab movi", "lab movie"] { store("suggest|\(q)", q.count > 3 ? [film] : [film, show]) }
-        store("suggest|labx", [MetaItem]())
+        for q in ["la", "lab", "lab m", "lab mo", "lab mov", "lab movi", "lab movie"] { store("suggest2|\(q)", q.count > 3 ? [film] : [film, show]) }
+        store("suggest2|labx", [MetaItem]())
         dlog("lab", "IMDb cache seeded (Lab Movie, Lab Series)")
     }
 
@@ -347,6 +347,8 @@ enum IMDbSource {
         var yr: String?
         var s: String?
         var i: Img?
+        /// IMDb's popularity rank (lower: more popular).
+        var rank: Int?
     }
     private struct SuggestionResponse: Decodable { var d: [Suggestion]? }
 
@@ -367,7 +369,8 @@ enum IMDbSource {
     static func suggest(_ query: String) async throws -> [MetaItem] {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !q.isEmpty else { return [] }
-        let key = "suggest|\(q)"
+        // "suggest2" (1.28.5): answers kept before it lack the popularity rank.
+        let key = "suggest2|\(q)"
         if let hit = cached(key, ttl: 86400, as: [MetaItem].self) { return hit }
         guard let path = suggestionPath(q), let url = URL(string: "https://v3.sg.media-imdb.com/suggestion/x/\(path).json") else { throw URLError(.badURL) }
         var req = URLRequest(url: url)
@@ -388,6 +391,7 @@ enum IMDbSource {
             var m = MetaItem(id: s.id, type: type, name: name, poster: sized(s.i?.imageUrl, width: 240),
                              description: s.s, releaseInfo: s.yr ?? s.y.map(String.init), imdbRating: nil, genres: nil)
             m.background = sized(s.i?.imageUrl, width: 780)
+            m.popularityRank = s.rank
             return m
         }
         store(key, items)

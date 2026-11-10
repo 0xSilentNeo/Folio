@@ -19,6 +19,11 @@ enum PasscodeAnswer {
 /// the app's appearance. Every place the kids passcode is asked for or
 /// chosen shows it (KidsPasscodeScreen); until 1.22.1 each had a small pad
 /// of its own.
+///
+/// 1.28.5: while Face ID looks (`scanning`), only its symbol and a way to
+/// the passcode show, as on the Lock Screen; the keys come in when it
+/// gives up. The keys are the Lock Screen's size: a fifth of the screen's
+/// width (75 pt on a 375 pt phone, 88 pt on a Pro Max).
 struct PasscodeScreen: View {
     let title: String
     /// Under the circles: what it's for, or what went wrong.
@@ -26,11 +31,16 @@ struct PasscodeScreen: View {
     /// "Face ID", "Touch ID" or "Optic ID": its button, bottom left.
     var biometry: String?
     var onBiometry: () -> Void = {}
+    /// Face ID is looking: its symbol instead of the circles, no keys yet.
+    var scanning = false
+    /// "Enter Passcode" while Face ID looks: the keys now.
+    var onSkipBiometry: () -> Void = {}
     /// Too many wrong tries: the keys wait.
     var locked = false
     let onCancel: () -> Void
     let onEntered: (String) -> PasscodeAnswer
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var code = ""
     @State private var shakes: CGFloat = 0
     /// From the fourth digit until the answer is in: no more typing.
@@ -43,16 +53,13 @@ struct PasscodeScreen: View {
         GeometryReader { geo in
             // A phone on its side has no room for the pad under the title: side by side then.
             let landscape = geo.size.width > geo.size.height && geo.size.height < 600
-            // The Lock Screen's keys are about 80 pt on a 6.9" iPhone; smaller where it's short.
-            let key = landscape
-                ? max(52, min(74, (geo.size.height - 3 * 12 - 24) / 4))
-                : max(56, min(80, (geo.size.width - 100) / 3, (geo.size.height - 300) / 4.8))
+            let key = Self.keySize(geo.size, landscape: landscape)
             Group {
                 if landscape {
                     HStack(spacing: 0) {
                         VStack(spacing: 0) {
                             Spacer(minLength: 8)
-                            header
+                            header(key)
                             Spacer(minLength: 8)
                             bottomBar(key)
                         }
@@ -63,7 +70,7 @@ struct PasscodeScreen: View {
                 } else {
                     VStack(spacing: 0) {
                         Spacer(minLength: 12).frame(maxHeight: 110)
-                        header
+                        header(key)
                         Spacer().frame(height: key * 0.55)
                         keypad(key)
                         Spacer(minLength: 12)
@@ -73,6 +80,8 @@ struct PasscodeScreen: View {
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
+            // The keys come in as on the Lock Screen when Face ID gives up.
+            .animation(reduceMotion ? .easeOut(duration: 0.2) : .spring(duration: 0.4, bounce: 0.2), value: scanning)
         }
         .foregroundStyle(.white)
         .background(PasscodeBackground())
@@ -80,13 +89,43 @@ struct PasscodeScreen: View {
         .dynamicTypeSize(...DynamicTypeSize.xxLarge)
     }
 
-    private var header: some View {
+    /// A key's size: the Lock Screen's, a fifth of the screen's width (75 pt
+    /// on a 375 pt phone, 88 pt on a 6.9" one); smaller where it's short.
+    static func keySize(_ size: CGSize, landscape: Bool) -> CGFloat {
+        landscape
+            ? max(52, min(80, (size.height - 3 * 12 - 24) / 4))
+            : max(56, min(90, size.width / 5, (size.height - 300) / 4.8))
+    }
+
+    /// The title and circles, with Face ID's symbol over them while it looks.
+    /// Both are laid out the whole time, so nothing moves when the keys come.
+    private func header(_ key: CGFloat) -> some View {
+        passcodeHeader(key)
+            .opacity(scanning ? 0 : 1)
+            .accessibilityHidden(scanning)
+            .overlay {
+                if scanning {
+                    VStack(spacing: 14) {
+                        Image(systemName: KidsProfile.biometrySymbol(biometry))
+                            .font(.system(size: key * 0.6, weight: .light))
+                            .symbolEffect(.pulse, isActive: !reduceMotion)
+                            .accessibilityHidden(true)
+                        Text(biometry ?? "Face ID").font(.title3)
+                            .accessibilityAddTraits(.isHeader)
+                            .accessibilityIdentifier("passcodeScanning")
+                    }
+                    .transition(.opacity)
+                }
+            }
+    }
+
+    private func passcodeHeader(_ key: CGFloat) -> some View {
         VStack(spacing: 0) {
             // Text styles, not fixed sizes (1.27.0), so they grow up to the screen's cap.
             Text(title).font(.title3).multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("passcodeTitle")
-            dots.padding(.top, 20)
+            dots(key).padding(.top, 20)
             // Two lines kept for it, so nothing moves when it appears.
             Text(message ?? " ").font(.subheadline).foregroundStyle(.white.opacity(0.75))
                 .multilineTextAlignment(.center)
@@ -96,12 +135,12 @@ struct PasscodeScreen: View {
         }
     }
 
-    private var dots: some View {
-        HStack(spacing: 24) {
+    private func dots(_ key: CGFloat) -> some View {
+        HStack(spacing: key * 0.3) {
             ForEach(0..<4, id: \.self) { i in
                 Circle().strokeBorder(.white, lineWidth: 1.2)
                     .background(Circle().fill(i < code.count ? Color.white : .clear))
-                    .frame(width: 13, height: 13)
+                    .frame(width: key * 0.16, height: key * 0.16)
             }
         }
         .modifier(Shake(amount: shakes))
@@ -110,14 +149,18 @@ struct PasscodeScreen: View {
         .accessibilityIdentifier("passcodeDots")
     }
 
+    /// The Lock Screen's spacing: 28 pt across and 15 down between 75 pt keys.
     private func keypad(_ size: CGFloat) -> some View {
         VStack(spacing: size * 0.2) {
             ForEach(0..<3, id: \.self) { row in
-                HStack(spacing: size * 0.34) { ForEach(1...3, id: \.self) { col in key(row * 3 + col, size) } }
+                HStack(spacing: size * 0.37) { ForEach(1...3, id: \.self) { col in key(row * 3 + col, size) } }
             }
             key(0, size)
         }
-        .opacity(locked ? 0.4 : 1)
+        .opacity(scanning ? 0 : locked ? 0.4 : 1)
+        .scaleEffect(scanning && !reduceMotion ? 0.88 : 1)
+        .allowsHitTesting(!scanning)
+        .accessibilityHidden(scanning)
     }
 
     private func key(_ n: Int, _ size: CGFloat) -> some View {
@@ -140,21 +183,28 @@ struct PasscodeScreen: View {
 
     /// Where the Lock Screen has Emergency and Cancel: under the 7 and the 9.
     private func bottomBar(_ size: CGFloat) -> some View {
-        HStack(spacing: size * 0.34) {
-            Group {
-                if let biometry {
-                    Button(biometry, action: onBiometry).accessibilityIdentifier("passcodeBiometry")
-                } else {
-                    Color.clear
+        HStack(spacing: size * 0.37) {
+            if scanning {
+                // Under the 7 and the 8: the passcode instead of Face ID.
+                Button("Enter Passcode", action: onSkipBiometry)
+                    .frame(width: size * 2.37)
+                    .accessibilityIdentifier("passcodeSkipBiometry")
+            } else {
+                Group {
+                    if let biometry {
+                        Button(biometry, action: onBiometry).accessibilityIdentifier("passcodeBiometry")
+                    } else {
+                        Color.clear
+                    }
                 }
+                .frame(width: size)
+                Color.clear.frame(width: size, height: 1)
+            }
+            Button(code.isEmpty || scanning ? "Cancel" : "Delete") {
+                if code.isEmpty || scanning { onCancel() } else if !busy { code.removeLast() }
             }
             .frame(width: size)
-            Color.clear.frame(width: size, height: 1)
-            Button(code.isEmpty ? "Cancel" : "Delete") {
-                if code.isEmpty { onCancel() } else if !busy { code.removeLast() }
-            }
-            .frame(width: size)
-            .accessibilityIdentifier(code.isEmpty ? "passcodeCancel" : "passcodeDelete")
+            .accessibilityIdentifier(code.isEmpty || scanning ? "passcodeCancel" : "passcodeDelete")
         }
         .font(.body)
         .lineLimit(1).minimumScaleFactor(0.7)
@@ -163,7 +213,7 @@ struct PasscodeScreen: View {
     }
 
     private func type(_ d: String) {
-        guard !busy, !locked, code.count < 4 else { return }
+        guard !busy, !locked, !scanning, code.count < 4 else { return }
         code += d
         guard code.count == 4 else { return }
         busy = true
@@ -270,6 +320,8 @@ struct KidsPasscodeScreen: View {
     @State private var waitLeft: Int?
     @State private var waitGeneration = 0
     @State private var biometryName: String?
+    /// Face ID is looking: the keys stay hidden until it gives up (1.28.5).
+    @State private var scanning: Bool
     @State private var finished = false
     @ObservedObject private var kids = KidsProfile.shared
 
@@ -278,6 +330,11 @@ struct KidsPasscodeScreen: View {
         self.cancel = cancel
         self.done = done
         _step = State(initialValue: purpose == .choose ? .new : .current)
+        // Known before the first frame, so the keys don't show and go.
+        let kids = KidsProfile.shared
+        let name = purpose != .choose && kids.allowBiometrics && kids.lockedFor == nil ? kids.biometryName : nil
+        _biometryName = State(initialValue: name)
+        _scanning = State(initialValue: name != nil)
     }
 
     private var title: String {
@@ -308,14 +365,17 @@ struct KidsPasscodeScreen: View {
     var body: some View {
         PasscodeScreen(title: title, message: message,
                        biometry: step == .current && kids.allowBiometrics ? biometryName : nil,
-                       onBiometry: useBiometry, locked: waitLeft != nil, onCancel: cancel, onEntered: entered)
+                       onBiometry: useBiometry, scanning: scanning, onSkipBiometry: skipBiometry,
+                       locked: waitLeft != nil, onCancel: cancel, onEntered: entered)
             .task {
-                biometryName = kids.biometryName
+                if biometryName == nil, purpose != .choose { biometryName = kids.biometryName }
                 // Face ID first, as the Lock Screen does: once the screen is up.
-                guard step == .current, kids.allowBiometrics, biometryName != nil, kids.lockedFor == nil else { return }
-                try? await Task.sleep(nanoseconds: 350_000_000)
-                if !Task.isCancelled { useBiometry() }
+                guard scanning else { return }
+                try? await Task.sleep(for: .milliseconds(350))
+                if Task.isCancelled || !scanning { return }
+                useBiometry()
             }
+            .onDisappear { kids.cancelBiometrics() }
             .task(id: waitGeneration) {
                 // The wait after five wrong tries counts down here (it's kept across launches).
                 while let left = kids.lockedFor, !Task.isCancelled {
@@ -359,17 +419,31 @@ struct KidsPasscodeScreen: View {
         }
     }
 
+    /// Face ID's own prompt: a second try is offered there; when it gives up
+    /// (or Cancel or Enter Passcode is chosen in it) the keys come in.
     private func useBiometry() {
         let why = reason
         Task {
-            guard await kids.unlockWithBiometrics(why), !finished else { return }
+            let ok = await kids.unlockWithBiometrics(why)
+            guard !finished else { return }
+            guard ok else {
+                scanning = false
+                return
+            }
             if purpose == .change {
                 note = nil
                 step = .new
+                scanning = false
             } else {
+                // The screen goes with the symbol still up: no keys flash past.
                 finish(nil)
             }
         }
+    }
+
+    private func skipBiometry() {
+        scanning = false
+        kids.cancelBiometrics()
     }
 
     private func finish(_ code: String?) {
