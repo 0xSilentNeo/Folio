@@ -1,0 +1,940 @@
+[   0.013][v][cplayer] mpv v0.41.0-dirty Copyright © 2000-2025 mpv/MPlayer/mplayer2 projects
+[   0.013][v][cplayer]  built on Nov  9 2026 12:25:19
+[   0.013][v][cplayer] libplacebo version: v7.360.1 (v7.360.1)
+[   0.013][v][cplayer] FFmpeg version: n9.0.2
+[   0.013][v][cplayer] FFmpeg library versions:
+[   0.013][v][cplayer]    libavcodec      63.1.102
+[   0.013][v][cplayer]    libavdevice     63.1.102
+[   0.013][v][cplayer]    libavfilter     12.1.102
+[   0.013][v][cplayer]    libavformat     63.1.102
+[   0.013][v][cplayer]    libavutil       61.1.102
+[   0.013][v][cplayer]    libswresample   7.1.102
+[   0.013][v][cplayer]    libswscale      10.1.102
+[   0.013][v][cplayer] Configuration: -Dlibmpv=true -Dgl=enabled -Dplain-gl=enabled -Diconv=enabled -Duchardet=enabled -Dvulkan=enabled -Dmoltenvk=enabled -Djavascript=disabled -Dzimg=disabled -Djpeg=disabled -Dvapoursynth=disabled -Drubberband=disabled -Dgpl=true -Dlibbluray=enabled -Dcplayer=false -Dvideotoolbox-gl=disabled -Dvideotoolbox-pl=enabled -Dswift-build=disabled -Daudiounit=enabled -Davfoundation=enabled -Dcoreaudio=disabled -Dlua=luajit -Dios-gl=enabled --cross-file=/Users/runner/work/Folio/Folio/mpvkit/dist/libmpv/isimulator/scratch/arm64/crossFile.meson
+[   0.013][v][cplayer] List of enabled features: audiounit avfoundation bsd-fstatfs build-date cplugins darwin ffmpeg gl glob glob-posix gpl iconv ios-gl lcms2 libass libavdevice libbluray libdl libplacebo luajit mac-thread-name macos-10-15-4-features macos-11-3-features macos-11-features macos-12-features moltenvk posix posix-shm uchardet vector videotoolbox-pl vulkan zlib
+[   0.013][v][cplayer] mpv v0.41.0-dirty Copyright © 2000-2025 mpv/MPlayer/mplayer2 projects
+[   0.013][v][cplayer]  built on Nov  9 2026 12:25:19
+[   0.013][v][cplayer] libplacebo version: v7.360.1 (v7.360.1)
+[   0.013][v][cplayer] FFmpeg version: n9.0.2
+[   0.013][v][cplayer] FFmpeg library versions:
+[   0.013][v][cplayer]    libavcodec      63.1.102
+[   0.013][v][cplayer]    libavdevice     63.1.102
+[   0.013][v][cplayer]    libavfilter     12.1.102
+[   0.013][v][cplayer]    libavformat     63.1.102
+[   0.013][v][cplayer]    libavutil       61.1.102
+[   0.013][v][cplayer]    libswresample   7.1.102
+[   0.013][v][cplayer]    libswscale      10.1.102
+[   0.013][v][cplayer] Configuration: -Dlibmpv=true -Dgl=enabled -Dplain-gl=enabled -Diconv=enabled -Duchardet=enabled -Dvulkan=enabled -Dmoltenvk=enabled -Djavascript=disabled -Dzimg=disabled -Djpeg=disabled -Dvapoursynth=disabled -Drubberband=disabled -Dgpl=true -Dlibbluray=enabled -Dcplayer=false -Dvideotoolbox-gl=disabled -Dvideotoolbox-pl=enabled -Dswift-build=disabled -Daudiounit=enabled -Davfoundation=enabled -Dcoreaudio=disabled -Dlua=luajit -Dios-gl=enabled --cross-file=/Users/runner/work/Folio/Folio/mpvkit/dist/libmpv/isimulator/scratch/arm64/crossFile.meson
+[   0.013][v][cplayer] List of enabled features: audiounit avfoundation bsd-fstatfs build-date cplugins darwin ffmpeg gl glob glob-posix gpl iconv ios-gl lcms2 libass libavdevice libbluray libdl libplacebo luajit mac-thread-name macos-10-15-4-features macos-11-3-features macos-11-features macos-12-features moltenvk posix posix-shm uchardet vector videotoolbox-pl vulkan zlib
+[   0.013][d][global] home path: '' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv'
+[   0.013][d][global] user path: '~~home/' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv'
+[   0.013][d][global] user path: '~~old_home/' -> ''
+[   0.013][d][global] config path: 'encoding-profiles.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/encoding-profiles.conf'
+[   0.013][d][global] config path: 'mpv.conf' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/mpv.conf'
+[   0.013][d][global] config path: 'config' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/config'
+[   0.013][v][cplayer] Reading config file /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/mpv.conf
+[   0.013][v][bdmv/bluray] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/mpv.conf
+[   0.013][v][file] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/mpv.conf
+[   0.013][d][file] resize stream to 131072 bytes, drop 0 bytes
+[   0.013][d][file] Stream opened successfully.
+[   0.013][v][cplayer] Applying profile 'default'...
+[   0.013][d][global] config path: 'input.conf' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/input.conf'
+[   0.013][v][bdmv/bluray] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/input.conf
+[   0.013][v][file] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/input.conf
+[   0.013][d][file] resize stream to 131072 bytes, drop 0 bytes
+[   0.013][d][file] Stream opened successfully.
+[   0.013][v][input] Parsing input config file /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/input.conf
+[   0.013][v][input] Input config file /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/input.conf parsed: 0 binds
+[   0.013][d][console] Loading lua script @console.lua...
+[   0.013][d][auto_profiles] Loading lua script @auto_profiles.lua...
+[   0.013][d][select] Loading lua script @select.lua...
+[   0.013][d][positioning] Loading lua script @positioning.lua...
+[   0.013][d][commands] Loading lua script @commands.lua...
+[   0.013][d][context_menu] Loading lua script @context_menu.lua...
+[   0.013][v][clipboard] Initialized vo clipboard backend.
+[   0.013][d][global] config path: 'scripts' -> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/scripts'
+[   0.013][e][cplayer] Can't load unknown script: /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/scripts/README.txt
+[   0.014][d][cplayer] Run command: af, flags=64, args=[operation="add", value="@folio-audio-probe:acompressor"]
+[   0.014][e][cplayer] Option af-add: 'acompressor' isn't supported.
+[   0.014][d][cplayer] Run command: af, flags=64, args=[operation="add", value="@folio-audio-probe:alimiter"]
+[   0.014][e][cplayer] Option af-add: 'alimiter' isn't supported.
+[   0.014][d][cplayer] Run command: af, flags=64, args=[operation="add", value="@folio-audio-probe:dynaudnorm"]
+[   0.014][e][cplayer] Option af-add: 'dynaudnorm' isn't supported.
+[   0.014][d][cplayer] Run command: af, flags=64, args=[operation="add", value="@folio-audio-probe:dialoguenhance"]
+[   0.014][e][cplayer] Option af-add: 'dialoguenhance' isn't supported.
+[   0.016][v][libmpv_render] GL_VERSION='OpenGL ES 3.0 APPLE-24.0.2'
+[   0.016][v][libmpv_render] Detected GLES 3.0.
+[   0.016][v][libmpv_render] GL_VENDOR='Apple Inc.'
+[   0.016][v][libmpv_render] GL_RENDERER='Apple Software Renderer'
+[   0.016][v][libmpv_render] GL_SHADING_LANGUAGE_VERSION='OpenGL ES GLSL ES 3.00'
+[   0.016][d][libmpv_render] Combined OpenGL extensions string:
+[   0.016][d][libmpv_render]  GL_OES_standard_derivatives GL_EXT_color_buffer_half_float GL_EXT_debug_label GL_EXT_debug_marker GL_EXT_pvrtc_sRGB GL_EXT_read_format_bgra GL_EXT_separate_shader_objects GL_EXT_shader_framebuffer_fetch GL_EXT_shader_texture_lod GL_EXT_shadow_samplers GL_EXT_texture_filter_anisotropic GL_APPLE_clip_distance GL_APPLE_color_buffer_packed_float GL_APPLE_copy_texture_levels GL_APPLE_rgb_422 GL_APPLE_texture_format_BGRA8888 GL_IMG_read_format GL_IMG_texture_compression_pvrtc 
+[   0.016][v][libmpv_render] Loaded extension GL_EXT_color_buffer_half_float.
+[   0.016][v][libmpv_render] Loaded extension GL_APPLE_rgb_422.
+[   0.016][v][libmpv_render] Detected suspected software renderer.
+[   0.016][w][libmpv_render] Suspected software renderer or indirect context.
+[   0.016][v][libmpv_render] GL_*_swap_control extension missing.
+[   0.016][v][libmpv_render] 16 bit UNORM textures not available.
+[   0.016][d][libmpv_render] Texture formats:
+[   0.016][d][libmpv_render]   NAME       COMP*TYPE SIZE           DEPTH PER COMP.
+[   0.016][d][libmpv_render]   r8         1*unorm   1B    LF CR ST {8}
+[   0.016][d][libmpv_render]   rg8        2*unorm   2B    LF CR ST {8 8}
+[   0.016][d][libmpv_render]   rgb8       3*unorm   3B    LF CR ST {8 8 8}
+[   0.016][d][libmpv_render]   rgba8      4*unorm   4B    LF CR ST {8 8 8 8}
+[   0.016][d][libmpv_render]   l          1*unorm   1B    LF CR ST {8}
+[   0.016][d][libmpv_render]   la         2*unorm   2B LA LF CR ST {8 8}
+[   0.016][d][libmpv_render]   r8ui       1*uint    1B       CR ST {8}
+[   0.016][d][libmpv_render]   rg8ui      2*uint    2B       CR ST {8 8}
+[   0.016][d][libmpv_render]   rgb8ui     3*uint    3B          ST {8 8 8}
+[   0.016][d][libmpv_render]   rgba8ui    4*uint    4B       CR ST {8 8 8 8}
+[   0.018][d][libmpv_render]   r16ui      1*uint    2B       CR ST {16}
+[   0.018][d][libmpv_render]   rg16ui     2*uint    4B       CR ST {16 16}
+[   0.018][d][libmpv_render]   rgb16ui    3*uint    6B          ST {16 16 16}
+[   0.018][d][libmpv_render]   rgba16ui   4*uint    8B       CR ST {16 16 16 16}
+[   0.018][d][libmpv_render]   r16f       1*float   4B    LF CR ST {32/16}
+[   0.018][d][libmpv_render]   rg16f      2*float   8B    LF CR ST {32/16 32/16}
+[   0.019][d][libmpv_render]   rgb16f     3*float  12B    LF    ST {32/16 32/16 32/16}
+[   0.019][d][libmpv_render]   rgba16f    4*float  16B    LF CR ST {32/16 32/16 32/16 32/16}
+[   0.019][d][libmpv_render]   r16f       1*float   4B    LF    ST {32/16}
+[   0.019][d][libmpv_render]   rg16f      2*float   8B    LF    ST {32/16 32/16}
+[   0.019][d][libmpv_render]   rgb16f     3*float  12B    LF    ST {32/16 32/16 32/16}
+[   0.020][d][libmpv_render]   rgba16f    4*float  16B    LF    ST {32/16 32/16 32/16 32/16}
+[   0.021][d][libmpv_render]   rgb10_a2   4*unorm   4B    LF CR ST {0 0 0 0}
+[   0.021][d][libmpv_render]   appleyp    0*unorm   2B    LF    ST {}
+[   0.021][d][libmpv_render]  LA = LUMINANCE_ALPHA hack format
+[   0.021][d][libmpv_render]  LF = linear filterable
+[   0.021][d][libmpv_render]  CR = can be used for render targets
+[   0.021][d][libmpv_render]  ST = can be used for storable images
+[   0.021][d][libmpv_render] Image formats:
+[   0.021][d][libmpv_render]   yuv444p => 3 planes 1x1 8/0 [r8/r8/r8] (r/g/b) [unorm]
+[   0.021][d][libmpv_render]   yuv420p => 3 planes 2x2 8/0 [r8/r8/r8] (r/g/b) [unorm]
+[   0.021][d][libmpv_render]   gray => 1 planes 1x1 8/0 [r8] (r) [unorm]
+[   0.021][d][libmpv_render]   gray16 => 1 planes 1x1 16/0 [r16ui] (r) [uint ]
+[   0.021][d][libmpv_render]   uyvy422 => 1 planes 1x1 0/0 [appleyp] (brg) [unknown]
+[   0.021][d][libmpv_render]   nv12 => 2 planes 2x2 8/0 [r8/rg8] (r/gb) [unorm]
+[   0.021][d][libmpv_render]   p010 => 2 planes 2x2 16/6 [r16ui/rg16ui] (r/gb) [uint ]
+[   0.021][d][libmpv_render]   argb => 1 planes 1x1 8/0 [rgba8] (argb) [unorm]
+[   0.021][d][libmpv_render]   bgra => 1 planes 1x1 8/0 [rgba8] (bgra) [unorm]
+[   0.021][d][libmpv_render]   abgr => 1 planes 1x1 8/0 [rgba8] (abgr) [unorm]
+[   0.021][d][libmpv_render]   rgba => 1 planes 1x1 8/0 [rgba8] (rgba) [unorm]
+[   0.021][d][libmpv_render]   bgr24 => 1 planes 1x1 8/0 [rgb8] (bgr) [unorm]
+[   0.021][d][libmpv_render]   rgb24 => 1 planes 1x1 8/0 [rgb8] (rgb) [unorm]
+[   0.021][d][libmpv_render]   0rgb => 1 planes 1x1 8/0 [rgba8] (_rgb) [unorm]
+[   0.021][d][libmpv_render]   bgr0 => 1 planes 1x1 8/0 [rgba8] (bgr) [unorm]
+[   0.021][d][libmpv_render]   0bgr => 1 planes 1x1 8/0 [rgba8] (_bgr) [unorm]
+[   0.021][d][libmpv_render]   rgb0 => 1 planes 1x1 8/0 [rgba8] (rgb) [unorm]
+[   0.021][d][libmpv_render]   rgba64 => 1 planes 1x1 16/0 [rgba16ui] (rgba) [uint ]
+[   0.021][d][libmpv_render]   rgb565
+[   0.021][d][libmpv_render]   pal8
+[   0.022][d][libmpv_render]   vdpau
+[   0.022][d][libmpv_render]   d3d11
+[   0.022][d][libmpv_render]   dxva2_vld
+[   0.022][d][libmpv_render]   mmal
+[   0.022][d][libmpv_render]   mediacodec
+[   0.022][d][libmpv_render]   cuda
+[   0.022][d][libmpv_render]   yap8 => 2 planes 1x1 8/0 [r8/r8] (r/a) [unorm]
+[   0.022][d][libmpv_render]   yap16 => 2 planes 1x1 16/0 [r16ui/r16ui] (r/a) [uint ]
+[   0.022][d][libmpv_render]   grayaf32 => 2 planes 1x1 32/0 [r16f/r16f] (r/a) [float]
+[   0.022][d][libmpv_render]   yuv444pf => 3 planes 1x1 32/0 [r16f/r16f/r16f] (r/g/b) [float]
+[   0.022][d][libmpv_render]   yuva444pf => 4 planes 1x1 32/0 [r16f/r16f/r16f/r16f] (r/g/b/a) [float]
+[   0.022][d][libmpv_render]   yuv420pf => 3 planes 2x2 32/0 [r16f/r16f/r16f] (r/g/b) [float]
+[   0.022][d][libmpv_render]   yuva420pf => 4 planes 2x2 32/0 [r16f/r16f/r16f/r16f] (r/g/b/a) [float]
+[   0.022][d][libmpv_render]   yuv422pf => 3 planes 2x1 32/0 [r16f/r16f/r16f] (r/g/b) [float]
+[   0.022][d][libmpv_render]   yuva422pf => 4 planes 2x1 32/0 [r16f/r16f/r16f/r16f] (r/g/b/a) [float]
+[   0.022][d][libmpv_render]   yuv440pf => 3 planes 1x2 32/0 [r16f/r16f/r16f] (r/g/b) [float]
+[   0.022][d][libmpv_render]   yuva440pf => 4 planes 1x2 32/0 [r16f/r16f/r16f/r16f] (r/g/b/a) [float]
+[   0.022][d][libmpv_render]   yuv410pf => 3 planes 4x4 32/0 [r16f/r16f/r16f] (r/g/b) [float]
+[   0.022][d][libmpv_render]   yuva410pf => 4 planes 4x4 32/0 [r16f/r16f/r16f/r16f] (r/g/b/a) [float]
+[   0.022][d][libmpv_render]   yuv411pf => 3 planes 4x1 32/0 [r16f/r16f/r16f] (r/g/b) [float]
+[   0.022][d][libmpv_render]   yuva411pf => 4 planes 4x1 32/0 [r16f/r16f/r16f/r16f] (r/g/b/a) [float]
+[   0.022][d][libmpv_render]   rgb30 => 1 planes 1x1 10/0 [rgb10_a2] (bgr) [unknown]
+[   0.022][d][libmpv_render]   y1 => 1 planes 1x1 8/-7 [r8] (r) [unorm]
+[   0.022][d][libmpv_render]   gbrp1 => 3 planes 1x1 8/-7 [r8/r8/r8] (g/b/r) [unorm]
+[   0.022][d][libmpv_render]   gbrp2 => 3 planes 1x1 8/-6 [r8/r8/r8] (g/b/r) [unorm]
+[   0.022][d][libmpv_render]   gbrp3 => 3 planes 1x1 8/-5 [r8/r8/r8] (g/b/r) [unorm]
+[   0.022][d][libmpv_render]   gbrp4 => 3 planes 1x1 8/-4 [r8/r8/r8] (g/b/r) [unorm]
+[   0.022][d][libmpv_render]   gbrp5 => 3 planes 1x1 8/-3 [r8/r8/r8] (g/b/r) [unorm]
+[   0.022][d][libmpv_render]   gbrp6 => 3 planes 1x1 8/-2 [r8/r8/r8] (g/b/r) [unorm]
+[   0.022][d][libmpv_render]   vdpau_output
+[   0.022][d][libmpv_render]   vaapi
+[   0.022][d][libmpv_render]   videotoolbox
+[   0.022][d][libmpv_render]   vulkan
+[   0.022][d][libmpv_render]   drm_prime
+[   0.022][d][libmpv_render]   yuyv422
+[   0.022][d][libmpv_render]   yuv422p => 3 planes 2x1 8/0 [r8/r8/r8] (r/g/b) [unorm]
+[   0.022][d][libmpv_render]   yuv410p => 3 planes 4x4 8/0 [r8/r8/r8] (r/g/b) [unorm]
+[   0.022][d][libmpv_render]   yuv411p => 3 planes 4x1 8/0 [r8/r8/r8] (r/g/b) [unorm]
+[   0.022][d][libmpv_render]   monow
+[   0.022][d][libmpv_render]   monob
+[   0.022][d][libmpv_render]   yuvj422p => 3 planes 2x1 8/0 [r8/r8/r8] (r/g/b) [unorm]
+[   0.022][d][libmpv_render]   uyyvyy411
+[   0.022][d][libmpv_render]   bgr8
+[   0.022][d][libmpv_render]   bgr4
+[   0.022][d][libmpv_render]   bgr4_byte
+[   0.022][d][libmpv_render]   rgb8
+[   0.022][d][libmpv_render]   rgb4
+[   0.022][d][libmpv_render]   rgb4_byte
+[   0.022][d][libmpv_render]   nv21 => 2 planes 2x2 8/0 [r8/rg8] (r/bg) [unorm]
+[   0.022][d][libmpv_render]   gray16be
+[   0.022][d][libmpv_render]   yuv440p => 3 planes 1x2 8/0 [r8/r8/r8] (r/g/b) [unorm]
+[   0.022][d][libmpv_render]   yuvj440p => 3 planes 1x2 8/0 [r8/r8/r8] (r/g/b) [unorm]
+[   0.022][d][libmpv_render]   yuva420p => 4 planes 2x2 8/0 [r8/r8/r8/r8] (r/g/b/a) [unorm]
+[   0.022][d][libmpv_render]   rgb48be
+[   0.022][d][libmpv_render]   rgb48 => 1 planes 1x1 16/0 [rgb16ui] (rgb) [uint ]
+[   0.022][d][libmpv_render]   rgb565be
+[   0.022][d][libmpv_render]   rgb555be
+[   0.022][d][libmpv_render]   rgb555
+[   0.022][d][libmpv_render]   bgr565be
+[   0.022][d][libmpv_render]   bgr565
+[   0.022][d][libmpv_render]   bgr555be
+[   0.022][d][libmpv_render]   bgr555
+[   0.022][d][libmpv_render]   yuv420p16 => 3 planes 2x2 16/0 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.022][d][libmpv_render]   yuv420p16be
+[   0.022][d][libmpv_render]   yuv422p16 => 3 planes 2x1 16/0 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.022][d][libmpv_render]   yuv422p16be
+[   0.022][d][libmpv_render]   yuv444p16 => 3 planes 1x1 16/0 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.022][d][libmpv_render]   yuv444p16be
+[   0.022][d][libmpv_render]   rgb444
+[   0.023][d][libmpv_render]   rgb444be
+[   0.023][d][libmpv_render]   bgr444
+[   0.023][d][libmpv_render]   bgr444be
+[   0.023][d][libmpv_render]   ya8 => 1 planes 1x1 8/0 [rg8] (ra) [unorm]
+[   0.023][d][libmpv_render]   bgr48be
+[   0.023][d][libmpv_render]   bgr48 => 1 planes 1x1 16/0 [rgb16ui] (bgr) [uint ]
+[   0.023][d][libmpv_render]   yuv420p9be
+[   0.023][d][libmpv_render]   yuv420p9 => 3 planes 2x2 16/-7 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.023][d][libmpv_render]   yuv420p10be
+[   0.023][d][libmpv_render]   yuv420p10 => 3 planes 2x2 16/-6 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.023][d][libmpv_render]   yuv422p10be
+[   0.024][d][libmpv_render]   yuv422p10 => 3 planes 2x1 16/-6 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.024][d][libmpv_render]   yuv444p9be
+[   0.024][d][libmpv_render]   yuv444p9 => 3 planes 1x1 16/-7 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.024][d][libmpv_render]   yuv444p10be
+[   0.024][d][libmpv_render]   yuv444p10 => 3 planes 1x1 16/-6 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.024][d][libmpv_render]   yuv422p9be
+[   0.024][d][libmpv_render]   yuv422p9 => 3 planes 2x1 16/-7 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.024][d][libmpv_render]   gbrp => 3 planes 1x1 8/0 [r8/r8/r8] (g/b/r) [unorm]
+[   0.024][d][libmpv_render]   gbrp9be
+[   0.024][d][libmpv_render]   gbrp9 => 3 planes 1x1 16/-7 [r16ui/r16ui/r16ui] (g/b/r) [uint ]
+[   0.024][d][libmpv_render]   gbrp10be
+[   0.024][d][libmpv_render]   gbrp10 => 3 planes 1x1 16/-6 [r16ui/r16ui/r16ui] (g/b/r) [uint ]
+[   0.024][d][libmpv_render]   gbrp16be
+[   0.024][d][libmpv_render]   gbrp16 => 3 planes 1x1 16/0 [r16ui/r16ui/r16ui] (g/b/r) [uint ]
+[   0.024][d][libmpv_render]   yuva422p => 4 planes 2x1 8/0 [r8/r8/r8/r8] (r/g/b/a) [unorm]
+[   0.024][d][libmpv_render]   yuva444p => 4 planes 1x1 8/0 [r8/r8/r8/r8] (r/g/b/a) [unorm]
+[   0.024][d][libmpv_render]   yuva420p9be
+[   0.024][d][libmpv_render]   yuva420p9 => 4 planes 2x2 16/-7 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.024][d][libmpv_render]   yuva422p9be
+[   0.024][d][libmpv_render]   yuva422p9 => 4 planes 2x1 16/-7 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.025][d][libmpv_render]   yuva444p9be
+[   0.025][d][libmpv_render]   yuva444p9 => 4 planes 1x1 16/-7 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.025][d][libmpv_render]   yuva420p10be
+[   0.025][d][libmpv_render]   yuva420p10 => 4 planes 2x2 16/-6 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.025][d][libmpv_render]   yuva422p10be
+[   0.025][d][libmpv_render]   yuva422p10 => 4 planes 2x1 16/-6 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.025][d][libmpv_render]   yuva444p10be
+[   0.025][d][libmpv_render]   yuva444p10 => 4 planes 1x1 16/-6 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.025][d][libmpv_render]   yuva420p16be
+[   0.025][d][libmpv_render]   yuva420p16 => 4 planes 2x2 16/0 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.025][d][libmpv_render]   yuva422p16be
+[   0.025][d][libmpv_render]   yuva422p16 => 4 planes 2x1 16/0 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.025][d][libmpv_render]   yuva444p16be
+[   0.025][d][libmpv_render]   yuva444p16 => 4 planes 1x1 16/0 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.025][d][libmpv_render]   xyz12 => 1 planes 1x1 16/4 [rgb16ui] (rgb) [uint ]
+[   0.025][d][libmpv_render]   xyz12be
+[   0.025][d][libmpv_render]   nv16 => 2 planes 2x1 8/0 [r8/rg8] (r/gb) [unorm]
+[   0.025][d][libmpv_render]   nv20 => 2 planes 2x1 16/-6 [r16ui/rg16ui] (r/gb) [uint ]
+[   0.025][d][libmpv_render]   nv20be
+[   0.025][d][libmpv_render]   rgba64be
+[   0.025][d][libmpv_render]   bgra64be
+[   0.025][d][libmpv_render]   bgra64 => 1 planes 1x1 16/0 [rgba16ui] (bgra) [uint ]
+[   0.025][d][libmpv_render]   yvyu422
+[   0.025][d][libmpv_render]   ya16be
+[   0.025][d][libmpv_render]   ya16 => 1 planes 1x1 16/0 [rg16ui] (ra) [uint ]
+[   0.025][d][libmpv_render]   gbrap => 4 planes 1x1 8/0 [r8/r8/r8/r8] (g/b/r/a) [unorm]
+[   0.025][d][libmpv_render]   gbrap16be
+[   0.025][d][libmpv_render]   gbrap16 => 4 planes 1x1 16/0 [r16ui/r16ui/r16ui/r16ui] (g/b/r/a) [uint ]
+[   0.025][d][libmpv_render]   qsv
+[   0.025][d][libmpv_render]   d3d11va_vld
+[   0.025][d][libmpv_render]   yuv420p12be
+[   0.026][d][libmpv_render]   yuv420p12 => 3 planes 2x2 16/-4 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.026][d][libmpv_render]   yuv420p14be
+[   0.026][d][libmpv_render]   yuv420p14 => 3 planes 2x2 16/-2 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.026][d][libmpv_render]   yuv422p12be
+[   0.026][d][libmpv_render]   yuv422p12 => 3 planes 2x1 16/-4 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.026][d][libmpv_render]   yuv422p14be
+[   0.026][d][libmpv_render]   yuv422p14 => 3 planes 2x1 16/-2 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.026][d][libmpv_render]   yuv444p12be
+[   0.026][d][libmpv_render]   yuv444p12 => 3 planes 1x1 16/-4 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.026][d][libmpv_render]   yuv444p14be
+[   0.026][d][libmpv_render]   yuv444p14 => 3 planes 1x1 16/-2 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.026][d][libmpv_render]   gbrp12be
+[   0.026][d][libmpv_render]   gbrp12 => 3 planes 1x1 16/-4 [r16ui/r16ui/r16ui] (g/b/r) [uint ]
+[   0.026][d][libmpv_render]   gbrp14be
+[   0.026][d][libmpv_render]   gbrp14 => 3 planes 1x1 16/-2 [r16ui/r16ui/r16ui] (g/b/r) [uint ]
+[   0.026][d][libmpv_render]   yuvj411p => 3 planes 4x1 8/0 [r8/r8/r8] (r/g/b) [unorm]
+[   0.026][d][libmpv_render]   bayer_bggr8
+[   0.026][d][libmpv_render]   bayer_rggb8
+[   0.026][d][libmpv_render]   bayer_gbrg8
+[   0.026][d][libmpv_render]   bayer_grbg8
+[   0.026][d][libmpv_render]   bayer_bggr16
+[   0.026][d][libmpv_render]   bayer_bggr16be
+[   0.027][d][libmpv_render]   bayer_rggb16
+[   0.027][d][libmpv_render]   bayer_rggb16be
+[   0.027][d][libmpv_render]   bayer_gbrg16
+[   0.027][d][libmpv_render]   bayer_gbrg16be
+[   0.027][d][libmpv_render]   bayer_grbg16
+[   0.027][d][libmpv_render]   bayer_grbg16be
+[   0.027][d][libmpv_render]   yuv440p10 => 3 planes 1x2 16/-6 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.027][d][libmpv_render]   yuv440p10be
+[   0.027][d][libmpv_render]   yuv440p12 => 3 planes 1x2 16/-4 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.027][d][libmpv_render]   yuv440p12be
+[   0.027][d][libmpv_render]   ayuv64 => 1 planes 1x1 16/0 [rgba16ui] (argb) [uint ]
+[   0.027][d][libmpv_render]   ayuv64be
+[   0.027][d][libmpv_render]   p010be
+[   0.027][d][libmpv_render]   gbrap12be
+[   0.027][d][libmpv_render]   gbrap12 => 4 planes 1x1 16/-4 [r16ui/r16ui/r16ui/r16ui] (g/b/r/a) [uint ]
+[   0.027][d][libmpv_render]   gbrap10be
+[   0.027][d][libmpv_render]   gbrap10 => 4 planes 1x1 16/-6 [r16ui/r16ui/r16ui/r16ui] (g/b/r/a) [uint ]
+[   0.027][d][libmpv_render]   gray12be
+[   0.027][d][libmpv_render]   gray12 => 1 planes 1x1 16/-4 [r16ui] (r) [uint ]
+[   0.027][d][libmpv_render]   gray10be
+[   0.027][d][libmpv_render]   gray10 => 1 planes 1x1 16/-6 [r16ui] (r) [uint ]
+[   0.027][d][libmpv_render]   p016 => 2 planes 2x2 16/0 [r16ui/rg16ui] (r/gb) [uint ]
+[   0.029][d][libmpv_render]   p016be
+[   0.029][d][libmpv_render]   gray9be
+[   0.038][d][libmpv_render]   gray9 => 1 planes 1x1 16/-7 [r16ui] (r) [uint ]
+[   0.038][d][libmpv_render]   gbrpf32be
+[   0.040][d][libmpv_render]   gbrpf32 => 3 planes 1x1 32/0 [r16f/r16f/r16f] (g/b/r) [float]
+[   0.040][d][libmpv_render]   gbrapf32be
+[   0.040][d][libmpv_render]   gbrapf32 => 4 planes 1x1 32/0 [r16f/r16f/r16f/r16f] (g/b/r/a) [float]
+[   0.040][d][libmpv_render]   opencl
+[   0.040][d][libmpv_render]   gray14be
+[   0.040][d][libmpv_render]   gray14 => 1 planes 1x1 16/-2 [r16ui] (r) [uint ]
+[   0.040][d][libmpv_render]   grayf32be
+[   0.063][d][libmpv_render]   grayf32 => 1 planes 1x1 32/0 [r16f] (r) [float]
+[   0.064][d][libmpv_render]   yuva422p12be
+[   0.065][d][libmpv_render]   yuva422p12 => 4 planes 2x1 16/-4 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.065][d][libmpv_render]   yuva444p12be
+[   0.065][d][libmpv_render]   yuva444p12 => 4 planes 1x1 16/-4 [r16ui/r16ui/r16ui/r16ui] (r/g/b/a) [uint ]
+[   0.065][d][libmpv_render]   nv24 => 2 planes 1x1 8/0 [r8/rg8] (r/gb) [unorm]
+[   0.065][d][libmpv_render]   nv42 => 2 planes 1x1 8/0 [r8/rg8] (r/bg) [unorm]
+[   0.065][d][libmpv_render]   y210be
+[   0.066][d][libmpv_render]   y210
+[   0.066][d][libmpv_render]   x2rgb10be
+[   0.066][d][libmpv_render]   x2bgr10
+[   0.066][d][libmpv_render]   x2bgr10be
+[   0.066][d][libmpv_render]   p210be
+[   0.066][d][libmpv_render]   p210 => 2 planes 2x1 16/6 [r16ui/rg16ui] (r/gb) [uint ]
+[   0.066][d][libmpv_render]   p410be
+[   0.066][d][libmpv_render]   p410 => 2 planes 1x1 16/6 [r16ui/rg16ui] (r/gb) [uint ]
+[   0.066][d][libmpv_render]   p216be
+[   0.066][d][libmpv_render]   p216 => 2 planes 2x1 16/0 [r16ui/rg16ui] (r/gb) [uint ]
+[   0.067][d][libmpv_render]   p416be
+[   0.067][d][libmpv_render]   p416 => 2 planes 1x1 16/0 [r16ui/rg16ui] (r/gb) [uint ]
+[   0.067][d][libmpv_render]   vuya => 1 planes 1x1 8/0 [rgba8] (bgra) [unorm]
+[   0.067][d][libmpv_render]   rgbaf16be
+[   0.068][d][libmpv_render]   rgbaf16
+[   0.068][d][libmpv_render]   vuyx => 1 planes 1x1 8/0 [rgba8] (bgr) [unorm]
+[   0.068][d][libmpv_render]   p012 => 2 planes 2x2 16/4 [r16ui/rg16ui] (r/gb) [uint ]
+[   0.069][d][libmpv_render]   p012be
+[   0.069][d][libmpv_render]   y212be
+[   0.069][d][libmpv_render]   y212
+[   0.069][d][libmpv_render]   xv30be
+[   0.069][d][libmpv_render]   xv30
+[   0.069][d][libmpv_render]   xv36be
+[   0.069][d][libmpv_render]   xv36 => 1 planes 1x1 16/4 [rgba16ui] (grb) [uint ]
+[   0.069][d][libmpv_render]   rgbf32be
+[   0.069][d][libmpv_render]   rgbf32
+[   0.069][d][libmpv_render]   rgbaf32be
+[   0.069][d][libmpv_render]   rgbaf32
+[   0.070][d][libmpv_render]   p212be
+[   0.071][d][libmpv_render]   p212 => 2 planes 2x1 16/4 [r16ui/rg16ui] (r/gb) [uint ]
+[   0.072][d][libmpv_render]   p412be
+[   0.073][d][libmpv_render]   p412 => 2 planes 1x1 16/4 [r16ui/rg16ui] (r/gb) [uint ]
+[   0.073][d][libmpv_render]   gbrap14be
+[   0.073][d][libmpv_render]   gbrap14 => 4 planes 1x1 16/-2 [r16ui/r16ui/r16ui/r16ui] (g/b/r/a) [uint ]
+[   0.073][d][libmpv_render]   d3d12
+[   0.073][d][libmpv_render]   ayuv => 1 planes 1x1 8/0 [rgba8] (argb) [unorm]
+[   0.073][d][libmpv_render]   uyva => 1 planes 1x1 8/0 [rgba8] (grba) [unorm]
+[   0.073][d][libmpv_render]   vyu444 => 1 planes 1x1 8/0 [rgb8] (brg) [unorm]
+[   0.074][d][libmpv_render]   v30xbe
+[   0.074][d][libmpv_render]   v30x
+[   0.074][d][libmpv_render]   rgbf16be
+[   0.074][d][libmpv_render]   rgbf16
+[   0.074][d][libmpv_render]   rgba128be
+[   0.074][d][libmpv_render]   rgba128
+[   0.074][d][libmpv_render]   rgb96be
+[   0.074][d][libmpv_render]   rgb96
+[   0.074][d][libmpv_render]   y216be
+[   0.075][d][libmpv_render]   y216
+[   0.075][d][libmpv_render]   xv48be
+[   0.075][d][libmpv_render]   xv48 => 1 planes 1x1 16/0 [rgba16ui] (grb) [uint ]
+[   0.075][d][libmpv_render]   gbrpf16be
+[   0.075][d][libmpv_render]   gbrpf16
+[   0.075][d][libmpv_render]   gbrapf16be
+[   0.075][d][libmpv_render]   gbrapf16
+[   0.075][d][libmpv_render]   grayf16be
+[   0.075][d][libmpv_render]   grayf16
+[   0.075][d][libmpv_render]   amf
+[   0.075][d][libmpv_render]   gray32be
+[   0.075][d][libmpv_render]   gray32
+[   0.075][d][libmpv_render]   yaf32be
+[   0.075][d][libmpv_render]   yaf32 => 1 planes 1x1 32/0 [rg16f] (ra) [float]
+[   0.075][d][libmpv_render]   yaf16be
+[   0.075][d][libmpv_render]   yaf16
+[   0.075][d][libmpv_render]   gbrap32be
+[   0.075][d][libmpv_render]   gbrap32
+[   0.075][d][libmpv_render]   yuv444p10msbbe
+[   0.075][d][libmpv_render]   yuv444p10msb => 3 planes 1x1 16/6 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.075][d][libmpv_render]   yuv444p12msbbe
+[   0.075][d][libmpv_render]   yuv444p12msb => 3 planes 1x1 16/4 [r16ui/r16ui/r16ui] (r/g/b) [uint ]
+[   0.075][d][libmpv_render]   gbrp10msbbe
+[   0.075][d][libmpv_render]   gbrp10msb => 3 planes 1x1 16/6 [r16ui/r16ui/r16ui] (g/b/r) [uint ]
+[   0.075][d][libmpv_render]   gbrp12msbbe
+[   0.075][d][libmpv_render]   gbrp12msb => 3 planes 1x1 16/4 [r16ui/r16ui/r16ui] (g/b/r) [uint ]
+[   0.075][d][libmpv_render]   ohcodec
+[   0.075][v][libmpv_render] Testing FBO format rgba16f
+[   0.076][d][libmpv_render] Resizing texture: 16x16
+[   0.076][d][select] loading mp.defaults
+[   0.076][v][libmpv_render] Using FBO format rgba16f.
+[   0.076][v][libmpv_render] Disabling HDR peak computation (one or more of the following is not supported: compute shaders=0, SSBO=0).
+[   0.076][v][libmpv_render] No advanced processing required. Enabling dumb mode.
+[   0.076][v][libmpv_render] Loading hwdec driver 'videotoolbox'
+[   0.076][d][select] loading @select.lua
+[   0.076][v][libmpv_render] Loading hwdec driver 'vulkan'
+[   0.076][v][libmpv_render/vulkan] This is not a libplacebo vulkan gpu api context.
+[   0.076][v][cplayer] Waiting for scripts...
+[   0.076][d][context_menu] loading mp.defaults
+[   0.076][d][console] loading mp.defaults
+[   0.076][d][console] loading @console.lua
+[   0.076][d][positioning] loading mp.defaults
+[   0.076][d][auto_profiles] loading mp.defaults
+[   0.076][d][auto_profiles] loading @auto_profiles.lua
+[   0.076][d][positioning] loading @positioning.lua
+[   0.076][d][positioning] reading options for positioning
+[   0.076][d][global] config path: 'script-opts/positioning.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/script-opts/positioning.conf'
+[   0.076][d][context_menu] loading @context_menu.lua
+[   0.076][d][commands] loading mp.defaults
+[   0.076][d][select] reading options for select
+[   0.076][d][global] config path: 'script-opts/select.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/script-opts/select.conf'
+[   0.076][d][select] script-opts/select.conf not found.
+[   0.076][d][global] config path: 'lua-settings/select.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/lua-settings/select.conf'
+[   0.076][d][select] lua-settings/select.conf not found.
+[   0.076][d][positioning] script-opts/positioning.conf not found.
+[   0.076][d][global] config path: 'lua-settings/positioning.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/lua-settings/positioning.conf'
+[   0.076][d][positioning] lua-settings/positioning.conf not found.
+[   0.076][d][context_menu] reading options for context_menu
+[   0.076][d][global] config path: 'script-opts/context_menu.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/script-opts/context_menu.conf'
+[   0.076][d][context_menu] script-opts/context_menu.conf not found.
+[   0.076][d][global] config path: 'lua-settings/context_menu.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/lua-settings/context_menu.conf'
+[   0.076][d][context_menu] lua-settings/context_menu.conf not found.
+[   0.076][v][cplayer] Set property: sub-pos="100" -> 1
+[   0.076][d][commands] loading @commands.lua
+[   0.076][d][console] reading options for console
+[   0.076][d][cplayer] Run command: define-section, flags=64, args=[name="input_positioning", contents="", flags="default"]
+[   0.076][d][cplayer] Run command: enable-section, flags=64, args=[name="input_positioning", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.076][d][global] config path: 'script-opts/console.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/script-opts/console.conf'
+[   0.076][d][console] script-opts/console.conf not found.
+[   0.076][d][global] config path: 'lua-settings/console.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/lua-settings/console.conf'
+[   0.076][d][console] lua-settings/console.conf not found.
+[   0.077][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_positioning", contents="", flags="force"]
+[   0.077][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_positioning", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.077][d][cplayer] Run command: define-section, flags=64, args=[name="input_select", contents="", flags="default"]
+[   0.077][d][cplayer] Run command: enable-section, flags=64, args=[name="input_select", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.077][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_select", contents="", flags="force"]
+[   0.077][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_select", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.077][d][commands] reading options for commands
+[   0.077][d][global] config path: 'script-opts/commands.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/script-opts/commands.conf'
+[   0.077][d][commands] script-opts/commands.conf not found.
+[   0.077][d][global] config path: 'lua-settings/commands.conf' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/lua-settings/commands.conf'
+[   0.077][d][commands] lua-settings/commands.conf not found.
+[   0.077][v][cplayer] Set property: sub-scale="1.000" -> 1
+[   0.077][d][cplayer] Run command: define-section, flags=64, args=[name="input_console", contents="", flags="default"]
+[   0.077][d][cplayer] Run command: enable-section, flags=64, args=[name="input_console", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.077][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_console", contents="", flags="force"]
+[   0.077][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_console", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.077][d][cplayer] Run command: define-section, flags=64, args=[name="input_commands", contents="", flags="default"]
+[   0.078][d][cplayer] Run command: enable-section, flags=64, args=[name="input_commands", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.078][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_commands", contents="", flags="force"]
+[   0.078][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_commands", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.078][v][cplayer] Set property: sub-margin-x="19" -> 1
+[   0.078][v][cplayer] Done loading scripts.
+[   0.078][d][auto_profiles] Destroying client handle...
+[   0.193][d][cplayer] Run command: change-list, flags=64, args=[name="http-header-fields", operation="clr", value=""]
+[   0.205][v][cplayer] Set property: http-header-fields -> 1
+[   0.206][v][cplayer] Set property: user-agent="libmpv" -> 1
+[   0.206][v][cplayer] Set property: referrer="" -> 1
+[   0.206][v][cplayer] Set property: demuxer-readahead-secs="60" -> 1
+[   0.206][d][cplayer] Run command: loadfile, flags=64, args=[url="/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/5DE3FD10-6CA9-4C71-83AA-D40C05AB8396/Folio.app/lab/lab.mp4", flags="replace", index="-1", options=""]
+[   0.206][v][cplayer] Running hook: auto_profiles/on_before_start_file
+[   0.206][v][cplayer] Failed sending hook command auto_profiles/on_before_start_file. Removing hook.
+[   0.206][v][cplayer] Running hook: auto_profiles/on_load
+[   0.206][v][cplayer] Failed sending hook command auto_profiles/on_load. Removing hook.
+[   0.206][v][bdmv/bluray] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/5DE3FD10-6CA9-4C71-83AA-D40C05AB8396/Folio.app/lab/lab.mp4
+[   0.206][v][file] Opening /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/5DE3FD10-6CA9-4C71-83AA-D40C05AB8396/Folio.app/lab/lab.mp4
+[   0.206][d][file] resize stream to 131072 bytes, drop 0 bytes
+[   0.206][d][file] Stream opened successfully.
+[   0.206][v][demux] Trying demuxers for level=normal.
+[   0.206][d][demux] Trying demuxer: directory (force-level: normal)
+[   0.206][d][demux] Trying demuxer: disc (force-level: normal)
+[   0.206][d][demux] Trying demuxer: edl (force-level: normal)
+[   0.206][d][demux] Trying demuxer: cue (force-level: normal)
+[   0.206][d][demux] Trying demuxer: rawaudio (force-level: normal)
+[   0.206][d][demux] Trying demuxer: rawvideo (force-level: normal)
+[   0.206][d][demux] Trying demuxer: mkv (force-level: normal)
+[   0.206][d][demux] Trying demuxer: lavf (force-level: normal)
+[   0.206][v][lavf] Found 'mov,mp4,m4a,3gp,3g2,mj2' at score=100 size=2048.
+[   0.237][v][demux] Detected file format: mov,mp4,m4a,3gp,3g2,mj2 (libavformat)
+[   0.237][v][cplayer] Opening done: /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/5DE3FD10-6CA9-4C71-83AA-D40C05AB8396/Folio.app/lab/lab.mp4
+[   0.910][v][find_files] Loading external files in /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/5DE3FD10-6CA9-4C71-83AA-D40C05AB8396/Folio.app/lab/
+[   0.910][d][global] config path: 'sub' -/-> '/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Data/Application/284BFD3D-E4BD-404E-9135-CF7C0CFDF2E9/Documents/mpv/sub'
+[   0.923][v][cplayer] Running hook: auto_profiles/on_preloaded
+[   0.923][v][cplayer] Failed sending hook command auto_profiles/on_preloaded. Removing hook.
+[   0.923][v][lavf] select track 0
+[   0.923][i][cplayer] ● Video  --vid=1  (h264 480x270 24 fps) [default]
+[   0.942][v][vd] Container reported FPS: 24.000000
+[   0.944][v][vd] Codec list:
+[   0.944][v][vd]     h264 - H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10
+[   0.944][v][vd] Opening decoder h264
+[   0.944][v][vd] Looking at hwdec h264-videotoolbox...
+[   0.944][v][vd] Trying hardware decoding via h264-videotoolbox.
+[   0.944][v][vd] Requesting 4 threads for decoding.
+[   0.944][v][vd] Selected decoder: h264 - H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10
+[   0.944][v][vf] User filter list:
+[   0.944][v][vf]   (empty)
+[   0.952][v][cplayer] Starting playback...
+[   1.008][d][lavf] stream 0: resize index to 128
+[   1.008][v][lavf] EOF reached.
+[   1.009][v][vd] Pixel formats supported by decoder: vulkan videotoolbox_vld yuv420p
+[   1.009][v][vd] Codec profile: High (0x64)
+[   1.009][v][vd] Requesting pixfmt 'videotoolbox_vld' from decoder.
+[   1.599][d][ffmpeg/video] h264: VideoToolbox decoder for this format not found.
+[   1.599][e][ffmpeg/video] h264: Failed setup for format videotoolbox_vld: hwaccel initialisation returned error.
+[   1.599][v][vd] Pixel formats supported by decoder: vulkan yuv420p yuv420p
+[   1.599][v][vd] Codec profile: High (0x64)
+[   1.599][v][vd] Requesting pixfmt '-' from decoder.
+[   1.599][e][ffmpeg/video] h264: no frame!
+[   1.599][v][vd] Pixel formats supported by decoder: vulkan videotoolbox_vld yuv420p
+[   1.599][v][vd] Codec profile: High (0x64)
+[   1.599][v][vd] Requesting pixfmt 'videotoolbox_vld' from decoder.
+[   1.696][d][ffmpeg/video] h264: VideoToolbox decoder for this format not found.
+[   1.696][e][ffmpeg/video] h264: Failed setup for format videotoolbox_vld: hwaccel initialisation returned error.
+[   1.696][v][vd] Pixel formats supported by decoder: vulkan yuv420p yuv420p
+[   1.696][v][vd] Codec profile: High (0x64)
+[   1.696][v][vd] Requesting pixfmt '-' from decoder.
+[   1.696][e][ffmpeg/video] h264: no frame!
+[   1.697][v][vd] Attempting next decoding method after failure of h264-videotoolbox.
+[   1.697][d][vd] Skipping previously attempted hwdec: h264-videotoolbox
+[   1.697][v][vd] Looking at hwdec h264-videotoolbox-copy...
+[   1.697][v][vd] Trying hardware decoding via h264-videotoolbox-copy.
+[   1.697][v][vd] Requesting 4 threads for decoding.
+[   1.698][v][vd] Pixel formats supported by decoder: vulkan videotoolbox_vld yuv420p
+[   1.699][v][vd] Codec profile: High (0x64)
+[   1.699][v][vd] Requesting pixfmt 'videotoolbox_vld' from decoder.
+[   1.701][d][ffmpeg/video] h264: VideoToolbox decoder for this format not found.
+[   1.701][e][ffmpeg/video] h264: Failed setup for format videotoolbox_vld: hwaccel initialisation returned error.
+[   1.701][v][vd] Pixel formats supported by decoder: vulkan yuv420p yuv420p
+[   1.701][v][vd] Codec profile: High (0x64)
+[   1.701][v][vd] Requesting pixfmt '-' from decoder.
+[   1.701][e][ffmpeg/video] h264: no frame!
+[   1.705][v][vd] Pixel formats supported by decoder: vulkan videotoolbox_vld yuv420p
+[   1.705][v][vd] Codec profile: High (0x64)
+[   1.705][v][vd] Requesting pixfmt 'videotoolbox_vld' from decoder.
+[   1.707][d][ffmpeg/video] h264: VideoToolbox decoder for this format not found.
+[   1.708][e][ffmpeg/video] h264: Failed setup for format videotoolbox_vld: hwaccel initialisation returned error.
+[   1.708][v][vd] Pixel formats supported by decoder: vulkan yuv420p yuv420p
+[   1.709][v][vd] Codec profile: High (0x64)
+[   1.709][v][vd] Requesting pixfmt '-' from decoder.
+[   1.709][e][ffmpeg/video] h264: no frame!
+[   1.710][v][vd] Attempting next decoding method after failure of h264-videotoolbox-copy.
+[   1.710][d][vd] Skipping previously attempted hwdec: h264-videotoolbox
+[   1.710][d][vd] Skipping previously attempted hwdec: h264-videotoolbox-copy
+[   1.710][v][vd] Using software decoding.
+[   1.710][v][vd] Detected 3 logical cores.
+[   1.710][v][vd] Requesting 4 threads for decoding.
+[   1.711][d][ffmpeg/video] h264: Reinit context to 480x272, pix_fmt: yuv420p
+[   1.712][d][vd] DR parameter change to 480x290 yuv420p align=64
+[   1.712][d][vd] Allocating new (host-cached) DR image...
+[   1.712][d][vd] ...failed..
+[   1.712][v][vd] DR failed - disabling.
+[   1.715][v][vd] Using software decoding.
+[   1.716][v][vd] Decoder format: 480x270 yuv420p auto/auto/auto/auto/auto CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   1.716][v][vd] Using container aspect ratio.
+[   1.716][v][vf] [in] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   1.716][v][vf] [userdeint] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   1.716][v][vf] [userdeint] (disabled)
+[   1.716][v][vf] [autovflip] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   1.716][v][vf] [autovflip] (disabled)
+[   1.716][v][vf] [autorotate] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   1.716][v][vf] [autorotate] (disabled)
+[   1.716][v][vf] [convert] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   1.716][v][vf] [convert] (disabled)
+[   1.716][v][vf] [out] 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   1.717][i][cplayer] VO: [libmpv] 480x270 yuv420p
+[   1.717][v][cplayer] VO: Description: render API for libmpv
+[   1.717][v][vo/libmpv] reconfig to 480x270 yuv420p bt.601/bt.709/bt.1886/limited/display CL=mpeg2/4/h264 crop=480x270+0+0 A=none
+[   1.944][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   1.945][v][cplayer] first video frame after restart shown
+[   1.945][d][cplayer] starting video playback
+[   1.945][v][cplayer] playback restart complete @ 0.000000, audio=eof, video=playing
+[   2.214][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   2.422][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   2.654][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   2.901][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   3.111][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   3.341][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   3.644][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   3.965][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   4.283][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   4.510][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   4.735][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   4.978][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   5.202][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   5.449][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   5.718][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   5.928][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   6.136][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   6.347][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   6.564][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   6.783][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   6.998][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   7.216][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   7.421][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   7.623][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   7.835][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   8.047][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   8.256][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   8.476][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   8.695][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   8.906][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   9.123][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   9.332][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   9.542][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   9.760][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[   9.965][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  10.175][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  10.384][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  10.596][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  10.817][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  11.053][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  11.288][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  11.506][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  11.717][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  11.929][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  12.133][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  12.347][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  12.561][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  12.778][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  12.985][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  13.203][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  13.412][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  13.617][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  13.826][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  14.049][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  14.359][v][cplayer] Set property: sub-pos="98" -> 1
+[  14.359][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  14.359][v][cplayer] Set property: sub-scale="0.954" -> 1
+[  14.359][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  14.385][v][cplayer] Set property: sub-pos="96" -> 1
+[  14.385][v][cplayer] Set property: sub-scale="0.930" -> 1
+[  14.385][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  14.423][v][cplayer] Set property: sub-pos="95" -> 1
+[  14.423][v][cplayer] Set property: sub-scale="0.903" -> 1
+[  14.424][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  14.467][v][cplayer] Set property: sub-pos="94" -> 1
+[  14.468][v][cplayer] Set property: sub-scale="0.877" -> 1
+[  14.468][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  14.552][v][cplayer] Set property: sub-pos="92" -> 1
+[  14.553][v][cplayer] Set property: sub-scale="0.834" -> 1
+[  14.553][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  14.606][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  14.613][v][cplayer] Set property: sub-pos="91" -> 1
+[  14.614][v][cplayer] Set property: sub-scale="0.816" -> 1
+[  14.614][v][cplayer] Set property: sub-margin-x="20" -> 1
+[  14.684][v][cplayer] Set property: sub-pos="91" -> 1
+[  14.684][v][cplayer] Set property: sub-scale="0.811" -> 1
+[  14.684][v][cplayer] Set property: sub-margin-x="25" -> 1
+[  14.702][v][cplayer] Set property: sub-pos="90" -> 1
+[  14.705][v][cplayer] Set property: sub-scale="0.806" -> 1
+[  14.708][v][cplayer] Set property: sub-margin-x="28" -> 1
+[  14.728][v][cplayer] Set property: sub-pos="90" -> 1
+[  14.731][v][cplayer] Set property: sub-scale="0.801" -> 1
+[  14.731][v][cplayer] Set property: sub-margin-x="32" -> 1
+[  14.788][v][cplayer] Set property: sub-pos="90" -> 1
+[  14.788][v][cplayer] Set property: sub-scale="0.796" -> 1
+[  14.788][v][cplayer] Set property: sub-margin-x="36" -> 1
+[  14.794][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  14.867][v][cplayer] Set property: sub-pos="90" -> 1
+[  14.867][v][cplayer] Set property: sub-scale="0.790" -> 1
+[  14.867][v][cplayer] Set property: sub-margin-x="40" -> 1
+[  14.906][v][cplayer] Set property: panscan=1.000000 -> 1
+[  15.007][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  15.050][v][cplayer] Set property: sub-pos="90" -> 1
+[  15.051][v][cplayer] Set property: sub-scale="0.792" -> 1
+[  15.051][v][cplayer] Set property: sub-margin-x="39" -> 1
+[  15.068][v][cplayer] Set property: sub-pos="90" -> 1
+[  15.068][v][cplayer] Set property: sub-scale="0.795" -> 1
+[  15.068][v][cplayer] Set property: sub-margin-x="37" -> 1
+[  15.083][v][cplayer] Set property: sub-pos="90" -> 1
+[  15.083][v][cplayer] Set property: sub-scale="0.797" -> 1
+[  15.083][v][cplayer] Set property: sub-margin-x="35" -> 1
+[  15.101][v][cplayer] Set property: sub-pos="90" -> 1
+[  15.101][v][cplayer] Set property: sub-scale="0.800" -> 1
+[  15.101][v][cplayer] Set property: sub-margin-x="33" -> 1
+[  15.118][v][cplayer] Set property: sub-pos="90" -> 1
+[  15.118][v][cplayer] Set property: sub-scale="0.803" -> 1
+[  15.118][v][cplayer] Set property: sub-margin-x="31" -> 1
+[  15.137][v][cplayer] Set property: sub-pos="90" -> 1
+[  15.137][v][cplayer] Set property: sub-scale="0.805" -> 1
+[  15.137][v][cplayer] Set property: sub-margin-x="29" -> 1
+[  15.168][v][cplayer] Set property: sub-pos="90" -> 1
+[  15.168][v][cplayer] Set property: sub-scale="0.809" -> 1
+[  15.168][v][cplayer] Set property: sub-margin-x="26" -> 1
+[  15.202][v][cplayer] Set property: sub-pos="91" -> 1
+[  15.202][v][cplayer] Set property: sub-scale="0.812" -> 1
+[  15.203][v][cplayer] Set property: sub-margin-x="24" -> 1
+[  15.209][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  15.249][v][cplayer] Set property: sub-pos="91" -> 1
+[  15.250][v][cplayer] Set property: sub-scale="0.815" -> 1
+[  15.250][v][cplayer] Set property: sub-margin-x="21" -> 1
+[  15.340][v][cplayer] Set property: sub-pos="91" -> 1
+[  15.345][v][cplayer] Set property: sub-scale="0.817" -> 1
+[  15.345][v][cplayer] Set property: sub-margin-x="20" -> 1
+[  15.417][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  15.587][v][cplayer] Set property: sub-pos="91" -> 1
+[  15.588][v][cplayer] Set property: sub-scale="0.818" -> 1
+[  15.590][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  15.625][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  15.826][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  16.043][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  16.255][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  16.466][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  16.672][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  16.884][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  17.089][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  17.311][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  17.541][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  17.754][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  17.967][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  18.170][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  18.384][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  18.595][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  18.804][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  19.014][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  19.231][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  19.435][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  19.502][v][cplayer] Set property: sub-pos="93" -> 1
+[  19.511][v][cplayer] Set property: sub-scale="0.852" -> 1
+[  19.512][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.518][v][cplayer] Set property: sub-pos="94" -> 1
+[  19.518][v][cplayer] Set property: sub-scale="0.873" -> 1
+[  19.518][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.535][v][cplayer] Set property: sub-pos="95" -> 1
+[  19.535][v][cplayer] Set property: sub-scale="0.897" -> 1
+[  19.535][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.555][v][cplayer] Set property: sub-pos="96" -> 1
+[  19.555][v][cplayer] Set property: sub-scale="0.922" -> 1
+[  19.555][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.568][v][cplayer] Set property: sub-pos="97" -> 1
+[  19.568][v][cplayer] Set property: sub-scale="0.950" -> 1
+[  19.568][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.585][v][cplayer] Set property: sub-pos="99" -> 1
+[  19.586][v][cplayer] Set property: sub-scale="0.980" -> 1
+[  19.586][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.602][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.602][v][cplayer] Set property: sub-scale="1.003" -> 1
+[  19.602][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.618][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.619][v][cplayer] Set property: sub-scale="1.011" -> 1
+[  19.619][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.637][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.637][v][cplayer] Set property: sub-scale="1.019" -> 1
+[  19.637][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.646][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  19.651][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.651][v][cplayer] Set property: sub-scale="1.027" -> 1
+[  19.651][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.668][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.670][v][cplayer] Set property: sub-scale="1.035" -> 1
+[  19.670][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.684][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.684][v][cplayer] Set property: sub-scale="1.042" -> 1
+[  19.684][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.700][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.701][v][cplayer] Set property: sub-scale="1.050" -> 1
+[  19.702][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.719][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.719][v][cplayer] Set property: sub-scale="1.057" -> 1
+[  19.719][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.734][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.734][v][cplayer] Set property: sub-scale="1.063" -> 1
+[  19.734][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.774][v][cplayer] Set property: panscan=0.000000 -> 1
+[  19.850][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  19.918][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.919][v][cplayer] Set property: sub-scale="1.055" -> 1
+[  19.919][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.935][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.935][v][cplayer] Set property: sub-scale="1.047" -> 1
+[  19.935][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.951][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.951][v][cplayer] Set property: sub-scale="1.041" -> 1
+[  19.952][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  19.984][v][cplayer] Set property: sub-pos="100" -> 1
+[  19.984][v][cplayer] Set property: sub-scale="1.029" -> 1
+[  19.984][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  20.021][v][cplayer] Set property: sub-pos="100" -> 1
+[  20.021][v][cplayer] Set property: sub-scale="1.020" -> 1
+[  20.021][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  20.059][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  20.071][v][cplayer] Set property: sub-pos="100" -> 1
+[  20.071][v][cplayer] Set property: sub-scale="1.011" -> 1
+[  20.071][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  20.150][v][cplayer] Set property: sub-pos="100" -> 1
+[  20.150][v][cplayer] Set property: sub-scale="1.003" -> 1
+[  20.150][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  20.266][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  20.474][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  20.685][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  20.891][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  21.096][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  21.304][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  21.513][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  21.720][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  21.933][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  22.140][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  22.348][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  22.558][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  22.768][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  22.974][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  23.000][v][cplayer] Set property: sub-pos="98" -> 1
+[  23.000][v][cplayer] Set property: sub-scale="0.954" -> 1
+[  23.000][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  23.033][v][cplayer] Set property: sub-pos="96" -> 1
+[  23.034][v][cplayer] Set property: sub-scale="0.930" -> 1
+[  23.034][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  23.066][v][cplayer] Set property: sub-pos="95" -> 1
+[  23.067][v][cplayer] Set property: sub-scale="0.903" -> 1
+[  23.067][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  23.117][v][cplayer] Set property: sub-pos="94" -> 1
+[  23.117][v][cplayer] Set property: sub-scale="0.877" -> 1
+[  23.117][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  23.184][v][cplayer] Set property: sub-pos="92" -> 1
+[  23.184][v][cplayer] Set property: sub-scale="0.834" -> 1
+[  23.184][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  23.184][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  23.233][v][cplayer] Set property: sub-pos="91" -> 1
+[  23.233][v][cplayer] Set property: sub-scale="0.816" -> 1
+[  23.233][v][cplayer] Set property: sub-margin-x="20" -> 1
+[  23.301][v][cplayer] Set property: sub-pos="91" -> 1
+[  23.302][v][cplayer] Set property: sub-scale="0.811" -> 1
+[  23.302][v][cplayer] Set property: sub-margin-x="25" -> 1
+[  23.350][v][cplayer] Set property: sub-pos="90" -> 1
+[  23.350][v][cplayer] Set property: sub-scale="0.806" -> 1
+[  23.350][v][cplayer] Set property: sub-margin-x="28" -> 1
+[  23.367][v][cplayer] Set property: sub-pos="90" -> 1
+[  23.367][v][cplayer] Set property: sub-scale="0.801" -> 1
+[  23.367][v][cplayer] Set property: sub-margin-x="32" -> 1
+[  23.391][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  23.433][v][cplayer] Set property: sub-pos="90" -> 1
+[  23.433][v][cplayer] Set property: sub-scale="0.796" -> 1
+[  23.433][v][cplayer] Set property: sub-margin-x="36" -> 1
+[  23.516][v][cplayer] Set property: sub-pos="90" -> 1
+[  23.516][v][cplayer] Set property: sub-scale="0.790" -> 1
+[  23.516][v][cplayer] Set property: sub-margin-x="40" -> 1
+[  23.553][v][cplayer] Set property: panscan=1.000000 -> 1
+[  23.602][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  23.633][v][cplayer] Set property: sub-pos="90" -> 1
+[  23.634][v][cplayer] Set property: sub-scale="0.794" -> 1
+[  23.634][v][cplayer] Set property: sub-margin-x="38" -> 1
+[  23.649][v][cplayer] Set property: sub-pos="90" -> 1
+[  23.650][v][cplayer] Set property: sub-scale="0.797" -> 1
+[  23.650][v][cplayer] Set property: sub-margin-x="36" -> 1
+[  23.667][v][cplayer] Set property: sub-pos="90" -> 1
+[  23.667][v][cplayer] Set property: sub-scale="0.799" -> 1
+[  23.667][v][cplayer] Set property: sub-margin-x="33" -> 1
+[  23.683][v][cplayer] Set property: sub-pos="90" -> 1
+[  23.683][v][cplayer] Set property: sub-scale="0.802" -> 1
+[  23.683][v][cplayer] Set property: sub-margin-x="31" -> 1
+[  23.700][v][cplayer] Set property: sub-pos="90" -> 1
+[  23.700][v][cplayer] Set property: sub-scale="0.804" -> 1
+[  23.700][v][cplayer] Set property: sub-margin-x="29" -> 1
+[  23.716][v][cplayer] Set property: sub-pos="90" -> 1
+[  23.716][v][cplayer] Set property: sub-scale="0.807" -> 1
+[  23.716][v][cplayer] Set property: sub-margin-x="28" -> 1
+[  23.749][v][cplayer] Set property: sub-pos="91" -> 1
+[  23.749][v][cplayer] Set property: sub-scale="0.810" -> 1
+[  23.750][v][cplayer] Set property: sub-margin-x="25" -> 1
+[  23.782][v][cplayer] Set property: sub-pos="91" -> 1
+[  23.783][v][cplayer] Set property: sub-scale="0.813" -> 1
+[  23.783][v][cplayer] Set property: sub-margin-x="23" -> 1
+[  23.809][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  23.833][v][cplayer] Set property: sub-pos="91" -> 1
+[  23.833][v][cplayer] Set property: sub-scale="0.815" -> 1
+[  23.833][v][cplayer] Set property: sub-margin-x="21" -> 1
+[  23.949][v][cplayer] Set property: sub-pos="91" -> 1
+[  23.949][v][cplayer] Set property: sub-scale="0.817" -> 1
+[  23.949][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  24.017][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  24.227][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  24.437][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  24.644][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  24.854][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  25.064][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  25.274][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  25.502][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  25.669][v][cplayer] Set property: sub-pos="100" -> 1
+[  25.669][v][cplayer] Set property: sub-scale="0.259" -> 1
+[  25.669][v][cplayer] Set property: sub-margin-x="300" -> 1
+[  25.708][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  25.919][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  26.121][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  26.321][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  26.530][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  26.734][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  26.946][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  27.151][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  27.362][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  27.574][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  27.780][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  27.983][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  28.191][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  28.417][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  28.557][v][cplayer] Set property: sub-pos="91" -> 1
+[  28.557][v][cplayer] Set property: sub-scale="0.818" -> 1
+[  28.557][v][cplayer] Set property: sub-margin-x="19" -> 1
+[  28.640][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  28.850][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  29.060][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  29.264][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  29.470][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  29.676][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  29.883][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  30.096][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  30.304][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  30.521][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  30.735][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  30.940][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  31.150][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  31.358][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  31.567][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  31.604][v][cplayer] Set property: pause=true -> 1
+[  31.616][d][vd] Uninit decoder.
+[  31.770][v][vo/libmpv] mpv_render_context_render() not being called or stuck.
+[  31.771][v][lavf] deselect track 0
+[  31.771][i][cplayer] Video: no video
+[  31.771][v][cplayer] EOF code: 6  
+[  31.771][d][cplayer] Terminating demuxers...
+[  31.771][d][libmpv_render] flushing shader cache
+[  31.771][d][cplayer] Done terminating demuxers.
+[  31.771][v][cplayer] finished playback, video output initialization failed (reason 4)
+[  31.772][d][cplayer] Run command: quit, flags=64, args=[code="0"]
+[  31.772][d][main] Destroying client handle...
+[  31.772][d][cplayer] Run command: quit, flags=64, args=[code="0"]
+[  31.772][d][cplayer] Run command: del, flags=64, args=[name="user-data/mpv/console"]
+[  31.772][d][positioning] Destroying client handle...
+[  31.772][d][select] Destroying client handle...
+[  31.772][d][context_menu] Destroying client handle...
+[  31.772][d][commands] Destroying client handle...
+[  31.772][d][console] Destroying client handle...

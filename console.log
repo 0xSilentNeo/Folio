@@ -1,0 +1,56 @@
+Timestamp               Ty Process[PID:TID]
+2026-11-10 04:05:22.128 E  Folio[71490:2ad1d] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-10 04:05:22.128 E  Folio[71490:2ad1d] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-10 04:05:23.080 E  Folio[71490:2ad1d] [com.apple.BoardServices:XPCErrors] <compose failure [shared UUID]>
+2026-11-10 04:05:24.023 E  Folio[71490:2ad1d] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-10 04:05:24.024 E  Folio[71490:2ad1d] [com.apple.coreanimation:API] <compose failure [shared UUID]>
+2026-11-10 04:05:24.650 E  Folio[71490:2ad1d] [com.apple.CFBundle:plugin] <compose failure [shared UUID]>
+2026-11-10 04:05:24.781 F  Folio[71490:2ad1d] [com.apple.runtime-issues:AVAudioSession Hang Risk] <compose failure [shared UUID]>
+2026-11-10 04:05:26.528 E  Folio[71490:2b499] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-11-10 04:05:26.665 E  Folio[71490:2b49a] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-11-10 04:05:26.670 E  Folio[71490:2b4b0] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-11-10 04:05:26.677 E  Folio[71490:2b4b1] [com.apple.coremedia:VTDecompression] <<<< VT-DS >>>> signalled err=-12906 at <>:2962
+2026-11-10 04:05:27.873 F  Folio[71490:2b1c9] [com.apple.Foundation:general] <compose failure [shared UUID]>
+2026-11-10 04:05:29.824 F  Folio[71490:2ad1d] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-10 04:05:30.241 F  Folio[71490:2ad1d] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-10 04:05:30.957 E  Folio[71490:2ad1d] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:30.970 E  Folio[71490:2ad1d] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:30.970 E  Folio[71490:2ad1d] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:31.013 E  Folio[71490:2ad1d] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:31.850 F  Folio[71490:2ad1d] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-10 04:05:32.285 E  Folio[71490:2ad1d] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:32.285 E  Folio[71490:2ad1d] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:32.286 E  Folio[71490:2ad1d] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:32.404 E  Folio[71490:2ad1d] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:32.404 E  Folio[71490:2ad1d] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:32.405 E  Folio[71490:2ad1d] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:32.411 E  Folio[71490:2ad1d] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:32.411 E  Folio[71490:2ad1d] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:32.423 E  Folio[71490:2ad1d] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:32.423 E  Folio[71490:2ad1d] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:37.451 E  Folio[71490:2ad1d] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-10 04:05:37.648 E  Folio[71490:2ad1d] [com.apple.WebKit:Process] <compose failure [shared UUID]>
+2026-11-10 04:05:40.902 E  Folio[71490:2b5b2] [com.apple.WebKit:ProcessSuspension] <compose failure [shared UUID]>
+2026-11-10 04:05:40.927 E  Folio[71490:2b5b2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:40.932 E  Folio[71490:2b5b2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:40.969 E  Folio[71490:2b5b2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:40.969 E  Folio[71490:2b5b2] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-11-10 04:05:40.970 E  Folio[71490:2b5b2] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-11-10 04:05:41.175 F  Folio[71490:2b1a4] [com.apple.defaults:User Defaults] <compose failure [shared UUID]>
+2026-11-10 04:05:41.284 E  Folio[71490:2ad1d] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:41.379 E  Folio[71490:2b5b2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:43.711 E  Folio[71490:2b5b2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:43.949 E  Folio[71490:2b5b2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:43.950 E  Folio[71490:2b5b2] [com.apple.defaults:cfprefsd] <compose failure [shared UUID]>
+2026-11-10 04:05:53.632 E  Folio[71490:2b5b2] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:53.736 E  Folio[71490:2ad1d] [com.apple.GenerativeModels:availability] <compose failure [shared UUID]>
+2026-11-10 04:05:53.743 E  Folio[71490:2ad1d] [com.apple.GenerativeModels:availability] <compose failure [shared UUID]>
+2026-11-10 04:05:53.743 E  Folio[71490:2ad1d] [com.apple.GenerativeModels:availability] <compose failure [shared UUID]>
+2026-11-10 04:05:53.757 E  Folio[71490:2ad1d] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:54.495 E  Folio[71490:2ad1d] [com.apple.WebKit:ResourceLoadStatistics] <compose failure [shared UUID]>
+2026-11-10 04:05:55.930 E  Folio[71490:2ad1d] [com.apple.Accessibility:AXRuntimeCommon] <compose failure [shared UUID]>
+2026-11-10 04:05:57.254 E  Folio[71490:2ad1d] [com.apple.coremedia:] <compose failure [shared UUID]>
+2026-11-10 04:05:58.584 E  Folio[71490:2b1c9] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-10 04:05:58.586 E  Folio[71490:2b1c9] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 8589935105, but AXAutomationType returned 35 which maps to 35
+2026-11-10 04:05:58.705 E  Folio[71490:2b1c9] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 1108101562369, but AXAutomationType returned 14 which maps to 14
+2026-11-10 04:05:58.715 E  Folio[71490:2b1c9] [com.apple.dt.xctest:Default] Automation type mismatch; legacy system derived element type 9 from class SwiftUI.AccessibilityNode:NSObject, traits 8589935105, but AXAutomationType returned 35 which maps to 35

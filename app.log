@@ -1,0 +1,75 @@
+04:05:18.559 [app] what's new: 1.0.0, last shown none
+04:05:18.593 [app] launch v1.0.0 (1) iOS 27.2 arm64 free=31.64 GB
+04:05:18.642 [dl] list: 0 item(s), 0 done
+04:05:19.813 [scene] D34E3E5D connects (landscape)
+04:05:19.814 [scene] D34E3E5D will enter foreground (landscape)
+04:05:20.128 [addons] 0 installed
+04:05:20.723 [app] first screen 10948 ms after process start
+04:05:20.723 [app] root view appeared (1 in this run, splash off)
+04:05:20.908 [hang] main thread unresponsive for 2.3 s
+04:05:22.520 [player] play requested: 1 item(s), index 0, first=/Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/5DE3FD10-6CA9-4C71-83AA-D40C05AB8396/Folio.app/lab/lab.mp4
+04:05:23.967 [ui] player toolbar 190 pt, its views:
+UICoreHostingView<RootView> x 0…190 w 190
+  _UIInheritedView x 10…180 w 170
+    _UIInheritedView x 10…180 w 170
+      _UIInheritedView x 10…10 w 0
+        UIPlatformGlassInteractionView x 26…180 w 154
+          _UIInheritedView x 26…72 w 46
+          _UIInheritedView x 80…126 w 46
+          _UIInheritedView x 134…180 w 46
+_UIPointerInteractionAssistantEffectContainerView x 0…0 w 0
+04:05:24.057 [scene] D34E3E5D active (landscape)
+04:05:24.064 [app] active
+04:05:24.210 [widget] App Group group.dev.silentneo.folio
+04:05:24.217 [widget] snapshot: 0 item(s), 0 with a picture
+04:05:24.256 [tracking] 0 tracked show(s)
+04:05:24.278 [ui] player toolbar: capsule at 26…180 pt of the 190 pt toolbar
+04:05:24.972 [player] start renderer=gl
+04:05:24.980 [player] mpv options applied renderer=gl hwdec=auto anime4k=off/fast picture=efficient
+04:05:24.986 [audio] optional audio filters in this engine: none (asked for acompressor, alimiter, dynaudnorm, dialoguenhance)
+04:05:25.028 [player] subtitles kept on screen: picture 1.00× fitted, 100% of its height on screen (OpenGL Fit) → sub-pos 100, sub-scale 1.00, sides 19
+04:05:25.135 [player] loadfile /Users/runner/Library/Developer/CoreSimulator/Devices/A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8/data/Containers/Bundle/Application/5DE3FD10-6CA9-4C71-83AA-D40C05AB8396/Folio.app/lab/lab.mp4 source=local opts=[] -> 0
+04:05:25.145 [player] Now Playing set: audio session AVAudioSessionCategoryPlayback, AVAudioSessionModeMoviePlayback, options 0, route sharing 3; other audio playing false; output Speaker (iPhone speaker, 2 ch max, spatial off); 4 of 4 commands on; 6 fields
+04:05:25.278 [player] decoder: software
+04:05:25.278 [player] video gamma: (none)
+04:05:25.337 [app] Home: appeared 525 ms after the root view, next frame at 4599 ms, main thread free at 4614 ms
+04:05:26.010 [perf] panel tracks prebuilt in 200 ms
+04:05:26.020 [player] file loaded in 895 ms
+04:05:26.020 [memory] lab [film:lab]: nothing remembered yet
+04:05:26.933 [perf] panel settings prebuilt in 819 ms
+04:05:27.106 [perf] panel nowPlaying prebuilt in 133 ms
+04:05:27.108 [player] video gamma: bt.1886
+04:05:27.110 [player] audio session while playing: AVAudioSessionCategoryPlayback, AVAudioSessionModeMoviePlayback, options 0, route sharing 3
+04:05:27.111 [player] seek 0:00 → 0:00: playing again after 1090 ms (local file, spinner shown)
+04:05:27.115 [player] decoder: software
+04:05:28.209 [tracking] background refresh not scheduled: BGTaskScheduler is not available on this platform.
+04:05:28.973 [handoff] advertising Lab clip playing
+04:05:28.986 [tracking] Airing widget: 0 show(s)
+04:05:30.241 [notify] holidays: 22 for US
+04:05:34.124 [imdb] HTTP 202 for /chart/moviemeter/ (1997 bytes) → web view
+04:05:34.124 [imdb] webkit load /chart/moviemeter
+04:05:34.132 [imdb] HTTP 202 for /title/tt35511966/ (1997 bytes) → web view
+04:05:34.146 [imdb] HTTP 202 for /chart/tvmeter/ (1997 bytes) → web view
+04:05:40.556 [player] subtitles kept on screen: picture 1.22× fitted, 82% of its height on screen (OpenGL Fill) → sub-pos 91, sub-scale 0.82, sides 19
+04:05:45.409 [player] subtitles kept on screen: picture 1.00× fitted, 100% of its height on screen (OpenGL Fit) → sub-pos 100, sub-scale 1.00, sides 19
+04:05:46.277 [player] GPU per frame (OpenGL, Anime4K off): the renderer gives no pass list; 383 dropped, 0 late since the last line; display 0 Hz
+04:05:50.641 [player] subtitles kept on screen: picture 3.87× fitted, 100% of its height on screen (OpenGL Fill) → sub-pos 100, sub-scale 0.26, sides 300
+04:05:51.196 [perf] panel tracks prebuilt in 11 ms
+04:05:51.259 [ui] player toolbar: capsule at 28…180 pt of the 190 pt toolbar
+04:05:51.606 [perf] panel settings prebuilt in 123 ms
+04:05:51.828 [perf] panel nowPlaying prebuilt in 20 ms
+04:05:53.529 [player] subtitles kept on screen: picture 1.22× fitted, 82% of its height on screen (OpenGL Fill) → sub-pos 91, sub-scale 0.82, sides 19
+04:05:53.978 [ui] player toolbar: capsule at 26…180 pt of the 190 pt toolbar
+04:05:54.140 [energy] cpu 47% (main 43%, other 4%) mem 98 MB (0 MB left) thermal=nominal playing=yes renderer=gl picture=efficient decoder=no
+04:05:54.357 [perf] panel tracks prebuilt in 0 ms
+04:05:54.548 [imdb] webkit nav 1: no data yet (waf=true, 1980 chars)
+04:05:54.665 [perf] panel settings prebuilt in 0 ms
+04:05:54.978 [perf] panel nowPlaying prebuilt in 0 ms
+04:05:56.565 [player] close at 0:23
+04:05:56.583 [handoff] playing activity ended
+04:05:56.586 [energy] cpu 30% (other 16%, main 14%) mem 99 MB (0 MB left) thermal=nominal playing=yes renderer=gl picture=efficient decoder=no · player closing
+04:05:57.246 [player] player model freed
+04:05:57.246 [player] player screen state freed
+04:05:58.711 [nav] after player closed: scene orientation=3 device=3 bounds=(874.0, 402.0)
+04:05:58.748 [nav]   window UIWindow level=0.0 hidden=false alpha=1.0 key=•••• touch=true frame=(0.0, 0.0, 874.0, 402.0) root=UIHostingController<ModifiedContent<LazyView<ModifiedContent<RootView, _EnvironmentKeyWritingModifier<Optional<AnyShapeStyle>>>>, RootModifier>> presented=nil
+04:05:58.748 [nav]   window UITextEffectsWindow level=10.0 hidden=false alpha=1.0 key=•••• touch=true frame=(0.0, 0.0, 874.0, 402.0) root=•••• presented=nil

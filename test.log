@@ -1,0 +1,170 @@
+Command line invocation:
+    /Applications/Xcode_27.2.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project Folio.xcodeproj -scheme Folio -configuration Release -destination id=A8CE73D2-F54C-4FB2-B688-BC6BD7612FA8 -derivedDataPath build "-only-testing:FolioUITests/ZoomUITests"
+
+2026-11-10 04:04:52.557261+0000 FolioUITests-Runner[71132:174382] [Default] Running tests...
+objc[71132]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.2.8117.0.I4lwWe/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x103d5c310) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.2.8117.0.I4lwWe/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x103d90398). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-11-10 04:05:02.982.
+Test Suite 'FolioUITests.xctest' started at 2026-11-10 04:05:02.993.
+Test Suite 'ZoomUITests' started at 2026-11-10 04:05:02.994.
+Test Case '-[FolioUITests.ZoomUITests test1PinchToFillAndBackThenClose]' started.
+    t =     0.03s Start Test at 2026-11-10 04:05:03.020
+    t =     0.16s Set Up
+    t =     0.18s Setting device orientation to Landscape Left
+2026-11-10 04:05:05.402 xcodebuild[69860:171060] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-10 04:05:05.403 xcodebuild[69860:171060] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     0.27s     Device orientation changed to Landscape Left
+    t =     0.35s     Wait for com.apple.springboard to idle
+    t =     0.55s Open dev.silentneo.folio
+    t =     0.55s     Launch dev.silentneo.folio
+    t =     7.50s         Interface orientation changed to Landscape Right
+    t =    10.05s         Setting up automation session
+    t =    16.48s         Wait for dev.silentneo.folio to idle
+<unknown>:0: warning: -[FolioUITests.ZoomUITests test1PinchToFillAndBackThenClose] : This method can lead to UI unresponsiveness if called on the main thread. Consider using the asynchronous activate/deactivate API instead for calls from the main thread.
+    t =    23.78s Waiting 30.0s for "Close player" Button to exist
+    t =    24.85s     Checking `Expect predicate `existsNoRetry == 1` for object "Close player" Button`
+    t =    24.85s         Checking existence of `"Close player" Button`
+    t =    32.06s Find the Target Application 'dev.silentneo.folio'
+    t =    34.98s Added attachment named '1-fit'
+    t =    35.00s Pinch with scale 1.6, velocity 2 in Window (First Match)
+    t =    35.00s     Wait for dev.silentneo.folio to idle
+    t =    35.01s     Find the Window (First Match)
+    t =    35.48s     Check for interrupting elements affecting Window
+    t =    35.75s     Synthesize event
+    t =    35.75s         Pinching with rect {{50, 50}, {302, 774}}
+    t =    37.09s     Wait for dev.silentneo.folio to idle
+    t =    37.73s Find the Target Application 'dev.silentneo.folio'
+    t =    38.18s Added attachment named '2-fill-settling'
+    t =    39.19s Find the Target Application 'dev.silentneo.folio'
+    t =    40.27s Added attachment named '3-fill'
+    t =    40.27s Pinch with scale 0.6, velocity -2 in Window (First Match)
+    t =    40.27s     Wait for dev.silentneo.folio to idle
+    t =    40.27s     Find the Window (First Match)
+    t =    41.18s     Check for interrupting elements affecting Window
+    t =    41.26s     Synthesize event
+    t =    41.27s         Pinching with rect {{50, 50}, {302, 774}}
+    t =    41.95s     Wait for dev.silentneo.folio to idle
+    t =    42.57s Find the Target Application 'dev.silentneo.folio'
+    t =    43.09s Added attachment named '4-fit-settling'
+    t =    44.10s Find the Target Application 'dev.silentneo.folio'
+    t =    44.40s Added attachment named '5-fit'
+    t =    44.40s Pinch with scale 1.6, velocity 2 in Window (First Match)
+    t =    44.40s     Wait for dev.silentneo.folio to idle
+    t =    44.41s     Find the Window (First Match)
+    t =    44.51s     Check for interrupting elements affecting Window
+    t =    44.56s     Synthesize event
+    t =    44.57s         Pinching with rect {{50, 50}, {302, 774}}
+    t =    45.73s     Wait for dev.silentneo.folio to idle
+    t =    47.16s Setting device orientation to Portrait
+    t =    47.17s     Device orientation changed to Portrait
+    t =    47.35s     Interface orientation changed to Portrait
+    t =    47.35s     Wait for dev.silentneo.folio to idle
+    t =    50.06s Find the Target Application 'dev.silentneo.folio'
+    t =    50.30s Added attachment named '6-fill-portrait'
+    t =    50.30s Setting device orientation to Landscape Left
+    t =    50.31s     Device orientation changed to Landscape Left
+    t =    50.37s     Interface orientation changed to Landscape Right
+    t =    50.39s     Wait for dev.silentneo.folio to idle
+    t =    52.60s Find the Target Application 'dev.silentneo.folio'
+    t =    52.89s Added attachment named '7-fill-landscape'
+    t =    52.89s Find the "Close player" Button
+    t =    53.01s Tap "xmark" Button
+    t =    53.01s     Wait for dev.silentneo.folio to idle
+    t =    53.02s     Find the "xmark" Button
+    t =    53.22s     Check for interrupting elements affecting "xmark" Button
+    t =    53.33s     Synthesize event
+    t =    53.77s     Wait for dev.silentneo.folio to idle
+    t =    54.24s Waiting 5.0s for "xmark" Button to not exist
+    t =    55.30s     Checking `Expect predicate `existsNoRetry == 0` for object "xmark" Button`
+    t =    55.30s         Checking existence of `"xmark" Button`
+ZOOMTEST close took 2652 ms (gone: true)
+    t =    55.63s Find the Target Application 'dev.silentneo.folio'
+    t =    56.02s Added attachment named '8-closed'
+    t =    56.02s Tear Down
+Test Case '-[FolioUITests.ZoomUITests test1PinchToFillAndBackThenClose]' passed (56.520 seconds).
+Test Suite 'ZoomUITests' passed at 2026-11-10 04:05:59.539.
+	 Executed 1 test, with 0 failures (0 unexpected) in 56.520 (56.545) seconds
+Test Suite 'FolioUITests.xctest' passed at 2026-11-10 04:05:59.543.
+	 Executed 1 test, with 0 failures (0 unexpected) in 56.520 (56.550) seconds
+Test Suite 'Selected tests' passed at 2026-11-10 04:05:59.544.
+	 Executed 1 test, with 0 failures (0 unexpected) in 56.520 (56.562) seconds
+2026-11-10 04:06:27.713 xcodebuild[69860:171060] [MT] DVTAssertions: Warning in DVTiOSFrameworks/IDEiOSSupportCore/DVTiPhoneSimulator.m:661
+Details:  SimDevice native architecture is nil. Device: SimDevice : Apple TV 4K (3rd generation) (AA1A4436-9426-4301-8D39-5E909CAF9C42) : state={ Shutdown } deviceType={ com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K: SimDeviceType : Apple TV 4K (3rd generation) (com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K) } runtime={ com.apple.CoreSimulator.SimRuntime.tvOS-27-0: (null) }, supportedArches: (
+)
+Object:   <DVTiPhoneSimulator: 0x77abda4200>
+Method:   -nativeArchitecture
+Thread:   <_NSMainThread: 0x102afcdf0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-11-10 04:06:27.722 xcodebuild[69860:171060] [MT] DVTAssertions: Warning in DVTiOSFrameworks/IDEiOSSupportCore/DVTiPhoneSimulator.m:661
+Details:  SimDevice native architecture is nil. Device: SimDevice : Apple TV 4K (3rd generation) (at 1080p) (B9E4D366-604B-4F2F-8C77-5D95AD648816) : state={ Shutdown } deviceType={ com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p: SimDeviceType : Apple TV 4K (3rd generation) (at 1080p) (com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p) } runtime={ com.apple.CoreSimulator.SimRuntime.tvOS-27-0: (null) }, supportedArches: (
+)
+Object:   <DVTiPhoneSimulator: 0x77abda4400>
+Method:   -nativeArchitecture
+Thread:   <_NSMainThread: 0x102afcdf0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-11-10 04:06:27.728 xcodebuild[69860:171060] [MT] DVTAssertions: Warning in DVTiOSFrameworks/IDEiOSSupportCore/DVTiPhoneSimulator.m:661
+Details:  SimDevice native architecture is nil. Device: SimDevice : Apple TV 4K (3rd generation) (AA1A4436-9426-4301-8D39-5E909CAF9C42) : state={ Shutdown } deviceType={ com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K: SimDeviceType : Apple TV 4K (3rd generation) (com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K) } runtime={ com.apple.CoreSimulator.SimRuntime.tvOS-27-0: (null) }, supportedArches: (
+)
+Object:   <DVTiPhoneSimulator: 0x77abda4200>
+Method:   -nativeArchitecture
+Thread:   <_NSMainThread: 0x102afcdf0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-11-10 04:06:27.728 xcodebuild[69860:171060] [MT] DVTAssertions: Warning in DVTiOSFrameworks/IDEiOSSupportCore/DVTiPhoneSimulator.m:661
+Details:  SimDevice native architecture is nil. Device: SimDevice : Apple TV 4K (3rd generation) (AA1A4436-9426-4301-8D39-5E909CAF9C42) : state={ Shutdown } deviceType={ com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K: SimDeviceType : Apple TV 4K (3rd generation) (com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K) } runtime={ com.apple.CoreSimulator.SimRuntime.tvOS-27-0: (null) }, supportedArches: (
+)
+Object:   <DVTiPhoneSimulator: 0x77abda4200>
+Method:   -nativeArchitecture
+Thread:   <_NSMainThread: 0x102afcdf0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-11-10 04:06:27.728 xcodebuild[69860:171060] [MT] DVTAssertions: Warning in DVTiOSFrameworks/IDEiOSSupportCore/DVTiPhoneSimulator.m:661
+Details:  SimDevice native architecture is nil. Device: SimDevice : Apple TV 4K (3rd generation) (at 1080p) (B9E4D366-604B-4F2F-8C77-5D95AD648816) : state={ Shutdown } deviceType={ com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p: SimDeviceType : Apple TV 4K (3rd generation) (at 1080p) (com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p) } runtime={ com.apple.CoreSimulator.SimRuntime.tvOS-27-0: (null) }, supportedArches: (
+)
+Object:   <DVTiPhoneSimulator: 0x77abda4400>
+Method:   -nativeArchitecture
+Thread:   <_NSMainThread: 0x102afcdf0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-11-10 04:06:27.728 xcodebuild[69860:171060] [MT] DVTAssertions: Warning in DVTiOSFrameworks/IDEiOSSupportCore/DVTiPhoneSimulator.m:661
+Details:  SimDevice native architecture is nil. Device: SimDevice : Apple TV 4K (3rd generation) (at 1080p) (B9E4D366-604B-4F2F-8C77-5D95AD648816) : state={ Shutdown } deviceType={ com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p: SimDeviceType : Apple TV 4K (3rd generation) (at 1080p) (com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p) } runtime={ com.apple.CoreSimulator.SimRuntime.tvOS-27-0: (null) }, supportedArches: (
+)
+Object:   <DVTiPhoneSimulator: 0x77abda4400>
+Method:   -nativeArchitecture
+Thread:   <_NSMainThread: 0x102afcdf0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-11-10 04:06:27.799 xcodebuild[69860:171060] [MT] DVTAssertions: Warning in DVTiOSFrameworks/IDEiOSSupportCore/DVTiPhoneSimulator.m:661
+Details:  SimDevice native architecture is nil. Device: SimDevice : Apple TV 4K (3rd generation) (AA1A4436-9426-4301-8D39-5E909CAF9C42) : state={ Shutdown } deviceType={ com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K: SimDeviceType : Apple TV 4K (3rd generation) (com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K) } runtime={ com.apple.CoreSimulator.SimRuntime.tvOS-27-0: (null) }, supportedArches: (
+)
+Object:   <DVTiPhoneSimulator: 0x77abda4200>
+Method:   -nativeArchitecture
+Thread:   <_NSMainThread: 0x102afcdf0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-11-10 04:06:27.800 xcodebuild[69860:171060] [MT] DVTAssertions: Warning in DVTiOSFrameworks/IDEiOSSupportCore/DVTiPhoneSimulator.m:661
+Details:  SimDevice native architecture is nil. Device: SimDevice : Apple TV 4K (3rd generation) (AA1A4436-9426-4301-8D39-5E909CAF9C42) : state={ Shutdown } deviceType={ com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K: SimDeviceType : Apple TV 4K (3rd generation) (com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K) } runtime={ com.apple.CoreSimulator.SimRuntime.tvOS-27-0: (null) }, supportedArches: (
+)
+Object:   <DVTiPhoneSimulator: 0x77abda4200>
+Method:   -nativeArchitecture
+Thread:   <_NSMainThread: 0x102afcdf0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-11-10 04:06:27.800 xcodebuild[69860:171060] [MT] DVTAssertions: Warning in DVTiOSFrameworks/IDEiOSSupportCore/DVTiPhoneSimulator.m:661
+Details:  SimDevice native architecture is nil. Device: SimDevice : Apple TV 4K (3rd generation) (at 1080p) (B9E4D366-604B-4F2F-8C77-5D95AD648816) : state={ Shutdown } deviceType={ com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p: SimDeviceType : Apple TV 4K (3rd generation) (at 1080p) (com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p) } runtime={ com.apple.CoreSimulator.SimRuntime.tvOS-27-0: (null) }, supportedArches: (
+)
+Object:   <DVTiPhoneSimulator: 0x77abda4400>
+Method:   -nativeArchitecture
+Thread:   <_NSMainThread: 0x102afcdf0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-11-10 04:06:27.801 xcodebuild[69860:171060] [MT] DVTAssertions: Warning in DVTiOSFrameworks/IDEiOSSupportCore/DVTiPhoneSimulator.m:661
+Details:  SimDevice native architecture is nil. Device: SimDevice : Apple TV 4K (3rd generation) (at 1080p) (B9E4D366-604B-4F2F-8C77-5D95AD648816) : state={ Shutdown } deviceType={ com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p: SimDeviceType : Apple TV 4K (3rd generation) (at 1080p) (com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p) } runtime={ com.apple.CoreSimulator.SimRuntime.tvOS-27-0: (null) }, supportedArches: (
+)
+Object:   <DVTiPhoneSimulator: 0x77abda4400>
+Method:   -nativeArchitecture
+Thread:   <_NSMainThread: 0x102afcdf0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-11-10 04:07:13.915 xcodebuild[69860:171060] [MT] IDETestOperationsObserverDebug: 152.381 elapsed -- Testing started completed.
+2026-11-10 04:07:13.917 xcodebuild[69860:171060] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-11-10 04:07:13.917 xcodebuild[69860:171060] [MT] IDETestOperationsObserverDebug: 152.381 sec, +152.381 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/Folio/Folio/build/Logs/Test/Test-Folio-2026.11.10_04-04-39-+0000.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
