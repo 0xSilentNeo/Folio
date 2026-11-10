@@ -13,9 +13,9 @@ import WidgetKit
 //     in its own Clear and Tinted appearances (the accented rendering mode);
 //     in full colour a clear container shows no wallpaper (Apple,
 //     "Displaying the right widget background"; developer forums thread
-//     845586, unanswered). So the glass is made of the widget's own artwork,
-//     frosted, under a veil only as dark as the picture needs for white
-//     text, with light through it from the top and a Liquid Glass rim.
+//     845586, unanswered). So the glass is drawn: the widget's own picture,
+//     blurred and toned down (1.28.4; 1.28.2 used it at full colour), with
+//     light through it from the top and a Liquid Glass rim.
 //   - Clear and Tinted (iOS): the accented rendering mode. iOS removes the
 //     background and colours everything by its alpha, except images marked
 //     full colour, which Apple reserves for media artwork. Artwork is full
@@ -120,8 +120,15 @@ private struct WidgetCard: ViewModifier {
     }
 }
 
-/// Clear glass in full colour, light or dark mode; nothing in Clear and
+/// The glass in full colour, light or dark mode; nothing in Clear and
 /// Tinted, where iOS draws its own.
+///
+/// 1.28.4, the user's choice (10 Nov): the widget's own picture, heavily
+/// blurred, with most of its colour taken out and darkened, as frosted
+/// glass, the way Apple's Music widgets do it, with nothing to set up.
+/// 1.28.2 used the picture at full colour, and a pink poster tinted the
+/// whole widget pink. No picture: neutral glass. On top, always: light from
+/// the top, a darker edge and a bright rim.
 struct WidgetBackdrop: View {
     let t: WidgetPalette
     var art: UIImage? = nil
@@ -132,28 +139,34 @@ struct WidgetBackdrop: View {
         case .accented:
             Color.clear
         case .glass:
-            let ground = art.flatMap(WidgetImages.softened) ?? WidgetImages.wallpaper(seed)
             ZStack {
-                // What's behind the glass, frosted: the widget's first title.
-                Image(uiImage: ground).resizable().interpolation(.high).scaledToFill()
-                    .saturation(1.12)
-                // Clear glass dims only as much as white text needs: a dark
-                // picture stays clear, a bright one gets a deeper veil.
-                Color.black.opacity(WidgetImages.veil(for: ground))
+                if let frosted = art.flatMap(WidgetImages.softened) {
+                    // The widget's picture as frosted glass: blurred, its
+                    // colour mostly gone, dimmed for white text.
+                    Image(uiImage: frosted).resizable().interpolation(.high).scaledToFill()
+                        .saturation(0.4)
+                    Color.black.opacity(WidgetImages.veil(for: frosted))
+                } else {
+                    // No picture: neutral glass.
+                    LinearGradient(colors: [Color(white: 0.25), Color(white: 0.15)], startPoint: .top, endPoint: .bottom)
+                }
                 // Light through the glass, from the top.
-                LinearGradient(stops: [.init(color: .white.opacity(0.16), location: 0),
-                                       .init(color: .white.opacity(0.04), location: 0.42),
+                LinearGradient(stops: [.init(color: .white.opacity(0.12), location: 0),
+                                       .init(color: .white.opacity(0.03), location: 0.4),
                                        .init(color: .white.opacity(0), location: 1)],
                                startPoint: .top, endPoint: .bottom)
+                // The glass's thickness: its edge a little darker.
+                ContainerRelativeShape()
+                    .strokeBorder(.black.opacity(0.16), lineWidth: 6).blur(radius: 5)
                 // A soft sheen inside the edge, as the glass bends the light.
                 ContainerRelativeShape().inset(by: 1.5)
-                    .strokeBorder(.white.opacity(0.1), lineWidth: 4).blur(radius: 3)
+                    .strokeBorder(.white.opacity(0.09), lineWidth: 4).blur(radius: 3)
                 // The rim: bright where the light catches it, faint across.
                 ContainerRelativeShape().strokeBorder(
-                    LinearGradient(stops: [.init(color: .white.opacity(0.62), location: 0),
+                    LinearGradient(stops: [.init(color: .white.opacity(0.55), location: 0),
                                            .init(color: .white.opacity(0.14), location: 0.35),
                                            .init(color: .white.opacity(0.06), location: 0.65),
-                                           .init(color: .white.opacity(0.32), location: 1)],
+                                           .init(color: .white.opacity(0.28), location: 1)],
                                    startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.2)
             }
         }
@@ -189,11 +202,10 @@ enum WidgetImages {
 
     private static let ciContext = CIContext(options: [.useSoftwareRenderer: true, .cacheIntermediates: false])
 
-    /// How dark the clear glass's veil is over this frosted picture: from
-    /// 0.14 over a dark one to 0.44 over a white one, so white text reads
-    /// at about 4.5:1 or better and the glass stays as clear as it can.
+    /// How dark the veil over a frosted picture is: 0.25 over a dark one to
+    /// 0.55 over a white one, so white text reads and the glass stays light.
     static func veil(for frosted: UIImage) -> Double {
-        0.14 + 0.3 * Double(luminance(frosted))
+        0.25 + 0.3 * Double(luminance(frosted))
     }
 
     /// The picture's average brightness, 0…1 (drawn into one pixel).
@@ -207,6 +219,7 @@ enum WidgetImages {
         ctx.draw(cg, in: CGRect(x: 0, y: 0, width: 1, height: 1))
         return (0.2126 * CGFloat(px[0]) + 0.7152 * CGFloat(px[1]) + 0.0722 * CGFloat(px[2])) / 255
     }
+
 
     /// Dark at the bottom (or the left), clear at the other end.
     static let scrimBottom = gradient(vertical: true, stops: [(0.3, 0), (1, 0.82)])
@@ -264,9 +277,12 @@ enum WidgetImages {
 struct WidgetArt: View {
     let image: UIImage?
     var seed: String = ""
+    /// Which part of the picture shows when it's cropped (a poster in a
+    /// square: its top, the faces, not its title under the widget's own).
+    var alignment: Alignment = .center
 
     var body: some View {
-        Color.clear.overlay {
+        Color.clear.overlay(alignment: alignment) {
             fullColor(Image(uiImage: image ?? WidgetImages.generated(seed)).resizable()).scaledToFill()
         }
         .clipped()

@@ -104,14 +104,32 @@ enum AiringSnapshotWriter {
 
     /// The poster's file name next to the snapshot, named by its address.
     private static func picture(_ poster: String?, in dir: WidgetStore) async -> String? {
-        guard let poster, let url = URL(string: IMDbSource.sized(poster, width: 300) ?? poster) else { return nil }
-        let name = hash(poster) + ".jpg"
+        guard let poster, let url = URL(string: largePoster(poster)) else { return nil }
+        // The size in the name: posters kept smaller before are fetched again
+        // (and swept as no show uses them).
+        let name = hash(poster) + "-\(Int(AiringSnapshot.picturePixels)).jpg"
         if dir.exists(name) { return name }
         guard let img = await ImageCache.shared.image(url, maxPixel: AiringSnapshot.picturePixels) else { return nil }
         return await Task.detached(priority: .utility) { () -> String? in
             guard let jpeg = img.jpegData(compressionQuality: 0.8), (try? dir.write(jpeg, name)) != nil else { return nil }
             return name
         }.value
+    }
+
+    /// The poster at a size the widget can fill a small widget with
+    /// (1.28.4). Tracked shows keep TVmaze's medium poster (210×295) or
+    /// AniList's large cover (about 230 wide), stretched over the Airing Day
+    /// widget; each service's full size instead, scaled down on the way in.
+    static func largePoster(_ poster: String) -> String {
+        if poster.contains("._V1_") { return IMDbSource.sized(poster, width: 400) ?? poster }
+        if poster.contains("tvmaze.com") {
+            return poster.replacingOccurrences(of: "/medium_portrait/", with: "/original_untouched/")
+        }
+        if poster.contains("anilist.co") {
+            return poster.replacingOccurrences(of: "/cover/large/", with: "/cover/extraLarge/")
+                .replacingOccurrences(of: "/cover/medium/", with: "/cover/extraLarge/")
+        }
+        return poster
     }
 
     private static func hash(_ s: String) -> String {
