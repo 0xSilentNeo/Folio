@@ -49,6 +49,15 @@ enum ReleaseMatch {
         /// Why it is (or isn't) a match, for the log.
         var why: String
         var date: Date
+        /// The rules it was found with (2: 1.28.5, ties broken by IMDb's
+        /// popularity too); an unsure result from older rules is tried again.
+        var rules: Int? = nil
+
+        /// No confident match: asked again after 3 days, from the other
+        /// source, or when it was found with older rules.
+        func wantsRetry(preferred: String, now: Date = Date()) -> Bool {
+            !confident && (now.timeIntervalSince(date) > 3 * 86400 || source != preferred || (rules ?? 0) < 2)
+        }
     }
 
     /// Lower-cased letters and digits only, accents folded, "&" read as
@@ -88,7 +97,7 @@ enum ReleaseMatch {
         guard let best = scored.enumerated().max(by: { a, b in a.element.score < b.element.score || (a.element.score == b.element.score && a.offset > b.offset) })?.element,
               best.related else {
             return Result(imdbID: nil, name: nil, year: nil, poster: nil, score: 0, source: source, confident: false,
-                          why: candidates.isEmpty ? "no results" : "no result with that name", date: now)
+                          why: candidates.isEmpty ? "no results" : "no result with that name", date: now, rules: 2)
         }
         let yearDiff = year.flatMap { y in best.c.year.map { abs($0 - y) } }
         var confident = false
@@ -101,7 +110,9 @@ enum ReleaseMatch {
                 let same = scored.filter { $0.exact && (kind == nil || $0.c.kind == kind) }.sorted { $0.c.popularity > $1.c.popularity }
                 if same.count <= 1 {
                     confident = true; why = "exact name, the only one"
-                } else if source == "TMDB", same[0].c.id == best.c.id, same[0].c.popularity >= 3 * max(same[1].c.popularity, 0.001) {
+                } else if same[0].c.id == best.c.id, same[0].c.popularity > 0, same[0].c.popularity >= 3 * max(same[1].c.popularity, 0.001) {
+                    // TMDB's popularity, or IMDb's rank (1.28.5: "Cowboy Bebop",
+                    // the 1998 anime and the 2021 remake, stayed a placeholder).
                     confident = true; why = "exact name, \(same.count) titles, this one far more popular"
                 } else {
                     why = "\(same.count) titles with this name and no year to choose"
@@ -116,7 +127,7 @@ enum ReleaseMatch {
         }
         return Result(imdbID: best.c.id.hasPrefix("tt") ? best.c.id : nil, name: best.c.name, year: best.c.year, poster: best.c.poster,
                       score: (best.score * 10).rounded() / 10, source: source, confident: confident,
-                      why: why + String(format: ", score %.1f", best.score), date: now)
+                      why: why + String(format: ", score %.1f", best.score), date: now, rules: 2)
     }
 }
 
@@ -156,8 +167,7 @@ actor ReleaseMatcher {
         let key = Self.key(r)
         let preferred = TMDB.enabled ? "TMDB" : "IMDb"
         if let hit = cache[key] {
-            let retry = !hit.confident && (Date().timeIntervalSince(hit.date) > 3 * 86400 || hit.source != preferred)
-            if !retry { return hit }
+            if !hit.wantsRetry(preferred: preferred) { return hit }
         }
         let me = UUID()
         waiters[key, default: []].insert(me)
@@ -229,7 +239,8 @@ actor ReleaseMatcher {
             guard m.type == "movie" || m.type == "series" else { return nil }
             return ReleaseMatch.Candidate(id: m.id, name: m.name, originalName: m.originalName,
                                           year: m.releaseInfo.flatMap { Int($0.prefix(4)) }, kind: m.type == "movie" ? .movie : .series,
-                                          popularity: 0, poster: m.poster, animation: false, japanese: false)
+                                          popularity: m.popularityRank.map { 100_000 / Double(max(1, $0)) } ?? 0,
+                                          poster: m.poster, animation: false, japanese: false)
         }
         return ReleaseMatch.pick(r, candidates, source: "IMDb")
     }

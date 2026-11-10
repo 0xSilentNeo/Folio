@@ -79,6 +79,12 @@ enum AiringBackground {
             // In the background a schedule an hour old is fetched again:
             // these runs are few, and the next episode may just have aired.
             await store.refresh(maxAge: 3600, reason: "background")
+            // Real-Debrid's library, for its widget (1.28.5).
+            if !Task.isCancelled, !KidsProfile.isOnNow, let rd = ServerStore.shared.servers.first(where: RealDebrid.isRealDebrid) {
+                await LibraryIndexStore.shared.refreshInBackground(rd, maxAge: 1800)
+                // Now, not after the writer's usual pause: iOS may suspend the app first.
+                await GlanceWriter.writeServers()
+            }
             // The notifications' charts and forecast (1.25.0), then planned again with them.
             if !Task.isCancelled, UIApplication.shared.applicationState == .background {
                 await NotifyCenter.refreshFeedsNow()

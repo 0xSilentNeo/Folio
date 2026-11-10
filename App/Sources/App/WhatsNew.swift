@@ -20,6 +20,16 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.5", items: [
+            Item(icon: "faceid", title: "Kids passcode, as the Lock Screen",
+                 text: "Face ID looks first with the keys hidden; if it doesn't recognise you, the passcode comes up, with the Lock Screen's bigger keys."),
+            Item(icon: "bell.badge", title: "Notifications that wait for you",
+                 text: "Trending, the weekly briefing and Just for fun stay planned while you're in Folio, and one switch turns all of Folio's notifications off."),
+            Item(icon: "magnifyingglass", title: "Clear recent searches",
+                 text: "A Clear Recent Searches button at the end of Discover's recent searches."),
+            Item(icon: "photo", title: "Better posters and widgets",
+                 text: "Titles that share a name get the more popular one's poster, and Real-Debrid's widget updates in the background."),
+        ]),
         Release(version: "1.28.4", items: [
             Item(icon: "rectangle.on.rectangle", title: "Frosted glass widgets",
                  text: "The widgets are frosted glass made from their own pictures, blurred and toned down, in light and dark mode alike."),

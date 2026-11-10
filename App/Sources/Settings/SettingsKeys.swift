@@ -132,6 +132,7 @@ enum SettingsKey {
     static let notifySounds = "notifySounds"            // group: default | none | folio:x | apple:path | custom:file
     static let notifyTest = "notifyTest"                // every kind, 20 s apart, after leaving Folio
     static let notifyPlace = "notifyPlace"              // the weather's city (WeatherFeed.Place)
+    static let notifyAllOff = "notifyAllOff"            // 1.28.5: none of Folio's notifications, whatever each group's switch says
 
     // Library
     static let cleanTitles = "cleanTitles"
@@ -250,6 +251,7 @@ enum SettingsKey {
             engageNotes: true,
             engageQuick: false,
             notifyTone: "balanced",
+            notifyAllOff: false,
             notifyQuietStart: 22 * 60,
             notifyQuietEnd: 9 * 60,
             notifyMaxPerDay: 1,

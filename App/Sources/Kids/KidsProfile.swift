@@ -47,6 +47,7 @@ final class KidsProfile: ObservableObject {
                 let now = Date()
                 KidsProfile.shared.relockedAt = now
                 KidsProfile.shared.backgroundedAt = now
+                KidsProfile.shared.biometryCache = nil
             }
         }
     }
@@ -81,6 +82,7 @@ final class KidsProfile: ObservableObject {
         isOn = true
         relockedAt = Date()
         ContinueSnapshotWriter.schedule()           // the widget empties
+        NotifyCenter.settingsChanged()              // none of Folio's own stay pending (1.28.5: some do while it's open)
         dlog("kids", "kids profile on (\(KidsRules.summary(limits)))")
     }
 
@@ -178,16 +180,26 @@ final class KidsProfile: ObservableObject {
     // MARK: Face ID / Touch ID
 
     /// "Face ID", "Touch ID" or "Optic ID" when the device has one set up; nil otherwise.
+    /// Asked of iOS once until Folio next leaves the screen (1.28.5: the
+    /// passcode screen reads it as it's made, which can be often).
     var biometryName: String? {
+        if let known = biometryCache { return known }
         let c = LAContext()
-        guard c.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) else { return nil }
-        switch c.biometryType {
-        case .faceID: return "Face ID"
-        case .touchID: return "Touch ID"
-        case .opticID: return "Optic ID"
-        default: return nil
+        var name: String?
+        if c.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) {
+            switch c.biometryType {
+            case .faceID: name = "Face ID"
+            case .touchID: name = "Touch ID"
+            case .opticID: name = "Optic ID"
+            default: name = nil
+            }
         }
+        biometryCache = .some(name)
+        return name
     }
+
+    /// biometryName's answer; asked again after a trip to iOS Settings.
+    private var biometryCache: String??
 
     /// Face ID or Touch ID instead of the passcode, when allowed. The system
     /// shows its own prompt; the answer comes back here.
@@ -195,6 +207,8 @@ final class KidsProfile: ObservableObject {
         guard allowBiometrics, biometryName != nil else { return false }
         let c = LAContext()
         c.localizedFallbackTitle = "Enter Passcode"
+        biometryContext = c
+        defer { if biometryContext === c { biometryContext = nil } }
         do {
             let ok = try await c.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason)
             dlog("kids", "unlocked with \(biometryName ?? "biometrics"): \(ok)")
@@ -203,6 +217,23 @@ final class KidsProfile: ObservableObject {
         } catch {
             dlog("kids", "biometric unlock not done: \(error.localizedDescription)")
             return false
+        }
+    }
+
+    /// The Face ID prompt that's up, so "Enter Passcode" can take it down.
+    private var biometryContext: LAContext?
+
+    /// Stops a Face ID check still going (1.28.5): its answer comes back as no.
+    func cancelBiometrics() {
+        biometryContext?.invalidate()
+    }
+
+    /// The symbol for `biometryName`, as on the Lock Screen.
+    static func biometrySymbol(_ name: String?) -> String {
+        switch name {
+        case "Touch ID": return "touchid"
+        case "Optic ID": return "opticid"
+        default: return "faceid"
         }
     }
 }

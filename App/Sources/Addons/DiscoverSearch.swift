@@ -282,14 +282,15 @@ struct AddonSearchView: View {
         if !search.history.isEmpty {
             Section {
                 ForEach(search.history) { historyRow($0) }
-            } header: {
-                HStack {
-                    Text("Recent")
-                    Spacer()
-                    Button("Clear") { confirmClear = true }
-                        .font(.subheadline.weight(.semibold))
-                        .accessibilityLabel("Clear recent searches")
+                // A row of its own under the list (1.28.5): the header's
+                // small Clear was easy to miss.
+                Button(role: .destructive) { confirmClear = true } label: {
+                    Label("Clear Recent Searches", systemImage: "trash")
                 }
+                .listRowBackground(Color.clear)
+                .accessibilityLabel("Clear recent searches")
+            } header: {
+                Text("Recent")
             }
         }
     }

@@ -3,9 +3,11 @@ import UIKit
 import UserNotifications
 
 /// Schedules Folio's own notifications (1.25.0; the 1.24.0 reminders grew
-/// into this). While you're in Folio none are pending: they're planned when
-/// it leaves the screen (a chain up to two weeks ahead, since Folio may not
-/// run for days) and taken back when it comes back.
+/// into this). They're planned when Folio leaves the screen (a chain up to
+/// two weeks ahead, since Folio may not run for days). Coming back takes
+/// back the ones that hang on what you do in Folio; the charts, the
+/// briefing and the weather stay pending (1.28.5: until then every one was
+/// taken back, so one due while you were in Folio never came).
 ///
 /// Each one: the wording in your personality, the next of its kind's lines
 /// (never the same twice in a row), the group's sound, the title's poster
@@ -53,7 +55,7 @@ enum NotifyCenter {
         nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated {
                 HabitLog.shared.began()
-                if !lab { takeBack() }
+                if !lab { takeBack(keepOutside: true) }
                 refreshFeeds(after: 4)
             }
         }
@@ -135,22 +137,46 @@ enum NotifyCenter {
         }
     }
 
-    /// Back in Folio, or a setting changed: none pending.
-    static func takeBack() {
+    /// Taken back: on coming back to Folio (`keepOutside`) the ones that
+    /// hang on what you do in it, else every planned one (a setting
+    /// changed; all planned again when Folio leaves). `asked` takes
+    /// "Tomorrow" and Send the next one too (notifications turned off).
+    static func takeBack(keepOutside: Bool = false, asked: Bool = false) {
         let previous = running
         running = Task {
             await previous?.value
             if NotifyPrefs.test { await checkDeliveredPictures() }
-            settle(now: Date(), takenBack: true)
-            await removePending()
+            let now = Date()
+            let keep = keepOutside && !NotifyPrefs.test ? await pendingKept(now: now) : []
+            settle(now: now, keep: keep)
+            await removePending(keeping: Set(keep.map(\.request)), asked: asked)
+            if !keep.isEmpty { dlog("notify", "back in Folio: \(keep.count) left pending (\(keep.map(\.kind.rawValue).joined(separator: ", ")))") }
         }
+    }
+
+    /// A notification setting changed while Folio is open: what's pending
+    /// was planned with the old ones.
+    static func settingsChanged() {
+        takeBack()
+    }
+
+    /// The planned ones that stay while Folio is open and are still pending.
+    private static func pendingKept(now: Date) async -> [Scheduled] {
+        let kept = loadScheduled().filter { !$0.test && $0.at > now && $0.kind.keptWhileOpen }
+        guard !kept.isEmpty else { return [] }
+        let pending = Set(await UNUserNotificationCenter.current().pendingNotificationRequests().map(\.identifier))
+        return kept.filter { pending.contains($0.request) }
     }
 
     private static func apply(_ reason: String) async {
         let now = Date()
-        settle(now: now, takenBack: true)
+        settle(now: now, keep: [])
         await removePending()
         guard !KidsProfile.isOnNow else { return }
+        guard NotifyPrefs.allOn else {
+            dlog("notify", "nothing planned: notifications are off in Folio")
+            return
+        }
         let center = UNUserNotificationCenter.current()
         guard [.authorized, .provisional, .ephemeral].contains(await center.notificationSettings().authorizationStatus) else {
             dlog("notify", "nothing planned: notifications aren't allowed")
@@ -478,8 +504,9 @@ enum NotifyCenter {
     // MARK: Pending and sent
 
     /// The ones due by `now` went out (or would have): kept for the rules,
-    /// and their kinds move to their next line. The rest are taken back.
-    private static func settle(now: Date, takenBack: Bool) {
+    /// and their kinds move to their next line. The rest are taken back,
+    /// except `keep` (still pending while Folio is open).
+    private static func settle(now: Date, keep: [Scheduled]) {
         let scheduled = loadScheduled()
         guard !scheduled.isEmpty else { return }
         let due = scheduled.filter { $0.at <= now }
@@ -498,18 +525,18 @@ enum NotifyCenter {
                 UserDefaults.standard.set(finished ? nil : on[(i + 1) % on.count].rawValue, forKey: "notifyTestNext")
             }
         }
-        if takenBack {
-            let gone = Set(scheduled.filter { $0.at > now }.map(\.request))
-            if !gone.isEmpty { removeLog(gone) }
-        }
-        saveScheduled([])
+        let kept = Set(keep.map(\.request))
+        let gone = Set(scheduled.filter { $0.at > now && !kept.contains($0.request) }.map(\.request))
+        if !gone.isEmpty { removeLog(gone) }
+        saveScheduled(keep)
     }
 
-    private static func removePending() async {
+    /// Ours that are pending, but `keeping`. "Tomorrow" and Send the next
+    /// one stay unless `asked`: they were asked for.
+    private static func removePending(keeping: Set<String> = [], asked: Bool = false) async {
         let center = UNUserNotificationCenter.current()
-        // "Tomorrow" and Send the next one stay: they were asked for.
         let ours = await center.pendingNotificationRequests().map(\.identifier)
-            .filter { $0.hasPrefix(prefix) && !$0.hasPrefix(prefix + "snooze.") && !$0.hasPrefix(prefix + "now.") }
+            .filter { $0.hasPrefix(prefix) && !keeping.contains($0) && (asked || (!$0.hasPrefix(prefix + "snooze.") && !$0.hasPrefix(prefix + "now."))) }
         if !ours.isEmpty { center.removePendingNotificationRequests(withIdentifiers: ours) }
     }
 
@@ -669,6 +696,7 @@ enum NotifyCenter {
             markLog(req.identifier, "Again tomorrow")
         case "fewer":
             NotifyPrefs.setKind(kind, on: false)
+            NotifyPrefsModel.shared.changed()
             markLog(req.identifier, "Turned off: Fewer like this")
             dlog("notify", "\(kind.rawValue) turned off from a notification")
         default:
@@ -736,10 +764,13 @@ enum NotifyCenter {
         HandoffPresenter.present(AnyView(TitleHeroView(file: URL(fileURLWithPath: path))))
     }
 
-    /// Shown over Folio too: Test's, and the lab's.
+    /// Shown over Folio too: Test's, the lab's, and (1.28.5) the ones left
+    /// pending while it's open, which would otherwise come unseen.
     nonisolated static func showsOverApp(_ n: UNNotification) -> Bool {
         let id = n.request.identifier
-        return id.hasPrefix(prefix + "test.") || id.hasPrefix(prefix + "now.") || (lab && id.hasPrefix(prefix))
+        if id.hasPrefix(prefix + "test.") || id.hasPrefix(prefix + "now.") || (lab && id.hasPrefix(prefix)) { return true }
+        guard id.hasPrefix(prefix), let raw = n.request.content.userInfo["notify"] as? String else { return false }
+        return NotifyKind(rawValue: raw)?.keptWhileOpen == true
     }
 
     // MARK: The essential ones' wording

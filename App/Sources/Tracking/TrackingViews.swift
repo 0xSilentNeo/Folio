@@ -633,6 +633,8 @@ struct TrackingAlertsSection: View {
         .onChange(of: alerts) { _, v in
             if v != AiringAlerts.off.rawValue { AiringNotifications.askPermissionIfNeeded() }
             AiringNotifications.reschedule(store.shows)
+            // Settings → Notifications' New episodes group is this picker (1.28.5: it showed the old one).
+            NotifyPrefsModel.shared.changed()
         }
         .task {
             denied = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus == .denied

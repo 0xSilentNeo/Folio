@@ -311,6 +311,9 @@ struct MetaItem: Codable, Hashable, Identifiable {
     var videos: [MetaVideo]?
     /// Chart position (IMDb Top 250); not part of the addon protocol.
     var rank: Int?
+    /// IMDb's popularity rank from its search (lower: more popular), 1.28.5:
+    /// tells apart two titles of one name (Cowboy Bebop, 1998 and 2021).
+    var popularityRank: Int?
     // Extra facts from the built-in IMDb source.
     var cast: [String]?
     /// Title in the production's own language (romaji for anime), when it differs from `name`.

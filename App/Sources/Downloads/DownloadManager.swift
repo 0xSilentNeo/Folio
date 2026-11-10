@@ -1481,7 +1481,7 @@ final class DownloadManager: ObservableObject {
         let done = items.filter { $0.state == .done && ($0.finished ?? .distantPast) > Date().addingTimeInterval(-3600) }
         guard !done.isEmpty else { return }
         notifiedRun = true
-        guard UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify), NotifyPrefs.kindOn(.downloadFinished),
+        guard NotifyPrefs.allOn, UserDefaults.standard.bool(forKey: SettingsKey.downloadNotify), NotifyPrefs.kindOn(.downloadFinished),
               UIApplication.shared.applicationState != .active else { return }
         let c = UNMutableNotificationContent()
         c.title = "Downloads finished"

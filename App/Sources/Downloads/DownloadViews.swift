@@ -832,7 +832,11 @@ struct DownloadSettingsView: View {
                 }
                 Toggle("Skip files already downloaded", isOn: $skipExisting)
                 Toggle("Notify when finished", isOn: $notify)
-                    .onChange(of: notify) { _, on in if on { DownloadManager.askForNotifications() } }
+                    .onChange(of: notify) { _, on in
+                        if on { DownloadManager.askForNotifications() }
+                        // Settings → Notifications' Downloads group is this switch (1.28.5: it showed the old one).
+                        NotifyPrefsModel.shared.changed()
+                    }
             }
             Section {
                 Toggle("Use mobile data", isOn: $cellular)

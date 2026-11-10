@@ -27,6 +27,8 @@ struct ResumeControl: ControlWidget {
 
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: Self.kind) {
+            // For the log (1.28.5): whether iOS asks Folio to draw it at all.
+            let _ = KeychainShare.controlDrawn()
             ControlWidgetButton(action: OpenURLIntent(Self.url)) {
                 Label("Resume", systemImage: "play.fill")
             }

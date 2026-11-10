@@ -25,74 +25,17 @@ struct NotifySettingsView: View {
 
     var body: some View {
         Form {
-            if !allowed {
-                Section {
-                    if status == .notDetermined {
-                        Button("Allow Notifications") {
-                            Task {
-                                _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
-                                await refresh()
-                            }
-                        }
-                    } else {
-                        Button("Allow Notifications in Settings") {
-                            if let u = URL(string: UIApplication.openNotificationSettingsURLString) { UIApplication.shared.open(u) }
-                        }
-                    }
-                } footer: { Text("Notifications are off for Folio, so none of these can come.") }
-            }
-
-            if test {
-                Section {
-                    NavigationLink(value: LibraryRoute.settingsSubpage(.notifyTest)) {
-                        Label("Test is on", systemImage: "testtube.2")
-                    }
-                    .accessibilityIdentifier("notifyTestRow")
-                } footer: {
-                    Text("Every kind comes one after another while you're away, and real new-episode notifications wait. Turn it off when you're done.")
-                }
-            }
-
             Section {
-                ForEach(NotifyGroup.allCases) { g in
-                    NavigationLink(value: LibraryRoute.settingsSubpage(.notifyGroup(g))) {
-                        groupRow(g)
-                    }
-                    .accessibilityIdentifier("notifyGroup.\(g.rawValue)")
-                }
+                Toggle("Allow Notifications", isOn: $prefs.allOn.animation(.smooth))
+                    .accessibilityIdentifier("notifyAllOn")
             } footer: {
-                Text("Made on this iPhone from what you watch, your library and IMDb's charts; nothing about what you watch is sent anywhere.")
+                Text(prefs.allOn
+                     ? "Folio's notifications, as each group below allows."
+                     : "None of Folio's notifications come, new episodes and finished downloads included. Each group keeps its own setting for when they're back on.")
             }
 
-            Section {
-                NotifyToneSlider(tone: $tone)
-            } header: { Text("Personality") } footer: {
-                Text(toneNote)
-            }
-
-            Section {
-                Toggle("Quiet Hours", isOn: $quietOn.animation(.smooth))
-                    .accessibilityIdentifier("notifyQuiet")
-                if quietOn {
-                    DatePicker("From", selection: $from, displayedComponents: .hourAndMinute)
-                    DatePicker("To", selection: $to, displayedComponents: .hourAndMinute)
-                }
-            } footer: {
-                Text(quietOn && Self.minutes(from) == Self.minutes(to)
-                     ? "From and To are the same time, so there are no quiet hours."
-                     : "Nothing comes in these hours except new episodes and finished downloads you asked for.")
-            }
-
-            Section {
-                Stepper(value: $maxPerDay, in: 1...5) {
-                    LabeledContent("Notifications a Day", value: "\(maxPerDay)")
-                }
-                .accessibilityIdentifier("notifyMax")
-                NavigationLink(value: LibraryRoute.settingsSubpage(.notifySounds)) {
-                    Text("Sounds")
-                }
-            } header: { Text("Delivery") } footer: {
-                Text("At most this many a day. New episodes and finished downloads don't count towards it. More than one a day come at least two hours apart.")
+            if prefs.allOn {
+                settings
             }
         }
         .brandListBackground()
@@ -104,6 +47,7 @@ struct NotifySettingsView: View {
         .onChange(of: tone) { _, _ in
             AiringNotifications.reschedule(TrackingStore.shared.shows)
             prefs.changed()
+            NotifyCenter.settingsChanged()
         }
         // Off is stored as no hours (start == end); on again, the times shown.
         .onChange(of: quietOn) { _, on in
@@ -112,7 +56,84 @@ struct NotifySettingsView: View {
         }
         .onChange(of: from) { _, d in if quietOn { quietStart = Self.minutes(d) } }
         .onChange(of: to) { _, d in if quietOn { quietEnd = Self.minutes(d) } }
+        .onChange(of: quietStart) { _, _ in NotifyCenter.settingsChanged() }
+        .onChange(of: quietEnd) { _, _ in NotifyCenter.settingsChanged() }
+        .onChange(of: maxPerDay) { _, _ in NotifyCenter.settingsChanged() }
         .onDisappear { NotifyCenter.refreshFeeds() }
+    }
+
+    /// Everything under Allow Notifications, shown while it's on.
+    @ViewBuilder
+    private var settings: some View {
+        if !allowed {
+            Section {
+                if status == .notDetermined {
+                    Button("Ask for Permission") {
+                        Task {
+                            _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+                            await refresh()
+                        }
+                    }
+                } else {
+                    Button("Allow Notifications in Settings") {
+                        if let u = URL(string: UIApplication.openNotificationSettingsURLString) { UIApplication.shared.open(u) }
+                    }
+                }
+            } footer: { Text("iOS has notifications off for Folio, so none of these can come.") }
+        }
+
+        if test {
+            Section {
+                NavigationLink(value: LibraryRoute.settingsSubpage(.notifyTest)) {
+                    Label("Test is on", systemImage: "testtube.2")
+                }
+                .accessibilityIdentifier("notifyTestRow")
+            } footer: {
+                Text("Every kind comes one after another while you're away, and real new-episode notifications wait. Turn it off when you're done.")
+            }
+        }
+
+        Section {
+            ForEach(NotifyGroup.allCases) { g in
+                NavigationLink(value: LibraryRoute.settingsSubpage(.notifyGroup(g))) {
+                    groupRow(g)
+                }
+                .accessibilityIdentifier("notifyGroup.\(g.rawValue)")
+            }
+        } footer: {
+            Text("Made on this iPhone from what you watch, your library and IMDb's charts; nothing about what you watch is sent anywhere.")
+        }
+
+        Section {
+            NotifyToneSlider(tone: $tone)
+        } header: { Text("Personality") } footer: {
+            Text(toneNote)
+        }
+
+        Section {
+            Toggle("Quiet Hours", isOn: $quietOn.animation(.smooth))
+                .accessibilityIdentifier("notifyQuiet")
+            if quietOn {
+                DatePicker("From", selection: $from, displayedComponents: .hourAndMinute)
+                DatePicker("To", selection: $to, displayedComponents: .hourAndMinute)
+            }
+        } footer: {
+            Text(quietOn && Self.minutes(from) == Self.minutes(to)
+                 ? "From and To are the same time, so there are no quiet hours."
+                 : "Nothing comes in these hours except new episodes and finished downloads you asked for.")
+        }
+
+        Section {
+            Stepper(value: $maxPerDay, in: 1...5) {
+                LabeledContent("Notifications a Day", value: "\(maxPerDay)")
+            }
+            .accessibilityIdentifier("notifyMax")
+            NavigationLink(value: LibraryRoute.settingsSubpage(.notifySounds)) {
+                Text("Sounds")
+            }
+        } header: { Text("Delivery") } footer: {
+            Text("At most this many a day. New episodes and finished downloads don't count towards it. More than one a day come at least two hours apart.")
+        }
     }
 
     private var toneNote: String {
@@ -221,7 +242,7 @@ struct NotifyGroupView: View {
                 if group == .fun {
                     Section {
                         NavigationLink(value: LibraryRoute.settingsSubpage(.notifyCity)) {
-                            LabeledContent("Weather", value: WeatherFeed.place?.name ?? "Not set")
+                            LabeledContent("Weather", value: prefs.place?.name ?? "Not set")
                         }
                     } footer: {
                         Text("Rain, cold and heat need a city: only its position (to two decimals) goes to Open-Meteo for the forecast. Weather data by Open-Meteo.com (CC BY 4.0). Public holidays from Nager.Date, for the city's country or this iPhone's region.")
@@ -248,24 +269,25 @@ struct NotifyGroupView: View {
     }
 
     private func needs(_ k: NotifyKind) -> String? {
-        if k.needsWeather, WeatherFeed.place == nil { return "Needs a city (Weather, below)." }
+        if k.needsWeather, prefs.place == nil { return "Needs a city (Weather, below)." }
         return nil
     }
 }
 
 /// Settings → Notifications → Sounds: each group's.
 struct NotifySoundsList: View {
-    /// Each group's sound by name, read again when the list is back on
-    /// screen (1.27.1: it kept the names it opened with, so a sound picked
-    /// on a group's page still said Default here).
-    @State private var labels: [NotifyGroup: String] = [:]
+    /// Each group's sound, read through the model so a sound picked on the
+    /// page over this one shows here when you're back (1.28.5; 1.27.1 read
+    /// them again on any settings change, which didn't reach this page
+    /// while the picker covered it).
+    private var prefs = NotifyPrefsModel.shared
 
     var body: some View {
         Form {
             Section {
                 ForEach(NotifyGroup.allCases) { g in
                     NavigationLink(value: LibraryRoute.settingsSubpage(.notifySound(g))) {
-                        LabeledContent(g.title, value: labels[g] ?? NotifySounds.choice(for: g).label)
+                        LabeledContent(g.title, value: prefs.sound(for: g).label)
                     }
                 }
             } footer: {
@@ -275,13 +297,6 @@ struct NotifySoundsList: View {
         .brandListBackground()
         .navigationTitle("Sounds")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear(perform: readLabels)
-        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification).receive(on: DispatchQueue.main)) { _ in readLabels() }
-    }
-
-    private func readLabels() {
-        let now = Dictionary(uniqueKeysWithValues: NotifyGroup.allCases.map { ($0, NotifySounds.choice(for: $0).label) })
-        if now != labels { labels = now }
     }
 }
 
@@ -354,9 +369,8 @@ struct NotifySoundPicker: View {
 
     private func pick(_ s: NotifySound) {
         current = s
-        NotifySounds.set(s, for: group)
+        NotifyPrefsModel.shared.setSound(s, for: group)
         SoundPreview.shared.play(s)
-        if group == .newReleases { AiringNotifications.reschedule(TrackingStore.shared.shows) }
     }
 }
 
@@ -365,18 +379,15 @@ struct NotifyCityView: View {
     @State private var query = ""
     @State private var results: [WeatherFeed.Place] = []
     @State private var searching = false
-    @State private var place = WeatherFeed.place
+    private var prefs = NotifyPrefsModel.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         Form {
-            if let p = place {
+            if let p = prefs.place {
                 Section("Now") {
                     Text(p.label)
-                    Button("Remove", role: .destructive) {
-                        WeatherFeed.place = nil
-                        place = nil
-                    }
+                    Button("Remove", role: .destructive) { prefs.place = nil }
                 }
             }
             Section {
@@ -388,8 +399,7 @@ struct NotifyCityView: View {
                 if searching { ProgressView() }
                 ForEach(results) { r in
                     Button {
-                        WeatherFeed.place = r
-                        place = r
+                        prefs.place = r
                         Task { await WeatherFeed.refresh(force: true); await HolidayFeed.refresh() }
                         dismiss()
                     } label: {

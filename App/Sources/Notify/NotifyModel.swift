@@ -110,6 +110,24 @@ enum NotifyKind: String, CaseIterable, Identifiable, Codable {
         }
     }
 
+    /// Doesn't hang on what you do in Folio (1.28.5): IMDb's charts, the
+    /// Friday briefing and new titles, the weather, holidays and Friday's
+    /// film night. These stay pending while Folio is open, and show over
+    /// it when their moment comes; the rest (what you're watching, your
+    /// library, picks from it, your habits) are taken back, since watching
+    /// can make them wrong. Every one is planned again when Folio leaves.
+    var keptWhileOpen: Bool {
+        switch self {
+        case .trendingMovie, .trendingSeries, .risingFast, .viral, .topRated, .highlyRatedSeries, .lowRatedPopular,
+             .comeback, .ratingMilestone, .popularGenre,
+             .weeklyBriefing, .freshTitles,
+             .movieNight, .weekendForecast, .rainy, .cold, .hot, .holiday:
+            return true
+        default:
+            return false
+        }
+    }
+
     /// The name in the group's list of switches and in the sent list.
     var title: String {
         switch self {
@@ -288,9 +306,17 @@ enum NotifyPrefs {
 
     static var test: Bool { d.bool(forKey: SettingsKey.notifyTest) }
 
+    /// Folio's notifications as a whole (1.28.5). Off, none come: new
+    /// episodes and finished downloads too. Each group keeps its own switch
+    /// for when they're on again.
+    static var allOn: Bool {
+        get { !d.bool(forKey: SettingsKey.notifyAllOff) }
+        set { d.set(!newValue, forKey: SettingsKey.notifyAllOff) }
+    }
+
     /// Its group and itself are on, and the personality allows it (Test sends these).
     static func switchedOn(_ k: NotifyKind) -> Bool {
-        groupOn(k.group) && kindOn(k) && !(k.group == .fun && tone == .subtle)
+        allOn && groupOn(k.group) && kindOn(k) && !(k.group == .fun && tone == .subtle)
     }
 
     /// Switched on, and what it needs is set up (a city for the weather).

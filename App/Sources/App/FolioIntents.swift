@@ -100,7 +100,7 @@ enum ContinueSnapshotWriter {
             if dir.isKeychain {
                 let seen = KeychainShare.lastSeen()
                 dlog("widget", "\(FolioGroup.status): the widgets' files go in the default Keychain group, here \(KeychainShare.defaultGroup ?? "?") (the profile's Keychain groups: \(KeychainShare.profileKeychainGroups.joined(separator: ", ")))"
-                     + "; the widget last read them: \(seen ?? "never")")
+                     + "; the widget last read them: \(seen ?? "never"); the Resume control: \(KeychainShare.lastControlDrawn() ?? "never drawn")")
             } else {
                 dlog("widget", FolioGroup.status)
             }

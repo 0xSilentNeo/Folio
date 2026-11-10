@@ -104,7 +104,8 @@ enum AiringNotifications {
     @MainActor
     static func reschedule(_ shows: [TrackedShow], onlyIfChanged: Bool = false) {
         // While Test is on (1.25.0) these are held: Test sends their samples.
-        let planned = NotifyPrefs.test ? [] : plan(shows, now: Date(), mode: .current, voice: NotifyPrefs.tone != .subtle,
+        // None while notifications are off in Folio (1.28.5).
+        let planned = NotifyPrefs.test || !NotifyPrefs.allOn ? [] : plan(shows, now: Date(), mode: .current, voice: NotifyPrefs.tone != .subtle,
                                                  tone: NotifyPrefs.tone, kinds: (NotifyPrefs.kindOn(.newEpisode), NotifyPrefs.kindOn(.newSeason)))
         let sig = signature(planned)
         let previous = running
@@ -187,7 +188,7 @@ final class AiringNotificationDelegate: NSObject, UNUserNotificationCenterDelega
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         let id = notification.request.identifier
-        // Folio's own (1.25.0) aren't pending while it's open, except Test's and the lab's, shown over it.
+        // Folio's own (1.25.0) shown over it: Test's, the lab's, and those left pending while it's open (1.28.5).
         let show = id.hasPrefix(AiringNotifications.prefix) || NotifyCenter.showsOverApp(notification)
         completionHandler(show ? [.banner, .list, .sound] : [])
     }
