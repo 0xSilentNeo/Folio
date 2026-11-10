@@ -185,7 +185,7 @@ final class MotionTilt: ObservableObject {
 
     private func begin() {
         guard manager.isDeviceMotionAvailable, !manager.isDeviceMotionActive else { return }
-        manager.deviceMotionUpdateInterval = 1.0 / 20
+        manager.deviceMotionUpdateInterval = 1.0 / 15
         manager.startDeviceMotionUpdates(to: .main) { [weak self] m, _ in
             guard let self, let m else { return }
             if base == nil { base = (m.attitude.roll, m.attitude.pitch) }
@@ -194,8 +194,10 @@ final class MotionTilt: ObservableObject {
             if let b = base { base = (b.roll + (m.attitude.roll - b.roll) * 0.02, b.pitch + (m.attitude.pitch - b.pitch) * 0.02) }
             let dr = m.attitude.roll - (base?.roll ?? 0), dp = m.attitude.pitch - (base?.pitch ?? 0)
             let t = CGSize(width: min(1, max(-1, dr * 4.5)), height: min(1, max(-1, dp * 4.5)))   // full tilt at ~13° of phone rotation
-            // Only re-render for a visible change.
-            if abs(t.width - tilt.width) > 0.03 || abs(t.height - tilt.height) > 0.03 { tilt = t }
+            // Only re-render for a visible change (1.28.2): a tenth of full
+            // tilt, about 1.3° of the phone. 0.03 (0.4°) was under a steady
+            // hand's tremor, so the button animated without end.
+            if abs(t.width - tilt.width) > 0.1 || abs(t.height - tilt.height) > 0.1 { tilt = t }
         }
     }
     func stop() { wanted = false; pause(); tilt = .zero }

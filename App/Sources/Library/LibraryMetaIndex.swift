@@ -59,7 +59,9 @@ final class LibraryMetaIndex: ObservableObject {
             guard let at = looked[n] else { return true }
             return metas[n] == nil && now.timeIntervalSince(at) > 600
         }
-        guard !names.isEmpty else { complete = true; return }
+        // Set only when it changes (1.28.2): a published value announces
+        // even an equal one, and Home redrew whole on every return to it.
+        guard !names.isEmpty else { if !complete { complete = true }; return }
         complete = false
         let t0 = Date()
         task = Task { [weak self] in
@@ -96,6 +98,27 @@ final class LibraryMetaIndex: ObservableObject {
             byKey[k, default: []].append(f)
         }
         return order.map { byKey[$0]! }
+    }
+
+    /// The filter menu's genres and years (1.28.2): from the metadata alone,
+    /// no history lookups, and kept until the library or its metadata
+    /// changes. Home built every title's full facts for them on every redraw.
+    private var optionsMemo: (key: Int, genres: [String], years: [String])?
+
+    func filterOptions(of groups: [LibraryGroup]) -> (genres: [String], years: [String]) {
+        var h = Hasher()
+        h.combine(metas.count)
+        for g in groups { h.combine(g.id); h.combine(g.files.count) }
+        let key = h.finalize()
+        if let m = optionsMemo, m.key == key { return (m.genres, m.years) }
+        let facts = groups.flatMap { Self.titles(of: $0) }.map { files -> LibraryFilter.Facts in
+            let meta = files.first.flatMap(meta(for:))
+            return LibraryFilter.Facts(watch: .unwatched, genres: meta?.genres ?? [],
+                                       year: LibraryFilter.year(meta: meta?.year, fileName: files.first?.lastPathComponent))
+        }
+        let genres = LibraryFilter.genres(in: facts), years = LibraryFilter.years(in: facts)
+        optionsMemo = (key, genres, years)
+        return (genres, years)
     }
 
     /// One title's facts: its watched state (from the history) and the

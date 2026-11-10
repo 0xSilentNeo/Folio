@@ -37,8 +37,10 @@ enum GlanceWriter {
         NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
             .sink { _ in MainActor.assumeIsolated {
                 WatchLog.shared.flush()
-                writeWeek()
-                writeDownloads(force: true)
+                AwayWork.onLeaving("week and downloads widgets") {
+                    writeWeek()
+                    writeDownloads(force: true)
+                }
             } }
             .store(in: &subscriptions)
         let m = NWPathMonitor()

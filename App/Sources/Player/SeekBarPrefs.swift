@@ -110,6 +110,14 @@ enum ThumbnailStore {
                                decode: nil, shouldInterpolate: true, intent: .defaultIntent) else { return }
         if let data = UIImage(cgImage: cg).jpegData(compressionQuality: 0.75) {
             try? data.write(to: url(for: key), options: .atomic)
+            // Saved behind the closing player now (1.28.2), after Home has
+            // drawn: a tile that found no frame looks again.
+            DispatchQueue.main.async { NotificationCenter.default.post(name: .folioThumbnailSaved, object: key) }
         }
     }
+}
+
+extension Notification.Name {
+    /// A Continue Watching frame was saved (object: its key).
+    static let folioThumbnailSaved = Notification.Name("FolioThumbnailSaved")
 }

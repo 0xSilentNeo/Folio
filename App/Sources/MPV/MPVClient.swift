@@ -174,6 +174,26 @@ final class MPVClient {
         return mpv_set_property_async(handle, 0, name, MPV_FORMAT_FLAG, &v)
     }
 
+    /// A string property, without waiting for mpv's core (1.28.2): the
+    /// subtitles' place, set on each step of a zoom. mpv copies the string.
+    @discardableResult
+    func setAsync(_ name: String, _ value: String) -> Int32 {
+        guard !isShutDown else { return MPV_ERROR_UNINITIALIZED.rawValue }
+        return value.withCString { cs in
+            var p: UnsafePointer<CChar>? = cs
+            return mpv_set_property_async(handle, 0, name, MPV_FORMAT_STRING, &p)
+        }
+    }
+
+    /// A number, without waiting for mpv's core (1.28.2): speed, delays,
+    /// volume from the player's buttons.
+    @discardableResult
+    func setAsync(_ name: String, _ value: Double) -> Int32 {
+        guard !isShutDown else { return MPV_ERROR_UNINITIALIZED.rawValue }
+        var v = value
+        return mpv_set_property_async(handle, 0, name, MPV_FORMAT_DOUBLE, &v)
+    }
+
     @discardableResult
     func set(_ name: String, _ value: Double) -> Int32 {
         guard !isShutDown else { return MPV_ERROR_UNINITIALIZED.rawValue }

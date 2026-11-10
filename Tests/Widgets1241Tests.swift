@@ -8,7 +8,8 @@ import XCTest
 final class Widgets1241Tests: XCTestCase {
     func testEachAppearanceGetsItsLook() {
         XCTAssertEqual(WidgetPalette(scheme: .light, mode: .fullColor).kind, .glass)
-        XCTAssertEqual(WidgetPalette(scheme: .dark, mode: .fullColor).kind, .tinted)
+        // 1.28.2: one clear glass look, dark mode too.
+        XCTAssertEqual(WidgetPalette(scheme: .dark, mode: .fullColor).kind, .glass)
         XCTAssertEqual(WidgetPalette(scheme: .light, mode: .accented).kind, .accented)
         XCTAssertEqual(WidgetPalette(scheme: .dark, mode: .accented).kind, .accented)
         XCTAssertEqual(WidgetPalette(scheme: .dark, mode: .vibrant).kind, .accented)

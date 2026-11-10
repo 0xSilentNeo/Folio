@@ -95,27 +95,48 @@ enum AiringNotifications {
     /// adds its own, so two at once could leave both sets.
     @MainActor private static var running: Task<Void, Never>?
 
+    /// The alerts last scheduled, as `signature` gives them.
+    @MainActor private static var lastScheduled: String?
+
+    /// `onlyIfChanged` (coming back to Folio, 1.28.2): left alone when the
+    /// plan is the one scheduled and all of it is still pending. Every return
+    /// removed and added them all again (34 times in the 10 Nov report).
     @MainActor
-    static func reschedule(_ shows: [TrackedShow]) {
+    static func reschedule(_ shows: [TrackedShow], onlyIfChanged: Bool = false) {
         // While Test is on (1.25.0) these are held: Test sends their samples.
         let planned = NotifyPrefs.test ? [] : plan(shows, now: Date(), mode: .current, voice: NotifyPrefs.tone != .subtle,
                                                  tone: NotifyPrefs.tone, kinds: (NotifyPrefs.kindOn(.newEpisode), NotifyPrefs.kindOn(.newSeason)))
+        let sig = signature(planned)
         let previous = running
         running = Task {
             await previous?.value
-            await apply(planned)
+            if onlyIfChanged, lastScheduled == sig, await stillPending(planned) { return }
+            lastScheduled = await apply(planned) ? sig : nil
         }
     }
 
-    private static func apply(_ planned: [PlannedAlert]) async {
+    /// What each alert is and when it fires (to the minute).
+    static func signature(_ planned: [PlannedAlert]) -> String {
+        planned.map { "\($0.id)@\(Int($0.fire.timeIntervalSince1970 / 60))|\($0.title)|\($0.body)" }.joined(separator: "\n")
+    }
+
+    /// The planned alerts still to come are exactly the ones pending.
+    private static func stillPending(_ planned: [PlannedAlert]) async -> Bool {
+        let pending = Set(await UNUserNotificationCenter.current().pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) })
+        return pending == Set(planned.filter { $0.fire.timeIntervalSinceNow > 1 }.map(\.id))
+    }
+
+    /// Scheduled (true), or nothing could be (not allowed).
+    @discardableResult
+    private static func apply(_ planned: [PlannedAlert]) async -> Bool {
         let center = UNUserNotificationCenter.current()
         let ours = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) }
         center.removePendingNotificationRequests(withIdentifiers: ours)
-        guard !planned.isEmpty else { return }
+        guard !planned.isEmpty else { return true }
         let settings = await center.notificationSettings()
         guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else {
             dlog("tracking", "\(planned.count) notification(s) not scheduled: notifications aren't allowed")
-            return
+            return false
         }
         let now = Date()
         var added = 0
@@ -138,6 +159,7 @@ enum AiringNotifications {
             }
         }
         dlog("tracking", "\(added) notification(s) scheduled, the first \(planned.first.map { "in \(Int($0.fire.timeIntervalSince(now) / 60)) min" } ?? "none")")
+        return true
     }
 
     /// The first Track (as Downloads asks when its notifications are turned on).

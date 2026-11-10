@@ -127,6 +127,13 @@ struct RootView: View {
         FirstRunRouter.shared.request = step
     }
 
+    /// Home's Add files, for a video the share sheet couldn't pass on.
+    private func openAddFiles(because why: String) {
+        dlog("open", "shared video: \(why); Add files instead")
+        tab = 0
+        FirstRunRouter.shared.request = .addFiles
+    }
+
     private func showWhatsNew() {
         if FirstRun.pending {
             FirstRun.pending = false
@@ -310,7 +317,14 @@ struct RootView: View {
                 dlog("open", "folio://shared with nothing waiting")
                 return
             }
-            if link.file != nil {
+            if let mark = link.bookmark {
+                // A video from Files with no App Group (1.28.2): played where it is.
+                if let u = SharedInbox.resolve(mark) {
+                    FileOpener.open([u])
+                } else {
+                    openAddFiles(because: "its bookmark didn't open here")
+                }
+            } else if link.file != nil {
                 // A video (1.27.1): into Media, then played from there.
                 guard let saved = SharedInbox.receive(link) else { return }
                 FileOpener.open([saved])
@@ -318,6 +332,10 @@ struct RootView: View {
                 dlog("open", "shared link: \(u.scheme ?? "?")://\(u.host ?? "")")
                 IntentPlayback.play(link.url)
             }
+        case "import":
+            // The share sheet couldn't hand the video over (no App Group, and
+            // a copy rather than the file itself): Add files, to pick it.
+            openAddFiles(because: "the share sheet had no way to pass it")
         case "play":
             guard let target, let s = URL(string: target)?.scheme?.lowercased(), Self.playableSchemes.contains(s) else {
                 dlog("open", "folio://play with a link Folio doesn't play: \(target.flatMap { URL(string: $0)?.scheme } ?? "no scheme")")

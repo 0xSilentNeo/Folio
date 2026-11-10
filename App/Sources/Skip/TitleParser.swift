@@ -42,7 +42,9 @@ enum TitleParser {
         cacheLock.unlock()
         let p = parseUncached(rawName)
         cacheLock.lock()
-        if cache.count > 5000 { cache.removeAll() }
+        // Half kept when full (1.28.2): emptied whole at 5,000, a large
+        // Real-Debrid library made every redraw parse its names again.
+        if cache.count > 20_000 { cache = Dictionary(uniqueKeysWithValues: cache.prefix(10_000).map { ($0.key, $0.value) }) }
         cache[rawName] = p
         cacheLock.unlock()
         return p
@@ -176,9 +178,23 @@ enum TitleParser {
 
     struct Match { let range: Range<String.Index>; let groups: [String] }
 
+    /// Each pattern compiled once (1.28.2): a dozen were compiled again for
+    /// every name parsed, thousands of them for a Real-Debrid library on the
+    /// main thread. NSRegularExpression is safe to share between threads.
+    private static let regexLock = NSLock()
+    private nonisolated(unsafe) static var regexes: [String: NSRegularExpression] = [:]
+
+    static func regex(_ pattern: String) -> NSRegularExpression? {
+        regexLock.lock(); defer { regexLock.unlock() }
+        if let r = regexes[pattern] { return r }
+        guard let r = try? NSRegularExpression(pattern: pattern) else { return nil }
+        regexes[pattern] = r
+        return r
+    }
+
     /// The last plausible release year in `s` (no later than next year).
     private static func lastYear(in s: String) -> Match? {
-        guard let re = try? NSRegularExpression(pattern: #"[\(\. _](19\d{2}|20\d{2})(?=[\)\. _]|$)"#) else { return nil }
+        guard let re = regex(#"[\(\. _](19\d{2}|20\d{2})(?=[\)\. _]|$)"#) else { return nil }
         let latest = Calendar.current.component(.year, from: Date()) + 1
         var found: Match?
         for m in re.matches(in: s, range: NSRange(s.startIndex..., in: s)) {
@@ -190,7 +206,7 @@ enum TitleParser {
     }
 
     static func match(_ pattern: String, in s: String) -> Match? {
-        guard let re = try? NSRegularExpression(pattern: pattern) else { return nil }
+        guard let re = regex(pattern) else { return nil }
         let ns = NSRange(s.startIndex..., in: s)
         guard let m = re.firstMatch(in: s, range: ns), let r = Range(m.range, in: s) else { return nil }
         var groups: [String] = []

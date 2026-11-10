@@ -846,7 +846,9 @@ struct BackSwipeProbe: UIViewRepresentable {
         /// had zoomed back into its tile — its move not finished yet.
         private func startMoveLog(_ nav: UINavigationController) {
             watchPlayer()
-            guard moveTimer == nil, PlayerPresenter.current == nil else { return }
+            // Only with the library trace on (1.28.2): ten wake-ups a second
+            // for as long as a title page is open, for a log line.
+            guard moveTimer == nil, PlayerPresenter.current == nil, LibTrace.on else { return }
             let t = Timer(timeInterval: 0.1, repeats: true) { [weak self, weak nav] _ in
                 MainActor.assumeIsolated {
                     guard let self else { return }
@@ -861,6 +863,7 @@ struct BackSwipeProbe: UIViewRepresentable {
                     }
                 }
             }
+            t.tolerance = 0.05
             RunLoop.main.add(t, forMode: .common)
             moveTimer = t
         }

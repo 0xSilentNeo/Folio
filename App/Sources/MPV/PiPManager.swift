@@ -95,6 +95,9 @@ final class PiPManager: NSObject {
         super.init()
         view.backgroundColor = .black
         view.isUserInteractionEnabled = false
+        // Always the whole frame (1.28.2): PiP takes its window's shape from
+        // the layer's framing. Fill scales the view instead
+        // (PlayerModel.applyLayerZoom).
         view.displayLayer.videoGravity = .resizeAspect
 
         var tb: CMTimebase?
@@ -141,14 +144,6 @@ final class PiPManager: NSObject {
         if c.canStartPictureInPictureAutomaticallyFromInline { c.canStartPictureInPictureAutomaticallyFromInline = false }
         c.canStartPictureInPictureAutomaticallyFromInline = on
         c.invalidatePlaybackState()
-    }
-
-    /// Fill (pinch, the Fill button, a show's memory) for the sample-buffer
-    /// renderer: its frames have the video's shape, so mpv's panscan has
-    /// nothing to crop; the layer fills the view instead. PiP's window always
-    /// shows the whole frame.
-    func setFill(_ fill: Bool) {
-        view.displayLayer.videoGravity = fill ? .resizeAspectFill : .resizeAspect
     }
 
     /// HDR frames from the sample-buffer renderer: the layer shows them with

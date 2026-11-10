@@ -237,7 +237,20 @@ final class ThumbLoader: ObservableObject {
     init() {
         Self.made += 1
         serial = Self.made
+        saved = NotificationCenter.default.addObserver(forName: .folioThumbnailSaved, object: nil, queue: .main) { [weak self] note in
+            MainActor.assumeIsolated {
+                guard let self, self.image == nil, let again = self.lastLoad, note.object as? String == again.key else { return }
+                self.loadedKey = nil
+                again.run()
+            }
+        }
     }
+
+    deinit { if let saved { NotificationCenter.default.removeObserver(saved) } }
+
+    /// The last load asked for, to run again when its saved frame arrives.
+    private var lastLoad: (key: String, run: () -> Void)?
+    nonisolated(unsafe) private var saved: NSObjectProtocol?
 
     /// Trace: the end of a key (a file name or an id), not the whole path.
     nonisolated static func short(_ key: String) -> String { String((key as NSString).lastPathComponent.prefix(60)) }
@@ -272,6 +285,9 @@ final class ThumbLoader: ObservableObject {
     func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool? = nil, art: Art = .wide,
               points: CGFloat = 300, hero: Int? = nil) {
         self.hero = hero
+        lastLoad = (key, { [weak self] in
+            self?.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName, preferMeta: preferMeta, art: art, points: points, hero: hero)
+        })
         pixels = Self.pixels(points: points, hero: hero)
         let cacheKey = Self.cacheKey(key, art: art, pixels: pixels)
         guard loadedKey != cacheKey else { return }

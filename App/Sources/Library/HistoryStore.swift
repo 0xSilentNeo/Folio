@@ -30,8 +30,12 @@ final class HistoryStore: ObservableObject {
     /// saves (every few seconds) don't re-render the library while it plays.
     private(set) var entries: [HistoryEntry] = [] {
         willSet { if deferPublishing { changedWhileDeferred = true } else { objectWillChange.send() } }
-        didSet { lookup = nil }
+        didSet { lookup = nil; version &+= 1 }
     }
+
+    /// Goes up with every change to the entries: what's worked out from
+    /// them can be kept until it moves (Home's tiles, 1.28.2).
+    private(set) var version = 0
 
     /// Where each entry is, by URL, id and (library files) file name, and the
     /// Continue Watching list: built once after a change, not per question.
@@ -329,20 +333,33 @@ final class HistoryStore: ObservableObject {
     /// Marks items watched (finished, also when never played) or unwatched
     /// (their entry goes: no progress, no resume point). `item` makes the
     /// history item for a key that has no entry yet.
+    ///
+    /// 1.28.2: every key is looked up first, then the list changes once.
+    /// Each change cleared the lookup index, so the next key rebuilt it from
+    /// the whole history, and each one announced a change: marking a long
+    /// show watched hitched.
     func setWatched(_ keys: [String], _ watched: Bool, item: (String) -> MediaItem) {
-        for key in keys {
-            if let e = entry(forURL: key), let i = entries.firstIndex(where: { $0.id == e.id }) {
+        let found = keys.map { (key: $0, id: entry(forURL: $0)?.id) }
+        var list = entries
+        var at: [HistoryEntry.ID: Int] = [:]
+        for (i, e) in list.enumerated() where at[e.id] == nil { at[e.id] = i }
+        var gone = Set<HistoryEntry.ID>(), added = Set<String>()
+        let now = Date()
+        for (key, id) in found {
+            if let id, let i = at[id] {
                 if watched {
-                    entries[i].watched = true
-                    entries[i].position = entries[i].duration
-                    entries[i].updated = Date()
+                    list[i].watched = true
+                    list[i].position = list[i].duration
+                    list[i].updated = now
                 } else {
-                    entries.remove(at: i)
+                    gone.insert(id)
                 }
-            } else if watched {
-                entries.append(HistoryEntry(item: Self.stored(item(key)), position: 0, duration: 0, updated: Date(), watched: true))
+            } else if watched, added.insert(key).inserted {
+                list.append(HistoryEntry(item: Self.stored(item(key)), position: 0, duration: 0, updated: now, watched: true))
             }
         }
+        if !gone.isEmpty { list.removeAll { gone.contains($0.id) } }
+        entries = list
         trim()
         scheduleSave()
     }
