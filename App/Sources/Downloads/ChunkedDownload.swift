@@ -538,7 +538,12 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         guard !protocolLogged, let p = metrics.transactionMetrics.last?.networkProtocolName else { return }
         protocolLogged = true
         let name = ["h2": "HTTP/2", "h3": "HTTP/3", "http/1.1": "HTTP/1.1"][p.lowercased()] ?? p
-        onEvent(.note("\(fileName): the server answers over \(name)"))
+        // Through emit, to the main thread like every other event (1.28.3).
+        // Called here on URLSession's queue, the manager's handler asserted
+        // the main thread and the app ended the moment a connection
+        // finished, a cancelled one too: a crash on every launch that
+        // resumed the download, and on pause and delete (10 Nov report).
+        emit(.note("\(fileName): the server answers over \(name)"))
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {

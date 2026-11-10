@@ -20,6 +20,10 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.3", items: [
+            Item(icon: "arrow.down.circle", title: "Downloads don't crash Folio",
+                 text: "Folio no longer closes while a download runs, pauses or is removed, nor on every launch after that."),
+        ]),
         Release(version: "1.28.2", items: [
             Item(icon: "pip", title: "Picture in Picture, whole",
                  text: "With the video filling the screen, PiP shows the whole picture in a window its own shape, subtitles and all. Zooming is smoother and follows your fingers."),
