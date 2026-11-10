@@ -760,7 +760,13 @@ final class DownloadManager: ObservableObject {
         let t = ChunkedDownload(id: id, request: request(for: item), file: file, fileName: item.fileName, chunks: chunks ?? [],
                                 total: chunks != nil && item.expected > 0 ? item.expected : nil, ranges: chunks != nil ? true : nil,
                                 connections: n) { event in
-            MainActor.assumeIsolated { DownloadManager.shared.engineEvent(id, run, event) }
+            // Events come on the main thread (ChunkedDownload.emit); one that
+            // doesn't is taken there instead of ending the app (1.28.3).
+            if Thread.isMainThread {
+                MainActor.assumeIsolated { DownloadManager.shared.engineEvent(id, run, event) }
+            } else {
+                DispatchQueue.main.async { MainActor.assumeIsolated { DownloadManager.shared.engineEvent(id, run, event) } }
+            }
         }
         transfers[id] = (t, run)
         t.start()
