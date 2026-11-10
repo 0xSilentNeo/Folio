@@ -23,7 +23,7 @@ enum AiringTracker {
                 refreshIfStale("foreground")
                 // Notifications allowed in iOS Settings meanwhile: planned now,
                 // not at the next refresh up to six hours on (review, 5 Nov).
-                AiringNotifications.reschedule(TrackingStore.shared.shows)
+                AiringNotifications.reschedule(TrackingStore.shared.shows, onlyIfChanged: true)
             }
         }
         nc.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in

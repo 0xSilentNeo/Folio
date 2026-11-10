@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import QuartzCore
 import CryptoKit
 
@@ -144,6 +145,22 @@ enum IMDbSource {
 
     private static var memory: [String: (Date, Data)] = [:]
     private static let lock = NSLock()
+
+    /// The in-memory copy stays small (1.28.2): every answer of the session
+    /// was kept in memory, never let go. Everything is on disk anyway.
+    private static func remember(_ key: String, _ entry: (Date, Data)) {
+        _ = watchMemory
+        lock.lock()
+        if memory.count >= 300 { memory.removeAll(keepingCapacity: true) }
+        memory[key] = entry
+        lock.unlock()
+    }
+
+    private static let watchMemory: Void = {
+        NotificationCenter.default.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: nil) { _ in
+            lock.lock(); memory.removeAll(); lock.unlock()
+        }
+    }()
     private static var dir: URL {
         let d = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("imdb", isDirectory: true)
         try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
@@ -166,12 +183,12 @@ enum IMDbSource {
         let f = cacheFile(key)
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: f.path), let date = attrs[.modificationDate] as? Date,
               Date().timeIntervalSince(date) < ttl, let d = try? Data(contentsOf: f), let v = try? JSONDecoder().decode(T.self, from: d) else { return nil }
-        lock.lock(); memory[key] = (date, d); lock.unlock()
+        remember(key, (date, d))
         return v
     }
     private static func store<T: Encodable>(_ key: String, _ value: T) {
         guard let d = try? JSONEncoder().encode(value) else { return }
-        lock.lock(); memory[key] = (Date(), d); lock.unlock()
+        remember(key, (Date(), d))
         try? d.write(to: cacheFile(key), options: .atomic)
     }
     /// UI tests: fill the cache with a chart, a film and a series shaped like

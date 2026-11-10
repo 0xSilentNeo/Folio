@@ -20,6 +20,18 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.2", items: [
+            Item(icon: "pip", title: "Picture in Picture, whole",
+                 text: "With the video filling the screen, PiP shows the whole picture in a window its own shape, subtitles and all. Zooming is smoother and follows your fingers."),
+            Item(icon: "playpause", title: "Instant play and pause",
+                 text: "Play, pause, tracks, speed and taps on the video answer at once, and closing the player no longer waits."),
+            Item(icon: "battery.100percent", title: "Lighter on the battery",
+                 text: "A glance at Notification Centre no longer has Folio redo its notifications and widgets, and Home does far less work as you scroll."),
+            Item(icon: "rectangle.on.rectangle", title: "Clear glass widgets",
+                 text: "Every widget is clear Liquid Glass, in light and dark mode."),
+            Item(icon: "square.and.arrow.up", title: "Share sheet",
+                 text: "A video shared from Files plays in Folio on any install."),
+        ]),
         Release(version: "1.28.1", items: [
             Item(icon: "thermometer.medium", title: "Cooler after a trip away",
                  text: "Coming back from Notification Centre or the Home Screen, the video goes back to the hardware decoder. It could stay on the processor for the rest of the film, which made the phone hot."),

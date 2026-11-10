@@ -24,6 +24,22 @@ enum SharedInbox {
         return dest
     }
 
+    /// A file the extension bookmarked where it is (1.28.2), if it opens
+    /// here: a bookmark carries the access iOS lent the extension, which
+    /// iOS may or may not honour in another app.
+    static func resolve(_ bookmark: Data) -> URL? {
+        var stale = false
+        guard let url = try? URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil, bookmarkDataIsStale: &stale) else {
+            dlog("open/warn", "shared video: its bookmark doesn't resolve here")
+            return nil
+        }
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        let readable = FileManager.default.isReadableFile(atPath: url.path)
+        dlog("open", "shared video by bookmark: \(url.lastPathComponent), access \(scoped ? "lent" : "not lent"), \(readable ? "readable" : "not readable")\(stale ? ", stale" : "")")
+        return scoped || readable ? url : nil
+    }
+
     /// "Film.mkv", or "Film 2.mkv" when there's one already.
     static func unique(_ name: String, in dir: URL) -> URL {
         let fm = FileManager.default

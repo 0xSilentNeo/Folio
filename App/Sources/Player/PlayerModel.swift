@@ -14,7 +14,8 @@ struct MediaTrack: Identifiable, Hashable {
     let lang: String?
     let codec: String?
     let profile: String?
-    let selected: Bool
+    /// Changed at the tap (1.28.2), before mpv's track list says so.
+    var selected: Bool
     let external: Bool
     let isDefault: Bool
     let channels: String?
@@ -337,6 +338,7 @@ final class PlayerModel: ObservableObject {
         }
         c.delegate = self
         client = c
+        subMarginBase = Int(c.int("sub-margin-x") ?? 25)
         observe(c)
         probeAudioFilters(c)
 
@@ -346,7 +348,12 @@ final class PlayerModel: ObservableObject {
             }
         }
         if let frames {
-            pip.view.onLayout = { [weak frames, weak self] pixels in frames?.setViewSize(pixels); self?.refitAnime4K(); self?.applySubtitleFraming() }
+            pip.view.onLayout = { [weak frames, weak self] pixels in
+                frames?.setViewSize(pixels); self?.refitAnime4K()
+                // Fill's ratio changes with the view (a turn of the phone):
+                // inside the rotation's animation, the scale goes along.
+                self?.applyLayerZoom(animated: false); self?.applySubtitleFraming()
+            }
             metalFrames?.onResize = { [weak self] in self?.nudgeRedraw() }
             let b = pip.view.bounds.size, n = pip.view.layouts, name = renderer == .gl ? "OpenGL" : "Metal (video layer)"
             Task { @MainActor in PiPTrace.event("\(name) renderer listening for the view's size: \(Int(b.width))×\(Int(b.height)) pt after \(n) layout(s)") }
@@ -400,6 +407,11 @@ final class PlayerModel: ObservableObject {
         problemCheck?.cancel(); problemCheck = nil
         nowPlayingArtTask?.cancel(); nowPlayingArtTask = nil
         dlog("player", "close at \(Self.format(position))")
+        // Silent and still at once (1.28.2): the player goes off the screen
+        // now and mpv finishes behind it.
+        client?.setAsync("pause", true)
+        audioCoolWork?.cancel(); pauseSideWork?.cancel()
+        zoomTicker.stop()
         saveHistory(force: true)
         HistoryStore.shared.flush()
         WatchLog.shared.flush()
@@ -410,8 +422,35 @@ final class PlayerModel: ObservableObject {
         observers = []
         tearDownRemoteCommands()
         stopPiPFeed()
-        snapshotQueue.sync {}
-        captureThumbnail()
+        UIApplication.shared.isIdleTimerDisabled = false
+        EnergyMonitor.shared.sample(reason: "player closing")
+        EnergyMonitor.shared.playing = false
+        EnergyMonitor.shared.note = ""
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        // Continue Watching's frame, read from mpv off the main thread
+        // (1.28.2). It was read here with the main thread waiting: a 4K HDR
+        // frame drawn and read back took up to a second, and the player
+        // only started closing after it (10 Nov report: "close at 8:18",
+        // the next line 0.9 s later). The rest of the close follows it.
+        let started = CACurrentMediaTime()
+        if let shot = thumbnailShot() {
+            // Held strongly until mpv is let go: freed first, nothing would
+            // shut it down.
+            snapshotQueue.async { [self] in
+                shot()
+                DispatchQueue.main.async { [self] in
+                    let ms = Int((CACurrentMediaTime() - started) * 1000)
+                    if ms > 150 { dlog("player", "close: Continue Watching frame read in \(ms) ms, behind the closing player") }
+                    finishClose()
+                }
+            }
+        } else {
+            finishClose()
+        }
+    }
+
+    /// mpv let go, after the frame for Continue Watching.
+    private func finishClose() {
         // The OpenGL renderer first: it enqueues into PiP's layer from its own
         // queue, and the layer is flushed below (independent review, 1.20.0).
         frames?.detach()
@@ -436,14 +475,14 @@ final class PlayerModel: ObservableObject {
         client?.shutdown {
             scoped?.stopAccessingSecurityScopedResource()
             metalFrames?.engineDone()
+            // The audio session let go once mpv's output is closed, off the
+            // main thread: deactivating it with the output still running
+            // waits for it, then fails.
+            DispatchQueue.global(qos: .utility).async {
+                try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+            }
         }
         client = nil
-        UIApplication.shared.isIdleTimerDisabled = false
-        EnergyMonitor.shared.sample(reason: "player closing")
-        EnergyMonitor.shared.playing = false
-        EnergyMonitor.shared.note = ""
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     private func applyOptions(_ c: MPVClient) {
@@ -526,6 +565,8 @@ final class PlayerModel: ObservableObject {
         // simulator, whatever Folio had set before. Music and TV don't mix
         // either: another app's sound pauses when a video starts.
         c.setOption("audio-exclusive", "yes")
+        // Instant play (1.28.2): see audioWarm.
+        c.setOption("audio-stream-silence", "yes")
         c.setOption("audio-channels", defaults.bool(forKey: SettingsKey.surroundAudio) ? "auto" : "stereo")
         c.setOption("sub-auto", "fuzzy")
         if defaults.string(forKey: SettingsKey.subtitlesDefault) == "off" { c.setOption("sid", "no") }
@@ -768,6 +809,8 @@ final class PlayerModel: ObservableObject {
         lastGamma = ""
         glHDRFailedForFile = false
         hardwareSeenForFile = false
+        hardwareDecoderForFile = nil
+        decoderRenewals = []
         copyTooSlowForFile = false
         copyWatch?.cancel(); copyWatch = nil
 
@@ -1497,9 +1540,22 @@ final class PlayerModel: ObservableObject {
     func tracks(_ type: String) -> [MediaTrack] { tracks.filter { $0.type == type } }
 
     /// A track picked in the Tracks menu: remembered for the show.
+    ///
+    /// 1.28.2: the tick moves at the tap and mpv is told without waiting.
+    /// The set waited for mpv's core, which a new audio track holds while
+    /// it opens the audio output again: the menu froze until then, and the
+    /// tick only moved when mpv's track list came back.
     func selectTrack(_ type: String, id: Int?) {
         let prop = type == "audio" ? "aid" : type == "sub" ? "sid" : "vid"
-        client?.set(prop, id.map(String.init) ?? "no")
+        client?.setAsync(prop, id.map(String.init) ?? "no")
+        let second = type == "sub" ? Int(secondarySid) : nil
+        tracks = tracks.map { t in
+            guard t.type == type, t.id != second else { return t }
+            var t = t
+            t.selected = t.id == id
+            return t
+        }
+        if type == "sub" { sid = id.map(String.init) ?? "no" }
         switch type {
         case "audio":
             guard let t = tracks.first(where: { $0.type == "audio" && $0.id == id }) else { return }
@@ -1528,7 +1584,9 @@ final class PlayerModel: ObservableObject {
             showToast("Couldn't open that subtitle file")
             return
         }
-        client?.command(["sub-add", dest.path, "select"])
+        // Read by mpv without the app waiting on it (1.28.2): a long
+        // subtitle file is parsed in mpv's core.
+        _ = client?.commandAsync(["sub-add", dest.path, "select"])
     }
 
     // MARK: Subtitle search (SubtitleSearch)
@@ -1794,13 +1852,61 @@ final class PlayerModel: ObservableObject {
 
     // MARK: Transport
 
-    // Asynchronous (1.24.1): mpv's reply isn't needed, the button follows
-    // the "pause" property's event.
+    // Asynchronous (1.24.1): mpv's reply isn't needed. The button changes
+    // at the tap (1.28.2), not when mpv's "pause" event comes back, and the
+    // audio output is still open (warm), so the picture and sound go on at
+    // once too.
     func togglePause() {
-        if ended { seek(to: 0); client?.setAsync("pause", false); ended = false; return }
-        client?.setAsync("pause", !paused)
+        if ended { seek(to: 0); setPaused(false); ended = false; return }
+        setPaused(!paused)
     }
-    func setPaused(_ p: Bool) { client?.setAsync("pause", p) }
+    func setPaused(_ p: Bool) {
+        guard let c = client else { return }
+        if !p { warmAudioForPlay(c) }
+        if p != paused { paused = p; pipState.paused = p }
+        c.setAsync("pause", p)
+    }
+
+    // MARK: Instant play and pause (1.28.2)
+
+    /// mpv's audio output plays silence while paused (audio-stream-silence),
+    /// so play doesn't wait for iOS to start the audio unit again: 359 ms
+    /// on 6 Nov, with mpv's core held meanwhile (Outplayer plays at once).
+    /// Seeks keep it running too. False once stopped to save power.
+    private var audioWarm = true
+    private var audioCoolWork: DispatchWorkItem?
+
+    /// Paused: the silence stops after a minute on screen, and soon after
+    /// leaving the app, where it would keep the app awake for nothing.
+    private func scheduleAudioCool() {
+        audioCoolWork?.cancel(); audioCoolWork = nil
+        guard paused, audioWarm, !closed else { return }
+        let away = UIApplication.shared.applicationState == .background
+        let w = DispatchWorkItem { [weak self] in self?.coolAudio(away: away) }
+        audioCoolWork = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + (away ? 3 : 60), execute: w)
+    }
+
+    private func coolAudio(away: Bool) {
+        guard paused, audioWarm, let c = client, !closed else { return }
+        audioWarm = false
+        c.set("audio-stream-silence", "no")
+        _ = c.commandAsync(["ao-reload"])
+        dlog("player", "paused \(away ? "in the background" : "for a minute"): audio output closed until play")
+    }
+
+    /// Playing on from a closed output: opened warm again first (that one
+    /// play waits for it, as every play used to).
+    private func warmAudioForPlay(_ c: MPVClient) {
+        audioCoolWork?.cancel(); audioCoolWork = nil
+        guard !audioWarm else { return }
+        audioWarm = true
+        c.set("audio-stream-silence", "yes")
+        _ = c.commandAsync(["ao-reload"])
+    }
+
+    /// What the pause event does besides the button, a moment later.
+    private var pauseSideWork: DispatchWorkItem?
 
     /// mpv's own "mute", as its event last said (1.24.1): read here instead of
     /// asking mpv on the main thread before a skip.
@@ -1893,7 +1999,12 @@ final class PlayerModel: ObservableObject {
         _ = client?.commandAsync(["seek", String(max(0, seconds)), "absolute+keyframes"])
     }
 
-    func setSpeed(_ s: Double) { client?.set("speed", s) }
+    /// At once (1.28.2): shown at the tap, set without waiting for mpv's
+    /// core (a speed change rebuilds its audio filters).
+    func setSpeed(_ s: Double) {
+        if abs(s - speed) > 0.0001 { speed = s }
+        client?.setAsync("speed", s)
+    }
 
     /// A speed picked in the menu (not hold-to-speed): remembered for the
     /// show (1.22.0).
@@ -1908,7 +2019,8 @@ final class PlayerModel: ObservableObject {
     @Published private(set) var secondarySid = "no"
 
     func selectSecondSubtitle(id: Int?) {
-        client?.set("secondary-sid", id.map(String.init) ?? "no")
+        secondarySid = id.map(String.init) ?? "no"
+        client?.setAsync("secondary-sid", secondarySid)
         if let id, let t = tracks.first(where: { $0.type == "sub" && $0.id == id }) {
             remember { $0.secondSubtitle = SubtitleChoice(t) }
         } else {
@@ -1969,13 +2081,14 @@ final class PlayerModel: ObservableObject {
         sample()
     }
 
-    func setVolume(_ v: Double) { client?.set("volume", min(150, max(0, v))) }
+    func setVolume(_ v: Double) { client?.setAsync("volume", min(150, max(0, v))) }
     var volume: Double { client?.double("volume") ?? 100 }
     /// Delays set in the menus: remembered for the show, and the subtitle
     /// delay for this file too (a file's own delay wins over the show's).
     func setSubDelay(_ v: Double) {
         let v = (v * 1000).rounded() / 1000
-        client?.set("sub-delay", v)
+        subDelay = v
+        client?.setAsync("sub-delay", v)
         delaysTouched = true
         guard rememberOn, let key = memoryKey(for: memoryItem) else { return }
         ShowMemoryStore.shared.setSubDelay(v, file: memoryItem.id, for: key)
@@ -1983,7 +2096,8 @@ final class PlayerModel: ObservableObject {
     }
     func setAudioDelay(_ v: Double) {
         let v = (v * 1000).rounded() / 1000
-        client?.set("audio-delay", v)
+        audioDelay = v
+        client?.setAsync("audio-delay", v)
         delaysTouched = true
         remember { $0.audioDelay = v }
     }
@@ -2011,16 +2125,131 @@ final class PlayerModel: ObservableObject {
     /// margins, mpv's default sub-use-margins).
     var subtitlesFollowZoom: Bool { (defaults.string(forKey: SettingsKey.subFollowZoom) ?? "auto") != "manual" }
 
-    /// A pinch's stand-in scale of the picture (1: none).
-    private(set) var pinchScale: CGFloat = 1
-    /// The stand-in scale gone with nothing applied yet: the caller applies
-    /// the framing that replaces it (setZoom), so no subtitle placement
-    /// counts both at once.
-    func dropPinchScale() { pinchScale = 1 }
-    func setPinchScale(_ s: CGFloat) {
-        guard abs(s - pinchScale) > 0.004 || s == 1 else { return }
-        pinchScale = s
+    // MARK: Fit and Fill on the video layer (1.28.2)
+
+    /// The video layer's picture on screen, as a scale of Fit: Fill's ratio,
+    /// a pinch's scale, or a step of the zoom between them.
+    private(set) var layerScale: CGFloat = 1
+    /// A pinch moves the picture: nothing else sets its scale meanwhile.
+    private var layerPinching = false
+    /// Steps the subtitles along with a zoom while it animates.
+    private lazy var zoomTicker = FrameTicker { [weak self] _ in self?.zoomStep() }
+
+    /// The scale Fit or Fill asks for now.
+    var layerZoomTarget: CGFloat { zoomToFill ? fillRatio : 1 }
+
+    /// Fit and Fill on the video layer (OpenGL, Metal on engine 3): the
+    /// layer always fits the frame, and for Fill its view is scaled about
+    /// its centre. Until 1.28.1 Fill was the layer's aspect-fill gravity,
+    /// and Picture in Picture took its window's shape from it: the screen's
+    /// (2.17:1, not the film's 16:9), showing the frame's top with its
+    /// bottom bar and subtitles cut (10 Nov recording). With the view
+    /// scaled, the layer stays whole and PiP gets the whole frame. The zoom
+    /// is a Core Animation spring, drawn by the render server, so a busy
+    /// main thread can't make it stutter.
+    func applyLayerZoom(animated: Bool) {
+        guard onLayer, !layerPinching else { return }
+        let target = layerZoomTarget
+        // A zoom under way: on to the new target from where it is (the
+        // toggle flipped back, the phone turned). It used to be dropped,
+        // and the picture stayed in Fill with everything else at Fit.
+        if zoomTicker.isRunning {
+            if abs(target - zoomTarget) > 0.0005 { animateLayerScale(to: target, velocity: 0) }
+            return
+        }
+        guard abs(pip.view.transform.a - target) > 0.0005 || abs(layerScale - target) > 0.0005 else { return }
+        if animated, pip.view.window != nil, !UIAccessibility.isReduceMotionEnabled {
+            animateLayerScale(to: target, velocity: 0)
+        } else {
+            setLayerScale(target)
+        }
+    }
+
+    /// The picture at this scale of Fit now, unanimated (a pinch's step;
+    /// inside a rotation's animation block it goes along with it).
+    func setLayerScale(_ s: CGFloat) {
+        pip.view.transform = CGAffineTransform(scaleX: s, y: s)
+        layerScaleChanged(s)
+    }
+
+    /// True when the scale moved (and the subtitles were placed for it).
+    @discardableResult
+    private func layerScaleChanged(_ s: CGFloat) -> Bool {
+        guard abs(s - layerScale) > 0.003 || (s != layerScale && s == layerZoomTarget) else { return false }
+        layerScale = s
         applySubtitleFraming()
+        return true
+    }
+
+    /// A pinch starts: a zoom under way stops where it is on screen. The
+    /// scale the pinch starts from.
+    func beginLayerPinch() -> CGFloat {
+        let v = pip.view
+        if zoomTicker.isRunning {
+            zoomTicker.stop()
+            zoomRun += 1                    // the spring's end does nothing now
+            let now = v.layer.presentation()?.affineTransform() ?? v.transform
+            v.layer.removeAllAnimations()
+            v.transform = now
+            layerScaleChanged(now.a)
+        }
+        layerPinching = true
+        return v.transform.a
+    }
+
+    /// The fingers lifted: on to Fit or Fill from where the picture is,
+    /// at the speed it was moving (points of scale a second).
+    func endLayerPinch(fill: Bool, velocity: CGFloat) {
+        layerPinching = false
+        let changed = fill != zoomToFill
+        zoomToFill = fill
+        if changed {
+            client?.setAsync("panscan", fill ? 1.0 : 0.0)
+            showToast(fill ? "Fill" : "Fit")
+            remember { $0.panscan = fill ? 1 : 0 }
+        }
+        let target = layerZoomTarget
+        if UIAccessibility.isReduceMotionEnabled { setLayerScale(target); return }
+        animateLayerScale(to: target, velocity: velocity)
+    }
+
+    /// Where the zoom under way is going, and which one it is.
+    private var zoomTarget: CGFloat = 1
+    private var zoomRun = 0
+
+    private func animateLayerScale(to target: CGFloat, velocity: CGFloat) {
+        let v = pip.view
+        let from = v.layer.presentation()?.affineTransform().a ?? v.transform.a
+        let distance = target - from
+        guard abs(distance) > 0.0005 else { setLayerScale(target); return }
+        // UIKit's spring takes the velocity as a share of the distance a
+        // second; capped, or a flick over a short way overshoots.
+        let relative = abs(distance) > 0.01 ? min(6, max(-6, velocity / distance)) : 0
+        zoomTicker.start(fps: 60)
+        zoomTarget = target
+        zoomRun += 1
+        let run = zoomRun
+        UIView.animate(springDuration: 0.38, bounce: 0, initialSpringVelocity: relative, delay: 0,
+                       options: [.allowUserInteraction, .beginFromCurrentState]) {
+            v.transform = CGAffineTransform(scaleX: target, y: target)
+        } completion: { [weak self] _ in
+            // A zoom that another took over ends here unfinished: the later
+            // one finishes the work.
+            guard let self, run == self.zoomRun else { return }
+            self.zoomTicker.stop()
+            if !self.layerScaleChanged(self.pip.view.transform.a) { self.applySubtitleFraming(settled: true) }
+            // The target moved meanwhile without a new zoom (a turn of the
+            // phone while a pinch's spring ran): on to it.
+            if !self.layerPinching, abs(self.pip.view.transform.a - self.layerZoomTarget) > 0.0005 {
+                self.applyLayerZoom(animated: true)
+            }
+        }
+    }
+
+    /// Subtitles follow the picture on screen while a zoom animates.
+    private func zoomStep() {
+        guard let s = pip.view.layer.presentation()?.affineTransform().a else { return }
+        layerScaleChanged(s)
     }
 
     /// How much bigger than fitted the frame is shown, and the part of its
@@ -2038,6 +2267,26 @@ final class PlayerModel: ObservableObject {
         return (k, min(1, view.height / (fitH * k)))
     }
 
+    /// The left and right margin for text subtitles (mpv's sub-margin-x, in
+    /// its scaled pixels: 720 to the frame's height) when the picture is
+    /// shown at `scale` of Fit and its sides are off the screen: a wide
+    /// film filled on a narrower screen. libass wrapped lines to the whole
+    /// frame's width, and a long line ran off both edges. 25 is mpv's own.
+    ///
+    /// `base`: the margin as set (mpv.conf), 25 by default. At most 300,
+    /// the most mpv takes (its option's range), so a picture zoomed far past
+    /// that (portrait Fill of a wide film) can still lose a long line's ends.
+    static func subtitleMarginX(scale: CGFloat, video: CGSize, view: CGSize, base: Int = 25) -> Int {
+        guard video.width > 0, video.height > 0, view.width > 0, view.height > 0 else { return base }
+        let fitW = min(view.width, view.height * video.width / video.height)
+        let visibleWidth = min(1, view.width / (fitW * max(0.05, scale)))
+        let offEachSide = (1 - visibleWidth) / 2 * (video.width / video.height) * 720
+        return min(300, base + Int(offEachSide.rounded()))
+    }
+
+    /// sub-margin-x as mpv.conf (or mpv's default) set it, read at start.
+    private var subMarginBase = 25
+
     /// sub-pos and sub-scale for what's on screen: your position and size
     /// on the visible part of the picture (Automatic), or as set (Manual).
     static func subtitlePlacement(userPos: Double, userScale: Double, framing: (scale: CGFloat, visible: CGFloat),
@@ -2051,24 +2300,43 @@ final class PlayerModel: ObservableObject {
         return (Int(pos.rounded()), scale)
     }
 
-    func applySubtitleFraming() {
+    /// PiP shows the whole frame, whatever the zoom in the player.
+    private var subtitlesInPiP: Bool { isPiPActive && !pipStopping }
+
+    /// `settled`: a zoom or pinch just ended; logged even when the last step
+    /// already placed them there.
+    func applySubtitleFraming(settled: Bool = false) {
         guard let c = client else { return }
-        let framing = Self.subtitleFraming(gl: onLayer, fill: zoomToFill, fillRatio: fillRatio, pinch: pinchScale,
-                                           video: videoSize, view: videoView.bounds.size)
+        // The video layer: the picture's scale on screen (Fill, a pinch, a
+        // step of the zoom); in PiP the whole frame. Metal on its own layer:
+        // mpv frames Fill itself.
+        let layerK: CGFloat = subtitlesInPiP ? 1 : layerScale
+        let framing = onLayer
+            ? Self.subtitleFraming(gl: true, fill: false, fillRatio: 1, pinch: layerK, video: videoSize, view: videoView.bounds.size)
+            : Self.subtitleFraming(gl: false, fill: zoomToFill, fillRatio: fillRatio, pinch: 1, video: videoSize, view: videoView.bounds.size)
         let userScale = (defaults.object(forKey: SettingsKey.subScale) == nil ? 1 : defaults.double(forKey: SettingsKey.subScale)) * subtitleStyle.scaleFactor
         let userPos = defaults.object(forKey: SettingsKey.subPos) == nil ? 100 : Double(defaults.integer(forKey: SettingsKey.subPos))
         let p = Self.subtitlePlacement(userPos: userPos, userScale: userScale, framing: framing, follow: subtitlesFollowZoom, gl: onLayer)
-        guard lastSubPlacement.map({ $0.pos != p.pos || abs($0.scale - p.scale) > 0.005 }) ?? true else { return }
-        lastSubPlacement = p
-        if pinchScale == 1 {
-            dlog("player", String(format: "subtitles %@: picture %.2f× fitted, %.0f%% of its height on screen (%@) → sub-pos %d, sub-scale %.2f",
+        let marginX = onLayer && subtitlesFollowZoom
+            ? Self.subtitleMarginX(scale: layerK, video: videoSize, view: videoView.bounds.size, base: subMarginBase)
+            : subMarginBase
+        let changed = lastSubPlacement.map({ $0.pos != p.pos || abs($0.scale - p.scale) > 0.005 || $0.marginX != marginX }) ?? true
+        guard changed || settled else { return }
+        lastSubPlacement = (p.pos, p.scale, marginX)
+        // One line when it settles, not one per step of a pinch or a zoom.
+        if !layerPinching, !zoomTicker.isRunning {
+            dlog("player", String(format: "subtitles %@: picture %.2f× fitted, %.0f%% of its height on screen (%@) → sub-pos %d, sub-scale %.2f, sides %d",
                                   subtitlesFollowZoom ? "kept on screen" : "as set", framing.scale, framing.visible * 100,
-                                  (renderer == .gl ? "OpenGL" : onLayer ? "Metal (video layer)" : "Metal") + (zoomToFill ? " Fill" : " Fit"), p.pos, p.scale))
+                                  (renderer == .gl ? "OpenGL" : onLayer ? "Metal (video layer)" : "Metal") + (subtitlesInPiP ? " PiP" : zoomToFill ? " Fill" : " Fit"), p.pos, p.scale, marginX))
         }
-        c.set("sub-pos", String(p.pos))
-        c.set("sub-scale", String(format: "%.3f", p.scale))
+        // Asynchronous: a zoom steps them every frame, and a set waits for
+        // mpv's core, which may be busy (1.28.2).
+        guard changed else { return }
+        c.setAsync("sub-pos", String(p.pos))
+        c.setAsync("sub-scale", String(format: "%.3f", p.scale))
+        c.setAsync("sub-margin-x", String(marginX))
     }
-    private var lastSubPlacement: (pos: Int, scale: Double)?
+    private var lastSubPlacement: (pos: Int, scale: Double, marginX: Int)?
 
     /// The saved subtitle options for this renderer. The sample-buffer
     /// renderer's frames are the video's shape, with no black bars to draw
@@ -2099,20 +2367,13 @@ final class PlayerModel: ObservableObject {
 
     func toggleZoom() { setZoom(fill: !zoomToFill) }
 
-    /// OpenGL: the layer's framing alone, for a pinch out of Fill, which
-    /// shrinks Fit scaled up rather than Fill (1.27.1).
-    func setLayerFill(_ fill: Bool) {
-        if onLayer { pip.setFill(fill) }
-    }
-
-    /// Fit or Fill. On OpenGL the layer's gravity changes here and now, in
-    /// the caller's transaction, not when mpv's echo of panscan arrives: a
-    /// pinch drops its stand-in scale in the same screen update (1.23.4; the
-    /// 6 Nov recording had a frame of each framing at once).
+    /// Fit or Fill. On the video layer the picture zooms there and then
+    /// (applyLayerZoom), not when mpv's echo of panscan arrives; mpv's
+    /// panscan is what a show's memory and Metal on its own layer go by.
     func setZoom(fill: Bool, toast: Bool = true) {
-        if onLayer { pip.setFill(fill) }
         zoomToFill = fill
-        client?.set("panscan", fill ? 1.0 : 0.0)
+        if onLayer { applyLayerZoom(animated: true) }
+        client?.setAsync("panscan", fill ? 1.0 : 0.0)
         if toast { showToast(fill ? "Fill" : "Fit") }
         remember { $0.panscan = fill ? 1 : 0 }
         applySubtitleFraming()
@@ -2121,12 +2382,13 @@ final class PlayerModel: ObservableObject {
     /// Metal: a pinch frames the picture in mpv as the fingers move (panscan
     /// between Fit, 0, and Fill, 1), so there's no stand-in to hand over.
     func setLivePanscan(_ p: Double) {
-        client?.set("panscan", min(1, max(0, p)))
+        // Every frame of the pinch: never waiting for mpv's core (1.28.2).
+        client?.setAsync("panscan", min(1, max(0, p)))
     }
 
     func setAspect(_ value: String) {
         aspectOverride = value
-        client?.set("video-aspect-override", value)
+        client?.setAsync("video-aspect-override", value)
     }
 
     /// mpv writes the picture off the main thread, and the toast says what
@@ -2182,8 +2444,8 @@ final class PlayerModel: ObservableObject {
         return r >= 0
     }
 
-    func keyDown(_ key: String) { client?.command(["keydown", key]) }
-    func keyUp(_ key: String) { client?.command(["keyup", key]) }
+    func keyDown(_ key: String) { _ = client?.commandAsync(["keydown", key]) }
+    func keyUp(_ key: String) { _ = client?.commandAsync(["keyup", key]) }
 
     func setShaders(_ names: [String]) {
         MPVFiles.activeShaderNames = names
@@ -2958,15 +3220,21 @@ final class PlayerModel: ObservableObject {
     }
 
     /// Saves the current frame as the Continue Watching thumbnail.
-    private func captureThumbnail() {
+    /// Reads the frame for Continue Watching and saves it; run off the main
+    /// thread, before mpv shuts down (nil: nothing to read).
+    private func thumbnailShot() -> (() -> Void)? {
         #if targetEnvironment(simulator)
-        return                        // the simulator's Metal driver aborts on readback
+        return nil                    // the simulator's Metal driver aborts on readback
         #endif
-        guard fileLoaded, mode == .main, let c = client, !c.isShutDown else { return }
-        var w: Int32 = 0, h: Int32 = 0
-        guard let bytes = gp_screenshot_bgra(c.handle, 640, &w, &h) else { return }
-        defer { free(bytes) }
-        ThumbnailStore.save(bgra: bytes, width: Int(w), height: Int(h), key: item.id)
+        guard fileLoaded, mode == .main, let c = client, !c.isShutDown else { return nil }
+        let key = item.id
+        return {
+            guard !c.isShutDown else { return }
+            var w: Int32 = 0, h: Int32 = 0
+            guard let bytes = gp_screenshot_bgra(c.handle, 640, &w, &h) else { return }
+            defer { free(bytes) }
+            ThumbnailStore.save(bgra: bytes, width: Int(w), height: Int(h), key: key)
+        }
     }
 
     private var snapshotWork: DispatchWorkItem?
@@ -3389,7 +3657,22 @@ final class PlayerModel: ObservableObject {
         observers.append(nc.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             guard let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
                   AVAudioSession.InterruptionType(rawValue: raw) == .began else { return }
-            MainActor.assumeIsolated { self?.setPaused(true) }
+            MainActor.assumeIsolated {
+                // iOS stopped the audio unit (Siri, an alarm, a call). With
+                // the output kept open while paused, play no longer starts it
+                // again by itself: it's opened anew at the next play (1.28.2).
+                self?.audioWarm = false
+                self?.audioCoolWork?.cancel()
+                self?.setPaused(true)
+            }
+        })
+        observers.append(nc.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let c = self.client, !self.closed else { return }
+                dlog("player/warn", "iOS's media services restarted: audio output opened again")
+                self.audioWarm = true
+                _ = c.commandAsync(["ao-reload"])
+            }
         })
         observers.append(nc.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] note in
             guard let raw = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
@@ -3455,6 +3738,8 @@ final class PlayerModel: ObservableObject {
         PiPTrace.event("app in background (PiP \(isPiPActive ? "up" : "not up"))")
         saveHistory(force: true)
         wentToBackground = true
+        // Paused already: the silence stops in a few seconds, not a minute.
+        if paused { scheduleAudioCool() }
         guard mode == .main, !isPiPActive, let c = client else { return }
         let keepPlaying = defaults.bool(forKey: SettingsKey.backgroundAudio)
         if !keepPlaying { setPaused(true) }
@@ -3469,6 +3754,7 @@ final class PlayerModel: ObservableObject {
         if keepPlaying {
             if paused {
                 parkedPaused = true
+                scheduleAudioCool()
                 dlog("player", "background while paused: video and buffer kept")
             } else {
                 glTrackOffLater()
@@ -3586,13 +3872,45 @@ final class PlayerModel: ObservableObject {
         }
     }
 
+    /// The hardware decoder this file has played on (not copy decoding).
+    private var hardwareDecoderForFile: String?
+    /// When the decoder was rebuilt on screen: twice in two minutes at most.
+    private var decoderRenewals: [CFTimeInterval] = []
+    private var decoderQuietUntil: CFTimeInterval = 0
+
+    /// On screen, the decoder fell from the hardware to copy decoding or
+    /// software (1.28.2). iOS had ended the VideoToolbox session while the
+    /// app was away paused; the first frames after play failed and mpv went
+    /// down its list to copy decoding for the rest of the film (10 Nov
+    /// report, 13:31:24: back while paused, play, "decoder:
+    /// videotoolbox-copy"; then software after the next trip away). The
+    /// return check had passed, as nothing had been decoded yet. Not when
+    /// copy decoding was chosen (OpenGL's 10-bit HDR, the setting).
+    private func decoderDroppedOnScreen() {
+        guard let hw = hardwareDecoderForFile, hwdecCurrent != hw, !hdrCopyActive, mode == .main,
+              UIApplication.shared.applicationState == .active,
+              (defaults.string(forKey: SettingsKey.hwdec) ?? "auto") == "auto" else { return }
+        let now = CACurrentMediaTime()
+        guard now > decoderQuietUntil else { return }     // a rebuild passes through copy decoding
+        decoderRenewals = decoderRenewals.filter { now - $0 < 120 }
+        guard decoderRenewals.count < 2 else { return }
+        decoderRenewals.append(now)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self, !self.closed, self.hwdecCurrent != hw, self.mode == .main,
+                  UIApplication.shared.applicationState == .active else { return }
+            dlog("player/warn", "on screen: the decoder fell to \(self.hwdecCurrent.isEmpty ? "software" : self.hwdecCurrent), was \(hw); building the hardware one again")
+            self.renewHardwareDecoder()
+        }
+    }
+
     private func renewHardwareDecoder() {
         guard let c = client, fileLoaded, let hw = c.string("hwdec"), hw != "no",
               let vid = c.string("vid"), vid != "no" else { return }
         swapSeekQuietUntil = CACurrentMediaTime() + 2   // its seek is from the buffer too
+        decoderQuietUntil = CACurrentMediaTime() + 2
         c.set("hwdec", hw == "videotoolbox-copy" ? "videotoolbox" : "videotoolbox-copy")
         c.set("hwdec", hw)
-        dlog("player", "back while paused: new hardware decoder (\(hw))")
+        dlog("player", "new hardware decoder (\(hw))")
     }
 
     private func videoOffForPlayback(_ c: MPVClient) {
@@ -3723,6 +4041,13 @@ final class PlayerModel: ObservableObject {
         }
         if pendingMain { switchToMain(); setPiPLayerOnTop(false); return }
         guard mode == .main else { return }
+        // Back while paused with the audio output closed: open it again now,
+        // so the next play is instant (closed again after a minute).
+        // Not over another app's sound: Folio's doesn't mix, and warming
+        // it would stop that app's music with nothing pressed.
+        if paused, !audioWarm, let c = client, !AVAudioSession.sharedInstance().isOtherAudioPlaying {
+            warmAudioForPlay(c); scheduleAudioCool()
+        }
         if onLayer {
             awayToken += 1              // back within 15 s: the track never went
             frames?.setRenderingAllowed(true, why: "app active")
@@ -3785,7 +4110,7 @@ final class PlayerModel: ObservableObject {
     /// Spatial Audio switched in the player's panel (1.26.0): applied now,
     /// not at the next session. The switch only wrote the setting.
     func setSurround(_ on: Bool) {
-        _ = client?.set("audio-channels", on ? "auto" : "stereo")
+        _ = client?.setAsync("audio-channels", on ? "auto" : "stereo")
         try? AVAudioSession.sharedInstance().setSupportsMultichannelContent(on)
         updateOutputChannels()
         dlog("player", "spatial audio \(on ? "on" : "off") for this session")
@@ -4013,13 +4338,24 @@ extension PlayerModel: MPVClientDelegate {
         case "mute":
             mpvMuted = value.bool ?? false
         case "pause":
-            paused = value.bool ?? false
-            pipState.paused = paused
-            pip.updatePlayback(position: position, rate: paused ? 0 : speed)
-            if paused || isPiPActive { pip.invalidate() } else { pip.rearmAutoStart(defaults.bool(forKey: SettingsKey.pipAuto)) }
-            updateNowPlaying()
-            UIApplication.shared.isIdleTimerDisabled = !paused
-            if paused { saveHistory(force: true); scheduleSnapshot(after: 0.3) } else { resumedInBackground() }
+            let p = value.bool ?? false
+            if p != paused { paused = p }
+            pipState.paused = p
+            pip.updatePlayback(position: position, rate: p ? 0 : speed)
+            UIApplication.shared.isIdleTimerDisabled = !p
+            scheduleAudioCool()
+            // The rest after the button has been drawn (1.28.2): history,
+            // Handoff, Now Playing and PiP's state are no reason to hold
+            // the screen update the tap made.
+            pauseSideWork?.cancel()
+            let w = DispatchWorkItem { [weak self] in
+                guard let self, self.paused == p, !self.closed else { return }
+                if p || self.isPiPActive { self.pip.invalidate() } else { self.pip.rearmAutoStart(self.defaults.bool(forKey: SettingsKey.pipAuto)) }
+                self.updateNowPlaying()
+                if p { self.saveHistory(force: true); self.scheduleSnapshot(after: 0.25) } else { self.resumedInBackground() }
+            }
+            pauseSideWork = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: w)
         case "paused-for-cache":
             let waiting = value.bool ?? false
             buffering = waiting
@@ -4063,7 +4399,9 @@ extension PlayerModel: MPVClientDelegate {
             let software = hwdecCurrent.isEmpty || hwdecCurrent == "no"
             dlog("player", "decoder: \(software ? "software" : hwdecCurrent)")
             if !software { hardwareSeenForFile = true } else { checkCopyFallback() }
+            if hwdecCurrent == "videotoolbox" { hardwareDecoderForFile = hwdecCurrent }
             decoderDroppedWhileAway()
+            decoderDroppedOnScreen()
             EnergyMonitor.shared.note = "renderer=\(renderer) picture=\(PictureMode.current.rawValue) decoder=\(hwdecCurrent.isEmpty ? "sw" : hwdecCurrent)"
             // A minute into playback: one line that says what this file costs
             // (once per file, not once per decoder change).
@@ -4093,8 +4431,8 @@ extension PlayerModel: MPVClientDelegate {
             // frame, and each echo redrew the whole player (review, 9 Nov).
             let fill = (value.double ?? 0) > 0.5
             if fill != zoomToFill { zoomToFill = fill }
-            // Fill did nothing on the sample-buffer renderer (review, 2 Nov).
-            if onLayer { pip.setFill(zoomToFill) }
+            // A show's memory: straight there (the file is only starting).
+            if onLayer { applyLayerZoom(animated: false) }
             applySubtitleFraming()
         default:
             break
@@ -4103,7 +4441,7 @@ extension PlayerModel: MPVClientDelegate {
 
     private func applyVideoSize() {
         let size = CGSize(width: pendingW, height: pendingH)
-        if size != videoSize { videoSize = size; refitAnime4K(); applySubtitleFraming() }
+        if size != videoSize { videoSize = size; refitAnime4K(); applyLayerZoom(animated: false); applySubtitleFraming() }
         if pendingW > 0, pendingH > 0, ownLayerMetal {
             sw.setVideoSize(width: pendingW, height: pendingH)
         }
@@ -4162,6 +4500,7 @@ extension PlayerModel: PiPManagerDelegate {
             self.isPiPActive = true
             self.pipRestoring = false
             self.switchToSoftware()
+            if self.onLayer { self.applySubtitleFraming() }
         }
     }
 
@@ -4178,6 +4517,7 @@ extension PlayerModel: PiPManagerDelegate {
                 self.pipStopping = true
                 self.pipSizeWork?.cancel()
                 self.frames?.setPiPSize(nil)
+                self.applySubtitleFraming()
             } else {
                 self.setPiPLayerOnTop(true)
             }
@@ -4219,6 +4559,7 @@ extension PlayerModel: PiPManagerDelegate {
             guard let self else { return }
             self.isPiPActive = false
             self.pipStopping = false
+            self.applySubtitleFraming()
             self.showToast("PiP failed: \(message)")
             self.setPiPLayerOnTop(false)
             if self.mode == .sw { self.switchToMain() }

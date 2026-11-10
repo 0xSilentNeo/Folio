@@ -484,7 +484,7 @@ struct HomeView: View {
     }
 
     private func libraryHeader(_ margin: CGFloat, count: Int) -> some View {
-        let facts = kidsGroups.flatMap { metaIndex.facts(of: $0) }
+        let options = metaIndex.filterOptions(of: kidsGroups)
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("Library").font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
@@ -498,7 +498,7 @@ struct HomeView: View {
                 .accessibilityLabel("Pick something for me")
                 .accessibilityIdentifier("pickForMe")
                 LibraryFilterMenu(watch: $filterWatch, genre: $filterGenre, year: $filterYear,
-                                  genres: LibraryFilter.genres(in: facts), years: LibraryFilter.years(in: facts), loading: !metaIndex.complete)
+                                  genres: options.genres, years: options.years, loading: !metaIndex.complete)
                 LibrarySortMenu(sort: $librarySort, ascending: $librarySortAsc)
                 ViewModeMenu(mode: $libraryView)
             }
@@ -720,7 +720,7 @@ struct HomeView: View {
         return Array(g.files.filter { season == nil || TitleParser.parse($0.lastPathComponent).season == season }.prefix(8))
     }
 
-    private func allWatched(_ g: LibraryGroup) -> Bool { !g.files.isEmpty && g.files.allSatisfy { history.isWatched($0) } }
+    private func allWatched(_ g: LibraryGroup) -> Bool { LibraryGroup.allWatched(g.files) }
 
     @ViewBuilder
     private func groupLink<L: View>(_ g: LibraryGroup, menu: MenuShape, @ViewBuilder label: () -> L) -> some View {

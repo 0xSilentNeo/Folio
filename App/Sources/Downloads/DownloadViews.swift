@@ -99,9 +99,26 @@ final class DownloadsPage: ObservableObject {
     func disappeared() { shown = max(0, shown - 1) }
 }
 
+/// What the downloads pill shows, read from the manager at most twice a
+/// second (1.28.2). The pill watched the manager itself, which announces
+/// each piece's progress, many times a second: 5–20 redraws a second of a
+/// pill whose numbers change once.
+struct DownloadPillSnapshot: Equatable {
+    var hasWork = false
+    var active = 0
+    var speed: Double = 0
+    var history: [Double] = []
+
+    @MainActor static func now() -> DownloadPillSnapshot {
+        let d = DownloadManager.shared
+        return DownloadPillSnapshot(hasWork: d.hasWork, active: d.active.count, speed: d.speed, history: d.speedHistory)
+    }
+}
+
 struct DownloadPillOverlay: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ObservedObject private var dm = DownloadManager.shared
+    private var dm: DownloadManager { DownloadManager.shared }
+    @State private var snap = DownloadPillSnapshot.now()
     @ObservedObject private var page = DownloadsPage.shared
     @ObservedObject private var lift = DownloadPillLift.shared
     @State private var showing = false
@@ -110,13 +127,19 @@ struct DownloadPillOverlay: View {
     var body: some View {
         VStack {
             Spacer()
-            if dm.hasWork && page.shown == 0 {
+            if snap.hasWork && page.shown == 0 {
                 pill
                     .padding(.bottom, 74 + lift.lift)
                     .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.7)))
             }
         }
-        .animation(.spring(response: 0.42, dampingFraction: 0.8), value: dm.hasWork && page.shown == 0)
+        .animation(.spring(response: 0.42, dampingFraction: 0.8), value: snap.hasWork && page.shown == 0)
+        .onReceive(DownloadManager.shared.objectWillChange
+            .throttle(for: .seconds(0.5), scheduler: DispatchQueue.main, latest: true)
+            .receive(on: DispatchQueue.main)) { _ in
+            let now = DownloadPillSnapshot.now()
+            if now != snap { snap = now }
+        }
         .animation(.smooth(duration: 0.3), value: lift.lift)
         .sheet(isPresented: $showing) {
             NavigationStack { DownloadsView(inSheet: true) }
@@ -128,25 +151,26 @@ struct DownloadPillOverlay: View {
         HStack(spacing: 10) {
             Button { showing = true } label: {
                 HStack(spacing: 10) {
-                    PulsingDot(active: !dm.active.isEmpty)
-                    Text(dm.active.isEmpty ? "Waiting" : speedString(dm.speed)).font(.subheadline.weight(.bold).monospacedDigit())
-                    Text("\(dm.active.count) file\(dm.active.count == 1 ? "" : "s")").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
-                    Sparkline(values: dm.speedHistory).frame(width: 54, height: 20)
+                    PulsingDot(active: snap.active > 0)
+                    Text(snap.active == 0 ? "Waiting" : speedString(snap.speed)).font(.subheadline.weight(.bold).monospacedDigit())
+                    Text("\(snap.active) file\(snap.active == 1 ? "" : "s")").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                    Sparkline(values: snap.history).frame(width: 54, height: 20)
                 }
                 .padding(.leading, 16).frame(height: 44)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Downloads, \(speedString(dm.speed))")
+            .accessibilityLabel("Downloads, \(speedString(snap.speed))")
             Button {
-                dm.active.isEmpty ? dm.resumeAll() : dm.pauseAll()
+                snap.active == 0 ? dm.resumeAll() : dm.pauseAll()
+                snap = DownloadPillSnapshot.now()      // the icon at the tap, not at the next refresh
             } label: {
-                Image(systemName: dm.active.isEmpty ? "play.fill" : "pause.fill").font(.system(size: 12, weight: .bold))
+                Image(systemName: snap.active == 0 ? "play.fill" : "pause.fill").font(.system(size: 12, weight: .bold))
                     .frame(width: 30, height: 30).background(Theme.fill, in: Circle())
             }
             .buttonStyle(.plain)
             .padding(.trailing, 7)
-            .accessibilityLabel(dm.active.isEmpty ? "Resume all downloads" : "Pause all downloads")
+            .accessibilityLabel(snap.active == 0 ? "Resume all downloads" : "Pause all downloads")
         }
         .glass(cornerRadius: 22, interactive: true)
         .shadow(color: Theme.shadow, radius: 12, y: 6)

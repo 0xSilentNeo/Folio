@@ -70,14 +70,26 @@ final class ShareViewController: UIViewController {
         let id = UUID().uuidString
         var link: SharedPlayLink
         if let video = videoProvider() {
-            label.text = "Copying to Folio…"
-            guard let file = await copyVideo(video, id: id) else {
-                show(SharedPlayLink.inbox == nil
-                     ? "This install of Folio has no shared storage for its extensions. Open the video in Files and choose Folio there."
-                     : "Folio couldn't read this video.")
+            if SharedPlayLink.inbox != nil {
+                label.text = "Copying to Folio…"
+                guard let file = await copyVideo(video, id: id) else { show("Folio couldn't read this video."); return }
+                link = SharedPlayLink(url: "", at: Date(), id: id, file: file)
+            } else if let mark = await inPlaceBookmark(video) {
+                // No App Group on this install (1.28.2): nowhere to copy the
+                // video to, so Folio opens it where it is. It said "no shared
+                // storage" and stopped there (10 Nov).
+                link = SharedPlayLink(url: "", at: Date(), id: id, bookmark: mark)
+            } else {
+                // Not lent in place (Photos hands over a copy that goes when
+                // this ends): Folio's Add files instead, with it in Recents.
+                if openInFolio(SharedPlayLink.importURL) {
+                    try? await Task.sleep(nanoseconds: 400_000_000)
+                    finish()
+                } else {
+                    show("Open Folio and tap Add files to play this video.")
+                }
                 return
             }
-            link = SharedPlayLink(url: "", at: Date(), id: id, file: file)
         } else if let url = await sharedLink() {
             link = SharedPlayLink(url: url.absoluteString, at: Date(), id: id)
         } else {
@@ -134,6 +146,21 @@ final class ShareViewController: UIViewController {
                 } catch {
                     done.resume(returning: nil)
                 }
+            }
+        }
+    }
+
+    /// A bookmark to the shared file where it is, when iOS lends it in place
+    /// (Files); nil for a copy (Photos) or a file it can't bookmark.
+    private func inPlaceBookmark(_ provider: NSItemProvider) async -> Data? {
+        let type = provider.registeredTypeIdentifiers.first { UTType($0)?.conforms(to: .audiovisualContent) == true }
+            ?? UTType.audiovisualContent.identifier
+        return await withCheckedContinuation { (done: CheckedContinuation<Data?, Never>) in
+            _ = provider.loadInPlaceFileRepresentation(forTypeIdentifier: type) { url, inPlace, _ in
+                guard let url, inPlace else { done.resume(returning: nil); return }
+                let scoped = url.startAccessingSecurityScopedResource()
+                defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                done.resume(returning: try? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil))
             }
         }
     }

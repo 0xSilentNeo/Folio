@@ -1124,8 +1124,14 @@ final class DownloadManager: ObservableObject {
         guard let (id, part) = DownloadEngine.parse(key), let i = index(id), items[i].state == .running else { return }
         if let part {
             guard let p = items[i].parts?[safe: part], !p.done else { return }
-            items[i].parts?[part].received = min(got, p.length)
-            recount(i)
+            // One change to the list, not two (1.28.2): each announced it,
+            // and every view watching downloads drew again.
+            var item = items[i]
+            item.parts?[part].received = min(got, p.length)
+            if let parts = item.parts {
+                item.received = parts.reduce(Int64(0)) { $0 + ($1.done ? $1.length : min($1.received, $1.length)) }
+            }
+            items[i] = item
         } else {
             items[i].received = got
             if let total, total > 0 { items[i].expected = total }

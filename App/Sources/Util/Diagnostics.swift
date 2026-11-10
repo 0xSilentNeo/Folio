@@ -54,10 +54,14 @@ final class Diagnostics: NSObject {
         let nc = NotificationCenter.default
         nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             self?.heartbeatLock.lock(); self?.isActive = true; self?.lastHeartbeat = Date(); self?.heartbeatLock.unlock()
+            self?.startHeartbeat()
             self?.log("app", "active")
         }
         nc.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
             self?.heartbeatLock.lock(); self?.isActive = false; self?.heartbeatLock.unlock()
+            // Nothing is watched while away (1.28.2): it woke the main
+            // thread twice a second all through background audio and PiP.
+            self?.heartbeatTimer?.invalidate(); self?.heartbeatTimer = nil
             self?.log("app", "resign active")
         }
         nc.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { [weak self] _ in
@@ -267,18 +271,37 @@ final class Diagnostics: NSObject {
         heartbeatLock.lock(); lastHeartbeat = Date(); hangReported = false; heartbeatLock.unlock()
     }
 
-    private func startWatchdog() {
-        // Main-thread heartbeat twice a second (with tolerance, so it rides
-        // along with other timers instead of waking the CPU on its own).
+    private var heartbeatTimer: Timer?
+
+    /// Main-thread heartbeat twice a second while the app is active (with
+    /// tolerance, so it rides along with other timers instead of waking the
+    /// CPU on its own).
+    private func startHeartbeat() {
+        guard heartbeatTimer == nil else { return }
         let t = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in self?.heartbeat() }
         t.tolerance = 0.2
         RunLoop.main.add(t, forMode: .common)
+        heartbeatTimer = t
+    }
+
+    private func startWatchdog() {
+        startHeartbeat()
         let thread = Thread { [weak self] in
             while true {
                 guard let self else { return }
                 self.heartbeatLock.lock(); let active = self.isActive; self.heartbeatLock.unlock()
                 // Nothing to watch in the background: sleep long there.
-                Thread.sleep(forTimeInterval: active ? 1.0 : 5.0)
+                let nap = active ? 1.0 : 5.0
+                let before = Date()
+                Thread.sleep(forTimeInterval: nap)
+                // Overslept by seconds: iOS froze the whole process (this
+                // thread too), not just the main thread. Counted from now, or
+                // the time frozen read as a hang: "main thread stalled
+                // 22157.4 s" in the 10 Nov report (1.28.2).
+                if Date().timeIntervalSince(before) > nap + 2 {
+                    self.heartbeat()
+                    continue
+                }
                 self.heartbeatLock.lock()
                 let stalled = self.isActive ? Date().timeIntervalSince(self.lastHeartbeat) : 0
                 let reported = self.hangReported

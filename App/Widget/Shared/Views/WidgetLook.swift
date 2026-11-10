@@ -6,15 +6,16 @@ import WidgetKit
 // The widgets' look. Built into the widget extension and, for the lab's
 // gallery (-labWidgets), into the app.
 //
-// 1.24.1 (the user, 7 Nov: the paper-and-ink widgets looked out of place in
-// light mode; use the Clear look in light mode and the Tinted look in dark):
-//   - Light: glass. iOS lets a widget be see-through only in its own Clear
-//     and Tinted appearances (the accented rendering mode); in full colour a
-//     clear container shows no wallpaper (Apple, "Displaying the right widget
-//     background"; developer forums thread 845586, unanswered). So the glass
-//     is drawn: the widget's own artwork, softened, under a smoky veil and a
-//     light rim, with white text, as the Clear look has over a wallpaper.
-//   - Dark: tinted. A deep blue glass with text in a light tint.
+// 1.28.2 (the user, 10 Nov: one clear Liquid Glass look, no light and dark
+// styles): the same clear glass in light and dark mode. 1.24.1 had glass in
+// light mode and a deep blue tint in dark.
+//   - Full colour: clear glass, drawn. iOS lets a widget be see-through only
+//     in its own Clear and Tinted appearances (the accented rendering mode);
+//     in full colour a clear container shows no wallpaper (Apple,
+//     "Displaying the right widget background"; developer forums thread
+//     845586, unanswered). So the glass is made of the widget's own artwork,
+//     frosted, under a veil only as dark as the picture needs for white
+//     text, with light through it from the top and a Liquid Glass rim.
 //   - Clear and Tinted (iOS): the accented rendering mode. iOS removes the
 //     background and colours everything by its alpha, except images marked
 //     full colour, which Apple reserves for media artwork. Artwork is full
@@ -22,7 +23,7 @@ import WidgetKit
 //     gradients that keep text readable over a picture (drawn as images, or
 //     iOS would turn them into white haze). Text and bars stay near solid.
 
-enum WidgetLookKind { case glass, tinted, accented }
+enum WidgetLookKind { case glass, accented }
 
 /// The colours of the look the widget is drawn in.
 struct WidgetPalette {
@@ -42,10 +43,8 @@ struct WidgetPalette {
 
     var accented: Bool { kind == .accented }
 
-    /// The Tinted look's colour (the mockup's blue) and its light shade for text.
+    /// iOS's Tinted look's colour, roughly (the lab's gallery draws it).
     static let tint = Color(hex: 0x7FB3E6)
-    static let tintLight = Color(hex: 0xB2D1F0)
-    static let tintInk = Color(hex: 0x122030)
 
     init(scheme: ColorScheme, mode: WidgetRenderingMode) {
         if mode == .accented || mode == .vibrant {
@@ -60,25 +59,14 @@ struct WidgetPalette {
             todayInk = .black
             pill = .white
             pillInk = .black
-        } else if scheme == .dark {
-            kind = .tinted
-            ink = Self.tintLight
-            sub = Self.tintLight.opacity(0.78)
-            track = Self.tintLight.opacity(0.25)
-            chip = Self.tint.opacity(0.25)
-            line = Self.tint.opacity(0.35)
-            accent = Self.tintLight
-            today = Self.tintLight
-            todayInk = Self.tintInk
-            pill = Self.tintLight
-            pillInk = Self.tintInk
         } else {
+            // Clear glass in light and dark mode alike (1.28.2).
             kind = .glass
             ink = .white
-            sub = .white.opacity(0.82)
+            sub = .white.opacity(0.86)
             track = .white.opacity(0.3)
-            chip = .white.opacity(0.22)
-            line = .white.opacity(0.3)
+            chip = .white.opacity(0.2)
+            line = .white.opacity(0.28)
             accent = .white
             today = .white.opacity(0.94)
             todayInk = Color(hex: 0x141312)
@@ -132,7 +120,7 @@ private struct WidgetCard: ViewModifier {
     }
 }
 
-/// Glass in light mode, tinted glass in dark mode; nothing in Clear and
+/// Clear glass in full colour, light or dark mode; nothing in Clear and
 /// Tinted, where iOS draws its own.
 struct WidgetBackdrop: View {
     let t: WidgetPalette
@@ -143,25 +131,30 @@ struct WidgetBackdrop: View {
         switch t.kind {
         case .accented:
             Color.clear
-        case .tinted:
-            ZStack {
-                LinearGradient(colors: [Color(hex: 0x1B2836), Color(hex: 0x0E151D)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                if let soft = art.flatMap(WidgetImages.softened) {
-                    Image(uiImage: soft).resizable().interpolation(.high).scaledToFill().opacity(0.3)
-                }
-                WidgetPalette.tint.opacity(0.14)
-                ContainerRelativeShape().strokeBorder(WidgetPalette.tint.opacity(0.35), lineWidth: 1)
-            }
         case .glass:
+            let ground = art.flatMap(WidgetImages.softened) ?? WidgetImages.wallpaper(seed)
             ZStack {
-                Image(uiImage: art.flatMap(WidgetImages.softened) ?? WidgetImages.wallpaper(seed))
-                    .resizable().interpolation(.high).scaledToFill()
-                // Smoky enough for white text over the brightest picture.
-                Color.black.opacity(0.34)
-                LinearGradient(colors: [.white.opacity(0.16), .white.opacity(0.02)], startPoint: .top, endPoint: .bottom)
+                // What's behind the glass, frosted: the widget's first title.
+                Image(uiImage: ground).resizable().interpolation(.high).scaledToFill()
+                    .saturation(1.12)
+                // Clear glass dims only as much as white text needs: a dark
+                // picture stays clear, a bright one gets a deeper veil.
+                Color.black.opacity(WidgetImages.veil(for: ground))
+                // Light through the glass, from the top.
+                LinearGradient(stops: [.init(color: .white.opacity(0.16), location: 0),
+                                       .init(color: .white.opacity(0.04), location: 0.42),
+                                       .init(color: .white.opacity(0), location: 1)],
+                               startPoint: .top, endPoint: .bottom)
+                // A soft sheen inside the edge, as the glass bends the light.
+                ContainerRelativeShape().inset(by: 1.5)
+                    .strokeBorder(.white.opacity(0.1), lineWidth: 4).blur(radius: 3)
+                // The rim: bright where the light catches it, faint across.
                 ContainerRelativeShape().strokeBorder(
-                    LinearGradient(colors: [.white.opacity(0.55), .white.opacity(0.08), .white.opacity(0.25)],
-                                   startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
+                    LinearGradient(stops: [.init(color: .white.opacity(0.62), location: 0),
+                                           .init(color: .white.opacity(0.14), location: 0.35),
+                                           .init(color: .white.opacity(0.06), location: 0.65),
+                                           .init(color: .white.opacity(0.32), location: 1)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.2)
             }
         }
     }
@@ -195,6 +188,25 @@ enum WidgetImages {
     }
 
     private static let ciContext = CIContext(options: [.useSoftwareRenderer: true, .cacheIntermediates: false])
+
+    /// How dark the clear glass's veil is over this frosted picture: from
+    /// 0.14 over a dark one to 0.44 over a white one, so white text reads
+    /// at about 4.5:1 or better and the glass stays as clear as it can.
+    static func veil(for frosted: UIImage) -> Double {
+        0.14 + 0.3 * Double(luminance(frosted))
+    }
+
+    /// The picture's average brightness, 0…1 (drawn into one pixel).
+    static func luminance(_ image: UIImage) -> CGFloat {
+        var px = [UInt8](repeating: 0, count: 4)
+        guard let cg = image.cgImage,
+              let ctx = CGContext(data: &px, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                                  space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return 0.5 }
+        ctx.interpolationQuality = .medium
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+        return (0.2126 * CGFloat(px[0]) + 0.7152 * CGFloat(px[1]) + 0.0722 * CGFloat(px[2])) / 255
+    }
 
     /// Dark at the bottom (or the left), clear at the other end.
     static let scrimBottom = gradient(vertical: true, stops: [(0.3, 0), (1, 0.82)])
@@ -336,8 +348,8 @@ struct WidgetRing: View {
     }
 }
 
-/// A pill on a picture. Primary: solid with dark text (the tint and its ink
-/// in dark mode). Secondary: frosted with white text. In Clear and Tinted,
+/// A pill on a picture. Primary: solid with dark text. Secondary: frosted
+/// with white text. In Clear and Tinted,
 /// which colour by alpha alone, the primary's text is cut out of it.
 struct WidgetPill: View {
     let text: String
@@ -358,15 +370,15 @@ struct WidgetPill: View {
 
             if primary && t.accented {
                 label.foregroundStyle(.black).blendMode(.destinationOut)
-                    .background(Capsule().fill(.white))
+                    .background(.white, in: .capsule)
                     .compositingGroup()
                     .fixedSize(horizontal: true, vertical: false)
             } else if primary {
-                label.foregroundStyle(t.kind == .tinted ? t.pillInk : Color(hex: 0x141312))
-                    .background(Capsule().fill(t.kind == .tinted ? t.pill : .white))
+                label.foregroundStyle(t.pillInk)
+                    .background(t.pill, in: .capsule)
                     .fixedSize(horizontal: true, vertical: false)
             } else {
-                label.foregroundStyle(.white).background(Capsule().fill(.white.opacity(0.22)))
+                label.foregroundStyle(.white).background(.white.opacity(0.22), in: .capsule)
                     .fixedSize(horizontal: true, vertical: false)
             }
         }
@@ -384,11 +396,11 @@ struct WidgetBadge<Label: View>: View {
     var body: some View {
         if mode == .accented || mode == .vibrant {
             label().foregroundStyle(.black).blendMode(.destinationOut)
-                .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(.white))
+                .background(.white, in: .rect(cornerRadius: radius, style: .continuous))
                 .compositingGroup()
         } else {
             label().foregroundStyle(ink)
-                .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(fill))
+                .background(fill, in: .rect(cornerRadius: radius, style: .continuous))
         }
     }
 }

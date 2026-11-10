@@ -76,6 +76,41 @@ struct LibraryGroup: Identifiable, Hashable {
     /// (Until 1.14.1 this took the FIRST resumable episode, so an episode
     /// left half-watched long ago kept the highlight.)
     @MainActor static func nextUp(in files: [URL]) -> URL {
+        // Kept until the history changes (1.28.2): each Home tile asked
+        // four times a redraw, each a pass over the show's history.
+        let key = memoKey(files), version = HistoryStore.shared.version
+        if let m = nextUpMemo[key], m.version == version { return m.url }
+        let url = findNextUp(in: files)
+        if nextUpMemo.count > 2000 { nextUpMemo.removeAll() }
+        nextUpMemo[key] = (version, url)
+        return url
+    }
+
+    /// Every file watched (a tile's tick), kept like `nextUp`.
+    @MainActor static func allWatched(_ files: [URL]) -> Bool {
+        guard !files.isEmpty else { return false }
+        let key = memoKey(files), version = HistoryStore.shared.version
+        if let m = watchedMemo[key], m.version == version { return m.all }
+        let h = HistoryStore.shared
+        let all = files.allSatisfy { h.isWatched($0) }
+        if watchedMemo.count > 2000 { watchedMemo.removeAll() }
+        watchedMemo[key] = (version, all)
+        return all
+    }
+
+    @MainActor private static var nextUpMemo: [Int: (version: Int, url: URL)] = [:]
+    @MainActor private static var watchedMemo: [Int: (version: Int, all: Bool)] = [:]
+
+    /// A file list by its length and ends: a show's files differ there.
+    private static func memoKey(_ files: [URL]) -> Int {
+        var h = Hasher()
+        h.combine(files.count)
+        h.combine(files.first)
+        h.combine(files.last)
+        return h.finalize()
+    }
+
+    @MainActor private static func findNextUp(in files: [URL]) -> URL {
         let h = HistoryStore.shared
         let watched = files.compactMap { f in h.entry(forURL: f.path).map { (file: f, entry: $0) } }
         if let last = watched.max(by: { $0.entry.updated < $1.entry.updated }) {

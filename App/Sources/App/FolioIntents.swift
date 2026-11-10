@@ -35,7 +35,9 @@ enum ContinueSnapshotWriter {
             .debounce(for: .seconds(1.5), scheduler: DispatchQueue.main)
             .sink { _ in MainActor.assumeIsolated { schedule() } }
         NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { writeInBackground() }
+            // Not for a glance at Notification Centre (AwayWork, 1.28.2):
+            // each write reloads the widgets, which wakes their extension.
+            MainActor.assumeIsolated { AwayWork.onLeaving("Continue Watching widget") { writeInBackground() } }
         }
         // The first snapshot after an install or an update, before anything
         // changes. On the next turn of the main loop: this runs while

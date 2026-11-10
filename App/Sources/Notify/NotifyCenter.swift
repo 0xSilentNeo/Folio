@@ -45,7 +45,9 @@ enum NotifyCenter {
         nc.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated {
                 HabitLog.shared.ended()
-                replan("left the screen")
+                // Planned once Folio has really left (AwayWork, 1.28.2): a
+                // dozen requests with pictures, taken back on return.
+                AwayWork.onLeaving("notifications") { replan("left the screen") }
             }
         }
         nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in

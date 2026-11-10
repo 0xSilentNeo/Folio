@@ -17,9 +17,13 @@ struct SharedPlayLink: Codable, Equatable {
     /// A video file instead of a link: its path in the App Group, under
     /// Share/Inbox (1.27.1).
     var file: String?
+    /// A video from Files on an install with no App Group (1.28.2): a
+    /// bookmark to the file where it is, which iOS lent the extension in
+    /// place. Small enough for the Keychain, where the link waits there.
+    var bookmark: Data?
 
-    init(url: String, title: String? = nil, at: Date, id: String, file: String? = nil) {
-        self.url = url; self.title = title; self.at = at; self.id = id; self.file = file
+    init(url: String, title: String? = nil, at: Date, id: String, file: String? = nil, bookmark: Data? = nil) {
+        self.url = url; self.title = title; self.at = at; self.id = id; self.file = file; self.bookmark = bookmark
     }
 
     /// Where shared videos wait for Folio.
@@ -72,6 +76,7 @@ struct SharedPlayLink: Codable, Equatable {
     static func accepts(_ link: SharedPlayLink, maxAge: TimeInterval, now: Date) -> Bool {
         let age = now.timeIntervalSince(link.at)
         guard age >= -60, age <= maxAge else { return false }
+        if let mark = link.bookmark { return !mark.isEmpty }
         if let file = link.file { return !file.isEmpty && !file.contains("..") }
         guard let u = URL(string: link.url) else { return false }
         return isPlayable(u)
@@ -79,4 +84,8 @@ struct SharedPlayLink: Codable, Equatable {
 
     /// What the extension opens.
     var openURL: URL? { URL(string: "folio://shared?id=\(id)") }
+
+    /// Opened when a video can't be handed over at all (no App Group, and
+    /// not a file iOS lends in place, as Photos' copies): Folio's Add files.
+    static let importURL = URL(string: "folio://import?from=share")!
 }
