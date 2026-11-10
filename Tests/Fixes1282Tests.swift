@@ -116,19 +116,4 @@ final class Fixes1282Tests: XCTestCase {
         XCTAssertEqual(light.pill, dark.pill)
     }
 
-    /// The veil is as clear as the picture allows: light over a dark
-    /// picture, deeper over a bright one, never past 0.44.
-    func testTheVeilFollowsThePicturesBrightness() {
-        func plain(_ c: UIColor) -> UIImage {
-            let f = UIGraphicsImageRendererFormat(); f.scale = 1
-            return UIGraphicsImageRenderer(size: CGSize(width: 8, height: 8), format: f).image { ctx in
-                c.setFill(); ctx.fill(CGRect(x: 0, y: 0, width: 8, height: 8))
-            }
-        }
-        let black = WidgetImages.veil(for: plain(.black)), white = WidgetImages.veil(for: plain(.white))
-        let grey = WidgetImages.veil(for: plain(UIColor(white: 0.5, alpha: 1)))
-        XCTAssertEqual(black, 0.14, accuracy: 0.01)
-        XCTAssertEqual(white, 0.44, accuracy: 0.01)
-        XCTAssertTrue(black < grey && grey < white)
-    }
 }

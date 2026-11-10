@@ -252,6 +252,8 @@ struct HomeView: View {
             }
             Spacer()
             if kids.isOn { KidsBadge() }
+            // As on Discover (1.28.4): the list is as much Home's as Discover's.
+            WatchlistSheetButton()
             Menu {
                 Button { showAddFiles = true } label: { Label("Add files or folders", systemImage: "folder.badge.plus") }
                 // The kids profile plays what the library and Discover let through, not any link.

@@ -20,6 +20,14 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.4", items: [
+            Item(icon: "rectangle.on.rectangle", title: "Frosted glass widgets",
+                 text: "The widgets are frosted glass made from their own pictures, blurred and toned down, in light and dark mode alike."),
+            Item(icon: "bookmark", title: "Watchlist on Home",
+                 text: "Your Watchlist is a tap away at the top of Home too."),
+            Item(icon: "switch.2", title: "Resume in Control Centre",
+                 text: "The Resume control shows its play button and plays what you watched last."),
+        ]),
         Release(version: "1.28.3", items: [
             Item(icon: "arrow.down.circle", title: "Downloads don't crash Folio",
                  text: "Folio no longer closes while a download runs, pauses or is removed, nor on every launch after that."),

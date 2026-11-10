@@ -32,6 +32,9 @@ final class HitchProbe: NSObject {
 
     /// Starts watching (a new start under the same tag replaces the old one).
     static func start(_ tag: String, _ what: String, seconds: Double = 1.5) {
+        // Only while a trace is on (1.28.4): every player button started a
+        // second of 120 Hz display link, held ProMotion up, and logged a line.
+        guard PiPTrace.on || LibTrace.on else { return }
         running[tag]?.link?.invalidate()
         running[tag] = HitchProbe(tag: tag, what: what, seconds: seconds)
     }

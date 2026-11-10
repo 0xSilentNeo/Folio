@@ -92,8 +92,12 @@ struct AiringSnapshot: Codable, Equatable {
     /// The large widget shows seven; a few more so one that ends doesn't leave a gap.
     static let limit = 12
     static let widgetKind = "Airing"
-    /// Posters are kept this big on their long side: a medium widget's row at 3x.
-    static let picturePixels: CGFloat = 240
+    /// Posters are kept this big on their long side. 240 (a medium widget's
+    /// row at 3x) was stretched three times over the Airing Day widget,
+    /// which fills a small widget with it (1.28.4: 600, 400 wide, for its
+    /// 510-pixel square on a Pro Max; about 1 MB each drawn, so the large
+    /// widget's seven stay well within a widget's memory).
+    static let picturePixels: CGFloat = 600
 
     private static let fileName = "airing.json"
 

@@ -1863,8 +1863,44 @@ final class PlayerModel: ObservableObject {
     func setPaused(_ p: Bool) {
         guard let c = client else { return }
         if !p { warmAudioForPlay(c) }
-        if p != paused { paused = p; pipState.paused = p }
+        if p != paused {
+            paused = p; pipState.paused = p
+            timePlayPause(p)
+        }
         c.setAsync("pause", p)
+    }
+
+    // MARK: Play and pause, timed (1.28.4)
+
+    /// The last play or pause tapped, and when: the log says how long mpv
+    /// took to answer and, for play, how long until the picture moved.
+    private var playPauseTap: (pause: Bool, at: CFTimeInterval, mpv: Double?)?
+    private var playPauseTimed = 0
+
+    private func timePlayPause(_ pause: Bool) {
+        guard playPauseTimed < 12 else { return }        // a few a session are enough
+        let at = CACurrentMediaTime()
+        playPauseTap = (pause, at, nil)
+        guard !pause, onLayer, mode == .main else { return }
+        pip.onNextFrame { [weak self] t in
+            MainActor.assumeIsolated {
+                guard let self, let tap = self.playPauseTap, tap.at == at else { return }
+                self.playPauseTimed += 1
+                let mpv = tap.mpv.map { String(format: "mpv answered in %.0f ms, ", $0) } ?? ""
+                dlog("player", String(format: "play: %@picture moving %.0f ms after the tap (audio output %@)", mpv, (t - at) * 1000, self.audioWarm ? "open" : "opened again"))
+            }
+        }
+    }
+
+    /// mpv's echo of pause: how long after the tap.
+    private func pauseAnswered(_ p: Bool) {
+        guard let tap = playPauseTap, tap.pause == p, tap.mpv == nil else { return }
+        let ms = (CACurrentMediaTime() - tap.at) * 1000
+        playPauseTap?.mpv = ms
+        if p {
+            playPauseTimed += 1
+            dlog("player", String(format: "pause: mpv answered in %.0f ms", ms))
+        }
     }
 
     // MARK: Instant play and pause (1.28.2)
@@ -4339,6 +4375,7 @@ extension PlayerModel: MPVClientDelegate {
             mpvMuted = value.bool ?? false
         case "pause":
             let p = value.bool ?? false
+            pauseAnswered(p)
             if p != paused { paused = p }
             pipState.paused = p
             pip.updatePlayback(position: position, rate: p ? 0 : speed)

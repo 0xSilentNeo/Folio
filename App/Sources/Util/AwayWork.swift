@@ -17,7 +17,7 @@ enum AwayWork {
     static let delay: TimeInterval = 12
 
     private static var pending: [(name: String, work: () -> Void)] = []
-    private static var timer: DispatchWorkItem?
+    private static var timer: Task<Void, Never>?
     private static var task = UIBackgroundTaskIdentifier.invalid
     private static var observing = false
 
@@ -36,9 +36,11 @@ enum AwayWork {
                 MainActor.assumeIsolated { runNow(); endTask() }
             }
         }
-        let w = DispatchWorkItem { MainActor.assumeIsolated { runNow() } }
-        timer = w
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: w)
+        timer = Task {
+            try? await Task.sleep(for: .seconds(delay))
+            guard !Task.isCancelled else { return }
+            runNow()
+        }
     }
 
     private static func runNow() {
@@ -50,8 +52,9 @@ enum AwayWork {
         }
         // A moment more for what the work started (files written off the
         // main thread), unless more work has come meanwhile.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-            MainActor.assumeIsolated { if timer == nil, pending.isEmpty { endTask() } }
+        Task {
+            try? await Task.sleep(for: .seconds(4))
+            if timer == nil, pending.isEmpty { endTask() }
         }
     }
 

@@ -75,6 +75,13 @@ final class PiPManager: NSObject {
 
     /// PiP trace: when each of the last frames went into the layer.
     private var frameTimes: [CFTimeInterval] = []
+    /// Told when the next frame goes into the layer (play's timing, 1.28.4).
+    private var nextFrameWatch: (@Sendable (CFTimeInterval) -> Void)?
+
+    /// `f` gets the time the next frame goes into the layer, on the main thread.
+    func onNextFrame(_ f: @escaping @Sendable (CFTimeInterval) -> Void) {
+        enqueueLock.lock(); nextFrameWatch = f; enqueueLock.unlock()
+    }
     /// Diagnostics → PiP trace, as it was when this player opened.
     private let tracing = UserDefaults.standard.bool(forKey: SettingsKey.pipTrace)
 
@@ -219,6 +226,11 @@ final class PiPManager: NSObject {
         displayLayer.enqueue(sb)
         lastEnqueue = CACurrentMediaTime()
         enqueued += 1
+        if let w = nextFrameWatch {
+            nextFrameWatch = nil
+            let t = lastEnqueue
+            DispatchQueue.main.async { w(t) }
+        }
         if tracing {   // PiPTrace.on, read once (not a settings lookup per frame)
             frameTimes.append(lastEnqueue)
             if frameTimes.count > 600 { frameTimes.removeFirst(frameTimes.count - 600) }

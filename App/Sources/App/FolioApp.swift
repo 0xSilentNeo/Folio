@@ -332,6 +332,14 @@ struct RootView: View {
                 dlog("open", "shared link: \(u.scheme ?? "?")://\(u.host ?? "")")
                 IntentPlayback.play(link.url)
             }
+        case "resume":
+            // The Resume control (1.28.4): what you watched last, from its place.
+            guard let e = HistoryStore.shared.continueWatching.first else {
+                dlog("intents", "Resume control: nothing to continue")
+                return
+            }
+            dlog("intents", "Resume control: \(ShowCatalog.name(of: e))")
+            IntentPlayback.start(e.item)
         case "import":
             // The share sheet couldn't hand the video over (no App Group, and
             // a copy rather than the file itself): Add files, to pick it.

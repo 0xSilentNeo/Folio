@@ -23,9 +23,10 @@ enum WidgetLab {
         DispatchQueue.main.asyncAfter(deadline: .now() + 12) { render() }
     }
 
-    static let small = CGSize(width: 170, height: 170)
-    static let medium = CGSize(width: 364, height: 170)
-    static let large = CGSize(width: 364, height: 382)
+    // A Pro Max's widgets on iOS 27 (measured from the user's screenshot, 1.28.4).
+    static let small = CGSize(width: 176.67, height: 176.67)
+    static let medium = CGSize(width: 378.67, height: 176.67)
+    static let large = CGSize(width: 378.67, height: 394.33)
 
     static func render() {
         guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
@@ -132,9 +133,26 @@ enum WidgetLab {
 
     // MARK: What the widgets would read
 
+    /// `-labArt` (1.28.4): the samples with real pictures, Documents/lab-art-1…4.jpg,
+    /// to judge the frosted glass (the samples have none, so it fell back to neutral).
+    private static let labArt: [UIImage] = {
+        guard CommandLine.arguments.contains("-labArt"),
+              let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return [] }
+        return (1...4).compactMap { UIImage(contentsOfFile: docs.appendingPathComponent("lab-art-\($0).jpg").path) }
+    }()
+
+    private static func artName(_ i: Int) -> String { "lab-art-\(i % max(1, labArt.count))" }
+    private static var artPictures: [String: UIImage] {
+        Dictionary(uniqueKeysWithValues: labArt.enumerated().map { ("lab-art-\($0.offset)", $0.element) })
+    }
+
     private static func continueEntry() -> ContinueEntry {
         let dir = WidgetStore.continueWatching()
-        guard let snap = ContinueSnapshot.read(from: dir), !snap.items.isEmpty else { return .sample }
+        guard let snap = ContinueSnapshot.read(from: dir), !snap.items.isEmpty else {
+            guard !labArt.isEmpty, case .items(var items) = ContinueEntry.sample.content else { return .sample }
+            for i in items.indices { items[i].picture = artName(i) }
+            return ContinueEntry(date: Date(), content: .items(items), pictures: artPictures)
+        }
         var pictures: [String: UIImage] = [:]
         for name in snap.items.flatMap({ [$0.picture, $0.poster] }).compactMap({ $0 }) {
             if let d = dir?.read(name), let img = UIImage(data: d) { pictures[name] = img }
@@ -144,7 +162,12 @@ enum WidgetLab {
 
     private static func airingEntry() -> AiringEntry {
         let dir = WidgetStore.airing()
-        guard let snap = AiringSnapshot.read(from: dir), !snap.items.isEmpty else { return .sample() }
+        guard let snap = AiringSnapshot.read(from: dir), !snap.items.isEmpty else {
+            let sample = AiringEntry.sample()
+            guard !labArt.isEmpty, case .snapshot(var s) = sample.content else { return sample }
+            for i in s.items.indices { s.items[i].picture = artName(i + 1) }
+            return AiringEntry(date: sample.date, content: .snapshot(s), pictures: artPictures)
+        }
         var pictures: [String: UIImage] = [:]
         for name in snap.items.compactMap(\.picture) + (snap.recent ?? []).compactMap(\.picture) {
             if let d = dir?.read(name), let img = UIImage(data: d) { pictures[name] = img }
@@ -159,6 +182,9 @@ enum WidgetLab {
         if let w = WeekGlance.read(from: store), w.seconds > 0 { e.week = w }
         if let s = ServersGlance.read(from: store) { e.servers = s }
         if let p = PicksGlance.read(from: store), !p.picks.isEmpty { e.picks = p }
+        if !labArt.isEmpty {
+            for (i, r) in (e.servers?.releases ?? []).enumerated() { e.pictures[ServersTile.pictureName(r)] = labArt[(i + 2) % labArt.count] }
+        }
         var names = (e.servers?.releases ?? []).map(ServersTile.pictureName)
         names += (e.picks?.picks ?? []).compactMap(\.picture)
         for n in names { if let d = store?.read(n), let img = UIImage(data: d) { e.pictures[n] = img } }

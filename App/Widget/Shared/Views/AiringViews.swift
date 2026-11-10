@@ -211,7 +211,9 @@ struct AiringDayTile: View {
         let day = row.episode.localDay() ?? row.episode.airDate
         Looked { t in
             ZStack(alignment: .bottomLeading) {
-                WidgetArt(image: picture, seed: row.item.name)
+                // The poster's top (1.28.4): centred, its own title sat under
+                // the widget's name ("MOBLAND" behind "MobLand").
+                WidgetArt(image: picture, seed: row.item.name, alignment: .top)
                 WidgetScrim()
                 VStack(alignment: .leading, spacing: 2) {
                     Text(row.item.name).font(.system(size: 15, weight: .bold)).lineLimit(2)
