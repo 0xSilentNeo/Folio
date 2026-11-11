@@ -18,16 +18,25 @@ struct WatchedMenuItems: View {
         case thisEpisode
         /// All of a title's episodes: "Mark all as watched".
         case all
+        /// The season shown (Discover's page, 1.30.0): "Mark this season as watched".
+        case season
     }
 
-    let keys: [String]
+    /// What's marked, one list of keys per item (1.30.0): an episode's
+    /// library file and its addon entry are one item, watched when either
+    /// is, and marked together (WatchedState).
+    let units: [[String]]
     var scope: Scope = .one
     @ObservedObject private var history = HistoryStore.shared
     /// The history item for a key that was never played (to mark it watched).
     let item: (String) -> MediaItem
 
     init(keys: [String], scope: Scope = .one, item: @escaping (String) -> MediaItem) {
-        self.keys = keys
+        self.init(units: keys.map { [$0] }, scope: scope, item: item)
+    }
+
+    init(units: [[String]], scope: Scope = .one, item: @escaping (String) -> MediaItem) {
+        self.units = units
         self.scope = scope
         self.item = item
     }
@@ -43,7 +52,8 @@ struct WatchedMenuItems: View {
     }
 
     var body: some View {
-        let offers = Self.offers(watched: keys.filter { history.isWatched(key: $0) }.count, total: keys.count)
+        let offers = Self.offers(watched: units.filter { $0.contains { history.isWatched(key: $0) } }.count, total: units.count)
+        let keys = units.flatMap { $0 }
         if offers.markWatched {
             Button { history.setWatched(keys, true, item: item) } label: { Label(title(watched: true), systemImage: "eye") }
         }
@@ -58,6 +68,7 @@ struct WatchedMenuItems: View {
         case .one: return "Mark as \(state)"
         case .thisEpisode: return "Mark this episode as \(state)"
         case .all: return "Mark all as \(state)"
+        case .season: return "Mark this season as \(state)"
         }
     }
 }

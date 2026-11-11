@@ -124,12 +124,23 @@ actor MetadataService {
         dlog("meta", "fix match: \(p.title) \(pin.map { "pinned to \($0.id)" } ?? "back to the automatic match")")
     }
 
+    private static func cacheKey(_ p: TitleParser.Parsed) -> String {
+        var key = [p.title.lowercased(), p.year.map(String.init) ?? "", p.season.map(String.init) ?? "", p.episode.map(String.init) ?? ""].joined(separator: "|")
+        if let x = p.extra { key += "|" + x.lowercased() + (p.part.map { String($0) } ?? "") + "|" + (p.subtitle?.lowercased() ?? "") }
+        return key
+    }
+
+    /// What's kept for a file already, without asking IMDb (1.30.0: the
+    /// shared watched state reads a file's season and episode from it).
+    func known(filename: String) -> MediaMeta? {
+        cache[Self.cacheKey(TitleParser.parse(filename))]?.meta
+    }
+
     func lookup(filename: String) async -> MediaMeta? {
         guard UserDefaults.standard.bool(forKey: SettingsKey.metadataFetching) else { return nil }
         let p = TitleParser.parse(filename)
         guard p.title.count >= 2 else { return nil }
-        var key = [p.title.lowercased(), p.year.map(String.init) ?? "", p.season.map(String.init) ?? "", p.episode.map(String.init) ?? ""].joined(separator: "|")
-        if let x = p.extra { key += "|" + x.lowercased() + (p.part.map { String($0) } ?? "") + "|" + (p.subtitle?.lowercased() ?? "") }
+        let key = Self.cacheKey(p)
         if let e = cache[key], e.meta != nil || Date().timeIntervalSince(e.date) < 86400 * 3 {
             if let m = e.meta, (m.version ?? 0) < MediaMeta.currentVersion || m.titleLanguage != EpisodeTitles.language {
                 refresh(key: key, parsed: p)

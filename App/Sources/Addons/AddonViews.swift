@@ -189,34 +189,46 @@ struct CatalogGridView: View {
 
 struct EpisodeRow: View {
     let video: MetaVideo
+    /// The episode's state on either side (1.30.0, WatchedState.combined):
+    /// its addon entry or its library file's.
     let entry: HistoryEntry?
+    @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
 
     private var episodeTitle: String {
         if let e = video.episode { return "\(e). " + (video.title ?? "Episode \(e)") }
         return video.title ?? video.id
     }
+    private var watched: Bool { entry?.isFinished == true }
+    /// Unwatched episode with spoilers hidden: no synopsis, a blurred
+    /// still, as the library's rows have it (1.30.0).
+    private var spoilerHidden: Bool { hideSpoilers && video.episode != nil && !watched }
+
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
             PosterImage(url: video.thumbnail, aspect: 16.0 / 9.0, cornerRadius: 10)
+                .blur(radius: spoilerHidden ? 12 : 0)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .frame(width: 130)
                 .overlay(alignment: .bottom) {
-                    if let entry, entry.progress > 0.01 {
+                    // Not on a watched one, as in the library.
+                    if let entry, !watched, entry.progress > 0.01 {
                         ArtProgressBar(progress: entry.progress)
                     }
                 }
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 Text(episodeTitle)
                     .font(.subheadline.weight(.semibold)).lineLimit(2)
-                if let o = video.overview { Text(o).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
+                if !spoilerHidden, let o = video.overview { Text(o).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
                 if video.rating != nil || video.released != nil {
                     Text([video.rating.map { "★ \($0)" }, video.released].compactMap { $0 }.joined(separator: " · ")).font(.caption2).foregroundStyle(.secondary)
                         .accessibilityLabel([video.rating.map { "Rated \($0)" }, video.released].compactMap { $0 }.joined(separator: ", "))
                 }
-                if let entry, entry.isFinished {
-                    Label("Watched", systemImage: "checkmark.circle.fill").font(.caption2).foregroundStyle(Theme.accent)
-                }
             }
             Spacer(minLength: 0)
+            // The library's eye, at the row's top right as there (1.30.0: a
+            // checkmark and the word under the text). The row says it as its value.
+            if watched { WatchedGlyph(spoken: false).padding(.top, 2) }
         }
         .padding(8)
         // The library's episode rows' radius (1.27.0: 14 here, 16 there).
@@ -231,6 +243,10 @@ struct StreamsView: View {
     let video: MetaVideo?
     /// Play Season: this episode and the ones after it (first = `video`).
     var seasonVideos: [MetaVideo] = []
+    /// Start over (1.30.0): the stream starts at 0 whatever its history says.
+    var fromStart = false
+    /// Where it starts when only the episode's library file has a place (1.30.0).
+    var startAt: Double? = nil
 
     struct StreamGroup: Identifiable { let id: String; let addon: InstalledAddon; var streams: [AddonStream]; var error: String? }
     @State private var groups: [StreamGroup] = []
@@ -375,9 +391,9 @@ struct StreamsView: View {
                 let pick = AddonPlayback.pick(from: s, addon: addon, context: first)
                 let rest = seasonVideos.dropFirst().map { AddonPlayback.placeholder(context(for: $0), pick: pick) }
                 dlog("player", "season: \(seasonVideos.count) episodes from \(addon.manifest.name), release group \(pick.bingeGroup ?? "none"), \(pick.resolution ?? "?")")
-                PlayerPresenter.play(queue: [item] + rest, index: 0)
+                PlayerPresenter.play(queue: [item] + rest, index: 0, fromStart: fromStart, startAt: startAt)
             } else {
-                PlayerPresenter.play(item)
+                PlayerPresenter.play(queue: [item], index: 0, fromStart: fromStart, startAt: startAt)
             }
         }
     }

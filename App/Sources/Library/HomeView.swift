@@ -987,6 +987,8 @@ struct MediaTile: View {
     var trailingNote: String? = nil
     /// Every file behind the tile is watched: an eye on the picture.
     var watched = false
+    /// False where the tile's accessibility value says "Watched" (1.30.0, episode lists).
+    var watchedSpoken = true
     /// Home's titles: their size on the picture, bottom right, as folder
     /// tiles have it (above the progress bar when there is one).
     var sizeBadge: Int64? = nil
@@ -1009,7 +1011,7 @@ struct MediaTile: View {
                     .clipped()
                 if !watched, let progress, progress > 0.01 { ArtProgressBar(progress: progress) }
             }
-            .overlay(alignment: .topTrailing) { if watched { WatchedBadge() } }
+            .overlay(alignment: .topTrailing) { if watched { WatchedBadge().accessibilityHidden(!watchedSpoken) } }
             .overlay(alignment: .bottomTrailing) {
                 if let sizeBadge {
                     SizeBadge(size: sizeBadge)
