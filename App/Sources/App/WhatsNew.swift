@@ -20,6 +20,12 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.9", items: [
+            Item(icon: "bolt", title: "Continue Watching starts sooner",
+                 text: "A stream you've played recently starts from its saved download address, without waiting for a slow addon to hand it over again."),
+            Item(icon: "trash", title: "Clear opens from its pill",
+                 text: "The Clear pill over recent searches opens into its own menu, and comes up every time."),
+        ]),
         Release(version: "1.28.8", items: [
             Item(icon: "magnifyingglass", title: "System search in Settings",
                  text: "Settings' search is iOS's own field, and the empty search pages are the system's too."),

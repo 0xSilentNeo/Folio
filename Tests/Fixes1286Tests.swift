@@ -58,6 +58,29 @@ final class Fixes1286Tests: XCTestCase {
         d.removePersistentDomain(forName: "folio.tests.traces")
     }
 
+    /// 1.28.9: where a stream link led is kept for half a day, so a slow
+    /// addon link isn't waited for on the next play.
+    func testAResolvedAddressIsKeptForHalfADay() async throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("links-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: file) }
+        let link = try XCTUnwrap(URL(string: "https://addon.invalid/playback/abc/E1.mkv"))
+        let address = try XCTUnwrap(URL(string: "https://dl.invalid/d/xyz/E1.mkv"))
+        let t0 = Date(timeIntervalSince1970: 1_800_000_000)
+        let store = ResolvedLinks(file: file)
+        let none = await store.address(for: link, now: t0)
+        XCTAssertNil(none)
+        await store.keep(address, for: link, now: t0)
+        // Read again from the file, as after a relaunch.
+        let again = ResolvedLinks(file: file)
+        let hit = await again.address(for: link, now: t0.addingTimeInterval(3600))
+        XCTAssertEqual(hit, address)
+        let late = await again.address(for: link, now: t0.addingTimeInterval(13 * 3600))
+        XCTAssertNil(late, "past half a day the link is asked again")
+        await again.forget(link)
+        let gone = await again.address(for: link, now: t0.addingTimeInterval(60))
+        XCTAssertNil(gone)
+    }
+
     /// One entry this version can't read doesn't lose the rest of a saved list.
     func testASavedListReadsEntryByEntry() throws {
         let meta = MetaItem(id: "tt1", type: "movie", name: "A", poster: nil, description: nil, releaseInfo: nil, imdbRating: nil, genres: nil)

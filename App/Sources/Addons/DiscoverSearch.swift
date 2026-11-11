@@ -214,7 +214,6 @@ struct AddonSearchView: View {
     @State private var ownQuery = ""
     @State private var fieldActive = false
     @State private var opened: Opened?
-    @State private var confirmClear = false
     @State private var focusedOnce = false
 
     private var query: String {
@@ -286,20 +285,26 @@ struct AddonSearchView: View {
                 HStack {
                     Text("Recent").accessibilityAddTraits(.isHeader)
                     Spacer()
-                    Button { confirmClear = true } label: {
+                    // A menu the pill itself opens into (1.28.9). 1.28.7 hung
+                    // a confirmation dialog on the pill: iOS drew it as a
+                    // separate question, and after a few taps it stopped
+                    // coming up at all (a dialog anchored in a list's header
+                    // loses its anchor when the header is redrawn). A menu
+                    // is the pill's own glass morphing open, and keeps no
+                    // state that can stick.
+                    Menu {
+                        Section("Clear recent searches?") {
+                            Button("Clear", systemImage: "trash", role: .destructive) {
+                                withAnimation(.smooth(duration: 0.3)) { search.clearHistory() }
+                            }
+                        }
+                    } label: {
                         Label("Clear", systemImage: "trash").font(.caption.weight(.semibold))
                     }
+                    .menuStyle(.button)
                     .modifier(ClearPillStyle())
                     .accessibilityLabel("Clear recent searches")
                     .accessibilityIdentifier("searchClearRecent")
-                    // On the pill itself (1.28.7), so iOS 26 morphs the
-                    // question out of it; on the list it rose from the
-                    // bottom of the screen.
-                    .confirmationDialog("Clear recent searches?", isPresented: $confirmClear, titleVisibility: .visible) {
-                        Button("Clear", role: .destructive) {
-                            withAnimation(.smooth(duration: 0.3)) { search.clearHistory() }
-                        }
-                    }
                 }
                 .textCase(nil)
             }
@@ -452,8 +457,7 @@ private struct OwnSearchField: ViewModifier {
 }
 
 /// The Recent header's Clear pill (1.28.7). iOS 26: the system's glass
-/// button, which swells under the finger and lets the question morph out
-/// of it. Before iOS 26: the filled capsule the search's other pills are.
+/// button, which swells under the finger and morphs open into its menu. Before iOS 26: the filled capsule the search's other pills are.
 private struct ClearPillStyle: ViewModifier {
     @ViewBuilder
     func body(content: Content) -> some View {
