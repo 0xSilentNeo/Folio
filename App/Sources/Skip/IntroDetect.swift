@@ -199,6 +199,13 @@ enum IntroMatcher {
                            errorRate: Double(best.errors) / Double((best.end - best.start) * 16))
         let length = m.endA - m.startA
         guard length >= minLength, length <= maxLength, m.startA < latestStart, m.startB < latestStart else { return nil }
+        // A file shorter than what is analysed was read whole: what its
+        // second half shares with the other is the ending, not the intro.
+        let whole = Double(IntroAudio.analysed) - 10
+        for (start, frames) in [(m.startA, a.count), (m.startB, b.count)] {
+            let seconds = Double(frames) / fps
+            if seconds < whole, start > seconds * 0.4 { return nil }
+        }
         // An intro that opens the file starts at 0, not half a second in.
         if m.startA < 1.5 { m.startA = 0 }
         if m.startB < 1.5 { m.startB = 0 }

@@ -24,5 +24,7 @@ final class Fixes1290Tests: XCTestCase {
     func testSpecialsShareTheShowsMatch() {
         let show = MetadataService.pinKey(TitleParser.parse("Lab Show - 03 (1080p).mkv"))
         XCTAssertEqual(show, "lab show")
+        // Two films of one name keep their own match (1.30.0).
+        XCTAssertNotEqual(MetadataService.pinKey(TitleParser.parse("Dune (1984).mkv")), MetadataService.pinKey(TitleParser.parse("Dune (2021).mkv")))
     }
 }

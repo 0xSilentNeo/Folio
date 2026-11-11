@@ -20,6 +20,14 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.30.0", items: [
+            Item(icon: "forward.end", title: "Intros found on this iPhone",
+                 text: "For episodes in your library that no source knows, Folio compares an episode's sound with its neighbour's and offers Skip Intro from the next play. Nothing leaves the phone."),
+            Item(icon: "eye", title: "One watched state",
+                 text: "An episode watched from your library is watched in Discover too, and the other way round. Both title pages have the same marks and menu, and a half-watched episode resumes from either."),
+            Item(icon: "ipad.landscape", title: "Made for iPad",
+                 text: "Bigger posters, readable columns, tabs that turn into a sidebar, pointer highlights, and keys in the player: Space, arrows, F, N and Esc."),
+        ]),
         Release(version: "1.29.0", items: [
             Item(icon: "wand.and.stars", title: "Fix Match",
                  text: "The wrong poster or title? On a title's page, tap ⋯ → Fix Match, search IMDb and pick the right one. Every episode follows."),

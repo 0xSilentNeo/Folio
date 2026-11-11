@@ -38,7 +38,13 @@ enum IntroAudio {
 
     /// Blocks until the sound is decoded: for a background queue only.
     static func fingerprintNow(of url: URL, seconds: Int, cancelled: () -> Bool) -> Sound? {
-        let wav = FileManager.default.temporaryDirectory.appendingPathComponent("intro-\(UUID().uuidString).wav")
+        let tmp = FileManager.default.temporaryDirectory
+        // One left by a run the app was closed in the middle of (one analysis
+        // runs at a time, so any other file here is nobody's).
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: tmp.path)) ?? [] where name.hasPrefix("intro-") && name.hasSuffix(".wav") {
+            try? FileManager.default.removeItem(at: tmp.appendingPathComponent(name))
+        }
+        let wav = tmp.appendingPathComponent("intro-\(UUID().uuidString).wav")
         defer { try? FileManager.default.removeItem(at: wav) }
         guard decode(url.path, to: wav.path, seconds: seconds, cancelled: cancelled), !cancelled(),
               let data = try? Data(contentsOf: wav, options: .mappedIfSafe),
@@ -50,7 +56,6 @@ enum IntroAudio {
     /// Runs an mpv over `path` that writes its first `seconds` of sound to
     /// `wav`: mono, 8 kHz, 16-bit. False when mpv couldn't, or was cancelled.
     static func decode(_ path: String, to wav: String, seconds: Int, cancelled: () -> Bool) -> Bool {
-        setlocale(LC_NUMERIC, "C")
         guard let h = mpv_create() else { return false }
         let options: [(String, String)] = [
             // Nothing of the user's setup: no mpv.conf, scripts or key bindings.
@@ -115,11 +120,11 @@ enum IntroAudio {
         return data.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> [Int16]? in
             func u16(_ o: Int) -> Int { Int(raw.loadUnaligned(fromByteOffset: o, as: UInt16.self).littleEndian) }
             func u32(_ o: Int) -> Int { Int(raw.loadUnaligned(fromByteOffset: o, as: UInt32.self).littleEndian) }
-            var at = 12, tag = 0, channels = 0, bits = 0, start = -1
+            var at = 12, tag = 0, channels = 0, bits = 0, rate = 0, start = -1
             while at + 8 <= raw.count {
                 let id = String(decoding: raw[at..<at + 4], as: UTF8.self), size = u32(at + 4)
                 if id == "fmt ", at + 24 <= raw.count {
-                    tag = u16(at + 8); channels = u16(at + 10); bits = u16(at + 22)
+                    tag = u16(at + 8); channels = u16(at + 10); rate = u32(at + 12); bits = u16(at + 22)
                     // "Extensible": the real format follows the 24 bytes of the plain one.
                     if tag == 0xFFFE, size >= 26, at + 34 <= raw.count { tag = u16(at + 32) }
                 } else if id == "data" {
@@ -128,7 +133,8 @@ enum IntroAudio {
                 }
                 at += 8 + size + (size & 1)
             }
-            guard start > 0, channels > 0, (tag == 1 && bits == 16) || (tag == 3 && bits == 32) else { return nil }
+            // Another rate (the engine kept the file's own) would put every time off.
+            guard start > 0, channels > 0, rate == IntroFingerprint.sampleRate, (tag == 1 && bits == 16) || (tag == 3 && bits == 32) else { return nil }
             let width = bits / 8 * channels
             let count = (raw.count - start) / width
             var out = [Int16](repeating: 0, count: count)
@@ -207,6 +213,8 @@ actor IntroFinder {
     /// The intro already found for this file, if any. No decoding.
     func known(for url: URL) -> Intro? {
         guard let key = Self.key(for: url), let e = load()[key], let s = e.start, let end = e.end else { return nil }
+        // Still in use: kept when the list is trimmed (written with the next save).
+        entries?[key]?.used = Date()
         return Intro(start: s, end: end)
     }
 
@@ -236,18 +244,33 @@ actor IntroFinder {
         var decoded = 0
         func fingerprint(_ u: URL, _ k: String) async -> [UInt16]? {
             if let e = load()[k] { return Self.values(e.fingerprint) }
-            guard let s = await IntroAudio.fingerprint(of: u) else { return nil }
+            let s = await IntroAudio.fingerprint(of: u)
+            if s == nil, Task.isCancelled { return nil }
             decoded += 1
             var all = load()
-            all[k] = Entry(fingerprint: Self.data(s.fingerprint))
+            // A file that can't be read (no sound, damaged, too slow) is kept
+            // as empty: it isn't decoded again on every play.
+            all[k] = Entry(fingerprint: Self.data(s?.fingerprint ?? []))
             entries = all
-            return s.fingerprint
+            return s?.fingerprint ?? []
+        }
+        /// Not compared again: with every neighbour when it is this file that can't be read.
+        func unreadable(_ name: String, own: Bool) {
+            var all = load()
+            let others = own ? candidates(for: url, tried: []).compactMap { Self.key(for: $0) } : [otherKey]
+            let had = all[key]?.tried ?? []
+            all[key]?.tried.append(contentsOf: others.filter { !had.contains($0) })
+            entries = all
+            save()
+            dlog("skip", "on device: \(name): sound not read, not tried again")
         }
         guard let a = await fingerprint(url, key), !Task.isCancelled, let b = await fingerprint(other, otherKey), !Task.isCancelled else {
             save()
             dlog("skip", "on device: \(url.lastPathComponent): sound not read (\(Task.isCancelled ? "cancelled" : "decode failed")) after \(Self.ms(t0)) ms")
             return nil
         }
+        if a.isEmpty { unreadable(url.lastPathComponent, own: true); return nil }
+        if b.isEmpty { unreadable(other.lastPathComponent, own: false); return nil }
         let t1 = CFAbsoluteTimeGetCurrent()
         let match = IntroMatcher.match(a, b)
         var all = load()

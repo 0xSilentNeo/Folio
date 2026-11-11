@@ -97,7 +97,13 @@ actor MetadataService {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("metadata-pins.json")
     }
 
-    static func pinKey(_ p: TitleParser.Parsed) -> String { TitleParser.baseTitle(p).lowercased() }
+    /// A film is pinned with its year (1.30.0): "Dune (1984)" and "Dune
+    /// (2021)" shared one pin, so fixing one re-matched the other.
+    static func pinKey(_ p: TitleParser.Parsed) -> String {
+        let base = TitleParser.baseTitle(p).lowercased()
+        if p.episode == nil, p.extra == nil, let y = p.year { return "\(base) (\(y))" }
+        return base
+    }
 
     private func loadedPins() -> [String: Pin] {
         if let pins { return pins }

@@ -289,6 +289,7 @@ final class PlayerModel: ObservableObject {
         startFirstAt = fromStart ? nil : startAt
         self.queue = queue
         self.queueIndex = min(max(0, startIndex), queue.count - 1)
+        startFirstID = queue[min(max(0, startIndex), queue.count - 1)].id
         if UserDefaults.standard.string(forKey: SettingsKey.renderer) == "gl", let gl = SampleBufferRenderer.make(output: pip.makeSink()) {
             renderer = .gl
             glRenderer = gl
@@ -1099,11 +1100,15 @@ final class PlayerModel: ObservableObject {
     /// WatchedState.carriedPosition): a stream of an episode half watched
     /// from the library, or the file of one half watched from a stream.
     private var startFirstAt: Double?
+    /// The file those two are for.
+    private var startFirstID: String?
 
     private func startOptions(for item: MediaItem, toast: Bool) -> [String] {
-        if startFirstAtZero { startFirstAtZero = false; return ["start=0"] }
-        if let at = startFirstAt {
-            startFirstAt = nil
+        // Kept until the file has opened (onFileLoaded): Try Again opens it
+        // again, and must start where the first try was to.
+        let isFirst = item.id == startFirstID
+        if isFirst, startFirstAtZero { return ["start=0"] }
+        if isFirst, let at = startFirstAt {
             if defaults.bool(forKey: SettingsKey.resumePlayback), at > 15 {
                 if toast { showToast("Resuming from \(Self.format(at))") }
                 return ["start=\(Int(at))"]
@@ -1478,6 +1483,7 @@ final class PlayerModel: ObservableObject {
         guard let c = client else { return }
         dlog("player", "file loaded in \(String(format: "%.0f", Date().timeIntervalSince(loadStarted) * 1000)) ms")
         fileLoaded = true
+        if item.id == startFirstID { startFirstID = nil; startFirstAt = nil; startFirstAtZero = false }
         noteSoftwareDecoding()
         // The gestures tip comes up in the first plays after installing (1.27.0).
         FolioTips.note(PlayerGesturesTip.played)
@@ -3045,6 +3051,14 @@ final class PlayerModel: ObservableObject {
         let key = item.id
         let dur = duration
         let len = defaults.double(forKey: SettingsKey.skipOATLength)
+        // An intro the phone found before is there at once, not after the
+        // sources have answered (a slow network kept it past the intro).
+        segmentsAnime = nil
+        if defaults.bool(forKey: SettingsKey.skipFindOnDevice), let url = item.resolvedURL, IntroFinder.eligible(url) {
+            Task { [weak self] in
+                if let known = await IntroFinder.shared.known(for: url) { self?.addIntroFromDevice(known, for: key) }
+            }
+        }
         Task { [weak self] in
             var found = SkipLookup()
             let meta = await MetadataService.shared.lookup(filename: fileName)
@@ -3068,6 +3082,7 @@ final class PlayerModel: ObservableObject {
                 defer { self.findIntroOnDevice() }
                 guard !found.segments.isEmpty else { return }
                 let anime = explicitAnime || animation || (meta == nil && fansubName) || found.segments.contains { $0.source == "AniSkip" || $0.source == "OAT" }
+                self.segmentsAnime = anime
                 self.segments = SkipService.tidy(found.segments, duration: dur, chapters: self.chapters.map { ($0.title, $0.time) }, anime: anime)
                 dlog("skip", "segments: \(self.segments.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })")
                 if self.defaults.bool(forKey: SettingsKey.skipInjectChapters), self.chapters.isEmpty {
@@ -3095,7 +3110,9 @@ final class PlayerModel: ObservableObject {
     /// show's memory treat it the same. One that comes after playback has
     /// passed it is there the next time.
     private func findIntroOnDevice() {
+        // Only where its result is used: the Skip button, or chapters made from segments.
         guard defaults.bool(forKey: SettingsKey.skipFindOnDevice), !closed,
+              defaults.bool(forKey: SettingsKey.skipEnabled) || defaults.bool(forKey: SettingsKey.skipInjectChapters),
               !segments.contains(where: { $0.kind == .intro }),
               let url = item.resolvedURL, IntroFinder.eligible(url) else { return }
         let key = item.id
@@ -3108,25 +3125,32 @@ final class PlayerModel: ObservableObject {
             guard !KidsProfile.isOnNow, await IntroFinder.shared.worthTrying(url) else { return }
             try? await Task.sleep(for: .seconds(Self.introFindDelay))
             // Up to ten minutes for the film to be playing and the phone cool.
+            var ready = false
             for _ in 0..<60 {
                 guard !Task.isCancelled, let self, !self.closed, self.item.id == key else { return }
-                if !self.paused, !self.isLoading, IntroFinder.phoneIsCool { break }
+                if !self.paused, !self.isLoading, IntroFinder.phoneIsCool { ready = true; break }
                 try? await Task.sleep(for: .seconds(10))
             }
-            guard !Task.isCancelled, IntroFinder.phoneIsCool, self?.defaults.bool(forKey: SettingsKey.skipFindOnDevice) == true,
+            // Never while paused or still opening: ten minutes of that and it's left for the next time.
+            guard ready, !Task.isCancelled, IntroFinder.phoneIsCool, self?.defaults.bool(forKey: SettingsKey.skipFindOnDevice) == true,
                   let found = await IntroFinder.shared.find(for: url), !Task.isCancelled else { return }
             self?.addIntroFromDevice(found, for: key)
         }
     }
 
     private func addIntroFromDevice(_ intro: IntroFinder.Intro, for key: String) {
-        guard !closed, item.id == key, duration > 0, intro.end <= duration, !segments.contains(where: { $0.kind == .intro }) else { return }
+        // An "intro" that ends in the file's second half is something else two episodes share.
+        guard !closed, item.id == key, duration > 0, intro.end <= duration * 0.5, !segments.contains(where: { $0.kind == .intro }) else { return }
         let seg = SkipSegment(kind: .intro, start: intro.start, end: intro.end, source: "On device")
         let had = segments.isEmpty
-        segments = SkipService.tidy(segments + [seg], duration: duration, chapters: chapters.map { ($0.title, $0.time) }, anime: item.anime?.hasAnimeID == true)
+        segments = SkipService.tidy(segments + [seg], duration: duration, chapters: chapters.map { ($0.title, $0.time) }, anime: segmentsAnime ?? (item.anime?.hasAnimeID == true))
         dlog("skip", "on device: segments: \(segments.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })")
         if had, defaults.bool(forKey: SettingsKey.skipInjectChapters), chapters.isEmpty { injectChapters(segments) }
     }
+
+    /// Whether the file's segments were named as an anime's ("Opening",
+    /// "Ending"): an intro added later keeps the names.
+    private var segmentsAnime: Bool?
 
     // MARK: Up Next
 

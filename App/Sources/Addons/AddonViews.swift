@@ -248,6 +248,7 @@ struct StreamsView: View {
     var fromStart = false
     /// Where it starts when only the episode's library file has a place (1.30.0).
     var startAt: Double? = nil
+    @State private var playedOnce = false
 
     struct StreamGroup: Identifiable { let id: String; let addon: InstalledAddon; var streams: [AddonStream]; var error: String? }
     @State private var groups: [StreamGroup] = []
@@ -387,14 +388,18 @@ struct StreamsView: View {
             let subs = await AddonPlayback.subtitles(type: meta.type, videoId: videoId)
             guard let item = AddonPlayback.makeItem(first, stream: s, addon: addon, extraSubtitles: subs) else { starting = false; return }
             starting = false
+            // "Start over" and the carried place are for the first play from
+            // this page: a second pick starts where the first one stopped.
+            let firstPlay = !playedOnce
+            playedOnce = true
             if seasonVideos.count > 1 {
                 // Play Season: the rest follow, each resolved just before it plays.
                 let pick = AddonPlayback.pick(from: s, addon: addon, context: first)
                 let rest = seasonVideos.dropFirst().map { AddonPlayback.placeholder(context(for: $0), pick: pick) }
                 dlog("player", "season: \(seasonVideos.count) episodes from \(addon.manifest.name), release group \(pick.bingeGroup ?? "none"), \(pick.resolution ?? "?")")
-                PlayerPresenter.play(queue: [item] + rest, index: 0, fromStart: fromStart, startAt: startAt)
+                PlayerPresenter.play(queue: [item] + rest, index: 0, fromStart: fromStart && firstPlay, startAt: firstPlay ? startAt : nil)
             } else {
-                PlayerPresenter.play(queue: [item], index: 0, fromStart: fromStart, startAt: startAt)
+                PlayerPresenter.play(queue: [item], index: 0, fromStart: fromStart && firstPlay, startAt: firstPlay ? startAt : nil)
             }
         }
     }

@@ -225,7 +225,9 @@ enum HandoffActivity {
                 }
                 return
             }
-            guard play, !kids, let position = p.position else { return }
+            // Marked watched in Discover and never played here: there is no
+            // stream to open, only the page (1.30.0).
+            guard play, !kids, let position = p.position, !(entry.item.url.isEmpty && entry.item.streamPick == nil) else { return }
             resume(entry.item, at: position, duration: p.duration ?? (entry.duration > 0 ? entry.duration : nil))
         }
     }

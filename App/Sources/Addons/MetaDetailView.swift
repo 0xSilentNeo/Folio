@@ -328,7 +328,10 @@ struct MetaDetailView: View {
     }
 
     private func resumeLabel(for videoId: String) -> String? {
-        guard let e = state(videoId), e.canResume else { return nil }
+        // The stream's own place first, as the player takes it (carried):
+        // the button said the library file's newer one and started at the stream's.
+        let own = history.entry(for: "addon:\(videoId)")
+        guard let e = own?.canResume == true ? own : state(videoId), e.canResume else { return nil }
         return "from \(PlayerModel.format(e.position))"
     }
 
@@ -395,7 +398,13 @@ struct MetaDetailView: View {
     private var moreButton: some View {
         Menu {
             let eps = seasonEpisodes
-            let out = eps.filter { !$0.airsLater() }
+            let airing = self.airing
+            let out = eps.filter { v in
+                // As the rows have it: the tracker's "airs" mark counts too.
+                if v.airsLater() { return false }
+                if case .airs? = airing?.mark(season: v.season, episode: v.episode) { return false }
+                return true
+            }
             if isSeries {
                 if !eps.isEmpty {
                     let i = nextIndex(eps)

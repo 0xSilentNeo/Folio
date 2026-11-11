@@ -175,7 +175,9 @@ struct RootView: View {
         // ⌘F (1.30.0): the search tab, whose field opens as it's chosen
         // (iOS 26). A button nobody sees, so the key shows in the ⌘ overlay.
         .background {
-            Button("Search") { if PlayerPresenter.current == nil { tab = 3 } }
+            // "Find", not "Search": a second button of the tab's name was the one
+            // the UI tests (and Voice Control) found.
+            Button("Find") { if PlayerPresenter.current == nil { tab = 3 } }
                 .keyboardShortcut("f", modifiers: .command)
                 .opacity(0)
                 .frame(width: 0, height: 0)
