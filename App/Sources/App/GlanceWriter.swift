@@ -20,7 +20,7 @@ enum GlanceWriter {
     /// library's and the servers' titles are written for it now.
     static func kidsChanged() {
         writePicks()
-        Task { @MainActor in await writeServers() }
+        serversSoon()       // ends a write already under way (1.28.10): it could put the titles back
     }
 
     static func start() {
@@ -204,6 +204,8 @@ enum GlanceWriter {
                 await keep(img, as: file, in: store)
             }
         }
+        // Not if the kids profile came on, or a newer write began, while the posters were fetched (1.28.10).
+        guard !Task.isCancelled, !KidsProfile.isOnNow else { return }
         sweep("rel-", keeping: Set(shown.map(ServersTile.pictureName)), in: store)
         if write(glance, kind: WidgetKind.newOnServers) {
             dlog("widget", "new on \(glance.serverName): \(glance.releases.count) shown, \(glance.thisWeek) this week")

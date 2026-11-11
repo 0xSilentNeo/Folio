@@ -44,6 +44,8 @@ final class Fixes1286Tests: XCTestCase {
     }
 
     /// 1.28.8: diagnostic traces left on turn themselves off after a day.
+    /// 1.28.10: each from when it was turned on, so one turned off and on
+    /// again starts a new day.
     func testTracesTurnThemselvesOffAfterADay() throws {
         let d = try XCTUnwrap(UserDefaults(suiteName: "folio.tests.traces"))
         d.removePersistentDomain(forName: "folio.tests.traces")
@@ -53,8 +55,19 @@ final class Fixes1286Tests: XCTestCase {
         XCTAssertFalse(TraceExpiry.check(now: t0, defaults: d), "first seen on: the day starts")
         XCTAssertFalse(TraceExpiry.check(now: t0.addingTimeInterval(3600), defaults: d))
         XCTAssertTrue(d.bool(forKey: SettingsKey.pipTrace))
-        XCTAssertTrue(TraceExpiry.check(now: t0.addingTimeInterval(90_000), defaults: d))
+        // Off by hand, and on again three days later: a new day, not ended at once.
+        d.set(false, forKey: SettingsKey.pipTrace)
+        XCTAssertFalse(TraceExpiry.check(now: t0.addingTimeInterval(7200), defaults: d))
+        d.set(true, forKey: SettingsKey.pipTrace)
+        let later = t0.addingTimeInterval(3 * 86400)
+        XCTAssertFalse(TraceExpiry.check(now: later, defaults: d))
+        XCTAssertTrue(d.bool(forKey: SettingsKey.pipTrace))
+        // Another turned on at hour 23 outlives it.
+        d.set(true, forKey: SettingsKey.netTrace)
+        XCTAssertFalse(TraceExpiry.check(now: later.addingTimeInterval(23 * 3600), defaults: d))
+        XCTAssertTrue(TraceExpiry.check(now: later.addingTimeInterval(25 * 3600), defaults: d))
         XCTAssertFalse(d.bool(forKey: SettingsKey.pipTrace))
+        XCTAssertTrue(d.bool(forKey: SettingsKey.netTrace))
         d.removePersistentDomain(forName: "folio.tests.traces")
     }
 

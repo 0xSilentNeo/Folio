@@ -38,7 +38,7 @@ struct SettingsView: View {
     /// screens on a 17 Pro). The version is under About.
     private var list: some View {
         List {
-            if !SettingsSearchBar.isSystem {
+            if !SettingsSearchBar.isSystem, !locked {
                 Section {
                     SettingsSearchField(text: $query)
                 }
@@ -50,7 +50,7 @@ struct SettingsView: View {
             }
         }
         .settingsPage()
-        .modifier(SettingsSearchBar(text: $query))
+        .modifier(SettingsSearchBar(text: $query, active: !locked))
         .scrollDismissesKeyboard(.immediately)
         .background { TopEdgeNoBounce().frame(width: 0, height: 0).accessibilityHidden(true) }
     }

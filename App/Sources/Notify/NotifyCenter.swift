@@ -192,8 +192,22 @@ enum NotifyCenter {
             return
         }
         if NotifyPrefs.test {
-            await scheduleTest(now: now)
-            return
+            // An hour after Test was first seen on, it's off (1.28.10): a
+            // whole run only ends it if you stay away for all of it.
+            let d = UserDefaults.standard
+            if let since = d.object(forKey: "notifyTestSince") as? Date, now.timeIntervalSince(since) > 3600 {
+                d.removeObject(forKey: "notifyTestSince")
+                d.set(false, forKey: SettingsKey.notifyTest)
+                dlog("notify", "test: on for over an hour; Test is off again")
+                AiringNotifications.reschedule(TrackingStore.shared.shows)
+                NotifyPrefsModel.shared.changed()
+            } else {
+                if d.object(forKey: "notifyTestSince") == nil { d.set(now, forKey: "notifyTestSince") }
+                await scheduleTest(now: now)
+                return
+            }
+        } else {
+            UserDefaults.standard.removeObject(forKey: "notifyTestSince")
         }
         let all = await candidates(now: now)
         let chosen = Array(NotifyPlanner.choose(all, rules(now: now)).prefix(maxPending))
