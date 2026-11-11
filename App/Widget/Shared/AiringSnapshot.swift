@@ -134,18 +134,6 @@ struct AiringSnapshot: Codable, Equatable {
         return Array(dates.sorted().prefix(limit))
     }
 
-    /// `Airing/` in the group's container, where the snapshot and its
-    /// posters live (apart from Continue Watching's `Widget/`, whose old
-    /// pictures that writer sweeps); nil without the group.
-    static func directory(in container: URL? = FolioGroup.container, create: Bool = false) -> URL? {
-        guard let container else { return nil }
-        let dir = container.appendingPathComponent("Airing", isDirectory: true)
-        if create {
-            do { try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true) } catch { return nil }
-        }
-        return dir
-    }
-
     /// The last snapshot written; nil when there is none or no group.
     static func read(from dir: URL?) -> AiringSnapshot? {
         guard let dir, let data = try? Data(contentsOf: dir.appendingPathComponent(fileName)) else { return nil }

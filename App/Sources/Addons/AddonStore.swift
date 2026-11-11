@@ -164,7 +164,6 @@ final class AddonStore: ObservableObject {
         // earlier versions installed automatically is removed once.
         if !UserDefaults.standard.bool(forKey: "cinemetaRemoved") {
             UserDefaults.standard.set(true, forKey: "cinemetaRemoved")
-            UserDefaults.standard.set(true, forKey: "addonsSeeded")
             addons.removeAll { $0.transportURL == Self.cinemeta || $0.manifest.id == "com.linvo.cinemeta" }
         }
     }
@@ -187,14 +186,6 @@ final class AddonStore: ObservableObject {
             addons[i] = addon
         } else {
             addons.append(addon)
-        }
-    }
-
-    func refreshAll() async {
-        for a in addons {
-            guard let m = try? await AddonAPI.manifest(a.transportURL),
-                  let i = addons.firstIndex(where: { $0.id == a.id }) else { continue }
-            if addons[i].manifest != m { addons[i].manifest = m }
         }
     }
 
@@ -254,12 +245,6 @@ final class AddonStore: ObservableObject {
 
     /// The addons switched on (1.27.0): the only ones asked for anything.
     var active: [InstalledAddon] { addons.filter(\.enabled) }
-
-    func setEnabled(_ id: String, _ on: Bool) {
-        guard let i = addons.firstIndex(where: { $0.id == id }), addons[i].enabled != on else { return }
-        addons[i].enabled = on
-        dlog("addons", "\(addons[i].manifest.name) switched \(on ? "on" : "off")")
-    }
 
     // MARK: Catalogs on Discover (1.27.0)
 

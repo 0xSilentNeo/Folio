@@ -164,9 +164,9 @@ final class BrowseModel: ObservableObject {
         let gen = generation
         loading = true
         defer { if gen == generation { loading = false } }
-        // "New" has no genre menu (it picks a year), so a genre chosen under
-        // another sort no longer filters it out of sight (review, 2 Nov).
-        var genre = sort == .new ? nil : self.genre
+        // "New" has its genre menu too (1.28.11): it had only the year's,
+        // and a genre chosen under another sort was dropped.
+        var genre = self.genre
         // Kids profile (1.22.0): the lists start from IMDb's or TMDB's Family
         // genre, and every title is checked by KidsRules where it's shown.
         let kids = KidsProfile.shared.isOn
@@ -600,22 +600,21 @@ struct DiscoverView: View {
             if browse.sort == .new {
                 Menu {
                     Picker("Year", selection: $browse.year) { ForEach(BrowseModel.years, id: \.self) { Text($0).tag($0) } }
-                } label: { FilterChip(title: browse.year, active: true) }
+                } label: { FilterChip(title: browse.year, active: true, icon: compact ? "calendar" : nil) }
                 .accessibilityLabel("Year")
                 .accessibilityValue(browse.year)
-            } else {
-                Menu {
-                    Button { browse.genre = nil } label: { browse.genre == nil ? Label("All genres", systemImage: "checkmark") : Label("All genres", systemImage: "circle") }
-                    Divider()
-                    ForEach(BrowseModel.genres, id: \.self) { g in
-                        Button { browse.genre = g } label: { if browse.genre == g { Label(g, systemImage: "checkmark") } else { Text(g) } }
-                    }
-                } label: {
-                    FilterChip(title: browse.genre ?? "Genre", active: browse.genre != nil, icon: compact ? "theatermasks" : nil)
-                }
-                .accessibilityLabel("Genre")
-                .accessibilityValue(browse.genre ?? "All genres")
             }
+            Menu {
+                Button { browse.genre = nil } label: { browse.genre == nil ? Label("All genres", systemImage: "checkmark") : Label("All genres", systemImage: "circle") }
+                Divider()
+                ForEach(BrowseModel.genres, id: \.self) { g in
+                    Button { browse.genre = g } label: { if browse.genre == g { Label(g, systemImage: "checkmark") } else { Text(g) } }
+                }
+            } label: {
+                FilterChip(title: browse.genre ?? "Genre", active: browse.genre != nil, icon: compact ? "theatermasks" : nil)
+            }
+            .accessibilityLabel("Genre")
+            .accessibilityValue(browse.genre ?? "All genres")
         }
         .fixedSize(horizontal: false, vertical: true)
     }

@@ -199,40 +199,48 @@ final class DiscoverSearch: ObservableObject {
     }
 }
 
-/// Discover → the magnifying glass.
+/// The one search page (1.28.11), behind the tab bar's search button on
+/// every tab: what's yours first (the library, your servers), then movies
+/// and shows from IMDb as you type, and your addons' catalogs after Search.
+/// Until then Home and Network opened one page and Discover another, and
+/// the text was dropped when you changed between them.
 struct AddonSearchView: View {
-    /// The tab bar's search button owns the text when it's opened from
-    /// Discover (1.22.4). Nil: a page of its own with its own field.
-    var tabQuery: Binding<String>? = nil
+    /// The tab bar's search field owns the text.
+    @Binding var query: String
 
     struct SearchResult: Identifiable { let id: String; let title: String; let addon: InstalledAddon?; let metas: [MetaItem] }
     /// A title opened from the search (and the addon that found it, if any).
     private struct Opened: Hashable { let meta: MetaItem; let addon: InstalledAddon? }
 
     @StateObject private var search = DiscoverSearch()
+    @StateObject private var catalogs = CatalogSearch()
     @ObservedObject private var kids = KidsProfile.shared
-    @State private var ownQuery = ""
-    @State private var fieldActive = false
+    @ObservedObject private var local = LocalMediaStore.shared
+    @ObservedObject private var index = LibraryIndexStore.shared
+    @ObservedObject private var webdav = ServerStore.shared
     @State private var opened: Opened?
-    @State private var focusedOnce = false
+    /// The library's titles, grouped once (not at every keystroke).
+    @State private var groups: [LibraryGroup] = []
+    @State private var route: LibraryRoute?
+    @State private var openedEntry: LibrarySearchResults.OpenedEntry?
 
-    private var query: String {
-        get { tabQuery?.wrappedValue ?? ownQuery }
-        nonmutating set {
-            if let tabQuery { tabQuery.wrappedValue = newValue } else { ownQuery = newValue }
-        }
-    }
     private var typed: String { SearchHistoryStore.tidy(query) }
 
     var body: some View {
         List {
             if typed.isEmpty {
+                SearchIntro(sources: LibrarySearchResults.sources())
+                    .padding(.top, 12)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 recent
             } else {
                 let matches = kids.isOn ? [] : search.matchingHistory(query)
                 if !matches.isEmpty {
                     Section { ForEach(matches) { historyRow($0) } }
                 }
+                // What's yours comes first.
+                LibrarySearchResults(query: query, groups: groups, catalogs: catalogs, route: $route, opened: $openedEntry)
                 titlesSection
                 ForEach(search.addonResults) { addonSection($0) }
                 if search.addonsSearching {
@@ -251,22 +259,34 @@ struct AddonSearchView: View {
         .scrollDismissesKeyboard(.immediately)
         .navigationTitle("Search")
         .navigationBarTitleDisplayMode(.inline)
-        .modifier(OwnSearchField(on: tabQuery == nil, text: $ownQuery, active: $fieldActive))
-        .onChange(of: query) { _, text in search.textChanged(text) }
+        .onChange(of: query) { _, text in
+            search.textChanged(text)
+            catalogs.textChanged(kids.isOn ? "" : text)
+        }
         .onSubmit(of: .search) { search.submit(query) }
         .onReceive(NotificationCenter.default.publisher(for: .searchTabSubmitted)) { note in
-            if tabQuery != nil { search.submit((note.object as? String) ?? query) }
+            search.submit((note.object as? String) ?? query)
         }
-        .task {
-            await search.loadHistory()
-            // The keyboard comes up the first time (you came here to type),
-            // not again on coming back from a title. The search tab's field
-            // comes up by itself when its button is tapped.
-            if tabQuery == nil, !focusedOnce { focusedOnce = true; fieldActive = true }
+        .task { await search.loadHistory() }
+        // Each server's index brought up to date when it's due, and text
+        // kept from the last search asked again.
+        .onAppear {
+            HitchProbe.mark("search", "page appeared")
+            if !kids.isOn { for server in webdav.servers { index.refreshIfNeeded(server) } }
+            search.textChanged(query)
+            catalogs.textChanged(kids.isOn ? "" : query)
+            groups = LibraryOrganizer.groups(local.files)
+            HitchProbe.mark("search", "page set up")
         }
-
+        .onChange(of: local.files) { _, files in groups = LibraryOrganizer.groups(files) }
         .navigationDestination(item: $opened) { o in
             MetaDetailView(preview: o.meta, sourceAddon: o.addon).zoomDestination("search|" + o.meta.id, in: zoomNS, zoom: false)
+        }
+        .navigationDestination(item: $route) { r in LibraryRoute.destination(r) }
+        .navigationDestination(item: $openedEntry) { o in
+            if let source = CatalogSearch.source(for: o.server) {
+                CatalogBrowserView(source: source, parent: o.entry, title: CatalogTitles.rowTitle(o.entry))
+            }
         }
     }
     @Namespace private var zoomNS
@@ -354,7 +374,7 @@ struct AddonSearchView: View {
             }
         } header: {
             HStack(spacing: 8) {
-                Text("Titles")
+                Text("Movies & Shows")
                 if let limits = kids.activeLimits { Text("· rated \(KidsRules.summary(limits))") }
                 if search.phase == .loading {
                     FolioSpinner(size: .small).accessibilityLabel("Searching")
@@ -436,22 +456,6 @@ struct AddonSearchView: View {
             .listRowBackground(Color.clear)
         } header: {
             Text(r.title).lineLimit(1)
-        }
-    }
-}
-
-/// Discover's own search page has its own field; in the search tab the tab
-/// bar's search button has it (1.22.4).
-private struct OwnSearchField: ViewModifier {
-    let on: Bool
-    @Binding var text: String
-    @Binding var active: Bool
-
-    func body(content: Content) -> some View {
-        if on {
-            content.searchable(text: $text, isPresented: $active, placement: .navigationBarDrawer(displayMode: .always), prompt: "Movies, shows, anime")
-        } else {
-            content
         }
     }
 }

@@ -19,7 +19,6 @@ enum Theme {
     /// Unselected chips, capsule buttons, row tints: a faint ink or white wash.
     static let fill = Color(light: 0x1B1A18, dark: 0xFFFFFF, lightAlpha: 0.07, darkAlpha: 0.11)
     static let hairline = Color(light: 0x1B1A18, dark: 0xFFFFFF, lightAlpha: 0.10, darkAlpha: 0.09)
-    static let secondaryText = Color.secondary
     static let taupe = Color(light: 0xC4B8AA, dark: 0xC4B8AA)
     static let graphite = Color(light: 0x8B8784, dark: 0x8B8784)
     static let shadow = Color(light: 0x2B2118, dark: 0x000000, lightAlpha: 0.22, darkAlpha: 0.5)

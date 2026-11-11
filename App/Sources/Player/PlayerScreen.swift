@@ -110,10 +110,6 @@ struct PlayerScreen: View {
 
                 if let error = model.errorMessage { errorView(error) }
 
-                if ui.showTune {
-                    TuneCard(ui: ui).transition(motion(.scale(scale: 0.85, anchor: .topLeading).combined(with: .opacity)))
-                }
-
                 if ui.showConsole {
                     ConsoleBar(model: model, ui: ui).transition(motion(.move(edge: .bottom).combined(with: .opacity)))
                 }
@@ -178,7 +174,6 @@ struct PlayerScreen: View {
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUDKind != nil)
             .animation(.spring(response: 0.32, dampingFraction: 0.82), value: ui.gestureHUDKind)
             .animation(.spring(response: 0.42, dampingFraction: 0.84), value: ui.showStats || ui.showInfo)
-            .animation(.spring(response: 0.4, dampingFraction: 0.84), value: ui.showTune)
             .animation(.easeOut(duration: 0.18), value: model.toast)
             .animation(.easeOut(duration: 0.18), value: model.holdSpeedActive)
             .animation(.spring(response: 0.4, dampingFraction: 0.86), value: model.upNext != nil)
@@ -380,6 +375,18 @@ struct PlayerScreen: View {
                 Spacer()
                 // Grows to the left into the pill, so PiP beside it stays put.
                 LockControl(locked: ui.locked, onLock: { setLocked(true) }, onUnlock: { setLocked(false) })
+                // AirPlay and other outputs (1.28.11): iOS's own route
+                // picker, which was written long ago and never placed. The
+                // sound goes to an AirPlay speaker or Apple TV; the picture
+                // goes there by Screen Mirroring, which the same sheet offers.
+                AirPlayButton()
+                    .frame(width: 44, height: 44)
+                    .glassCircle()
+                    .opacity(ui.locked ? 0 : 1)
+                    .allowsHitTesting(!ui.locked)
+                    .accessibilityHidden(ui.locked)
+                    .accessibilityLabel("AirPlay")
+                    .accessibilityHint(model.audioRoute.map { "Playing on \($0.name)" } ?? "")
                 if PiPManager.isSupported && UserDefaults.standard.bool(forKey: SettingsKey.pipEnabled) {
                     GlassIcon(model.isPiPActive ? "pip.exit" : "pip.enter", size: 17) {
                         model.isPiPActive ? model.stopPiP() : model.startPiP()
@@ -1146,7 +1153,8 @@ struct AirPlayButton: UIViewRepresentable {
     func makeUIView(context: Context) -> AVRoutePickerView {
         let v = AVRoutePickerView()
         v.tintColor = .white
-        v.activeTintColor = UIColor(Theme.accent)
+        // Its own tint while another output is in use, so the button shows it.
+        v.activeTintColor = .systemBlue
         v.prioritizesVideoDevices = true
         return v
     }

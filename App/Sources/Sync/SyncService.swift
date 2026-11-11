@@ -22,9 +22,6 @@ enum SyncService: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    /// What it keeps: Trakt every film and episode, the other two anime only.
-    var animeOnly: Bool { self != .trakt }
-
     var enabledKey: String {
         switch self {
         case .trakt: return SettingsKey.syncTrakt

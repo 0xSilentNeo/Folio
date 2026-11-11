@@ -141,27 +141,5 @@ struct GlassLab: View {
             .frame(width: 180, height: 300, alignment: .bottomTrailing)
         }
     }
-
-    // D: pill and panel siblings in one VStack (no overlay), same glass.
-    @Namespace private var nsD
-    private var stackVariant: some View {
-        GlassEffectContainer(spacing: 40) {
-            VStack(alignment: .trailing, spacing: 8) {
-                if open {
-                    panelContent.frame(width: 170, height: 200)
-                        .glassEffect(.regular, in: .rect(cornerRadius: 22))
-                        .glassEffectID("panels", in: nsD)
-                        .glassEffectTransition(.matchedGeometry)
-                } else {
-                    Spacer(minLength: 0)
-                    pill
-                        .glassEffect(.regular, in: .capsule)
-                        .glassEffectID("panels", in: nsD)
-                        .glassEffectTransition(.matchedGeometry)
-                }
-            }
-            .frame(width: 180, height: 300, alignment: .bottomTrailing)
-        }
-    }
 }
 #endif

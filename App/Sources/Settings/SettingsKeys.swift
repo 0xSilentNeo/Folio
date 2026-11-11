@@ -113,7 +113,6 @@ enum SettingsKey {
     static let pictureMode = "pictureMode"             // efficient | balanced | enhanced
     static let audioBoost = "audioBoost"          // 0 | 50 | 100 (percent)
     static let playbackMode = "playbackMode"      // playlist | single | loop
-    static let logLevel = "logLevel"
 
     // Tracking (1.21.0)
     static let airingAlerts = "airingAlerts"            // air | hour | off: new-episode notifications (AiringAlerts)
@@ -244,7 +243,6 @@ enum SettingsKey {
             enhancedQuality: false,
             audioBoost: 0,
             playbackMode: "playlist",
-            logLevel: "info",
             cleanTitles: true,
             showOnlyMedia: false,
             airingAlerts: "air",

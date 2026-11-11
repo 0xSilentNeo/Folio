@@ -412,9 +412,7 @@ struct MPVClientError: Error, LocalizedError {
 
 /// MPV_END_FILE_REASON_* values.
 enum MPVEndReason {
-    static let eof: Int32 = 0
     static let stop: Int32 = 2
     static let quit: Int32 = 3
     static let error: Int32 = 4
-    static let redirect: Int32 = 5
 }

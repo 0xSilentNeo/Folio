@@ -34,9 +34,19 @@ final class WhatsNewTests: XCTestCase {
 
     func testTheList() {
         let versions = WhatsNew.releases.map(\.version)
-        XCTAssertEqual(Array(versions.prefix(2)), ["1.28.10", "1.28.9"])
+        XCTAssertEqual(Array(versions.prefix(2)), ["1.28.11", "1.28.10"])
         XCTAssertEqual(versions, versions.sorted { $0.compare($1, options: .numeric) == .orderedDescending }, "newest first")
         for r in WhatsNew.releases { XCTAssertFalse(r.items.isEmpty, r.version) }
         XCTAssertNotNil(WhatsNew.release("1.21.0"))
+    }
+
+    /// 1.28.11: an update over several versions lists each one since.
+    func testEverythingSinceTheVersionYouHad() {
+        let since = WhatsNew.releases(after: "1.28.5", upTo: "1.28.8").map(\.version)
+        XCTAssertEqual(since, ["1.28.8", "1.28.7", "1.28.6"])
+        XCTAssertEqual(WhatsNew.releases(after: nil, upTo: "1.28.8").map(\.version), ["1.28.8"])
+        XCTAssertTrue(WhatsNew.releases(after: "1.28.8", upTo: "1.28.8").isEmpty)
+        // Numbered, not spelt: 1.28.10 is after 1.28.9.
+        XCTAssertEqual(WhatsNew.releases(after: "1.28.9", upTo: "1.28.10").map(\.version), ["1.28.10"])
     }
 }

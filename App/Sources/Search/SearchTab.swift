@@ -1,33 +1,17 @@
 import SwiftUI
 
-/// What the tab bar's search button searches: the page it was opened from
-/// (1.22.5). From Home or Network your library and servers
-/// (LibrarySearchPage); from Discover titles on IMDb and the addons
-/// (AddonSearchView). In 1.22.4 it was one page for everything, which
-/// looked like Discover's search wherever it was opened.
-enum SearchScope: Equatable {
-    case library, discover
-
-    /// The tab the button was tapped on: 1 is Discover.
-    init(fromTab tab: Int) { self = tab == 1 ? .discover : .library }
-
-    var prompt: String { self == .discover ? "Movies, shows, anime" : "Your library and servers" }
-}
-
 /// The search tab: iOS 26 draws it as the round button beside the tab bar
-/// that opens into the field where it is.
+/// that opens into the field where it is. One page whatever tab it was
+/// opened from (1.28.11): your library and servers, then movies and shows.
+/// From 1.22.5 it searched only the page it was opened from.
 struct SearchTabView: View {
     @Binding var query: String
-    let scope: SearchScope
 
     var body: some View {
         NavigationStack {
-            switch scope {
-            case .library: LibrarySearchPage(query: $query)
-            case .discover: AddonSearchView(tabQuery: $query)
-            }
+            AddonSearchView(query: $query)
         }
-        .modifier(PageSearchField(text: $query, prompt: scope.prompt))
+        .modifier(PageSearchField(text: $query, prompt: "Library, servers, movies and shows"))
     }
 }
 

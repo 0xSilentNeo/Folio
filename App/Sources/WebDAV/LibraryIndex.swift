@@ -144,6 +144,21 @@ struct LibraryIndexer: Sendable {
         let rootFolder = old.folders[fresh.root]
         props[fresh.root] = (rootFolder?.name ?? rootURL.lastPathComponent, rootFolder?.etag, rootFolder?.modified, rootFolder?.added)
 
+        // A few folders are listed again on every refresh, oldest first, each
+        // at most once an hour (1.28.11). Real-Debrid changes a folder's
+        // contents without changing its date or etag (26 and 31 folders in
+        // the 11 Nov log), so nothing showed until all of them came due at
+        // 24 hours together: Home's count and size stayed short for a day,
+        // then jumped (539 files, then 635 with the same 220 folders), and
+        // that one refresh took 30 s. In turns, each folder is seen again
+        // within a few hours and no refresh lists them all.
+        let turn: Set<String> = {
+            guard !full else { return [] }
+            let due = old.folders.filter { $0.key != fresh.root && now.timeIntervalSince($0.value.listed) > 3600 }
+            let share = max(12, old.folders.count / 12)
+            return Set(due.sorted { $0.value.listed < $1.value.listed }.prefix(share).map(\.key))
+        }()
+
         func keep(_ key: String) {
             guard let f = old.folders[key], fresh.folders[key] == nil else { return }
             fresh.folders[key] = f
@@ -201,7 +216,7 @@ struct LibraryIndexer: Sendable {
                         else if let m = item.modified, let pm = prev?.modified { why = m != pm ? "date changed" : nil }
                         else { why = nil }
                         let stale = prev.map { now.timeIntervalSince($0.listed) > maxAge } ?? false
-                        if let why = why ?? (stale ? "older than 24 h" : nil) {
+                        if let why = why ?? (stale ? "older than 24 h" : turn.contains(k) ? "its turn" : nil) {
                             props[k] = (item.name, item.etag, item.modified, item.added)
                             queue.append((item.url, done.depth + 1))
                             LibTrace.index.log("\(item.name): list (\(why))")
