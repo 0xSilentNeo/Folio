@@ -404,6 +404,7 @@ final class PlayerModel: ObservableObject {
         screener?.cancel()
         problemCheck?.cancel(); problemCheck = nil
         nowPlayingArtTask?.cancel(); nowPlayingArtTask = nil
+        introFinding?.cancel(); introFinding = nil
         dlog("player", "close at \(Self.format(position))")
         // Silent and still at once (1.28.2): the player goes off the screen
         // now and mpv finishes behind it.
@@ -807,6 +808,7 @@ final class PlayerModel: ObservableObject {
         upNextDismissed = false
         postCredits = false
         segmentsRequested = false
+        introFinding?.cancel(); introFinding = nil
         chaptersRead = false
         fileLoaded = false
         memoryApplied = false
@@ -3007,7 +3009,11 @@ final class PlayerModel: ObservableObject {
         if defaults.bool(forKey: SettingsKey.skipUseChapters) {
             let chs = chapters.map { ($0.title, $0.time) }
             let s = SkipService.tidy(SkipService.segments(fromChapters: chs, duration: duration), duration: duration, chapters: chs, anime: item.anime?.hasAnimeID == true)
-            if !s.isEmpty { segments = s; dlog("skip", "from chapters: \(s.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })"); return }
+            if !s.isEmpty {
+                segments = s; dlog("skip", "from chapters: \(s.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })")
+                findIntroOnDevice()
+                return
+            }
         }
 
         let name = item.resolvedURL?.lastPathComponent ?? item.title
@@ -3045,6 +3051,9 @@ final class PlayerModel: ObservableObject {
             await MainActor.run {
                 guard let self, self.item.id == key else { return }
                 self.postCredits = found.postCredits
+                // Whatever the sources said: the phone looks for an intro
+                // none of them gave (1.30.0).
+                defer { self.findIntroOnDevice() }
                 guard !found.segments.isEmpty else { return }
                 let anime = explicitAnime || animation || (meta == nil && fansubName) || found.segments.contains { $0.source == "AniSkip" || $0.source == "OAT" }
                 self.segments = SkipService.tidy(found.segments, duration: dur, chapters: self.chapters.map { ($0.title, $0.time) }, anime: anime)
@@ -3054,6 +3063,57 @@ final class PlayerModel: ObservableObject {
                 }
             }
         }
+    }
+
+    // MARK: Intro found on the phone (1.30.0)
+
+    private var introFinding: Task<Void, Never>?
+    /// How long a file plays before its sound is analysed: opening a file is
+    /// the player's busiest moment, and most files closed at once were opened
+    /// by mistake.
+    static let introFindDelay = 20.0
+
+    /// The file's sources gave no intro: for an episode in the library, its
+    /// sound is compared with a neighbouring episode's (IntroFinder). An
+    /// intro found before is shown at once. Otherwise the analysis waits
+    /// until the file has played a while, runs at utility priority, and only
+    /// on a phone that is cool and not in Low Power Mode; not at all with the
+    /// kids profile on. Its result is an intro segment like any other: the
+    /// Skip pill, skipping automatically, "Hide intros I watch" and the
+    /// show's memory treat it the same. One that comes after playback has
+    /// passed it is there the next time.
+    private func findIntroOnDevice() {
+        guard defaults.bool(forKey: SettingsKey.skipFindOnDevice), !closed,
+              !segments.contains(where: { $0.kind == .intro }),
+              let url = item.resolvedURL, IntroFinder.eligible(url) else { return }
+        let key = item.id
+        introFinding?.cancel()
+        introFinding = Task(priority: .utility) { [weak self] in
+            if let known = await IntroFinder.shared.known(for: url) {
+                self?.addIntroFromDevice(known, for: key)
+                return
+            }
+            guard !KidsProfile.isOnNow, await IntroFinder.shared.worthTrying(url) else { return }
+            try? await Task.sleep(for: .seconds(Self.introFindDelay))
+            // Up to ten minutes for the film to be playing and the phone cool.
+            for _ in 0..<60 {
+                guard !Task.isCancelled, let self, !self.closed, self.item.id == key else { return }
+                if !self.paused, !self.isLoading, IntroFinder.phoneIsCool { break }
+                try? await Task.sleep(for: .seconds(10))
+            }
+            guard !Task.isCancelled, IntroFinder.phoneIsCool, self?.defaults.bool(forKey: SettingsKey.skipFindOnDevice) == true,
+                  let found = await IntroFinder.shared.find(for: url), !Task.isCancelled else { return }
+            self?.addIntroFromDevice(found, for: key)
+        }
+    }
+
+    private func addIntroFromDevice(_ intro: IntroFinder.Intro, for key: String) {
+        guard !closed, item.id == key, duration > 0, intro.end <= duration, !segments.contains(where: { $0.kind == .intro }) else { return }
+        let seg = SkipSegment(kind: .intro, start: intro.start, end: intro.end, source: "On device")
+        let had = segments.isEmpty
+        segments = SkipService.tidy(segments + [seg], duration: duration, chapters: chapters.map { ($0.title, $0.time) }, anime: item.anime?.hasAnimeID == true)
+        dlog("skip", "on device: segments: \(segments.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })")
+        if had, defaults.bool(forKey: SettingsKey.skipInjectChapters), chapters.isEmpty { injectChapters(segments) }
     }
 
     // MARK: Up Next
