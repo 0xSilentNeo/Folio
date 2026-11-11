@@ -213,13 +213,6 @@ final class SampleBufferRenderer {
         }
     }
 
-    func setFlip(_ flipped: Bool) {
-        queue.async { [weak self] in
-            self?.flipY = flipped ? 1 : 0
-            self?.render()
-        }
-    }
-
     fileprivate func schedule() {
         queuedLock.lock()
         if queued { queuedLock.unlock(); return }

@@ -33,6 +33,7 @@ struct FolioApp: App {
         // Trakt, AniList, MyAnimeList (1.26.0): what waited to be sent goes now.
         MainActor.assumeIsolated { SyncCenter.shared.start() }
         MainActor.assumeIsolated { ResumeSetup.start() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { MainActor.assumeIsolated { QuickActions.start() } }
         if !["-uiTest", "-uiTestLibrary", "-labDiscover", "-shots"].contains(where: CommandLine.arguments.contains) { IMDbSource.warmUp() }
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
@@ -59,6 +60,14 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         DownloadEngine.shared.backgroundCompletionHandler = completionHandler
         MainActor.assumeIsolated { _ = DownloadManager.shared }
         _ = DownloadEngine.shared.session
+    }
+
+    /// The scene's delegate, for the Home Screen quick action (1.28.11).
+    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession,
+                     options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        let config = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+        config.delegateClass = QuickActionSceneDelegate.self
+        return config
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -88,7 +97,7 @@ struct RootView: View {
         }
         .background(AppearanceProbe(mode: appearance).frame(width: 1, height: 1))
         .toggleStyle(BrandSwitchStyle())
-        .sheet(isPresented: $whatsNew) { WhatsNewSheet() }
+        .sheet(isPresented: $whatsNew) { WhatsNewSheet(since: WhatsNew.updatedFrom) }
         .sheet(isPresented: $welcome, onDismiss: goToWelcomePick) {
             WelcomeSheet { welcomePick = $0 }
         }
@@ -164,13 +173,12 @@ struct RootView: View {
     private var tabs: some View {
         tabView
         .onChange(of: kids.isOn) { _, on in if on && tab == 2 { tab = 0 } }
-        // The search searches the page it's opened from; a new page, a new search.
+        // One search for every tab (1.28.11): the text stays between them.
         .onChange(of: tab) { old, new in
             // How smoothly a tab switch (and its zoom) goes, in the report (1.23.1).
             if new != 3 { HitchProbe.start("tab", "tab \(old) → \(new)", seconds: 0.8) }
             guard new == 3, old != 3 else { return }
             HitchProbe.start("search", "search opened from tab \(old)")
-            if SearchScope(fromTab: old) != SearchScope(fromTab: searchFrom) { searchText = "" }
             searchFrom = old
         }
         .onOpenURL(perform: handle)
@@ -240,7 +248,7 @@ struct RootView: View {
                 if !kids.isOn {
                     Tab("Network", systemImage: "externaldrive.connected.to.line.below", value: 2) { NetworkView().tabZoom() }
                 }
-                Tab(value: 3, role: .search) { SearchTabView(query: $searchText, scope: SearchScope(fromTab: searchFrom)) }
+                Tab(value: 3, role: .search) { SearchTabView(query: $searchText) }
             }
             .modifier(TabBarSearchField())
         } else {
@@ -256,7 +264,7 @@ struct RootView: View {
                         .tabItem { Label("Network", systemImage: "externaldrive.connected.to.line.below") }
                         .tag(2)
                 }
-                SearchTabView(query: $searchText, scope: SearchScope(fromTab: searchFrom))
+                SearchTabView(query: $searchText)
                     .tabItem { Label("Search", systemImage: "magnifyingglass") }
                     .tag(3)
             }

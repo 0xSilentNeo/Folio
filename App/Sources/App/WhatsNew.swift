@@ -20,6 +20,18 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.11", items: [
+            Item(icon: "magnifyingglass", title: "One search",
+                 text: "The search button finds everything from any tab: your library and servers first, then movies and shows."),
+            Item(icon: "airplayvideo", title: "AirPlay in the player",
+                 text: "An AirPlay button in the player's top row sends the sound to a speaker or Apple TV, and offers Screen Mirroring for the picture."),
+            Item(icon: "play.fill", title: "Resume from the app icon",
+                 text: "Long-press Folio's icon on the Home Screen for Resume, with the name of what you watched last."),
+            Item(icon: "sparkles", title: "What's new since your version",
+                 text: "After an update over several versions, this page lists what each of them brought."),
+            Item(icon: "line.3.horizontal.decrease", title: "Genre under New, a steadier Real-Debrid count",
+                 text: "Discover's New sort keeps its genre filter, and Home's Real-Debrid count no longer runs short for a day and then jumps."),
+        ]),
         Release(version: "1.28.10", items: [
             Item(icon: "lock.shield", title: "Streams through Apple's encryption",
                  text: "HTTPS streams are decrypted by iOS's own library, which uses the phone's hardware: less work on high-bitrate streams."),
@@ -334,6 +346,21 @@ enum WhatsNew {
 
     static func release(_ version: String) -> Release? { releases.first { $0.version == version } }
 
+    /// Every version's list after `last` up to `current`, newest first
+    /// (1.28.11): an update over several versions shows what each one
+    /// brought, not only the newest's. With no `last`, the current one's.
+    static func releases(after last: String?, upTo current: String) -> [Release] {
+        releases.filter { r in
+            guard r.version.compare(current, options: .numeric) != .orderedDescending else { return false }
+            guard let last else { return r.version == current }
+            return r.version.compare(last, options: .numeric) == .orderedDescending
+        }
+    }
+
+    /// The version this install showed last, before this launch: what the
+    /// sheet lists from.
+    @MainActor static var updatedFrom: String?
+
     static var currentVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "" }
 
     // MARK: Once per version
@@ -385,7 +412,9 @@ enum WhatsNew {
         let used = usedBefore()
         // The first install's welcome (1.27.0), from the same evidence.
         FirstRun.decide(lastShown: last, usedBefore: used)
-        var decision = decide(current: current, lastShown: last, existingInstall: used, hasEntries: release(current) != nil)
+        updatedFrom = last
+        var decision = decide(current: current, lastShown: last, existingInstall: used,
+                              hasEntries: !releases(after: last, upTo: current).isEmpty)
         if CommandLine.arguments.contains("-whatsNew") { decision.show = true }
         if suppressed { decision.show = false }
         if let r = decision.remember { d.set(r, forKey: SettingsKey.whatsNewShown) }
@@ -399,10 +428,15 @@ struct WhatsNewSheet: View {
     var version: String = WhatsNew.currentVersion
     /// From Settings: every version's list, newest first.
     var all = false
+    /// After an update (1.28.11): the version Folio was updated from, so the
+    /// sheet lists everything since.
+    var since: String? = nil
     @Environment(\.dismiss) private var dismiss
 
     private var releases: [WhatsNew.Release] {
-        all ? WhatsNew.releases : WhatsNew.release(version).map { [$0] } ?? []
+        if all { return WhatsNew.releases }
+        let list = WhatsNew.releases(after: since, upTo: version)
+        return list.isEmpty ? (WhatsNew.release(version).map { [$0] } ?? []) : list
     }
 
     var body: some View {
@@ -415,6 +449,10 @@ struct WhatsNewSheet: View {
                             Wordmark(size: 22)
                         }
                         Text("What's new").font(.system(.largeTitle, design: .rounded, weight: .bold))
+                        if !all, let since, releases.count > 1 {
+                            Text("Since \(since), the version you had")
+                                .font(.subheadline).foregroundStyle(.secondary)
+                        }
                     }
                     .padding(.top, 36)
                     ForEach(releases, id: \.version) { r in

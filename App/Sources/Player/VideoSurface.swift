@@ -131,7 +131,6 @@ struct VideoSurface: UIViewRepresentable {
             defer { lastSingleTap = now }
             if now - lastSingleTap < 0.35 { return }
             if ui.panel != nil { dlog("ui", "panel: video tap closes it"); ui.closePanel(); return }
-            if ui.showTune { withAnimation(.spring(response: 0.38, dampingFraction: 0.85)) { ui.showTune = false }; return }
             if ui.showInfo || ui.showStats { withAnimation(.spring(response: 0.38, dampingFraction: 0.85)) { ui.showInfo = false; ui.showStats = false }; return }
             if ui.showConsole { ui.showConsole = false; return }
             withAnimation(.easeOut(duration: 0.2)) { ui.toggleControls() }

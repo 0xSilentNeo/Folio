@@ -1,28 +1,25 @@
 import SwiftUI
 
-/// Home's search (1.22.5): what the tab bar's search button finds when it's
-/// opened from Home or Network. Only what's yours, in this order: the
-/// library's titles, the files on each WebDAV or Real-Debrid server (from
-/// its index, what a server's "Search all files" used), and what each Plex
-/// and Jellyfin server finds. Titles on IMDb and the addons are Discover's
-/// search. The kids profile sees its library titles only: the servers are
-/// locked there.
-struct LibrarySearchPage: View {
-    @Binding var query: String
+/// What's yours in the search (1.28.11): the library's titles, the files on
+/// each WebDAV or Real-Debrid server (from its index), and what each Plex
+/// and Jellyfin server finds. Sections for the one search page's list
+/// (SearchPage); from 1.22.5 to 1.28.10 this was a page of its own, opened
+/// from Home and Network, with Discover's search a second page. The kids
+/// profile sees its library titles only: the servers are locked there.
+struct LibrarySearchResults: View {
+    let query: String
+    /// The library's titles, grouped once by the page (not at every keystroke).
+    let groups: [LibraryGroup]
+    @ObservedObject var catalogs: CatalogSearch
+    @Binding var route: LibraryRoute?
+    @Binding var opened: OpenedEntry?
 
     @ObservedObject private var kids = KidsProfile.shared
-    @ObservedObject private var local = LocalMediaStore.shared
     @ObservedObject private var index = LibraryIndexStore.shared
     @ObservedObject private var webdav = ServerStore.shared
-    @ObservedObject private var mediaServers = MediaServerStore.shared
-    @StateObject private var catalogs = CatalogSearch()
     @AppStorage(SettingsKey.cleanTitles) private var cleanTitles = true
     /// Files or posters for what's on the servers (1.23.0), kept between searches.
     @AppStorage(SettingsKey.searchServerLayout) private var serverLayout = ServerLayout.files
-    @State private var route: LibraryRoute?
-    @State private var opened: OpenedEntry?
-    /// The library's titles, grouped once (not at every keystroke).
-    @State private var groups: [LibraryGroup] = []
 
     /// How the files found on the servers show: a row each, or a poster for
     /// each release they're in.
@@ -34,87 +31,45 @@ struct LibrarySearchPage: View {
     }
 
     /// A Plex or Jellyfin show or season, opened in its server's browser.
-    private struct OpenedEntry: Hashable {
+    struct OpenedEntry: Hashable {
         let server: UUID
         let entry: CatalogEntry
         static func == (a: Self, b: Self) -> Bool { a.server == b.server && a.entry.id == b.entry.id }
         func hash(into h: inout Hasher) { h.combine(server); h.combine(entry.id) }
     }
 
-    /// The typed words, two letters at least.
-    private var words: [String] { LibrarySearchText.words(query) }
-
     var body: some View {
-        let words = self.words
+        let words = LibrarySearchText.words(query)
         let library = libraryMatches(words)
         let files = serverMatches(words)
-        let indexing = self.indexing
-        let found = !library.isEmpty || !files.isEmpty || catalogs.results.contains { !$0.entries.isEmpty || $0.error != nil }
-        let working = !indexing.isEmpty || catalogs.searching
-        Group {
-            if words.isEmpty {
-                ScrollView { SearchIntro(sources: sources).padding(.top, 36) }
-                    .scrollDismissesKeyboard(.immediately)
-            } else if !found && !working {
-                ScrollView {
-                    SearchNothing(query: query.trimmingCharacters(in: .whitespacesAndNewlines), sources: sources)
-                        .padding(.top, 36)
-                }
-                .scrollDismissesKeyboard(.immediately)
-            } else {
-                List {
-                    if !library.isEmpty { librarySection(library) }
-                    if !files.isEmpty { serverSection(files) }
-                    ForEach(indexing, id: \.id) { server in
-                        let st = index.state(server.id)
-                        FolioWorkingRow(text: "Indexing \(server.name)… \(st.done) of \(st.total) folders")
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                    }
-                    ForEach(catalogs.results) { r in catalogSection(r) }
-                    if catalogs.searching {
-                        FolioWorkingRow(text: "Searching Plex and Jellyfin…")
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                    }
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                // Room under the last row for the downloads pill (1.24.1).
-                .downloadPillRoom()
-                .scrollDismissesKeyboard(.immediately)
+        if !library.isEmpty { librarySection(library) }
+        if !files.isEmpty { serverSection(files) }
+        if !words.isEmpty {
+            ForEach(indexing, id: \.id) { server in
+                let st = index.state(server.id)
+                FolioWorkingRow(text: "Indexing \(server.name)… \(st.done) of \(st.total) folders")
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             }
-        }
-        .background(Theme.background.ignoresSafeArea())
-        .navigationTitle("Search")
-        .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: query) { _, q in catalogs.textChanged(kids.isOn ? "" : q) }
-        // Each server's index brought up to date when it's due, as the
-        // server's "Search all files" page did until 1.22.5.
-        .onAppear {
-            HitchProbe.mark("search", "page appeared")
-            if !kids.isOn { for server in webdav.servers { index.refreshIfNeeded(server) } }
-            // Text kept from the last search asks Plex and Jellyfin again.
-            catalogs.textChanged(kids.isOn ? "" : query)
-            groups = LibraryOrganizer.groups(local.files)
-            HitchProbe.mark("search", "page set up")
-        }
-        .onChange(of: local.files) { _, files in groups = LibraryOrganizer.groups(files) }
-        .navigationDestination(item: $route) { r in LibraryRoute.destination(r) }
-        .navigationDestination(item: $opened) { o in
-            if let source = CatalogSearch.source(for: o.server) {
-                CatalogBrowserView(source: source, parent: o.entry, title: CatalogTitles.rowTitle(o.entry))
+            ForEach(catalogs.results) { r in catalogSection(r) }
+            if catalogs.searching {
+                FolioWorkingRow(text: "Searching Plex and Jellyfin…")
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             }
         }
     }
 
-    /// What the search looks through, for the page before typing and the
-    /// one with nothing found: the library, then each server by name.
-    private var sources: [SearchSource] {
+    /// What the search looks through, for the page before anything is
+    /// typed: the library, each server by name, then IMDb.
+    @MainActor
+    static func sources() -> [SearchSource] {
         var out = [SearchSource(name: "Library", icon: "play.rectangle.fill")]
-        guard !kids.isOn else { return out }
-        out += webdav.servers.map { SearchSource(name: $0.name, icon: RealDebrid.isRealDebrid($0) ? "bolt.horizontal.circle.fill" : "externaldrive.fill") }
-        out += mediaServers.servers.filter { $0.kind != .smb }.map { SearchSource(name: $0.displayName, icon: $0.kind.icon) }
+        if !KidsProfile.shared.isOn {
+            out += ServerStore.shared.servers.map { SearchSource(name: $0.name, icon: RealDebrid.isRealDebrid($0) ? "bolt.horizontal.circle.fill" : "externaldrive.fill") }
+            out += MediaServerStore.shared.servers.filter { $0.kind != .smb }.map { SearchSource(name: $0.displayName, icon: $0.kind.icon) }
+        }
+        out.append(SearchSource(name: "Movies & Shows", icon: "sparkles.tv"))
         return out
     }
 
@@ -372,38 +327,20 @@ struct SearchSource: Hashable {
     let icon: String
 }
 
-/// Before anything is typed: what this search finds and where it looks.
-/// The system's empty-state view (1.28.8), as everywhere else in Folio;
-/// from 1.23.0 it was a look of its own.
-private struct SearchIntro: View {
+/// Before anything is typed: what the search finds and where it looks.
+/// The system's empty-state view (1.28.8), as everywhere else in Folio.
+struct SearchIntro: View {
     let sources: [SearchSource]
 
     var body: some View {
         ContentUnavailableView {
-            Label("Search What's Yours", systemImage: "magnifyingglass")
+            Label("Search Folio", systemImage: "magnifyingglass")
         } description: {
-            Text(sources.count > 1 ? "Titles in your library and the files on your servers." : "The titles in your library.")
+            Text("One search for what's yours and what's out there.")
         } actions: {
             SourceChips(sources: sources)
         }
         .accessibilityIdentifier("librarySearchIntro")
-    }
-}
-
-/// Nothing found: the system's "no results", with where it looked.
-private struct SearchNothing: View {
-    let query: String
-    let sources: [SearchSource]
-
-    var body: some View {
-        ContentUnavailableView {
-            Label("No Results for “\(query)”", systemImage: "magnifyingglass")
-        } description: {
-            Text("Try fewer words, or another spelling. Looked in:")
-        } actions: {
-            SourceChips(sources: sources)
-        }
-        .accessibilityIdentifier("librarySearchEmpty")
     }
 }
 
@@ -435,7 +372,7 @@ private struct ChipLabelStyle: LabelStyle {
 }
 
 /// A section's name, in the page's own type (not the list's small caps).
-private struct SearchHeader: View {
+struct SearchHeader: View {
     let title: String
     var body: some View {
         Text(title).font(.subheadline.weight(.bold)).foregroundStyle(.primary)
@@ -446,12 +383,12 @@ private struct SearchHeader: View {
 
 /// Files or Posters: two halves of one pill, the chosen one filled.
 private struct LayoutPill: View {
-    @Binding var selection: LibrarySearchPage.ServerLayout
+    @Binding var selection: LibrarySearchResults.ServerLayout
     @Namespace private var ns
 
     var body: some View {
         HStack(spacing: 2) {
-            ForEach(LibrarySearchPage.ServerLayout.allCases) { l in
+            ForEach(LibrarySearchResults.ServerLayout.allCases) { l in
                 let on = selection == l
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { selection = l }

@@ -255,8 +255,6 @@ final class PlayerModel: ObservableObject {
 
     private var snapshotTimer: Timer?
     private let snapshotQueue = DispatchQueue(label: "folio.snapshot", qos: .utility)
-    private var snapshotPool: CVPixelBufferPool?
-    private var snapshotPoolSize = (0, 0)
 
     private var scopedURL: URL?
     private var lastHistorySave = Date.distantPast
@@ -2217,7 +2215,6 @@ final class PlayerModel: ObservableObject {
         sample()
     }
 
-    func setVolume(_ v: Double) { client?.setAsync("volume", min(150, max(0, v))) }
     var volume: Double { client?.double("volume") ?? 100 }
     /// Delays set in the menus: remembered for the show, and the subtitle
     /// delay for this file too (a file's own delay wins over the show's).
@@ -3483,8 +3480,6 @@ final class PlayerModel: ObservableObject {
         mv.layoutIfNeeded()
         dlog("av", "video view now \(Int(mv.frame.width))×\(Int(mv.frame.height))")
     }
-    /// A/V lab: the decoder rebuild done after coming back while paused.
-    func labRenewDecoder() { renewHardwareDecoder() }
     /// Lab: the app away for 3 s while playing (Notification Centre pulled
     /// down), then back — the buffer must still be there.
     func labAwayThenBack() {

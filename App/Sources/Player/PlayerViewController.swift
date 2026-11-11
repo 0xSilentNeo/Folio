@@ -12,7 +12,6 @@ final class PlayerUIState: ObservableObject {
     @Published var showInfo = false { didSet { closedOver(oldValue && !showInfo) } }
     @Published var panel: Panel?
     @Published var showStats = false { didSet { closedOver(oldValue && !showStats) } }
-    @Published var showTune = false
     /// UIKit views behind the panel buttons (iOS 17/18 pill); popovers are presented from them.
     var anchors: [Panel: UIView] = [:]
     /// iOS 26: the panel buttons as bar items in a toolbar (popover sources).
@@ -98,7 +97,7 @@ final class PlayerUIState: ObservableObject {
         // timer, nothing on screen was left to focus to bring them back.
         if UIAccessibility.isVoiceOverRunning || UIAccessibility.isSwitchControlRunning { return }
         let w = DispatchWorkItem { [weak self] in
-            guard let self, !self.showInfo, !self.showStats, !self.showTune, !self.scrubbing, !self.showConsole, !self.menuOpen, self.panel == nil else { return }
+            guard let self, !self.showInfo, !self.showStats,!self.scrubbing, !self.showConsole, !self.menuOpen, self.panel == nil else { return }
             withAnimation(.easeOut(duration: 0.25)) { self.controlsVisible = false }
         }
         hideWork = w

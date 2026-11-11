@@ -134,10 +134,6 @@ final class PiPManager: NSObject {
         }
     }
 
-    func setAutoStart(_ on: Bool) {
-        controller?.canStartPictureInPictureAutomaticallyFromInline = on
-    }
-
     /// Arms automatic PiP again and has AVKit read the playback state anew
     /// (1.26.0). After the player went on to the next episode, or after a
     /// panel had been open, leaving the app often didn't start PiP: the

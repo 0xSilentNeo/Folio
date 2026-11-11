@@ -210,7 +210,6 @@ struct SettingsPanelContent: View {
     @ObservedObject var ui: PlayerUIState
     let onRotationLock: (Bool) -> Void
     @AppStorage(SettingsKey.seekStep) private var seekStep = 10
-    @AppStorage(SettingsKey.landscapeOnOpen) private var autoRotate = true
     @AppStorage(SettingsKey.surroundAudio) private var spatial = true
     @AppStorage(SettingsKey.subScale) private var subScale = 1.0
     @AppStorage(SettingsKey.subPos) private var subPos = 100

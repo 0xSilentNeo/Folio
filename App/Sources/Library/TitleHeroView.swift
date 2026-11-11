@@ -757,22 +757,12 @@ struct LibraryRow: View {
     }
 }
 
-/// Logs the navigation controller's back swipe (enabled? did it start?) so a
-/// report shows whether a swipe reached it.
-/// Is a back swipe under way, or did one just start? (1.16.1: a Play tap
-/// that coincides with a back swipe is ignored.)
+/// The navigation controller the title pages live in, and whether a page's
+/// own move in it is running.
 @MainActor
 enum BackGesture {
     /// The navigation controller the title pages live in (set by BackSwipeProbe).
     static weak var nav: UINavigationController?
-    /// A page is moving in or out: the zoom from its tile (or back into it)
-    /// runs ~0.9 s in the simulator, and its page takes touches meanwhile
-    /// (lab page probe: a touch at the page's middle reached the page for the
-    /// whole zoom-in). 27 Oct log: episode rows played 0.4–1.2 s after the
-    /// page appeared, from taps meant for Home.
-    static var pageMoving: Bool { moving(page) }
-    /// The title page on screen (its controller), set by BackSwipeProbe.
-    static weak var page: UIViewController?
 
     /// Whether `page`'s own navigation move is running: the navigation
     /// controller's transition has it as the page coming or going (a sheet or
@@ -787,9 +777,6 @@ enum BackGesture {
         }
         return false
     }
-    static var active = false
-    static var lastBegan = Date.distantPast
-    static var justStarted: Bool { active || Date().timeIntervalSince(lastBegan) < 0.6 }
 }
 
 struct BackSwipeProbe: UIViewRepresentable {
@@ -809,7 +796,6 @@ struct BackSwipeProbe: UIViewRepresentable {
             if let w = window { TouchTracker.install(on: w) }
             // Back on screen after another page or a tab switch: the move log again.
             if window != nil, let nav = navRef, !Self.labProbe {
-                BackGesture.page = pageController
                 startMoveLog(nav)
             }
             guard window != nil, watched.isEmpty else { return }
@@ -819,7 +805,6 @@ struct BackSwipeProbe: UIViewRepresentable {
                 while let n = r, !(n is UINavigationController) { r = n.next }
                 guard let nav = r as? UINavigationController else { dlog("nav", "back swipe probe: no navigation controller"); return }
                 BackGesture.nav = nav
-                BackGesture.page = self.pageController
                 self.navRef = nav
                 let g = nav.interactivePopGestureRecognizer
                 var content: UIGestureRecognizer?
@@ -934,13 +919,8 @@ struct BackSwipeProbe: UIViewRepresentable {
             let kind = g === watched.first ? "edge" : "content"
             switch g.state {
             case .began:
-                BackGesture.active = true
-                BackGesture.lastBegan = Date()
                 dlog("nav", "back swipe (\(kind)) began")
-            case .changed:
-                BackGesture.active = true
             case .ended, .cancelled, .failed:
-                BackGesture.active = false
                 dlog("nav", "back swipe (\(kind)) \(g.state == .ended ? "ended" : g.state == .cancelled ? "cancelled" : "failed")")
             default: break
             }

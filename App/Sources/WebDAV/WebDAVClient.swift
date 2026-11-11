@@ -223,7 +223,6 @@ final class PropfindParser: NSObject, XMLParserDelegate {
     private var etag = ""
     private var text = ""
     private var inResponse = false
-    private var statusOK = true
     private var propstatOK = true
 
     private static let dateFormatter: DateFormatter = {

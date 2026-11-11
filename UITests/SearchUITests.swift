@@ -102,7 +102,11 @@ final class SearchUITests: XCTestCase {
         field.typeText("lab")
         XCTAssertTrue(app.staticTexts["Lab Movie"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.keyboards.count > 0)
-        app.staticTexts["Lab Series"].firstMatch.swipeUp()
+        // Dragged in the list's upper part (1.28.11): with the library's
+        // results first, "Lab Series" can sit under the keyboard, and a
+        // swipe that starts there lands on the keyboard.
+        let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.34))
+        from.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.16)))
         sleep(1)
         print("SEARCH keyboard after scrolling: \(app.keyboards.count > 0 ? "still up" : "dismissed")")
         XCTAssertEqual(app.keyboards.count, 0, "scrolling the results didn't dismiss the keyboard")

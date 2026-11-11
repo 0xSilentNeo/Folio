@@ -35,10 +35,12 @@ final class Fixes1225Tests: XCTestCase {
         XCTAssertEqual(items.first { $0.name == "Recursive" }?.value, "true")
     }
 
-    func testSearchScopeFollowsThePage() {
-        XCTAssertEqual(SearchScope(fromTab: 0), .library)
-        XCTAssertEqual(SearchScope(fromTab: 1), .discover)
-        XCTAssertEqual(SearchScope(fromTab: 2), .library)
+    /// 1.28.11: one search for every tab; what it looks through ends with IMDb.
+    @MainActor
+    func testTheOneSearchLooksEverywhere() {
+        let sources = LibrarySearchResults.sources().map(\.name)
+        XCTAssertEqual(sources.first, "Library")
+        XCTAssertEqual(sources.last, "Movies & Shows")
     }
 }
 

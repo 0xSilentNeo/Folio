@@ -13,7 +13,6 @@ struct HomeView: View {
     @State private var showAddFiles = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.verticalSizeClass) private var verticalSizeClass
-    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var path: [LibraryRoute] = []
 
@@ -756,19 +755,6 @@ struct HomeView: View {
         .padding(.horizontal, margin)
     }
 
-    private func sectionTitle<D: View>(_ t: String, _ margin: CGFloat, trailing: String?, @ViewBuilder destination: @escaping () -> D) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(t).font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
-            if let trailing { Text(trailing).font(.subheadline).foregroundStyle(.secondary) }
-            Spacer()
-            NavigationLink(destination: destination) {
-                HStack(spacing: 2) { Text("All"); Image(systemName: "chevron.right").font(.caption.weight(.bold)) }
-                    .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
-            }
-        }
-        .padding(.horizontal, margin)
-    }
-
     private func historyActions(_ e: HistoryEntry) -> [TileMenuAction] {
         [TileMenuAction(title: e.canResume ? "Resume" : "Play", systemImage: "play") { ContinueQueue.play(e.item) },
          TileMenuAction(title: "Mark as watched", systemImage: "checkmark.circle") { history.markWatched(e) },
@@ -1083,98 +1069,6 @@ struct PrimaryChip: View {
                 .foregroundStyle(Theme.onAccent)
         }
         .buttonStyle(.plain)
-    }
-}
-
-struct SourceCard: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let host: String?
-    var dashed = false
-    @StateObject private var brand = BrandIconLoader()
-
-    init(title: String, subtitle: String, icon: String, host: String?, dashed: Bool = false) {
-        self.title = title; self.subtitle = subtitle; self.icon = icon; self.host = host; self.dashed = dashed
-    }
-
-    init(server: WebDAVServer) {
-        self.init(title: server.name, subtitle: server.base?.host ?? server.baseURL, icon: "externaldrive.connected.to.line.below", host: server.base?.host)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ZStack {
-                if let img = brand.image {
-                    Image(uiImage: img).resizable().scaledToFit().frame(width: 40, height: 40)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                } else {
-                    Image(systemName: icon).font(.system(size: 18, weight: .semibold))
-                        .frame(width: 40, height: 40)
-                        .background(Theme.fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                }
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
-                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-            }
-        }
-        .frame(width: 150, alignment: .leading)
-        .padding(14)
-        .background(Theme.card.opacity(dashed ? 0.4 : 1), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay {
-            if dashed {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [5, 4])).foregroundStyle(.secondary)
-            }
-        }
-        .onAppear { brand.load(host: host) }
-    }
-}
-
-struct HistoryRow: View {
-    let entry: HistoryEntry
-    @StateObject private var thumb = ThumbLoader()
-
-    var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                // The memory copy first (1.24.1): a rebuilt row showed generated art for a frame.
-                if let img = thumb.image ?? ThumbLoader.cached(key: entry.item.id, points: 96) { Image(uiImage: img).resizable().scaledToFill() }
-                else { GeneratedArt(seed: entry.item.displayTitle) }
-            }
-            .frame(width: 96, height: 54)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            VStack(alignment: .leading, spacing: 3) {
-                Text(thumb.meta?.name ?? entry.item.displayTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
-                HStack(spacing: 6) {
-                    Image(systemName: icon)
-                    if let s = HeroCard.line(entry.item, meta: thumb.meta) { Text(s).lineLimit(1) }
-                    Text(entry.updated, style: .relative)
-                }
-                .font(.caption).foregroundStyle(.secondary)
-                if entry.duration > 0 && !entry.isFinished {
-                    ProgressView(value: entry.progress).tint(Theme.accent).scaleEffect(x: 1, y: 0.6, anchor: .leading)
-                }
-            }
-            Spacer(minLength: 0)
-            if entry.isFinished { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accent) }
-        }
-        .padding(8)
-        .background(Theme.card.opacity(0.7), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .onAppear {
-            thumb.load(key: entry.item.id, fileURL: nil, artwork: entry.item.artwork,
-                       lookupName: entry.item.resolvedURL?.lastPathComponent ?? entry.item.title, points: 96)
-        }
-    }
-
-    private var icon: String {
-        switch entry.item.source {
-        case .webdav: return "externaldrive.connected.to.line.below"
-        case .addon: return "puzzlepiece.extension"
-        case .local: return "iphone"
-        case .url: return "link"
-        }
     }
 }
 

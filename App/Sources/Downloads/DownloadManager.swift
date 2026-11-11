@@ -472,8 +472,6 @@ final class DownloadManager: ObservableObject {
         save(); pump()
     }
 
-    func retry(_ id: UUID) { resume(id) }
-
     func remove(_ id: UUID, deleteFile: Bool = false) {
         guard let i = index(id) else { return }
         let item = items[i]

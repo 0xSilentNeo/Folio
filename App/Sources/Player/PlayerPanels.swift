@@ -156,23 +156,6 @@ struct ConsoleBar: View {
     }
 }
 
-/// Named shader chains, offered when all their files are installed.
-enum ShaderPresets {
-    struct Preset { let name: String; let shaders: [String] }
-
-    static let all: [Preset] = [
-        Preset(name: "Anime4K Mode A (Fast)", shaders: ["Anime4K_Clamp_Highlights.glsl", "Anime4K_Restore_CNN_M.glsl", "Anime4K_Upscale_CNN_x2_M.glsl", "Anime4K_AutoDownscalePre_x2.glsl", "Anime4K_AutoDownscalePre_x4.glsl", "Anime4K_Upscale_CNN_x2_S.glsl"]),
-        Preset(name: "Anime4K Mode B (Fast)", shaders: ["Anime4K_Clamp_Highlights.glsl", "Anime4K_Restore_CNN_Soft_M.glsl", "Anime4K_Upscale_CNN_x2_M.glsl", "Anime4K_AutoDownscalePre_x2.glsl", "Anime4K_AutoDownscalePre_x4.glsl", "Anime4K_Upscale_CNN_x2_S.glsl"]),
-        Preset(name: "Anime4K Mode C (Fast)", shaders: ["Anime4K_Clamp_Highlights.glsl", "Anime4K_Upscale_Denoise_CNN_x2_M.glsl", "Anime4K_AutoDownscalePre_x2.glsl", "Anime4K_AutoDownscalePre_x4.glsl", "Anime4K_Upscale_CNN_x2_S.glsl"]),
-        Preset(name: "FSRCNNX x2", shaders: ["FSRCNNX_x2_8-0-4-1.glsl"]),
-    ]
-
-    static func available(files: [URL]) -> [Preset] {
-        let names = Set(files.map(\.lastPathComponent))
-        return all.filter { $0.shaders.allSatisfy(names.contains) }
-    }
-}
-
 /// Compact live stats card (our own, instead of mpv's stats.lua overlay):
 /// polled once a second off the main thread.
 @MainActor
