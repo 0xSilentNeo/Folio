@@ -11,7 +11,61 @@ struct TitleHeroView: View {
     /// Live: a series page's highlight, header and Resume move to the episode
     /// you just watched when you come back from the player (1.14.1 fixed it
     /// at the moment the page was built).
-    private var file: URL { focus ?? LibraryGroup.nextUp(in: group.files) }
+    ///
+    /// 1.30.0: with episodes also watched from streams (`links`), the next
+    /// one counts those too, as Discover's page counts the files.
+    private var file: URL {
+        if let focus { return focus }
+        guard !links.isEmpty else { return LibraryGroup.nextUp(in: group.files) }
+        let version = history.version
+        if let m = memo.nextUp, m.version == version, m.links == links.count, m.files == group.files.count { return m.url }
+        let url = WatchedState.nextUp(group.files, entry: state) ?? LibraryGroup.nextUp(in: group.files)
+        memo.nextUp = (version, links.count, group.files.count, url)
+        return url
+    }
+
+    // MARK: One watched state (1.30.0, WatchedState)
+
+    /// Each file's identity ("tt…:1:5") when the library matched it to an
+    /// IMDb title: its link to the same episode's addon entry. Built when
+    /// the page's files or their metadata change, not per row.
+    @State private var links: [URL: String] = [:]
+
+    private func linkedKey(_ f: URL) -> String? { links[f].map(WatchedState.addonKey) }
+    private func linkedEntry(_ f: URL) -> HistoryEntry? { linkedKey(f).flatMap { history.entry(for: $0) } }
+
+    /// A file's state on either side: its own entry, or the addon entry of the same episode.
+    private func state(_ f: URL) -> HistoryEntry? {
+        let own = history.entry(forURL: f.path)
+        guard let other = linkedEntry(f) else { return own }
+        return WatchedState.combined([own, other])
+    }
+
+    /// What's marked with a file: itself, and the same episode's addon entry when there is one.
+    private func unit(_ f: URL) -> [String] {
+        WatchedState.markKeys(own: [f.path], others: [linkedKey(f)].compactMap { $0 }) { history.entry(for: $0) != nil }
+    }
+
+    private func setWatched(_ f: URL, _ watched: Bool) {
+        history.setWatched(unit(f), watched, item: HistoryStore.libraryItem)
+    }
+
+    /// Where Resume starts: this file's own place, else the place kept by
+    /// the same episode's stream.
+    private var resumeAt: Double? {
+        if let e = entry, e.canResume { return e.position }
+        return WatchedState.carriedPosition(own: entry, others: [linkedEntry(file)])
+    }
+
+    /// The title as the Watchlist keeps one (1.30.0): the page has the
+    /// button Discover's has once the library knows its IMDb title.
+    private var watchlistMeta: MetaItem? {
+        guard let m = meta, m.id.hasPrefix("tt") else { return nil }
+        var item = MetaItem(id: m.id, type: m.type, name: m.name, poster: m.poster, description: m.description,
+                            releaseInfo: m.year, imdbRating: m.rating, genres: m.genres)
+        item.background = m.background
+        return item
+    }
     @ObservedObject private var local = LocalMediaStore.shared
     @ObservedObject private var history = HistoryStore.shared
     @ObservedObject private var kids = KidsProfile.shared
@@ -29,7 +83,7 @@ struct TitleHeroView: View {
     /// (then the show's own description).
     private func spoilerSafe(_ m: MediaMeta?) -> String? {
         guard let m else { return nil }
-        if hideSpoilers, m.episodeOverview != nil, HistoryStore.shared.entry(forURL: file.path)?.isFinished != true { return m.description }
+        if hideSpoilers, m.episodeOverview != nil, state(file)?.isFinished != true { return m.description }
         return m.synopsis
     }
     @Environment(\.dismiss) private var dismiss
@@ -92,6 +146,7 @@ struct TitleHeroView: View {
     private final class Memo {
         var siblings: (group: String, files: [URL], file: URL, list: [URL])?
         var seasons: [Int] = []
+        var nextUp: (version: Int, links: Int, files: Int, url: URL)?
     }
     @State private var memo = Memo()
     private var shownEpisodes: [URL] {
@@ -154,9 +209,10 @@ struct TitleHeroView: View {
                         // Play sits under the description, left-aligned (from the mockup).
                         // Track (1.21.0) after it for a series, on its own line when there's no room.
                         TitleButtonRow {
-                            TiltPlayButton(title: entry?.canResume == true ? "Resume" : "Play",
-                                           subtitle: entry?.canResume == true ? "from \(PlayerModel.format(entry!.position))" : nil) { tapped(file, "Play") }
-                            if entry?.canResume == true {
+                            let resumeAt = self.resumeAt
+                            TiltPlayButton(title: resumeAt != nil ? "Resume" : "Play",
+                                           subtitle: resumeAt.map { "from \(PlayerModel.format($0))" }) { tapped(file, "Play") }
+                            if resumeAt != nil {
                                 Button { if pageLife?.cantAct == nil { restart() } } label: {
                                     Label("Start over", systemImage: "arrow.counterclockwise").font(.subheadline.weight(.semibold))
                                         .padding(.horizontal, 16).frame(height: 44).glass(cornerRadius: 22, interactive: true)
@@ -186,8 +242,18 @@ struct TitleHeroView: View {
         }
         .background(HomeBackdrop().ignoresSafeArea())
         .background(BackSwipeProbe().frame(width: 1, height: 1))
-        .pageButtons(zooms: zoomsFromTile, back: goBack) { moreButton }
+        .pageButtons(zooms: zoomsFromTile, back: goBack) {
+            // Watchlist, then ⋯, as on Discover's page (1.30.0).
+            HStack(spacing: 8) {
+                if let m = watchlistMeta { WatchlistButton(meta: m) }
+                moreButton
+            }
+        }
         .landscapeTopGap()
+        .task(id: LinkKey(files: siblings, title: meta?.id, known: LibraryMetaIndex.shared.metas.count)) {
+            let found = await WatchedState.identities(of: siblings)
+            if !Task.isCancelled, found != links { links = found }
+        }
         // Landscape phone: the floating tab bar sat on the title and its details.
         .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .onAppear {
@@ -283,8 +349,11 @@ struct TitleHeroView: View {
     private func airingMark(_ f: URL, _ airing: EpisodeAiring) -> AiringMark? {
         let p = TitleParser.parse(f.lastPathComponent)
         guard let mark = airing.mark(season: p.season, episode: p.episode) else { return nil }
-        return mark == .new && history.isWatched(f) ? nil : mark
+        return mark == .new && state(f)?.isFinished == true ? nil : mark
     }
+
+    /// The task that links the page's files to their addon entries runs again when any of these changes.
+    private struct LinkKey: Hashable { var files: [URL]; var title: String?; var known: Int }
 
     /// Episodes not out yet with no file (1.22.1): when each airs, in your time zone.
     private var comingUp: some View {
@@ -322,7 +391,7 @@ struct TitleHeroView: View {
                 // The release's own details, read by the one release-name parser.
                 ForEach(releaseChips, id: \.self) { chip($0) }
                 chip(file.pathExtension.uppercased())
-                if let e = entry, e.isFinished { chip("Watched") }
+                if state(file)?.isFinished == true { chip("Watched") }
             }
         }
     }
@@ -373,11 +442,12 @@ struct TitleHeroView: View {
             }
             LibraryList(files: shownEpisodes, mode: LibraryViewMode(rawValue: viewMode) ?? .details, current: file, group: group,
                         airing: airing.map { a in { airingMark($0, a) } },
+                        linkedKey: links.isEmpty ? nil : { linkedKey($0) },
                         swipe: { f in
                             [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = f },
-                             history.isWatched(f)
-                                ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { history.setWatched([f], false) }
-                                : SwipeAction(title: "Watched", icon: "eye", tint: Theme.swipeTint) { history.setWatched([f], true) }]
+                             state(f)?.isFinished == true
+                                ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { setWatched(f, false) }
+                                : SwipeAction(title: "Watched", icon: "eye", tint: Theme.swipeTint) { setWatched(f, true) }]
                         },
                         pendingDelete: $pendingDelete,
                         delete: { f in
@@ -394,10 +464,14 @@ struct TitleHeroView: View {
         Menu {
             Button { play(file) } label: { Label("Play", systemImage: "play") }
             if siblings.count > 1 {
-                WatchedMenuItems(files: [file], scope: .thisEpisode)
-                WatchedMenuItems(files: siblings, scope: .all)
+                WatchedMenuItems(units: [unit(file)], scope: .thisEpisode, item: HistoryStore.libraryItem)
+                WatchedMenuItems(units: siblings.map(unit), scope: .all, item: HistoryStore.libraryItem)
             } else {
-                WatchedMenuItems(files: [file])
+                WatchedMenuItems(units: [unit(file)], item: HistoryStore.libraryItem)
+            }
+            // The title's IMDb link, as Discover's page shares it (1.30.0).
+            if let m = meta, m.id.hasPrefix("tt"), let link = URL(string: "https://www.imdb.com/title/\(m.id)/") {
+                ShareLink(item: link) { Label("Share", systemImage: "square.and.arrow.up") }
             }
             // The wrong title, poster or episode names (1.29.0).
             Button { fixingMatch = true } label: { Label("Fix Match…", systemImage: "wand.and.stars") }
@@ -459,7 +533,9 @@ struct TitleHeroView: View {
             if p.episode != nil { m.anime = AnimeHint(title: p.title, episode: p.episode) }
             return m
         }
-        PlayerPresenter.play(queue: queue, index: list.firstIndex(of: f) ?? 0, fromStart: fromStart)
+        // Half watched from a stream and never from this file: on from there (1.30.0).
+        let carried = fromStart ? nil : WatchedState.carriedPosition(own: history.entry(forURL: f.path), others: [linkedEntry(f)])
+        PlayerPresenter.play(queue: queue, index: list.firstIndex(of: f) ?? 0, fromStart: fromStart, startAt: carried)
     }
 
     private func restart() {
@@ -531,6 +607,10 @@ struct LibraryList: View {
     var group: LibraryGroup? = nil
     /// A tracked show's marks on its episodes (1.22.1): "New", "Airs Tue 9:00 PM".
     var airing: ((URL) -> AiringMark?)? = nil
+    /// The history key of the same episode's addon entry (1.30.0, the
+    /// title page): watched or half watched from a stream shows here too,
+    /// and the row's watched marks go to both (WatchedState).
+    var linkedKey: ((URL) -> String?)? = nil
     /// Actions revealed by swiping a row to the left (over the tile in Thumbnails).
     var swipe: ((URL) -> [SwipeAction])? = nil
     /// The file whose delete question is up, and what Delete does. The question
@@ -591,21 +671,32 @@ struct LibraryList: View {
         }
         .buttonStyle(PressStyle(scale: 0.98))
         .accessibilityIdentifier("ep:" + f.lastPathComponent)
+        // "Watched" or "In progress", once, as the row's value (1.30.0).
+        .accessibilityValue(WatchedState.spoken(state(f)))
         .contextMenu {
             Button { play(f) } label: { Label("Play", systemImage: "play") }
-            WatchedMenuItems(files: [f])
+            WatchedMenuItems(units: [WatchedState.markKeys(own: [f.path], others: [linkedKey?(f)].compactMap { $0 }) { history.entry(for: $0) != nil }],
+                             item: HistoryStore.libraryItem)
             Button(role: .destructive) {
                 pending.wrappedValue = f
             } label: { Label("Delete", systemImage: "trash") }
         }
     }
 
+    /// A file's state: its own entry, or the same episode's addon entry (1.30.0).
+    private func state(_ f: URL) -> HistoryEntry? {
+        let own = history.entry(forURL: f.path)
+        guard let other = linkedKey?(f).flatMap({ history.entry(for: $0) }) else { return own }
+        return WatchedState.combined([own, other])
+    }
+
     private func tile(_ f: URL) -> some View {
         let p = TitleParser.parse(f.lastPathComponent)
         let tag = TitleParser.tag(p) ?? TitleParser.clean(f.lastPathComponent)
+        let state = state(f)
         return MediaTile(title: tag, subtitle: f.pathExtension.uppercased(), key: f.path, fileURL: f, lookupName: f.lastPathComponent,
-                         progress: history.entry(forURL: f.path)?.progress, fixedTitle: tag,
-                         trailingNote: LibraryOrganizer.info(f).size.byteString, watched: history.isWatched(f))
+                         progress: state?.progress, fixedTitle: tag,
+                         trailingNote: LibraryOrganizer.info(f).size.byteString, watched: state?.isFinished == true, watchedSpoken: false)
             .overlay(alignment: .topTrailing) {
                 if f == current {
                     Image(systemName: "play.fill").font(.caption2.weight(.bold)).foregroundStyle(Theme.onAccent)
@@ -618,8 +709,9 @@ struct LibraryList: View {
     }
 
     private func row(_ f: URL) -> some View {
-        LibraryRow(file: f, mode: mode, highlighted: f == current, progress: history.entry(forURL: f.path)?.progress, size: LibraryOrganizer.info(f).size,
-                   watched: history.isWatched(f), airing: airing?(f))
+        let state = state(f)
+        return LibraryRow(file: f, mode: mode, highlighted: f == current, progress: state?.progress, size: LibraryOrganizer.info(f).size,
+                          watched: state?.isFinished == true, watchedSpoken: false, airing: airing?(f))
     }
 }
 
@@ -642,14 +734,17 @@ struct LibraryRow: View {
     var size: Int64? = nil
     /// Watched (for a show's row on Home: every episode): an eye at the end.
     var watched = false
+    /// False where the row's accessibility value says "Watched" (1.30.0, episode lists).
+    var watchedSpoken = true
     /// A tracked show's mark on the episode (1.22.1): "New", "Airs Tue 9:00 PM".
     var airing: AiringMark? = nil
     @StateObject private var thumb = ThumbLoader()
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
 
     /// Unwatched episode with spoilers hidden: no synopsis, blurred frame.
+    /// 1.30.0: an episode row's `watched` counts too (watched from a stream).
     private var spoilerHidden: Bool {
-        hideSpoilers && parsed.episode != nil && HistoryStore.shared.entry(forURL: file.path)?.isFinished != true
+        hideSpoilers && parsed.episode != nil && !(watched && fixedTitle == nil) && HistoryStore.shared.entry(forURL: file.path)?.isFinished != true
     }
     private var parsed: TitleParser.Parsed { TitleParser.parse(file.lastPathComponent) }
     private var episodeTag: String? { parsed.episode == nil ? nil : TitleParser.tag(parsed) }
@@ -735,7 +830,7 @@ struct LibraryRow: View {
     /// Top right: the eye when watched, the play mark on the highlighted row.
     private var marks: some View {
         HStack(spacing: 6) {
-            if watched { Image(systemName: "eye.fill").font(.caption).foregroundStyle(.secondary).accessibilityLabel("Watched") }
+            if watched { WatchedGlyph(spoken: watchedSpoken) }
             if highlighted { Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent) }
         }
     }

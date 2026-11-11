@@ -283,9 +283,10 @@ final class PlayerModel: ObservableObject {
 
     private let defaults = UserDefaults.standard
 
-    init?(queue: [MediaItem], startIndex: Int = 0, fromStart: Bool = false) {
+    init?(queue: [MediaItem], startIndex: Int = 0, fromStart: Bool = false, startAt: Double? = nil) {
         guard !queue.isEmpty else { return nil }
         startFirstAtZero = fromStart
+        startFirstAt = fromStart ? nil : startAt
         self.queue = queue
         self.queueIndex = min(max(0, startIndex), queue.count - 1)
         if UserDefaults.standard.string(forKey: SettingsKey.renderer) == "gl", let gl = SampleBufferRenderer.make(output: pip.makeSink()) {
@@ -1094,9 +1095,20 @@ final class PlayerModel: ObservableObject {
     /// history was deleted before the player opened, so a file that failed to
     /// open, or a quick close, lost its resume point and watched mark.
     private var startFirstAtZero = false
+    /// The first file's place as its other side keeps it (1.30.0,
+    /// WatchedState.carriedPosition): a stream of an episode half watched
+    /// from the library, or the file of one half watched from a stream.
+    private var startFirstAt: Double?
 
     private func startOptions(for item: MediaItem, toast: Bool) -> [String] {
         if startFirstAtZero { startFirstAtZero = false; return ["start=0"] }
+        if let at = startFirstAt {
+            startFirstAt = nil
+            if defaults.bool(forKey: SettingsKey.resumePlayback), at > 15 {
+                if toast { showToast("Resuming from \(Self.format(at))") }
+                return ["start=\(Int(at))"]
+            }
+        }
         // Lab: a resume position for the first file (loading measurements).
         if item.id == queue.first?.id, let s = CommandLine.arguments.first(where: { $0.hasPrefix("-labStart=") }) { return ["start=" + s.dropFirst("-labStart=".count)] }
         guard defaults.bool(forKey: SettingsKey.resumePlayback),
