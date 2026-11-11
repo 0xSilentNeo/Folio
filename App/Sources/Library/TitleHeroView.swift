@@ -36,6 +36,7 @@ struct TitleHeroView: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var confirmDelete = false
+    @State private var fixingMatch = false
     @State private var confirmDeleteAll = false
     /// An episode whose Delete was swiped: asks first.
     @State private var pendingDelete: URL?
@@ -398,6 +399,8 @@ struct TitleHeroView: View {
             } else {
                 WatchedMenuItems(files: [file])
             }
+            // The wrong title, poster or episode names (1.29.0).
+            Button { fixingMatch = true } label: { Label("Fix Match…", systemImage: "wand.and.stars") }
             if siblings.count > 1 {
                 Button(role: .destructive) { confirmDelete = true } label: { Label("Delete \(deleteLabel)", systemImage: "trash") }
                 Button(role: .destructive) { confirmDeleteAll = true } label: { Label("Delete All \(siblings.count) Episodes", systemImage: "trash") }
@@ -408,6 +411,8 @@ struct TitleHeroView: View {
             PageButtonLabel(systemName: "ellipsis", width: 56)
         }
         .accessibilityLabel("More")
+        // Matched: back to Home, where the title comes up under its new name and poster.
+        .sheet(isPresented: $fixingMatch) { FixMatchSheet(file: file) { dismiss() } }
     }
 
     private func goBack() {

@@ -230,18 +230,6 @@ enum KeychainShare {
         write(Data(line.utf8), group: nil, account: seenAccount)
     }
 
-    /// The Resume control was drawn by the widget extension (1.28.5): the
-    /// app's log says when, so a blank control can be told apart from one
-    /// iOS never asked Folio to draw.
-    static func controlDrawn() {
-        let line = ISO8601DateFormatter().string(from: Date()) + " Resume control drawn"
-        write(Data(line.utf8), group: nil, account: "Folio.control.drawn")
-    }
-
-    static func lastControlDrawn() -> String? {
-        read(group: nil, account: "Folio.control.drawn").data.flatMap { String(data: $0, encoding: .utf8) }
-    }
-
     /// What the widget wrote, if it reached the same group.
     static func lastSeen() -> String? {
         guard let data = read(group: nil, account: seenAccount).data else { return nil }

@@ -23,9 +23,6 @@ struct FolioWidgets: WidgetBundle {
         NewOnServersWidget()
         PickTonightWidget()
         DownloadActivityWidget()
-        if #available(iOSApplicationExtension 18.0, *) {
-            ResumeControl()
-        }
     }
 }
 

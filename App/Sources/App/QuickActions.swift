@@ -2,9 +2,8 @@ import UIKit
 
 /// Home Screen quick actions (1.28.11): long-press Folio's icon for Resume,
 /// with the name of what you watched last. It's the app's own menu, so it
-/// works on any install; the Control Centre control is drawn by the widget
-/// extension, which a re-signed install leaves blank (it draws as it
-/// should on an install signed as built).
+/// works on any install (the Control Centre control, drawn by the widget
+/// extension, came out blank on a re-signed one and was removed in 1.29.0).
 @MainActor
 enum QuickActions {
     static let resume = "dev.silentneo.folio.quick.resume"
@@ -37,7 +36,7 @@ enum QuickActions {
     static func perform(_ item: UIApplicationShortcutItem) -> Bool {
         guard item.type == resume else { return false }
         dlog("intents", "quick action: Resume")
-        ResumeHook.run?()
+        ResumeSetup.resume()
         return true
     }
 }

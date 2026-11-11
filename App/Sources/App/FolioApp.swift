@@ -353,16 +353,8 @@ struct RootView: View {
                 IntentPlayback.play(link.url)
             }
         case "resume":
-            // The Resume control (1.28.4): what you watched last, from its place.
-            guard let e = HistoryStore.shared.continueWatching.first else {
-                dlog("intents", "Resume control: nothing to continue")
-                return
-            }
-            dlog("intents", "Resume control: \(ShowCatalog.name(of: e))")
-            IntentPlayback.start(e.item)
-        case "front":
-            // The Resume control's intent already played (1.28.6): only Folio to the front.
-            break
+            // What you watched last, from its place (a Shortcut that opens folio://resume).
+            ResumeSetup.resume()
         case "import":
             // The share sheet couldn't hand the video over (no App Group, and
             // a copy rather than the file itself): Add files, to pick it.

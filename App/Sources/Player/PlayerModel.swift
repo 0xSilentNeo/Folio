@@ -815,6 +815,7 @@ final class PlayerModel: ObservableObject {
         dropLayoutFilter(c)
         subtitleSearch?.cancel(); subtitleSearch = nil
         isLoading = true
+        beginOpening(item)
         position = 0
         clock.position = 0
         clock.duration = item.durationHint ?? 0
@@ -875,17 +876,10 @@ final class PlayerModel: ObservableObject {
                 // minute to hand the stream over, with nothing on screen.
                 // Kept up for as long as it waits (1.28.10; one 1.6 s note
                 // left the rest of a 30 s wait as blank as before).
-                let slow = Task { [weak self] in
-                    try? await Task.sleep(for: .seconds(4))
-                    while !Task.isCancelled {
-                        guard let self, !self.closed, self.playingItem?.id == id, !self.fileLoaded else { return }
-                        self.showToast("Waiting for the stream’s server…")
-                        try? await Task.sleep(for: .seconds(1.4))
-                    }
-                }
+                // Said on the opening card (1.29.0; a repeating note before).
+                openStage = .link
                 Task { [weak self] in
                     let answer = await LinkWarmer.resolveFast(u, headers: item.headers, purpose: "this file")
-                    slow.cancel()
                     let final = answer.address
                     guard let self, !self.closed, self.playingItem?.id == id, self.appended == nil else { return }
                     if let final, final != u { self.playLinks[id] = final } else if final == u { LinkWarmer.direct.insert(u.host ?? "") }
@@ -903,6 +897,7 @@ final class PlayerModel: ObservableObject {
     }
 
     private func loadFile(_ item: MediaItem, _ opts: [String], _ c: MPVClient) {
+        if openStage != .connecting { openStage = .connecting }
         let r = c.command(["loadfile", mpvPath(item), "replace", "-1", opts.joined(separator: ",")])
         dlog("player", "loadfile \(mpvPath(item)) source=\(item.source) opts=\(opts) -> \(r)")
     }
@@ -987,6 +982,43 @@ final class PlayerModel: ObservableObject {
     // MARK: Why a file didn't play (1.23.0)
 
     private var problemCheck: Task<Void, Never>?
+
+    // MARK: Opening (1.29.0)
+
+    /// What the player is doing while a file opens, for the opening card:
+    /// a spinner on black said nothing for the half minute a slow link or
+    /// server could take.
+    enum OpenStage: Equatable { case link, connecting }
+    @Published private(set) var openStage: OpenStage = .connecting
+    /// Still opening after 12 s: the card offers Try Again.
+    @Published private(set) var openingSlow = false
+    /// The title's picture, for the card's background, once it's found.
+    @Published private(set) var openingArt: UIImage?
+    private var openingTimer: DispatchWorkItem?
+
+    private func beginOpening(_ it: MediaItem) {
+        openStage = .connecting
+        openingSlow = false
+        if nowPlayingArt?.id != it.id { openingArt = nil }
+        openingTimer?.cancel()
+        let id = it.id
+        let w = DispatchWorkItem { [weak self] in
+            guard let self, !self.closed, self.isLoading, !self.fileLoaded, (self.playingItem ?? self.item).id == id else { return }
+            self.openingSlow = true
+        }
+        openingTimer = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 12, execute: w)
+    }
+
+    /// What's opening, by name.
+    var openingTitle: String { (playingItem ?? item).displayTitle }
+
+    /// Where the file is, in words: "Real-Debrid", a server's name, "This iPhone".
+    var openingSource: String {
+        let it = playingItem ?? item
+        if let u = it.resolvedURL, u.isFileURL { return "This iPhone" }
+        return serverName(of: it).name
+    }
 
     /// The server the item is on, by name, and whether it's Real-Debrid.
     private func serverName(of it: MediaItem) -> (name: String, realDebrid: Bool) {
@@ -4338,6 +4370,7 @@ final class PlayerModel: ObservableObject {
             guard let self, !Task.isCancelled, !self.closed, (self.playingItem ?? self.item).id == it.id else { return }
             guard let found else { dlog("player", "Now Playing: no picture found for \(it.displayTitle)"); return }
             self.nowPlayingArt = (it.id, found.image)
+            if self.isLoading { self.openingArt = found.image }
             dlog("player", "Now Playing picture: \(found.source), \(Int(found.image.size.width))×\(Int(found.image.size.height))")
             self.updateNowPlaying()
         }

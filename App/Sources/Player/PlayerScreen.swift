@@ -47,8 +47,11 @@ struct PlayerScreen: View {
                     .allowsHitTesting(false)
                 }
 
-                BusySpinner(busy: (model.buffering || model.isLoading) && model.errorMessage == nil,
-                            delay: model.isLoading ? 0.35 : model.spinnerDelay)
+                // Opening (1.29.0): what's opening, from where, and what it's
+                // waiting for; a spinner alone once it plays and stalls.
+                OpeningCard(model: model, onClose: onClose)
+                BusySpinner(busy: model.buffering && !model.isLoading && model.errorMessage == nil,
+                            delay: model.spinnerDelay)
                     .offset(y: ui.controlsVisible && !ui.locked ? -10 : 0)
 
                 // iOS 26: while a panel is open, a tap anywhere outside it closes
@@ -1056,6 +1059,85 @@ struct PillIcon: View {
 /// when it's over. Seeks served from the buffer are over sooner, and a
 /// spinner that flashes for a few frames reads as a hiccup (2 Nov report;
 /// the 1 Nov log has ten seeks in one second while the phone turned).
+/// While a file opens (1.29.0): its picture dimmed behind, its name, where
+/// it's coming from and what the player is waiting for. After 12 s, Try
+/// Again and Close, where there was a spinner on black for as long as a
+/// server took (34 s in the 11 Nov log). Not for the first half second:
+/// a file on the phone opens faster than that.
+struct OpeningCard: View {
+    @ObservedObject var model: PlayerModel
+    let onClose: () -> Void
+    @State private var shown = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var opening: Bool { model.isLoading && model.errorMessage == nil && !model.isPiPActive }
+
+    private var status: String {
+        switch model.openStage {
+        case .link: "Waiting for the stream’s server…"
+        case .connecting: model.openingSource == "This iPhone" ? "Opening…" : "Connecting to \(model.openingSource)…"
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            if shown && opening {
+                ZStack {
+                    if let art = model.openingArt {
+                        Image(uiImage: art)
+                            .resizable().scaledToFill()
+                            .blur(radius: 24, opaque: true)
+                            .overlay(Color.black.opacity(0.62))
+                            .transition(.opacity)
+                            .accessibilityHidden(true)
+                    }
+                    VStack(spacing: 14) {
+                        FolioSpinner(size: .large, tint: .white)
+                        VStack(spacing: 5) {
+                            Text(model.openingTitle)
+                                .font(.headline)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.center)
+                            Text(status)
+                                .font(.subheadline)
+                                .foregroundStyle(.white.opacity(0.7))
+                                .contentTransition(.opacity)
+                        }
+                        if model.openingSlow {
+                            HStack(spacing: 10) {
+                                Button("Try Again") { model.load(model.item) }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(.white.opacity(0.22))
+                                Button("Close", action: onClose)
+                                    .buttonStyle(.bordered)
+                                    .tint(.white)
+                            }
+                            .buttonBorderShape(.capsule)
+                            .padding(.top, 6)
+                            .transition(.opacity)
+                        }
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 40)
+                    .frame(maxWidth: 520)
+                }
+                .transition(.opacity)
+                .accessibilityElement(children: .contain)
+            }
+        }
+        .ignoresSafeArea()
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: shown && opening)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: model.openingSlow)
+        .animation(.easeOut(duration: 0.3), value: model.openingArt != nil)
+        .allowsHitTesting(shown && opening && model.openingSlow)
+        .task(id: opening) {
+            guard opening else { shown = false; return }
+            try? await Task.sleep(for: .milliseconds(500))
+            if !Task.isCancelled { shown = true }
+        }
+    }
+}
+
 struct BusySpinner: View {
     let busy: Bool
     /// Seconds before it shows (a local file's seek: a second; PlayerModel.spinnerDelay).
