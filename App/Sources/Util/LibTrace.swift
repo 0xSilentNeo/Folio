@@ -177,3 +177,27 @@ struct GridProbe: ViewModifier {
 
     static let space = "homeGrid"
 }
+
+/// Diagnostic traces switch themselves off a day after they were turned on
+/// (1.28.8). The 11 Nov report had all three on from an earlier hunt: they
+/// log every tile that scrolls by, sample the picture 120 times a second
+/// around each trip away, and save screenshots, all of which costs battery
+/// long after the question they were turned on for was answered.
+enum TraceExpiry {
+    static let keys = [SettingsKey.libTrace, SettingsKey.netTrace, SettingsKey.pipTrace]
+    static let life: TimeInterval = 86400
+
+    /// At launch. `now` and `defaults` are parameters for the tests.
+    @discardableResult
+    static func check(now: Date = Date(), defaults d: UserDefaults = .standard) -> Bool {
+        let on = keys.filter { d.bool(forKey: $0) }
+        guard !on.isEmpty else { d.removeObject(forKey: "tracesOnSince"); return false }
+        guard let since = d.object(forKey: "tracesOnSince") as? Date else { d.set(now, forKey: "tracesOnSince"); return false }
+        guard now.timeIntervalSince(since) > life else { return false }
+        for k in on { d.set(false, forKey: k) }
+        d.removeObject(forKey: "tracesOnSince")
+        dlog("app", "diagnostic traces were on for over a day: turned off (\(on.joined(separator: ", ")))")
+        return true
+    }
+}
+

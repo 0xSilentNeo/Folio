@@ -43,6 +43,21 @@ final class Fixes1286Tests: XCTestCase {
         XCTAssertFalse(DownloadManager.isPermanent("The network connection was lost."))
     }
 
+    /// 1.28.8: diagnostic traces left on turn themselves off after a day.
+    func testTracesTurnThemselvesOffAfterADay() throws {
+        let d = try XCTUnwrap(UserDefaults(suiteName: "folio.tests.traces"))
+        d.removePersistentDomain(forName: "folio.tests.traces")
+        let t0 = Date(timeIntervalSince1970: 1_800_000_000)
+        XCTAssertFalse(TraceExpiry.check(now: t0, defaults: d), "nothing on")
+        d.set(true, forKey: SettingsKey.pipTrace)
+        XCTAssertFalse(TraceExpiry.check(now: t0, defaults: d), "first seen on: the day starts")
+        XCTAssertFalse(TraceExpiry.check(now: t0.addingTimeInterval(3600), defaults: d))
+        XCTAssertTrue(d.bool(forKey: SettingsKey.pipTrace))
+        XCTAssertTrue(TraceExpiry.check(now: t0.addingTimeInterval(90_000), defaults: d))
+        XCTAssertFalse(d.bool(forKey: SettingsKey.pipTrace))
+        d.removePersistentDomain(forName: "folio.tests.traces")
+    }
+
     /// One entry this version can't read doesn't lose the rest of a saved list.
     func testASavedListReadsEntryByEntry() throws {
         let meta = MetaItem(id: "tt1", type: "movie", name: "A", poster: nil, description: nil, releaseInfo: nil, imdbRating: nil, genres: nil)

@@ -72,6 +72,14 @@ enum GlanceWriter {
         serversTask = Task { @MainActor in await writeServers() }
     }
 
+    /// The store's reads and writes, one at a time and off the main thread
+    /// (1.28.8). On this install the store is the Keychain: every call is a
+    /// round trip to another process, and they all ran on the main thread,
+    /// at launch and after every change to the history.
+    private static let disk = DispatchQueue(label: "folio.glance-store", qos: .utility)
+    /// Files compared once with what the last run left.
+    private static var compared: Set<String> = []
+
     /// Writes `file` when it's new or changed, and reloads `kind`.
     private static func write<F: GlanceFile>(_ file: F, kind: String, compare: Data? = nil) -> Bool {
         guard let store = WidgetStore.glance(create: true) else { return false }
@@ -80,13 +88,44 @@ enum GlanceWriter {
         guard let data = try? e.encode(file) else { return false }
         let key = compare ?? data
         if written[F.fileName] == key { return false }
-        do { try file.write(to: store) } catch {
-            dlog("widget", "\(F.fileName) not written: \(error.localizedDescription)")
-            return false
-        }
         written[F.fileName] = key
-        WidgetCenter.shared.reloadTimelines(ofKind: kind)
+        // The first write of a launch (1.28.8): not when it's what the last
+        // run left. Every cold launch wrote every file again and had iOS
+        // reload four kinds of widget for nothing.
+        let first = compared.insert(F.fileName).inserted && compare == nil
+        disk.async {
+            if first, F.read(from: store) == file { return }
+            do {
+                try file.write(to: store)
+                WidgetCenter.shared.reloadTimelines(ofKind: kind)
+            } catch {
+                dlog("widget", "\(F.fileName) not written: \(error.localizedDescription)")
+                DispatchQueue.main.async { MainActor.assumeIsolated { if written[F.fileName] == key { written[F.fileName] = nil } } }
+            }
+        }
         return true
+    }
+
+    /// A picture kept for the widgets, encoded and stored off the main thread (1.28.8).
+    private static func keep(_ image: UIImage, as name: String, in store: WidgetStore) async {
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            disk.async {
+                if let jpeg = image.jpegData(compressionQuality: 0.8) { try? store.write(jpeg, name) }
+                done.resume()
+            }
+        }
+    }
+
+    /// Whether the store has `name`, asked off the main thread.
+    private static func has(_ name: String, in store: WidgetStore) async -> Bool {
+        await withCheckedContinuation { (done: CheckedContinuation<Bool, Never>) in
+            disk.async { done.resume(returning: store.exists(name)) }
+        }
+    }
+
+    /// Pictures with `prefix` that are no longer shown, removed off the main thread.
+    private static func sweep(_ prefix: String, keeping: Set<String>, in store: WidgetStore) {
+        disk.async { for f in store.names() where f.hasPrefix(prefix) && !keeping.contains(f) { store.remove(f) } }
     }
 
     // MARK: Downloads
@@ -158,15 +197,14 @@ enum GlanceWriter {
         if UserDefaults.standard.bool(forKey: SettingsKey.metadataFetching) {
             for r in shown {
                 let file = ServersTile.pictureName(r)
-                guard !store.exists(file), let name = ReleaseName.folder(r.folder),
+                if await has(file, in: store) { continue }
+                guard let name = ReleaseName.folder(r.folder),
                       let m = await ReleaseMatcher.shared.match(name), m.confident, let poster = m.poster, let url = URL(string: poster),
-                      let img = await ImageCache.shared.poster(id: m.imdbID ?? poster, url: url, maxPixel: 240),
-                      let jpeg = img.jpegData(compressionQuality: 0.8) else { continue }
-                try? store.write(jpeg, file)
+                      let img = await ImageCache.shared.poster(id: m.imdbID ?? poster, url: url, maxPixel: 240) else { continue }
+                await keep(img, as: file, in: store)
             }
         }
-        let keep = Set(shown.map(ServersTile.pictureName))
-        for f in store.names() where f.hasPrefix("rel-") && !keep.contains(f) { store.remove(f) }
+        sweep("rel-", keeping: Set(shown.map(ServersTile.pictureName)), in: store)
         if write(glance, kind: WidgetKind.newOnServers) {
             dlog("widget", "new on \(glance.serverName): \(glance.releases.count) shown, \(glance.thisWeek) this week")
         }
@@ -210,7 +248,10 @@ enum GlanceWriter {
             let line = ["Film", meta?.year ?? p.year.map(String.init), "in your library", meta?.rating].compactMap { $0 }.joined(separator: " · ")
             return PicksGlance.Pick(file: String(path.dropFirst(base.count)), title: meta?.name ?? TitleParser.clean(c.file.lastPathComponent), line: line)
         }
-        _ = write(PicksGlance(picks: picks), kind: WidgetKind.pickTonight)
+        // Written once, with its pictures (1.28.8): it was written without
+        // them first and again with them, two writes and two reloads of the
+        // widget for every change to the history or the library.
+        if picks.isEmpty { _ = write(PicksGlance(picks: []), kind: WidgetKind.pickTonight) }
         let chosen = order.map(\.file)
         picturesTask?.cancel()
         picturesTask = Task { @MainActor in await writePickPictures(picks: picks, metaFiles: chosen) }
@@ -228,12 +269,12 @@ enum GlanceWriter {
             guard let art = meta?.wideArt ?? meta?.poster, let url = URL(string: art) else { out[i].picture = nil; continue }
             let name = "pick-" + stableHash(art) + ".jpg"
             out[i].picture = name
-            if store.exists(name) { continue }
-            guard let img = await ImageCache.shared.image(url, maxPixel: 540), let jpeg = img.jpegData(compressionQuality: 0.8) else { out[i].picture = nil; continue }
-            try? store.write(jpeg, name)
+            if await has(name, in: store) { continue }
+            guard let img = await ImageCache.shared.image(url, maxPixel: 540) else { out[i].picture = nil; continue }
+            await keep(img, as: name, in: store)
         }
-        let keep = Set(out.compactMap(\.picture))
-        for f in store.names() where f.hasPrefix("pick-") && !keep.contains(f) { store.remove(f) }
+        guard !Task.isCancelled else { return }
+        sweep("pick-", keeping: Set(out.compactMap(\.picture)), in: store)
         _ = write(PicksGlance(picks: out), kind: WidgetKind.pickTonight)
     }
 

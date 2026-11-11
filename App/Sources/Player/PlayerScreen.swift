@@ -1072,25 +1072,31 @@ struct LevelHUD: View {
     let hud: PlayerUIState.GestureHUD
     let top: CGFloat
 
+    /// 1.28.8: the level as a number in a pill, like the player's other
+    /// notes, with the sun growing and shrinking beside it. It was a small
+    /// bar of its own that filled.
     var body: some View {
         let level = min(1, max(0, hud.progress ?? 0))
         VStack {
-            ZStack(alignment: .leading) {
-                Capsule().fill(.black.opacity(0.18)).glass(cornerRadius: 10)
-                GeometryReader { g in
-                    Capsule().fill(.white).frame(width: max(g.size.height, g.size.width * level))
-                        .animation(.interactiveSpring(response: 0.18, dampingFraction: 0.9), value: level)
-                }
-                Image(systemName: hud.icon)
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(level > 0.08 ? Color.black : Color.white)
+            HStack(spacing: 8) {
+                Image(systemName: hud.icon, variableValue: level)
                     .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 18, height: 18)
-                    .padding(.leading, 1)
+                    .scaleEffect(0.85 + 0.3 * level)
+                    .animation(.interactiveSpring(response: 0.2, dampingFraction: 0.8), value: level)
+                    .frame(width: 22)
+                    .accessibilityHidden(true)
+                Text(hud.text)
+                    .monospacedDigit()
+                    .contentTransition(.numericText(value: level))
+                    .animation(.snappy(duration: 0.15), value: hud.text)
             }
-            .frame(width: 180, height: 20)
-            .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
-            .padding(.top, top + 10)
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .glass(cornerRadius: 18)
+            .padding(.top, top + 14)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(hud.kind == .volume ? "Volume \(hud.text)" : "Brightness \(hud.text)")
             Spacer()
         }
         .allowsHitTesting(false)

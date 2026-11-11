@@ -41,6 +41,8 @@ struct GlassPanelPill: View {
     @State private var natural: [PlayerUIState.Panel: CGFloat] = [:]
     @State private var measuring: PlayerUIState.Panel?
     @State private var generation = 0
+    /// For the pill's haptic (1.28.8: SwiftUI's own, in place of UIKit's generator).
+    @State private var taps = 0
 
     /// SwiftUI's default animation; with Reduce Motion a short fade instead of
     /// the glass growing out of the pill (1.27.0).
@@ -67,6 +69,7 @@ struct GlassPanelPill: View {
         Color.clear
             .frame(width: pillSize.width, height: pillSize.height)
             .overlay(alignment: .bottomTrailing) { glass }
+            .sensoryFeedback(.impact(weight: .light), trigger: taps)
             .overlay {
                 pill
                     .frame(width: pillSize.width, height: pillSize.height)
@@ -115,7 +118,7 @@ struct GlassPanelPill: View {
         HStack(spacing: 0) {
             ForEach(Self.items) { item in
                 Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    taps += 1
                     ui.toggle(item.id)
                 } label: {
                     Image(systemName: item.icon)

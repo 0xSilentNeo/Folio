@@ -1,13 +1,12 @@
 import SwiftUI
-import CoreMotion
 
-/// Pill-shaped play button with depth: it tilts toward the finger and with
-/// the phone, a highlight slides across it opposite the tilt, and every few
-/// seconds it rocks gently while a band of light sweeps over it.
+/// Pill-shaped play button with depth: it tilts toward the finger, a
+/// highlight slides across it opposite the tilt, and every few seconds it
+/// rocks gently while a band of light sweeps over it.
 ///
 /// Energy: nothing animates between sweeps (one ~1 s animation every ~4.5 s).
-/// Motion updates run at 20 Hz only while the page is on screen with no video
-/// over it, and re-render the button only when the tilt visibly changes.
+/// 1.28.8: it no longer tilts with the phone. That kept the motion sensor
+/// running at 15 Hz on every title page for as long as it was on screen.
 struct TiltPlayButton: View {
     let title: String
     var subtitle: String? = nil
@@ -22,7 +21,8 @@ struct TiltPlayButton: View {
     @State private var size = CGSize(width: 160, height: 56)
     @State private var sweep: CGFloat = -1         // -1 (off left) … 1 (off right)
     @State private var rock: CGFloat = 0           // -1…1, the idle rock that goes with the sweep
-    @StateObject private var motion = MotionTilt()
+    /// For the tap's haptic (1.28.8: SwiftUI's own, in place of UIKit's generator).
+    @State private var taps = 0
     /// Reduce Motion (1.27.0): no tilt with the phone, no 3D turn, no sweep
     /// or rock; a plain press.
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -53,24 +53,22 @@ struct TiltPlayButton: View {
                 DragGesture(minimumDistance: 0, coordinateSpace: .global)
                     .onEnded { v in
                         guard hypot(v.translation.width, v.translation.height) < 12 else { return }
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        taps += 1
                         action()
                     }
             )
+            .sensoryFeedback(.impact(weight: .medium), trigger: taps)
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isButton)
             // VoiceOver's activation: the button plays on a drag's end otherwise.
             .accessibilityAction { action() }
             .accessibilityIdentifier("heroPlay")
-            .onAppear { if !reduceMotion { motion.start() } }
-            .onDisappear { motion.stop() }
-            .onChange(of: reduceMotion) { _, on in if on { motion.stop() } else { motion.start() } }
             .task(id: reduceMotion) { if !reduceMotion { await runShimmer() } }
     }
 
     private var face: some View {
-        let tx = reduceMotion ? 0 : clamp(touch.width + motion.tilt.width * 0.7 + rock)
-        let ty = reduceMotion ? 0 : clamp(touch.height + motion.tilt.height * 0.7)
+        let tx = reduceMotion ? 0 : clamp(touch.width + rock)
+        let ty = reduceMotion ? 0 : clamp(touch.height)
         let shape = Capsule(style: .continuous)
         return HStack(spacing: 12) {
             Image(systemName: icon).font(.system(size: 20, weight: .bold))
@@ -118,7 +116,6 @@ struct TiltPlayButton: View {
         .rotation3DEffect(.degrees(tx * maxDegrees), axis: (x: 0, y: 1, z: 0), perspective: 1)
         .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.7), value: touch)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: pressed)
-        .animation(.easeOut(duration: 0.25), value: motion.tilt)
         .contentShape(shape)
         .background(GeometryReader { g in Color.clear.onAppear { size = g.size } })
     }
@@ -146,59 +143,4 @@ struct TiltPlayButton: View {
             }
         }
     }
-}
-
-/// Device attitude → small tilt offset, for the parallax on the play button.
-@MainActor
-final class MotionTilt: ObservableObject {
-    @Published var tilt = CGSize.zero
-    private let manager = CMMotionManager()
-    private var base: (roll: Double, pitch: Double)?
-    private var wanted = false
-    /// Removed when the button goes (each title page makes one).
-    private nonisolated(unsafe) var observers: [NSObjectProtocol] = []
-
-    init() {
-        // Motion updates re-render the button: pause them while a video plays
-        // (the page is still alive under the player) or the app is inactive.
-        let nc = NotificationCenter.default
-        for (name, on) in [(Notification.Name.playerWillShow, false), (.playerDidHide, true),
-                           (UIApplication.willResignActiveNotification, false), (UIApplication.didBecomeActiveNotification, true)] {
-            observers.append(nc.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    if on, self.wanted, PlayerPresenter.current == nil { self.begin() } else if !on { self.pause() }
-                }
-            })
-        }
-    }
-
-    deinit { observers.forEach { NotificationCenter.default.removeObserver($0) } }
-
-    func start() {
-        wanted = true
-        guard PlayerPresenter.current == nil else { return }
-        begin()
-    }
-
-    private func pause() { manager.stopDeviceMotionUpdates(); base = nil }
-
-    private func begin() {
-        guard manager.isDeviceMotionAvailable, !manager.isDeviceMotionActive else { return }
-        manager.deviceMotionUpdateInterval = 1.0 / 15
-        manager.startDeviceMotionUpdates(to: .main) { [weak self] m, _ in
-            guard let self, let m else { return }
-            if base == nil { base = (m.attitude.roll, m.attitude.pitch) }
-            // Drift the rest position toward how the phone is held now, so after
-            // you settle into a new grip the button comes back level.
-            if let b = base { base = (b.roll + (m.attitude.roll - b.roll) * 0.02, b.pitch + (m.attitude.pitch - b.pitch) * 0.02) }
-            let dr = m.attitude.roll - (base?.roll ?? 0), dp = m.attitude.pitch - (base?.pitch ?? 0)
-            let t = CGSize(width: min(1, max(-1, dr * 4.5)), height: min(1, max(-1, dp * 4.5)))   // full tilt at ~13° of phone rotation
-            // Only re-render for a visible change (1.28.2): a tenth of full
-            // tilt, about 1.3° of the phone. 0.03 (0.4°) was under a steady
-            // hand's tremor, so the button animated without end.
-            if abs(t.width - tilt.width) > 0.1 || abs(t.height - tilt.height) > 0.1 { tilt = t }
-        }
-    }
-    func stop() { wanted = false; pause(); tilt = .zero }
 }
