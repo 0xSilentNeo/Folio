@@ -99,6 +99,9 @@ enum SettingsKey {
     static let skipOATLength = "skipOATLength"
     /// 1.23.2: an intro pill you watch through in two episodes of a show stops showing for it.
     static let skipLearnIntros = "skipLearnIntros"
+    /// 1.30.0: a local episode with no intro from any source has its sound
+    /// compared with a neighbouring episode's, on the phone (IntroFinder).
+    static let skipFindOnDevice = "skipFindOnDevice"
 
     // mpv
     static let activeShaders = "activeShaders"
@@ -234,6 +237,7 @@ enum SettingsKey {
             skipInjectChapters: true,
             skipOATLength: 90,
             skipLearnIntros: true,
+            skipFindOnDevice: true,
             flipVideo: false,
             renderer: "metal",
             hdrOutput: true,

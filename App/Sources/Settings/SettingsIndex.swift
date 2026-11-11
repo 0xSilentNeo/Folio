@@ -111,6 +111,7 @@ enum SettingsIndex {
         e("Skip Automatically", .skip, "auto intro credits"),
         e("Skip Sources", .skip, "file chapters online markers aniskip"),
         e("Hide Intros I Watch", .skip, "intro watched"),
+        e("Find Intros on This iPhone", .skip, "intro on device local sound audio compare episodes"),
 
         // Video Engine
         e("Renderer", .engine, "vulkan opengl metal gpu"),
