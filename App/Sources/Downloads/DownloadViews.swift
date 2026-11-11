@@ -111,13 +111,19 @@ struct DownloadPillOverlay: View {
     @ObservedObject private var lift = DownloadPillLift.shared
     @State private var showing = false
     @Namespace private var ns
+    @Environment(\.horizontalSizeClass) private var widthClass
+
+    /// How far above the bottom the pill sits: over the tab bar where it is
+    /// at the bottom. A wide iPad window has its tabs at the top or in the
+    /// sidebar (iOS 18 and later), so the pill sits low (1.30.0).
+    private var bottomGap: CGFloat { TabChrome.atBottom(regularWidth: widthClass == .regular) ? 74 : 24 }
 
     var body: some View {
         VStack {
             Spacer()
             if snap.hasWork && page.shown == 0 {
                 pill
-                    .padding(.bottom, 74 + lift.lift)
+                    .padding(.bottom, bottomGap + lift.lift)
                     .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.7)))
             }
         }
@@ -146,6 +152,7 @@ struct DownloadPillOverlay: View {
                 }
                 .padding(.leading, 16).frame(height: 44)
                 .contentShape(Rectangle())
+                .pointerHover(cornerRadius: 22)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Downloads, \(speedString(snap.speed))")
@@ -188,6 +195,8 @@ struct DownloadPillRoom: ViewModifier {
 
     func body(content: Content) -> some View {
         content.safeAreaInset(edge: .bottom, spacing: 0) {
+            // With no tab bar under the pill (a wide iPad window, 1.30.0) the
+            // page's safe area ends at the screen's: the same room clears it.
             if working && page.shown == 0 { Color.clear.frame(height: Self.height).allowsHitTesting(false) }
         }
         .onReceive(DownloadManager.shared.objectWillChange
@@ -379,6 +388,8 @@ struct DownloadsView: View {
             }
         }
         .listStyle(.insetGrouped)
+        // A readable column on a wide iPad window (1.30.0).
+        .readableListWidth()
         .sensoryFeedback(.impact(weight: .light), trigger: folds)
         .listSectionSpacing(16)
         .scrollContentBackground(.hidden)

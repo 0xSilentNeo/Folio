@@ -106,6 +106,9 @@ struct MetaDetailView: View {
 
     private var page: some View {
         GeometryReader { geo in
+            // The text in a readable column, centred, on a wide iPad window
+            // (1.30.0); the picture keeps the whole width.
+            let side = PageLayout(width: geo.size.width).readableSide(16)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     backdrop(geo.size)
@@ -131,7 +134,7 @@ struct MetaDetailView: View {
                             if canTrack { TrackButton(show: trackedShow) }
                         }
                         if canTrack { TrackStatusLine(show: trackedShow).padding(.top, -8) }
-                        if castPosition == "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, -16) }
+                        if castPosition == "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c, inset: side).padding(.horizontal, -side) }
                         if isSeries && (!allVideos.isEmpty || !allSeasons.isEmpty) {
                             episodeList
                         } else if !untiledEpisodes.isEmpty {
@@ -141,14 +144,14 @@ struct MetaDetailView: View {
                             }
                         }
                         if loadingEpisodes && allVideos.isEmpty { LoadingQuips().padding(.vertical, 8) }
-                        if castPosition != "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, -16) }
+                        if castPosition != "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c, inset: side).padding(.horizontal, -side) }
                         if let d = m.director, !d.isEmpty {
                             Text((isSeries ? "Created by " : "Directed by ") + d.prefix(3).joined(separator: ", "))
                                 .font(.footnote).foregroundStyle(.secondary)
                         }
                         TitleLinks(name: m.name, year: m.releaseInfo.map { String($0.prefix(4)) }, type: m.type, imdbID: usesIMDb ? resolvedID : nil)
                     }
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, side)
                     .padding(.top, 14)
                     .padding(.bottom, 40)
                 }
@@ -247,8 +250,8 @@ struct MetaDetailView: View {
                     }
                     titleBlock.padding(.bottom, 6)
                 }
-                .padding(.leading, size.width > 700 ? 28 : 16)
-                .padding(.trailing, 16)
+                .padding(.leading, PageLayout(width: size.width).readableSide(size.width > 700 ? 28 : 16))
+                .padding(.trailing, PageLayout(width: size.width).readableSide(16))
         }
     }
 

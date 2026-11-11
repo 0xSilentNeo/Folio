@@ -861,7 +861,9 @@ struct ScrubBubble: View {
 // MARK: - Buttons
 
 /// Press feedback shared by every control in the player: a quick spring
-/// scale with a slight dim, like the system's glass buttons.
+/// scale with a slight dim, like the system's glass buttons. On an iPad
+/// the pointer highlights it (1.30.0): the player's buttons, and every tile,
+/// card and pill in the app that presses this way.
 struct PressStyle: ButtonStyle {
     var scale: CGFloat = 0.9
     /// Called when the finger goes down (a head start for what the tap opens).
@@ -869,6 +871,7 @@ struct PressStyle: ButtonStyle {
     @ViewBuilder
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.label
+            .pointerHover()
             .scaleEffect(configuration.isPressed ? scale : 1)
             .opacity(configuration.isPressed ? 0.8 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)

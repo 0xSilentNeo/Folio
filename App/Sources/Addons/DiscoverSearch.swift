@@ -252,6 +252,8 @@ struct AddonSearchView: View {
             }
         }
         .listStyle(.plain)
+        // A readable column on a wide iPad window (1.30.0).
+        .readableListWidth()
         .scrollContentBackground(.hidden)
         // Room under the last row for the downloads pill (1.24.1).
         .downloadPillRoom()

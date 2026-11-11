@@ -185,13 +185,16 @@ struct TitleHeroView: View {
 
     private var page: some View {
         GeometryReader { geo in
-            let wide = geo.size.width > 700
+            // The text in a readable column, centred, on a wide iPad window
+            // (1.30.0); the picture keeps the whole width.
+            let base: CGFloat = geo.size.width > 700 ? 28 : 20
+            let side = PageLayout(width: geo.size.width).readableSide(base)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if filesOnly {
                         Text(title).font(.largeTitle.weight(.bold)).lineLimit(2)
                             .padding(.top, geo.safeAreaInsets.top + 52)
-                            .padding(.horizontal, wide ? 28 : 20)
+                            .padding(.horizontal, side)
                     } else {
                         backdrop(geo.size)
                     }
@@ -223,15 +226,15 @@ struct TitleHeroView: View {
                         }
                         .padding(.vertical, 4)
                         if isShow { TrackStatusLine(show: trackedShow).padding(.top, -8) }
-                        if castPosition == "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, wide ? -28 : -20) }
+                        if castPosition == "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c, inset: side > base ? side : 16).padding(.horizontal, -side) }
                         if siblings.count > 1 { episodes } else if !untiledEpisodes.isEmpty { comingUp.padding(.top, 10) }
-                        if castPosition != "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, wide ? -28 : -20) }
+                        if castPosition != "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c, inset: side > base ? side : 16).padding(.horizontal, -side) }
                         if let m = meta, m.id.hasPrefix("tt") {
                             TitleLinks(name: m.name, year: m.year.map { String($0.prefix(4)) }, type: m.type, imdbID: m.id)
                         }
                       }
                     }
-                    .padding(.horizontal, wide ? 28 : 20)
+                    .padding(.horizontal, side)
                     .padding(.top, 14)
                     .padding(.bottom, 40)
                 }
@@ -308,8 +311,8 @@ struct TitleHeroView: View {
                     }
                     titleBlock.padding(.bottom, 6)
                 }
-                .padding(.leading, size.width > 700 ? 28 : 20)
-                .padding(.trailing, 20)
+                .padding(.leading, PageLayout(width: size.width).readableSide(size.width > 700 ? 28 : 20))
+                .padding(.trailing, PageLayout(width: size.width).readableSide(20))
         }
     }
 

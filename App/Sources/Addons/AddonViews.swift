@@ -96,6 +96,7 @@ struct PosterCard: View {
                 // No drop shadow: every blurred shadow in a grid is re-rendered
                 // on each scroll frame; a hairline edge reads the same on dark.
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 0.5))
+                .pointerHover(cornerRadius: 12)
                 .zoomSource(zoom)
             // Two lines for a long title (1.27.0: cut at one).
             Text(meta.name).font(.caption.weight(.medium)).lineLimit(2).frame(width: width, alignment: .leading)
