@@ -39,6 +39,10 @@ struct SettingsSearchField: View {
 /// that bar, the row above stays.
 struct SettingsSearchBar: ViewModifier {
     @Binding var text: String
+    /// Off while Settings is locked by the kids profile (1.28.10): the
+    /// field is the system's chrome, and stayed live over the lock.
+    var active = true
+    @Environment(\.horizontalSizeClass) private var width
 
     static var isSystem: Bool {
         #if compiler(>=6.2)
@@ -50,14 +54,16 @@ struct SettingsSearchBar: ViewModifier {
     @ViewBuilder
     func body(content: Content) -> some View {
         #if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, *), active {
             content
                 .searchable(text: $text, prompt: "Search Settings")
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .toolbar { DefaultToolbarItem(kind: .search, placement: .bottomBar) }
-                // The tab bar would sit on the field: Settings' root has the bottom to itself.
-                .toolbar(.hidden, for: .tabBar)
+                // The tab bar would sit on the field: Settings' root has the
+                // bottom to itself. Only where the tab bar is at the bottom
+                // (1.28.10): an iPad's is at the top.
+                .toolbar(width == .compact ? .hidden : .automatic, for: .tabBar)
         } else {
             content
         }

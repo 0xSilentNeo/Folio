@@ -20,6 +20,12 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.10", items: [
+            Item(icon: "lock.shield", title: "Streams through Apple's encryption",
+                 text: "HTTPS streams are decrypted by iOS's own library, which uses the phone's hardware: less work on high-bitrate streams."),
+            Item(icon: "checkmark.shield", title: "Twelve fixes from a code check",
+                 text: "The saved stream address can no longer replay a placeholder clip, Try Again really starts afresh, and the kids profile's widgets stay clean."),
+        ]),
         Release(version: "1.28.9", items: [
             Item(icon: "bolt", title: "Continue Watching starts sooner",
                  text: "A stream you've played recently starts from its saved download address, without waiting for a slow addon to hand it over again."),

@@ -578,7 +578,9 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         // Counted from 0 again once the range has got further since it last
         // stopped (1.28.6): the count only went up, so four blips hours
         // apart failed a file that was downloading fine in between.
-        if let last = stoppedAt[index], chunks[index].current - last >= 1 << 20 { retries[index] = nil }
+        // Only where a retry carries on (1.28.10): without ranges each one starts
+        // from the first byte, and stopping a little later than last time isn't progress.
+        if ranges == true, let last = stoppedAt[index], chunks[index].current - last >= 1 << 20 { retries[index] = nil }
         stoppedAt[index] = chunks[index].current
         let attempts = (retries[index] ?? 0) + 1
         retries[index] = attempts

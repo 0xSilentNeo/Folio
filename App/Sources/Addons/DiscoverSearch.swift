@@ -474,17 +474,15 @@ private struct ClearPillStyle: ViewModifier {
         #endif
     }
 
+    /// A menu takes the system's button styles only, so before iOS 26 the
+    /// capsule is drawn on its label (1.28.10: a ButtonStyle of Folio's own
+    /// left it plain text).
     private func flat(_ content: Content) -> some View {
-        content.buttonStyle(ClearPillFlat())
-    }
-}
-
-private struct ClearPillFlat: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        content
+            .buttonStyle(.plain)
             .foregroundStyle(.primary.opacity(0.75))
             .padding(.horizontal, 12).padding(.vertical, 7)
-            .background(Theme.fill.opacity(configuration.isPressed ? 0.6 : 1), in: Capsule())
+            .background(Theme.fill, in: Capsule())
             .frame(minHeight: 44)
             .contentShape(Rectangle())
     }

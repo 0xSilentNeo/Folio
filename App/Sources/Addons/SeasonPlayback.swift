@@ -287,24 +287,27 @@ enum LinkWarmer {
     /// "link answered HTTP 206 in 34.2 s" for a Continue Watching card,
     /// with the player showing nothing meanwhile. The address it led to
     /// answers in under a second for as long as the debrid service keeps it.
-    static func resolveFast(_ url: URL, headers: [String: String], purpose: String) async -> URL? {
+    /// Returns where the link led, and whether that came from the saved
+    /// address. Nothing is saved here (1.28.10): 1.28.9 saved whatever a
+    /// link led to, and a debrid addon answers a link whose file isn't
+    /// ready with a short "downloading" clip, which would then have won
+    /// every race for half a day. The player saves an address once the
+    /// file it led to has really loaded (PlayerModel.rememberAddress).
+    static func resolveFast(_ url: URL, headers: [String: String], purpose: String) async -> (address: URL?, fromSaved: Bool) {
         guard let saved = await ResolvedLinks.shared.address(for: url) else {
-            let final = await resolve(url, headers: headers, purpose: purpose)
-            if let final, final != url { await ResolvedLinks.shared.keep(final, for: url) }
-            return final
+            return (await resolve(url, headers: headers, purpose: purpose), false)
         }
         let t0 = Date()
         return await withTaskGroup(of: (url: URL?, saved: Bool).self) { group in
-            group.addTask { (await resolve(saved, headers: [:], purpose: purpose + " (its saved address)", timeout: 8), true) }
+            // The saved address must answer as a file does: part of it (206), not a page.
+            group.addTask { (await resolve(saved, headers: [:], purpose: purpose + " (its saved address)", timeout: 8, asFile: true), true) }
             group.addTask { (await resolve(url, headers: headers, purpose: purpose), false) }
-            var winner: URL?
+            var winner: (address: URL?, fromSaved: Bool) = (nil, false)
             for await answer in group {
                 if let u = answer.url {
-                    winner = u
+                    winner = (u, answer.saved)
                     if answer.saved {
                         dlog("player", String(format: "%@: played from its saved download address after %.1f s, without waiting for the link", purpose, Date().timeIntervalSince(t0)))
-                    } else if u != url {
-                        await ResolvedLinks.shared.keep(u, for: url)
                     }
                     group.cancelAll()           // the other request ends at once
                     break
@@ -316,7 +319,10 @@ enum LinkWarmer {
         }
     }
 
-    static func resolve(_ url: URL, headers: [String: String], purpose: String = "next episode", timeout: TimeInterval = 40) async -> URL? {
+    /// `asFile`: only an answer a file gives counts (206 to the byte range,
+    /// and not a web page): for a saved address, which an expired one may
+    /// answer with its error page.
+    static func resolve(_ url: URL, headers: [String: String], purpose: String = "next episode", timeout: TimeInterval = 40, asFile: Bool = false) async -> URL? {
         var r = URLRequest(url: url, timeoutInterval: timeout)
         r.setValue("bytes=0-0", forHTTPHeaderField: "Range")
         r.setValue("libmpv", forHTTPHeaderField: "User-Agent")       // what the player sends
@@ -333,6 +339,8 @@ enum LinkWarmer {
             body.task.cancel()                      // the headers are all it needs
             response = r
         } catch {
+            // The race's other request, ended on purpose (1.28.10): not "didn't answer".
+            if Task.isCancelled || (error as? URLError)?.code == .cancelled || error is CancellationError { return nil }
             NetTrace.report("link", url: url, others: others, started: c0, timer: timer, status: nil, bytes: nil, error: error)
             dlog("player", "\(purpose): link didn't answer")
             return nil
@@ -341,6 +349,10 @@ enum LinkWarmer {
         guard let http = response as? HTTPURLResponse else { return nil }
         dlog("player", String(format: "%@: link answered HTTP %d in %.1f s%@", purpose, http.statusCode, Date().timeIntervalSince(t0),
                               http.url?.host != url.host ? " (redirected to \(http.url?.host ?? "?"))" : ""))
+        if asFile {
+            let page = ChunkPlan.isPage(contentType: http.value(forHTTPHeaderField: "Content-Type"), fileName: url.lastPathComponent)
+            guard http.statusCode == 206, !page else { return nil }
+        }
         return (200..<300).contains(http.statusCode) ? http.url : nil
     }
 }

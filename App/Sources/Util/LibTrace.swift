@@ -187,17 +187,39 @@ enum TraceExpiry {
     static let keys = [SettingsKey.libTrace, SettingsKey.netTrace, SettingsKey.pipTrace]
     static let life: TimeInterval = 86400
 
-    /// At launch. `now` and `defaults` are parameters for the tests.
+    private static func stamp(_ key: String) -> String { "traceOnSince." + key }
+
+    /// At launch, and whenever a setting changes: each trace that's on has
+    /// the time it was turned on, and one on for over a day goes off.
+    /// Stamped as it's switched (1.28.10), not only at launch: a trace
+    /// turned off and on again days later died at the next launch, just
+    /// when it was wanted. `now` and `defaults` are parameters for the tests.
     @discardableResult
     static func check(now: Date = Date(), defaults d: UserDefaults = .standard) -> Bool {
-        let on = keys.filter { d.bool(forKey: $0) }
-        guard !on.isEmpty else { d.removeObject(forKey: "tracesOnSince"); return false }
-        guard let since = d.object(forKey: "tracesOnSince") as? Date else { d.set(now, forKey: "tracesOnSince"); return false }
-        guard now.timeIntervalSince(since) > life else { return false }
-        for k in on { d.set(false, forKey: k) }
-        d.removeObject(forKey: "tracesOnSince")
-        dlog("app", "diagnostic traces were on for over a day: turned off (\(on.joined(separator: ", ")))")
-        return true
+        var ended: [String] = []
+        for k in keys {
+            guard d.bool(forKey: k) else {
+                if d.object(forKey: stamp(k)) != nil { d.removeObject(forKey: stamp(k)) }
+                continue
+            }
+            guard let since = d.object(forKey: stamp(k)) as? Date else { d.set(now, forKey: stamp(k)); continue }
+            if now.timeIntervalSince(since) > life {
+                d.removeObject(forKey: stamp(k))
+                d.set(false, forKey: k)
+                ended.append(k)
+            }
+        }
+        if !ended.isEmpty { dlog("app", "diagnostic traces on for over a day: turned off (\(ended.joined(separator: ", ")))") }
+        return !ended.isEmpty
+    }
+
+    /// Watches the switches, so each is stamped when it's turned on.
+    static func watch() {
+        check()
+        NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { _ in
+            // Only when a stamp is missing or left over: this fires for every setting.
+            let d = UserDefaults.standard
+            if keys.contains(where: { d.bool(forKey: $0) != (d.object(forKey: stamp($0)) != nil) }) { check() }
+        }
     }
 }
-

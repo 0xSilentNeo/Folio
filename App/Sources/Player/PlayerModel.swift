@@ -875,16 +875,24 @@ final class PlayerModel: ObservableObject {
                 let id = item.id
                 // Said after 4 s (1.28.9): an addon's server can take half a
                 // minute to hand the stream over, with nothing on screen.
-                let slow = DispatchWorkItem { [weak self] in
-                    guard let self, !self.closed, self.playingItem?.id == id, !self.fileLoaded else { return }
-                    self.showToast("Waiting for \(u.host ?? "the server") to hand over the stream…")
+                // Kept up for as long as it waits (1.28.10; one 1.6 s note
+                // left the rest of a 30 s wait as blank as before).
+                let slow = Task { [weak self] in
+                    try? await Task.sleep(for: .seconds(4))
+                    while !Task.isCancelled {
+                        guard let self, !self.closed, self.playingItem?.id == id, !self.fileLoaded else { return }
+                        self.showToast("Waiting for the stream’s server…")
+                        try? await Task.sleep(for: .seconds(1.4))
+                    }
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: slow)
                 Task { [weak self] in
-                    let final = await LinkWarmer.resolveFast(u, headers: item.headers, purpose: "this file")
+                    let answer = await LinkWarmer.resolveFast(u, headers: item.headers, purpose: "this file")
                     slow.cancel()
+                    let final = answer.address
                     guard let self, !self.closed, self.playingItem?.id == id, self.appended == nil else { return }
                     if let final, final != u { self.playLinks[id] = final } else if final == u { LinkWarmer.direct.insert(u.host ?? "") }
+                    // Saved once the file has really loaded (see rememberAddress).
+                    self.followed = final.flatMap { $0 != u && !answer.fromSaved ? (id, u, $0) : nil }
                     self.loadFile(item, opts, c)
                     if !wasPaused { c.set("pause", false) }
                 }
@@ -911,6 +919,32 @@ final class PlayerModel: ObservableObject {
     /// under it (5 Nov log, 18:05: a Continue Watching card played
     /// "syd3-4.download.real-debrid.com/d/…" as a queue of one).
     private var playLinks: [String: URL] = [:]
+
+    /// A link just followed to a new address, until its file has loaded.
+    private var followed: (id: String, link: URL, address: URL)?
+
+    /// Keeps where a stream link led, for LinkWarmer.resolveFast (1.28.10):
+    /// only once the file has loaded and is a real one. A debrid addon
+    /// answers a link whose file isn't ready with a short clip on its own
+    /// host; saved, that clip would have played in the file's place for
+    /// half a day. So: another host than the link's, and five minutes long
+    /// at least.
+    private func rememberAddress() {
+        guard let f = followed, f.id == (playingItem ?? item).id else { return }
+        followed = nil
+        guard f.address.host != f.link.host, duration >= 300 else {
+            dlog("player", "this file: its address isn't kept (\(f.address.host == f.link.host ? "the link's own host" : "under five minutes long"))")
+            return
+        }
+        Task { await ResolvedLinks.shared.keep(f.address, for: f.link) }
+    }
+
+    /// The address a link led to failed, or Try again was asked: forgotten,
+    /// so the link itself is followed afresh.
+    private func forgetAddress(of it: MediaItem) {
+        if followed?.id == it.id { followed = nil }
+        if let u = it.resolvedURL { Task { await ResolvedLinks.shared.forget(u) } }
+    }
     private func mpvPath(_ it: MediaItem) -> String { playLinks[it.id]?.absoluteString ?? it.mpvPath }
 
     /// Worth following to its download address before mpv opens it: mpv
@@ -1407,6 +1441,8 @@ final class PlayerModel: ObservableObject {
         refreshTracks()
         refreshChapters()
         readDuration()
+        // A moment on, with the length known: where its link led is kept (1.28.10).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.rememberAddress() }
         addedSubtitles = []
         addSubtitles(item.subtitles)
         // Subtitle addons that answered after the stream started (AddonPlayback.subtitleWait).
@@ -2859,6 +2895,10 @@ final class PlayerModel: ObservableObject {
     /// (or takes it out), for the playing track's channels: the decoder's
     /// layout, or before it's known, the track's as the file gives it. Only
     /// a changed graph touches mpv (each change rebuilds its audio filters).
+    /// The check after a queued filter found none: mpv refused it, or
+    /// hadn't reached it yet (1.28.10).
+    private var audioFilterInDoubt = false
+
     private func updateAudioFilters(because why: String) {
         guard let c = client else { return }
         let on = nightMode || dialogueBoost
@@ -2866,12 +2906,15 @@ final class PlayerModel: ObservableObject {
         if on && layout == nil { return }          // applied when the channels are known
         let plan = AudioFilters.plan(night: nightMode, dialogue: dialogueBoost, layout: layout, available: AudioFilters.available ?? [])
         if plan != audioFilterPlan { audioFilterPlan = plan }
-        guard plan?.graph != appliedAudioGraph else { return }
+        guard plan?.graph != appliedAudioGraph || audioFilterInDoubt else { return }
         // Both queued without waiting for mpv's core (1.28.6), in this
         // order: the menu's switch waited on the main thread for each. The
         // result is whether mpv took the command into its queue; a graph mpv
         // then refuses is in mpv's own log lines.
-        if appliedAudioGraph != nil {
+        // Also when the check below wasn't sure what mpv holds (1.28.10): a
+        // remove of a filter that isn't there does nothing.
+        if appliedAudioGraph != nil || audioFilterInDoubt {
+            audioFilterInDoubt = false
             let r = c.commandAsync(["af", "remove", "@" + AudioFilters.label])
             if r < 0 { dlog("audio/error", "af remove @\(AudioFilters.label) -> \(String(cString: mpv_error_string(r)))") }
             appliedAudioGraph = nil
@@ -2890,9 +2933,11 @@ final class PlayerModel: ObservableObject {
                 guard let self, !self.closed, self.appliedAudioGraph == graph else { return }
                 self.client?.query({ $0.string("af") ?? "" }) { [weak self] af in
                     guard let self, self.appliedAudioGraph == graph, af.isEmpty else { return }
-                    dlog("audio/error", "mpv has no audio filter after \(why): the graph was refused")
+                    dlog("audio/error", "mpv has no audio filter after \(why): refused, or not applied yet")
                     self.appliedAudioGraph = nil
                     self.appliedLayoutSpecific = false
+                    // mpv may only be busy and apply it later: the next change removes it first.
+                    self.audioFilterInDoubt = true
                 }
             }
         } else {
@@ -4446,6 +4491,7 @@ extension PlayerModel: MPVClientDelegate {
                 }
                 // A download address may have expired: Try again goes back to the item's own.
                 playLinks[(playingItem ?? item).id] = nil
+                forgetAddress(of: playingItem ?? item)
                 diagnose(playingItem ?? item, reason: String(cString: mpv_error_string(error)))
             }
         case .playbackRestart:
@@ -4630,6 +4676,7 @@ extension PlayerModel: MPVClientDelegate {
             let where_ = serverName(of: it)
             dlog("player", "the stream stopped at \(Self.format(position)) of \(Self.format(duration)): not the end")
             playLinks[it.id] = nil          // Try again: the item's own address, redirected afresh
+            forgetAddress(of: it)
             show(ServerProblem(kind: .stoppedEarly, title: "The stream stopped at \(Self.format(position)) of \(Self.format(duration))",
                                detail: "The connection to \(where_.name) dropped. Try again to go on from there.", icon: "wifi.exclamationmark"), for: it)
             return

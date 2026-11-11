@@ -8,7 +8,7 @@ struct FolioApp: App {
 
     init() {
         SettingsKey.registerDefaults()
-        TraceExpiry.check()
+        TraceExpiry.watch()
         // Before anything this launch writes: whether Folio was used before (WhatsNew.usedBefore).
         MainActor.assumeIsolated { WhatsNew.noteLaunch() }
         // Tips where they apply (1.27.0).
