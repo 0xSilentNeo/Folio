@@ -3,6 +3,9 @@ import SwiftUI
 /// Horizontal strip of cast members: round headshot, actor, character.
 struct CastStrip: View {
     let credits: [CastMember]
+    /// Where the heading and the first face start (1.30.0): the page's
+    /// column on a wide iPad window, while the strip scrolls edge to edge.
+    var inset: CGFloat = 16
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -11,7 +14,7 @@ struct CastStrip: View {
                 Text("Cast").font(.title3.weight(.bold)).accessibilityAddTraits(.isHeader)
                 Text("\(credits.count)").font(.subheadline).foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, inset)
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top, spacing: 14) {
                     ForEach(credits) { c in
@@ -41,7 +44,7 @@ struct CastStrip: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, inset)
             }
         }
     }

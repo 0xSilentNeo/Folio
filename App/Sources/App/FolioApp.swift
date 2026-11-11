@@ -172,6 +172,15 @@ struct RootView: View {
 
     private var tabs: some View {
         tabView
+        // ⌘F (1.30.0): the search tab, whose field opens as it's chosen
+        // (iOS 26). A button nobody sees, so the key shows in the ⌘ overlay.
+        .background {
+            Button("Search") { if PlayerPresenter.current == nil { tab = 3 } }
+                .keyboardShortcut("f", modifiers: .command)
+                .opacity(0)
+                .frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+        }
         .onChange(of: kids.isOn) { _, on in if on && tab == 2 { tab = 0 } }
         // One search for every tab (1.28.11): the text stays between them.
         .onChange(of: tab) { old, new in
@@ -251,6 +260,7 @@ struct RootView: View {
                 Tab(value: 3, role: .search) { SearchTabView(query: $searchText) }
             }
             .modifier(TabBarSearchField())
+            .modifier(PadSidebarTabs())
         } else {
             TabView(selection: $tab) {
                 HomeView().tabZoom()
@@ -268,6 +278,19 @@ struct RootView: View {
                     .tabItem { Label("Search", systemImage: "magnifyingglass") }
                     .tag(3)
             }
+        }
+    }
+
+    /// An iPad's tabs can become a sidebar (1.30.0): the button at the bar's
+    /// leading end turns the bar into a sidebar and back, as in Apple's
+    /// apps, and iOS keeps the choice. An iPhone keeps its tab bar: the style
+    /// isn't set there at all. A narrow iPad window (Slide Over, Split View)
+    /// gets the bottom bar from iOS itself.
+    @available(iOS 18.0, *)
+    private struct PadSidebarTabs: ViewModifier {
+        @ViewBuilder
+        func body(content: Content) -> some View {
+            if PageLayout.isPad { content.tabViewStyle(.sidebarAdaptable) } else { content }
         }
     }
 

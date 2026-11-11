@@ -19,8 +19,9 @@ struct HomeView: View {
     var body: some View {
         NavigationStack(path: $path) {
             GeometryReader { geo in
-                let wide = geo.size.width > 700
-                let margin: CGFloat = wide ? 28 : 20
+                // Margins, columns and card sizes by the page's width (1.30.0, PageLayout).
+                let layout = PageLayout(width: geo.size.width)
+                let margin = layout.margin
                 // A List (1.17.0) so library rows have the system's swipe actions
                 // ("Adds custom swipe actions to a row in a list" — swipeActions docs);
                 // the rest are plain full-width rows.
@@ -28,7 +29,7 @@ struct HomeView: View {
                 List {
                     Group {
                         header(margin).padding(.top, 6)
-                        if !continueItems.isEmpty { continueWatching(width: geo.size.width, wide: wide, margin: margin).padding(.top, 30) }
+                        if !continueItems.isEmpty { continueWatching(layout).padding(.top, 30) }
                         // Tracked shows' episodes out now or in the next 7 days (1.21.0); nothing when none.
                         // Not in the kids profile: they're the grown-ups' shows.
                         if !kids.isOn { AiringRow(margin: margin) }
@@ -37,7 +38,7 @@ struct HomeView: View {
                         else { howToAdd(margin).padding(.top, continueItems.isEmpty ? 70 : 40) }
                     }
                     .homeRow()
-                    if hasLibrary { libraryRows(shown, width: geo.size.width, margin: margin) }
+                    if hasLibrary { libraryRows(shown, layout: layout) }
                     if hasLibrary && shown.isEmpty { filteredOut(margin).homeRow() }
                     if let rd = realDebridSummary {
                         RealDebridSection(summary: rd, margin: margin, seeAllAction: { openRealDebrid(nil) }, open: { openRealDebrid($0) })
@@ -319,9 +320,10 @@ struct HomeView: View {
         }
     }
 
-    private func continueWatching(width: CGFloat, wide: Bool, margin: CGFloat) -> some View {
+    private func continueWatching(_ layout: PageLayout) -> some View {
         let items = Array(continueItems.prefix(12))
-        let cardW: CGFloat = wide ? 320 : min(340, width - margin * 2 - 44)
+        let margin = layout.margin
+        let cardW = layout.continueCardWidth
         return VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Continue Watching", margin)
             ScrollView(.horizontal, showsIndicators: false) {
@@ -329,6 +331,7 @@ struct HomeView: View {
                     ForEach(items) { e in
                         HeroCard(entry: e, height: cardW * 9 / 16 + 8)
                             .frame(width: cardW)
+                            .pointerHover(cornerRadius: 22)
                             .onTapGesture { ContinueQueue.play(e.item) }
                             // Each card's own menu (1.25.0): `.contextMenu` in Home's
                             // List belongs to the whole row, as tiles' did before 1.24.1.
@@ -557,10 +560,11 @@ struct HomeView: View {
     /// the system's own (deleteSwipe, watchedSwipe). Thumbnails have none:
     /// a long press has the same actions.
     @ViewBuilder
-    private func libraryRows(_ groups: [LibraryGroup], width: CGFloat, margin: CGFloat) -> some View {
+    private func libraryRows(_ groups: [LibraryGroup], layout: PageLayout) -> some View {
         let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
+        let margin = layout.margin
         if mode == .grid {
-            library(groups, width: width, margin: margin)
+            library(groups, layout: layout)
         } else {
             let posters = tileArtwork == "poster"
             let style = ListTransition.current
@@ -604,9 +608,10 @@ struct HomeView: View {
     /// row of tiles is a plain HStack of equal columns, each in its own list
     /// row, and a different column count makes new rows.
     @ViewBuilder
-    private func library(_ groups: [LibraryGroup], width: CGFloat, margin: CGFloat) -> some View {
+    private func library(_ groups: [LibraryGroup], layout: PageLayout) -> some View {
         let posters = tileArtwork == "poster"
-        let cols = posters ? max(3, Int((width - margin * 2 + 14) / 124)) : max(2, Int((width - margin * 2 + 14) / 184))
+        let width = layout.width, margin = layout.margin
+        let cols = posters ? layout.posterColumns : layout.thumbColumns
         ForEach(TileRow.rows(groups, columns: cols)) { row in
             HStack(alignment: .top, spacing: 14) {
                 ForEach(row.groups) { g in
