@@ -55,6 +55,9 @@ final class ImageCache: @unchecked Sendable {
     /// same memory as everything else.
     func picture(forKey key: String) -> UIImage? { memory.object(forKey: ("item|" + key) as NSString) }
 
+    /// The pictures kept in memory, dropped (1.29.0, Fix Match: a title's tile kept its old poster). The files stay.
+    func forgetPictures() { memory.removeAllObjects() }
+
     func remember(_ image: UIImage, forKey key: String) {
         memory.setObject(image, forKey: ("item|" + key) as NSString, cost: Self.cost(image))
     }

@@ -20,6 +20,14 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.29.0", items: [
+            Item(icon: "wand.and.stars", title: "Fix Match",
+                 text: "The wrong poster or title? On a title's page, tap ⋯ → Fix Match, search IMDb and pick the right one. Every episode follows."),
+            Item(icon: "play.rectangle", title: "An opening screen",
+                 text: "While a video opens you see what it is, where it's coming from and what it's waiting for, with Try Again if it takes long."),
+            Item(icon: "hand.wave", title: "A new welcome",
+                 text: "Three short pages on a first install: what Folio is, where your videos come from, and the player's gestures."),
+        ]),
         Release(version: "1.28.11", items: [
             Item(icon: "magnifyingglass", title: "One search",
                  text: "The search button finds everything from any tab: your library and servers first, then movies and shows."),

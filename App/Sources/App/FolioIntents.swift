@@ -92,7 +92,7 @@ enum ContinueSnapshotWriter {
             if dir.isKeychain {
                 let seen = KeychainShare.lastSeen()
                 dlog("widget", "\(FolioGroup.status): the widgets' files go in the default Keychain group, here \(KeychainShare.defaultGroup ?? "?") (the profile's Keychain groups: \(KeychainShare.profileKeychainGroups.joined(separator: ", ")))"
-                     + "; the widget last read them: \(seen ?? "never"); the Resume control: \(KeychainShare.lastControlDrawn() ?? "never drawn")")
+                     + "; the widget last read them: \(seen ?? "never")")
             } else {
                 dlog("widget", FolioGroup.status)
             }
@@ -510,31 +510,31 @@ struct FolioShortcuts: AppShortcutsProvider {
     }
 }
 
-// MARK: - The Resume intent's hook
+// MARK: - Resume
 
-/// What the Resume intent does in Folio, set as the app starts (1.28.6:
-/// it was set a turn of the main loop after the history was first read, so
-/// an intent run on a cold start found nothing to call).
+/// Resume from outside the app's own screens: the Home Screen quick action
+/// and folio://resume (a Shortcut). The Control Centre control that used
+/// this from 1.24.0 was removed in 1.29.0: on a re-signed install iOS drew
+/// it blank and never ran it.
 @MainActor
 enum ResumeSetup {
-    static func start() {
-        ResumeHook.run = {
-            guard !KidsProfile.isOnNow, let e = HistoryStore.shared.continueWatching.first else {
-                dlog("intents", "Resume: nothing to continue\(KidsProfile.isOnNow ? " (kids profile)" : "")")
-                return
-            }
-            dlog("intents", "Resume: \(ShowCatalog.name(of: e))")
-            IntentPlayback.start(e.item)
+    static func resume() {
+        guard !KidsProfile.isOnNow, let e = HistoryStore.shared.continueWatching.first else {
+            dlog("intents", "Resume: nothing to continue\(KidsProfile.isOnNow ? " (kids profile)" : "")")
+            return
         }
-        ResumeHook.tapped = { dlog("intents", "Resume control: its intent ran in Folio") }
-        // Every widget and control drawn anew once a launch: free while
-        // Folio is in front, and the way out of any state they were stuck in.
+        dlog("intents", "Resume: \(ShowCatalog.name(of: e))")
+        IntentPlayback.start(e.item)
+    }
+
+    static func start() {
+        // Every widget drawn anew once a launch: free while Folio is in
+        // front, and the way out of any state they were stuck in.
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
             // Only in front (1.28.7): a launch in the background (a
             // download, the airing refresh) would spend the widgets' budget.
             guard UIApplication.shared.applicationState == .active else { return }
             WidgetCenter.shared.reloadAllTimelines()
-            if #available(iOS 18.0, *) { ControlCenter.shared.reloadAllControls() }
         }
     }
 }

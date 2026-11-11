@@ -48,6 +48,18 @@ final class LibraryMetaIndex: ObservableObject {
         return order.compactMap { first[$0] }
     }
 
+    /// The title `file` belongs to was matched by hand, or its match was
+    /// dropped (1.29.0, Fix Match): what's kept for its files goes, and
+    /// they're looked up again.
+    func forget(titleOf file: URL) {
+        let key = MetadataService.pinKey(TitleParser.parse(file.lastPathComponent))
+        for f in files where MetadataService.pinKey(TitleParser.parse(f.lastPathComponent)) == key {
+            metas[f.lastPathComponent] = nil
+            looked[f.lastPathComponent] = nil
+        }
+        update(files)
+    }
+
     /// The library changed (or Home appeared): looks up what's new.
     func update(_ files: [URL]) {
         self.files = files

@@ -82,6 +82,48 @@ actor MetadataService {
         return m
     }
 
+    // MARK: Fix Match (1.29.0)
+
+    /// The IMDb title a library title was matched to by hand. Kept by the
+    /// title parsed from the file's name, so every episode of a show (and
+    /// every file of a film) follows it.
+    struct Pin: Codable, Equatable, Sendable {
+        var id: String
+        var type: String
+    }
+
+    private var pins: [String: Pin]?
+    private static var pinsFile: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("metadata-pins.json")
+    }
+
+    static func pinKey(_ p: TitleParser.Parsed) -> String { TitleParser.baseTitle(p).lowercased() }
+
+    private func loadedPins() -> [String: Pin] {
+        if let pins { return pins }
+        let read = (try? Data(contentsOf: Self.pinsFile)).flatMap { try? JSONDecoder().decode([String: Pin].self, from: $0) } ?? [:]
+        pins = read
+        return read
+    }
+
+    func pin(forFile filename: String) -> Pin? {
+        loadedPins()[Self.pinKey(TitleParser.parse(filename))]
+    }
+
+    /// Pins the title `filename` belongs to (nil: back to the automatic
+    /// match), and forgets what was kept for it, so it's looked up again.
+    func setPin(_ pin: Pin?, forFile filename: String) {
+        let p = TitleParser.parse(filename)
+        var all = loadedPins()
+        all[Self.pinKey(p)] = pin
+        pins = all
+        if let d = try? JSONEncoder().encode(all) { try? d.write(to: Self.pinsFile, options: .atomic) }
+        let prefix = p.title.lowercased() + "|"
+        for k in cache.keys where k.hasPrefix(prefix) { cache[k] = nil }
+        save()
+        dlog("meta", "fix match: \(p.title) \(pin.map { "pinned to \($0.id)" } ?? "back to the automatic match")")
+    }
+
     func lookup(filename: String) async -> MediaMeta? {
         guard UserDefaults.standard.bool(forKey: SettingsKey.metadataFetching) else { return nil }
         let p = TitleParser.parse(filename)
@@ -122,6 +164,11 @@ actor MetadataService {
     private enum Searched { case found(MetaItem), noMatch, unreachable }
 
     private func resolve(_ p: TitleParser.Parsed) async -> Resolved {
+        // Matched by hand (Fix Match): that title, no search.
+        if let pin = loadedPins()[Self.pinKey(p)] {
+            guard let item = await IMDbSource.details(id: pin.id, type: pin.type) else { return Resolved(meta: nil, unreachable: true) }
+            return Resolved(meta: await meta(from: item, type: pin.type, parsed: p))
+        }
         let wantsSeries = p.episode != nil && p.extra != "Movie"
         // A film of a series: its own title first ("Show Name Subtitle"), then
         // the series (art only). An OAD / OVA: the show it belongs to, but
@@ -143,23 +190,28 @@ actor MetadataService {
             case .noMatch: continue
             case .unreachable: unreachable = true; continue
             }
-            var meta = MediaMeta(id: item.id, type: item.type, name: item.name, poster: item.poster, background: item.background,
-                                 logo: item.logo, description: item.description, year: item.releaseInfo, rating: item.imdbRating, genres: item.genres)
-            meta.originalName = item.originalName
-            meta.credits = item.credits
-            meta.contentRating = item.contentRating
-            meta.version = MediaMeta.currentVersion
-            meta.titleLanguage = EpisodeTitles.language
-            if type == "series", p.extra == nil, let ep = p.episode, let video = await episode(of: item.id, season: p.season, episode: ep) {
-                meta.episodeTitle = video.title
-                meta.episodeThumb = video.thumbnail
-                meta.episodeOverview = video.overview
-                meta.episodeSeason = video.season
-                meta.episodeNumber = video.episode
-            }
-            return Resolved(meta: meta)
+            return Resolved(meta: await meta(from: item, type: type, parsed: p))
         }
         return Resolved(meta: nil, unreachable: unreachable)
+    }
+
+    /// A found title as the library keeps it, with the file's episode when it's one.
+    private func meta(from item: MetaItem, type: String, parsed p: TitleParser.Parsed) async -> MediaMeta {
+        var meta = MediaMeta(id: item.id, type: item.type, name: item.name, poster: item.poster, background: item.background,
+                             logo: item.logo, description: item.description, year: item.releaseInfo, rating: item.imdbRating, genres: item.genres)
+        meta.originalName = item.originalName
+        meta.credits = item.credits
+        meta.contentRating = item.contentRating
+        meta.version = MediaMeta.currentVersion
+        meta.titleLanguage = EpisodeTitles.language
+        if type == "series", p.extra == nil, let ep = p.episode, let video = await episode(of: item.id, season: p.season, episode: ep) {
+            meta.episodeTitle = video.title
+            meta.episodeThumb = video.thumbnail
+            meta.episodeOverview = video.overview
+            meta.episodeSeason = video.season
+            meta.episodeNumber = video.episode
+        }
+        return meta
     }
 
     private func search(title: String, year: Int?, type: String) async -> Searched {
