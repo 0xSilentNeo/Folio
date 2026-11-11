@@ -35,6 +35,14 @@ final class Fixes1286Tests: XCTestCase {
         XCTAssertFalse(ChunkPlan.isPage(contentType: "text/html", fileName: "page.html"), "a page that was asked for")
     }
 
+    /// 1.28.7: a web page isn't asked for again and again (an expired link
+    /// sends the same page); a dropped connection still is.
+    func testAWebPageIsNotRetried() {
+        XCTAssertTrue(DownloadManager.isPermanent("real-debrid.com sent a web page instead of the file (an expired link or a login page)"))
+        XCTAssertTrue(DownloadManager.isPermanent("Server returned HTTP 404"))
+        XCTAssertFalse(DownloadManager.isPermanent("The network connection was lost."))
+    }
+
     /// One entry this version can't read doesn't lose the rest of a saved list.
     func testASavedListReadsEntryByEntry() throws {
         let meta = MetaItem(id: "tt1", type: "movie", name: "A", poster: nil, description: nil, releaseInfo: nil, imdbRating: nil, genres: nil)

@@ -58,11 +58,11 @@ struct AiringProvider: TimelineProvider {
     /// reloads it whenever the schedules change).
     func getTimeline(in context: Context, completion: @escaping (Timeline<AiringEntry>) -> Void) {
         let entries = Self.entries(from: Date())
-        // Nothing read (1.28.6): asked again in a quarter of an hour, not never.
+        // Nothing read (1.28.6): asked again in an hour, not never.
         if entries.count == 1, case .snapshot = entries[0].content {
             completion(Timeline(entries: entries, policy: .never))
         } else if entries.count == 1 {
-            completion(Timeline(entries: entries, policy: .after(Date().addingTimeInterval(900))))
+            completion(Timeline(entries: entries, policy: .after(Date().addingTimeInterval(3600))))
         } else {
             completion(Timeline(entries: entries, policy: .atEnd))
         }

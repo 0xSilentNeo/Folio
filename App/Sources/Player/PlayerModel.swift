@@ -2875,6 +2875,18 @@ final class PlayerModel: ObservableObject {
             appliedAudioGraph = plan.graph
             appliedLayoutSpecific = plan.layoutSpecific
             dlog("audio", "\(why): \(layout ?? "?") → \(plan.entry)")
+            // Queued, so mpv's answer isn't known here (1.28.7): looked at
+            // a moment later, and a graph it refused isn't counted as on.
+            let graph = plan.graph
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                guard let self, !self.closed, self.appliedAudioGraph == graph else { return }
+                self.client?.query({ $0.string("af") ?? "" }) { [weak self] af in
+                    guard let self, self.appliedAudioGraph == graph, af.isEmpty else { return }
+                    dlog("audio/error", "mpv has no audio filter after \(why): the graph was refused")
+                    self.appliedAudioGraph = nil
+                    self.appliedLayoutSpecific = false
+                }
+            }
         } else {
             dlog("audio/error", "\(why): mpv refused \(plan.entry): \(String(cString: mpv_error_string(r)))")
         }

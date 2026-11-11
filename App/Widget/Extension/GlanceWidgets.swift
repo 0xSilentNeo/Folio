@@ -89,9 +89,9 @@ struct GlanceProvider: TimelineProvider {
             if stale > now { entries.append(GlanceEntry(date: stale, access: entries[0].access, downloads: d, pictures: entries[0].pictures)) }
         }
         entries.sort { $0.date < $1.date }
-        // Nothing read (1.28.6): asked again in a quarter of an hour, not never.
+        // Nothing read (1.28.6): asked again in an hour, not never.
         let unread = entries[0].access != .ok
-        completion(Timeline(entries: entries, policy: unread ? .after(now.addingTimeInterval(900)) : kind == .week ? .atEnd : .never))
+        completion(Timeline(entries: entries, policy: unread ? .after(now.addingTimeInterval(3600)) : kind == .week ? .atEnd : .never))
     }
 
     func load(_ now: Date) -> GlanceEntry {

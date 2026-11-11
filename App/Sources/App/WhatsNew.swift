@@ -20,6 +20,12 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.7", items: [
+            Item(icon: "trash", title: "Clear, as glass",
+                 text: "The Clear pill over your recent searches is a glass button, and its question opens out of it."),
+            Item(icon: "checkmark.shield", title: "1.28.6, checked again",
+                 text: "History comes back from its daily backup if its file is cut short, an expired download link fails once instead of retrying, and widgets retry hourly."),
+        ]),
         Release(version: "1.28.6", items: [
             Item(icon: "bell", title: "Real notifications again",
                  text: "Notification Test was left on from a test build, so Folio sent its samples and held new-episode alerts. It's off now, and turns itself off after one run."),
