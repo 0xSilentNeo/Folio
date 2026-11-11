@@ -71,5 +71,5 @@ jobs:
           else
             gh release create "$TAG" FolioEngine.zip --prerelease \
               --title "Engine $TAG" \
-              --notes "libmpv (mpv v0.41 + LuaJIT) with FFmpeg n9.0.2 (GPL), libplacebo, MoltenVK, libdovi — built from MPVKit $MPVKIT_SHA with Folio patches. Used by the app build; not an app release."
+              --notes "libmpv (mpv v0.41 + LuaJIT) with FFmpeg n9.0.2 (GPL, HTTPS through Secure Transport), libplacebo, MoltenVK, libdovi — built from MPVKit $MPVKIT_SHA with Folio patches. Used by the app build; not an app release."
           fi
