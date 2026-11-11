@@ -110,6 +110,13 @@ final class HistoryStore: ObservableObject {
                 let aside = dir.appendingPathComponent("history.unreadable.json")
                 try? data.write(to: aside, options: .atomic)
                 dlog("history/error", "history.json didn't read whole (\(data.count) bytes): \(some.map { "\($0.count) entr(ies) kept" } ?? "none readable"); a copy is in \(aside.lastPathComponent)")
+                // Nothing readable (a file cut short, 1.28.7): yesterday's copy,
+                // where 1.28.6 still started empty.
+                if (some ?? []).isEmpty, let old = try? Data(contentsOf: dir.appendingPathComponent("history.backup.json")),
+                   let saved = try? JSONDecoder().decode([HistoryEntry].self, from: old), !saved.isEmpty {
+                    read = saved
+                    dlog("history/error", "history restored from the daily backup: \(saved.count) entr(ies)")
+                }
             }
         }
         if let decoded = read {

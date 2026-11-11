@@ -269,9 +269,6 @@ struct AddonSearchView: View {
         .navigationDestination(item: $opened) { o in
             MetaDetailView(preview: o.meta, sourceAddon: o.addon).zoomDestination("search|" + o.meta.id, in: zoomNS, zoom: false)
         }
-        .confirmationDialog("Clear recent searches?", isPresented: $confirmClear, titleVisibility: .visible) {
-            Button("Clear", role: .destructive) { search.clearHistory() }
-        }
     }
     @Namespace private var zoomNS
 
@@ -290,18 +287,19 @@ struct AddonSearchView: View {
                     Text("Recent").accessibilityAddTraits(.isHeader)
                     Spacer()
                     Button { confirmClear = true } label: {
-                        Label("Clear", systemImage: "trash")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.primary.opacity(0.75))
-                            .padding(.horizontal, 12).padding(.vertical, 7)
-                            .background(Theme.fill, in: Capsule())
-                            // 44 pt to tap, whatever the pill's own height.
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
+                        Label("Clear", systemImage: "trash").font(.caption.weight(.semibold))
                     }
-                    .buttonStyle(.plain)
+                    .modifier(ClearPillStyle())
                     .accessibilityLabel("Clear recent searches")
                     .accessibilityIdentifier("searchClearRecent")
+                    // On the pill itself (1.28.7), so iOS 26 morphs the
+                    // question out of it; on the list it rose from the
+                    // bottom of the screen.
+                    .confirmationDialog("Clear recent searches?", isPresented: $confirmClear, titleVisibility: .visible) {
+                        Button("Clear", role: .destructive) {
+                            withAnimation(.smooth(duration: 0.3)) { search.clearHistory() }
+                        }
+                    }
                 }
                 .textCase(nil)
             }
@@ -450,5 +448,40 @@ private struct OwnSearchField: ViewModifier {
         } else {
             content
         }
+    }
+}
+
+/// The Recent header's Clear pill (1.28.7). iOS 26: the system's glass
+/// button, which swells under the finger and lets the question morph out
+/// of it. Before iOS 26: the filled capsule the search's other pills are.
+private struct ClearPillStyle: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content.buttonStyle(.glass).controlSize(.small).tint(.primary)
+                // 44 pt to tap, whatever the pill's own height.
+                .frame(minHeight: 44)
+        } else {
+            flat(content)
+        }
+        #else
+        flat(content)
+        #endif
+    }
+
+    private func flat(_ content: Content) -> some View {
+        content.buttonStyle(ClearPillFlat())
+    }
+}
+
+private struct ClearPillFlat: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.primary.opacity(0.75))
+            .padding(.horizontal, 12).padding(.vertical, 7)
+            .background(Theme.fill.opacity(configuration.isPressed ? 0.6 : 1), in: Capsule())
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
     }
 }

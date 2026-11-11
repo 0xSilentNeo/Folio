@@ -95,11 +95,12 @@ struct ContinueProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<ContinueEntry>) -> Void) {
         let entry = Self.load()
-        // Nothing read (1.28.6): asked again in a quarter of an hour. With
+        // Nothing read (1.28.6): asked again in an hour (1.28.7; a quarter
+        // of one would use up the day's refreshes where nothing can be read). With
         // .never a read that failed once (before the first unlock after a
         // restart, say) left "Open Folio once" until the history changed.
         switch entry.content {
-        case .openFolio, .cantShare: completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900))))
+        case .openFolio, .cantShare: completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(3600))))
         default: completion(Timeline(entries: [entry], policy: .never))
         }
     }

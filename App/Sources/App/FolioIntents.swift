@@ -530,6 +530,9 @@ enum ResumeSetup {
         // Every widget and control drawn anew once a launch: free while
         // Folio is in front, and the way out of any state they were stuck in.
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            // Only in front (1.28.7): a launch in the background (a
+            // download, the airing refresh) would spend the widgets' budget.
+            guard UIApplication.shared.applicationState == .active else { return }
             WidgetCenter.shared.reloadAllTimelines()
             if #available(iOS 18.0, *) { ControlCenter.shared.reloadAllControls() }
         }

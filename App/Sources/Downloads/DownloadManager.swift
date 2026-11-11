@@ -1373,6 +1373,9 @@ final class DownloadManager: ObservableObject {
     /// or missing file (HTTP 401, 403, 404, 410). Until 1.20.3 these went
     /// through every retry first.
     nonisolated static func isPermanent(_ message: String) -> Bool {
+        // A web page where the file should be (1.28.7): an expired link
+        // sends the same page however often it's asked.
+        if message.contains("sent a web page instead of the file") { return true }
         guard let r = message.range(of: #"HTTP (\d{3})"#, options: .regularExpression),
               let code = Int(message[r].dropFirst(5)) else { return false }
         return [401, 403, 404, 410].contains(code)
