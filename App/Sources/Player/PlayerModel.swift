@@ -873,8 +873,16 @@ final class PlayerModel: ObservableObject {
                 let wasPaused = paused
                 if !wasPaused { c.set("pause", true) }
                 let id = item.id
+                // Said after 4 s (1.28.9): an addon's server can take half a
+                // minute to hand the stream over, with nothing on screen.
+                let slow = DispatchWorkItem { [weak self] in
+                    guard let self, !self.closed, self.playingItem?.id == id, !self.fileLoaded else { return }
+                    self.showToast("Waiting for \(u.host ?? "the server") to hand over the stream…")
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: slow)
                 Task { [weak self] in
-                    let final = await LinkWarmer.resolve(u, headers: item.headers, purpose: "this file")
+                    let final = await LinkWarmer.resolveFast(u, headers: item.headers, purpose: "this file")
+                    slow.cancel()
                     guard let self, !self.closed, self.playingItem?.id == id, self.appended == nil else { return }
                     if let final, final != u { self.playLinks[id] = final } else if final == u { LinkWarmer.direct.insert(u.host ?? "") }
                     self.loadFile(item, opts, c)

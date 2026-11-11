@@ -280,8 +280,44 @@ enum LinkWarmer {
     /// WebDAV servers): their files aren't asked twice before mpv opens them.
     @MainActor static var direct: Set<String> = []
 
-    static func resolve(_ url: URL, headers: [String: String], purpose: String = "next episode") async -> URL? {
-        var r = URLRequest(url: url, timeoutInterval: 40)
+    /// As `resolve`, but for a link followed before (1.28.9) its saved
+    /// download address is asked at the same time, and whichever answers
+    /// first plays. An addon's playback link goes through the addon's own
+    /// server on the way to the debrid service: the 11 Nov log has
+    /// "link answered HTTP 206 in 34.2 s" for a Continue Watching card,
+    /// with the player showing nothing meanwhile. The address it led to
+    /// answers in under a second for as long as the debrid service keeps it.
+    static func resolveFast(_ url: URL, headers: [String: String], purpose: String) async -> URL? {
+        guard let saved = await ResolvedLinks.shared.address(for: url) else {
+            let final = await resolve(url, headers: headers, purpose: purpose)
+            if let final, final != url { await ResolvedLinks.shared.keep(final, for: url) }
+            return final
+        }
+        let t0 = Date()
+        return await withTaskGroup(of: (url: URL?, saved: Bool).self) { group in
+            group.addTask { (await resolve(saved, headers: [:], purpose: purpose + " (its saved address)", timeout: 8), true) }
+            group.addTask { (await resolve(url, headers: headers, purpose: purpose), false) }
+            var winner: URL?
+            for await answer in group {
+                if let u = answer.url {
+                    winner = u
+                    if answer.saved {
+                        dlog("player", String(format: "%@: played from its saved download address after %.1f s, without waiting for the link", purpose, Date().timeIntervalSince(t0)))
+                    } else if u != url {
+                        await ResolvedLinks.shared.keep(u, for: url)
+                    }
+                    group.cancelAll()           // the other request ends at once
+                    break
+                } else if answer.saved {
+                    await ResolvedLinks.shared.forget(url)      // no longer kept there: the link decides
+                }
+            }
+            return winner
+        }
+    }
+
+    static func resolve(_ url: URL, headers: [String: String], purpose: String = "next episode", timeout: TimeInterval = 40) async -> URL? {
+        var r = URLRequest(url: url, timeoutInterval: timeout)
         r.setValue("bytes=0-0", forHTTPHeaderField: "Range")
         r.setValue("libmpv", forHTTPHeaderField: "User-Agent")       // what the player sends
         for (k, v) in headers { r.setValue(v, forHTTPHeaderField: k) }
@@ -306,5 +342,57 @@ enum LinkWarmer {
         dlog("player", String(format: "%@: link answered HTTP %d in %.1f s%@", purpose, http.statusCode, Date().timeIntervalSince(t0),
                               http.url?.host != url.host ? " (redirected to \(http.url?.host ?? "?"))" : ""))
         return (200..<300).contains(http.statusCode) ? http.url : nil
+    }
+}
+
+/// Where a stream link led the last time it was followed (1.28.9), kept for
+/// half a day: LinkWarmer.resolveFast asks it alongside the link. In
+/// Application Support, like the history that holds the links themselves.
+actor ResolvedLinks {
+    static let shared = ResolvedLinks()
+    static let life: TimeInterval = 12 * 3600
+    static let limit = 60
+
+    private struct Entry: Codable { var address: URL; var at: Date }
+    private var entries: [String: Entry]?
+    private let file: URL
+
+    init(file: URL? = nil) {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        self.file = file ?? dir.appendingPathComponent("resolved-links.json")
+    }
+
+    private func loaded() -> [String: Entry] {
+        if let entries { return entries }
+        let read = (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode([String: Entry].self, from: $0) } ?? [:]
+        entries = read
+        return read
+    }
+
+    func address(for link: URL, now: Date = Date()) -> URL? {
+        guard let e = loaded()[link.absoluteString], now.timeIntervalSince(e.at) < Self.life, e.address != link else { return nil }
+        return e.address
+    }
+
+    func keep(_ address: URL, for link: URL, now: Date = Date()) {
+        var all = loaded().filter { now.timeIntervalSince($0.value.at) < Self.life }
+        all[link.absoluteString] = Entry(address: address, at: now)
+        if all.count > Self.limit {
+            for k in all.sorted(by: { $0.value.at < $1.value.at }).prefix(all.count - Self.limit).map(\.key) { all[k] = nil }
+        }
+        entries = all
+        save()
+    }
+
+    func forget(_ link: URL) {
+        var all = loaded()
+        guard all.removeValue(forKey: link.absoluteString) != nil else { return }
+        entries = all
+        save()
+    }
+
+    private func save() {
+        try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        if let data = try? JSONEncoder().encode(entries ?? [:]) { try? data.write(to: file, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]) }
     }
 }
