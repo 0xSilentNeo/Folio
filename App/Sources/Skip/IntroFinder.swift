@@ -199,7 +199,9 @@ actor IntroFinder {
     /// Whether the phone has the energy to spare right now: not in Low Power
     /// Mode, and not warm.
     nonisolated static var phoneIsCool: Bool {
-        !ProcessInfo.processInfo.isLowPowerModeEnabled && ProcessInfo.processInfo.thermalState == .nominal
+        // Up to "fair": a phone playing HDR is often there (the 11 Nov logs), and at
+        // nominal only the analysis would rarely have run. It takes seconds.
+        !ProcessInfo.processInfo.isLowPowerModeEnabled && ProcessInfo.processInfo.thermalState.rawValue <= ProcessInfo.ThermalState.fair.rawValue
     }
 
     /// The intro already found for this file, if any. No decoding.
