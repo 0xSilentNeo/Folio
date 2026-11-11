@@ -397,6 +397,7 @@ struct SkipSettings: View {
     @AppStorage(SettingsKey.skipInjectChapters) private var injectChapters = true
     @AppStorage(SettingsKey.skipOATLength) private var oatLength = 90.0
     @AppStorage(SettingsKey.skipLearnIntros) private var learnIntros = true
+    @AppStorage(SettingsKey.skipFindOnDevice) private var findOnDevice = true
     @ObservedObject private var memory = ShowMemoryStore.shared
 
     var body: some View {
@@ -415,6 +416,9 @@ struct SkipSettings: View {
                 }
                 SettingGroup("Sources", footer: "Files that name their chapters (Opening, Ending, Credits…) are skipped by those chapters first.") {
                     Toggle("Use file chapters", isOn: $useChapters)
+                }
+                SettingGroup(footer: "For episodes in your library that no source knows: the sound of the first minutes is compared with the next episode's, and what they share is the intro. Local files only; nothing leaves the phone.") {
+                    Toggle("Find intros on this \(UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone")", isOn: $findOnDevice)
                 }
                 SettingGroup(footer: "Intros and credits found online show as chapters too: on the progress bar, in Now Playing, and to Lua scripts.") {
                     Toggle("Add found markers as chapters", isOn: $injectChapters)

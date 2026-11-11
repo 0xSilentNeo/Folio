@@ -22,6 +22,13 @@ struct MetaDetailView: View {
     @ObservedObject private var history = HistoryStore.shared
     @ObservedObject private var kids = KidsProfile.shared
     @ObservedObject private var tracking = TrackingStore.shared
+    /// The library and what it knows of its titles: the page's own files of
+    /// this title follow them (1.30.0).
+    @ObservedObject private var local = LocalMediaStore.shared
+    @ObservedObject private var libraryMeta = LibraryMetaIndex.shared
+    /// The library's files of this title, by identity ("tt…:1:5"): built
+    /// when the page loads and when the library changes, never per row.
+    @State private var libraryFiles: [String: [URL]] = [:]
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     /// The title's details have been asked for (the kids profile decides on them, not on the list's tile).
     @State private var loaded = false
@@ -61,6 +68,10 @@ struct MetaDetailView: View {
         var queue: [MetaVideo]
         /// The view the page zooms out of: "find" (the big button) or "ep|<id>" (an episode row).
         var source = "find"
+        /// Start over (1.30.0): the stream picked starts at 0.
+        var fromStart = false
+        /// The place kept by the episode's library file, when the stream has none of its own (1.30.0).
+        var startAt: Double? = nil
         var id: String { video?.id ?? "title" }
     }
 
@@ -95,6 +106,9 @@ struct MetaDetailView: View {
 
     private var page: some View {
         GeometryReader { geo in
+            // The text in a readable column, centred, on a wide iPad window
+            // (1.30.0); the picture keeps the whole width.
+            let side = PageLayout(width: geo.size.width).readableSide(16)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     backdrop(geo.size)
@@ -109,10 +123,18 @@ struct MetaDetailView: View {
                         // Track (1.21.0): series only, once the page knows which show it is.
                         TitleButtonRow {
                             findButton.zoomSource(ZoomSource("find", streamsNS), cornerRadius: 28)
+                            // As on the library's page (1.30.0): from the beginning, beside Resume.
+                            if let again = startOverTarget {
+                                Button { go = again } label: {
+                                    Label("Start over", systemImage: "arrow.counterclockwise").font(.subheadline.weight(.semibold))
+                                        .padding(.horizontal, 16).frame(height: 44).glass(cornerRadius: 22, interactive: true)
+                                }
+                                .buttonStyle(PressStyle())
+                            }
                             if canTrack { TrackButton(show: trackedShow) }
                         }
                         if canTrack { TrackStatusLine(show: trackedShow).padding(.top, -8) }
-                        if castPosition == "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, -16) }
+                        if castPosition == "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c, inset: side).padding(.horizontal, -side) }
                         if isSeries && (!allVideos.isEmpty || !allSeasons.isEmpty) {
                             episodeList
                         } else if !untiledEpisodes.isEmpty {
@@ -122,14 +144,14 @@ struct MetaDetailView: View {
                             }
                         }
                         if loadingEpisodes && allVideos.isEmpty { LoadingQuips().padding(.vertical, 8) }
-                        if castPosition != "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c).padding(.horizontal, -16) }
+                        if castPosition != "top", let c = m.credits, !c.isEmpty { CastStrip(credits: c, inset: side).padding(.horizontal, -side) }
                         if let d = m.director, !d.isEmpty {
                             Text((isSeries ? "Created by " : "Directed by ") + d.prefix(3).joined(separator: ", "))
                                 .font(.footnote).foregroundStyle(.secondary)
                         }
                         TitleLinks(name: m.name, year: m.releaseInfo.map { String($0.prefix(4)) }, type: m.type, imdbID: usesIMDb ? resolvedID : nil)
                     }
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, side)
                     .padding(.top, 14)
                     .padding(.bottom, 40)
                 }
@@ -139,17 +161,29 @@ struct MetaDetailView: View {
             .topScrollScrim()
         }
         .background(Theme.background.ignoresSafeArea())
-        .pageButtons(zooms: zooms, back: { dismiss() }) { WatchlistButton(meta: m) }
+        .pageButtons(zooms: zooms, back: { dismiss() }) {
+            // Watchlist, then ⋯, as on the library's page (1.30.0).
+            HStack(spacing: 8) {
+                WatchlistButton(meta: m)
+                moreButton
+            }
+        }
         .landscapeTopGap()
         // Landscape phone: the floating tab bar sat on Track and the episodes,
         // as it did on the library's title page (1.22.1).
         .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .navigationDestination(item: $go) { t in
             // Zooms only from a page that draws its own bar (see pageButtons).
-            StreamsView(meta: m, video: t.video, seasonVideos: t.queue)
+            StreamsView(meta: m, video: t.video, seasonVideos: t.queue, fromStart: t.fromStart, startAt: t.startAt)
                 .zoomDestination(t.source, in: streamsNS, zoom: zooms)
         }
         .task { LibTrace.title.event("appeared", "addon title page appeared"); await load(); loaded = true }
+        // The library's files of this title (1.30.0), once it's known which
+        // title it is, and again when the library or its metadata changes.
+        .task(id: LibraryKey(imdb: usesIMDb ? resolvedID : "", files: local.files.count, metas: libraryMeta.metas.count)) {
+            let found = usesIMDb ? await WatchedState.libraryFiles(imdb: resolvedID) : [:]
+            if !Task.isCancelled, found != libraryFiles { libraryFiles = found }
+        }
         .task(id: season) {
             guard usesIMDb, isSeries, !seasons.isEmpty else { return }
             loadingEpisodes = true
@@ -216,8 +250,8 @@ struct MetaDetailView: View {
                     }
                     titleBlock.padding(.bottom, 6)
                 }
-                .padding(.leading, size.width > 700 ? 28 : 16)
-                .padding(.trailing, 16)
+                .padding(.leading, PageLayout(width: size.width).readableSide(size.width > 700 ? 28 : 16))
+                .padding(.trailing, PageLayout(width: size.width).readableSide(16))
         }
     }
 
@@ -271,19 +305,21 @@ struct MetaDetailView: View {
     private var findButton: some View {
         let eps = seasonEpisodes
         if isSeries, eps.count > 1 {
-            // Whole season, from the first episode not finished yet.
-            let startAt = eps.firstIndex { history.entry(for: "addon:\($0.id)")?.isFinished != true } ?? 0
+            // Whole season, from the first episode not finished yet, in the
+            // library or from a stream (1.30.0: only streams counted, so a
+            // season watched from your own files began at episode 1 again).
+            let startAt = WatchedState.firstUnwatched(eps.map { state($0.id)?.isFinished == true })
             let ep = eps[startAt]
             TiltPlayButton(title: startAt == 0 ? (season == 0 ? "Play all specials" : "Play Season \(season)") : "Continue Season \(season)",
                            subtitle: startAt == 0 ? "\(eps.count) episodes" : "from episode \(ep.episode ?? startAt + 1)",
                            icon: "play.square.stack.fill") {
-                go = StreamsTarget(video: ep, queue: Array(eps[startAt...]))
+                go = StreamsTarget(video: ep, queue: Array(eps[startAt...]), startAt: carried(ep.id))
             }
         } else if isSeries, eps.count == 1, let ep = eps.first {
-            TiltPlayButton(title: "Find streams", subtitle: ep.title) { go = StreamsTarget(video: ep, queue: []) }
+            TiltPlayButton(title: "Find streams", subtitle: ep.title) { go = StreamsTarget(video: ep, queue: [], startAt: carried(ep.id)) }
         } else if !isSeries || (!loadingEpisodes && allSeasons.isEmpty) {
             let resume = resumeLabel(for: m.id)
-            TiltPlayButton(title: resume == nil ? "Find streams" : "Resume", subtitle: resume) { go = StreamsTarget(video: nil, queue: []) }
+            TiltPlayButton(title: resume == nil ? "Find streams" : "Resume", subtitle: resume) { go = StreamsTarget(video: nil, queue: [], startAt: carried(m.id)) }
         } else {
             // Episodes still loading: keep the button's place so the page doesn't jump.
             TiltPlayButton(title: "Find streams", subtitle: "loading episodes…", shimmer: false) {}
@@ -292,8 +328,102 @@ struct MetaDetailView: View {
     }
 
     private func resumeLabel(for videoId: String) -> String? {
-        guard let e = history.entry(for: "addon:\(videoId)"), e.canResume else { return nil }
+        // The stream's own place first, as the player takes it (carried):
+        // the button said the library file's newer one and started at the stream's.
+        let own = history.entry(for: "addon:\(videoId)")
+        guard let e = own?.canResume == true ? own : state(videoId), e.canResume else { return nil }
         return "from \(PlayerModel.format(e.position))"
+    }
+
+    /// The episode the big button and ⋯ → Play start with: the first of the
+    /// season shown that isn't watched on either side.
+    private func nextIndex(_ eps: [MetaVideo]) -> Int {
+        WatchedState.firstUnwatched(eps.map { state($0.id)?.isFinished == true })
+    }
+
+    /// What the big button would play, from the beginning: only when that
+    /// has a place to resume from (the library's "Start over", 1.30.0).
+    private var startOverTarget: StreamsTarget? {
+        let eps = seasonEpisodes
+        if isSeries {
+            guard !eps.isEmpty else { return nil }
+            let i = nextIndex(eps)
+            guard state(eps[i].id)?.canResume == true else { return nil }
+            return StreamsTarget(video: eps[i], queue: eps.count > 1 ? Array(eps[i...]) : [], fromStart: true)
+        }
+        guard state(m.id)?.canResume == true else { return nil }
+        return StreamsTarget(video: nil, queue: [], fromStart: true)
+    }
+
+    // MARK: One watched state (1.30.0, WatchedState)
+
+    /// The task that finds the library's files of this title runs again when any of these changes.
+    private struct LibraryKey: Hashable { var imdb: String; var files: Int; var metas: Int }
+
+    /// The library's files of an episode (a film: of the title).
+    private func files(for videoID: String) -> [URL] {
+        guard !libraryFiles.isEmpty, let id = WatchedState.identity(videoID: videoID) else { return [] }
+        return libraryFiles[id] ?? []
+    }
+
+    /// An episode's state on either side: its addon entry or a library file's.
+    private func state(_ videoID: String) -> HistoryEntry? {
+        let own = history.entry(for: "addon:\(videoID)")
+        let files = files(for: videoID)
+        return files.isEmpty ? own : WatchedState.combined([own] + files.map { history.entry(forURL: $0.path) })
+    }
+
+    /// The place a stream starts at when only the library file has one.
+    private func carried(_ videoID: String) -> Double? {
+        let files = files(for: videoID)
+        guard !files.isEmpty else { return nil }
+        return WatchedState.carriedPosition(own: history.entry(for: "addon:\(videoID)"), others: files.map { history.entry(forURL: $0.path) })
+    }
+
+    /// What's marked with an episode: its addon entry and its library files.
+    private func unit(_ videoID: String) -> [String] {
+        ["addon:\(videoID)"] + files(for: videoID).map(\.path)
+    }
+
+    /// The history item for a key that has no entry yet.
+    private func historyItem(_ key: String) -> MediaItem {
+        guard key.hasPrefix("addon:") else { return HistoryStore.libraryItem(key) }
+        let label = allVideos.first { "addon:\($0.id)" == key }?.label
+        return WatchedState.addonItem(key: key, name: m.name, poster: m.poster, type: m.type, metaID: m.id, label: label)
+    }
+
+    // MARK: More
+
+    /// The library page's ⋯ (1.30.0): Play, the watched marks, Share.
+    private var moreButton: some View {
+        Menu {
+            let eps = seasonEpisodes
+            let airing = self.airing
+            let out = eps.filter { v in
+                // As the rows have it: the tracker's "airs" mark counts too.
+                if v.airsLater() { return false }
+                if case .airs? = airing?.mark(season: v.season, episode: v.episode) { return false }
+                return true
+            }
+            if isSeries {
+                if !eps.isEmpty {
+                    let i = nextIndex(eps)
+                    Button { go = StreamsTarget(video: eps[i], queue: eps.count > 1 ? Array(eps[i...]) : [], startAt: carried(eps[i].id)) } label: { Label("Play", systemImage: "play") }
+                }
+                if !out.isEmpty {
+                    WatchedMenuItems(units: out.map { unit($0.id) }, scope: allSeasons.count > 1 ? .season : .all, item: historyItem)
+                }
+            } else {
+                Button { go = StreamsTarget(video: nil, queue: [], startAt: carried(m.id)) } label: { Label("Play", systemImage: "play") }
+                WatchedMenuItems(units: [unit(m.id)], item: historyItem)
+            }
+            if usesIMDb, let link = URL(string: "https://www.imdb.com/title/\(resolvedID)/") {
+                ShareLink(item: link) { Label("Share", systemImage: "square.and.arrow.up") }
+            }
+        } label: {
+            PageButtonLabel(systemName: "ellipsis", width: 56)
+        }
+        .accessibilityLabel("More")
     }
 
     // MARK: Episodes
@@ -328,12 +458,13 @@ struct MetaDetailView: View {
                     // Also while its badge says it airs later today: IMDb's
                     // date-only release counts from midnight (review, 5 Nov).
                     let notOut = v.airsLater() || { if case .airs = mark { return true }; return false }()
-                    Button { go = StreamsTarget(video: v, queue: [], source: "ep|" + v.id) } label: {
+                    let entry = state(v.id)
+                    Button { go = StreamsTarget(video: v, queue: [], source: "ep|" + v.id, startAt: carried(v.id)) } label: {
                         // A tracked episode's time is the badge's, in your time zone: the
                         // row's own date is the network's (IMDb's US date), so it's left out.
                         // Only under "Airs…": the "New" badge has no date (1.22.6; until
                         // then Tulsa King's newest episode showed none).
-                        EpisodeRow(video: { if case .airs = mark { var u = v; u.released = nil; return u }; return v }(), entry: history.entry(for: "addon:\(v.id)"))
+                        EpisodeRow(video: { if case .airs = mark { var u = v; u.released = nil; return u }; return v }(), entry: entry)
                             .overlay(alignment: .topLeading) {
                                 if let mark { AiringBadge(mark: mark, maxWidth: 116).padding(14) }
                             }
@@ -343,6 +474,14 @@ struct MetaDetailView: View {
                     .disabled(notOut)
                     .opacity(notOut ? 0.6 : 1)
                     .accessibilityHint(notOut ? "Not out yet." : "")
+                    .accessibilityValue(WatchedState.spoken(entry))
+                    // As the library's episode rows have (1.30.0).
+                    .contextMenu {
+                        if !notOut {
+                            Button { go = StreamsTarget(video: v, queue: [], startAt: carried(v.id)) } label: { Label("Play", systemImage: "play") }
+                            WatchedMenuItems(units: [unit(v.id)], item: historyItem)
+                        }
+                    }
                 }
                 ForEach(untiledEpisodes, id: \.self) { UpcomingEpisodeCard(episode: $0) }
             }

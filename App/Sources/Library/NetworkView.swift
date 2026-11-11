@@ -171,8 +171,9 @@ struct LocalFolderView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let margin: CGFloat = geo.size.width > 700 ? 28 : 20
-            let cols = max(2, Int((geo.size.width - margin * 2 + 14) / 184))
+            let layout = PageLayout(width: geo.size.width)
+            let margin = layout.margin
+            let cols = layout.thumbColumns
             let mode = LibraryViewMode(rawValue: libraryView) ?? .grid
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {

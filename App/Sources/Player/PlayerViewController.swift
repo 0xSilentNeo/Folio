@@ -301,13 +301,106 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
         setNeedsUpdateOfSupportedInterfaceOrientations()
     }
 
+    // MARK: Hardware keyboard: Folio's own keys (1.30.0)
+
+    /// Folio's key for a press, if it's one of them (PlayerShortcut): the
+    /// bare key only. With Caps Lock on, F and N are still F and N.
+    static func shortcut(for key: UIKey) -> PlayerShortcut? {
+        guard key.modifierFlags.intersection([.shift, .control, .alternate, .command]).isEmpty,
+              let name = mpvKeyName(key) else { return nil }
+        return PlayerShortcut.claimed(mpvName: name.count == 1 ? name.lowercased() : name)
+    }
+
+    /// The same keys as key commands, so iPadOS lists them while ⌘ is held
+    /// and repeats a held arrow. Not while something else has the keyboard
+    /// (the mpv console's field, a search field in a sheet): these take
+    /// priority over typing, and F, N and Space are letters there.
+    override var keyCommands: [UIKeyCommand]? {
+        guard isFirstResponder else { return nil }
+        return PlayerShortcut.allCases.map { s in
+            let c = UIKeyCommand(title: s.title, action: #selector(shortcutCommand(_:)), input: s.input, modifierFlags: [], propertyList: s.rawValue)
+            // The arrows, Space and Esc are otherwise the system's (focus moves).
+            c.wantsPriorityOverSystemBehavior = true
+            return c
+        }
+    }
+
+    @objc private func shortcutCommand(_ command: UIKeyCommand) {
+        guard let raw = command.propertyList as? String, let s = PlayerShortcut(rawValue: raw) else { return }
+        perform(s, fromPress: false)
+    }
+
+    private var shortcutDedupe = PlayerShortcut.Dedupe()
+    private var volumeHUDWork: DispatchWorkItem?
+
+    private func perform(_ s: PlayerShortcut, fromPress: Bool) {
+        guard shortcutDedupe.shouldPerform(s, fromPress: fromPress, at: CACurrentMediaTime()) else { return }
+        dlog("ui", "key: \(s.rawValue)")
+        let defaults = UserDefaults.standard
+        switch s {
+        case .playPause:
+            model.togglePause()
+            ui.showControls()
+        case .back:
+            // Folio's own steps (Settings → Playback), as the buttons use.
+            model.seek(by: -Double(max(1, defaults.integer(forKey: SettingsKey.seekBackStep))))
+            ui.showControls()
+        case .forward:
+            model.seek(by: Double(max(1, defaults.integer(forKey: SettingsKey.seekStep))))
+            ui.showControls()
+        case .volumeUp, .volumeDown:
+            // The device's volume, as the swipe on the right half sets it.
+            SystemVolume.attach(to: view.window)
+            let value = PlayerShortcut.volume(SystemVolume.current, up: s == .volumeUp)
+            SystemVolume.set(value)
+            guard !SystemVolume.nativeHUD else { return }
+            let v = Double(value)
+            ui.gestureHUD = .init(icon: v == 0 ? "speaker.slash.fill" : v < 0.34 ? "speaker.wave.1.fill" : v < 0.67 ? "speaker.wave.2.fill" : "speaker.wave.3.fill",
+                                  text: "\(Int(v * 100))%", progress: v, kind: .volume)
+            volumeHUDWork?.cancel()
+            let w = DispatchWorkItem { [weak self] in
+                guard let self, self.ui.gestureHUDKind == .volume else { return }
+                self.ui.gestureHUD = nil
+            }
+            volumeHUDWork = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9, execute: w)
+        case .fill:
+            model.toggleZoom()
+        case .next:
+            if model.hasNext { model.playNext() } else { model.showToast("Nothing to play next") }
+        case .close:
+            escape()
+        }
+    }
+
+    /// Esc: what's open on top closes; with nothing open, the player.
+    private func escape() {
+        let presented = presentedViewController.map { !$0.isBeingDismissed } ?? false
+        // A panel on iOS 17/18 is a popover, presented too: it closes as a panel.
+        switch PlayerShortcut.escapeTarget(locked: ui.locked, panel: ui.panel != nil, console: ui.showConsole,
+                                           card: ui.showInfo || ui.showStats, sheet: presented && ui.panel == nil) {
+        case .nothing: break
+        case .panel: ui.closePanel()
+        case .console: ui.showConsole = false
+        case .card:
+            ui.showInfo = false
+            ui.showStats = false
+        case .sheet: presentedViewController?.dismiss(animated: true)
+        case .player: closePlayer()
+        }
+    }
+
     // MARK: Hardware keyboard -> mpv
 
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         var handled = false
         for press in presses {
-            if let key = press.key, let name = Self.mpvKeyName(key) {
-                if name == "ESC", model.client == nil { continue }
+            guard let key = press.key else { continue }
+            // Folio's keys first (1.30.0); the rest are mpv's, as before.
+            if let s = Self.shortcut(for: key) {
+                perform(s, fromPress: true)
+                handled = true
+            } else if let name = Self.mpvKeyName(key) {
                 model.keyDown(name)
                 handled = true
             }
@@ -318,7 +411,10 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
     override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         var handled = false
         for press in presses {
-            if let key = press.key, let name = Self.mpvKeyName(key) {
+            guard let key = press.key else { continue }
+            if Self.shortcut(for: key) != nil {
+                handled = true          // mpv never saw it go down
+            } else if let name = Self.mpvKeyName(key) {
                 model.keyUp(name)
                 handled = true
             }
@@ -425,13 +521,15 @@ enum PlayerPresenter {
 
     /// `fromStart`: the first file starts at 0 whatever its history says
     /// (Start over); its history is updated by playing, not erased first.
-    static func play(queue: [MediaItem], index: Int, fromStart: Bool = false) {
+    /// `startAt`: where the first file starts when its place is kept by its
+    /// other side (1.30.0, WatchedState.carriedPosition).
+    static func play(queue: [MediaItem], index: Int, fromStart: Bool = false, startAt: Double? = nil) {
         dlog("player", "play requested: \(queue.count) item(s), index \(index), first=\(queue.first?.mpvPath ?? "")")
         if let existing = current {
             dlog("player", "closing previous player first")
             existing.closePlayer(animated: false)
         }
-        guard let model = PlayerModel(queue: queue.map { $0.preparedForPlayback() }, startIndex: index, fromStart: fromStart) else {
+        guard let model = PlayerModel(queue: queue.map { $0.preparedForPlayback() }, startIndex: index, fromStart: fromStart, startAt: startAt) else {
             dlog("player/error", "could not create PlayerModel")
             return
         }

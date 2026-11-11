@@ -333,8 +333,10 @@ struct DiscoverView: View {
     var body: some View {
         NavigationStack {
             GeometryReader { geo in
-                let margin: CGFloat = geo.size.width > 700 ? 28 : 20
-                let cols = max(3, Int((geo.size.width - margin * 2 + 12) / 122))
+                // By the page's width (1.30.0, PageLayout): larger posters on an iPad.
+                let layout = PageLayout(width: geo.size.width)
+                let margin = layout.margin
+                let cols = layout.discoverColumns
                 let shown = browse.shown(kids.activeLimits)
                 ScrollViewReader { scroller in
                 ScrollView {
