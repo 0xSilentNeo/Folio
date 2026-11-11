@@ -597,7 +597,9 @@ final class PlayerModel: ObservableObject {
     @Published var pictureMode: PictureMode = PictureMode.current {
         didSet {
             PictureMode.current = pictureMode
-            for (k, v) in pictureMode.options { client?.set(k, v) }
+            // Without waiting for mpv's core (1.28.6), as play and pause:
+            // a menu tap waited on the main thread for each of these.
+            for (k, v) in pictureMode.options { client?.setAsync(k, v) }
             dlog("player", "picture mode \(pictureMode.rawValue)")
             applyHDRDecode()
         }
@@ -619,7 +621,7 @@ final class PlayerModel: ObservableObject {
     @Published var nightMode: Bool = UserDefaults.standard.bool(forKey: SettingsKey.nightMode) {
         didSet {
             guard nightMode != oldValue else { return }
-            client?.set("ad-lavc-ac3drc", AudioFilters.ac3drc(night: nightMode))
+            client?.setAsync("ad-lavc-ac3drc", AudioFilters.ac3drc(night: nightMode))
             updateAudioFilters(because: nightMode ? "night mode on" : "night mode off")
         }
     }
@@ -643,13 +645,13 @@ final class PlayerModel: ObservableObject {
     @Published var audioBoost: Int = UserDefaults.standard.integer(forKey: SettingsKey.audioBoost) {
         didSet {
             UserDefaults.standard.set(audioBoost, forKey: SettingsKey.audioBoost)
-            client?.set("volume", Double(100 + audioBoost))
+            client?.setAsync("volume", Double(100 + audioBoost))
         }
     }
     @Published var playbackMode: String = UserDefaults.standard.string(forKey: SettingsKey.playbackMode) ?? "playlist" {
         didSet {
             UserDefaults.standard.set(playbackMode, forKey: SettingsKey.playbackMode)
-            client?.set("loop-file", playbackMode == "loop" ? "inf" : "no")
+            client?.setAsync("loop-file", playbackMode == "loop" ? "inf" : "no")
         }
     }
 
@@ -1225,7 +1227,9 @@ final class PlayerModel: ObservableObject {
         // 0.41 loadfile.c, prefetch_next → demux_start_prefetch). Reading ahead
         // to the end of this file is allowed now so that happens early.
         c.set("keep-open", "always")                 // never move on by itself: Up Next / autoplay decide
-        c.set("prefetch-playlist", "yes")
+        // Not after a memory warning (1.28.6): that turned it off so no
+        // second file buffers alongside, and this turned it back on.
+        if !bufferTrimmed { c.set("prefetch-playlist", "yes") }
         c.set("demuxer-readahead-secs", String(Int(max(60, duration - position + 30))))
         c.command(["playlist-clear"])
         let opts = startOptions(for: item, toast: false)
@@ -1361,11 +1365,18 @@ final class PlayerModel: ObservableObject {
         guard !softwareNoted else { return }
         let id = item.id
         Task { [weak self] in
-            try? await Task.sleep(for: .seconds(2))
+            // Only when mpv says "no" (1.28.6): no value yet means no frame
+            // has been decoded, and a stream slow to start got this toast.
+            // Still none at 2 s: looked at once more, 4 s later.
+            for wait in [2.0, 4.0] {
+                try? await Task.sleep(for: .seconds(wait))
+                guard let self, !self.closed, self.item.id == id, self.mode == .main else { return }
+                if !self.hwdecCurrent.isEmpty { break }
+            }
             guard let self, !self.closed, self.item.id == id, self.mode == .main,
                   UIApplication.shared.applicationState == .active,
                   (self.defaults.string(forKey: SettingsKey.hwdec) ?? "auto") == "auto",
-                  !Self.isHardware(self.hwdecCurrent), self.client?.string("vid") != "no" else { return }
+                  self.hwdecCurrent == "no", self.client?.string("vid") != "no" else { return }
             let codec = self.client?.string("video-codec") ?? self.client?.string("video-format") ?? "this video"
             dlog("player", "software decoding: the hardware decoder can't take \(codec) as encoded here (interlaced video is one such case); it costs more battery and heat")
             // Once a session: a season of such episodes doesn't repeat it.
@@ -1384,7 +1395,7 @@ final class PlayerModel: ObservableObject {
         noteSoftwareDecoding()
         // The gestures tip comes up in the first plays after installing (1.27.0).
         FolioTips.note(PlayerGesturesTip.played)
-        isLoading = false
+        if isLoading { isLoading = false }
         refreshTracks()
         refreshChapters()
         readDuration()
@@ -1980,7 +1991,7 @@ final class PlayerModel: ObservableObject {
         audioCoolWork?.cancel(); audioCoolWork = nil
         guard !audioWarm else { return }
         audioWarm = true
-        c.set("audio-stream-silence", "yes")
+        c.setAsync("audio-stream-silence", "yes")       // 1.28.6: as the reload after it, not waiting for mpv's core
         _ = c.commandAsync(["ao-reload"])
     }
 
@@ -2140,7 +2151,9 @@ final class PlayerModel: ObservableObject {
     /// For 3 s after a speed or renderer change, samples A/V offset and
     /// whether the picture advances; logs one summary line (for the log you send).
     func traceAV(_ label: String) {
-        guard let c = client else { return }
+        // Only with tracing on (1.28.6): 15 reads of mpv over 3 s after every
+        // speed or renderer change, for a line nobody had asked for.
+        guard PiPTrace.on, let c = client else { return }
         var samples: [(t: Double, a: Double, sync: Double)] = []
         let start = Date()
         func sample() {
@@ -2430,7 +2443,7 @@ final class PlayerModel: ObservableObject {
     /// The style preset with your size, position, bold and box, live.
     func applySubtitleStyle() {
         guard let c = client else { return }
-        for (k, v) in subtitleOptions() { c.set(k, v) }
+        for (k, v) in subtitleOptions() { c.setAsync(k, v) }      // 1.28.6: not waiting for mpv's core; the framing below was already set so
         lastSubPlacement = nil
         applySubtitleFraming()
     }
@@ -2846,14 +2859,18 @@ final class PlayerModel: ObservableObject {
         let plan = AudioFilters.plan(night: nightMode, dialogue: dialogueBoost, layout: layout, available: AudioFilters.available ?? [])
         if plan != audioFilterPlan { audioFilterPlan = plan }
         guard plan?.graph != appliedAudioGraph else { return }
+        // Both queued without waiting for mpv's core (1.28.6), in this
+        // order: the menu's switch waited on the main thread for each. The
+        // result is whether mpv took the command into its queue; a graph mpv
+        // then refuses is in mpv's own log lines.
         if appliedAudioGraph != nil {
-            let r = c.command(["af", "remove", "@" + AudioFilters.label])
+            let r = c.commandAsync(["af", "remove", "@" + AudioFilters.label])
             if r < 0 { dlog("audio/error", "af remove @\(AudioFilters.label) -> \(String(cString: mpv_error_string(r)))") }
             appliedAudioGraph = nil
             appliedLayoutSpecific = false
         }
         guard let plan else { dlog("audio", "\(why): audio filters off"); return }
-        let r = c.command(["af", "add", plan.entry])
+        let r = c.commandAsync(["af", "add", plan.entry])
         if r >= 0 {
             appliedAudioGraph = plan.graph
             appliedLayoutSpecific = plan.layoutSpecific
@@ -2995,6 +3012,9 @@ final class PlayerModel: ObservableObject {
     }
 
     private func updateUpNext() {
+        // Not before this file has loaded (1.28.6): a late position of the
+        // last file could bring the card up for the new one.
+        guard fileLoaded else { return }
         guard !upNextDismissed, let trigger = upNextTrigger else {
             if upNext != nil { upNext = nil }
             return
@@ -3005,8 +3025,12 @@ final class PlayerModel: ObservableObject {
                 // Whether Play Next will be instant: the next file is in mpv's
                 // playlist, and this one has been read to the end (mpv opens the
                 // next one only then).
-                let read = client.map(Self.fileReadToEnd) ?? false
-                dlog("player", "up next card at \(Int(position)) s: next episode \(appended?.index == queueIndex + 1 ? "prepared" : preparing == queueIndex + 1 ? "still being prepared" : "not prepared"), this file \(read ? "read to the end" : "not read to the end yet")")
+                // Asked off the main thread (1.28.6): the read waits for mpv's
+                // core, and this runs inside the position update.
+                let what = "up next card at \(Int(position)) s: next episode \(appended?.index == queueIndex + 1 ? "prepared" : preparing == queueIndex + 1 ? "still being prepared" : "not prepared")"
+                client?.query({ Self.fileReadToEnd($0) }) { read in
+                    dlog("player", "\(what), this file \(read ? "read to the end" : "not read to the end yet")")
+                }
             }
             if trigger.autoplay, !paused, position >= trigger.time + Self.upNextCountdown {
                 // Once: until the next file loads (load() clears this), the card
@@ -3231,7 +3255,9 @@ final class PlayerModel: ObservableObject {
     }
 
     private func updateActiveSegment() {
-        guard Date() >= skipSuppressedUntil, defaults.bool(forKey: SettingsKey.skipEnabled) else { return }
+        // Not before this file has loaded (1.28.6), as Up Next: a late
+        // position of the last file could skip in the new one.
+        guard fileLoaded, Date() >= skipSuppressedUntil, defaults.bool(forKey: SettingsKey.skipEnabled) else { return }
         let seg = segments.first { position >= $0.start && position < $0.end - 0.5 && !introHidden($0) }
         if seg != activeSegment { activeSegment = seg }
         guard let seg, !autoSkipped.contains(seg.id) else { return }
@@ -3990,6 +4016,14 @@ final class PlayerModel: ObservableObject {
         c.set("hwdec", hw == "videotoolbox-copy" ? "videotoolbox" : "videotoolbox-copy")
         c.set("hwdec", hw)
         dlog("player", "new hardware decoder (\(hw))")
+        // Looked at once more when the quiet time ends (1.28.6): the decoder
+        // mpv reports during it is ignored (a rebuild passes through copy
+        // decoding), and if the rebuild ended on copy or software decoding
+        // nothing looked again. Not while mpv names no decoder yet.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.1) { [weak self] in
+            guard let self, !self.closed, self.fileLoaded, !self.hwdecCurrent.isEmpty else { return }
+            self.decoderDroppedOnScreen()
+        }
     }
 
     private func videoOffForPlayback(_ c: MPVClient) {
@@ -4007,7 +4041,14 @@ final class PlayerModel: ObservableObject {
     private func resumedInBackground() {
         guard UIApplication.shared.applicationState == .background, mode == .main, let c = client else { return }
         if outputOffForAway { trackOffLater(); return }
-        guard parkedPaused else { return }
+        guard parkedPaused else {
+            // Left playing, paused and played again from the Lock Screen
+            // (1.28.6): on the video layer the track stayed on with nothing
+            // drawn, decoding for as long as the sound played. Off after
+            // 15 s, as when the app is left playing; back when you are.
+            if onLayer, !isPiPActive, !videoOffForBackground { glTrackOffLater() }
+            return
+        }
         parkedPaused = false
         videoOffForPlayback(c)
     }
@@ -4182,7 +4223,7 @@ final class PlayerModel: ObservableObject {
         dlog("player", "audio route: \(now.describe) (\(why))")
         guard let was, was.maxChannels != now.maxChannels || was.spatial != now.spatial,
               defaults.bool(forKey: SettingsKey.surroundAudio), let c = client, !closed else { return }
-        _ = c.command(["ao-reload"])
+        _ = c.commandAsync(["ao-reload"])         // 1.28.6: not waiting for mpv's core on the main thread
         dlog("player", "audio output reopened for the new route")
     }
 
@@ -4209,15 +4250,23 @@ final class PlayerModel: ObservableObject {
     /// title's own art, found as the library's rows find theirs (until
     /// then only the saved frame, which a file not played before doesn't
     /// have: no picture, 5 Nov). Looked up once per file, off the main thread.
-    private var nowPlayingArt: (id: String, image: UIImage)?
+    private var nowPlayingArt: (id: String, image: UIImage)? {
+        didSet { nowPlayingArtworkMade = nil }
+    }
+    /// The artwork object made from it, kept for the file (1.28.6): a new
+    /// one went to iOS with every update.
+    private var nowPlayingArtworkMade: (id: String, artwork: MPMediaItemArtwork)?
     private var nowPlayingArtFor: String?
     private var nowPlayingArtTask: Task<Void, Never>?
 
     private var nowPlayingArtwork: MPMediaItemArtwork? {
         let id = (playingItem ?? item).id
         guard let art = nowPlayingArt, art.id == id else { return nil }
+        if let made = nowPlayingArtworkMade, made.id == id { return made.artwork }
         let img = art.image
-        return MPMediaItemArtwork(boundsSize: img.size) { _ in img }
+        let artwork = MPMediaItemArtwork(boundsSize: img.size) { _ in img }
+        nowPlayingArtworkMade = (id, artwork)
+        return artwork
     }
 
     private func findNowPlayingArt(_ it: MediaItem) {
@@ -4274,7 +4323,21 @@ final class PlayerModel: ObservableObject {
         remoteTargets = []
     }
 
+    /// After a seek has landed (1.28.6): 0.4 s after the last one, so a
+    /// scrub (up to ten landings a second) sets Now Playing once, not each time.
+    private var nowPlayingSoon: DispatchWorkItem?
+    private func updateNowPlayingSoon() {
+        nowPlayingSoon?.cancel()
+        let w = DispatchWorkItem { [weak self] in
+            guard let self, !self.closed else { return }
+            self.updateNowPlaying()
+        }
+        nowPlayingSoon = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: w)
+    }
+
     private func updateNowPlaying() {
+        nowPlayingSoon?.cancel(); nowPlayingSoon = nil
         let it = playingItem ?? item
         findNowPlayingArt(it)
         var info: [String: Any] = [
@@ -4340,7 +4403,7 @@ extension PlayerModel: MPVClientDelegate {
             onFileLoaded()
         case .endFile(let reason, let error):
             if reason == MPVEndReason.error {
-                isLoading = false
+                if isLoading { isLoading = false }
                 var msg = "Playback failed: \(String(cString: mpv_error_string(error)))"
                 if let u = item.resolvedURL, u.isFileURL {
                     let fm = FileManager.default
@@ -4370,12 +4433,14 @@ extension PlayerModel: MPVClientDelegate {
             logOpenTimelineOnce()
             logSeekTime()
             skipLanded()
-            buffering = false
+            // Published values from events only when they change (1.28.6): an
+            // assignment of the same value still redrew the whole player.
+            if buffering { buffering = false }
             swapSeekQuietUntil = 0
             metalWaitRestarted = true
             PiPTrace.event("mpv: playback restart (first frame after the seek)")
             if ownLayerMetal { scheduleSnapshot(after: 0.8) }
-            updateNowPlaying()              // Control Center's time after a seek
+            updateNowPlayingSoon()          // Control Center's time after a seek
         case .videoReconfig:
             PiPTrace.event("mpv: video reconfig")
         case .clientMessage(let args):
@@ -4397,7 +4462,9 @@ extension PlayerModel: MPVClientDelegate {
     private func handleProperty(_ name: String, _ value: MPVValue) {
         switch name {
         case "time-pos":
-            let p = value.double ?? 0
+            // No position (between files, 1.28.6): read as 0 it was saved
+            // to history as 0:00.
+            guard let p = value.double else { break }
             let before = position
             position = p
             learnIntros(from: before, to: p)
@@ -4438,11 +4505,11 @@ extension PlayerModel: MPVClientDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: w)
         case "paused-for-cache":
             let waiting = value.bool ?? false
-            buffering = waiting
+            if buffering != waiting { buffering = waiting }
             logWaitForData(waiting)
         case "seeking":
             if value.bool == true, CACurrentMediaTime() > swapSeekQuietUntil {
-                buffering = true
+                if !buffering { buffering = true }
                 if seekStarted == nil { seekStarted = (CACurrentMediaTime(), position) }
             }
         case "eof-reached":
@@ -4451,7 +4518,8 @@ extension PlayerModel: MPVClientDelegate {
             // to restart the file from 0 (review, 2 Nov).
             else if ended { ended = false }
         case "speed":
-            speed = value.double ?? 1
+            let s = value.double ?? 1
+            if s != speed { speed = s }
             updateNowPlaying()
         case "media-title":
             if let t = value.string, !t.isEmpty, item.title.isEmpty { mediaTitle = t }
@@ -4462,7 +4530,8 @@ extension PlayerModel: MPVClientDelegate {
         case "chapter":
             currentChapter = Int(value.int ?? -1)
         case "sid":
-            sid = value.string ?? "no"
+            let s = value.string ?? "no"
+            if s != sid { sid = s }
             refreshTracks()
         case "secondary-sid":
             secondarySid = value.string ?? "no"

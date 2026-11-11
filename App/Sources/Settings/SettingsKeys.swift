@@ -256,7 +256,7 @@ enum SettingsKey {
             notifyQuietEnd: 9 * 60,
             notifyMaxPerDay: 1,
             // On in the 1.25.0 test build, so every notification can be tried (the user, 7 Nov).
-            notifyTest: true,
+            notifyTest: false,              // 1.28.6: was on by default since the 1.25.0 test build, so no real notification was ever planned
         ])
         // 1.22.1: Metal is the default again. 1.22.0 moved everyone to the
         // OpenGL renderer, which some files didn't play on (user report,

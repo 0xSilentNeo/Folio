@@ -20,20 +20,27 @@ import WidgetKit
 /// from (FolioApp.handle). The control no longer hangs on Folio's own
 /// intent being matched to the app, which a re-signed install evidently
 /// didn't manage. Shortcuts and the Action button keep ResumeLastIntent.
+///
+/// 1.28.6 (still blank and dead in 1.28.5): the action is ResumeControlIntent,
+/// which opens Folio and hands folio://resume on from inside it; a new
+/// kind; and Folio asks iOS to reload its controls at each launch.
 @available(iOSApplicationExtension 18.0, *)
 struct ResumeControl: ControlWidget {
-    static let kind = "dev.silentneo.folio.resume"
-    static let url = URL(string: "folio://resume")!
+    /// A new kind (1.28.6), so iOS takes it for a new control: one placed
+    /// under an earlier build could stay a blank that's never drawn again.
+    static let kind = "dev.silentneo.folio.resume2"
 
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: Self.kind) {
             // For the log (1.28.5): whether iOS asks Folio to draw it at all.
             let _ = KeychainShare.controlDrawn()
-            ControlWidgetButton(action: OpenURLIntent(Self.url)) {
+            ControlWidgetButton(action: ResumeControlIntent()) {
                 Label("Resume", systemImage: "play.fill")
             }
         }
-        .displayName("Resume")
+        // Not the label's word (1.28.6): if a control still shows only
+        // "Resume in Folio", iOS drew its placeholder, not this button.
+        .displayName("Resume in Folio")
         .description("Plays what you watched last in Folio.")
     }
 }

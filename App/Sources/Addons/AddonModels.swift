@@ -348,6 +348,7 @@ struct MetaItem: Codable, Hashable, Identifiable {
         genres = c.flexStrings(.genres) ?? c.flexStrings(.genre)
         videos = c.lossy(MetaVideo.self, .videos)
         rank = c.flexInt(.rank)
+        popularityRank = try? c.decodeIfPresent(Int.self, forKey: .popularityRank)
         cast = c.flexStrings(.cast)
         originalName = c.flexString(.originalName)
         director = c.flexStrings(.director)
@@ -360,6 +361,8 @@ struct MetaItem: Codable, Hashable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id, type, name, poster, posterShape, background, logo, description, releaseInfo, year, endYear, imdbRating, runtime, genres, genre, videos
         case rank, cast, originalName, director, contentRating, countries, credits, wikipedia
+        // 1.28.6: kept with a cached search answer too (without it the tie-break only worked on a fresh one).
+        case popularityRank
     }
 
     func encode(to encoder: Encoder) throws {
@@ -379,6 +382,7 @@ struct MetaItem: Codable, Hashable, Identifiable {
         try c.encodeIfPresent(genres, forKey: .genres)
         try c.encodeIfPresent(videos, forKey: .videos)
         try c.encodeIfPresent(rank, forKey: .rank)
+        try c.encodeIfPresent(popularityRank, forKey: .popularityRank)
         try c.encodeIfPresent(cast, forKey: .cast)
         try c.encodeIfPresent(originalName, forKey: .originalName)
         try c.encodeIfPresent(director, forKey: .director)

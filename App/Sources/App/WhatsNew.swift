@@ -20,6 +20,18 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.6", items: [
+            Item(icon: "bell", title: "Real notifications again",
+                 text: "Notification Test was left on from a test build, so Folio sent its samples and held new-episode alerts. It's off now, and turns itself off after one run."),
+            Item(icon: "playpause", title: "A lighter, quicker player",
+                 text: "Menus and switches no longer wait on the engine, scrubbing redraws far less, and a video playing from the Lock Screen stops decoding pictures nobody sees."),
+            Item(icon: "switch.2", title: "Resume in Control Centre",
+                 text: "The control opens Folio and plays what you watched last. Remove the old one and add Resume in Folio again."),
+            Item(icon: "figure.and.child.holdinghands", title: "Kids profile, tighter",
+                 text: "No new-episode alerts, no grown-up titles on the widgets, and no recent searches while the kids profile is on."),
+            Item(icon: "arrow.down.circle", title: "Safer downloads and history",
+                 text: "An expired link's web page is no longer saved as a video, long downloads survive network blips, and an unreadable history is kept, not wiped."),
+        ]),
         Release(version: "1.28.5", items: [
             Item(icon: "faceid", title: "Kids passcode, as the Lock Screen",
                  text: "Face ID looks first with the keys hidden; if it doesn't recognise you, the passcode comes up, with the Lock Screen's bigger keys."),

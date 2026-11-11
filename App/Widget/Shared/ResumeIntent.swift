@@ -27,12 +27,45 @@ struct ResumeLastIntent: OpenIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        ResumeHook.run?()
+        guard let run = ResumeHook.run else {
+            // 1.28.6: said, where it was a silent nothing.
+            NSLog("Folio: Resume intent ran before the app set its hook")
+            return .result()
+        }
+        run()
         return .result()
+    }
+}
+
+/// The Resume control's action (1.28.6). 1.28.4 gave the control iOS's
+/// OpenURLIntent with folio://resume directly; a link that isn't a
+/// universal link is evidently dropped when it's a control's own action,
+/// and a sideloaded install has no universal links. This is the form that
+/// works for a custom scheme: Folio's own intent, in both targets, that
+/// opens the app and hands the link on as its result.
+@available(iOS 18.0, *)
+struct ResumeControlIntent: AppIntent {
+    static let title: LocalizedStringResource = "Resume in Folio"
+    static let isDiscoverable = false
+    static let openAppWhenRun = true
+
+    @MainActor
+    func perform() async throws -> some IntentResult & OpensIntent {
+        // Run in Folio (as openAppWhenRun asks): plays now. The link after it
+        // only brings Folio to the front ("front" does nothing else).
+        if let run = ResumeHook.run {
+            ResumeHook.tapped?()
+            run()
+            return .result(opensIntent: OpenURLIntent(URL(string: "folio://front")!))
+        }
+        // Run in the widget's process instead: Folio plays from the link.
+        return .result(opensIntent: OpenURLIntent(URL(string: "folio://resume")!))
     }
 }
 
 /// What the app does for the control (set at launch; nil in the widget's process).
 enum ResumeHook {
     @MainActor static var run: (() -> Void)?
+    /// For the log: the control's intent ran in Folio.
+    @MainActor static var tapped: (() -> Void)?
 }

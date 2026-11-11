@@ -41,6 +41,15 @@ enum NotifyCenter {
         guard !started else { return }
         started = true
         migrate()
+        // 1.28.6: Test was on by default (left from the 1.25.0 test build),
+        // so real notifications were never planned and new-episode alerts
+        // were held. Off once for everyone; it can be turned on again.
+        if !UserDefaults.standard.bool(forKey: "notifyTestOffOnce") {
+            UserDefaults.standard.set(true, forKey: "notifyTestOffOnce")
+            if NotifyPrefs.test { dlog("notify", "Test was on from an earlier build: turned off") }
+            UserDefaults.standard.removeObject(forKey: SettingsKey.notifyTest)
+            UserDefaults.standard.removeObject(forKey: "notifyTestNext")
+        }
         registerCategories()
         for s in NotifySounds.folio { NotifySounds.file(for: .folio(s)) }
         let nc = NotificationCenter.default
@@ -523,6 +532,15 @@ enum NotifyCenter {
                 // The run carries on after the last one that came; a whole run done starts again.
                 let finished = tests.allSatisfy { $0.at <= now }
                 UserDefaults.standard.set(finished ? nil : on[(i + 1) % on.count].rawValue, forKey: "notifyTestNext")
+                if finished {
+                    // A whole run came (1.28.6): Test turns itself off, so
+                    // the real ones are planned again (it started over on
+                    // every trip away, and held new-episode alerts).
+                    UserDefaults.standard.set(false, forKey: SettingsKey.notifyTest)
+                    dlog("notify", "test: the whole run came; Test is off again")
+                    AiringNotifications.reschedule(TrackingStore.shared.shows)
+                    NotifyPrefsModel.shared.changed()
+                }
             }
         }
         let kept = Set(keep.map(\.request))

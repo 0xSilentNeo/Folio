@@ -652,6 +652,12 @@ enum TrackingPresenter {
 
     /// A show's page; nil: the Tracking list.
     static func open(_ id: String?) {
+        // Kids profile (1.28.6): an alert delivered before it was turned on
+        // opened this sheet without the passcode.
+        guard !KidsProfile.isOnNow else {
+            dlog("kids", "kids profile: Tracked Shows not opened from outside")
+            return
+        }
         Task { @MainActor in
             // Opened from a notification while Folio was closed: its window comes a moment later.
             var waited = 0

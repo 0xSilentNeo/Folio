@@ -82,7 +82,11 @@ final class KidsProfile: ObservableObject {
         isOn = true
         relockedAt = Date()
         ContinueSnapshotWriter.schedule()           // the widget empties
-        NotifyCenter.settingsChanged()              // none of Folio's own stay pending (1.28.5: some do while it's open)
+        // None of Folio's own stay pending, "Tomorrow" ones too, nor the
+        // tracker's new-episode alerts (1.28.6), and no grown-up titles on the widgets.
+        NotifyCenter.takeBack(asked: true)
+        AiringNotifications.reschedule(TrackingStore.shared.shows)
+        GlanceWriter.kidsChanged()
         dlog("kids", "kids profile on (\(KidsRules.summary(limits)))")
     }
 
@@ -101,6 +105,8 @@ final class KidsProfile: ObservableObject {
         UserDefaults.standard.set(false, forKey: SettingsKey.kidsProfile)
         isOn = false
         ContinueSnapshotWriter.schedule()
+        AiringNotifications.reschedule(TrackingStore.shared.shows)
+        GlanceWriter.kidsChanged()
         dlog("kids", "kids profile off")
     }
 

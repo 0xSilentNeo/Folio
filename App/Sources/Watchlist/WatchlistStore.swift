@@ -24,7 +24,15 @@ final class WatchlistStore: ObservableObject {
         if let data = try? Data(contentsOf: url) {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
-            items = (try? decoder.decode([WatchlistItem].self, from: data)) ?? []
+            if let whole = try? decoder.decode([WatchlistItem].self, from: data) {
+                items = whole
+            } else {
+                // 1.28.6: entry by entry, with a copy set aside (one entry
+                // that didn't read emptied the list, and the next add wrote over it).
+                items = decoder.decodeLossy(WatchlistItem.self, from: data) ?? []
+                try? data.write(to: url.deletingLastPathComponent().appendingPathComponent("watchlist.unreadable.json"), options: .atomic)
+                dlog("watchlist/error", "watchlist.json didn't read whole: \(items.count) kept, a copy set aside")
+            }
         }
         ids = Set(items.map(\.id))
     }

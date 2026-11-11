@@ -1304,6 +1304,7 @@ final class DownloadManager: ObservableObject {
         // Paused or held meanwhile: kept for its resume.
         guard items[i].state == .running else { save(); return }
         let limit = UserDefaults.standard.integer(forKey: SettingsKey.downloadRetries)
+        forgiveRetries(i)
         if items[i].retries < limit, !Self.isPermanent(message) {
             items[i].retries += 1
             let delay = Double(min(30, 2 << min(items[i].retries, 4)))
@@ -1321,6 +1322,22 @@ final class DownloadManager: ObservableObject {
         save(); pump()
     }
 
+    /// Where each file was when it last failed.
+    private var failedAt: [UUID: Int64] = [:]
+
+    /// A failure after real progress starts the count again (1.28.6). The
+    /// retries were only ever counted up, so on a long download a few
+    /// network blips hours apart used them all and the file failed,
+    /// although every retry had been getting further.
+    private func forgiveRetries(_ i: Int) {
+        let id = items[i].id, now = items[i].received
+        if let last = failedAt[id], now - last >= 4 << 20, items[i].retries > 0 {
+            dlog("dl", "\(items[i].fileName): \((now - last).byteString) since its last failure, retries counted from 0 again")
+            items[i].retries = 0
+        }
+        failedAt[id] = now
+    }
+
     private func failed(_ id: UUID, _ message: String, _ resume: String?) {
         guard let i = index(id) else { return }
         if let resume {
@@ -1334,6 +1351,7 @@ final class DownloadManager: ObservableObject {
         }
         guard items[i].state == .running else { save(); return }
         let limit = UserDefaults.standard.integer(forKey: SettingsKey.downloadRetries)
+        forgiveRetries(i)
         if items[i].retries < limit, !Self.isPermanent(message) {
             items[i].retries += 1
             items[i].state = .queued
@@ -1843,6 +1861,17 @@ final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sen
         if part != nil, let http, http.statusCode != 206 {
             let msg = "\(http.url?.host ?? "the server") ignored the byte range (HTTP \(http.statusCode))"
             DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(key, msg, nil, true) } }
+            return
+        }
+        // A web page where the file was asked for (1.28.6): an expired debrid
+        // link answers 200 with its error page, which was kept as the video
+        // and marked done. The in-app engine has refused these since 1.20.
+        if let http, ChunkPlan.isPage(contentType: http.value(forHTTPHeaderField: "Content-Type"),
+                                      fileName: downloadTask.originalRequest?.url?.lastPathComponent ?? "") {
+            let host = http.url?.host ?? "The server"
+            dlog("dl/error", "\(Self.label(key)): a web page instead of the file from \(host)")
+            let msg = "\(host) sent a web page instead of the file (an expired link or a login page)"
+            DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(key, msg, nil, false) } }
             return
         }
         // The temporary file is deleted when this method returns: moved now,

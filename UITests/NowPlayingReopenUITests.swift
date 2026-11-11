@@ -7,6 +7,10 @@ import XCTest
 final class NowPlayingReopenUITests: XCTestCase {
     override func setUp() { continueAfterFailure = false }
 
+    /// A row's frame for the log, or "not built": since 1.28.6 the rows are
+    /// built as they come into view, so a row scrolled away isn't there.
+    private func place(_ e: XCUIElement) -> String { e.exists ? "\(e.frame)" : "not built" }
+
     func testReopensOnThePlayingEpisode() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTest", "-labNoEngine", "-libTrace", "-uiTestQueue=10,6"]
@@ -35,7 +39,7 @@ final class NowPlayingReopenUITests: XCTestCase {
             sleep(1)
         }
         let onScreen = { (e: XCUIElement) in e.exists && !e.frame.isEmpty && app.windows.firstMatch.frame.contains(CGPoint(x: e.frame.midX, y: e.frame.midY)) && e.isHittable }
-        print("NOWPLAYING after scrolling: E1 \(first.frame) E6 \(playing.frame)")
+        print("NOWPLAYING after scrolling: E1 \(place(first)) E6 \(place(playing))")
         guard onScreen(first), !onScreen(playing) || playing.frame.minY > spot.maxY + 40 else {
             throw XCTSkip("the panel shows E1 and E6 together at this size; nothing to scroll away from")
         }
@@ -45,7 +49,8 @@ final class NowPlayingReopenUITests: XCTestCase {
         sleep(2)
         button.tap()
         sleep(2)
-        print("NOWPLAYING reopened: E1 \(first.frame) E6 \(playing.frame), first open E6 \(spot)")
+        XCTAssertTrue(playing.waitForExistence(timeout: 3), "E6 isn't there on reopening")
+        print("NOWPLAYING reopened: E1 \(place(first)) E6 \(place(playing)), first open E6 \(spot)")
         XCTAssertEqual(playing.frame.midY, spot.midY, accuracy: 30, "E6 isn't where it was on the first opening: the panel kept the scroll position")
     }
 
@@ -64,7 +69,7 @@ final class NowPlayingReopenUITests: XCTestCase {
         let playing = app.buttons["q8"].firstMatch
         XCTAssertTrue(playing.waitForExistence(timeout: 5))
         sleep(2)
-        print("NOWPLAYING first opening on E9: E1 \(app.buttons["q0"].firstMatch.frame) E9 \(playing.frame) window \(app.windows.firstMatch.frame)")
+        print("NOWPLAYING first opening on E9: E1 \(place(app.buttons["q0"].firstMatch)) E9 \(place(playing)) window \(app.windows.firstMatch.frame)")
         XCTAssertTrue(playing.isSelected, "E9 isn't the playing row")
         XCTAssertTrue(app.windows.firstMatch.frame.contains(CGPoint(x: playing.frame.midX, y: playing.frame.midY)) && playing.frame.minY > 60,
                       "E9 not on screen on the first opening (the list was left on E1)")
