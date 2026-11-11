@@ -372,55 +372,37 @@ struct SearchSource: Hashable {
     let icon: String
 }
 
-/// Before anything is typed: what this search finds and where it looks,
-/// in Folio's own style (until 1.23.0 a line of grey text between list
-/// separators at the top).
+/// Before anything is typed: what this search finds and where it looks.
+/// The system's empty-state view (1.28.8), as everywhere else in Folio;
+/// from 1.23.0 it was a look of its own.
 private struct SearchIntro: View {
     let sources: [SearchSource]
 
     var body: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle().fill(Theme.accentSoft).frame(width: 76, height: 76)
-                Image(systemName: "magnifyingglass").font(.system(size: 30, weight: .semibold)).foregroundStyle(Theme.accent)
-            }
-            .accessibilityHidden(true)
-            VStack(spacing: 6) {
-                Text("Search what's yours").font(.title3.weight(.bold))
-                Text(sources.count > 1 ? "Titles in your library and the files on your servers." : "The titles in your library.")
-                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            }
+        ContentUnavailableView {
+            Label("Search What's Yours", systemImage: "magnifyingglass")
+        } description: {
+            Text(sources.count > 1 ? "Titles in your library and the files on your servers." : "The titles in your library.")
+        } actions: {
             SourceChips(sources: sources)
         }
-        .padding(.horizontal, 28)
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
         .accessibilityIdentifier("librarySearchIntro")
     }
 }
 
-/// Nothing found: said in the same style, with where it looked.
+/// Nothing found: the system's "no results", with where it looked.
 private struct SearchNothing: View {
     let query: String
     let sources: [SearchSource]
 
     var body: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle().fill(Theme.accentSoft).frame(width: 76, height: 76)
-                Image(systemName: "questionmark.text.page").font(.system(size: 28, weight: .semibold)).foregroundStyle(Theme.accent)
-            }
-            .accessibilityHidden(true)
-            VStack(spacing: 6) {
-                Text("Nothing matches “\(query)”").font(.title3.weight(.bold)).multilineTextAlignment(.center)
-                Text("Try fewer words, or another spelling. Looked in:")
-                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            }
+        ContentUnavailableView {
+            Label("No Results for “\(query)”", systemImage: "magnifyingglass")
+        } description: {
+            Text("Try fewer words, or another spelling. Looked in:")
+        } actions: {
             SourceChips(sources: sources)
         }
-        .padding(.horizontal, 28)
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
         .accessibilityIdentifier("librarySearchEmpty")
     }
 }

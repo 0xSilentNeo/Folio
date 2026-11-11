@@ -31,3 +31,38 @@ struct SettingsSearchField: View {
         }
     }
 }
+
+/// Settings' search as the system's own field (1.28.8, iOS 26): in the
+/// bottom bar, where iOS 26 puts search, with its Cancel, its keyboard
+/// handling and its glass. The root hides the navigation bar (it draws its
+/// own for the zoom), so before iOS 26, where the system's field lives in
+/// that bar, the row above stays.
+struct SettingsSearchBar: ViewModifier {
+    @Binding var text: String
+
+    static var isSystem: Bool {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) { return true }
+        #endif
+        return false
+    }
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content
+                .searchable(text: $text, prompt: "Search Settings")
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .toolbar { DefaultToolbarItem(kind: .search, placement: .bottomBar) }
+                // The tab bar would sit on the field: Settings' root has the bottom to itself.
+                .toolbar(.hidden, for: .tabBar)
+        } else {
+            content
+        }
+        #else
+        content
+        #endif
+    }
+}

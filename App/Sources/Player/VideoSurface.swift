@@ -411,6 +411,11 @@ enum SystemVolume {
     }()
     private static var slider: UISlider? { view.subviews.compactMap { $0 as? UISlider }.first }
     private static var checked = false
+    /// The last value asked for (1.28.8: the check below compared with the
+    /// first, which a swipe has long left 0.3 s on, so it failed for no
+    /// reason: iOS's indicator went for the rest of the run and the volume
+    /// jumped back to where the swipe began).
+    private static var asked: Float = 0
     /// iOS's own indicator is in use (so the player doesn't draw its HUD for volume).
     private(set) static var nativeHUD = true
 
@@ -427,11 +432,12 @@ enum SystemVolume {
         guard let slider else { return }
         slider.value = value
         slider.sendActions(for: .valueChanged)
+        asked = value
         guard !checked else { return }
         checked = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            let now = current
-            if abs(now - value) > 0.04 && nativeHUD {
+            let now = current, value = asked
+            if abs(now - value) > 0.08 && nativeHUD {
                 dlog("player", String(format: "volume: hidden volume view didn't set the volume (wanted %.2f, got %.2f); using the player's HUD", value, now))
                 nativeHUD = false
                 view.isHidden = false

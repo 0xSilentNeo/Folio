@@ -20,6 +20,14 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.28.8", items: [
+            Item(icon: "magnifyingglass", title: "System search in Settings",
+                 text: "Settings' search is iOS's own field, and the empty search pages are the system's too."),
+            Item(icon: "sun.max", title: "Brightness as a pill",
+                 text: "Swiping brightness shows its number in a pill with a sun that grows, and the volume swipe keeps iOS's own indicator."),
+            Item(icon: "battery.75percent", title: "Less in the background",
+                 text: "Widgets are written off the main thread and only when they change, the play button no longer runs the motion sensor, and diagnostic traces turn themselves off after a day."),
+        ]),
         Release(version: "1.28.7", items: [
             Item(icon: "trash", title: "Clear, as glass",
                  text: "The Clear pill over your recent searches is a glass button, and its question opens out of it."),

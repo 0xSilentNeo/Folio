@@ -22,6 +22,8 @@ struct TrackButton: View {
     /// Nil while that's being found out: the button keeps its place but
     /// isn't shown, so it doesn't appear and then vanish.
     @State private var ended: Bool?
+    /// For the tap's haptic (1.28.8: SwiftUI's own, in place of UIKit's generator).
+    @State private var taps = 0
 
     var body: some View {
         let on = store.tracked(like: show) != nil
@@ -55,7 +57,7 @@ struct TrackButton: View {
 
     private func button(_ on: Bool) -> some View {
         Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            taps += 1
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { store.toggle(show) }
         } label: {
             HStack(spacing: 6) {
@@ -74,6 +76,7 @@ struct TrackButton: View {
             .fixedSize()
         }
         .buttonStyle(PressStyle())
+        .sensoryFeedback(.impact(weight: .light), trigger: taps)
         .accessibilityLabel(on ? "Tracking" : "Track")
         .accessibilityValue(on ? "On" : "Off")
         .accessibilityHint(on ? "Stops telling you about new episodes." : "Tells you when new episodes air.")

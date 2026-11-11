@@ -16,10 +16,12 @@ struct DownloadButton: View {
     /// watched the whole manager, so every row of a folder (and the Network
     /// tab) redrew on each progress tick of any download, about 5 times a second.
     @State private var d: DownloadItem?
+    /// For the tap's haptic (1.28.8: SwiftUI's own, in place of UIKit's generator).
+    @State private var taps = 0
 
     var body: some View {
         Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            taps += 1
             guard let d else {
                 let subs = siblings.filter { $0.isSubtitle && SubtitleMatch.belongs($0.name, to: item.name) }
                 dm.enqueue([item] + subs, server: server, package: package)
@@ -48,6 +50,7 @@ struct DownloadButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .sensoryFeedback(.impact(weight: .light), trigger: taps)
         .accessibilityLabel(label(d))
         .onAppear(perform: look)
         .onReceive(DownloadManager.shared.objectWillChange
@@ -292,6 +295,8 @@ struct DownloadsView: View {
     @State private var packageAsk: PackageQuestion?
     /// Packages folded to their header (1.22.3), kept between launches.
     @State private var collapsed = DownloadCollapse.load()
+    /// For the fold's haptic (1.28.8).
+    @State private var folds = 0
 
     enum Filter: String, CaseIterable { case all = "All", active = "Active", queued = "Queued", done = "Done", failed = "Failed" }
 
@@ -374,6 +379,7 @@ struct DownloadsView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .sensoryFeedback(.impact(weight: .light), trigger: folds)
         .listSectionSpacing(16)
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
@@ -460,7 +466,7 @@ struct DownloadsView: View {
 
     /// Folds a package to its header, or opens it again.
     private func toggle(_ p: Package) {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        folds += 1
         withAnimation(.snappy(duration: 0.3)) { collapsed = DownloadCollapse.toggle(p.name) }
     }
 

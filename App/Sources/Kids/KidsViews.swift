@@ -144,6 +144,8 @@ struct PasscodeScreen: View {
             }
         }
         .modifier(Shake(amount: shakes))
+        // The wrong-passcode buzz (1.28.8: SwiftUI's own), with the shake.
+        .sensoryFeedback(.error, trigger: shakes)
         .accessibilityElement()
         .accessibilityLabel("\(code.count) of 4 digits entered")
         .accessibilityIdentifier("passcodeDots")
@@ -227,7 +229,6 @@ struct PasscodeScreen: View {
                 code = ""
                 busy = false
             case .wrong:
-                UINotificationFeedbackGenerator().notificationOccurred(.error)
                 UIAccessibility.post(notification: .announcement, argument: "Wrong passcode")
                 withAnimation(.linear(duration: 0.45)) { shakes += 1 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
