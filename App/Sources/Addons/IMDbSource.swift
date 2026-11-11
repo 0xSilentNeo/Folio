@@ -227,8 +227,8 @@ enum IMDbSource {
             store("episodes2|\(show.id)|\(season)|\(lang)", eps)
         }
         // Live search as you type "lab" (and its first two letters).
-        for q in ["la", "lab", "lab m", "lab mo", "lab mov", "lab movi", "lab movie"] { store("suggest2|\(q)", q.count > 3 ? [film] : [film, show]) }
-        store("suggest2|labx", [MetaItem]())
+        for q in ["la", "lab", "lab m", "lab mo", "lab mov", "lab movi", "lab movie"] { store("suggest3|\(q)", q.count > 3 ? [film] : [film, show]) }
+        store("suggest3|labx", [MetaItem]())
         dlog("lab", "IMDb cache seeded (Lab Movie, Lab Series)")
     }
 
@@ -369,8 +369,9 @@ enum IMDbSource {
     static func suggest(_ query: String) async throws -> [MetaItem] {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !q.isEmpty else { return [] }
-        // "suggest2" (1.28.5): answers kept before it lack the popularity rank.
-        let key = "suggest2|\(q)"
+        // "suggest3" (1.28.6): answers kept before it lack the popularity rank
+        // (1.28.5 fetched it but didn't keep it with the cached answer).
+        let key = "suggest3|\(q)"
         if let hit = cached(key, ttl: 86400, as: [MetaItem].self) { return hit }
         guard let path = suggestionPath(q), let url = URL(string: "https://v3.sg.media-imdb.com/suggestion/x/\(path).json") else { throw URLError(.badURL) }
         var req = URLRequest(url: url)

@@ -31,6 +31,7 @@ struct FolioApp: App {
         MainActor.assumeIsolated { NotifyCenter.start() }
         // Trakt, AniList, MyAnimeList (1.26.0): what waited to be sent goes now.
         MainActor.assumeIsolated { SyncCenter.shared.start() }
+        MainActor.assumeIsolated { ResumeSetup.start() }
         if !["-uiTest", "-uiTestLibrary", "-labDiscover", "-shots"].contains(where: CommandLine.arguments.contains) { IMDbSource.warmUp() }
         let tab = UITabBarAppearance()
         tab.configureWithDefaultBackground()
@@ -181,7 +182,17 @@ struct RootView: View {
                 guard !KidsProfile.isOnNow, linkPlay == nil, sharedVideo == nil,
                       let link = SharedPlayLink.take(id: nil, maxAge: 600) else { return }
                 dlog("open", "something shared to Folio was waiting")
-                if link.file != nil {
+                if let mark = link.bookmark {
+                    // A video from Files with no App Group (1.28.6): played
+                    // where it is, as when the share sheet opens Folio
+                    // itself. It fell through to "Play this stream?" with
+                    // an empty link, and the video was lost.
+                    if let u = SharedInbox.resolve(mark) {
+                        FileOpener.open([u])
+                    } else {
+                        openAddFiles(because: "its bookmark didn't open here")
+                    }
+                } else if link.file != nil {
                     // Kept in Media either way; asked whether to play it now.
                     sharedVideo = SharedInbox.receive(link)
                 } else {
@@ -340,6 +351,9 @@ struct RootView: View {
             }
             dlog("intents", "Resume control: \(ShowCatalog.name(of: e))")
             IntentPlayback.start(e.item)
+        case "front":
+            // The Resume control's intent already played (1.28.6): only Folio to the front.
+            break
         case "import":
             // The share sheet couldn't hand the video over (no App Group, and
             // a copy rather than the file itself): Add files, to pick it.

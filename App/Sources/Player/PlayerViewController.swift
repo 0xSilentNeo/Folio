@@ -9,16 +9,16 @@ final class PlayerUIState: ObservableObject {
 
     @Published var controlsVisible = true
     @Published var locked = false
-    @Published var showInfo = false
+    @Published var showInfo = false { didSet { closedOver(oldValue && !showInfo) } }
     @Published var panel: Panel?
-    @Published var showStats = false
+    @Published var showStats = false { didSet { closedOver(oldValue && !showStats) } }
     @Published var showTune = false
     /// UIKit views behind the panel buttons (iOS 17/18 pill); popovers are presented from them.
     var anchors: [Panel: UIView] = [:]
     /// iOS 26: the panel buttons as bar items in a toolbar (popover sources).
     var barItems: [Panel: UIBarButtonItem] = [:]
     weak var panelBar: UIView?
-    var menuOpen = false
+    var menuOpen = false { didSet { closedOver(oldValue && !menuOpen) } }
     /// A panel's closing morph is running (the pill buttons aren't back yet).
     @Published var panelClosing = false
     /// Where each pill button is, in window coordinates (taken when a panel
@@ -42,7 +42,7 @@ final class PlayerUIState: ObservableObject {
         panel = nil
         scheduleHide()
     }
-    @Published var scrubbing = false
+    @Published var scrubbing = false { didSet { closedOver(oldValue && !scrubbing) } }
     /// Which swipe HUD shows (1.24.1): changes when one appears, goes or
     /// changes kind. Its value, which a swipe changes on every move, is in
     /// `hud`, watched by the HUD alone: the whole player redrew at touch rate.
@@ -61,7 +61,7 @@ final class PlayerUIState: ObservableObject {
     }
     @Published var rotationLocked = false
     @Published var showRemaining = false
-    @Published var showConsole = false
+    @Published var showConsole = false { didSet { closedOver(oldValue && !showConsole) } }
 
     struct GestureHUD: Equatable {
         enum Kind { case seek, brightness, volume, generic }
@@ -82,6 +82,13 @@ final class PlayerUIState: ObservableObject {
 
     func toggleControls() {
         if controlsVisible { controlsVisible = false; hideWork?.cancel() } else { showControls() }
+    }
+
+    /// A card, the console, a menu or a scrub over the controls ended
+    /// (1.28.6): the hide timer starts again. It gave up while one was up,
+    /// and nothing started it again, so the controls stayed over the video.
+    private func closedOver(_ closed: Bool) {
+        if closed, controlsVisible, panel == nil { scheduleHide() }
     }
 
     func scheduleHide(after seconds: Double = 4) {

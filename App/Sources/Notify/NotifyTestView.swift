@@ -3,7 +3,7 @@ import SwiftUI
 /// Help & Diagnostics → Notification Test (1.26.1; a section of
 /// Notifications until then): every kind, one after another, to try them.
 struct NotifyTestView: View {
-    @AppStorage(SettingsKey.notifyTest) private var test = true
+    @AppStorage(SettingsKey.notifyTest) private var test = false
     @State private var sentKind: NotifyKind?
     @State private var allowed = true
 

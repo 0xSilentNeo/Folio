@@ -226,6 +226,8 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
     /// Speeds of the last connections that finished their range.
     private var finishedSpeeds: [Double] = []
     private var retries: [Int: Int] = [:]
+    /// Where each range was when it last stopped early.
+    private var stoppedAt: [Int: Int64] = [:]
     /// What arrived per range and isn't written yet: fewer, bigger writes.
     private var buffers: [Int: (offset: Int64, data: Data)] = [:]
     private static let flushAt = 4 << 20
@@ -573,6 +575,11 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
             return
         }
         // Ended early (a network error, or the server closed): this range again.
+        // Counted from 0 again once the range has got further since it last
+        // stopped (1.28.6): the count only went up, so four blips hours
+        // apart failed a file that was downloading fine in between.
+        if let last = stoppedAt[index], chunks[index].current - last >= 1 << 20 { retries[index] = nil }
+        stoppedAt[index] = chunks[index].current
         let attempts = (retries[index] ?? 0) + 1
         retries[index] = attempts
         let message = error?.localizedDescription ?? "The connection closed before the range was in"

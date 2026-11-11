@@ -88,7 +88,8 @@ enum AiringBackground {
             // The notifications' charts and forecast (1.25.0), then planned again with them.
             if !Task.isCancelled, UIApplication.shared.applicationState == .background {
                 await NotifyCenter.refreshFeedsNow()
-                NotifyCenter.replan("background refresh")
+                // Not while Test is on (1.28.6): each background run sent its whole run again.
+                if !NotifyPrefs.test { NotifyCenter.replan("background refresh") }
             }
             task.setTaskCompleted(success: !Task.isCancelled)
         }

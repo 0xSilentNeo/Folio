@@ -105,7 +105,8 @@ enum AiringNotifications {
     static func reschedule(_ shows: [TrackedShow], onlyIfChanged: Bool = false) {
         // While Test is on (1.25.0) these are held: Test sends their samples.
         // None while notifications are off in Folio (1.28.5).
-        let planned = NotifyPrefs.test || !NotifyPrefs.allOn ? [] : plan(shows, now: Date(), mode: .current, voice: NotifyPrefs.tone != .subtle,
+        // Nor in the kids profile (1.28.6): a tap on one opened Tracked Shows.
+        let planned = NotifyPrefs.test || !NotifyPrefs.allOn || KidsProfile.isOnNow ? [] : plan(shows, now: Date(), mode: .current, voice: NotifyPrefs.tone != .subtle,
                                                  tone: NotifyPrefs.tone, kinds: (NotifyPrefs.kindOn(.newEpisode), NotifyPrefs.kindOn(.newSeason)))
         let sig = signature(planned)
         let previous = running

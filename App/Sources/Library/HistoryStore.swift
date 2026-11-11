@@ -90,8 +90,29 @@ final class HistoryStore: ObservableObject {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         fileURL = dir.appendingPathComponent("history.json")
-        if let data = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder().decode([HistoryEntry].self, from: data) {
+        // 1.28.6: a file that doesn't read whole is read entry by entry and a
+        // copy is set aside, where the history started empty and the next
+        // save wrote over the only copy. A file that reads is copied once a
+        // day (history.backup.json).
+        var read: [HistoryEntry]?
+        if let data = try? Data(contentsOf: fileURL) {
+            let dir = fileURL.deletingLastPathComponent()
+            if let whole = try? JSONDecoder().decode([HistoryEntry].self, from: data) {
+                read = whole
+                let backup = dir.appendingPathComponent("history.backup.json")
+                let age = (try? backup.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate).map { Date().timeIntervalSince($0) }
+                if !whole.isEmpty, (age ?? .infinity) > 86400 {
+                    DispatchQueue.global(qos: .utility).async { try? data.write(to: backup, options: .atomic) }
+                }
+            } else {
+                let some = JSONDecoder().decodeLossy(HistoryEntry.self, from: data)
+                read = some
+                let aside = dir.appendingPathComponent("history.unreadable.json")
+                try? data.write(to: aside, options: .atomic)
+                dlog("history/error", "history.json didn't read whole (\(data.count) bytes): \(some.map { "\($0.count) entr(ies) kept" } ?? "none readable"); a copy is in \(aside.lastPathComponent)")
+            }
+        }
+        if let decoded = read {
             let r = Self.rebased(decoded, mediaDir: MPVFiles.mediaDir.path)
             entries = r.entries
             if r.moved > 0 || r.merged > 0 {

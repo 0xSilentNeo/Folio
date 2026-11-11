@@ -13,7 +13,7 @@ struct NotifySettingsView: View {
     @Bindable private var prefs = NotifyPrefsModel.shared
     @AppStorage(SettingsKey.notifyTone) private var tone = NotifyTone.balanced.rawValue
     @AppStorage(SettingsKey.notifyMaxPerDay) private var maxPerDay = 1
-    @AppStorage(SettingsKey.notifyTest) private var test = true
+    @AppStorage(SettingsKey.notifyTest) private var test = false
     @AppStorage(SettingsKey.notifyQuietStart) private var quietStart = 22 * 60
     @AppStorage(SettingsKey.notifyQuietEnd) private var quietEnd = 9 * 60
     @State private var quietOn = true

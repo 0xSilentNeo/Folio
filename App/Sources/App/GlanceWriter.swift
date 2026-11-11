@@ -16,6 +16,13 @@ enum GlanceWriter {
     private static var network: String?
     private static var monitor: NWPathMonitor?
 
+    /// The kids profile went on or off (1.28.6): the widgets that show the
+    /// library's and the servers' titles are written for it now.
+    static func kidsChanged() {
+        writePicks()
+        Task { @MainActor in await writeServers() }
+    }
+
     static func start() {
         guard subscriptions.isEmpty else { return }
         DownloadManager.shared.objectWillChange
@@ -126,6 +133,11 @@ enum GlanceWriter {
     // MARK: New on your server
 
     static func writeServers() async {
+        // Kids profile (1.28.6): nothing from the servers on the widget.
+        guard !KidsProfile.isOnNow else {
+            _ = write(ServersGlance(server: "", serverName: "", thisWeek: 0, releases: []), kind: WidgetKind.newOnServers)
+            return
+        }
         let summaries = IndexSummaries.shared.all
         // Real-Debrid first (Home's row), else the server with the newest release.
         let servers = ServerStore.shared.servers.filter { summaries[$0.id]?.releases?.isEmpty == false }
@@ -166,7 +178,12 @@ enum GlanceWriter {
     /// for me weighs them (newer and better-known first), in a fresh order
     /// each day; Shuffle in the widget moves along it.
     static func writePicks() {
-        guard !KidsProfile.isOnNow else { return }
+        // Kids profile (1.28.6): no picks, where the grown-ups' stayed on the widget.
+        guard !KidsProfile.isOnNow else {
+            picturesTask?.cancel()
+            _ = write(PicksGlance(picks: []), kind: WidgetKind.pickTonight)
+            return
+        }
         let files = LocalMediaStore.shared.files
         let history = HistoryStore.shared
         var candidates: [PickForMe.Candidate] = []

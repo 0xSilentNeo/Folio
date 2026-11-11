@@ -8,7 +8,8 @@ final class NotifyUITests: XCTestCase {
 
     func testNotificationsPage() {
         let app = XCUIApplication()
-        app.launchArguments = ["-uiTestLibrary", "-openNotify"]  // no clip playing underneath
+        // Test on for this run (1.28.6: it's off by default now), for its row at the end.
+        app.launchArguments = ["-uiTestLibrary", "-openNotify", "-notifyTest", "YES"]  // no clip playing underneath
         app.launch()
 
         // 1.26.1: a group's row says On or Off and opens its page, where its switch is.

@@ -311,7 +311,10 @@ final class PanelUITests: XCTestCase {
         let spots: [CGVector] = [CGVector(dx: 0.2, dy: 0.5), CGVector(dx: 0.8, dy: 0.5), CGVector(dx: 0.5, dy: 0.2), CGVector(dx: 0.5, dy: 0.8), CGVector(dx: 0.25, dy: 0.25)]
         for (i, v) in spots.enumerated() {
             more.coordinate(withNormalizedOffset: v).tap()
-            if app.buttons["Delete file"].waitForExistence(timeout: 2) || app.staticTexts["Delete file"].exists { ok += 1 } else { print("MORE miss at spot \(i) \(v)") }
+            // Any of the menu's Delete items (1.28.6): Lab Show has two
+            // episodes, so it says "Delete S1 · E1", never "Delete file".
+            let delete = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Delete'")).firstMatch
+            if delete.waitForExistence(timeout: 2) { ok += 1 } else { print("MORE miss at spot \(i) \(v)") }
             sleep(1)
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)).tap()   // dismiss the menu
             sleep(1)

@@ -44,16 +44,8 @@ enum ContinueSnapshotWriter {
         // HistoryStore.shared is still being made.
         DispatchQueue.main.async { MainActor.assumeIsolated {
             schedule()
-            // The 1.24.0 widgets' files, and the Resume control's action.
+            // The 1.24.0 widgets' files.
             GlanceWriter.start()
-            ResumeHook.run = {
-                guard !KidsProfile.isOnNow, let e = HistoryStore.shared.continueWatching.first else {
-                    dlog("intents", "Resume control: nothing to continue\(KidsProfile.isOnNow ? " (kids profile)" : "")")
-                    return
-                }
-                dlog("intents", "Resume control: \(ShowCatalog.name(of: e))")
-                IntentPlayback.start(e.item)
-            }
         } }
     }
 
@@ -515,5 +507,31 @@ struct FolioShortcuts: AppShortcutsProvider {
             "Play a link in \(.applicationName)",
             "Play a URL in \(.applicationName)",
         ], shortTitle: "Play URL", systemImageName: "link")
+    }
+}
+
+// MARK: - The Resume intent's hook
+
+/// What the Resume intent does in Folio, set as the app starts (1.28.6:
+/// it was set a turn of the main loop after the history was first read, so
+/// an intent run on a cold start found nothing to call).
+@MainActor
+enum ResumeSetup {
+    static func start() {
+        ResumeHook.run = {
+            guard !KidsProfile.isOnNow, let e = HistoryStore.shared.continueWatching.first else {
+                dlog("intents", "Resume: nothing to continue\(KidsProfile.isOnNow ? " (kids profile)" : "")")
+                return
+            }
+            dlog("intents", "Resume: \(ShowCatalog.name(of: e))")
+            IntentPlayback.start(e.item)
+        }
+        ResumeHook.tapped = { dlog("intents", "Resume control: its intent ran in Folio") }
+        // Every widget and control drawn anew once a launch: free while
+        // Folio is in front, and the way out of any state they were stuck in.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            WidgetCenter.shared.reloadAllTimelines()
+            if #available(iOS 18.0, *) { ControlCenter.shared.reloadAllControls() }
+        }
     }
 }

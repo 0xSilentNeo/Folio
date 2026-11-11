@@ -568,6 +568,10 @@ struct NowPlayingPanelContent: View {
                         .onChange(of: model.queueIndex) { _, _ in DispatchQueue.main.async { scroll(proxy, animated: true) } }
                         .onChange(of: model.currentChapter) { _, _ in DispatchQueue.main.async { scroll(proxy, animated: true) } }
                         .onChange(of: tab) { _, _ in DispatchQueue.main.async { scroll(proxy, animated: false) } }
+                        // A row scrolled to before it was built (1.28.6): once more, to where it is.
+                        .onChange(of: currentMeasured) { _, measured in
+                            if measured { DispatchQueue.main.async { scroll(proxy, animated: false) } }
+                        }
                     }
                 }
             } else {
@@ -587,7 +591,7 @@ struct NowPlayingPanelContent: View {
     /// not on screen). 1.26.3: scrolled to through `marker` on every opening
     /// (`.playerPanelOpening`), since the panel is built ahead of time and kept.
     private func scroll(_ proxy: ScrollViewProxy, animated: Bool) {
-        guard let key = Self.current(model, tab: tab), rowFrames[key] != nil else { return }
+        guard currentFrame != nil else { return }
         let id = Self.markerID
         if animated {
             withAnimation(.smooth(duration: 0.35)) { proxy.scrollTo(id, anchor: .center) }
@@ -595,6 +599,31 @@ struct NowPlayingPanelContent: View {
             var t = Transaction(); t.disablesAnimations = true
             withTransaction(t) { proxy.scrollTo(id, anchor: .center) }
         }
+    }
+
+    /// Where the current row is in the list: as laid out, or, for a queue
+    /// row not built yet (1.28.6: they're built as they come into view),
+    /// worked out from the nearest row that has been. The list scrolls there,
+    /// the row is built, and `currentMeasured` scrolls once more to its
+    /// real place.
+    private var currentFrame: CGRect? {
+        guard let key = Self.current(model, tab: tab) else { return nil }
+        if let f = rowFrames[key] { return f }
+        guard tab == 0 else { return nil }
+        let i = model.queueIndex
+        var nearest: (index: Int, frame: CGRect)?
+        for (k, f) in rowFrames where k.hasPrefix("q") && f.height > 0 {
+            guard let j = Int(k.dropFirst()), model.queue.indices.contains(j) else { continue }
+            if nearest == nil || abs(j - i) < abs(nearest!.index - i) { nearest = (j, f) }
+        }
+        guard let nearest else { return nil }
+        let step = nearest.frame.height + Self.rowSpacing
+        return CGRect(x: nearest.frame.minX, y: max(0, nearest.frame.minY + CGFloat(i - nearest.index) * step),
+                      width: nearest.frame.width, height: nearest.frame.height)
+    }
+    /// The current row has been laid out (its frame is real, not worked out).
+    private var currentMeasured: Bool {
+        Self.current(model, tab: tab).map { rowFrames[$0] != nil } ?? false
     }
 
     private static let space = "nowPlayingList"
@@ -607,7 +636,7 @@ struct NowPlayingPanelContent: View {
     /// the list never moved), nor was the ForEach's own id; the marker was.
     @ViewBuilder
     private var marker: some View {
-        if let key = Self.current(model, tab: tab), let f = rowFrames[key] {
+        if let f = currentFrame {
             VStack(spacing: 0) {
                 Color.clear.frame(width: 1, height: max(0, f.minY))
                 Color.clear.frame(width: 1, height: max(1, f.height)).id(Self.markerID)
@@ -647,8 +676,17 @@ struct NowPlayingPanelContent: View {
         }
     }
 
+    /// A queue row, known by its place and its file (1.28.6).
+    private struct QueueRow: Identifiable {
+        let index: Int
+        let item: MediaItem
+        var id: String { "\(index)|\(item.id)" }
+    }
+    private var queueRows: [QueueRow] { model.queue.enumerated().map { QueueRow(index: $0.offset, item: $0.element) } }
+    private static let rowSpacing: CGFloat = 12
+
     private var list: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Self.rowSpacing) {
             switch tab {
             case 0:
                 // Rows known by their file (1.24.1), not their place: when a
@@ -656,12 +694,19 @@ struct NowPlayingPanelContent: View {
                 // the old file's picture and title.
                 // 1.26.3: scrolled to through a marker at the row's place (see
                 // `marker`), not an .id() on the row.
-                ForEach(Array(model.queue.enumerated()), id: \.element.id) { i, item in
-                    PlaylistRow(item: item, active: i == model.queueIndex, state: model.episodeStates[i]) {
-                        model.playFromPlaylist(i)
+                // 1.28.6: built as they come into view (every row was built,
+                // and loaded its picture, when the panel was made ready soon
+                // after the player opened), and known by place and file: the
+                // same file queued twice had one id for two rows.
+                LazyVStack(alignment: .leading, spacing: Self.rowSpacing) {
+                    ForEach(queueRows) { row in
+                        let i = row.index
+                        PlaylistRow(item: row.item, active: i == model.queueIndex, state: model.episodeStates[i]) {
+                            model.playFromPlaylist(i)
+                        }
+                        .accessibilityIdentifier("q\(i)")
+                        .modifier(RowFrame(key: "q\(i)", frames: $rowFrames))
                     }
-                    .accessibilityIdentifier("q\(i)")
-                    .modifier(RowFrame(key: "q\(i)", frames: $rowFrames))
                 }
             case 1:
                 if model.chapters.isEmpty { Text("No chapters").foregroundStyle(.white.opacity(0.5)).padding(.vertical, 8) }

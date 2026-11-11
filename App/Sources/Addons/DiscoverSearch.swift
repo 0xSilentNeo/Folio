@@ -230,7 +230,7 @@ struct AddonSearchView: View {
             if typed.isEmpty {
                 recent
             } else {
-                let matches = search.matchingHistory(query)
+                let matches = kids.isOn ? [] : search.matchingHistory(query)
                 if !matches.isEmpty {
                     Section { ForEach(matches) { historyRow($0) } }
                 }
@@ -279,18 +279,31 @@ struct AddonSearchView: View {
 
     @ViewBuilder
     private var recent: some View {
-        if !search.history.isEmpty {
+        // Not in the kids profile (1.28.6): the grown-ups' searches showed, and ran.
+        if !search.history.isEmpty, !kids.isOn {
             Section {
                 ForEach(search.history) { historyRow($0) }
-                // A row of its own under the list (1.28.5): the header's
-                // small Clear was easy to miss.
-                Button(role: .destructive) { confirmClear = true } label: {
-                    Label("Clear Recent Searches", systemImage: "trash")
-                }
-                .listRowBackground(Color.clear)
-                .accessibilityLabel("Clear recent searches")
             } header: {
-                Text("Recent")
+                // Clear as a pill in the header (1.28.6), like the search's
+                // other pills: 1.28.5's row sat under the whole list.
+                HStack {
+                    Text("Recent").accessibilityAddTraits(.isHeader)
+                    Spacer()
+                    Button { confirmClear = true } label: {
+                        Label("Clear", systemImage: "trash")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.primary.opacity(0.75))
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(Theme.fill, in: Capsule())
+                            // 44 pt to tap, whatever the pill's own height.
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear recent searches")
+                    .accessibilityIdentifier("searchClearRecent")
+                }
+                .textCase(nil)
             }
         }
     }

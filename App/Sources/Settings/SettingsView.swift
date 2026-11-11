@@ -536,7 +536,7 @@ struct MPVSettings: View {
 }
 
 struct AdvancedSettings: View {
-    @AppStorage(SettingsKey.notifyTest) private var notifyTest = true
+    @AppStorage(SettingsKey.notifyTest) private var notifyTest = false
     @AppStorage(SettingsKey.nativePanelMorph) private var nativePanelMorph = true
 
     var body: some View {
