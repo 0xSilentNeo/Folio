@@ -10,6 +10,13 @@ enum SharedInbox {
     static func receive(_ link: SharedPlayLink) -> URL? {
         let fm = FileManager.default
         guard let src = link.fileURL, fm.fileExists(atPath: src.path) else { return nil }
+        // Only a file the extension left in Share/Inbox/<id>/ (1.30.2): the
+        // path comes from a file any app in the group can write, and its
+        // folder is removed below.
+        guard let inbox = SharedPlayLink.inbox, isInside(src, inbox: inbox) else {
+            dlog("open/warn", "shared video: its path isn't in the share inbox, left alone")
+            return nil
+        }
         let media = MPVFiles.mediaDir
         try? fm.createDirectory(at: media, withIntermediateDirectories: true)
         let dest = unique(src.lastPathComponent, in: media)
@@ -22,6 +29,16 @@ enum SharedInbox {
         try? fm.removeItem(at: src.deletingLastPathComponent())
         dlog("open", "shared video saved to Media: \(dest.lastPathComponent)")
         return dest
+    }
+
+    /// Whether `file` is in a folder of its own under `inbox`
+    /// (Share/Inbox/<id>/<name>), by path components, once "." and ".." are
+    /// worked out (1.30.2).
+    static func isInside(_ file: URL, inbox: URL) -> Bool {
+        // (Without the "/" a folder's address may end in.)
+        let f = file.standardizedFileURL.pathComponents.filter { $0 != "/" }
+        let b = inbox.standardizedFileURL.pathComponents.filter { $0 != "/" }
+        return f.count >= b.count + 2 && Array(f.prefix(b.count)) == b
     }
 
     /// A file the extension bookmarked where it is (1.28.2), if it opens

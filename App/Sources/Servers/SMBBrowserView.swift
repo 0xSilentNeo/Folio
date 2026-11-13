@@ -177,12 +177,20 @@ struct SMBBrowserView: View {
         let own = (UserDefaults.standard.dictionary(forKey: SettingsKey.folderSorts)?[sortKey] as? Data)
             ?? UserDefaults.standard.data(forKey: SettingsKey.folderSortLast)
         guard let data = own, let pref = try? JSONDecoder().decode(FolderSortPref.self, from: data) else { return }
+        shownPref = pref
         sort = pref.sort
         ascending = pref.ascending
     }
 
+    /// The order the folder opened with (1.30.2, as the WebDAV browser):
+    /// only a different one is saved as the folder's own. Opening a folder
+    /// saved the inherited order for it, so every folder visited kept an entry.
+    @State private var shownPref: FolderSortPref?
+
     private func saveSortPref() {
-        guard prefLoaded, let data = try? JSONEncoder().encode(FolderSortPref(sort: sort, ascending: ascending)) else { return }
+        let pref = FolderSortPref(sort: sort, ascending: ascending)
+        guard prefLoaded, pref != shownPref, let data = try? JSONEncoder().encode(pref) else { return }
+        shownPref = pref
         var dict = UserDefaults.standard.dictionary(forKey: SettingsKey.folderSorts) ?? [:]
         dict[sortKey] = data
         UserDefaults.standard.set(dict, forKey: SettingsKey.folderSorts)

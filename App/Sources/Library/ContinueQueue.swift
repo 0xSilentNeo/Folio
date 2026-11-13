@@ -143,12 +143,13 @@ enum ContinueQueue {
         let media = items.filter(\.isMedia).sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         let subs = items.filter(\.isSubtitle)
         guard media.count > 1, let index = media.firstIndex(where: { $0.url.absoluteString == item.url || $0.url.standardized == fileURL.standardized }) else { return nil }
-        let clean = UserDefaults.standard.bool(forKey: SettingsKey.cleanTitles)
+        // On unless switched off, as everywhere else (1.30.2: off when never set here).
+        let clean = UserDefaults.standard.object(forKey: SettingsKey.cleanTitles) as? Bool ?? true
         let queue: [MediaItem] = media.enumerated().map { i, m in
             if i == index { return item }
             var mi = client.mediaItem(for: m, cleanTitles: clean)
-            let base = (m.name as NSString).deletingPathExtension.lowercased()
-            mi.subtitles = subs.filter { $0.name.lowercased().hasPrefix(base) }.map { ExternalSubtitle(url: $0.url.absoluteString, lang: nil, title: $0.name) }
+            // The browser's rule (1.30.2): a plain prefix gave "Ep 1" the subtitles of "Ep 10".
+            mi.subtitles = subs.filter { SubtitleMatch.belongs($0.name, to: m.name) }.map { ExternalSubtitle(url: $0.url.absoluteString, lang: nil, title: $0.name) }
             return mi
         }
         return (queue, index)

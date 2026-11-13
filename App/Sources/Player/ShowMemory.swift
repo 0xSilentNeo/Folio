@@ -270,6 +270,8 @@ final class ShowMemoryStore: ObservableObject {
     private let url: URL?
     private let writer = DispatchQueue(label: "folio.show-memory", qos: .utility)
     private var saveWork: DispatchWorkItem?
+    /// Which scheduled save `saveWork` is (1.30.2).
+    private var saveCount = 0
 
     /// `url` nil: in memory only (tests).
     init(url: URL?, limit: Int = 500, fileLimit: Int = 200) {
@@ -367,7 +369,18 @@ final class ShowMemoryStore: ObservableObject {
         guard let url else { return }
         saveWork?.cancel()
         let snapshot = entries
-        let w = DispatchWorkItem { Self.write(snapshot, to: url) }
+        saveCount += 1
+        let count = saveCount
+        let w = DispatchWorkItem {
+            Self.write(snapshot, to: url)
+            // Written: nothing is pending any more (1.30.2). It stayed set,
+            // and every later flush encoded and wrote on the main thread
+            // with nothing changed.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.saveCount == count else { return }
+                self.saveWork = nil
+            }
+        }
         saveWork = w
         writer.asyncAfter(deadline: .now() + 0.5, execute: w)
     }

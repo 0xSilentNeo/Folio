@@ -90,13 +90,6 @@ final class DiscoverSearch: ObservableObject {
         Task { history = await store.clear() }
     }
 
-    /// History entries that contain what's typed (not the same search), newest first.
-    func matchingHistory(_ text: String, max: Int = 4) -> [SearchHistoryEntry] {
-        let k = SearchHistoryStore.key(text)
-        guard !k.isEmpty else { return history }
-        return Array(history.filter { $0.id != k && $0.id.contains(k) }.prefix(max))
-    }
-
     // MARK: Running
 
     private func start(_ q: String, wait: Bool, minLength: Int = DiscoverSearch.minLength) {
@@ -200,10 +193,11 @@ final class DiscoverSearch: ObservableObject {
 }
 
 /// The one search page (1.28.11), behind the tab bar's search button on
-/// every tab: what's yours first (the library, your servers), then movies
-/// and shows from IMDb as you type, and your addons' catalogs after Search.
-/// Until then Home and Network opened one page and Discover another, and
-/// the text was dropped when you changed between them.
+/// every tab. One list, one kind of row: what's yours first (the library,
+/// your servers' releases, Plex and Jellyfin), then movies and shows from
+/// IMDb as you type, and your addons' titles after Search. Until then each
+/// source was a section of its own with its own rows, a file on a server
+/// was a row each (a season: 24), and each addon catalog a carousel.
 struct AddonSearchView: View {
     /// The tab bar's search field owns the text.
     @Binding var query: String
@@ -218,213 +212,364 @@ struct AddonSearchView: View {
     @ObservedObject private var local = LocalMediaStore.shared
     @ObservedObject private var index = LibraryIndexStore.shared
     @ObservedObject private var webdav = ServerStore.shared
+    @AppStorage(SettingsKey.cleanTitles) private var cleanTitles = true
     @State private var opened: Opened?
     /// The library's titles, grouped once (not at every keystroke).
     @State private var groups: [LibraryGroup] = []
     @State private var route: LibraryRoute?
     @State private var openedEntry: LibrarySearchResults.OpenedEntry?
+    /// The chip chosen; All again when the field is emptied.
+    @State private var scope = SearchScope.all
+    /// The library's and the servers' matches for `filteredWords`, as rows.
+    @State private var mine: [SearchItem] = []
+    @State private var filteredWords: [String] = []
+    /// Everything found, in the list's order: put together when the query
+    /// or an answer changes, not at each redraw.
+    @State private var results = SearchResults()
+    /// Go up when a server's index, or an answer (IMDb, addons, Plex and
+    /// Jellyfin), changes: the lists above are made again then.
+    @State private var indexTick = 0
+    @State private var answersTick = 0
 
     private var typed: String { SearchHistoryStore.tidy(query) }
+    private static let chipsID = "searchChips"
 
     var body: some View {
-        List {
-            if typed.isEmpty {
-                SearchIntro(sources: LibrarySearchResults.sources())
-                    .padding(.top, 12)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                recent
-            } else {
-                let matches = kids.isOn ? [] : search.matchingHistory(query)
-                if !matches.isEmpty {
-                    Section { ForEach(matches) { historyRow($0) } }
-                }
-                // What's yours comes first.
-                LibrarySearchResults(query: query, groups: groups, catalogs: catalogs, route: $route, opened: $openedEntry)
-                titlesSection
-                ForEach(search.addonResults) { addonSection($0) }
-                if search.addonsSearching {
-                    Section {
-                        FolioWorkingRow(text: "Searching your addons…")
-                        .listRowBackground(Color.clear)
-                    }
+        page
+            .onChange(of: query) { _, text in
+                search.textChanged(text)
+                catalogs.textChanged(kids.isOn ? "" : text)
+                if SearchHistoryStore.tidy(text).isEmpty { scope = .all }
+                refilter()
+            }
+            .onSubmit(of: .search) { search.submit(query) }
+            .onReceive(NotificationCenter.default.publisher(for: .searchTabSubmitted)) { note in
+                search.submit((note.object as? String) ?? query)
+            }
+            .task { await search.loadHistory() }
+            // Each server's index brought up to date when it's due, and text
+            // kept from the last search asked again.
+            .onAppear {
+                HitchProbe.mark("search", "page appeared")
+                if !kids.isOn { for server in webdav.servers { index.refreshIfNeeded(server) } }
+                search.textChanged(query)
+                catalogs.textChanged(kids.isOn ? "" : query)
+                groups = LibraryOrganizer.groups(local.files)
+                refilter(force: true)
+                HitchProbe.mark("search", "page set up")
+            }
+            .onChange(of: local.files) { _, files in
+                groups = LibraryOrganizer.groups(files)
+                refilter(force: true)
+            }
+            .onChange(of: webdav.servers) { refilter(force: true) }
+            .onChange(of: kids.isOn) { refilter(force: true) }
+            // A counter, not the index itself: comparing two indexes at
+            // every redraw would cost more than the search does.
+            .onReceive(index.$states) { _ in indexTick &+= 1 }
+            .onChange(of: indexTick) { refilter(force: true) }
+            .onReceive(search.$titles) { _ in answersTick &+= 1 }
+            .onReceive(search.$addonResults) { _ in answersTick &+= 1 }
+            .onReceive(catalogs.$results) { _ in answersTick &+= 1 }
+            .onChange(of: answersTick) { compose() }
+            .navigationDestination(item: $opened) { o in
+                MetaDetailView(preview: o.meta, sourceAddon: o.addon).zoomDestination("search|" + o.meta.id, in: zoomNS, zoom: false)
+            }
+            .navigationDestination(item: $route) { r in LibraryRoute.destination(r) }
+            .navigationDestination(item: $openedEntry) { o in
+                if let source = CatalogSearch.source(for: o.server) {
+                    CatalogBrowserView(source: source, parent: o.entry, title: CatalogTitles.rowTitle(o.entry))
                 }
             }
-        }
-        .listStyle(.plain)
-        // A readable column on a wide iPad window (1.30.0).
-        .readableListWidth()
-        .scrollContentBackground(.hidden)
-        // Room under the last row for the downloads pill (1.24.1).
-        .downloadPillRoom()
-        .background(Theme.background.ignoresSafeArea())
-        .scrollDismissesKeyboard(.immediately)
-        .navigationTitle("Search")
-        .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: query) { _, text in
-            search.textChanged(text)
-            catalogs.textChanged(kids.isOn ? "" : text)
-        }
-        .onSubmit(of: .search) { search.submit(query) }
-        .onReceive(NotificationCenter.default.publisher(for: .searchTabSubmitted)) { note in
-            search.submit((note.object as? String) ?? query)
-        }
-        .task { await search.loadHistory() }
-        // Each server's index brought up to date when it's due, and text
-        // kept from the last search asked again.
-        .onAppear {
-            HitchProbe.mark("search", "page appeared")
-            if !kids.isOn { for server in webdav.servers { index.refreshIfNeeded(server) } }
-            search.textChanged(query)
-            catalogs.textChanged(kids.isOn ? "" : query)
-            groups = LibraryOrganizer.groups(local.files)
-            HitchProbe.mark("search", "page set up")
-        }
-        .onChange(of: local.files) { _, files in groups = LibraryOrganizer.groups(files) }
-        .navigationDestination(item: $opened) { o in
-            MetaDetailView(preview: o.meta, sourceAddon: o.addon).zoomDestination("search|" + o.meta.id, in: zoomNS, zoom: false)
-        }
-        .navigationDestination(item: $route) { r in LibraryRoute.destination(r) }
-        .navigationDestination(item: $openedEntry) { o in
-            if let source = CatalogSearch.source(for: o.server) {
-                CatalogBrowserView(source: source, parent: o.entry, title: CatalogTitles.rowTitle(o.entry))
-            }
-        }
     }
     @Namespace private var zoomNS
 
-    // MARK: Recent
-
-    @ViewBuilder
-    private var recent: some View {
-        // Not in the kids profile (1.28.6): the grown-ups' searches showed, and ran.
-        if !search.history.isEmpty, !kids.isOn {
-            Section {
-                ForEach(search.history) { historyRow($0) }
-            } header: {
-                // Clear as a pill in the header (1.28.6), like the search's
-                // other pills: 1.28.5's row sat under the whole list.
-                HStack {
-                    Text("Recent").accessibilityAddTraits(.isHeader)
-                    Spacer()
-                    // A menu the pill itself opens into (1.28.9). 1.28.7 hung
-                    // a confirmation dialog on the pill: iOS drew it as a
-                    // separate question, and after a few taps it stopped
-                    // coming up at all (a dialog anchored in a list's header
-                    // loses its anchor when the header is redrawn). A menu
-                    // is the pill's own glass morphing open, and keeps no
-                    // state that can stick.
-                    Menu {
-                        Section("Clear recent searches?") {
-                            Button("Clear", systemImage: "trash", role: .destructive) {
-                                withAnimation(.smooth(duration: 0.3)) { search.clearHistory() }
-                            }
+    private var page: some View {
+        ScrollViewReader { proxy in
+            List {
+                if typed.isEmpty {
+                    // Recent not in the kids profile (1.28.6): the grown-ups' searches showed, and ran.
+                    SearchEmptyState(recent: kids.isOn ? [] : search.history,
+                                     run: { entry in
+                                         query = entry.query
+                                         search.submit(entry.query)
+                                     },
+                                     delete: { search.delete($0) },
+                                     clear: { search.clearHistory() })
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                } else {
+                    resultRows { target in
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            scope = target
+                            proxy.scrollTo(Self.chipsID, anchor: .top)
                         }
-                    } label: {
-                        Label("Clear", systemImage: "trash").font(.caption.weight(.semibold))
                     }
-                    .menuStyle(.button)
-                    .modifier(ClearPillStyle())
-                    .accessibilityLabel("Clear recent searches")
-                    .accessibilityIdentifier("searchClearRecent")
                 }
-                .textCase(nil)
             }
+            .listStyle(.plain)
+            // A readable column on a wide iPad window (1.30.0).
+            .readableListWidth()
+            .scrollContentBackground(.hidden)
+            // Room under the last row for the downloads pill (1.24.1).
+            .downloadPillRoom()
+            .background(Theme.background.ignoresSafeArea())
+            .scrollDismissesKeyboard(.immediately)
+            .navigationTitle("Search")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 
-    private func historyRow(_ entry: SearchHistoryEntry) -> some View {
-        Button {
-            query = entry.query
-            search.submit(entry.query)
-        } label: {
-            Label {
-                Text(entry.query).foregroundStyle(.primary).lineLimit(1)
-            } icon: {
-                Image(systemName: "clock.arrow.circlepath").foregroundStyle(.secondary)
-            }
+    // MARK: Finding
+
+    /// What's yours on this device and in the servers' indexes: found and
+    /// grouped by release when the typed words change, or (`force`) what
+    /// they're looked for in does. Before the one list this ran in the
+    /// page's body, at every redraw.
+    private func refilter(force: Bool = false) {
+        let words = LibrarySearchText.words(query)
+        guard force || words != filteredWords else { return }
+        filteredWords = words
+        let library = LibrarySearchResults.libraryMatches(words, in: groups, limits: kids.activeLimits)
+        // Not in the kids profile: the servers are locked there.
+        let files = kids.isOn ? [] : LibrarySearchResults.serverMatches(words, servers: webdav.servers, index: index)
+        var found: [SearchItem] = library.map { SearchItem(library: $0) }
+        // A release's files are one row ("MobLand · 10 files"), not a row each.
+        let clean = cleanTitles
+        found += ServerFile.releases(files).map { SearchItem(release: $0, clean: clean) }
+        mine = found
+        compose(mine: found)
+    }
+
+    /// The whole list: what's yours, then Plex and Jellyfin's entries,
+    /// then IMDb's titles and the addons'.
+    private func compose(mine found: [SearchItem]? = nil) {
+        var owned = found ?? mine
+        if !LibrarySearchText.words(query).isEmpty {
+            for r in catalogs.results { owned += r.entries.map { SearchItem(entry: $0, server: r.server) } }
+        }
+        results = SearchResults(owned: owned, imdb: search.titles, addons: search.addonResults)
+    }
+
+    // MARK: Results
+
+    @ViewBuilder
+    private func resultRows(show: @escaping (SearchScope) -> Void) -> some View {
+        // A chip whose results went away (a new query) falls back to All.
+        let active = results.scopes.contains(scope) ? scope : SearchScope.all
+        SearchScopeChips(scopes: results.scopes, selection: active, select: show)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .id(Self.chipsID)
+        if let status { statusLine(status.text, working: status.working) }
+        switch active {
+        case .all:
+            if let top = results.top { topCard(top) }
+            ForEach(results.ownedShort) { row($0) }
+            if results.hiddenOwned > 0 { showAll("Show all \(results.owned.count) in Yours", .yours, show) }
+            catalogErrors
+            titleProblem
+            ForEach(results.titlesShort) { row($0) }
+            if results.hiddenMovies > 0 { showAll("Show all \(results.movies.count) movies", .movies, show) }
+            if results.hiddenShows > 0 { showAll("Show all \(results.shows.count) shows", .shows, show) }
+        case .yours:
+            ForEach(results.owned) { row($0) }
+            catalogErrors
+        case .movies:
+            titleProblem
+            ForEach(results.movies) { row($0) }
+        case .shows:
+            titleProblem
+            ForEach(results.shows) { row($0) }
+        }
+    }
+
+    /// The one quiet line under the chips: what the search is still doing
+    /// (the most telling of it), or what it's waiting for. Until the one
+    /// list each of these was a spinner row of its own.
+    private var status: (text: String, working: Bool)? {
+        if typed.count < DiscoverSearch.minLength, search.phase == .idle { return (text: "Keep typing to search titles.", working: false) }
+        if search.phase == .loading { return (text: "Searching movies and shows…", working: true) }
+        if catalogs.searching { return (text: "Searching Plex and Jellyfin…", working: true) }
+        if search.addonsSearching { return (text: "Searching your addons…", working: true) }
+        if !kids.isOn, let server = webdav.servers.first(where: { index.state($0.id).refreshing }) {
+            let st = index.state(server.id)
+            return (text: "Indexing \(server.name)… \(st.done) of \(st.total) folders", working: true)
+        }
+        if let limits = kids.activeLimits { return (text: "Movies and shows rated \(KidsRules.summary(limits)).", working: false) }
+        return nil
+    }
+
+    private func statusLine(_ text: String, working: Bool) -> some View {
+        HStack(spacing: 8) {
+            if working { FolioSpinner(size: .small) }
+            Text(text).font(.footnote).foregroundStyle(.secondary)
+            Spacer(minLength: 0)
         }
         .listRowBackground(Color.clear)
-        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            Button(role: .destructive) { search.delete(entry) } label: { Label("Delete", systemImage: "trash") }
-        }
-        .accessibilityLabel("Recent search, \(entry.query)")
-        .accessibilityHint("Searches again")
-        .accessibilityAction(named: "Delete") { search.delete(entry) }
+        .listRowSeparator(.hidden)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("searchStatus")
     }
 
-    // MARK: Titles
-
-    @ViewBuilder
-    private var titlesSection: some View {
-        Section {
-            switch search.phase {
-            case .failed(let offline):
-                statusRow(offline ? "You're offline." : "Couldn't reach IMDb.",
-                          detail: offline ? "Search works again once you're connected." : "Check the connection and try again.",
-                          icon: offline ? "wifi.slash" : "exclamationmark.triangle", retry: true)
-            case .done where search.titles.isEmpty && search.titlesQuery == typed:
-                statusRow(kids.isOn ? "No titles rated for the kids profile match “\(typed)”." : "No titles match “\(typed)”.",
-                          detail: nil, icon: "magnifyingglass", retry: false)
-            case .idle where typed.count < DiscoverSearch.minLength:
-                statusRow("Keep typing to search titles.", detail: nil, icon: "character.cursor.ibeam", retry: false)
-            default:
-                EmptyView()
-            }
-            ForEach(search.titles) { m in
-                titleRow(m)
-            }
-        } header: {
-            HStack(spacing: 8) {
-                Text("Movies & Shows")
-                if let limits = kids.activeLimits { Text("· rated \(KidsRules.summary(limits))") }
-                if search.phase == .loading {
-                    FolioSpinner(size: .small).accessibilityLabel("Searching")
-                }
-                Spacer()
-            }
-            .frame(minHeight: 22)            // the spinner never changes the header's height
+    /// Every result's row, whatever found it.
+    private func row(_ item: SearchItem) -> some View {
+        // The last titles stay up, dimmed, while the next are asked for: nothing jumps.
+        let dim = item.isTitle && search.phase == .loading
+        let folder: (() -> Void)? = item.isRelease ? { openFolder(item) } : nil
+        return Button { open(item) } label: {
+            SearchResultRow(item: item, artwork: artwork(item))
         }
+        .buttonStyle(.plain)
+        .modifier(OpenFolderActions(action: folder))
+        .listRowBackground(Color.clear)
+        .opacity(dim ? 0.55 : 1)
+        .animation(.easeOut(duration: 0.15), value: dim)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier(item.identifier)
     }
 
-    private func titleRow(_ m: MetaItem) -> some View {
-        Button {
-            search.opened(from: search.titlesQuery.isEmpty ? query : search.titlesQuery)
-            opened = Opened(meta: m, addon: nil)
-        } label: {
-            HStack(spacing: 12) {
-                PosterImage(url: m.poster, cornerRadius: 8)
-                    .frame(width: 46)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(m.name).font(.body.weight(.semibold)).foregroundStyle(.primary).lineLimit(2)
-                    Text(subtitle(m)).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
-                    if let cast = m.description, !cast.isEmpty {
-                        Text(cast).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
-                    }
-                }
+    /// The first of what's yours, as a card with a capsule that plays it.
+    private func topCard(_ item: SearchItem) -> some View {
+        let folder: (() -> Void)? = item.isRelease ? { openFolder(item) } : nil
+        return SearchTopCard(item: item, artwork: artwork(item), play: topAction(item)) { open(item) }
+            .modifier(OpenFolderActions(action: folder))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+    }
+
+    /// "Show all 14 in Yours": "All" shows the first few of each kind, the chip all of them.
+    private func showAll(_ title: String, _ target: SearchScope, _ show: @escaping (SearchScope) -> Void) -> some View {
+        Button { show(target) } label: {
+            HStack(spacing: 6) {
+                Text(title).font(.subheadline.weight(.semibold))
+                Image(systemName: "chevron.right").font(.caption.weight(.bold)).accessibilityHidden(true)
                 Spacer(minLength: 0)
             }
+            .foregroundStyle(Theme.action)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .listRowBackground(Color.clear)
-        .opacity(search.phase == .loading ? 0.55 : 1)
-        .animation(.easeOut(duration: 0.15), value: search.phase == .loading)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("searchShowAll:" + target.rawValue)
     }
 
-    private func subtitle(_ m: MetaItem) -> String {
-        [m.releaseInfo, m.type == "series" ? "Series" : "Movie"].compactMap { $0 }.joined(separator: " · ")
+    /// A Plex or Jellyfin server that didn't answer.
+    @ViewBuilder
+    private var catalogErrors: some View {
+        ForEach(catalogs.results.filter { $0.error != nil }) { r in
+            Label(r.error ?? "", systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(.secondary)
+                .listRowBackground(Color.clear)
+        }
+    }
+
+    /// A Plex or Jellyfin entry's picture, asked of the client the search used.
+    private func artwork(_ item: SearchItem) -> URLRequest? {
+        guard case .catalog(let e, let server) = item.kind else { return nil }
+        return catalogs.client(for: server.id)?.imageRequest(for: e, pixels: 240)
+    }
+
+    // MARK: Opening
+
+    private func open(_ item: SearchItem) {
+        switch item.kind {
+        case .library(let g):
+            route = .group(g.id)
+        case .release(let r):
+            // One file found: it plays, as a file's row did. More: the release's folder.
+            if r.count == 1, let f = r.files.first { play(f) } else { open(r) }
+        case .catalog(let e, let server):
+            if e.isPlayable {
+                guard let source = catalogs.client(for: server.id) else { return }
+                PlayerPresenter.play(queue: [source.mediaItem(for: e, parent: nil)], index: 0)
+            } else {
+                openedEntry = LibrarySearchResults.OpenedEntry(server: server.id, entry: e)
+            }
+        case .title(let m, let addon):
+            // The query that found it goes into history.
+            search.opened(from: addon == nil && !search.titlesQuery.isEmpty ? search.titlesQuery : query)
+            opened = Opened(meta: m, addon: addon)
+        }
+    }
+
+    private func openFolder(_ item: SearchItem) {
+        if let folder = item.folderRoute { route = folder }
+    }
+
+    /// A file plays with its folder as the queue, as the server's browser plays it.
+    private func play(_ f: ServerFile) {
+        ContinueQueue.play(WebDAVClient(server: f.server).mediaItem(for: f.davItem, cleanTitles: cleanTitles))
+    }
+
+    /// A release: its folder; one file on its own (at the server's top): it plays.
+    private func open(_ r: ServerFile.Release) {
+        if let folder = r.folder {
+            route = .webdavFolder(r.server.id.uuidString, folder.absoluteString, r.name.raw)
+        } else if let f = r.files.first {
+            play(f)
+        }
+    }
+
+    /// The top result's capsule: Resume or Play for what has one thing to
+    /// play next (a library title's next episode, a single file, a film on
+    /// Plex or Jellyfin), Open for a folder of files or a show on a server.
+    private func topAction(_ item: SearchItem) -> SearchPlay {
+        let opens = SearchPlay(title: "Open", icon: "chevron.right") { open(item) }
+        switch item.kind {
+        case .library(let g):
+            guard g.folder == nil else { return opens }
+            let file = g.nextUp
+            let entry = HistoryStore.shared.entry(forURL: file.path)
+            // Played as Continue Watching plays a library file: the show's episodes as the queue.
+            return SearchPlay(title: entry?.canResume == true ? "Resume" : "Play", icon: "play.fill") {
+                ContinueQueue.play(entry?.item ?? Self.libraryItem(file))
+            }
+        case .release(let r):
+            guard r.count == 1, let f = r.files.first else { return opens }
+            let resumes = HistoryStore.shared.entry(forURL: f.file.url.absoluteString)?.canResume == true
+            return SearchPlay(title: resumes ? "Resume" : "Play", icon: "play.fill") { play(f) }
+        case .catalog(let e, _):
+            guard e.isPlayable else { return opens }
+            return SearchPlay(title: "Play", icon: "play.fill") { open(item) }
+        case .title:
+            return opens
+        }
+    }
+
+    /// A library file never played, as ContinueQueue makes a show's other episodes.
+    private static func libraryItem(_ file: URL) -> MediaItem {
+        var m = MediaItem(url: file.path, title: TitleParser.clean(file.lastPathComponent), source: .local)
+        m.historyKey = file.path
+        let p = TitleParser.parse(file.lastPathComponent)
+        if p.episode != nil { m.anime = AnimeHint(title: p.title, episode: p.episode) }
+        return m
+    }
+
+    // MARK: Titles' problems
+
+    /// Offline, IMDb out of reach, or nothing found: said in a row where the titles would be.
+    @ViewBuilder
+    private var titleProblem: some View {
+        switch search.phase {
+        case .failed(let offline):
+            statusRow(offline ? "You're offline." : "Couldn't reach IMDb.",
+                      detail: offline ? "Search works again once you're connected." : "Check the connection and try again.",
+                      icon: offline ? "wifi.slash" : "exclamationmark.triangle", retry: true)
+        case .done where results.titles.isEmpty && search.titlesQuery == typed:
+            statusRow(kids.isOn ? "No titles rated for the kids profile match “\(typed)”." : "No titles match “\(typed)”.",
+                      detail: nil, icon: "magnifyingglass", retry: false)
+        default:
+            EmptyView()
+        }
     }
 
     private func statusRow(_ title: String, detail: String?, icon: String, retry: Bool) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon).font(.title3).foregroundStyle(.secondary).frame(width: 46).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 6) {
-                Text(title).font(.body.weight(.medium))
-                if let detail { Text(detail).font(.footnote).foregroundStyle(.secondary) }
+                Text(title).font(.body.weight(.semibold))
+                if let detail { Text(detail).font(.subheadline).foregroundStyle(.secondary) }
                 if retry {
                     Button("Try Again") { search.retry() }
                         .buttonStyle(.bordered)
@@ -437,34 +582,33 @@ struct AddonSearchView: View {
         .listRowBackground(Color.clear)
         .accessibilityElement(children: .contain)
     }
+}
 
-    // MARK: Addons (after Search)
+/// "Open folder" on a release's row, by long press or a swipe: where the
+/// server's pill under each file was. Other rows get neither.
+private struct OpenFolderActions: ViewModifier {
+    let action: (() -> Void)?
 
-    private func addonSection(_ r: SearchResult) -> some View {
-        Section {
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 12) {
-                    ForEach(r.metas) { m in
-                        Button {
-                            search.opened(from: query)
-                            opened = Opened(meta: m, addon: r.addon)
-                        } label: { PosterCard(meta: m) }
-                        .buttonStyle(.plain)
-                    }
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if let action {
+            content
+                .contextMenu {
+                    Button("Open folder", systemImage: "folder", action: action)
                 }
-                .padding(.horizontal, 16)
-            }
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
-        } header: {
-            Text(r.title).lineLimit(1)
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(action: action) { Label("Open folder", systemImage: "folder") }
+                        .tint(Theme.swipeTint)
+                }
+        } else {
+            content
         }
     }
 }
 
 /// The Recent header's Clear pill (1.28.7). iOS 26: the system's glass
 /// button, which swells under the finger and morphs open into its menu. Before iOS 26: the filled capsule the search's other pills are.
-private struct ClearPillStyle: ViewModifier {
+struct ClearPillStyle: ViewModifier {
     @ViewBuilder
     func body(content: Content) -> some View {
         #if compiler(>=6.2)

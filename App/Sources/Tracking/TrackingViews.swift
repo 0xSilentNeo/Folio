@@ -602,7 +602,9 @@ private struct AiringCard: View {
             Spacer(minLength: 0)
         }
         .padding(10)
-        .frame(width: 250, height: 101, alignment: .leading)
+        // At least 101 high (1.30.2): fixed, the text was cut at the larger text sizes.
+        .frame(width: 250, alignment: .leading)
+        .frame(minHeight: 101)
         .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.hairline))
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))

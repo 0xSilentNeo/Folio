@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 struct SkipSegment: Identifiable, Hashable {
     enum Kind: String { case recap, intro, outro, preview
@@ -388,7 +389,24 @@ actor SkipService {
         return out.sorted { $0.start < $1.start }
     }
 
+    /// Open Anime Timestamps' whole file, parsed, stays in memory for a day
+    /// (1.30.2): given back when iOS says memory is short, and downloaded
+    /// again by the next anime episode that needs it.
+    private static let watchMemory: Void = {
+        NotificationCenter.default.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: nil) { _ in
+            Task { await SkipService.shared.releaseTimestamps() }
+        }
+    }()
+
+    private func releaseTimestamps() {
+        guard oatCache != nil else { return }
+        oatCache = nil
+        oatFetched = nil
+        dlog("skip", "memory warning: Open Anime Timestamps' list let go")
+    }
+
     private func oat(anidbId: Int, episode: Int, duration: Double, length: Double) async -> [SkipSegment] {
+        _ = Self.watchMemory
         if oatCache == nil || (oatFetched.map { Date().timeIntervalSince($0) > 86400 } ?? true) {
             // The file is large: after a failed download it's tried again in
             // 10 minutes, not for every episode (an older copy is still used).

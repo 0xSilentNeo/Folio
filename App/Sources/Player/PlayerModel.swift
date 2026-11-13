@@ -407,6 +407,9 @@ final class PlayerModel: ObservableObject {
         problemCheck?.cancel(); problemCheck = nil
         nowPlayingArtTask?.cancel(); nowPlayingArtTask = nil
         introFinding?.cancel(); introFinding = nil
+        // The tasks that wake on a timer end with the player (1.30.2).
+        copyWatch?.cancel(); copyWatch = nil
+        passLog?.cancel(); passLog = nil
         dlog("player", "close at \(Self.format(position))")
         // Silent and still at once (1.28.2): the player goes off the screen
         // now and mpv finishes behind it.
@@ -473,9 +476,14 @@ final class PlayerModel: ObservableObject {
         // thread may still call it while it quits.
         let metalFrames = self.metalFrames
         if client == nil { metalFrames?.engineDone() }
+        let me = ObjectIdentifier(self)
         client?.shutdown {
             scoped?.stopAccessingSecurityScopedResource()
             metalFrames?.engineDone()
+            // Not when another player has opened meanwhile (1.30.2): the
+            // session is that one's now, and this took it away under it.
+            let another = MainActor.assumeIsolated { PlayerPresenter.current.map { ObjectIdentifier($0.model) != me } ?? false }
+            guard !another else { return }
             // The audio session let go once mpv's output is closed, off the
             // main thread: deactivating it with the output still running
             // waits for it, then fails.
@@ -790,12 +798,15 @@ final class PlayerModel: ObservableObject {
                 var it = item
                 it.subtitles += await AddonPlayback.subtitles(type: ctx.type, videoId: ctx.videoId)
                 self.resolvedItems[index] = it
-                guard self.queueIndex == index else { return }
+                // Not into a player closed meanwhile (1.30.2).
+                guard self.queueIndex == index, !self.closed else { return }
                 self.load(it)
             }
             return
         }
         saveHistory(force: true)            // the file that was playing, under its own entry
+        // Another file: the place a stream stopped at isn't its (1.30.2).
+        if retryAt?.id != item.id { retryAt = nil }
         leftFinished = false
         playingItem = item
         ended = false
@@ -1125,10 +1136,18 @@ final class PlayerModel: ObservableObject {
     private var startFirstAt: Double?
     /// The file those two are for.
     private var startFirstID: String?
+    /// Where a stream stopped early (1.30.2): Try again goes on from there,
+    /// with Resume playback off too (it started at 0:00, though the card
+    /// says it goes on). For that file's next open only.
+    private var retryAt: (id: String, at: Double)?
 
     private func startOptions(for item: MediaItem, toast: Bool) -> [String] {
         // Kept until the file has opened (onFileLoaded): Try Again opens it
         // again, and must start where the first try was to.
+        if let r = retryAt, r.id == item.id {
+            if toast { showToast("Resuming from \(Self.format(r.at))") }
+            return ["start=\(Int(r.at))"]
+        }
         let isFirst = item.id == startFirstID
         if isFirst, startFirstAtZero { return ["start=0"] }
         if isFirst, let at = startFirstAt {
@@ -1160,13 +1179,14 @@ final class PlayerModel: ObservableObject {
             guard let self else { return }
             let p = self.pick(for: index) ?? pick
             let match = await AddonPlayback.screen(p)
-            guard self.queueIndex == index else { return }
+            // Not into a player closed meanwhile (1.30.2).
+            guard self.queueIndex == index, !self.closed else { return }
             switch match {
             case .same(var found):
                 self.episodeStates[index] = .ready
                 found.subtitles += await AddonPlayback.subtitles(type: p.context.type, videoId: p.context.videoId)
                 self.subsFetched.insert(index)
-                guard self.queueIndex == index else { return }
+                guard self.queueIndex == index, !self.closed else { return }
                 self.resolvedItems[index] = found
                 self.load(found)
             case .other:
@@ -1373,6 +1393,7 @@ final class PlayerModel: ObservableObject {
     /// on until a stream is picked (1.17.0 paused it, and the picker could not
     /// open over the Now Playing menu — 27 Oct report).
     private func askToPick(_ index: Int) {
+        advancingFromEnd = false        // the choice is the user's from here
         guard let ctx = queue[index].streamPick?.context else { return }
         pickRequest = PickRequest(id: index, context: ctx)
         dlog("player", "episode \(ctx.videoLabel ?? ctx.videoId): no stream of the same release; asking")
@@ -1523,6 +1544,7 @@ final class PlayerModel: ObservableObject {
         dlog("player", "file loaded in \(String(format: "%.0f", Date().timeIntervalSince(loadStarted) * 1000)) ms")
         fileLoaded = true
         if item.id == startFirstID { startFirstID = nil; startFirstAt = nil; startFirstAtZero = false }
+        retryAt = nil
         noteSoftwareDecoding()
         // The gestures tip comes up in the first plays after installing (1.27.0).
         FolioTips.note(PlayerGesturesTip.played)
@@ -1665,6 +1687,8 @@ final class PlayerModel: ObservableObject {
         guard let c = client else { return }
         guard !tracksRefreshPending else { tracksRefreshAgain = true; return }
         tracksRefreshPending = true
+        // The file this read is for, as the chapters' read has it (1.30.2).
+        let started = loadStarted
         c.query({ c -> ([MediaTrack], String) in
             var list: [MediaTrack] = []
             let n = c.int("track-list/count") ?? 0
@@ -1689,6 +1713,15 @@ final class PlayerModel: ObservableObject {
         }) { [weak self] result in
             guard let self else { return }
             self.tracksRefreshPending = false
+            // Started before load(): the file before's list (1.30.2). Left
+            // out; a read asked for meanwhile runs for the new file.
+            guard started == self.loadStarted else {
+                if self.tracksRefreshAgain {
+                    self.tracksRefreshAgain = false
+                    self.refreshTracks()
+                }
+                return
+            }
             if result.0 != self.tracks { self.tracks = result.0 }
             self.updateVideoFormat(gamma: result.1)
             if self.tracksRefreshAgain {
@@ -1849,8 +1882,13 @@ final class PlayerModel: ObservableObject {
             let info = SampleBufferRenderer.HDROutput(hlg: hlg, maxCLL: c.int("video-params/max-cll").map(Int.init), maxFALL: c.int("video-params/max-fall").map(Int.init),
                                                        maxLuma: c.double("video-params/max-luma"), minLuma: c.double("video-params/min-luma"))
             guard !glHDROn || info != hdrInfoSent else { return }
+            // None of the four readable for a moment (a decoder restart):
+            // what was sent for this file stays (1.30.2).
+            if glHDROn, hdrInfoFile == loadStarted, hlg == hdrInfoSent?.hlg,
+               info.maxCLL == nil, info.maxFALL == nil, info.maxLuma == nil, info.minLuma == nil { return }
             glHDROn = true
             hdrInfoSent = info
+            hdrInfoFile = loadStarted
             mf.onHDRFailed = { [weak self] in self?.glHDRFailed() }
             mf.setHDR(info)
             pip.setHDR(true)
@@ -1874,6 +1912,8 @@ final class PlayerModel: ObservableObject {
     private var glHDROn = false
     /// The light levels the Metal frames are tagged with now.
     private var hdrInfoSent: SampleBufferRenderer.HDROutput?
+    /// The file (its load) they were read from (1.30.2).
+    private var hdrInfoFile: Date?
     /// Half-float frames failed for this file: not tried again until the
     /// next one (the simulator, which can't make them, tried after every
     /// decoder restart, round and round).
@@ -2012,9 +2052,12 @@ final class PlayerModel: ObservableObject {
             var bad = 0
             while !Task.isCancelled {
                 guard let self, !self.closed, self.hdrCopyActive, (self.playingItem ?? self.item).id == id, let c = self.client else { return }
-                let drops = await withCheckedContinuation { (k: CheckedContinuation<Int64, Never>) in
-                    c.query({ $0.int("frame-drop-count") ?? 0 }) { k.resume(returning: $0) }
+                // Answered when mpv has gone too (1.30.2): the read was dropped
+                // then, and this task waited for ever, holding the player.
+                let read: Int64? = await withCheckedContinuation { (k: CheckedContinuation<Int64?, Never>) in
+                    c.query({ $0.int("frame-drop-count") ?? 0 }, then: { k.resume(returning: $0) }, orElse: { k.resume(returning: nil) })
                 }
+                guard let drops = read, !Task.isCancelled, !self.closed else { return }
                 if let last, !self.paused {
                     bad = drops - last > 5 ? bad + 1 : 0
                     if bad >= 2 {
@@ -2059,6 +2102,10 @@ final class PlayerModel: ObservableObject {
         setPaused(!paused)
     }
     func setPaused(_ p: Bool) {
+        // Play or pause asked for: the end of the last file no longer decides
+        // whether the next load plays (the flag outlived a stream picker
+        // that was cancelled, and un-paused a later Next).
+        advancingFromEnd = false
         guard let c = client else { return }
         if !p { warmAudioForPlay(c) }
         if p != paused {
@@ -2317,7 +2364,6 @@ final class PlayerModel: ObservableObject {
         sample()
     }
 
-    var volume: Double { client?.double("volume") ?? 100 }
     /// Delays set in the menus: remembered for the show, and the subtitle
     /// delay for this file too (a file's own delay wins over the show's).
     func setSubDelay(_ v: Double) {
@@ -3421,7 +3467,8 @@ final class PlayerModel: ObservableObject {
         guard !openTimelineLogged, let u = (playingItem ?? item).resolvedURL, !u.isFileURL else { return }
         openTimelineLogged = true
         DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1) {
-            guard let s = OpenTimeline.summary(MPVFiles.readText(MPVFiles.logFile)) else { return }
+            // The log's end only (1.30.2): the whole of it was read each time.
+            guard let s = OpenTimeline.summary(OpenTimeline.tail(of: MPVFiles.logFile)) else { return }
             dlog("player", s)
         }
     }
@@ -3524,6 +3571,10 @@ final class PlayerModel: ObservableObject {
         case .gl:
             break                       // every frame already goes into PiP's layer
         case .metal:
+            // Metal into the video layer has its frames in PiP's layer
+            // already, and takeSnapshot does nothing for it: no timer waking
+            // every 45 s for that (1.30.2).
+            guard ownLayerMetal else { return }
             // A readback of the full frame is not free; refresh the PiP
             // layer rarely (it only needs *some* current-ish picture to be
             // allowed to start) and whenever playback settles.
@@ -4013,6 +4064,9 @@ final class PlayerModel: ObservableObject {
             MainActor.assumeIsolated {
                 guard let self, let c = self.client, !self.closed else { return }
                 dlog("player/warn", "iOS's media services restarted: audio output opened again")
+                // The session first (1.30.2): the restart reset its category
+                // and left it inactive, and the output opened on that.
+                self.configureAudioSession()
                 self.audioWarm = true
                 _ = c.commandAsync(["ao-reload"])
             }
@@ -4635,6 +4689,11 @@ extension PlayerModel: MPVClientDelegate {
     }
 
     private func handle(_ event: MPVEvent) {
+        // Nothing from mpv once the player is closing (1.30.2): until mpv is
+        // let go (finishClose) an event could still start the next episode,
+        // skip an intro or close the screen again. mpv's shutdown is answered
+        // through MPVClient.shutdown's closure, not from here.
+        guard !closed else { return }
         switch event {
         case .property(let name, let value):
             handleProperty(name, value)
@@ -4851,6 +4910,7 @@ extension PlayerModel: MPVClientDelegate {
             dlog("player", "the stream stopped at \(Self.format(position)) of \(Self.format(duration)): not the end")
             playLinks[it.id] = nil          // Try again: the item's own address, redirected afresh
             forgetAddress(of: it)
+            retryAt = (it.id, position)     // and from here, whatever Resume playback says (1.30.2)
             show(ServerProblem(kind: .stoppedEarly, title: "The stream stopped at \(Self.format(position)) of \(Self.format(duration))",
                                detail: "The connection to \(where_.name) dropped. Try again to go on from there.", icon: "wifi.exclamationmark"), for: it)
             return

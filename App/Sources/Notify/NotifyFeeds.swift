@@ -303,5 +303,4 @@ final class HabitLog {
         UserDefaults.standard.set(try? JSONEncoder().encode(days), forKey: key)
     }
 
-    func day(_ key: String) -> Day? { days.last { $0.day == key } }
 }

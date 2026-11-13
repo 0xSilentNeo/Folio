@@ -97,21 +97,6 @@ enum AddonPlayback {
         return nil
     }
 
-    /// The next episode's stream: same binge group (the protocol's marker for "same
-    /// release across episodes") if the addon sets one, else the same stream
-    /// name and resolution, else the first playable stream.
-    static func choose(_ streams: [AddonStream], like pick: StreamPick) -> AddonStream? {
-        let playable = streams.filter(\.isPlayable)
-        if let g = pick.bingeGroup, let s = playable.first(where: { $0.behaviorHints?.bingeGroup == g }) { return s }
-        func score(_ s: AddonStream) -> Int {
-            var n = 0
-            if let r = pick.resolution, resolution(of: s) == r { n += 2 }
-            if let name = pick.streamName, s.name == name { n += 1 }
-            return n
-        }
-        return playable.max { score($0) < score($1) } ?? playable.first
-    }
-
     /// What the addon has for an episode, compared with the release you picked.
     enum Match {
         /// The same release (ready to play; subtitles are added later).
@@ -134,7 +119,16 @@ enum AddonPlayback {
 
     /// The streams each addon last gave for an episode (in-player picker:
     /// shown straight away, and kept when asking again comes back empty).
-    @MainActor static var recentStreams: [String: (at: Date, streams: [AddonStream])] = [:]
+    @MainActor static var recentStreams: [String: (at: Date, streams: [AddonStream])] = [:] {
+        // The newest 200 (1.30.2): it grew with every episode checked.
+        didSet {
+            let extra = recentStreams.count - 200
+            guard extra > 0 else { return }
+            for old in recentStreams.sorted(by: { $0.value.at < $1.value.at }).prefix(extra) {
+                recentStreams[old.key] = nil
+            }
+        }
+    }
     static func recentKey(_ addonID: String, _ videoId: String) -> String { addonID + "|" + videoId }
 
     /// Asks the pick's addon for the episode in `pick.context` and compares.
@@ -151,15 +145,6 @@ enum AddonPlayback {
 
     /// Resolves a placeholder; nil when the addon has nothing playable.
     @MainActor
-    static func resolve(_ pick: StreamPick) async -> MediaItem? {
-        let c = pick.context
-        guard let addon = addon(for: pick) else { return nil }
-        guard let streams = try? await AddonAPI.streams(addon, type: c.type, id: c.videoId),
-              let s = choose(streams, like: pick) else { return nil }
-        dlog("player", "season: \(c.videoLabel ?? c.videoId) → \(s.displayName) (\(resolution(of: s) ?? "?"))\(s.behaviorHints?.bingeGroup != nil && s.behaviorHints?.bingeGroup == pick.bingeGroup ? " same release" : "")")
-        let subs = await subtitles(type: c.type, videoId: c.videoId)
-        return makeItem(c, stream: s, addon: addon, extraSubtitles: subs)
-    }
 
     /// How long a stream start waits for subtitle addons (1.20.0). Until
     /// then playback waited for every one: 20.3 s twice in the 30 Oct log

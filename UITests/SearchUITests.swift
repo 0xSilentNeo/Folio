@@ -63,17 +63,21 @@ final class SearchUITests: XCTestCase {
         if clear2.exists { clear2.tap() }
         let labx = app.buttons["Recent search, labx"].firstMatch
         XCTAssertTrue(labx.waitForExistence(timeout: 5), "\"labx\" not kept after Search")
-        // Newest first.
-        if labx.exists, recent.exists { XCTAssertLessThan(labx.frame.minY, recent.frame.minY, "newest search isn't on top") }
+        // Newest first: Recent is chips that wrap, so before it on its
+        // line, or on a line above.
+        if labx.exists, recent.exists {
+            let sameLine = abs(labx.frame.minY - recent.frame.minY) <= 1
+            XCTAssertTrue(sameLine ? labx.frame.minX < recent.frame.minX : labx.frame.minY < recent.frame.minY, "newest search isn't first")
+        }
 
-        // Swipe to delete one.
-        labx.swipeLeft()
+        // Long press: the chip's own menu deletes it.
+        labx.press(forDuration: 1.0)
         let delete = app.buttons["Delete"].firstMatch
-        XCTAssertTrue(delete.waitForExistence(timeout: 3), "no Delete on swipe")
+        XCTAssertTrue(delete.waitForExistence(timeout: 3), "no Delete in the chip's menu")
         delete.tap()
         sleep(1)
         XCTAssertFalse(app.buttons["Recent search, labx"].exists, "deleted search still there")
-        print("SEARCH swipe to delete: \(!app.buttons["Recent search, labx"].exists)")
+        print("SEARCH long press to delete: \(!app.buttons["Recent search, labx"].exists)")
 
         // Clear all, after confirming.
         app.buttons["Clear recent searches"].firstMatch.tap()

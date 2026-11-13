@@ -92,8 +92,6 @@ final class SampleBufferRenderer {
         flipY = UserDefaults.standard.bool(forKey: SettingsKey.flipVideo) ? 1 : 0
     }
 
-    var isAttached: Bool { queue.sync { ctx != nil } }
-
     func attach(to client: MPVClient) throws {
         var err: Int32 = 0
         queue.sync {

@@ -219,7 +219,19 @@ struct PlayerScreen: View {
         // VoiceOver (1.27.0): a two-finger double tap plays and pauses; the
         // two-finger scrub closes the player.
         .accessibilityAction(.magicTap) { model.togglePause() }
-        .accessibilityAction(.escape) { onClose() }
+        // What's open on top first (1.30.2): the scrub closed the whole
+        // player from under a menu, the stream picker or the subtitle search.
+        .accessibilityAction(.escape) {
+            if model.pickRequest != nil {
+                model.cancelPick()
+            } else if model.subtitleSearch != nil {
+                model.closeSubtitleSearch()
+            } else if ui.panel != nil {
+                ui.closePanel()
+            } else {
+                onClose()
+            }
+        }
     }
 
     /// "Load subtitle file…" from the Tracks menu (1.23.0). The menu is a
@@ -662,6 +674,9 @@ struct TimeBar: View {
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity)
         .frame(height: UITune.shared.pillHeight)
+        // The times no larger than this (1.30.2): at the accessibility sizes
+        // they left the seek track no width.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .glass(cornerRadius: UITune.shared.pillHeight / 2, interactive: true)
         // The scrub bubble (time and chapter) over the knob, drawn outside the
         // glass (1.27.0): inside, the glass cut it off, so dragging showed
@@ -749,11 +764,15 @@ struct SeekTrack: View {
                 }
 
                 if prefs.markerStyle == "ticks" {
-                    ForEach(chapterTimes, id: \.self) { t in
+                    // By place in the list (1.30.2): two chapters at the same
+                    // time were the same id twice.
+                    ForEach(chapterTimes.indices, id: \.self) { i in
+                        let t = chapterTimes[i]
                         Capsule().fill(prefs.color.opacity(0.9)).frame(width: 2, height: h + 8).offset(x: w * t / d - 1)
                     }
                 } else if prefs.markerStyle == "dots" {
-                    ForEach(chapterTimes, id: \.self) { t in
+                    ForEach(chapterTimes.indices, id: \.self) { i in
+                        let t = chapterTimes[i]
                         Circle().fill(prefs.color).frame(width: 5, height: 5).offset(x: w * t / d - 2.5, y: -(h / 2 + 6))
                     }
                 }

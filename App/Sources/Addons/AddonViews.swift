@@ -83,7 +83,9 @@ struct PosterCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            PosterImage(url: meta.poster, aspect: meta.posterShape == "landscape" ? 16.0 / 9.0 : (meta.posterShape == "square" ? 1 : 2.0 / 3.0))
+            // Decoded for the tile's width where it has one (1.30.2).
+            PosterImage(url: meta.poster, aspect: meta.posterShape == "landscape" ? 16.0 / 9.0 : (meta.posterShape == "square" ? 1 : 2.0 / 3.0),
+                        width: width)
                 .frame(width: width)
                 .overlay(alignment: .topLeading) {
                     if let rank = meta.rank {
@@ -156,7 +158,14 @@ struct CatalogGridView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            if catalog.requiredExtras.contains("genre") { genre = catalog.genreOptions.first }
+            // A catalog that needs a genre opens on its first (1.30.2): the
+            // change loads it (onChange), so nothing is loaded here as well.
+            // It asked twice on opening, and went back to the first genre
+            // each time the grid came back on screen.
+            if catalog.requiredExtras.contains("genre"), genre == nil, let first = catalog.genreOptions.first {
+                genre = first
+                return
+            }
             if metas.isEmpty { await loadMore() }
         }
         .onChange(of: genre) { _, _ in

@@ -50,14 +50,14 @@ struct AiringProvider: TimelineProvider {
     func placeholder(in context: Context) -> AiringEntry { .sample() }
 
     func getSnapshot(in context: Context, completion: @escaping (AiringEntry) -> Void) {
-        let entry = Self.entries(from: Date()).first ?? AiringEntry(date: Date(), content: .openFolio)
+        let entry = Self.entries(from: Date(), family: context.family).first ?? AiringEntry(date: Date(), content: .openFolio)
         completion(context.isPreview && entry.rows.isEmpty && entry.recent.isEmpty ? .sample() : entry)
     }
 
     /// The entries below; a new timeline after the last (the app also
     /// reloads it whenever the schedules change).
     func getTimeline(in context: Context, completion: @escaping (Timeline<AiringEntry>) -> Void) {
-        let entries = Self.entries(from: Date())
+        let entries = Self.entries(from: Date(), family: context.family)
         // Nothing read (1.28.6): asked again in an hour, not never.
         if entries.count == 1, case .snapshot = entries[0].content {
             completion(Timeline(entries: entries, policy: .never))
@@ -68,18 +68,42 @@ struct AiringProvider: TimelineProvider {
         }
     }
 
-    static func entries(from now: Date) -> [AiringEntry] {
+    /// The pictures a family's widgets draw at these moments (1.30.2):
+    /// every show's was decoded before the timeline was handed over. The
+    /// Lock Screen's draw none; small, the first row's (Airing Day: the
+    /// first not out yet); medium, the first row's and the newest episode
+    /// out (Out Now); large, the first five rows'. No family: all of them.
+    static func pictureNames(_ snap: AiringSnapshot, at dates: [Date], family: WidgetFamily?) -> Set<String> {
+        guard let family else { return Set(snap.items.compactMap(\.picture) + (snap.recent ?? []).compactMap(\.picture)) }
+        var names = Set<String>()
+        switch family {
+        case .accessoryInline, .accessoryRectangular, .accessoryCircular: return names
+        default: break
+        }
+        for date in dates {
+            let rows = snap.rows(at: date)
+            var wanted: [String?] = []
+            switch family {
+            case .systemSmall:
+                wanted = [rows.first?.item.picture, rows.first(where: { !$0.isOut })?.item.picture]
+            case .systemMedium:
+                let out = (snap.recent ?? []).filter { $0.airDate <= date }
+                let newest = out.map(\.airDate).max()
+                wanted = [rows.first?.item.picture] + out.filter { $0.airDate == newest }.map(\.picture)
+            default:
+                wanted = rows.prefix(5).map(\.item.picture)
+            }
+            for name in wanted { if let name { names.insert(name) } }
+        }
+        return names
+    }
+
+    static func entries(from now: Date, family: WidgetFamily? = nil) -> [AiringEntry] {
         let dir = WidgetStore.airing()
         guard let snap = AiringSnapshot.read(from: dir) else {
             return [AiringEntry(date: now, content: WidgetAccess.cantShare(dir) ? .cantShare : .openFolio)]
         }
         if dir?.isKeychain == true { KeychainShare.widgetSaw("Airing: \(snap.items.count) show(s)") }
-        var pictures: [String: UIImage] = [:]
-        if let dir {
-            for name in Set(snap.items.compactMap(\.picture) + (snap.recent ?? []).compactMap(\.picture)) {
-                if let data = dir.read(name), let img = UIImage(data: data) { pictures[name] = img }
-            }
-        }
         // A day before each air time too: the small widget's countdown
         // starts there (further out it shows the day).
         var dates = Set(snap.timelineDates(from: now))
@@ -87,7 +111,16 @@ struct AiringProvider: TimelineProvider {
             let start = e.airDate.addingTimeInterval(-86400)
             if start > now { dates.insert(start) }
         }
-        return dates.sorted().prefix(80).map { AiringEntry(date: $0, content: .snapshot(snap), pictures: pictures) }
+        // 24 entries, not 80 (1.30.2): less to make before the timeline is
+        // handed over; a new one is asked for after the last.
+        let moments = Array(dates.sorted().prefix(24))
+        var pictures: [String: UIImage] = [:]
+        if let dir {
+            for name in pictureNames(snap, at: moments, family: family) {
+                if let data = dir.read(name), let img = UIImage(data: data) { pictures[name] = img }
+            }
+        }
+        return moments.map { AiringEntry(date: $0, content: .snapshot(snap), pictures: pictures) }
     }
 }
 

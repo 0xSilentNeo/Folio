@@ -50,9 +50,13 @@ enum SettingsPreset {
         IMDbSource.Key.language: .string, IMDbSource.Key.minVotes: .int, IMDbSource.Key.animeJapan: .bool,
         // 1.23.0: the search's Files or Posters.
         SettingsKey.searchServerLayout: .string,
+        // 1.30.2: the appearance and the notifications' groups, kinds and sounds were left out.
+        SettingsKey.appearance: .string, SettingsKey.notifyGroupsOff: .strings, SettingsKey.notifyKindsOff: .strings,
+        SettingsKey.notifySounds: .dictionary,
     ]
-    /// Never exported: app bookkeeping, not choices.
-    private static let skip: Set<String> = ["enhancedQuality"]
+    /// Never exported: app bookkeeping, not choices. The test switches too
+    /// (1.30.2): a preset made with Test on turned it on wherever it was imported.
+    private static let skip: Set<String> = ["enhancedQuality", SettingsKey.notifyTest, SettingsKey.engageQuick]
 
     private static func kind(of v: Any) -> Kind? {
         if let n = v as? NSNumber {

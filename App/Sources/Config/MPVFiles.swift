@@ -111,8 +111,21 @@ enum MPVFiles {
         let scoped = src.startAccessingSecurityScopedResource()
         defer { if scoped { src.stopAccessingSecurityScopedResource() } }
         let dest = dir.appendingPathComponent(src.lastPathComponent)
-        if fm.fileExists(atPath: dest.path) { try fm.removeItem(at: dest) }
-        try fm.copyItem(at: src, to: dest)
+        // Copied beside it under another name first (1.30.2): the file already
+        // there was deleted before the copy, and lost when the copy failed.
+        // (A hidden name with no .lua: mpv and the lists here pass it over.)
+        let tmp = dir.appendingPathComponent(".import-\(UUID().uuidString).tmp")
+        do {
+            try fm.copyItem(at: src, to: tmp)
+            if fm.fileExists(atPath: dest.path) {
+                _ = try fm.replaceItemAt(dest, withItemAt: tmp)
+            } else {
+                try fm.moveItem(at: tmp, to: dest)
+            }
+        } catch {
+            try? fm.removeItem(at: tmp)
+            throw error
+        }
         return dest
     }
 

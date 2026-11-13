@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 /// The shows you track, saved as tracking.json in Application Support.
 ///
@@ -121,6 +122,8 @@ final class TrackingStore: ObservableObject {
     private func run(_ due: [TrackedShow], reason: String) async {
         dlog("tracking", "refreshing \(due.count) show(s) (\(reason))")
         var found = 0, missing = 0, failed = 0
+        // Not from a background refresh (1.30.2): its time is for the schedules.
+        let background = UIApplication.shared.applicationState == .background
         for var s in due {
             guard !Task.isCancelled else { break }
             // Shows tracked before 1.22.6 don't know whether the series has
@@ -129,7 +132,14 @@ final class TrackingStore: ObservableObject {
             // Dragon Ball tracked from the library kept Beerus's dates).
             if s.seriesEnded == nil, let imdb = s.imdb {
                 var ended = IMDbSource.cachedDetails(id: imdb)?.hasEnded == true
-                if !ended, let d = await IMDbSource.details(id: imdb, type: "series") { ended = d.hasEnded }
+                // Asked once a week (1.30.2): a show still running had its
+                // title page downloaded on every refresh once the cache lapsed.
+                let asked = s.endedChecked.map { abs(Date().timeIntervalSince($0)) < 7 * 86_400 } ?? false
+                if !ended, !asked, !background, let d = await IMDbSource.details(id: imdb, type: "series") {
+                    ended = d.hasEnded
+                    s.endedChecked = Date()
+                    if let i = shows.firstIndex(where: { $0.id == s.id }) { shows[i].endedChecked = s.endedChecked }
+                }
                 if ended {
                     s.seriesEnded = true
                     if let i = shows.firstIndex(where: { $0.id == s.id }) { shows[i].seriesEnded = true }
@@ -140,14 +150,17 @@ final class TrackingStore: ObservableObject {
             // 1.22.6 Dragon Ball kept Dragon Ball Super: Beerus's. Looked up
             // again by name, without following sequels.
             var repaired = false
-            if s.seriesEnded == true, s.imdb != nil, s.source == .anilist {
+            // Once (1.30.2): the fetch puts AniList back as the source, so
+            // the ids were dropped and searched by name on every refresh.
+            if s.seriesEnded == true, s.imdb != nil, s.source == .anilist, s.sequelRepaired != true {
                 s.anilist = nil; s.mal = nil; s.source = nil
+                s.sequelRepaired = true
                 repaired = true
             }
             let outcome = await AiringService.shared.fetch(s)
             // Stopped tracking while it was asked.
             guard let i = shows.firstIndex(where: { $0.id == s.id }) else { continue }
-            if repaired { shows[i].anilist = nil; shows[i].mal = nil; shows[i].source = nil }
+            if repaired { shows[i].anilist = nil; shows[i].mal = nil; shows[i].source = nil; shows[i].sequelRepaired = true }
             switch outcome {
             case .found(let f):
                 shows[i].apply(f, at: Date())

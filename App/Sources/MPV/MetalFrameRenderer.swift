@@ -221,7 +221,7 @@ final class MetalFrameRenderer: FrameRenderer {
         askedForBuffer = true
         lock.unlock()
         if first { trace("Metal: the engine asks for a \(w)×\(h) buffer") }
-        guard go, w > 0, h > 0, let cache else { return nil }
+        guard go, w > 0, h > 0, let cache else { notDrawing(); return nil }
         let half = hdr != nil
         guard let pool = ensurePool(w, h, half) else { return skip("no pixel buffer pool for \(w)×\(h)") }
         var pbOut: CVPixelBuffer?
@@ -271,6 +271,9 @@ final class MetalFrameRenderer: FrameRenderer {
     private func ensurePool(_ w: Int, _ h: Int, _ half: Bool) -> CVPixelBufferPool? {
         lock.lock(); defer { lock.unlock() }
         if let pool, poolKey == (w, h, half) { return pool }
+        // Another size or format: the textures kept for the last one's
+        // buffers go (1.30.2); the cache was never emptied.
+        if let cache { CVMetalTextureCacheFlush(cache, 0) }
         let attrs: [String: Any] = [
             kCVPixelBufferPixelFormatTypeKey as String: half ? kCVPixelFormatType_64RGBAHalf : kCVPixelFormatType_32BGRA,
             kCVPixelBufferWidthKey as String: w,
@@ -288,7 +291,15 @@ final class MetalFrameRenderer: FrameRenderer {
     /// Why no frame was handed over, once per reason in a row.
     private func skip(_ why: String) -> UnsafeMutableRawPointer? {
         if why != lastSkip { lastSkip = why; trace("Metal: no frame: \(why)") }
+        notDrawing()
         return nil
+    }
+
+    /// No buffer for this frame, so the engine never calls `present` for it
+    /// (1.30.2): `drawing` stayed set, and stopping (setRenderingAllowed)
+    /// waited its whole 150 ms on the main thread.
+    private func notDrawing() {
+        lock.lock(); drawing = false; lock.unlock()
     }
 
     /// In the app log always (a new path), and in the PiP trace.

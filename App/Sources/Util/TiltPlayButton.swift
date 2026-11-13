@@ -117,7 +117,8 @@ struct TiltPlayButton: View {
         .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.7), value: touch)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: pressed)
         .contentShape(shape)
-        .background(GeometryReader { g in Color.clear.onAppear { size = g.size } })
+        // Its size now, not only the one it appeared with (1.30.2).
+        .background(GeometryReader { g in Color.clear.onAppear { size = g.size }.onChange(of: g.size) { _, new in size = new } })
     }
 
     private func clamp(_ v: CGFloat) -> CGFloat { min(1, max(-1, v)) }

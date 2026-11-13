@@ -120,16 +120,22 @@ final class Diagnostics: NSObject {
         log("app", "logs cleared")
     }
 
-    func error(_ tag: String, _ message: String) { log(tag + "/error", message) }
-
-    /// Measures a block and logs it when it takes longer than `warnAbove`.
-    func time<T>(_ tag: String, _ what: String, warnAbove: Double = 0.05, _ body: () throws -> T) rethrows -> T {
-        let t0 = CFAbsoluteTimeGetCurrent()
-        defer {
-            let dt = CFAbsoluteTimeGetCurrent() - t0
-            if dt > warnAbove { log(tag + "/slow", String(format: "%@ took %.0f ms%@", what, dt * 1000, Thread.isMainThread ? " on main" : "")) }
+    /// Adds to hangs.log or metrickit.log and keeps the newest `cap` bytes
+    /// (1.30.2): they only ever grew, as app.log did before it was capped.
+    /// Cut once a quarter over, from the start of a line.
+    static func append(_ text: String, to url: URL, cap: Int) {
+        let data = Data(text.utf8)
+        guard let h = try? FileHandle(forWritingTo: url) else {
+            try? data.write(to: url, options: .atomic)
+            return
         }
-        return try body()
+        let before = Int((try? h.seekToEnd()) ?? 0)
+        try? h.write(contentsOf: data)
+        try? h.close()
+        guard before + data.count > cap + cap / 4, let all = try? Data(contentsOf: url) else { return }
+        var tail = all.suffix(cap)
+        if let line = tail.firstIndex(of: 0x0A) { tail = tail[(line + 1)...] }
+        try? Data(tail).write(to: url, options: .atomic)
     }
 
     private func rotateIfNeeded() {
@@ -310,8 +316,7 @@ final class Diagnostics: NSObject {
                 if stalled > 1.5 && !reported {
                     self.log("hang", String(format: "main thread unresponsive for %.1f s", stalled))
                     let text = "\(Date()) main thread stalled \(String(format: "%.1f", stalled)) s\n\n"
-                    if let h = try? FileHandle(forWritingTo: self.hangLog) { _ = try? h.seekToEnd(); try? h.write(contentsOf: Data(text.utf8)); try? h.close() }
-                    else { try? text.write(to: self.hangLog, atomically: true, encoding: .utf8) }
+                    Self.append(text, to: self.hangLog, cap: 1 << 20)
                 }
             }
         }
@@ -407,8 +412,7 @@ extension Diagnostics: MXMetricManagerSubscriber {
             for h in p.hangDiagnostics ?? [] { text += "HANG \(h.hangDuration)\n\(String(decoding: h.callStackTree.jsonRepresentation(), as: UTF8.self))\n\n" }
         }
         guard !text.isEmpty else { return }
-        if let h = try? FileHandle(forWritingTo: metricLog) { _ = try? h.seekToEnd(); try? h.write(contentsOf: Data(text.utf8)); try? h.close() }
-        else { try? text.write(to: metricLog, atomically: true, encoding: .utf8) }
+        Self.append(text, to: metricLog, cap: 2 << 20)
         log("metrickit", "received \(payloads.count) diagnostic payload(s)")
     }
 

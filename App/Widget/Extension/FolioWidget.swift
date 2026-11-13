@@ -85,13 +85,13 @@ struct ContinueProvider: TimelineProvider {
     func placeholder(in context: Context) -> ContinueEntry { .sample }
 
     func getSnapshot(in context: Context, completion: @escaping (ContinueEntry) -> Void) {
-        let entry = Self.load()
+        let entry = Self.load(family: context.family)
         // The gallery shows what you're watching, or a sample when there's nothing yet.
         completion(context.isPreview && !entry.hasItems ? .sample : entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<ContinueEntry>) -> Void) {
-        let entry = Self.load()
+        let entry = Self.load(family: context.family)
         // Nothing read (1.28.6): asked again in an hour (1.28.7; a quarter
         // of one would use up the day's refreshes where nothing can be read). With
         // .never a read that failed once (before the first unlock after a
@@ -102,7 +102,25 @@ struct ContinueProvider: TimelineProvider {
         }
     }
 
-    static func load() -> ContinueEntry {
+    /// The pictures a family's widgets draw (1.30.2): every item's picture
+    /// and poster was decoded before the timeline was handed over, whatever
+    /// the size. The Lock Screen's draw none; small, the first title's;
+    /// medium, the first three's; large, the first four's and six posters
+    /// (the shelf). No family: all of them.
+    static func pictureNames(_ items: [ContinueSnapshot.Item], family: WidgetFamily?) -> [String] {
+        guard let family else { return items.flatMap { [$0.picture, $0.poster] }.compactMap { $0 } }
+        var names: [String?] = []
+        switch family {
+        case .accessoryInline, .accessoryRectangular, .accessoryCircular: break
+        case .systemSmall: names = items.prefix(1).map(\.picture)
+        case .systemMedium: names = items.prefix(3).map(\.picture)
+        default: names = items.prefix(4).map(\.picture) + items.prefix(6).map { $0.poster ?? $0.picture }
+        }
+        var seen = Set<String>()
+        return names.compactMap { $0 }.filter { seen.insert($0).inserted }
+    }
+
+    static func load(family: WidgetFamily? = nil) -> ContinueEntry {
         let dir = WidgetStore.continueWatching()
         guard let snapshot = ContinueSnapshot.read(from: dir) else {
             return ContinueEntry(date: Date(), content: WidgetAccess.cantShare(dir) ? .cantShare : .openFolio)
@@ -111,7 +129,7 @@ struct ContinueProvider: TimelineProvider {
         guard !snapshot.items.isEmpty else { return ContinueEntry(date: Date(), content: .empty) }
         var pictures: [String: UIImage] = [:]
         if let dir {
-            for name in snapshot.items.flatMap({ [$0.picture, $0.poster] }).compactMap({ $0 }) {
+            for name in pictureNames(snapshot.items, family: family) {
                 if let data = dir.read(name), let img = UIImage(data: data) { pictures[name] = img }
             }
         }

@@ -35,6 +35,24 @@ enum ChunkPlan {
     static let slowShare = 0.15
     static let slowFloor: Double = 64 * 1024
 
+    /// What a file that failed for want of space says (1.30.2); the manager
+    /// doesn't retry it (DownloadManager.isPermanent).
+    static let noSpace = "Not enough space on this iPhone"
+
+    /// A write that failed because the disk is full, also as the reason
+    /// under another error (URLSession's "can't write to file").
+    static func isOutOfSpace(_ error: Error) -> Bool {
+        var next: NSError? = error as NSError
+        var depth = 0
+        while let e = next, depth < 4 {
+            if e.domain == NSCocoaErrorDomain && e.code == NSFileWriteOutOfSpaceError { return true }
+            if e.domain == NSPOSIXErrorDomain && e.code == Int(ENOSPC) { return true }
+            next = e.userInfo[NSUnderlyingErrorKey] as? NSError
+            depth += 1
+        }
+        return false
+    }
+
     /// What the chunks have on disk.
     static func received(_ chunks: [DownloadChunk]) -> Int64 { chunks.reduce(0) { $0 + $1.received } }
 
@@ -555,7 +573,14 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         let index = entry.chunk
         guard flush(index) else { return }
         if restarting.remove(task.taskIdentifier) != nil {
-            if !chunks[index].isDone { startTask(index) }
+            if !chunks[index].isDone { startTask(index); return }
+            // Its range was in after all (1.30.2): the same end as below.
+            // Returning here left a whole file "downloading" at 100%.
+            if chunks.allSatisfy(\.isDone) {
+                if tasks.isEmpty { complete() }
+                return
+            }
+            fillConnections()
             return
         }
         if chunks[index].end < 0, error == nil {
@@ -650,7 +675,8 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
             return true
         } catch {
             buffers[index] = b
-            fail("Couldn't write the download: \(error.localizedDescription)")
+            // A full disk says so, and isn't tried again (1.30.2).
+            fail(ChunkPlan.isOutOfSpace(error) ? ChunkPlan.noSpace : "Couldn't write the download: \(error.localizedDescription)")
             return false
         }
     }

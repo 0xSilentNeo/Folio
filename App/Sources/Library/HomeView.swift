@@ -12,7 +12,6 @@ struct HomeView: View {
     @State private var editingServer: WebDAVServer?
     @State private var showAddFiles = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     @State private var path: [LibraryRoute] = []
 

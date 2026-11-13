@@ -182,8 +182,30 @@ enum WidgetImages {
 
     /// The picture made small and blurred: frosted glass. A Gaussian blur on
     /// a 64-pixel copy (a bare upscale of a tiny copy showed blocks: lab, 7 Nov).
-    /// Not kept, as each timeline reads its pictures again; it's two small drawings.
+    /// Kept for the picture it was made of (1.30.2): every entry of a
+    /// timeline draws the same picture, and each drew its glass again.
     static func softened(_ image: UIImage) -> UIImage? {
+        let key = NSNumber(value: Int(bitPattern: ObjectIdentifier(image)))
+        if let hit = softCache.object(forKey: key), hit.source === image { return hit.image }
+        guard let made = soften(image) else { return nil }
+        softCache.setObject(Softened(source: image, image: made), forKey: key)
+        return made
+    }
+
+    /// A softened picture and the one it was made of (weak: an address used again isn't mistaken for it).
+    private final class Softened {
+        weak var source: UIImage?
+        let image: UIImage
+        init(source: UIImage, image: UIImage) { self.source = source; self.image = image }
+    }
+
+    private static let softCache: NSCache<NSNumber, Softened> = {
+        let c = NSCache<NSNumber, Softened>()
+        c.countLimit = 12
+        return c
+    }()
+
+    private static func soften(_ image: UIImage) -> UIImage? {
         let side: CGFloat = 64
         let f = UIGraphicsImageRendererFormat()
         f.scale = 1

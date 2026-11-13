@@ -124,12 +124,20 @@ struct CatalogBrowserView: View {
         let own = (UserDefaults.standard.dictionary(forKey: SettingsKey.folderSorts)?[sortKey] as? Data)
             ?? UserDefaults.standard.data(forKey: SettingsKey.folderSortLast)
         guard let data = own, let pref = try? JSONDecoder().decode(FolderSortPref.self, from: data) else { return }
+        shownPref = pref
         sort = pref.sort
         ascending = pref.ascending
     }
 
+    /// The order the folder opened with (1.30.2, as the WebDAV browser):
+    /// only a different one is saved as the folder's own. Opening a folder
+    /// saved the inherited order for it, so every folder visited kept an entry.
+    @State private var shownPref: FolderSortPref?
+
     private func saveSortPref() {
-        guard prefLoaded, let data = try? JSONEncoder().encode(FolderSortPref(sort: sort, ascending: ascending)) else { return }
+        let pref = FolderSortPref(sort: sort, ascending: ascending)
+        guard prefLoaded, pref != shownPref, let data = try? JSONEncoder().encode(pref) else { return }
+        shownPref = pref
         var dict = UserDefaults.standard.dictionary(forKey: SettingsKey.folderSorts) ?? [:]
         dict[sortKey] = data
         UserDefaults.standard.set(dict, forKey: SettingsKey.folderSorts)
@@ -230,7 +238,12 @@ final class ServerArtLoader: ObservableObject {
         let cacheKey = "server-art|\(Int(pixels))|" + key
         if let c = ImageCache.shared.picture(forKey: cacheKey) { image = c; return }
         Task {
-            guard let data = try? await ServerHTTP.data(request) else { return }
+            guard let data = try? await ServerHTTP.data(request) else {
+                // Asked again when the row is next shown (1.30.2): the key
+                // stayed, so a picture that failed once never loaded.
+                if self.key == key { self.key = nil }
+                return
+            }
             let img = await Task.detached(priority: .userInitiated) { ImageCache.downsample(data, maxPixel: pixels) }.value
             guard let img else { return }
             ImageCache.shared.remember(img, forKey: cacheKey)

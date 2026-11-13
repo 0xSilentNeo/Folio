@@ -113,6 +113,12 @@ struct TrackedShow: Codable, Identifiable, Hashable, Sendable {
     /// followed (Dragon Ball took Dragon Ball Super: Beerus's schedule), and
     /// the show stops being tracked once its last episode's week is over.
     var seriesEnded: Bool?
+    /// When IMDb was last asked whether the series has ended (1.30.2): a
+    /// show still running was asked on every refresh.
+    var endedChecked: Date?
+    /// An ended series' AniList entry has been looked up again by name
+    /// (1.30.2, TrackingStore.run): once is enough.
+    var sequelRepaired: Bool?
 
     init(id: String, name: String) {
         self.id = id

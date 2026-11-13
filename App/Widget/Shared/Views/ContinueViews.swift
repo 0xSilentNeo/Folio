@@ -70,20 +70,21 @@ struct ContinueWidgetView: View {
             }
         case .empty:
             switch family {
-            case .accessoryInline: Text("Nothing to continue").widgetURL(GlanceLink.home)
+            // The inline ones say they have no background too (1.30.2), as every other Lock Screen view does.
+            case .accessoryInline: Text("Nothing to continue").widgetURL(GlanceLink.home).containerBackground(for: .widget) { Color.clear }
             case .accessoryRectangular, .accessoryCircular: ContinueLockMessage(text: "Nothing to continue")
             default: WidgetMessage(icon: "play.rectangle", title: "Nothing to continue", detail: "What you start in Folio shows up here.",
                                    action: "Browse", url: GlanceLink.home)
             }
         case .openFolio:
             switch family {
-            case .accessoryInline: Text("Open Folio once")
+            case .accessoryInline: Text("Open Folio once").containerBackground(for: .widget) { Color.clear }
             case .accessoryRectangular, .accessoryCircular: ContinueLockMessage(text: "Open Folio once")
             default: WidgetMessage(icon: "play.rectangle.fill", title: "Open Folio once", detail: "to see what you're watching here.", url: GlanceLink.home)
             }
         case .cantShare:
             switch family {
-            case .accessoryInline: Text("Can't reach Folio")
+            case .accessoryInline: Text("Can't reach Folio").containerBackground(for: .widget) { Color.clear }
             case .accessoryRectangular, .accessoryCircular: ContinueLockMessage(text: "Can't reach Folio")
             default: WidgetMessage(icon: "lock.rectangle", title: "Can't reach Folio", detail: WidgetAccessText.cantShareDetail)
             }

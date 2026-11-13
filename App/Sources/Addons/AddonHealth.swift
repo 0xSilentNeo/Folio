@@ -26,12 +26,34 @@ final class AddonHealth: ObservableObject {
         }
     }
 
+    /// Answers not yet shown or saved, and the task that will do both.
+    private var pending: [String: Answer] = [:]
+    private var flushing: Task<Void, Never>?
+
+    /// Shown and saved two seconds later, together (1.30.2): every addon
+    /// request wrote the whole list to UserDefaults and redrew Addons.
     func note(_ id: String, ms: Int, ok: Bool, what: String) {
-        last[id] = Answer(ms: ms, ok: ok, at: Date(), what: what)
+        pending[id] = Answer(ms: ms, ok: ok, at: Date(), what: what)
+        guard flushing == nil else { return }
+        flushing = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            self?.flush()
+        }
+    }
+
+    private func flush() {
+        flushing = nil
+        guard !pending.isEmpty else { return }
+        var next = last
+        for (id, a) in pending { next[id] = a }
+        pending = [:]
+        guard next != last else { return }
+        last = next
         UserDefaults.standard.set(try? JSONEncoder().encode(last), forKey: Self.key)
     }
 
     func forget(_ id: String) {
+        pending[id] = nil
         guard last.removeValue(forKey: id) != nil else { return }
         UserDefaults.standard.set(try? JSONEncoder().encode(last), forKey: Self.key)
     }

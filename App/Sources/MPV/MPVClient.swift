@@ -139,9 +139,16 @@ final class MPVClient {
     /// thread; batch them here instead of on the main thread.
     private let queryQueue = DispatchQueue(label: "mpv.query", qos: .userInitiated)
 
-    func query<T>(_ work: @escaping (MPVClient) -> T, then completion: @escaping @MainActor (T) -> Void) {
+    /// `orElse` (1.30.2): called on the main thread when the client was shut
+    /// down before the read ran, so a caller waiting for `completion` (a
+    /// continuation) is still answered.
+    func query<T>(_ work: @escaping (MPVClient) -> T, then completion: @escaping @MainActor (T) -> Void,
+                  orElse: (@MainActor () -> Void)? = nil) {
         queryQueue.async { [self] in
-            guard !isShutDown else { return }
+            guard !isShutDown else {
+                if let orElse { DispatchQueue.main.async { orElse() } }
+                return
+            }
             let result = work(self)
             DispatchQueue.main.async { completion(result) }
         }
@@ -412,7 +419,5 @@ struct MPVClientError: Error, LocalizedError {
 
 /// MPV_END_FILE_REASON_* values.
 enum MPVEndReason {
-    static let stop: Int32 = 2
-    static let quit: Int32 = 3
     static let error: Int32 = 4
 }

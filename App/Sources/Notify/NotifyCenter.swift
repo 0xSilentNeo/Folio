@@ -213,7 +213,10 @@ enum NotifyCenter {
         let chosen = Array(NotifyPlanner.choose(all, rules(now: now)).prefix(maxPending))
         var records: [Scheduled] = []
         for ch in chosen {
-            if let r = await schedule(ch.candidate, at: ch.fire, test: false) { records.append(r) }
+            // Written down as each is added (1.30.2): each waits up to 4 s
+            // for its picture, and iOS suspending Folio part-way left the
+            // ones already added unrecorded, to be sent again.
+            if let r = await schedule(ch.candidate, at: ch.fire, test: false) { records.append(r); saveScheduled(records) }
         }
         saveScheduled(records)
         let f = DateFormatter()
@@ -475,7 +478,7 @@ enum NotifyCenter {
         let times = NotifyPlanner.testTimes(list.count, from: Date())
         var records: [Scheduled] = []
         for (c, t) in zip(list, times) {
-            if let r = await schedule(c, at: t, test: true, requestID: prefix + "test.\(c.kind.rawValue)") { records.append(r) }
+            if let r = await schedule(c, at: t, test: true, requestID: prefix + "test.\(c.kind.rawValue)") { records.append(r); saveScheduled(records) }
         }
         saveScheduled(records)
         dlog("notify", "test: \(records.count) notifications, 20 s apart, from \(list.first?.kind.rawValue ?? "none")")

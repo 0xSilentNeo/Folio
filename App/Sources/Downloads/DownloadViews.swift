@@ -895,6 +895,9 @@ struct DownloadSettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: concurrent) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: lowPower) { _, _ in DownloadManager.shared.settingsChanged() }
+        // The queue is looked at again (1.30.2): a file started from now on
+        // takes the new setting (running ones keep the one they began with).
+        .onChange(of: cellular) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: charging) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: liveActivities) { _, _ in LiveActivities.settingChanged() }
         // Turning it on deletes finished downloads at once: asked first (1.26.1).

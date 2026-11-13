@@ -415,6 +415,7 @@ enum SystemVolume {
     /// reason: iOS's indicator went for the rest of the run and the volume
     /// jumped back to where the swipe began).
     private static var asked: Float = 0
+    private static var baseline: Float?
     /// iOS's own indicator is in use (so the player doesn't draw its HUD for volume).
     private(set) static var nativeHUD = true
 
@@ -429,15 +430,20 @@ enum SystemVolume {
 
     static func set(_ value: Float) {
         guard let slider else { return }
-        let before = current
+        // Where the volume was when the first change was asked for: small
+        // steps (the keyboard's are 1/16) add up against it.
+        if baseline == nil { baseline = current }
+        let before = baseline ?? current
         slider.value = value
         slider.sendActions(for: .valueChanged)
         asked = value
-        // Checked on the first change that asks for a real move.
+        // Checked once a real move has been asked for.
         guard !checked, abs(value - before) > 0.1 else { return }
         checked = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             let now = current, value = asked
+            // Asked back to where it began meanwhile: nothing to tell from.
+            guard abs(value - before) > 0.05 else { checked = false; return }
             // "Didn't set it" is the volume not having moved at all (1.30.1).
             // It was "not within 0.08 of what was asked", and a Bluetooth
             // headset moves in steps of 1/16 and a moment late: 12 Nov report,

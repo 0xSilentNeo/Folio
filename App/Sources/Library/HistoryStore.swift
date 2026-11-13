@@ -282,17 +282,30 @@ final class HistoryStore: ObservableObject {
     /// and are added back at play time.
     private static func stored(_ item: MediaItem) -> MediaItem {
         var stored = item
-        if case .webdav = item.source { stored.headers.removeValue(forKey: "Authorization") }
+        // (Whatever the header's case, 1.30.2.)
+        if case .webdav = item.source { stored.headers = stored.headers.filter { $0.key.lowercased() != "authorization" } }
         return stored
+    }
+
+    /// A look into an entry that was marked watched keeps the mark
+    /// (1.30.2): playing a watched episode again replaced the whole entry,
+    /// and five seconds in it read as unwatched. Only a look, though: past
+    /// the first minute (or 5% of it) it is being watched again, and its
+    /// place decides as before, so it can be resumed.
+    nonisolated static func carryingWatched(_ new: HistoryEntry, from old: HistoryEntry) -> HistoryEntry {
+        guard old.watched == true, !new.isFinished, new.position < max(60, new.duration * 0.05) else { return new }
+        var e = new
+        e.watched = true
+        return e
     }
 
     func record(_ item: MediaItem, position: Double, duration: Double) {
         guard position.isFinite, duration.isFinite else { return }
         let entry = HistoryEntry(item: Self.stored(item), position: position, duration: duration, updated: Date())
         if let i = entries.firstIndex(where: { $0.id == item.id }) {
-            entries[i] = entry
+            entries[i] = Self.carryingWatched(entry, from: entries[i])
         } else if let rel = Self.libraryRelative(item.id), let i = entries.firstIndex(where: { Self.libraryRelative($0.id) == rel }) {
-            entries[i] = entry          // the same library file under another path (1.23.2)
+            entries[i] = Self.carryingWatched(entry, from: entries[i])          // the same library file under another path (1.23.2)
         } else {
             entries.append(entry)
             trim()                      // only a new entry can take it over a cap

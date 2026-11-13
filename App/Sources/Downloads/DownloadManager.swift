@@ -608,6 +608,10 @@ final class DownloadManager: ObservableObject {
             }
             if held > 0 { dlog("dl", "holding \(held) download(s): Low Power Mode or not charging") }
             updateTicker(); save()
+            // A moment for the pauses' writes first (1.30.2): ending iOS's
+            // task below may suspend Folio before a file in Folio has
+            // written what arrived (stoppedOne ends it).
+            if !stopping.isEmpty, stopTime == nil { stopTime = BackgroundTime("folio.download.stop") }
             // iOS's own progress is told too (1.30.1): held, nothing reports
             // to it (the ticker stops), and its task stayed alive with its
             // progress frozen, keeping Folio awake in the background.
@@ -1212,7 +1216,7 @@ final class DownloadManager: ObservableObject {
                 if items[i].parts?.allSatisfy(\.done) == true { items[i].parts = nil; Self.removePartFiles(id) }
                 recount(i)
                 items[i].state = .failed
-                items[i].error = "Couldn't put the file together: \(error.localizedDescription)"
+                items[i].error = ChunkPlan.isOutOfSpace(error) ? ChunkPlan.noSpace : "Couldn't put the file together: \(error.localizedDescription)"
                 save(); pump()
             }
         }
@@ -1244,6 +1248,13 @@ final class DownloadManager: ObservableObject {
 
     private func finished(_ id: UUID, _ tmp: URL) {
         guard let i = index(id) else { try? FileManager.default.removeItem(at: tmp); return }
+        // Already saved (1.30.2): a transfer that ended late, after the file
+        // was started again and finished, was saved beside it as "Name 2".
+        if items[i].state == .done {
+            dlog("dl", "\(items[i].fileName): a second copy arrived after it was done, dropped")
+            if tmp.standardizedFileURL != items[i].destination.standardizedFileURL { try? FileManager.default.removeItem(at: tmp) }
+            return
+        }
         var dest = items[i].destination
         let fm = FileManager.default
         do {
@@ -1257,7 +1268,7 @@ final class DownloadManager: ObservableObject {
         } catch {
             let ns = error as NSError
             items[i].state = .failed
-            items[i].error = "Couldn't save the file: \(error.localizedDescription)"
+            items[i].error = ChunkPlan.isOutOfSpace(error) ? ChunkPlan.noSpace : "Couldn't save the file: \(error.localizedDescription)"
             dlog("dl/error", "couldn't save \(items[i].fileName) to \(DownloadItem.documentsPath(dest.path) ?? "outside Documents")"
                  + "\(dest.path.hasPrefix(MPVFiles.documents.path) ? "" : " (not this container's)"): \(ns.domain) \(ns.code) \(error.localizedDescription)")
             // The whole file downloaded in Folio stays, so Retry tries the
@@ -1386,6 +1397,8 @@ final class DownloadManager: ObservableObject {
         // A web page where the file should be (1.28.7): an expired link
         // sends the same page however often it's asked.
         if message.contains("sent a web page instead of the file") { return true }
+        // A full disk (1.30.2): every retry fails the same way.
+        if message.contains(ChunkPlan.noSpace) { return true }
         guard let r = message.range(of: #"HTTP (\d{3})"#, options: .regularExpression),
               let code = Int(message[r].dropFirst(5)) else { return false }
         return [401, 403, 404, 410].contains(code)
@@ -1445,9 +1458,13 @@ final class DownloadManager: ObservableObject {
         let need = items.contains { $0.state == .running }
         if need, ticker == nil {
             lastTick = CACurrentMediaTime()
-            ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            // In the common modes (1.30.2): a scheduled timer waits while a
+            // list is scrolled, and the speeds stood still under the finger.
+            let t = Timer(timeInterval: 1, repeats: true) { _ in
                 MainActor.assumeIsolated { DownloadManager.shared.tick(force: false) }
             }
+            RunLoop.main.add(t, forMode: .common)
+            ticker = t
         } else if !need, let t = ticker {
             t.invalidate(); ticker = nil
             speed = 0
@@ -1551,15 +1568,22 @@ final class DownloadManager: ObservableObject {
     private func saveNow() {
         saveWork?.cancel()
         saveWork = nil
-        if let d = try? JSONEncoder().encode(items) { try? d.write(to: file, options: .atomic) }
+        let snapshot = items, url = file
+        // On the queue every write is on (1.30.2), and waited for: one
+        // already being written a moment ago ends first, not after this.
+        Self.saveQueue.sync { if let d = try? JSONEncoder().encode(snapshot) { try? d.write(to: url, options: .atomic) } }
     }
+
+    /// One write of the list at a time, in the order asked (1.30.2): an
+    /// older list on the shared queue could land after a newer one.
+    private nonisolated static let saveQueue = DispatchQueue(label: "folio.downloads.save", qos: .utility)
 
     private func save() {
         saveWork?.cancel()
         let snapshot = items, url = file
         let w = DispatchWorkItem { if let d = try? JSONEncoder().encode(snapshot) { try? d.write(to: url, options: .atomic) } }
         saveWork = w
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.4, execute: w)
+        Self.saveQueue.asyncAfter(deadline: .now() + 0.4, execute: w)
     }
 }
 
@@ -1602,8 +1626,18 @@ final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sen
     static var resumeDir: URL {
         let d = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DownloadResume", isDirectory: true)
         try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+        _ = resumeDirKeptOffBackups
         return d
     }
+    /// Not in backups (1.30.2): resume data holds the request, a WebDAV
+    /// server's login header with it. Once a launch, for a folder an
+    /// earlier version made as well.
+    private static let resumeDirKeptOffBackups: Bool = {
+        var d = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DownloadResume", isDirectory: true)
+        var v = URLResourceValues()
+        v.isExcludedFromBackup = true
+        return (try? d.setResourceValues(v)) != nil
+    }()
     /// Finished parts until they're joined (1.22.1: Application Support, not
     /// Caches, which iOS may empty while a long download runs).
     static var partialDir: URL {
@@ -1647,7 +1681,14 @@ final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sen
     /// Part transfers whose answer was looked at (by task identifier).
     private var checked = Set<Int>()
 
-    lazy var session: URLSession = {
+    /// Made once, under a lock (1.30.2): as a lazy var, two threads asking
+    /// first at the same moment (the app delegate, a task on the pool) could
+    /// each make a background session of the one identifier.
+    private let sessionLock = NSLock()
+    private var madeSession: URLSession?
+    var session: URLSession {
+        sessionLock.lock(); defer { sessionLock.unlock() }
+        if let s = madeSession { return s }
         let c = URLSessionConfiguration.background(withIdentifier: Self.identifier)
         c.sessionSendsLaunchEvents = true
         // At once, not when iOS finds it convenient. (A transfer started
@@ -1658,8 +1699,10 @@ final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sen
         c.httpMaximumConnectionsPerHost = 16
         c.allowsExpensiveNetworkAccess = true
         c.allowsConstrainedNetworkAccess = true
-        return URLSession(configuration: c, delegate: self, delegateQueue: nil)
-    }()
+        let s = URLSession(configuration: c, delegate: self, delegateQueue: nil)
+        madeSession = s
+        return s
+    }
 
     func liveKeys() async -> [String] {
         await session.allTasks.compactMap { t in
@@ -1897,7 +1940,7 @@ final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sen
         } catch {
             let ns = error as NSError
             dlog("dl/error", "\(Self.label(key)): couldn't keep the downloaded file: \(ns.domain) \(ns.code) \(ns.localizedDescription)")
-            let msg = "Couldn't keep the downloaded file: \(ns.localizedDescription)"
+            let msg = ChunkPlan.isOutOfSpace(error) ? ChunkPlan.noSpace : "Couldn't keep the downloaded file: \(ns.localizedDescription)"
             DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(key, msg, nil, false) } }
         }
     }
@@ -1915,7 +1958,8 @@ final class DownloadEngine: NSObject, URLSessionDownloadDelegate, @unchecked Sen
         let status = (task.response as? HTTPURLResponse)?.statusCode
         dlog("dl", "\(Self.label(key)) stopped after \(task.countOfBytesReceived.byteString): \(ns.domain) \(ns.code)"
              + "\(status.map { ", HTTP \($0)" } ?? "")\(resume != nil ? ", resume data kept" : "")")
-        let msg = error.localizedDescription
+        // A full disk in words (1.30.2), and not tried again (isPermanent).
+        let msg = ChunkPlan.isOutOfSpace(error) ? ChunkPlan.noSpace : error.localizedDescription
         DispatchQueue.main.async { MainActor.assumeIsolated { self.onFailed?(key, msg, resume, false) } }
     }
 

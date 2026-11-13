@@ -178,6 +178,15 @@ enum NotifySounds {
                                        AVNumberOfChannelsKey: min(2, format.channelCount), AVLinearPCMBitDepthKey: 16,
                                        AVLinearPCMIsFloatKey: false, AVLinearPCMIsBigEndianKey: false]
         let output = try AVAudioFile(forWriting: dest, settings: settings, commonFormat: format.commonFormat, interleaved: format.isInterleaved)
+        // More than two channels (1.30.2): the file takes two, and a buffer
+        // of the input's six raised an exception. Converted to the file's
+        // own format first (its first two channels).
+        let outFormat = output.processingFormat
+        var converter: AVAudioConverter?
+        if format.channelCount > 2 {
+            guard let c = AVAudioConverter(from: format, to: outFormat) else { throw CocoaError(.fileReadCorruptFile) }
+            converter = c
+        }
         let maxFrames = AVAudioFramePosition(29 * format.sampleRate)
         var written: AVAudioFramePosition = 0
         let chunk: AVAudioFrameCount = 8192
@@ -186,7 +195,13 @@ enum NotifySounds {
             guard let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: n) else { break }
             try input.read(into: buf, frameCount: n)
             if buf.frameLength == 0 { break }
-            try output.write(from: buf)
+            if let converter {
+                guard let out = AVAudioPCMBuffer(pcmFormat: outFormat, frameCapacity: buf.frameLength) else { break }
+                try converter.convert(to: out, from: buf)
+                try output.write(from: out)
+            } else {
+                try output.write(from: buf)
+            }
             written += AVAudioFramePosition(buf.frameLength)
         }
         dlog("notify", "sound imported: \(name), \(Int(Double(written) / format.sampleRate)) s")

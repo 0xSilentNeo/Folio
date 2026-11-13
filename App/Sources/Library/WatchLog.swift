@@ -125,9 +125,13 @@ final class WatchLog {
         guard dirty, let url else { return }
         dirty = false
         let data = try? JSONEncoder().encode(days)
-        Task.detached(priority: .utility) {
+        // One after another (1.30.2): as detached tasks, an older log could
+        // be written after a newer one.
+        Self.writes.async {
             try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             try? data?.write(to: url, options: .atomic)
         }
     }
+
+    private nonisolated static let writes = DispatchQueue(label: "folio.watchlog.save", qos: .utility)
 }

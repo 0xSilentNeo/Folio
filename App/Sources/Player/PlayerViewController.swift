@@ -131,13 +131,21 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
         watchAway()
     }
 
+    private var appearedOnce = false
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         becomeFirstResponder()
         // Start once the video surface has its real size (the Metal
         // swapchain is created from it).
         model.start()
-        if Self.stayLandscape {
+        // The turn to landscape on the first appearance only (1.30.2): coming
+        // back from a full-screen sheet turned a player you had turned upright.
+        let first = !appearedOnce
+        appearedOnce = true
+        if !first {
+            // Nothing asked of the screen again.
+        } else if Self.stayLandscape {
             // Settings → Playback → Stay in landscape: turn now and never go to
             // portrait while playing (the phone still flips between the two landscapes).
             orientationMask = .landscape
@@ -401,7 +409,18 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
                 perform(s, fromPress: true)
                 handled = true
             } else if let name = Self.mpvKeyName(key) {
-                model.keyDown(name)
+                if let next = Self.playlistKey(name) {
+                    dlog("ui", "key: \(name), \(next ? "next" : "previous") in Folio's queue")
+                    if !next {
+                        model.playPrevious()
+                    } else if model.hasNext {
+                        model.playNext()
+                    } else {
+                        model.showToast("Nothing to play next")
+                    }
+                } else {
+                    model.keyDown(name)
+                }
                 handled = true
             }
         }
@@ -414,6 +433,8 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
             guard let key = press.key else { continue }
             if Self.shortcut(for: key) != nil {
                 handled = true          // mpv never saw it go down
+            } else if let name = Self.mpvKeyName(key), Self.playlistKey(name) != nil {
+                handled = true          // nor these (1.30.2)
             } else if let name = Self.mpvKeyName(key) {
                 model.keyUp(name)
                 handled = true
@@ -424,6 +445,19 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
 
     override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         pressesEnded(presses, with: event)
+    }
+
+    /// mpv's own keys for its playlist (1.30.2): Enter and > are
+    /// playlist-next, < is playlist-prev in its default bindings. Sent on,
+    /// they changed the file inside mpv with Folio's queue not following,
+    /// and history was then saved under the wrong episode. They go through
+    /// Folio's queue instead: true for next, false for previous.
+    static func playlistKey(_ mpvName: String) -> Bool? {
+        switch mpvName {
+        case "ENTER", ">": return true
+        case "<": return false
+        default: return nil
+        }
     }
 
     static func mpvKeyName(_ key: UIKey) -> String? {

@@ -340,6 +340,9 @@ struct WebDAVBrowserView: View {
     }
 
     private func open(_ item: DAVItem) {
+        // Made once (1.30.2): `client` builds one each time it's read, a
+        // Keychain read for every file of the folder.
+        let client = self.client
         guard item.isMedia else {
             if item.isSubtitle { return }
             // Unknown extension: let mpv try anyway.

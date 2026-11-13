@@ -19,8 +19,6 @@ enum IMDbSource {
         static let language = "imdbLanguage"        // Accept-Language, e.g. "en-US"
         static let minVotes = "imdbMinVotes"        // Top Rated with a genre
         static let animeJapan = "imdbAnimeJapan"    // Anime = Animation from Japan
-        static let trending = "imdbTrending"        // "popular" | "boxoffice"
-        static let region = "imdbRegion"            // used for box office / release dates
     }
     static var language: String {
         let s = UserDefaults.standard.string(forKey: Key.language)?.trimmingCharacters(in: .whitespaces) ?? ""
@@ -687,8 +685,12 @@ enum IMDbSource {
                 if let original, original != title { v.originalTitle = unescape(original) as String }
                 v.thumbnail = sized(imageURL(d["image"]) ?? imageURL(d["primaryImage"]), width: 480)
                 v.overview = unescape((d["plot"] as? String) ?? ((d["plot"] as? [String: Any])?["plotText"] as? [String: Any])?["plainText"] as? String)
-                if let rd = d["releaseDate"] as? [String: Any], let y = rd["year"] as? Int {
-                    v.released = String(format: "%04d-%02d-%02d", y, (rd["month"] as? Int) ?? 1, (rd["day"] as? Int) ?? 1)
+                // Only a whole date (1.30.2): a year alone became 1 January,
+                // and an episode not yet out read as released.
+                if let rd = d["releaseDate"] as? [String: Any] {
+                    if let y = rd["year"] as? Int, let mo = rd["month"] as? Int, let day = rd["day"] as? Int {
+                        v.released = String(format: "%04d-%02d-%02d", y, mo, day)
+                    }
                 } else if let s = d["releaseDate"] as? String { v.released = s }
                 v.rating = Self.rating(d["aggregateRating"])
                 v.imdbId = epId

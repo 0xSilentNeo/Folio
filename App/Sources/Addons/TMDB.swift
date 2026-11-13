@@ -10,8 +10,6 @@ enum TMDB {
         set { UserDefaults.standard.set(newValue, forKey: "tmdbApiKey") }
     }
     static var enabled: Bool { !apiKey.isEmpty }
-    /// True when the last request failed (bad key, offline).
-    static var lastError = false
     static let image = "https://image.tmdb.org/t/p/"
 
     private static var genreCache: [String: [String: Int]] = [:]
@@ -27,10 +25,8 @@ enum TMDB {
         guard let r = try? await URLSession.shared.data(for: req),
               (r.1 as? HTTPURLResponse)?.statusCode == 200 else {
             dlog("tmdb/error", "request failed: \(path)")
-            lastError = true
             return nil
         }
-        lastError = false
         return try? JSONSerialization.jsonObject(with: r.0) as? [String: Any]
     }
 
@@ -53,7 +49,11 @@ enum TMDB {
         return map?[key] ?? map?[aliases[key] ?? ""] ?? map?[key.replacingOccurrences(of: "sci-fi", with: "sci-fi & fantasy")]
     }
 
-    static func browse(sort: BrowseModel.Sort, type: String, genre: String?, year: String, page: Int) async -> [MetaItem] {
+    /// A page of a list; nil when the request failed (bad key, offline) or
+    /// the genre isn't one TMDB has. The answer says so itself (1.30.2):
+    /// a shared "last request failed" flag could be cleared by another
+    /// request before the caller read it.
+    static func browse(sort: BrowseModel.Sort, type: String, genre: String?, year: String, page: Int) async -> [MetaItem]? {
         let t = type == "series" ? "tv" : "movie"
         var obj: [String: Any]?
         var q = ["page": String(page), "include_adult": "false"]
@@ -68,8 +68,7 @@ enum TMDB {
                 // (1.30.1); marked as failed so the next source is tried.
                 guard let gid = await genreID(genre, type: type) else {
                     dlog("tmdb/error", "no TMDB genre for \(genre); nothing shown rather than the unfiltered list")
-                    lastError = true
-                    return []
+                    return nil
                 }
                 q["with_genres"] = String(gid)
             }
@@ -85,7 +84,8 @@ enum TMDB {
             }
             obj = await get("/discover/\(t)", q)
         }
-        guard let results = obj?["results"] as? [[String: Any]] else { return [] }
+        guard let obj else { return nil }
+        guard let results = obj["results"] as? [[String: Any]] else { return [] }
         return results.enumerated().compactMap { i, r in
             meta(r, type: type, rank: sort == .topRated && genre == nil ? (page - 1) * 20 + i + 1 : nil)
         }

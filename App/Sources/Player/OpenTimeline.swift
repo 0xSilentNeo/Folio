@@ -28,6 +28,23 @@ enum OpenTimeline {
         URL(string: String(url))?.host ?? "?"
     }
 
+    /// The end of mpv's log, at most `limit` bytes of it (1.30.2): the whole
+    /// debug-level log was read and parsed for every network file opened,
+    /// megabytes of it late in a session. Read leniently (a log can hold
+    /// bytes that aren't UTF-8), from the first whole line.
+    static func tail(of url: URL, limit: UInt64 = 512 * 1024) -> String {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return "" }
+        defer { try? h.close() }
+        guard let size = try? h.seekToEnd() else { return "" }
+        let from = size > limit ? size - limit : 0
+        guard (try? h.seek(toOffset: from)) != nil, let data = try? h.readToEnd() else { return "" }
+        let text = String(decoding: data, as: UTF8.self)
+        guard from > 0 else { return text }
+        // Cut mid-line: the rest of that line is left out.
+        guard let nl = text.firstIndex(of: "\n") else { return "" }
+        return String(text[text.index(after: nl)...])
+    }
+
     /// The summary of the last open in `log` (mpv's log-file text), or nil
     /// when it has none.
     static func summary(_ log: String) -> String? {

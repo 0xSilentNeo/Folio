@@ -30,10 +30,6 @@ enum DiscoverSource: String, CaseIterable, Identifiable {
         return list + [.imdb]
     }
 
-    static func save(_ order: [DiscoverSource]) {
-        UserDefaults.standard.set(order.filter { $0 != .imdb }.map(\.rawValue).joined(separator: ","), forKey: orderKey)
-    }
-
     /// Set up: Cinemeta installed and switched on, a TMDB key; IMDb always.
     @MainActor var isReady: Bool {
         switch self {

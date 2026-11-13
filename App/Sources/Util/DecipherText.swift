@@ -66,6 +66,10 @@ struct ExpandableText: View {
                                 .background(GeometryReader { full in
                                     Color.clear.onAppear { truncatable = full.size.height > limited.size.height + 1 }
                                         .onChange(of: text) { _, _ in truncatable = full.size.height > limited.size.height + 1 }
+                                        // And when the width changes (1.30.2: a turn of
+                                        // the iPad, a resized window): the lines wrap anew.
+                                        .onChange(of: full.size) { _, new in truncatable = new.height > limited.size.height + 1 }
+                                        .onChange(of: limited.size) { _, new in truncatable = full.size.height > new.height + 1 }
                                 })
                                 .hidden()
                         })

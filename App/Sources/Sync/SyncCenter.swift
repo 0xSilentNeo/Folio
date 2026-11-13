@@ -29,11 +29,44 @@ final class SyncCenter: ObservableObject {
     private var jobs: [Job] = [] { didSet { waiting = jobs.count } }
     private var flushing = false
     private var bag: Set<AnyCancellable> = []
+    /// One refresh per service that every caller waits for (1.30.2): two at
+    /// once both used Trakt's single-use refresh token, and one failed.
+    private var refreshing: [SyncService: Task<SyncTokens, Error>] = [:]
+    /// What was sent and when ("trakt|tt1|2|1"), kept between launches
+    /// (1.30.2): finishing an episode, then opening it again near its end,
+    /// sent a second play.
+    private var sent: [String: Date] = [:]
 
     private let file: URL = {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return dir.appendingPathComponent("sync-queue.json")
     }()
+    private let sentFile: URL = {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        return dir.appendingPathComponent("sync-sent.json")
+    }()
+
+    /// How long an episode or film counts as already sent.
+    nonisolated static var sentWindow: TimeInterval { 12 * 3600 }
+    nonisolated static var sentLimit: Int { 200 }
+
+    nonisolated static func sentKey(_ s: SyncService, _ e: SyncEvent) -> String { "\(s.rawValue)|\(e.key)" }
+
+    /// Sent within the last 12 hours (either side of now, so a clock set back doesn't hold a play for good).
+    nonisolated static func sentRecently(_ sent: [String: Date], key: String, now: Date) -> Bool {
+        guard let at = sent[key] else { return false }
+        return abs(now.timeIntervalSince(at)) < sentWindow
+    }
+
+    /// Without what's older than 12 hours, and the newest 200 at most.
+    nonisolated static func prunedSent(_ sent: [String: Date], now: Date) -> [String: Date] {
+        var kept = sent.filter { abs(now.timeIntervalSince($0.value)) < sentWindow }
+        if kept.count > sentLimit {
+            let newest = kept.sorted { $0.value > $1.value }.prefix(sentLimit)
+            kept = Dictionary(uniqueKeysWithValues: newest.map { ($0.key, $0.value) })
+        }
+        return kept
+    }
 
     private init() {
         for s in SyncService.allCases {
@@ -42,6 +75,10 @@ final class SyncCenter: ObservableObject {
         if let data = try? Data(contentsOf: file) {
             let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601
             jobs = (try? d.decode([Job].self, from: data)) ?? []
+        }
+        if let data = try? Data(contentsOf: sentFile) {
+            let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601
+            sent = Self.prunedSent((try? d.decode([String: Date].self, from: data)) ?? [:], now: Date())
         }
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
             .sink { [weak self] _ in self?.flushSoon() }
@@ -67,11 +104,19 @@ final class SyncCenter: ObservableObject {
     }
 
     func disconnect(_ s: SyncService) {
+        // A refresh under way must not put the sign-in back (1.30.2).
+        refreshing[s]?.cancel()
+        refreshing[s] = nil
         SyncTokens.clear(s)
         accounts[s] = nil
         UserDefaults.standard.set(false, forKey: s.enabledKey)
         jobs.removeAll { $0.service == s }
         save()
+        let prefix = s.rawValue + "|"
+        if sent.keys.contains(where: { $0.hasPrefix(prefix) }) {
+            sent = sent.filter { !$0.key.hasPrefix(prefix) }
+            saveSent()
+        }
         lastResult[s] = nil
         dlog("sync", "\(s.name): disconnected")
     }
@@ -85,10 +130,19 @@ final class SyncCenter: ObservableObject {
             return s == .trakt ? e.imdb != nil : e.looksLikeAnime && (e.anime?.episode ?? e.episode) != nil
         }
         guard !targets.isEmpty else { return }
+        let now = Date()
+        var queued: [SyncService] = []
         for s in targets where !jobs.contains(where: { $0.service == s && $0.event?.key == e.key }) {
+            // Sent in the last 12 hours (1.30.2): not a second play.
+            if Self.sentRecently(sent, key: Self.sentKey(s, e), now: now) {
+                dlog("sync", "\(s.name): \(e.label) was sent already, not again")
+                continue
+            }
             jobs.append(Job(service: s, event: e))
+            queued.append(s)
         }
-        dlog("sync", "finished \(e.label): to \(targets.map(\.name).joined(separator: ", "))")
+        guard !queued.isEmpty else { flushSoon(); return }
+        dlog("sync", "finished \(e.label): to \(queued.map(\.name).joined(separator: ", "))")
         save()
         flushSoon()
     }
@@ -145,6 +199,11 @@ final class SyncCenter: ObservableObject {
                 lastResult[job.service] = outcome
                 dlog("sync", "\(job.service.name): \(outcome)")
                 jobs.removeAll { $0 == job }
+                if let e = job.event, outcome.hasPrefix("Sent") {
+                    sent[Self.sentKey(job.service, e)] = Date()
+                    sent = Self.prunedSent(sent, now: Date())
+                    saveSent()
+                }
             } catch {
                 var j = job
                 j.attempts += 1
@@ -157,10 +216,11 @@ final class SyncCenter: ObservableObject {
                 // Dropped after six refusals of the job itself (1.30.1). An
                 // outage or a rate limit counted too, so six tries during one
                 // deleted everything queued; those wait now (up to 60 tries,
-                // so a job a service will never take doesn't stay for good).
+                // so a job a service will never take doesn't stay for good;
+                // not reached at all, it is never dropped, as before).
                 let transient = status.map(Self.isTransient) ?? false
                 if let k = jobs.firstIndex(of: job) {
-                    if j.attempts >= (transient ? 60 : 6) { jobs.remove(at: k) } else { jobs[k] = j; i += 1 }
+                    if j.attempts >= (transient ? 60 : 6) && !unreachable { jobs.remove(at: k) } else { jobs[k] = j; i += 1 }
                 }
                 if unreachable { break }
                 if transient { waiting.insert(job.service) }
@@ -198,20 +258,43 @@ final class SyncCenter: ObservableObject {
 
     /// A valid access token, refreshed when it's about to run out.
     private func token(_ s: SyncService) async throws -> String {
-        guard var t = SyncTokens.load(s) else { throw SyncHTTP.Failure(status: 401, body: "not signed in") }
-        if t.expired {
-            switch s {
-            case .trakt: t = try await TraktClient.refresh(t)
-            case .mal: t = try await MALClient.refresh(t)
-            case .anilist: throw SyncHTTP.Failure(status: 401, body: "AniList's sign-in ran out: connect again")
+        guard let t = SyncTokens.load(s) else { throw SyncHTTP.Failure(status: 401, body: "not signed in") }
+        guard t.expired else { return t.access }
+        // One refresh at a time (1.30.2): whoever else asks waits for it.
+        if let running = refreshing[s] { return try await running.value.access }
+        let task = Task { () throws -> SyncTokens in
+            do {
+                let fresh: SyncTokens
+                switch s {
+                case .trakt: fresh = try await TraktClient.refresh(t)
+                case .mal: fresh = try await MALClient.refresh(t)
+                case .anilist: throw SyncHTTP.Failure(status: 401, body: "AniList's sign-in ran out: connect again")
+                }
+                // Disconnected meanwhile (1.30.2): the tokens were saved
+                // again, and the service showed as connected on next launch.
+                guard !Task.isCancelled, self.accounts[s] != nil else {
+                    throw SyncHTTP.Failure(status: 401, body: "not signed in")
+                }
+                fresh.save(s)
+                self.refreshing[s] = nil
+                return fresh
+            } catch {
+                // Cancelled by disconnect: the entry is no longer this task's.
+                if !Task.isCancelled { self.refreshing[s] = nil }
+                throw error
             }
-            t.save(s)
         }
-        return t.access
+        refreshing[s] = task
+        return try await task.value.access
     }
 
     private func save() {
         let e = JSONEncoder(); e.dateEncodingStrategy = .iso8601
         if let data = try? e.encode(jobs) { try? data.write(to: file, options: .atomic) }
+    }
+
+    private func saveSent() {
+        let e = JSONEncoder(); e.dateEncodingStrategy = .iso8601
+        if let data = try? e.encode(sent) { try? data.write(to: sentFile, options: .atomic) }
     }
 }

@@ -1,7 +1,7 @@
 import XCTest
 
 /// The search tab (1.22.4): the button beside the tab bar opens into the
-/// field, and your library's titles come first. With $SHOTS_DIR set, a
+/// field, and your library's titles come first (the top result's card). With $SHOTS_DIR set, a
 /// file marks each screen and the test holds it for 4 s so the screen can
 /// be taken from outside (this Mac's simulator gives the test black shots).
 final class SearchTabUITests: XCTestCase {
@@ -25,7 +25,11 @@ final class SearchTabUITests: XCTestCase {
         field.typeText("lab show")
         let row = app.buttons["searchLibrary:Lab Show"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5), "the library's Lab Show isn't in the results")
-        XCTAssertTrue(app.staticTexts["In your library"].exists)
+        // One list (no "In your library" header): what's yours has its
+        // chip, and the library's title is above the titles from IMDb.
+        XCTAssertTrue(app.buttons["searchScope:yours"].exists, "no Yours chip with a library title found")
+        let imdb = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'searchTitle:'")).firstMatch
+        if imdb.exists { XCTAssertLessThan(row.frame.minY, imdb.frame.minY, "an IMDb title is above the library's") }
         hold("search-1-results")
         row.tap()
         XCTAssertTrue(app.descendants(matching: .any)["heroPlay"].waitForExistence(timeout: 8), "the title page didn't open")
@@ -49,7 +53,8 @@ final class SearchTabUITests: XCTestCase {
 
     /// 1.23.0 (5 Nov: "remove the search bar at the top of the Network
     /// page"): Network shows no search field of its own, on iOS 27 too, and
-    /// the search page opens on its intro.
+    /// the search page opens on what it shows before anything is typed
+    /// (recent searches and Continue watching, or one line).
     func test3NetworkHasNoSearchBar() {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTestLibrary", "-labNoEngine", "-noSplash", "-appearance", "dark"]
@@ -66,7 +71,7 @@ final class SearchTabUITests: XCTestCase {
         hold("search-3-network-pulled")
         XCTAssertEqual(app.searchFields.count, 0, "a search field after pulling the Network page down")
         app.buttons["Search"].firstMatch.tap()
-        XCTAssertTrue(app.descendants(matching: .any)["librarySearchIntro"].waitForExistence(timeout: 5), "the search page's intro didn't show")
+        XCTAssertTrue(app.descendants(matching: .any)["librarySearchIntro"].waitForExistence(timeout: 5), "the search page's start (nothing typed) didn't show")
         hold("search-4-intro")
     }
 }

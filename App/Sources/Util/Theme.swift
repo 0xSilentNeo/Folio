@@ -750,13 +750,25 @@ struct PosterImage: View {
     let url: String?
     var aspect: CGFloat = 2.0 / 3.0
     var cornerRadius: CGFloat = 12
+    /// The tile's width in points, where it's known (1.30.2): the picture is
+    /// decoded for that, not at 700 px for a 108-point tile. Nil: 700.
+    var width: CGFloat? = nil
+    @Environment(\.displayScale) private var displayScale
+
+    /// The long side to decode at: the tile's in pixels, rounded up to one
+    /// of three sizes so tiles of nearly one size share what's in memory.
+    nonisolated static func maxPixel(width: CGFloat?, aspect: CGFloat, scale: CGFloat) -> CGFloat {
+        guard let width, width > 0, aspect > 0 else { return 700 }
+        let long = (aspect < 1 ? width / aspect : width) * max(1, scale)
+        return long <= 360 ? 360 : long <= 540 ? 540 : 700
+    }
 
     var body: some View {
         Color.clear
             .aspectRatio(aspect, contentMode: .fit)
             .overlay {
                 if let url, let u = URL(string: url) {
-                    CachedImage(url: u, maxPixel: 700) { $0.resizable().scaledToFill() } placeholder: { placeholder }
+                    CachedImage(url: u, maxPixel: Self.maxPixel(width: width, aspect: aspect, scale: displayScale)) { $0.resizable().scaledToFill() } placeholder: { placeholder }
                 } else {
                     placeholder
                 }

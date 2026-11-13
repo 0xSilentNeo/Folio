@@ -342,13 +342,21 @@ struct NotifySoundPicker: View {
         .fileImporter(isPresented: $importing, allowedContentTypes: [.audio]) { result in
             switch result {
             case .success(let url):
-                do {
-                    let name = try NotifySounds.importSound(from: url)
-                    custom = NotifySounds.custom
-                    pick(.custom(name))
-                    error = nil
-                } catch {
-                    self.error = "That file couldn't be read as audio: \(error.localizedDescription)"
+                // Converted off the main thread (1.30.2): a long file held the screen.
+                let scoped = url.startAccessingSecurityScopedResource()
+                Task { @MainActor in
+                    let done = await Task.detached(priority: .userInitiated) {
+                        Result { try NotifySounds.importSound(from: url) }
+                    }.value
+                    if scoped { url.stopAccessingSecurityScopedResource() }
+                    switch done {
+                    case .success(let name):
+                        custom = NotifySounds.custom
+                        pick(.custom(name))
+                        error = nil
+                    case .failure(let e):
+                        error = "That file couldn't be read as audio: \(e.localizedDescription)"
+                    }
                 }
             case .failure(let e):
                 error = e.localizedDescription

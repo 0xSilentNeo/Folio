@@ -125,15 +125,17 @@ final class IMDbPageLoader: NSObject, WKNavigationDelegate {
     }
 
     func webView(_ wv: WKWebView, didFinish navigation: WKNavigation!) {
-        guard current != nil else { return }
+        guard let job = current?.id else { return }
         navigations += 1
         wv.evaluateJavaScript(Self.extractJS) { [weak self] result, _ in
-            Task { @MainActor in self?.handle(result as? [String: Any], wv) }
+            Task { @MainActor in self?.handle(result as? [String: Any], wv, job: job) }
         }
     }
 
-    private func handle(_ r: [String: Any]?, _ wv: WKWebView) {
-        guard current != nil else { return }
+    private func handle(_ r: [String: Any]?, _ wv: WKWebView, job: UUID) {
+        // Still the page this was read for (1.30.2): given up or timed out
+        // meanwhile, its data went to the next page's caller.
+        guard current?.id == job else { return }
         if let ua = r?["ua"] as? String, ua != userAgent { userAgent = ua; UserDefaults.standard.set(ua, forKey: "imdbWebUA") }
         let next = r?["next"] as? String
         let ld = (r?["ld"] as? [String]) ?? []

@@ -239,6 +239,15 @@ struct RootView: View {
         } message: { url in
             Text("\(url.lastPathComponent) is in Folio's Media folder.")
         }
+        // A script or shader opened in Folio (1.30.2): asked first, as an
+        // addon link is. A .lua copied into mpv/scripts runs on every playback.
+        .alert(mpvFileQuestion,
+               isPresented: Binding(get: { linkMPVFile != nil }, set: { if !$0 { linkMPVFile = nil } }), presenting: linkMPVFile) { file in
+            Button("Install") { installMPVFile(file) }
+            Button("Cancel", role: .cancel) {}
+        } message: { file in
+            Text(Self.isMPVScript(file) ? "Scripts run every time a video plays." : "Shaders you switch on run every time a video plays.")
+        }
         .alert("Couldn't add the addon", isPresented: Binding(get: { linkError != nil }, set: { if !$0 { linkError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: { Text(linkError ?? "") }
@@ -306,6 +315,33 @@ struct RootView: View {
     /// A video shared to Folio that waited (1.27.1), now in Media.
     @State private var sharedVideo: URL?
 
+    /// A .lua, .glsl or .hook file opened in Folio, waiting for a yes (1.30.2).
+    /// Until then it was copied into mpv's folder at once, and a failure dropped.
+    @State private var linkMPVFile: URL?
+
+    private static func isMPVScript(_ url: URL) -> Bool { url.pathExtension.lowercased() == "lua" }
+
+    private var mpvFileQuestion: String {
+        guard let file = linkMPVFile else { return "" }
+        return "Install \(file.lastPathComponent) as an mpv \(Self.isMPVScript(file) ? "script" : "shader")?"
+    }
+
+    private func installMPVFile(_ file: URL) {
+        let script = Self.isMPVScript(file)
+        do {
+            _ = try MPVFiles.importItem(from: file, into: script ? MPVFiles.scriptsDir : MPVFiles.shadersDir)
+            dlog("open", "mpv \(script ? "script" : "shader") installed: \(file.lastPathComponent)")
+            tab = 0
+        } catch {
+            dlog("open/error", "mpv \(script ? "script" : "shader") not installed: \(error.localizedDescription)")
+            // After a moment: the question is still closing.
+            let name = file.lastPathComponent, why = error.localizedDescription
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                MainActor.assumeIsolated { FileOpener.showAlert("Couldn't install \(name)", why) }
+            }
+        }
+    }
+
     private func installLinkedAddon(_ target: String) {
         tab = 1
         Task {
@@ -333,14 +369,10 @@ struct RootView: View {
             return
         }
         if url.isFileURL {
-            if url.pathExtension.lowercased() == "lua" {
-                _ = try? MPVFiles.importItem(from: url, into: MPVFiles.scriptsDir)
-                tab = 0
-                return
-            }
-            if ["glsl", "hook"].contains(url.pathExtension.lowercased()) {
-                _ = try? MPVFiles.importItem(from: url, into: MPVFiles.shadersDir)
-                tab = 0
+            // Asked first (1.30.2): any app can hand Folio a file, and a
+            // script in mpv/scripts runs on every playback.
+            if ["lua", "glsl", "hook"].contains(url.pathExtension.lowercased()) {
+                linkMPVFile = url
                 return
             }
             FileOpener.open([url])

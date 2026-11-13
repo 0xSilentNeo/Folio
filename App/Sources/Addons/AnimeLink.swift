@@ -22,7 +22,7 @@ enum AnimeLink {
         let wanted = Set(names.map(normalized))
         for q in names {
             let results = await IMDbSource.search(q)
-            if let pick = results.first(where: { $0.type == "series" && wanted.contains(normalized($0.name)) }) {
+            if let pick = choose(results, wanted: wanted, seasonYear: meta.releaseInfo.flatMap { Int($0.prefix(4)) }) {
                 found[meta.id] = pick.id
                 dlog("discover", "anime \(meta.name): IMDb \(pick.id) (\(pick.name)) by \"\(q)\"")
                 return pick.id
@@ -30,6 +30,21 @@ enum AnimeLink {
         }
         dlog("discover", "anime \(meta.name): no IMDb title of that name")
         return nil
+    }
+
+    /// The series of the name asked for. Of several, the one that began in
+    /// the season's year or the closest before it (1.30.2): by name alone
+    /// "Cowboy Bebop" could be the 2021 live-action series. Years not
+    /// known: the first, as before.
+    static func choose(_ results: [MetaItem], wanted: Set<String>, seasonYear: Int?) -> MetaItem? {
+        let named = results.filter { $0.type == "series" && wanted.contains(normalized($0.name)) }
+        guard let seasonYear, named.count > 1 else { return named.first }
+        var best: (item: MetaItem, year: Int)?
+        for m in named {
+            guard let y = m.releaseInfo.flatMap({ Int($0.prefix(4)) }), y <= seasonYear else { continue }
+            if best == nil || y > best!.year { best = (m, y) }
+        }
+        return best?.item ?? named.first
     }
 
     /// Letters and digits only, lowercased: "Frieren: Beyond Journey’s End" = "frierenbeyondjourneysend".

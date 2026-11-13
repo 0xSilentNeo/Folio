@@ -559,13 +559,15 @@ struct AdvancedSettings: View {
                     }
                 }
             } footer: { Text("A report bundles the logs and your settings (passwords removed) to send when something goes wrong.") }
-            // 1.26.1: the experiments, from General and Playback.
-            Section {
-                if #available(iOS 26.0, *) {
+            // 1.26.1: the experiments, from General and Playback. The whole
+            // section is iOS 26's (1.30.2): before it, a heading and a
+            // footer about a switch that wasn't there.
+            if #available(iOS 26.0, *) {
+                Section {
                     Toggle("Native menu morph", isOn: $nativePanelMorph)
+                } header: { Text("Experimental") } footer: {
+                    Text("Native menu morph: the player's menus grow out of their button with Apple's own glass animation; off, Folio's own glass menus.")
                 }
-            } header: { Text("Experimental") } footer: {
-                Text("Native menu morph: the player's menus grow out of their button with Apple's own glass animation; off, Folio's own glass menus.")
             }
         }
         .navigationTitle("Help & Diagnostics")
@@ -700,14 +702,27 @@ struct ScriptOptsView: View {
         .alert("New option file", isPresented: $showNew) {
             TextField("scriptname", text: $newName).textInputAutocapitalization(.never).autocorrectionDisabled()
             Button("Create") {
-                let name = newName.hasSuffix(".conf") ? newName : newName + ".conf"
-                let url = MPVFiles.scriptOptsDir.appendingPathComponent(name)
-                if !FileManager.default.fileExists(atPath: url.path) { try? MPVFiles.writeText("# \(name)\n", to: url) }
+                // A name, and only a name (1.30.2): empty made ".conf", and a "/" a path.
+                if let name = Self.optionFileName(newName) {
+                    let url = MPVFiles.scriptOptsDir.appendingPathComponent(name)
+                    if !FileManager.default.fileExists(atPath: url.path) { try? MPVFiles.writeText("# \(name)\n", to: url) }
+                }
                 newName = ""
                 files = MPVFiles.scriptOptFiles()
             }
             Button("Cancel", role: .cancel) {}
         }
+    }
+
+    /// "stats" → "stats.conf". Trimmed, without path separators or leading
+    /// dots; nil when nothing is left.
+    nonisolated static func optionFileName(_ typed: String) -> String? {
+        var stem = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+        if stem.lowercased().hasSuffix(".conf") { stem = String(stem.dropLast(5)) }
+        stem = stem.components(separatedBy: CharacterSet(charactersIn: "/\\:")).joined()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        while stem.hasPrefix(".") { stem.removeFirst() }
+        return stem.isEmpty ? nil : stem + ".conf"
     }
 }
 
@@ -1236,11 +1251,14 @@ struct LibrarySettings: View {
     @State private var working = false
     @State private var confirmClear = false
 
-    /// Worked out once per body (1.26.1: three times, each parsing every file name).
-    private var counts: (movies: Int, episodes: Int, other: Int) {
+    /// Worked out when the files change, off the main thread (1.30.2:
+    /// every file name was parsed in the body, on each redraw).
+    @State private var counts: (movies: Int, episodes: Int, other: Int) = (0, 0, 0)
+
+    nonisolated private static func count(_ files: [URL]) -> (movies: Int, episodes: Int, other: Int) {
         var m = 0, e = 0, o = 0
         let audio: Set<String> = ["mp3", "flac", "m4a", "aac", "ogg", "opus", "wav", "alac", "wma", "ape", "mka"]
-        for f in store.files {
+        for f in files {
             if audio.contains(f.pathExtension.lowercased()) { o += 1 }
             else if TitleParser.parse(f.lastPathComponent).episode != nil { e += 1 }
             else { m += 1 }
@@ -1314,6 +1332,10 @@ struct LibrarySettings: View {
         .navigationTitle("Library")
         .navigationBarTitleDisplayMode(.inline)
         .task { await measure() }
+        .task(id: store.files) {
+            let files = store.files
+            counts = await Task.detached(priority: .userInitiated) { Self.count(files) }.value
+        }
     }
 
     private func stat(_ n: Int, _ label: String) -> some View {

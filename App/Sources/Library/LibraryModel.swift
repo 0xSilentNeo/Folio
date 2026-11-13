@@ -101,12 +101,12 @@ struct LibraryGroup: Identifiable, Hashable {
     @MainActor private static var nextUpMemo: [Int: (version: Int, url: URL)] = [:]
     @MainActor private static var watchedMemo: [Int: (version: Int, all: Bool)] = [:]
 
-    /// A file list by its length and ends: a show's files differ there.
+    /// A file list by its length and every file (1.30.2: by its ends only,
+    /// two lists of one length that differed in between shared an answer).
     private static func memoKey(_ files: [URL]) -> Int {
         var h = Hasher()
         h.combine(files.count)
-        h.combine(files.first)
-        h.combine(files.last)
+        for f in files { h.combine(f) }
         return h.finalize()
     }
 

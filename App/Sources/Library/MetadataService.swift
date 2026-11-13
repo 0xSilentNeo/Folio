@@ -207,6 +207,13 @@ actor MetadataService {
             case .noMatch: continue
             case .unreachable: unreachable = true; continue
             }
+            // The first choice couldn't be asked (1.30.2): a match of the
+            // next kind isn't kept in its place (an episode's file remembered
+            // as a film of the same name); it's looked up again next time.
+            if unreachable {
+                dlog("meta", "\(title): found as a \(type) only after an earlier lookup didn't answer; not remembered")
+                return Resolved(meta: nil, unreachable: true)
+            }
             return Resolved(meta: await meta(from: item, type: type, parsed: p))
         }
         return Resolved(meta: nil, unreachable: unreachable)
@@ -354,6 +361,11 @@ enum BrandIcon {
         return suffixes.contains { d.hasSuffix($0) }
     }
 
+    /// One of the services in the Add Server list (WebDAVServer.presets).
+    static func isPreset(_ d: String) -> Bool {
+        WebDAVServer.presets.contains { URL(string: $0.url)?.host.map(domain(for:)) == d }
+    }
+
     static func fetch(_ host: String) async -> UIImage? {
         if let c = cached(host) { return c }
         let d = domain(for: host)
@@ -362,12 +374,15 @@ enum BrandIcon {
         let miss = dir.appendingPathComponent(d + ".miss")
         if let at = (try? miss.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
            Date().timeIntervalSince(at) < 7 * 86400 { return nil }
-        let candidates = [
+        var candidates = [
             "https://\(d)/apple-touch-icon.png",
             "https://www.\(d)/apple-touch-icon.png",
-            "https://icons.duckduckgo.com/ip3/\(d).ico",
-            "https://www.google.com/s2/favicons?domain=\(d)&sz=128",
         ]
+        // The icon services only for the services Folio lists itself
+        // (1.30.2): any other server's name was sent to DuckDuckGo and Google.
+        if isPreset(d) {
+            candidates += ["https://icons.duckduckgo.com/ip3/\(d).ico", "https://www.google.com/s2/favicons?domain=\(d)&sz=128"]
+        }
         var answered = false
         for c in candidates {
             guard let url = URL(string: c) else { continue }

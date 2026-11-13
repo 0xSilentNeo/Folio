@@ -123,11 +123,19 @@ final class WebDAVClient: @unchecked Sendable {
         var comps = URLComponents(url: base, resolvingAgainstBaseURL: false)
         var p = path.hasPrefix("/") ? path : "/" + path
         let basePath = comps?.path ?? ""
-        if !basePath.isEmpty && basePath != "/" && !p.hasPrefix(basePath) {
+        // By path components (1.30.2): as a text prefix, "/davfiles" counted
+        // as already under a base of "/dav" and lost the base's path.
+        if !basePath.isEmpty && basePath != "/" && !Self.isUnder(p, basePath) {
             p = (basePath.hasSuffix("/") ? String(basePath.dropLast()) : basePath) + p
         }
         comps?.path = p
         return comps?.url
+    }
+
+    /// Whether `path` is `base` or below it, folder by folder.
+    static func isUnder(_ path: String, _ base: String) -> Bool {
+        let p = path.split(separator: "/"), b = base.split(separator: "/")
+        return p.count >= b.count && Array(p.prefix(b.count)) == b
     }
 
     func list(_ url: URL) async throws -> [DAVItem] {
@@ -224,6 +232,11 @@ final class PropfindParser: NSObject, XMLParserDelegate {
     private var text = ""
     private var inResponse = false
     private var propstatOK = true
+    /// The values of the propstat being read (1.30.2): its status comes after
+    /// them, so they're kept only once it has said 2xx (or nothing).
+    private var inPropstat = false
+    private var pending: [String: String] = [:]
+    private var pendingCollection = false
 
     private static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -257,11 +270,15 @@ final class PropfindParser: NSObject, XMLParserDelegate {
         switch elementName.lowercased() {
         case "response":
             inResponse = true
+            propstatOK = true
             href = ""; displayName = ""; isCollection = false; length = ""; modified = ""; created = ""; contentType = ""; etag = ""
         case "collection":
-            if inResponse { isCollection = true }
+            if inPropstat { pendingCollection = true } else if inResponse { isCollection = true }
         case "propstat":
             propstatOK = true
+            inPropstat = true
+            pending = [:]
+            pendingCollection = false
         default: break
         }
     }
@@ -270,15 +287,25 @@ final class PropfindParser: NSObject, XMLParserDelegate {
 
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
         let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        switch elementName.lowercased() {
+        let name = elementName.lowercased()
+        switch name {
         case "href": href = value
-        case "displayname": if propstatOK { displayName = value }
-        case "getcontentlength": if propstatOK { length = value }
-        case "getlastmodified": if propstatOK { modified = value }
-        case "creationdate": if propstatOK { created = value }
-        case "getcontenttype": if propstatOK { contentType = value }
-        case "getetag": if propstatOK { etag = value }
-        case "status": if value.contains(" 404") { propstatOK = false }
+        case "displayname", "getcontentlength", "getlastmodified", "creationdate", "getcontenttype", "getetag":
+            if inPropstat { pending[name] = value } else if propstatOK { take(name, value) }
+        case "status":
+            // "HTTP/1.1 404 Not Found": anything but 2xx drops the propstat's
+            // values (1.30.2; only 404 did, and only for what came after it).
+            let bits = value.split(separator: " ")
+            if bits.count >= 2, let code = Int(bits[1]) { if !(200..<300).contains(code) { propstatOK = false } }
+            else if value.contains(" 404") { propstatOK = false }
+        case "propstat":
+            if propstatOK {
+                for (k, v) in pending { take(k, v) }
+                if pendingCollection && inResponse { isCollection = true }
+            }
+            inPropstat = false
+            pending = [:]
+            pendingCollection = false
         case "response":
             inResponse = false
             guard !href.isEmpty, let url = resolve(href) else { break }
@@ -296,12 +323,52 @@ final class PropfindParser: NSObject, XMLParserDelegate {
         text = ""
     }
 
-    private func resolve(_ href: String) -> URL? {
-        if let abs = URL(string: href), abs.scheme != nil { return abs }
-        // Re-encode in case the server sent raw characters.
-        let encoded = href.removingPercentEncoding.flatMap {
-            $0.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
-        } ?? href
-        return URL(string: encoded, relativeTo: base)?.absoluteURL
+    private func take(_ name: String, _ value: String) {
+        switch name {
+        case "displayname": displayName = value
+        case "getcontentlength": length = value
+        case "getlastmodified": modified = value
+        case "creationdate": created = value
+        case "getcontenttype": contentType = value
+        case "getetag": etag = value
+        default: break
+        }
+    }
+
+    private func resolve(_ href: String) -> URL? { Self.resolve(href, base: base) }
+
+    /// An item's address from its href. A full address stays as it is only on
+    /// the server's own host (and port), and never from https down to http:
+    /// anything else keeps its path and goes to the server asked (1.30.2).
+    /// It was used as sent, and the login went with the next request to
+    /// whatever host the listing named.
+    static func resolve(_ href: String, base: URL) -> URL? {
+        let found: URL?
+        if let abs = URL(string: href), abs.scheme != nil {
+            found = abs
+        } else {
+            // Re-encode in case the server sent raw characters.
+            let encoded = href.removingPercentEncoding.flatMap {
+                $0.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+            } ?? href
+            found = URL(string: encoded, relativeTo: base)?.absoluteURL
+        }
+        // (Checked for a path too: "//other.host/x" names a host without a scheme.)
+        guard let url = found, let scheme = url.scheme?.lowercased() else { return nil }
+        let home = base.absoluteURL
+        let homeScheme = home.scheme?.lowercased()
+        let sameHost = url.host?.lowercased() == home.host?.lowercased()
+        let downgrade = homeScheme == "https" && scheme != "https"
+        // (A port is compared within one scheme: http to https changes it.)
+        let samePort = scheme != homeScheme || url.port == home.port
+        let known = scheme == homeScheme || scheme == "http" || scheme == "https"
+        if sameHost && !downgrade && samePort && known { return url }
+        guard var comps = URLComponents(url: home, resolvingAgainstBaseURL: true),
+              let sent = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              sent.percentEncodedPath.hasPrefix("/") else { return nil }
+        comps.percentEncodedPath = sent.percentEncodedPath
+        comps.percentEncodedQuery = sent.percentEncodedQuery
+        comps.fragment = nil
+        return comps.url
     }
 }

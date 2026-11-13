@@ -50,7 +50,16 @@ enum PlatformCatalogs {
     private static let lock = NSLock()
 
     static var region: String {
-        UserDefaults.standard.string(forKey: "discoverRegion") ?? Locale.current.region?.identifier ?? "US"
+        // An empty saved region is none (1.30.2).
+        if let saved = UserDefaults.standard.string(forKey: "discoverRegion"), !saved.isEmpty { return saved }
+        return Locale.current.region?.identifier ?? "US"
+    }
+
+    /// A typed region as it is saved: two letters, upper case ("au " → "AU"); nil for anything else.
+    static func cleanRegion(_ typed: String) -> String? {
+        let s = typed.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard s.count == 2, s.unicodeScalars.allSatisfy({ $0.value >= 65 && $0.value <= 90 }) else { return nil }
+        return s
     }
 
     private static var base: String {
@@ -239,12 +248,14 @@ final class BrowseModel: ObservableObject {
         // A page that repeats only titles already shown: the next one,
         // up to three in a row, so the grid never stalls on a repeat.
         for _ in 0..<3 {
-            var page = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: nextPage)
+            // nil: the request failed (1.30.2, the answer says so itself).
+            let answer = await TMDB.browse(sort: sort, type: type, genre: genre, year: year, page: nextPage)
+            var page = answer ?? []
             if kids { page = Self.tagged(page, genre: genre) }
             guard gen == generation else { return true }
             if page.isEmpty {
                 // A failed page can be asked for again (scrolling back to the end).
-                if !TMDB.lastError { exhausted = true; return true }
+                if answer != nil { exhausted = true; return true }
                 if metas.isEmpty && !Task.isCancelled {
                     if last { failed = true }
                     return false
@@ -839,7 +850,8 @@ struct PlatformDetailView: View {
 struct PlatformSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var enabled: [StreamingPlatform] = StreamingPlatform.enabled
-    @AppStorage("discoverRegion") private var region = Locale.current.region?.identifier ?? "US"
+    /// Typed here, saved on Done (1.30.2): every keystroke was saved, and Cancel kept it.
+    @State private var region = PlatformCatalogs.region
 
     var body: some View {
         NavigationStack {
@@ -865,7 +877,9 @@ struct PlatformSettingsView: View {
                 Section {
                     TextField("Region (e.g. AU, US, GB)", text: $region)
                         .textInputAutocapitalization(.characters).autocorrectionDisabled()
-                } header: { Text("Region") }
+                } header: { Text("Region") } footer: {
+                    if !regionValid { Text("Two letters, like AU. Leave it empty for your phone's region.") }
+                }
             }
             .environment(\.editMode, .constant(.active))
             .brandListBackground()
@@ -878,10 +892,24 @@ struct PlatformSettingsView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { StreamingPlatform.enabled = enabled; dismiss() }
+                    Button("Done") {
+                        StreamingPlatform.enabled = enabled
+                        if region.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            UserDefaults.standard.removeObject(forKey: "discoverRegion")
+                        } else if let r = PlatformCatalogs.cleanRegion(region), r != PlatformCatalogs.region {
+                            UserDefaults.standard.set(r, forKey: "discoverRegion")
+                        }
+                        dismiss()
+                    }
+                    .disabled(!regionValid)
                 }
             }
         }
-        .interactiveDismissDisabled(enabled != StreamingPlatform.enabled)
+        .interactiveDismissDisabled(enabled != StreamingPlatform.enabled || region != PlatformCatalogs.region)
+    }
+
+    /// Empty (the phone's region) or two letters.
+    private var regionValid: Bool {
+        region.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || PlatformCatalogs.cleanRegion(region) != nil
     }
 }

@@ -91,6 +91,10 @@ enum FileOpener {
         var m = MediaItem(url: playURL.path, title: TitleParser.clean(playURL.lastPathComponent), source: .local)
         if playURL == url, !url.path.hasPrefix(MPVFiles.documents.path) {
             m.bookmark = try? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+            // The access is given back once the bookmark holds it (1.30.2):
+            // the player takes its own from the bookmark, and this one was
+            // never ended. Without a bookmark it stays: the player reads the path.
+            if scoped, m.bookmark != nil { url.stopAccessingSecurityScopedResource() }
         }
         m.historyKey = "file:" + playURL.lastPathComponent
         let p = TitleParser.parse(playURL.lastPathComponent)
@@ -304,7 +308,9 @@ final class ThumbLoader: ObservableObject {
         let hit = ImageCache.shared.picture(forKey: cacheKey)
         if loadedItem != nil, loadedItem != itemKey {
             image = hit
-            meta = nil
+            // The details stay until this item's own arrive (below): cleared
+            // here, a title page went blank between two episodes of a show.
+            if lookupName == nil { meta = nil }
         }
         loadedItem = itemKey
         started = CACurrentMediaTime()
@@ -323,10 +329,12 @@ final class ThumbLoader: ObservableObject {
             if image == nil, art == .wide, let artwork, let u = URL(string: artwork) { await fetch(u, cacheKey) }
             if let lookupName {
                 // Metadata is cached on disk forever; artwork on disk too (ImageCache).
-                if let m = await MetadataService.shared.lookup(filename: lookupName) {
-                    // Another item has been asked for meanwhile: not this one's.
-                    guard self.loadedKey == cacheKey else { return }
-                    self.meta = m
+                let found = await MetadataService.shared.lookup(filename: lookupName)
+                // Another item has been asked for meanwhile: not this one's.
+                guard self.loadedKey == cacheKey else { return }
+                // This item's details, or none: never the last item's.
+                self.meta = found
+                if let m = found {
                     if art == .poster, let p = m.poster, let u = URL(string: p), m.id.hasPrefix("tt") {
                         // Kept by IMDb id: the same poster as the Real-Debrid library's for this title.
                         if let img = await ImageCache.shared.poster(id: m.id, url: u, maxPixel: CGFloat(pixels)) { set(img, cacheKey, from: "poster \(m.id)") }
