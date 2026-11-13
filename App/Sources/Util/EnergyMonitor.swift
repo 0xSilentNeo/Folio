@@ -20,6 +20,9 @@ final class EnergyMonitor {
 
     func start() {
         mainThread = pthread_mach_thread_np(pthread_self())   // called on the main thread
+        // Battery level in each line (1.30.1): a report could say how hard the
+        // app worked but not what a session cost the battery.
+        UIDevice.current.isBatteryMonitoringEnabled = true
         let nc = NotificationCenter.default
         observers.append(nc.addObserver(forName: ProcessInfo.thermalStateDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
             self?.sample(reason: "thermal change")
@@ -64,6 +67,26 @@ final class EnergyMonitor {
         }
     }
 
+    /// The battery's level and state, the screen's brightness and how far
+    /// above SDR white it is showing HDR (1.30.1): the screen is usually the
+    /// largest draw while a video plays, and none of it shows in the app's
+    /// own CPU time. Main thread (UIDevice, UIScreen).
+    static var power: String {
+        var out = ""
+        let d = UIDevice.current
+        if d.batteryLevel >= 0 {
+            let state: String
+            switch d.batteryState {
+            case .charging: state = " charging"; case .full: state = " full"; default: state = ""
+            }
+            out += String(format: " battery=%.0f%%%@", d.batteryLevel * 100, state)
+        }
+        let screen = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.screen }.first ?? UIScreen.main
+        out += String(format: " brightness=%.0f%%", screen.brightness * 100)
+        if screen.currentEDRHeadroom > 1.01 { out += String(format: " hdr=%.1f×", screen.currentEDRHeadroom) }
+        return out
+    }
+
     /// One line now (also used by the player when a file starts/stops).
     func sample(reason: String?) {
         let threads = threadUsage()
@@ -73,6 +96,7 @@ final class EnergyMonitor {
         var line = String(format: "cpu %.0f%%", total)
         if !top.isEmpty { line += " (\(top))" }
         line += " \(Self.memory) thermal=\(Self.thermal) playing=\(playing ? "yes" : "no")"
+        line += Self.power
         if ProcessInfo.processInfo.isLowPowerModeEnabled { line += " lowPower" }
         if !note.isEmpty { line += " " + note }
         if let reason { line += " · \(reason)" }

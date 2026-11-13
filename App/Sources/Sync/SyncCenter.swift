@@ -126,11 +126,20 @@ final class SyncCenter: ObservableObject {
         }
     }
 
+    /// The service is busy or down, or wants a new sign-in: the job is kept
+    /// for a later try rather than counted towards being dropped.
+    nonisolated static func isTransient(status: Int) -> Bool {
+        status == 0 || status == 401 || status == 408 || status == 429 || (500...599).contains(status)
+    }
+
     private func flush() async {
         var i = 0
+        // Services that answered "not now" in this pass: their other jobs wait.
+        var waiting = Set<SyncService>()
         while i < jobs.count {
             let job = jobs[i]
             guard isOn(job.service) else { jobs.remove(at: i); continue }
+            if waiting.contains(job.service) { i += 1; continue }
             do {
                 let outcome = try await send(job)
                 lastResult[job.service] = outcome
@@ -143,11 +152,18 @@ final class SyncCenter: ObservableObject {
                 dlog("sync/error", "\(job.service.name): \(job.event?.label ?? job.watchlist?.name ?? "?") not sent (\(why)), try \(j.attempts)")
                 lastResult[job.service] = "Not sent yet: \(job.event?.label ?? job.watchlist?.name ?? "") (\(error.localizedDescription))"
                 // Not reached: this and the rest wait for the next try.
-                let unreachable = (error as? SyncHTTP.Failure)?.status == 0
+                let status = (error as? SyncHTTP.Failure)?.status
+                let unreachable = status == 0
+                // Dropped after six refusals of the job itself (1.30.1). An
+                // outage or a rate limit counted too, so six tries during one
+                // deleted everything queued; those wait now (up to 60 tries,
+                // so a job a service will never take doesn't stay for good).
+                let transient = status.map(Self.isTransient) ?? false
                 if let k = jobs.firstIndex(of: job) {
-                    if j.attempts >= 6 && !unreachable { jobs.remove(at: k) } else { jobs[k] = j; i += 1 }
+                    if j.attempts >= (transient ? 60 : 6) { jobs.remove(at: k) } else { jobs[k] = j; i += 1 }
                 }
                 if unreachable { break }
+                if transient { waiting.insert(job.service) }
             }
             save()
         }

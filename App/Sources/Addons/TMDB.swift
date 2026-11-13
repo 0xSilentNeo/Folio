@@ -17,9 +17,9 @@ enum TMDB {
     private static var genreCache: [String: [String: Int]] = [:]
     private static let lock = NSLock()
 
-    private static func get(_ path: String, _ query: [String: String] = [:]) async -> [String: Any]? {
+    private static func get(_ path: String, _ query: [String: String] = [:], language: String? = nil) async -> [String: Any]? {
         var comps = URLComponents(string: "https://api.themoviedb.org/3" + path)!
-        var items = [URLQueryItem(name: "api_key", value: apiKey), URLQueryItem(name: "language", value: Locale.preferredLanguages.first ?? "en-US")]
+        var items = [URLQueryItem(name: "api_key", value: apiKey), URLQueryItem(name: "language", value: language ?? Locale.preferredLanguages.first ?? "en-US")]
         items += query.map { URLQueryItem(name: $0.key, value: $0.value) }
         comps.queryItems = items
         guard let url = comps.url else { return nil }
@@ -38,7 +38,11 @@ enum TMDB {
         let t = type == "series" ? "tv" : "movie"
         lock.lock(); let cached = genreCache[t]; lock.unlock()
         var map = cached
-        if map == nil, let obj = await get("/genre/\(t)/list"), let list = obj["genres"] as? [[String: Any]] {
+        // In English whatever the phone's language (1.30.1): the names are
+        // looked up by the English ones Discover's genre chips use. In German
+        // "Family" came back as "Familie", no genre was found, and the list
+        // was asked for unfiltered: the kids profile then showed it as Family.
+        if map == nil, let obj = await get("/genre/\(t)/list", language: "en-US"), let list = obj["genres"] as? [[String: Any]] {
             var m: [String: Int] = [:]
             for g in list { if let n = g["name"] as? String, let id = g["id"] as? Int { m[n.lowercased()] = id } }
             map = m
@@ -59,7 +63,16 @@ enum TMDB {
         case .topRated where genre == nil:
             obj = await get("/\(t)/top_rated", q)
         default:
-            if let genre, let gid = await genreID(genre, type: type) { q["with_genres"] = String(gid) }
+            if let genre {
+                // A genre TMDB can't be asked for is no list, not every title
+                // (1.30.1); marked as failed so the next source is tried.
+                guard let gid = await genreID(genre, type: type) else {
+                    dlog("tmdb/error", "no TMDB genre for \(genre); nothing shown rather than the unfiltered list")
+                    lastError = true
+                    return []
+                }
+                q["with_genres"] = String(gid)
+            }
             if genre?.lowercased() == "anime" { q["with_original_language"] = "ja" }
             switch sort {
             case .new:

@@ -664,8 +664,12 @@ final class PlayerModel: ObservableObject {
         nudgeWork?.cancel()
         let w = DispatchWorkItem { [weak c] in
             guard let c, !c.isShutDown else { return }
-            c.command(["set", "video-zoom", "0.0001"])
-            c.command(["set", "video-zoom", "0"])
+            // Around the zoom that is set (1.30.1): it went to 0 each time,
+            // so a video-zoom from mpv.conf, a key or a script was lost at
+            // every turn of the phone and every return to the app.
+            let zoom = c.double("video-zoom") ?? 0
+            c.set("video-zoom", zoom + 0.0001)
+            c.set("video-zoom", zoom)
         }
         nudgeWork = w
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08, execute: w)
@@ -863,6 +867,7 @@ final class PlayerModel: ObservableObject {
             // Prepared near the end of the last episode: next in mpv's playlist,
             // opened (and buffered, once the last file was fully read) already.
             appended = nil
+            linkHoldPause = false; advancingFromEnd = false
             c.set("pause", false)
             let r = c.command(["playlist-next"])
             dlog("player", "playlist-next → the prepared episode \(item.displayTitle) -> \(r)")
@@ -873,8 +878,13 @@ final class PlayerModel: ObservableObject {
                 // was given on every reconnect and is redirected again. The
                 // last file pauses meanwhile (Next without a prepared episode);
                 // the play state is put back once the new file is asked for.
-                let wasPaused = paused
-                if !wasPaused { c.set("pause", true) }
+                // The user's own pause only (1.30.1): not the pause put on
+                // here for an earlier file whose address was still awaited
+                // (Next tapped twice left the third file paused), and not
+                // mpv's own at the end of the last file (keep-open).
+                let wasPaused = paused && !linkHoldPause && !advancingFromEnd
+                advancingFromEnd = false
+                if !wasPaused { c.set("pause", true); linkHoldPause = true }
                 let id = item.id
                 // Said after 4 s (1.28.9): an addon's server can take half a
                 // minute to hand the stream over, with nothing on screen.
@@ -890,15 +900,28 @@ final class PlayerModel: ObservableObject {
                     // Saved once the file has really loaded (see rememberAddress).
                     self.followed = final.flatMap { $0 != u && !answer.fromSaved ? (id, u, $0) : nil }
                     self.loadFile(item, opts, c)
-                    if !wasPaused { c.set("pause", false) }
+                    if !wasPaused { self.linkHoldPause = false; c.set("pause", false) }
                 }
             } else {
                 loadFile(item, opts, c)
+                // Playing again after a pause that wasn't the user's: the one
+                // held for an address (above), or mpv's at the end of the
+                // last file, which stays on across loadfile (1.30.1).
+                if linkHoldPause || advancingFromEnd {
+                    linkHoldPause = false; advancingFromEnd = false
+                    c.set("pause", false)
+                }
             }
         }
         watchLoading(item)
         updateNowPlaying()
     }
+
+    /// The pause is one `load` put on while a file's address was awaited.
+    private var linkHoldPause = false
+    /// The next file is being opened because the last one ended by itself
+    /// (autoplay): mpv paused at its end, the user didn't.
+    private var advancingFromEnd = false
 
     private func loadFile(_ item: MediaItem, _ opts: [String], _ c: MPVClient) {
         if openStage != .connecting { openStage = .connecting }
@@ -1277,11 +1300,27 @@ final class PlayerModel: ObservableObject {
                     guard done, let self, timer.isValid else { return }
                     timer.invalidate()
                     dlog("player", String(format: "next episode: this file read to the end at %.0f s, %.0f s before the Up Next card; mpv opens the next file now", self.position, cardAt - self.position))
+                    self.lowerRaisedBuffer()
                 }
             }
         }
         RunLoop.main.add(t, forMode: .common)
         readToEndCheck = t
+    }
+
+    /// The raised limit has done its work: this file is read to its end, and
+    /// what is buffered of it stays (mpv only stops reading at the limit, it
+    /// drops nothing ahead). The limit goes back to the setting's now, not at
+    /// the next file's start (1.30.1): the next file's reader takes the same
+    /// limit, so it filled a second buffer as large as the raised one. 12 Nov
+    /// report: "150 → 768 MB" took the app from 703 MB to 2310 MB, and
+    /// "150 → 611 MB" from 1625 MB to 2756 MB.
+    private func lowerRaisedBuffer() {
+        guard raisedBuffer, !bufferTrimmed, let c = client, !c.isShutDown else { return }
+        raisedBuffer = false
+        let mb = max(32, defaults.integer(forKey: SettingsKey.cacheMB))
+        c.setAsync("demuxer-max-bytes", "\(mb)MiB")
+        dlog("player", "next episode: buffer limit back to \(mb) MB for the next file (\(EnergyMonitor.memory))")
     }
 
     /// mpv's reader has hit the end of this file (demuxer-cache-state "eof").
@@ -1779,6 +1818,8 @@ final class PlayerModel: ObservableObject {
         // round: a 4K Dolby Vision file never got going (5 Nov report: the
         // decoder flipped between VideoToolbox and software many times a
         // second). The last gamma is forgotten when a new file loads.
+        // mpv has video params right now: the light levels can be read.
+        let known = !(gamma ?? "").isEmpty
         if let gamma, !gamma.isEmpty { lastGamma = gamma }
         let gamma = lastGamma
         let dv = tracks.first { $0.type == "video" && $0.selected }?.dvProfile ?? 0
@@ -1787,29 +1828,36 @@ final class PlayerModel: ObservableObject {
         else if gamma == "hlg" { videoFormat = "HLG" }
         else { videoFormat = gamma.isEmpty ? "" : "SDR" }
         updateGLHDR(gamma: gamma)
-        updateMetalFramesHDR(gamma: gamma)
+        updateMetalFramesHDR(gamma: gamma, known: known)
     }
 
     /// HDR on Metal in the video layer (1.28.0): libplacebo draws BT.2020 PQ
     /// (or HLG) into half-float frames, tagged with the video's light levels,
     /// as OpenGL's HDR frames are, but from the hardware decoder's own 10-bit
     /// frames, with Dolby Vision applied: no copy decoding, no stripping.
-    private func updateMetalFramesHDR(gamma: String) {
+    private func updateMetalFramesHDR(gamma: String, known: Bool) {
         guard let mf = metalFrames, let c = client else { return }
         let hdrVideo = gamma == "pq" || gamma == "hlg"
         let edr = UIScreen.main.potentialEDRHeadroom > 1 || CommandLine.arguments.contains("-labEDR")
         let want = hdrVideo && defaults.bool(forKey: SettingsKey.hdrOutput) && edr && !glHDRFailedForFile
-        guard want != glHDROn else { return }
-        glHDROn = want
+        // HDR already on: the next HDR file's own light levels all the same
+        // (1.30.1). They were only read when HDR came on, so every later
+        // episode's frames carried the first one's MaxCLL and mastering levels.
+        guard want != glHDROn || (want && known) else { return }
         if want {
             let hlg = gamma == "hlg"
             let info = SampleBufferRenderer.HDROutput(hlg: hlg, maxCLL: c.int("video-params/max-cll").map(Int.init), maxFALL: c.int("video-params/max-fall").map(Int.init),
                                                        maxLuma: c.double("video-params/max-luma"), minLuma: c.double("video-params/min-luma"))
+            guard !glHDROn || info != hdrInfoSent else { return }
+            glHDROn = true
+            hdrInfoSent = info
             mf.onHDRFailed = { [weak self] in self?.glHDRFailed() }
             mf.setHDR(info)
             pip.setHDR(true)
             dlog("player", "Metal (video layer): HDR output \(hlg ? "HLG" : "PQ") BT.2020 from the hardware's 10-bit frames, MaxCLL \(info.maxCLL.map(String.init) ?? "?"), mastering \(info.maxLuma.map { "\(Int($0))" } ?? "?") nits")
         } else {
+            glHDROn = false
+            hdrInfoSent = nil
             mf.setHDR(nil)
             pip.setHDR(false)
             dlog("player", "Metal (video layer): SDR output\(hdrVideo ? " (HDR video tone-mapped: HDR output off or no HDR screen)" : "")")
@@ -1824,6 +1872,8 @@ final class PlayerModel: ObservableObject {
     /// "HDR output" on and a screen with HDR headroom; otherwise mpv tone-maps
     /// to SDR as before.
     private var glHDROn = false
+    /// The light levels the Metal frames are tagged with now.
+    private var hdrInfoSent: SampleBufferRenderer.HDROutput?
     /// Half-float frames failed for this file: not tried again until the
     /// next one (the simulator, which can't make them, tried after every
     /// decoder restart, round and round).
@@ -4806,6 +4856,7 @@ extension PlayerModel: MPVClientDelegate {
             return
         }
         if playbackMode == "playlist", defaults.bool(forKey: SettingsKey.autoplayNext), hasNext {
+            advancingFromEnd = true
             playNext()
         } else {
             // The end: back to where you came from. There was a Replay / Close

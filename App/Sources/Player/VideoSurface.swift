@@ -429,14 +429,21 @@ enum SystemVolume {
 
     static func set(_ value: Float) {
         guard let slider else { return }
+        let before = current
         slider.value = value
         slider.sendActions(for: .valueChanged)
         asked = value
-        guard !checked else { return }
+        // Checked on the first change that asks for a real move.
+        guard !checked, abs(value - before) > 0.1 else { return }
         checked = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             let now = current, value = asked
-            if abs(now - value) > 0.08 && nativeHUD {
+            // "Didn't set it" is the volume not having moved at all (1.30.1).
+            // It was "not within 0.08 of what was asked", and a Bluetooth
+            // headset moves in steps of 1/16 and a moment late: 12 Nov report,
+            // AirPods, "wanted 0.66, got 0.75", and iOS's indicator was gone
+            // for the rest of the run.
+            if abs(now - before) < 0.01 && nativeHUD {
                 dlog("player", String(format: "volume: hidden volume view didn't set the volume (wanted %.2f, got %.2f); using the player's HUD", value, now))
                 nativeHUD = false
                 view.isHidden = false

@@ -248,6 +248,9 @@ final class ThumbLoader: ObservableObject {
 
     deinit { if let saved { NotificationCenter.default.removeObserver(saved) } }
 
+    /// The item (and kind of picture) loaded last, whatever its size.
+    private var loadedItem: String?
+
     /// The last load asked for, to run again when its saved frame arrives.
     private var lastLoad: (key: String, run: () -> Void)?
     nonisolated(unsafe) private var saved: NSObjectProtocol?
@@ -292,14 +295,26 @@ final class ThumbLoader: ObservableObject {
         let cacheKey = Self.cacheKey(key, art: art, pixels: pixels)
         guard loadedKey != cacheKey else { return }
         loadedKey = cacheKey
+        // Another item's picture (1.30.1): what was shown goes, unless the new
+        // item's is in memory. It stayed, counted as this item's own, and
+        // nothing was loaded: a title page that moved on to the next episode
+        // kept the last one's still under the new title. The same item at
+        // another size keeps its picture until the sharper one is there.
+        let itemKey = key + (art == .poster ? "|poster" : "|wide")
+        let hit = ImageCache.shared.picture(forKey: cacheKey)
+        if loadedItem != nil, loadedItem != itemKey {
+            image = hit
+            meta = nil
+        }
+        loadedItem = itemKey
         started = CACurrentMediaTime()
         // Poster / episode still first (Settings → Library → Tile artwork);
         // the saved player frame is the fallback, not the default.
         let preferMeta = art == .poster || (preferMeta ?? (UserDefaults.standard.string(forKey: SettingsKey.tileArtwork) != "frame"))
-        if let c = ImageCache.shared.picture(forKey: cacheKey) { image = c }
+        if let hit { image = hit }
         // A picture already made for this very key (1.24.1): the lookup below
         // only fetched the same art again and redrew the tile with it.
-        let memoryHit = image != nil
+        let memoryHit = hit != nil
         LibTrace.image.log("loader #\(serial) \(Self.short(cacheKey)): \(image == nil ? "not in memory, loading" : "from memory at once")")
         let pixels = self.pixels
         Task {
@@ -309,6 +324,8 @@ final class ThumbLoader: ObservableObject {
             if let lookupName {
                 // Metadata is cached on disk forever; artwork on disk too (ImageCache).
                 if let m = await MetadataService.shared.lookup(filename: lookupName) {
+                    // Another item has been asked for meanwhile: not this one's.
+                    guard self.loadedKey == cacheKey else { return }
                     self.meta = m
                     if art == .poster, let p = m.poster, let u = URL(string: p), m.id.hasPrefix("tt") {
                         // Kept by IMDb id: the same poster as the Real-Debrid library's for this title.
@@ -372,6 +389,18 @@ final class ThumbLoader: ObservableObject {
         let cacheKey = Self.cacheKey(key, art: .wide, pixels: pixels)
         guard loadedKey != cacheKey else { return }
         loadedKey = cacheKey
+        // Another item's picture (1.30.1): what was shown goes, unless the new
+        // item's is in memory. It stayed, counted as this item's own, and
+        // nothing was loaded: a title page that moved on to the next episode
+        // kept the last one's still under the new title. The same item at
+        // another size keeps its picture until the sharper one is there.
+        let itemKey = key + "|addon"
+        let hit = ImageCache.shared.picture(forKey: cacheKey)
+        if loadedItem != nil, loadedItem != itemKey {
+            image = hit
+            meta = nil
+        }
+        loadedItem = itemKey
         started = CACurrentMediaTime()
         if let c = ImageCache.shared.picture(forKey: cacheKey) { image = c; return }
         Task {
@@ -406,6 +435,8 @@ final class ThumbLoader: ObservableObject {
     }
 
     private func set(_ img: UIImage, _ key: String, from: String = "") {
+        // Kept for whoever asks for it next, shown only if it's still wanted.
+        guard key == loadedKey else { ImageCache.shared.remember(img, forKey: key); return }
         guard img !== image else { return }
         LibTrace.image.log("loader #\(serial) \(Self.short(key)): picture (\(from)) after \(LibTrace.ms(since: started)) ms\(image == nil ? "" : ", replacing one already shown")")
         ImageCache.shared.remember(img, forKey: key)

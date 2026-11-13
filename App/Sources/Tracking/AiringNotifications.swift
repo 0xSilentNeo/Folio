@@ -60,7 +60,13 @@ enum AiringNotifications {
         var out: [PlannedAlert] = []
         var voiced = 0
         for s in shows {
-            for e in s.upcoming(after: now) {
+            // An episode known by its day only fires in the morning of that
+            // day, which west of UTC is after its stand-in air time (TVmaze's
+            // 12:00 UTC is 07:00 in New York): kept until its own alert is due
+            // (1.30.1). Picked by air time alone, any replan between the two
+            // dropped it and removed the pending alert. `fire > now` below
+            // leaves out the ones that are over.
+            for e in s.schedule where e.airDate! > now || e.day != nil {
                 let premiere = e.number == 1 && (e.season ?? 0) >= 2
                 guard premiere ? (kinds.seasons || kinds.episodes) : kinds.episodes else { continue }
                 let what = e.number == nil && e.season == nil ? "A new episode of \(s.name)" : "\(s.name) \(e.label)"

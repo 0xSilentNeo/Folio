@@ -120,6 +120,9 @@ struct CatalogGridView: View {
     @State private var loading = false
     @State private var exhausted = false
     @State private var genre: String?
+    /// Goes up with each change of genre; a load belongs to the one it began in.
+    @State private var generation = 0
+    @State private var loadingGeneration: Int?
     @Namespace private var zoomNS
 
     var body: some View {
@@ -157,6 +160,7 @@ struct CatalogGridView: View {
             if metas.isEmpty { await loadMore() }
         }
         .onChange(of: genre) { _, _ in
+            generation += 1
             metas = []; exhausted = false
             Task { await loadMore() }
         }
@@ -171,14 +175,22 @@ struct CatalogGridView: View {
         .buttonStyle(.plain)
     }
 
+    /// One load at a time for the genre shown. A genre picked while a page
+    /// was on its way was dropped (the load in flight barred the new one) and
+    /// the old genre's titles then filled the grid under the new chip
+    /// (1.30.1): each genre's load now runs, and an answer for a genre no
+    /// longer shown is left out.
     private func loadMore() async {
-        guard !loading, !exhausted else { return }
+        let gen = generation
+        guard loadingGeneration != gen, !exhausted else { return }
+        loadingGeneration = gen
         loading = true
-        defer { loading = false }
         var extra: [String: String] = [:]
         if let genre { extra["genre"] = genre }
         if !metas.isEmpty { extra["skip"] = String(metas.count) }
         let page = (try? await AddonAPI.catalog(addon, catalog, extra: extra)) ?? []
+        guard gen == generation else { return }     // the newer load has the spinner
+        defer { loading = false; loadingGeneration = nil }
         let known = Set(metas.map(\.id))
         let fresh = page.filter { !known.contains($0.id) }
         if fresh.isEmpty { exhausted = true }

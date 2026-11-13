@@ -171,7 +171,7 @@ enum PictureMode: String, CaseIterable, Identifiable {
         case .efficient:
             return [("scale", "bilinear"), ("cscale", "bilinear"), ("dscale", "bilinear"),
                     ("correct-downscaling", "no"), ("linear-downscaling", "no"), ("sigmoid-upscaling", "no"),
-                    ("deband", "no"), ("dither-depth", "no")]
+                    ("deband", "no"), ("dither-depth", "auto")]
         case .balanced:
             return [("scale", "catmull_rom"), ("cscale", "bilinear"), ("dscale", "hermite"),
                     ("correct-downscaling", "no"), ("linear-downscaling", "no"), ("sigmoid-upscaling", "no"),

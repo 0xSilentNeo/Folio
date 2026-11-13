@@ -55,19 +55,27 @@ enum ContinueQueue {
     @MainActor
     static func webdavAddress(_ item: MediaItem) async -> MediaItem {
         guard case .webdav(let id) = item.source, let server = ServerStore.shared.servers.first(where: { $0.id == id }),
-              let u = URL(string: item.url), let base = URL(string: server.baseURL),
-              let host = u.host?.lowercased(), host != base.host?.lowercased() else { return item }
+              // server.base, as everywhere else (1.30.1): an address saved
+              // without "https://" has no host read from the raw text, so
+              // every episode on that server counted as a download address.
+              let u = URL(string: item.url), let base = server.base, let baseHost = base.host?.lowercased(),
+              let host = u.host?.lowercased(), host != baseHost else { return item }
         await LibraryIndexStore.shared.load(server)
         let name = u.lastPathComponent.removingPercentEncoding ?? u.lastPathComponent
         guard let f = LibraryIndexStore.shared.state(id).index?.allFiles.first(where: { $0.name == name }) else {
             dlog("player", "continue: \(name) was saved under a download address and isn't in \(server.name)'s library")
             return item
         }
+        // Already that address: nothing to move.
+        guard f.url.absoluteString != item.url else { return item }
         var it = item
         it.url = f.url.absoluteString
+        // The old entry goes only when the new one is another entry: with
+        // the same id, removing it removed the one just written, and the
+        // episode left Continue Watching with its place (1.30.1).
         if let e = HistoryStore.shared.entry(for: item.id) {
             HistoryStore.shared.record(it, position: e.position, duration: e.duration)
-            HistoryStore.shared.remove(e)
+            if it.id != e.id { HistoryStore.shared.remove(e) }
         }
         dlog("player", "continue: \(name) was saved under a download address; its WebDAV address on \(server.name) instead")
         return it

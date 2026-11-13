@@ -240,6 +240,11 @@ final class DownloadManager: ObservableObject {
     private var notifiedRun = false
     /// Transfers handed to the engine and not ended yet, by task key.
     private var inFlight = Set<String>()
+    /// Files whose transfers in iOS's session are being stopped and whose
+    /// resume data hasn't come back yet (1.30.1). Started again before it
+    /// had, a file began from the first byte of each part, or of the whole
+    /// file: Pause All then Resume All lost what had been downloaded.
+    private var haltingSession = Set<UUID>()
     /// Bumped each time a file starts or stops: an answer (a range check, a
     /// join) that comes back after a pause or a removal is dropped.
     private var runs: [UUID: Int] = [:]
@@ -603,6 +608,10 @@ final class DownloadManager: ObservableObject {
             }
             if held > 0 { dlog("dl", "holding \(held) download(s): Low Power Mode or not charging") }
             updateTicker(); save()
+            // iOS's own progress is told too (1.30.1): held, nothing reports
+            // to it (the ticker stops), and its task stayed alive with its
+            // progress frozen, keeping Folio awake in the background.
+            syncSystemProgress()
             return
         }
         guard attached else { updateTicker(); syncSystemProgress(); return }
@@ -619,7 +628,7 @@ final class DownloadManager: ObservableObject {
             // background without one it would be suspended in seconds.
             guard inApp || items[i].usesSession else { continue }
             // Paused a moment ago and still writing: it starts once that's done.
-            guard stopping[items[i].id] == nil else { continue }
+            guard stopping[items[i].id] == nil, !haltingSession.contains(items[i].id) else { continue }
             start(i)
             running += 1
         }
@@ -842,12 +851,15 @@ final class DownloadManager: ObservableObject {
             keys = [DownloadEngine.key(id, nil)]
         }
         for k in keys { inFlight.remove(k) }
+        haltingSession.insert(id)
         let engine = engine
         Task {
             await withTaskGroup(of: (String, String?).self) { group in
                 for k in keys { group.addTask { (k, await engine.pause(k)) } }
                 for await (k, name) in group { if let name { self.setResume(k, name) } }
             }
+            self.haltingSession.remove(id)
+            self.pump()         // a Resume tapped meanwhile starts now
         }
     }
 
