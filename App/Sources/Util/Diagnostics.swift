@@ -56,6 +56,8 @@ final class Diagnostics: NSObject {
             self?.heartbeatLock.lock(); self?.isActive = true; self?.lastHeartbeat = Date(); self?.heartbeatLock.unlock()
             self?.startHeartbeat()
             self?.log("app", "active")
+            // (1.30.3) Folio can stay open for days without a launch.
+            TraceKeepOn.refresh()
         }
         nc.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
             self?.heartbeatLock.lock(); self?.isActive = false; self?.heartbeatLock.unlock()
@@ -420,6 +422,23 @@ extension Diagnostics: MXMetricManagerSubscriber {
 }
 
 func dlog(_ tag: String, _ message: @autoclosure () -> String) { Diagnostics.shared.log(tag, message()) }
+
+/// "Keep on until I turn them off" (1.30.3): the traces normally go off a
+/// day after they were turned on (TraceExpiry), which is too soon for a
+/// problem that shows up once a week. While the switch is on, each trace
+/// that's on has its day started again, at launch (before TraceExpiry
+/// looks), whenever Folio comes to the front, and when the switch changes;
+/// so its day never runs out. Off again, they last a day from then.
+enum TraceKeepOn {
+    /// TraceExpiry's own stamp for a trace: when it was turned on.
+    static func stamp(_ key: String) -> String { "traceOnSince." + key }
+
+    /// `now` and `defaults` are parameters for the tests.
+    static func refresh(now: Date = Date(), defaults d: UserDefaults = .standard) {
+        guard d.bool(forKey: SettingsKey.diagnosticsKeepOn) else { return }
+        for k in TraceExpiry.keys where d.bool(forKey: k) { d.set(now, forKey: stamp(k)) }
+    }
+}
 
 /// Launch timing in the app log: process start → first screen. When iOS
 /// prewarmed the process (started it ahead of time), the gap includes the

@@ -30,9 +30,12 @@ enum AddonAPI {
         return URL(string: s) != nil ? s : nil
     }
 
-    static func get<T: Decodable>(_ type: T.Type, _ urlString: String) async throws -> T {
+    /// `fresh`: asked of the addon itself, not answered from this app's
+    /// cache of its last answer (1.30.3, the in-player stream picker).
+    static func get<T: Decodable>(_ type: T.Type, _ urlString: String, fresh: Bool = false) async throws -> T {
         guard let url = URL(string: urlString) else { throw AddonError.badURL }
         var req = URLRequest(url: url)
+        if fresh { req.cachePolicy = .reloadIgnoringLocalCacheData }
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         // Each request's timing (NetTrace): slow at the server, queued, or not connecting.
         let host = url.host ?? "?"
@@ -105,8 +108,8 @@ enum AddonAPI {
         try await timed(addon, "details") { try await get(MetaResponse.self, "\(addon.baseURL)/meta/\(enc(type))/\(enc(id)).json").meta }
     }
 
-    static func streams(_ addon: InstalledAddon, type: String, id: String) async throws -> [AddonStream] {
-        try await timed(addon, "streams") { try await get(StreamsResponse.self, "\(addon.baseURL)/stream/\(enc(type))/\(enc(id)).json").streams ?? [] }
+    static func streams(_ addon: InstalledAddon, type: String, id: String, fresh: Bool = false) async throws -> [AddonStream] {
+        try await timed(addon, "streams") { try await get(StreamsResponse.self, "\(addon.baseURL)/stream/\(enc(type))/\(enc(id)).json", fresh: fresh).streams ?? [] }
     }
 
     static func subtitles(_ addon: InstalledAddon, type: String, id: String) async throws -> [AddonSubtitle] {

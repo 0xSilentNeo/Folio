@@ -416,9 +416,10 @@ struct StreamsView: View {
             if seasonVideos.count > 1 {
                 // Play Season: the rest follow, each resolved just before it plays.
                 let pick = AddonPlayback.pick(from: s, addon: addon, context: first)
-                let rest = seasonVideos.dropFirst().map { AddonPlayback.placeholder(context(for: $0), pick: pick) }
+                let rest = seasonVideos.dropFirst().map { context(for: $0) }
                 dlog("player", "season: \(seasonVideos.count) episodes from \(addon.manifest.name), release group \(pick.bingeGroup ?? "none"), \(pick.resolution ?? "?")")
-                PlayerPresenter.play(queue: [item] + rest, index: 0, fromStart: fromStart && firstPlay, startAt: firstPlay ? startAt : nil)
+                PlayerPresenter.play(queue: AddonPlayback.seasonQueue(first: item, rest: rest, pick: pick), index: 0,
+                                     fromStart: fromStart && firstPlay, startAt: firstPlay ? startAt : nil)
             } else {
                 PlayerPresenter.play(queue: [item], index: 0, fromStart: fromStart && firstPlay, startAt: firstPlay ? startAt : nil)
             }
@@ -471,8 +472,16 @@ struct StreamPickerSheet: View {
     /// Shown inside the player, not as a sheet (1.17.1): Cancel calls this.
     var onCancel: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
-    @State private var groups: [StreamsView.StreamGroup] = []
-    @State private var loading = true
+    /// The asking is the loader's, begun as the picker is made (1.30.3):
+    /// it was the view's `.task`, and nothing else showed whether it ran.
+    @StateObject private var loader: StreamPickerLoader
+
+    init(context: PlayContext, onPick: @escaping (AddonStream, InstalledAddon) -> Void, onCancel: (() -> Void)? = nil) {
+        self.context = context
+        self.onPick = onPick
+        self.onCancel = onCancel
+        _loader = StateObject(wrappedValue: StreamPickerLoader(context: context))
+    }
 
     private var label: String { context.videoLabel ?? context.name }
 
@@ -483,10 +492,10 @@ struct StreamPickerSheet: View {
                     Text("The release you're watching isn't available for \(label). Pick a stream; the next episodes will follow it.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
-                if loading && groups.allSatisfy({ $0.streams.isEmpty }) {
+                if loader.loading && loader.isEmpty {
                     FolioWorkingRow(text: "Asking addons…", size: .regular)
                 }
-                ForEach(groups) { g in
+                ForEach(loader.groups) { g in
                     Section(g.addon.manifest.name) {
                         if let e = g.error { Text(e).font(.caption).foregroundStyle(.orange) }
                         ForEach(g.streams) { s in
@@ -495,13 +504,46 @@ struct StreamPickerSheet: View {
                         }
                     }
                 }
+                // Nothing to pick says so, with a way to ask again (1.30.3):
+                // the list was left blank under the first line.
+                if !loader.loading && loader.isEmpty {
+                    ContentUnavailableView {
+                        Label("No Streams", systemImage: "antenna.radiowaves.left.and.right.slash")
+                    } description: {
+                        Text(loader.groups.isEmpty
+                             ? "None of your addons that are switched on has streams for this title."
+                             : "No addon gave a stream for \(label) just now.")
+                    } actions: {
+                        Button("Ask Again") { Task { await loader.load(fresh: true) } }
+                            .buttonStyle(.borderedProminent)
+                    }
+                    .listRowBackground(Color.clear)
+                }
             }
             .navigationTitle(label)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { if let onCancel { onCancel() } else { dismiss() } } } }
-            .refreshable { await load() }
+            .refreshable { await loader.load(fresh: true) }
         }
-        .task { await load() }
+    }
+}
+
+/// Asks every stream addon for the picker's episode: the same addons, type
+/// and video id as the title page's streams list (StreamsView.load).
+@MainActor
+final class StreamPickerLoader: ObservableObject {
+    @Published private(set) var groups: [StreamsView.StreamGroup] = []
+    @Published private(set) var loading = true
+    let context: PlayContext
+    /// The latest asking: an older one that answers later changes nothing.
+    private var asking = 0
+
+    var isEmpty: Bool { groups.allSatisfy { $0.streams.isEmpty } }
+    private var label: String { context.videoLabel ?? context.name }
+
+    init(context: PlayContext) {
+        self.context = context
+        Task { await self.load(fresh: false) }
     }
 
     /// 27 Oct report: E7 and E8 showed the addon's name and no streams here,
@@ -509,31 +551,55 @@ struct StreamPickerSheet: View {
     /// was checked (that check is what opened this picker), and the title
     /// page listed them. What the addon gave in the last 10 minutes is shown
     /// at once; asking again only replaces it with an answer that has streams.
-    private func load() async {
-        let addons = AddonStore.shared.streamAddons(type: context.type, id: context.videoId)
+    ///
+    /// 1.30.3 (13 Nov report: no streams at all here, though the title page
+    /// then listed them): when no addon gives a stream, they are asked once
+    /// more a moment later, past this app's cache of their answers. The
+    /// first asking can come while the season check is still asking the
+    /// same addon for every later episode, and an empty or failed answer
+    /// was the end of it. `fresh`: past the cache from the start (Ask Again).
+    func load(fresh: Bool) async {
+        asking += 1
+        let mine = asking
+        loading = true
+        let type = context.type, videoId = context.videoId
+        let addons = AddonStore.shared.streamAddons(type: type, id: videoId)
+        dlog("player", "picker: asking \(addons.count) addon(s) for \(label) (\(type), \(videoId))\(fresh ? ", past the cache" : "")")
+        let shown = Dictionary(groups.map { ($0.id, $0.streams) }, uniquingKeysWith: { a, _ in a })
         groups = addons.map { a in
-            let recent = AddonPlayback.recentStreams[AddonPlayback.recentKey(a.id, context.videoId)]
-            let fresh = recent.map { Date().timeIntervalSince($0.at) < 600 } ?? false
-            return StreamsView.StreamGroup(id: a.id, addon: a, streams: fresh ? recent!.streams : [])
+            let recent = AddonPlayback.recentStreams[AddonPlayback.recentKey(a.id, videoId)]
+            let kept = recent.map { Date().timeIntervalSince($0.at) < 600 } ?? false
+            // Asked again: what's listed stays until a new answer has streams.
+            let had = shown[a.id] ?? []
+            return StreamsView.StreamGroup(id: a.id, addon: a, streams: !had.isEmpty ? had : (kept ? recent!.streams : []))
         }
-        await withTaskGroup(of: (String, [AddonStream]?, String?).self) { tg in
-            for a in addons {
-                tg.addTask {
-                    do { return (a.id, try await AddonAPI.streams(a, type: context.type, id: context.videoId), nil) }
-                    catch { return (a.id, nil, error.localizedDescription) }
+        for attempt in 0..<2 where !addons.isEmpty {
+            let past = fresh || attempt > 0
+            await withTaskGroup(of: (String, [AddonStream]?, String?).self) { tg in
+                for a in addons {
+                    tg.addTask {
+                        do { return (a.id, try await AddonAPI.streams(a, type: type, id: videoId, fresh: past), nil) }
+                        catch { return (a.id, nil, error.localizedDescription) }
+                    }
+                }
+                for await (id, streams, err) in tg {
+                    guard mine == asking, let i = groups.firstIndex(where: { $0.id == id }) else { continue }
+                    let had = groups[i].streams.count
+                    dlog("player", "picker: \(groups[i].addon.manifest.name) answered \(streams?.count ?? 0) stream(s) for \(label)\(err.map { " (\($0))" } ?? "")\(had > 0 ? ", \(had) listed already" : "")")
+                    if let streams, !streams.isEmpty {
+                        groups[i].streams = streams
+                        groups[i].error = nil
+                        AddonPlayback.recentStreams[AddonPlayback.recentKey(id, videoId)] = (Date(), streams)
+                    } else if had == 0 {
+                        groups[i].error = err ?? "No streams came back for \(label)."
+                    }
                 }
             }
-            for await (id, streams, err) in tg {
-                guard let i = groups.firstIndex(where: { $0.id == id }) else { continue }
-                let had = groups[i].streams.count
-                dlog("player", "picker: \(groups[i].addon.manifest.name) answered \(streams?.count ?? 0) stream(s) for \(label)\(err.map { " (\($0))" } ?? "")\(had > 0 ? ", \(had) from the episode check" : "")")
-                if let streams, !streams.isEmpty {
-                    groups[i].streams = streams
-                    AddonPlayback.recentStreams[AddonPlayback.recentKey(id, context.videoId)] = (Date(), streams)
-                } else if had == 0 {
-                    groups[i].error = err ?? "No streams came back for \(label). Pull down to ask again."
-                }
-            }
+            guard mine == asking else { return }        // a newer asking has the list
+            guard isEmpty, attempt == 0 else { break }
+            dlog("player", "picker: no addon gave a stream for \(label); asking once more")
+            try? await Task.sleep(nanoseconds: 2_500_000_000)
+            guard mine == asking else { return }
         }
         loading = false
     }

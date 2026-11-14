@@ -136,9 +136,24 @@ final class KidsProfile: ObservableObject {
     /// Seconds left before the pad takes another try; nil when it does now.
     var lockedFor: TimeInterval? {
         let d = UserDefaults.standard
+        // The same start of the device as at the lockout (1.30.3): after a
+        // restart the new time since boot passes the old one and, taken for
+        // the same, locked the pad again. A lockout from 1.30.2 has no id.
+        let saved = d.string(forKey: Self.lockedBootIDKey), current = Self.bootSession
+        let sameBoot = saved == nil || current == nil || saved == current
         return Self.lockLeft(until: d.double(forKey: Self.lockedUntilKey), now: Date().timeIntervalSince1970,
                              bootAtLock: d.double(forKey: Self.lockedAtBootKey), bootUntil: d.double(forKey: Self.lockedUntilBootKey),
-                             bootNow: Self.sinceBoot)
+                             bootNow: Self.sinceBoot, sameBoot: sameBoot)
+    }
+
+    /// The kernel's id for this start of the device; nil where it can't be read.
+    nonisolated static var bootSession: String? {
+        var size = 0
+        guard sysctlbyname("kern.bootsessionuuid", nil, &size, nil, 0) == 0, size > 1 else { return nil }
+        var buf = [CChar](repeating: 0, count: size)
+        guard sysctlbyname("kern.bootsessionuuid", &buf, &size, nil, 0) == 0 else { return nil }
+        let id = String(cString: buf)
+        return id.isEmpty ? nil : id
     }
 
     /// Seconds since the device started, counting sleep: the clock in
@@ -149,9 +164,10 @@ final class KidsProfile: ObservableObject {
     /// device started too (1.30.2): setting the clock forward ended the
     /// wait. After a restart (the time since boot is less than it was at
     /// the lockout) only the clock counts, so it can't wait for good.
-    nonisolated static func lockLeft(until: Double, now: Double, bootAtLock: Double, bootUntil: Double, bootNow: Double) -> TimeInterval? {
+    nonisolated static func lockLeft(until: Double, now: Double, bootAtLock: Double, bootUntil: Double, bootNow: Double,
+                                     sameBoot: Bool = true) -> TimeInterval? {
         var left = until - now
-        if bootUntil > 0, bootAtLock <= bootNow { left = max(left, bootUntil - bootNow) }
+        if sameBoot, bootUntil > 0, bootAtLock <= bootNow { left = max(left, bootUntil - bootNow) }
         return left > 0 ? left : nil
     }
 
@@ -175,6 +191,7 @@ final class KidsProfile: ObservableObject {
                 let boot = Self.sinceBoot
                 d.set(boot, forKey: Self.lockedAtBootKey)
                 d.set(boot + wait, forKey: Self.lockedUntilBootKey)
+                d.set(Self.bootSession, forKey: Self.lockedBootIDKey)
                 dlog("kids", "passcode locked for \(Int(wait)) s (lockout \(n + 1) in a row)")
                 return .locked(seconds: Int(wait))
             }
@@ -190,6 +207,7 @@ final class KidsProfile: ObservableObject {
     private static let lockoutsKey = "kidsPasscodeLockouts"
     private static let lockedAtBootKey = "kidsPasscodeLockedAtBoot"
     private static let lockedUntilBootKey = "kidsPasscodeLockedUntilBoot"
+    private static let lockedBootIDKey = "kidsPasscodeLockedBootID"
 
     /// The wait after the n-th lockout in a row (0 is the first).
     nonisolated static func lockout(after n: Int) -> TimeInterval {
@@ -203,6 +221,7 @@ final class KidsProfile: ObservableObject {
         UserDefaults.standard.removeObject(forKey: Self.lockedUntilKey)
         UserDefaults.standard.removeObject(forKey: Self.lockedAtBootKey)
         UserDefaults.standard.removeObject(forKey: Self.lockedUntilBootKey)
+        UserDefaults.standard.removeObject(forKey: Self.lockedBootIDKey)
     }
 
     // MARK: Face ID / Touch ID

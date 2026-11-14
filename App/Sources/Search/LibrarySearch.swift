@@ -41,17 +41,46 @@ enum LibrarySearchResults {
         }.prefix(20))
     }
 
-    /// Each server's indexed files whose name has every word, at most 40
-    /// a server. The page leaves the kids profile out.
+    /// How many releases of one server a search lists.
+    static let releaseCap = 40
+
+    /// Each server's indexed files whose name has every word, of at most
+    /// 40 releases a server. The page leaves the kids profile out.
+    ///
+    /// 1.30.3: the first 40 files were taken, before they were put together
+    /// by release, so a season's row said "40 files" of its 60 or stopped
+    /// mid-season, and a broad search showed the first two or three releases.
     @MainActor
     static func serverMatches(_ words: [String], servers: [WebDAVServer], index: LibraryIndexStore) -> [ServerFile] {
         guard !words.isEmpty else { return [] }
-        return servers.flatMap { server in
-            index.state(server.id).searchable.lazy
-                .filter { s in words.allSatisfy { s.haystack.contains($0) } }
-                .prefix(40)
-                .map { ServerFile(server: server, file: $0.file) }
+        return servers.flatMap { server -> [ServerFile] in
+            let state = index.state(server.id)
+            let matched = state.searchable.filter { s in words.allSatisfy { s.haystack.contains($0) } }.map(\.file)
+            return capByRelease(matched, root: state.index?.root, cap: releaseCap).map { ServerFile(server: server, file: $0) }
         }
+    }
+
+    /// The files of the first `cap` releases, every file of each, in the
+    /// order found.
+    static func capByRelease(_ files: [LibraryIndex.File], root: String?, cap: Int) -> [LibraryIndex.File] {
+        var kept = Set<String>()
+        var out: [LibraryIndex.File] = []
+        for f in files {
+            let key = releaseKey(f.url.absoluteString, root: root)
+            if kept.contains(key) { out.append(f) }
+            else if kept.count < cap { kept.insert(key); out.append(f) }
+        }
+        return out
+    }
+
+    /// The folder at the server's top a file is in (`root`: the start
+    /// folder's address, LibraryIndex.key); the file's own address when
+    /// it's at the top, or not under the start folder.
+    static func releaseKey(_ address: String, root: String?) -> String {
+        guard let root, !root.isEmpty, address.hasPrefix(root) else { return address }
+        let rest = address.dropFirst(root.count)
+        guard let slash = rest.firstIndex(of: "/") else { return address }
+        return String(rest[..<slash])
     }
 }
 
@@ -154,7 +183,8 @@ enum SearchScope: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .all: return "All"
-        case .yours: return "Yours"
+        // "Library" (1.30.3); the case and the chip's identifier keep the old name.
+        case .yours: return "Library"
         case .movies: return "Movies"
         case .shows: return "Shows"
         }
@@ -387,7 +417,8 @@ private struct SearchThumb: View {
             case .catalog(let e, _):
                 CatalogPosterThumb(entry: e, request: artwork, points: width * 1.5)
             case .title(let m, _):
-                PosterImage(url: m.poster, cornerRadius: 8)
+                // Decoded for the thumbnail's width, not at 700 px (1.30.3).
+                PosterImage(url: m.poster, cornerRadius: 8, width: width)
             }
         }
         .frame(width: width, height: width * 1.5)
@@ -501,7 +532,7 @@ struct SearchTopCard: View {
     }
 }
 
-/// All, Yours, Movies, Shows: the chosen one filled. Only the chips with
+/// All, Library, Movies, Shows: the chosen one filled. Only the chips with
 /// something under them are given (SearchResults.scopes).
 struct SearchScopeChips: View {
     let scopes: [SearchScope]
@@ -529,6 +560,8 @@ struct SearchScopeChips: View {
         }
         // The chips run to the screen's edge when they don't fit, not to the row's margin.
         .scrollClipDisabled()
+        // A sideways swipe isn't scrolling the results: the keyboard stays (1.30.3).
+        .scrollDismissesKeyboard(.never)
     }
 }
 
@@ -643,13 +676,14 @@ struct SearchEmptyState: View {
                         // Resumed as Home's card does it: the show's queue, not the one file.
                         Button { ContinueQueue.play(e.item) } label: { SearchContinueCard(entry: e) }
                             .buttonStyle(PressStyle(scale: 0.97))
-                            .accessibilityLabel(e.item.displayTitle)
+                            // Its label is the card's own: the name it shows (1.30.3).
                             .accessibilityHint(e.canResume ? "Resumes it" : "Plays it")
-                            .accessibilityIdentifier("searchContinue:" + e.item.title)
+                            .accessibilityIdentifier("searchContinue:" + (e.item.title.isEmpty ? e.item.id : e.item.title))
                     }
                 }
             }
             .scrollClipDisabled()
+            .scrollDismissesKeyboard(.never)
         }
     }
 }
@@ -661,6 +695,8 @@ private struct SearchContinueCard: View {
     @StateObject private var thumb = ThumbLoader()
     private static let width: CGFloat = 104
     private static let points: CGFloat = 156
+
+    private var shownName: String { thumb.meta?.name ?? entry.item.displayTitle }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -675,11 +711,14 @@ private struct SearchContinueCard: View {
                 .overlay { if entry.progress > 0.01 { ArtProgressBar(progress: entry.progress) } }
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 0.5))
-            Text(thumb.meta?.name ?? entry.item.displayTitle)
+            Text(shownName)
                 .font(.caption.weight(.semibold)).foregroundStyle(.primary)
                 .lineLimit(2).multilineTextAlignment(.leading)
         }
         .frame(width: Self.width, alignment: .leading)
+        // VoiceOver says the name the card shows (1.30.3: it said the file's).
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(shownName)
         .onAppear {
             // An addon stream's link names nothing: its poster is the item's artwork.
             let name = entry.item.addonRef == nil ? (entry.item.resolvedURL?.lastPathComponent ?? entry.item.title) : nil
@@ -722,8 +761,15 @@ final class CatalogSearch: ObservableObject {
     }
 
     @Published private(set) var results: [Result] = []
+    /// The words `results` answer (1.30.3): the page lists them only for
+    /// the same words, so the last query's entries aren't under the next
+    /// one's while its answer is on the way.
+    private(set) var resultsWords: [String] = []
     @Published private(set) var searching = false
     private var task: Task<Void, Never>?
+    /// The last text and servers asked for: the same again asks nothing
+    /// (the page calls this each time it comes back, 1.30.3).
+    private var lastAsked: String?
     /// The clients the last search asked, kept for its rows (their
     /// pictures, playing one): made once a search, not once a row.
     private var clients: [UUID: any CatalogSource] = [:]
@@ -747,23 +793,27 @@ final class CatalogSearch: ObservableObject {
     }
 
     func textChanged(_ text: String) {
-        task?.cancel()
         let q = text.trimmingCharacters(in: .whitespacesAndNewlines)
         // Only counted here: a client reads its login from the Keychain,
         // so they're made after the pause, not at each keystroke.
         let servers = MediaServerStore.shared.servers.filter { $0.kind != .smb }
+        let asked = q + "|" + servers.map(\.id.uuidString).joined(separator: ",")
+        guard asked != lastAsked else { return }
+        lastAsked = asked
+        task?.cancel()
         guard q.count >= 2, !servers.isEmpty else {
-            results = []
-            searching = false
+            // Only what changes is written: an empty field at each visit redrew the page.
+            if !results.isEmpty { results = [] }
+            if searching { searching = false }
             return
         }
-        searching = true
+        if !searching { searching = true }
         task = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 300_000_000)
             guard !Task.isCancelled else { return }
             let sources = self?.signedIn(servers) ?? []
             guard !sources.isEmpty else {
-                self?.results = []
+                if self?.results.isEmpty == false { self?.results = [] }
                 self?.searching = false
                 return
             }
@@ -780,6 +830,7 @@ final class CatalogSearch: ObservableObject {
                 return out.sorted { $0.0 < $1.0 }.map(\.1)
             }
             guard let self, !Task.isCancelled else { return }
+            self.resultsWords = LibrarySearchText.words(q)
             self.results = found.filter { !$0.entries.isEmpty || $0.error != nil }
             self.searching = false
             dlog("search", "Plex/Jellyfin: " + found.map { "\($0.server.displayName) \($0.error == nil ? "\($0.entries.count)" : "error")" }.joined(separator: ", ")

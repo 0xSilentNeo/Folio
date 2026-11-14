@@ -9,7 +9,8 @@ import SwiftUI
 ///   check of its library worked. Drawn from a saved summary
 ///   (IndexSummaries, UserDefaults), so it's there on Home's first frame
 ///   with nothing added to launch; the library is checked again in the
-///   background (LibraryIndexStore.refreshIfNeeded).
+///   background (LibraryIndexStore.refreshIfNeeded), and its start folder
+///   whenever the row shows (checkRoot, 1.30.3).
 /// - A refused login, or the server removed: it leaves, animated. Offline:
 ///   it stays, marked offline; a release or See all opens the library page,
 ///   which says it can't be reached.
@@ -50,6 +51,22 @@ struct RealDebridSection: View {
     }
 
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.scenePhase) private var scenePhase
+    /// The library was opened from here: checked again when Home is back.
+    @State private var wentToLibrary = false
+
+    /// The start folder's listing asked again (1.30.3): when the row shows,
+    /// when Folio comes back to the front, and when See all or a release
+    /// opens, whose page lists the server live. Before, the row came from a
+    /// check made once per launch, so a release deleted on Real-Debrid stayed
+    /// here although See all no longer had it. One request, and at most one
+    /// a minute unless the library was just opened (`every` 0).
+    private func check(every: TimeInterval = LibraryIndexStore.rootCheckEvery) {
+        // Not the screenshots' made-up library (ShotsSeed): no server to ask.
+        guard !CommandLine.arguments.contains(where: { $0.hasPrefix("-shotsRealDebrid") }),
+              let rd = ServerStore.shared.servers.first(where: RealDebrid.isRealDebrid) else { return }
+        LibraryIndexStore.shared.checkRoot(rd, every: every)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -57,7 +74,7 @@ struct RealDebridSection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top, spacing: 14) {
                     ForEach(items) { item in
-                        Button { open(item.release) } label: { ReleaseTile(release: item.name) }
+                        Button { wentToLibrary = true; check(every: 0); open(item.release) } label: { ReleaseTile(release: item.name) }
                             .buttonStyle(PressStyle(scale: 0.97))
                             .accessibilityLabel(ReleaseTile.spoken(item.name))
                             .accessibilityIdentifier("rd:" + item.name.title)
@@ -67,6 +84,11 @@ struct RealDebridSection: View {
             }
             .scrollClipDisabled()
         }
+        .onAppear {
+            check(every: wentToLibrary ? 0 : LibraryIndexStore.rootCheckEvery)
+            wentToLibrary = false
+        }
+        .onChange(of: scenePhase) { _, phase in if phase == .active { check() } }
     }
 
     /// "Real-Debrid", what's in it (and Offline), See all. At the largest
@@ -89,7 +111,7 @@ struct RealDebridSection: View {
     }
 
     private var seeAll: some View {
-        Button(action: seeAllAction) {
+        Button { wentToLibrary = true; check(every: 0); seeAllAction() } label: {
             HStack(spacing: 2) { Text("See all"); Image(systemName: "chevron.right").font(.caption.weight(.bold)) }
                 .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
         }

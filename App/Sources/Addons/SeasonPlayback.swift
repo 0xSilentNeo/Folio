@@ -72,6 +72,22 @@ enum AddonPlayback {
         return item
     }
 
+    /// The episodes a queue holds when it starts at `tapped` (1.30.3): that
+    /// one and the season's after it, as the title page's big button gives
+    /// them. An episode's own row gave none, so a stream picked from it
+    /// played as a queue of one ("play requested: 1 item(s)"). Empty when
+    /// nothing follows it: the streams page then plays the one episode.
+    static func seasonVideos(from tapped: MetaVideo, in season: [MetaVideo]) -> [MetaVideo] {
+        guard let i = season.firstIndex(where: { $0.id == tapped.id }), season.count - i > 1 else { return [] }
+        return Array(season[i...])
+    }
+
+    /// A season's queue: the stream picked for its first episode, then the
+    /// later ones as placeholders that carry the pick with their own context.
+    static func seasonQueue(first: MediaItem, rest: [PlayContext], pick: StreamPick) -> [MediaItem] {
+        [first] + rest.map { placeholder($0, pick: pick) }
+    }
+
     static func pick(from s: AddonStream, addon: InstalledAddon, context: PlayContext) -> StreamPick {
         StreamPick(addonID: addon.id, bingeGroup: s.behaviorHints?.bingeGroup, streamName: s.name,
                    resolution: resolution(of: s), context: context, manifestID: addon.manifest.id)

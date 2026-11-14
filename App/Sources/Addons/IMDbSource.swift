@@ -227,6 +227,12 @@ enum IMDbSource {
         // Live search as you type "lab" (and its first two letters).
         for q in ["la", "lab", "lab m", "lab mo", "lab mov", "lab movi", "lab movie"] { store("suggest3|\(q)", q.count > 3 ? [film] : [film, show]) }
         store("suggest3|labx", [MetaItem]())
+        // Search pressed (1.30.3): the fuller lists too, so no test asks IMDb.
+        for q in ["lab", "lab movie"] {
+            store(titleSearchKey(q, type: "movie"), [film])
+            store(titleSearchKey(q, type: "series"), q == "lab" ? [show] : [MetaItem]())
+        }
+        for type in ["movie", "series"] { store(titleSearchKey("labx", type: type), [MetaItem]()) }
         dlog("lab", "IMDb cache seeded (Lab Movie, Lab Series)")
     }
 
@@ -394,6 +400,42 @@ enum IMDbSource {
             return m
         }
         store(key, items)
+        return items
+    }
+
+    // MARK: - Search (titles of one kind)
+
+    /// The cache's key for `titleSearch` (the lab seeds it).
+    static func titleSearchKey(_ q: String, type: String) -> String { "tsearch1|\(type)|\(q)|\(language)" }
+
+    /// Movies or shows whose title has `query` in it, the most popular
+    /// first (1.30.3): IMDb's advanced search, the page `browse` reads, with
+    /// its `title` field. The suggestion API answers 8 names of every kind,
+    /// people too, whatever is asked of it ("mon": two series), so the
+    /// Shows chip had two shows for a half-remembered name. Nil when the
+    /// page couldn't be read (offline, cancelled, a layout change); kept a
+    /// day, as the suggestions are.
+    static func titleSearch(_ query: String, type: String) async -> [MetaItem]? {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !q.isEmpty else { return [] }
+        let key = titleSearchKey(q, type: type)
+        if let hit = cached(key, ttl: 86400, as: [MetaItem].self) { return hit }
+        let params: [String: String] = [
+            "title": q,
+            "title_type": type == "series" ? "tv_series,tv_miniseries" : "feature,tv_movie",
+            "sort": "moviemeter,asc",
+            "count": "50",
+        ]
+        let t0 = CACurrentMediaTime()
+        guard let page = await html("/search/title/", params) else { return nil }
+        var items = nextTitles(page, type: type)
+        if items.isEmpty { items = jsonLDList(page, type: type) }
+        items = items.filter { $0.type == type }
+        // A place in this list, not a chart's.
+        for i in items.indices { items[i].rank = nil }
+        // Counts only: what you search for stays out of the log.
+        dlog("imdb", String(format: "title search %@ → %d in %.0f ms", type, items.count, (CACurrentMediaTime() - t0) * 1000))
+        if !items.isEmpty { store(key, items) }
         return items
     }
 

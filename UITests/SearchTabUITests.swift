@@ -27,7 +27,7 @@ final class SearchTabUITests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 5), "the library's Lab Show isn't in the results")
         // One list (no "In your library" header): what's yours has its
         // chip, and the library's title is above the titles from IMDb.
-        XCTAssertTrue(app.buttons["searchScope:yours"].exists, "no Yours chip with a library title found")
+        XCTAssertTrue(app.buttons["searchScope:yours"].exists, "no Library chip with a library title found")
         let imdb = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'searchTitle:'")).firstMatch
         if imdb.exists { XCTAssertLessThan(row.frame.minY, imdb.frame.minY, "an IMDb title is above the library's") }
         hold("search-1-results")

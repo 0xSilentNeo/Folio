@@ -299,7 +299,8 @@ final class MetalFrameRenderer: FrameRenderer {
     /// (1.30.2): `drawing` stayed set, and stopping (setRenderingAllowed)
     /// waited its whole 150 ms on the main thread.
     private func notDrawing() {
-        lock.lock(); drawing = false; lock.unlock()
+        // Left set (1.30.3): after a refused buffer the engine still works
+        // through its frame queue, and stopping must wait for that too.
     }
 
     /// In the app log always (a new path), and in the PiP trace.

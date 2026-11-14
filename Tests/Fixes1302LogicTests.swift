@@ -99,6 +99,8 @@ final class Fixes1302LogicTests: XCTestCase {
         // Restarted (less time since boot than at the lockout): the clock alone.
         XCTAssertNil(KidsProfile.lockLeft(until: 1060, now: 1100, bootAtLock: 500, bootUntil: 560, bootNow: 20))
         XCTAssertEqual(KidsProfile.lockLeft(until: 1060, now: 1040, bootAtLock: 500, bootUntil: 560, bootNow: 20), 20)
+        // Restarted and up longer than at the lockout (1.30.3): another boot, the clock alone.
+        XCTAssertNil(KidsProfile.lockLeft(until: 1060, now: 5000, bootAtLock: 500, bootUntil: 560, bootNow: 520, sameBoot: false))
         // A lockout saved before 1.30.2 (nothing since boot): the clock alone.
         XCTAssertNil(KidsProfile.lockLeft(until: 1060, now: 1100, bootAtLock: 0, bootUntil: 0, bootNow: 9000))
         // Never locked.

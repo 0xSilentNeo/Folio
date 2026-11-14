@@ -409,10 +409,11 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
                 perform(s, fromPress: true)
                 handled = true
             } else if let name = Self.mpvKeyName(key) {
-                if let next = Self.playlistKey(name) {
+                if let next = Self.playlistKey(name), !userBound.contains(name.uppercased()) {
                     dlog("ui", "key: \(name), \(next ? "next" : "previous") in Folio's queue")
                     if !next {
-                        model.playPrevious()
+                        // Nothing before it: nothing, as mpv's playlist-prev (1.30.3).
+                        if model.hasPrevious { model.playPrevious() }
                     } else if model.hasNext {
                         model.playNext()
                     } else {
@@ -433,7 +434,7 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
             guard let key = press.key else { continue }
             if Self.shortcut(for: key) != nil {
                 handled = true          // mpv never saw it go down
-            } else if let name = Self.mpvKeyName(key), Self.playlistKey(name) != nil {
+            } else if let name = Self.mpvKeyName(key), Self.playlistKey(name) != nil, !userBound.contains(name.uppercased()) {
                 handled = true          // nor these (1.30.2)
             } else if let name = Self.mpvKeyName(key) {
                 model.keyUp(name)
@@ -452,6 +453,22 @@ final class PlayerViewController: UIHostingController<PlayerScreen> {
     /// they changed the file inside mpv with Folio's queue not following,
     /// and history was then saved under the wrong episode. They go through
     /// Folio's queue instead: true for next, false for previous.
+    /// Keys your input.conf binds itself (1.30.3): those go to mpv as you
+    /// wrote them, Enter, < and > too. Read once per player.
+    private lazy var userBound: Set<String> = Self.boundKeys(in: (try? String(contentsOf: MPVFiles.inputConf, encoding: .utf8)) ?? "")
+
+    /// The first word of each binding line of an input.conf, upper case.
+    nonisolated static func boundKeys(in conf: String) -> Set<String> {
+        var out = Set<String>()
+        for line in conf.split(whereSeparator: \.isNewline) {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard !t.isEmpty, !t.hasPrefix("#"),
+                  let first = t.split(whereSeparator: { $0 == " " || $0 == "\t" }).first else { continue }
+            out.insert(String(first).uppercased())
+        }
+        return out
+    }
+
     static func playlistKey(_ mpvName: String) -> Bool? {
         switch mpvName {
         case "ENTER", ">": return true

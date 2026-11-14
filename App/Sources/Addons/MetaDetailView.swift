@@ -459,7 +459,10 @@ struct MetaDetailView: View {
                     // date-only release counts from midnight (review, 5 Nov).
                     let notOut = v.airsLater() || { if case .airs = mark { return true }; return false }()
                     let entry = state(v.id)
-                    Button { go = StreamsTarget(video: v, queue: [], source: "ep|" + v.id, startAt: carried(v.id)) } label: {
+                    // The rest of the season follows a stream picked from an
+                    // episode's own row too (1.30.3): it queued that episode
+                    // alone, so nothing played after it. Built on the tap, not per row.
+                    Button { go = StreamsTarget(video: v, queue: AddonPlayback.seasonVideos(from: v, in: seasonEpisodes), source: "ep|" + v.id, startAt: carried(v.id)) } label: {
                         // A tracked episode's time is the badge's, in your time zone: the
                         // row's own date is the network's (IMDb's US date), so it's left out.
                         // Only under "Airs…": the "New" badge has no date (1.22.6; until
@@ -478,7 +481,7 @@ struct MetaDetailView: View {
                     // As the library's episode rows have (1.30.0).
                     .contextMenu {
                         if !notOut {
-                            Button { go = StreamsTarget(video: v, queue: [], startAt: carried(v.id)) } label: { Label("Play", systemImage: "play") }
+                            Button { go = StreamsTarget(video: v, queue: AddonPlayback.seasonVideos(from: v, in: seasonEpisodes), startAt: carried(v.id)) } label: { Label("Play", systemImage: "play") }
                             WatchedMenuItems(units: [unit(v.id)], item: historyItem)
                         }
                     }

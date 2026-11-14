@@ -17,6 +17,8 @@ struct FolioApp: App {
         MainThreadLayout.install()
         MainThreadLayout.lab()
         EnergyMonitor.shared.start()
+        // News from Folio (1.30.3): looked for when Folio comes to the front.
+        MainActor.assumeIsolated { Announcements.shared.start() }
         UILab.start()
         PopLab.start()
         MainActor.assumeIsolated { LingerLab.startIfAsked() }
@@ -265,9 +267,13 @@ struct RootView: View {
                 Tab("Home", systemImage: "play.rectangle.fill", value: 0) { HomeView().tabZoom() }
                 Tab("Discover", systemImage: "sparkles.tv", value: 1) { DiscoverView().tabZoom() }
                 // Not in the kids profile (1.22.0): servers play anything on them.
-                if !kids.isOn {
-                    Tab("Network", systemImage: "externaldrive.connected.to.line.below", value: 2) { NetworkView().tabZoom() }
-                }
+                // Hidden, not left out (1.30.3): leaving it out changed the
+                // tab view's own tabs when the profile was turned on, iOS
+                // rebuilt the bar under the page that was open (Settings),
+                // and that page stopped answering: no scrolling, no rows, no
+                // Back, with the tab bar drawn over it (13 Nov recording).
+                Tab("Network", systemImage: "externaldrive.connected.to.line.below", value: 2) { NetworkView().tabZoom() }
+                    .hidden(kids.isOn)
                 Tab(value: 3, role: .search) { SearchTabView(query: $searchText) }
             }
             .modifier(TabBarSearchField())

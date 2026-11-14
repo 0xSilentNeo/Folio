@@ -1240,6 +1240,10 @@ final class PlayerModel: ObservableObject {
             var i = (self?.queueIndex ?? 0) + 1
             while let self, !self.closed, i < self.queue.count, !Task.isCancelled {
                 defer { i += 1 }
+                // Not while the picker is asking the addons (1.30.3): the check
+                // went on asking the same addon for every later episode.
+                while self.pickRequest != nil, !self.closed, !Task.isCancelled { try? await Task.sleep(nanoseconds: 500_000_000) }
+                guard !self.closed, !Task.isCancelled, i < self.queue.count else { break }
                 guard self.queue[i].url.isEmpty, self.resolvedItems[i] == nil, self.episodeStates[i] == nil, let p = self.pick(for: i) else { continue }
                 self.episodeStates[i] = .checking
                 switch await AddonPlayback.screen(p) {
@@ -1393,7 +1397,6 @@ final class PlayerModel: ObservableObject {
     /// on until a stream is picked (1.17.0 paused it, and the picker could not
     /// open over the Now Playing menu — 27 Oct report).
     private func askToPick(_ index: Int) {
-        advancingFromEnd = false        // the choice is the user's from here
         guard let ctx = queue[index].streamPick?.context else { return }
         pickRequest = PickRequest(id: index, context: ctx)
         dlog("player", "episode \(ctx.videoLabel ?? ctx.videoId): no stream of the same release; asking")
@@ -1408,6 +1411,10 @@ final class PlayerModel: ObservableObject {
 
     func cancelPick() {
         if let r = pickRequest { dlog("player", "pick for episode \(r.id + 1) cancelled") }
+        // Cancelled, the end of the last file no longer decides a later load
+        // (1.30.3). Cleared when the picker opened, a stream picked after an
+        // episode ended by itself opened paused.
+        advancingFromEnd = false
         pickRequest = nil
     }
 
@@ -2198,6 +2205,9 @@ final class PlayerModel: ObservableObject {
     // button that was tapped.
     func seek(by seconds: Double) {
         guard let c = client else { return }
+        // A place of your own: Try again no longer goes back to where the
+        // stream stopped (1.30.3).
+        retryAt = nil
         // The sound is off until the picture lands, so quick skips don't
         // play a few milliseconds from each place on the way (4 Nov
         // recording: seven +10 s taps in 2 s, the sound cutting in and out).
@@ -2264,6 +2274,7 @@ final class PlayerModel: ObservableObject {
     }
 
     func seek(to seconds: Double, exact: Bool = true) {
+        retryAt = nil                   // as in seek(by:) (1.30.3)
         if ended, duration > 0, seconds < duration - 0.5 { ended = false }
         // A place chosen outright: skips still waiting would move it on.
         skipPending = 0

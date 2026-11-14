@@ -25,6 +25,11 @@ struct SettingsView: View {
             .allowsHitTesting(!locked)
             .accessibilityHidden(locked)
             .pageChrome(zooms: zooms, title: "Settings", back: { dismiss() }) { EmptyView() }
+            // Turned on from here: this visit stays open (1.30.3). Going
+            // back from the Kids Profile page met the lock, for Settings you
+            // were already in. Turning it off, its ratings and its passcode
+            // still ask each time, and leaving Folio or Settings locks them.
+            .onChange(of: kids.isOn) { _, on in if on { unlockedAt = Date() } }
             .overlay {
                 if locked {
                     SettingsLocked(cancel: { dismiss() }) { withAnimation(.smooth(duration: 0.3)) { unlockedAt = Date() } }
@@ -1065,6 +1070,7 @@ struct DiagnosticsView: View {
     @AppStorage(SettingsKey.pipTrace) private var pipTrace = false
     @AppStorage(SettingsKey.netTrace) private var netTrace = false
     @AppStorage(SettingsKey.libTrace) private var libTrace = false
+    @AppStorage(SettingsKey.diagnosticsKeepOn) private var keepOn = false
 
     var body: some View {
         List {
@@ -1082,6 +1088,15 @@ struct DiagnosticsView: View {
                 Toggle("Trace library and images", isOn: $libTrace)
             } footer: {
                 Text("Records in the app log how pictures load (from memory, disk or the network), where each title's tile is while a page opens and closes, Discover's provider pages and their requests, and which row the player's lists open on. Turn it on, reproduce the problem, then share a report.")
+            }
+            // (1.30.3) The traces went off after a day, before a problem
+            // that comes once a week had shown itself.
+            Section {
+                Toggle("Keep on until I turn them off", isOn: $keepOn)
+                    .accessibilityIdentifier("diagnosticsKeepOn")
+                    .onChange(of: keepOn) { _, _ in TraceKeepOn.refresh() }
+            } footer: {
+                Text("Normally the traces above switch themselves off after a day, so they don't use battery and space. Keeping them on helps catch a problem that only shows up now and then.")
             }
             HistoryLinkSection()
             Section {

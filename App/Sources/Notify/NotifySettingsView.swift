@@ -20,6 +20,7 @@ struct NotifySettingsView: View {
     @State private var from = Date()
     @State private var to = Date()
     @Environment(\.scenePhase) private var phase
+    @AppStorage(SettingsKey.announcements) private var news = true
 
     private var allowed: Bool { status.map { [.authorized, .provisional, .ephemeral].contains($0) } ?? true }
 
@@ -36,6 +37,14 @@ struct NotifySettingsView: View {
 
             if prefs.allOn {
                 settings
+            }
+
+            // (1.30.3) Outside Allow Notifications: the news shows in Folio too.
+            Section {
+                Toggle("News from Folio", isOn: $news)
+                    .accessibilityIdentifier("announcements")
+            } footer: {
+                Text("Checks Folio's page on GitHub about twice a day for announcements and new versions. Nothing about you is sent.")
             }
         }
         .brandListBackground()

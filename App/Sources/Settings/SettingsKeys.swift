@@ -72,6 +72,8 @@ enum SettingsKey {
     static let pipTrace = "pipTrace"                    // Diagnostics: trace PiP transitions (PiPTrace)
     static let netTrace = "netTrace"                    // Diagnostics: time every addon request (NetTrace)
     static let libTrace = "libTrace"                    // Diagnostics: library, artwork and Discover trace (LibTrace)
+    /// The traces stay on past their day (1.30.3), for a problem that only shows up now and then (TraceKeepOn).
+    static let diagnosticsKeepOn = "diagnosticsKeepOn"
 
     // Subtitles / audio
     static let subLangs = "subLangs"
@@ -156,6 +158,9 @@ enum SettingsKey {
 
     // What's new (1.22.0): the last version whose sheet was shown.
     static let whatsNewShown = "whatsNewShown"
+
+    // News from Folio (1.30.3): announcements and new versions from Folio's page on GitHub (Announcements).
+    static let announcements = "announcements"
 
     static func registerDefaults() {
         // 1.27.1: Zoom between tabs is on for everyone and has no switch; a
@@ -259,7 +264,12 @@ enum SettingsKey {
             notifyMaxPerDay: 1,
             // On in the 1.25.0 test build, so every notification can be tried (the user, 7 Nov).
             notifyTest: false,              // 1.28.6: was on by default since the 1.25.0 test build, so no real notification was ever planned
+            diagnosticsKeepOn: false,       // (1.30.3)
+            announcements: true,            // (1.30.3)
         ])
+        // Before TraceExpiry looks (FolioApp starts it right after this):
+        // traces kept on have their day started again (1.30.3).
+        TraceKeepOn.refresh()
         // 1.22.1: Metal is the default again. 1.22.0 moved everyone to the
         // OpenGL renderer, which some files didn't play on (user report,
         // 4 Nov); those moved are moved back, once. A later choice stays.

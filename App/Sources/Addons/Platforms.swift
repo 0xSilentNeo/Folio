@@ -851,7 +851,12 @@ struct PlatformSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var enabled: [StreamingPlatform] = StreamingPlatform.enabled
     /// Typed here, saved on Done (1.30.2): every keystroke was saved, and Cancel kept it.
-    @State private var region = PlatformCatalogs.region
+    /// What you saved, empty for the phone's region (1.30.3): it started
+    /// with the phone's region code, which can be three digits ("419"),
+    /// and Done stayed off until it was cleared.
+    @State private var region = PlatformSettingsView.saved
+
+    private static var saved: String { UserDefaults.standard.string(forKey: "discoverRegion") ?? "" }
 
     var body: some View {
         NavigationStack {
@@ -875,7 +880,7 @@ struct PlatformSettingsView: View {
                     }
                 }
                 Section {
-                    TextField("Region (e.g. AU, US, GB)", text: $region)
+                    TextField("Your phone's (\(Locale.current.region?.identifier ?? "US"))", text: $region)
                         .textInputAutocapitalization(.characters).autocorrectionDisabled()
                 } header: { Text("Region") } footer: {
                     if !regionValid { Text("Two letters, like AU. Leave it empty for your phone's region.") }
@@ -896,7 +901,7 @@ struct PlatformSettingsView: View {
                         StreamingPlatform.enabled = enabled
                         if region.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             UserDefaults.standard.removeObject(forKey: "discoverRegion")
-                        } else if let r = PlatformCatalogs.cleanRegion(region), r != PlatformCatalogs.region {
+                        } else if let r = PlatformCatalogs.cleanRegion(region), r != Self.saved {
                             UserDefaults.standard.set(r, forKey: "discoverRegion")
                         }
                         dismiss()
@@ -905,7 +910,7 @@ struct PlatformSettingsView: View {
                 }
             }
         }
-        .interactiveDismissDisabled(enabled != StreamingPlatform.enabled || region != PlatformCatalogs.region)
+        .interactiveDismissDisabled(enabled != StreamingPlatform.enabled || region != Self.saved)
     }
 
     /// Empty (the phone's region) or two letters.

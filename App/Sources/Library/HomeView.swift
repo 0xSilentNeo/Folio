@@ -28,6 +28,8 @@ struct HomeView: View {
                 List {
                     Group {
                         header(margin).padding(.top, 6)
+                        // News from Folio (1.30.3): nothing unless there is some.
+                        AnnouncementBanner()
                         if !continueItems.isEmpty { continueWatching(layout).padding(.top, 30) }
                         // Tracked shows' episodes out now or in the next 7 days (1.21.0); nothing when none.
                         // Not in the kids profile: they're the grown-ups' shows.
@@ -246,10 +248,13 @@ struct HomeView: View {
                 Text(greeting).font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
                 HStack(spacing: 8) {
                     FolioLeaf().frame(width: 30, height: 30).padding(.leading, -5)
-                    Wordmark(size: 24)
+                    // Never broken over two lines (1.30.3): with the kids
+                    // badge beside the buttons it had no room for one.
+                    Wordmark(size: 24).lineLimit(1).fixedSize()
                 }
             }
-            Spacer()
+            .layoutPriority(1)
+            Spacer(minLength: 4)
             if kids.isOn { KidsBadge() }
             // As on Discover (1.28.4): the list is as much Home's as Discover's.
             WatchlistSheetButton()

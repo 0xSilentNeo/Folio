@@ -54,12 +54,18 @@ struct SettingsSearchBar: ViewModifier {
     @ViewBuilder
     func body(content: Content) -> some View {
         #if compiler(>=6.2)
-        if #available(iOS 26.0, *), active {
+        // One shape whether locked or not (1.30.3). Locked, the field was
+        // left out altogether, which made Settings' list another view each
+        // time the lock came or went: the page pushed from it lost its way
+        // back, and the tab bar showed over the lock. The field's bar is
+        // hidden instead.
+        if #available(iOS 26.0, *) {
             content
                 .searchable(text: $text, prompt: "Search Settings")
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .toolbar { DefaultToolbarItem(kind: .search, placement: .bottomBar) }
+                .toolbar(active ? .automatic : .hidden, for: .bottomBar)
                 // The tab bar would sit on the field: Settings' root has the
                 // bottom to itself. Only where the tab bar is at the bottom
                 // (1.28.10): an iPad's is at the top.

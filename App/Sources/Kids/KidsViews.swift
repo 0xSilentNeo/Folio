@@ -646,9 +646,13 @@ struct KidsBadge: View {
         Button {
             KidsGate.open($gate, .unlock(reason: "To leave the kids profile")) { _ in KidsProfile.shared.turnOff() }
         } label: {
-            Label("Kids", systemImage: "figure.and.child.holdinghands")
-                .font(.subheadline.weight(.semibold))
-                .padding(.horizontal, 12).frame(height: 44)
+            // A round button like the ones beside it (1.30.3): as a pill
+            // with "Kids" written out it took the wordmark's room on a phone,
+            // and FOLIO broke over two lines.
+            Image(systemName: "figure.and.child.holdinghands")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Theme.accent)
+                .frame(width: 44, height: 44)
                 .glass(cornerRadius: 22, interactive: true)
         }
         .buttonStyle(PressStyle())

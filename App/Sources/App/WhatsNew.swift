@@ -20,6 +20,17 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        // (1.30.3) 1.30.1 and 1.30.2 had no list, so an update showed nothing new.
+        Release(version: "1.30.3", items: [
+            Item(icon: "magnifyingglass", title: "A tidier search",
+                 text: "One list with a top result you can play at once, and All, Library, Movies and Shows to narrow it. Part of a name is enough."),
+            Item(icon: "list.and.film", title: "Next episodes and streams from addons",
+                 text: "An addon's show plays on into its next episode again, and the stream picker opens with its choices."),
+            Item(icon: "memorychip", title: "Lighter, and on time",
+                 text: "Getting the next episode ready takes less memory, and \"comes out today\" alerts come on the right day."),
+            Item(icon: "megaphone", title: "News from Folio",
+                 text: "Folio tells you about announcements and new versions. You can turn it off in Settings → Notifications."),
+        ]),
         Release(version: "1.30.0", items: [
             Item(icon: "forward.end", title: "Intros found on this iPhone",
                  text: "For episodes in your library that no source knows, Folio compares an episode's sound with its neighbour's and offers Skip Intro from the next play. Nothing leaves the phone."),

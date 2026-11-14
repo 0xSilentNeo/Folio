@@ -416,6 +416,7 @@ enum SystemVolume {
     /// jumped back to where the swipe began).
     private static var asked: Float = 0
     private static var baseline: Float?
+    private static var lastSet: CFTimeInterval = 0
     /// iOS's own indicator is in use (so the player doesn't draw its HUD for volume).
     private(set) static var nativeHUD = true
 
@@ -432,7 +433,12 @@ enum SystemVolume {
         guard let slider else { return }
         // Where the volume was when the first change was asked for: small
         // steps (the keyboard's are 1/16) add up against it.
-        if baseline == nil { baseline = current }
+        // Taken again after a pause in the changes (1.30.3): kept for the
+        // whole run, a volume changed meanwhile with the buttons made the
+        // check pass when nothing had moved.
+        let t = CACurrentMediaTime()
+        if baseline == nil || t - lastSet > 1 { baseline = current }
+        lastSet = t
         let before = baseline ?? current
         slider.value = value
         slider.sendActions(for: .valueChanged)

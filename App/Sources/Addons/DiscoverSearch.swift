@@ -39,6 +39,17 @@ final class DiscoverSearch: ObservableObject {
     @Published private(set) var addonsSearching = false
     @Published private(set) var history: [SearchHistoryEntry] = []
 
+    /// The fuller lists (1.30.3): movies or shows with the typed text in
+    /// their title, by kind ("movie", "series"), for `fullerQuery`. Asked
+    /// when the Movies or Shows chip is chosen or Search is pressed, once
+    /// per query and kind; typing in All stays the quick suggestions.
+    @Published private(set) var fuller: [String: [MetaItem]] = [:]
+    @Published private(set) var fullerLoading: Set<String> = []
+    private var fullerQuery = ""
+    private var fullerAsked: Set<String> = []
+    private var fullerTasks: [String: Task<Void, Never>] = [:]
+    private var fullerGeneration = 0
+
     private let store: SearchHistoryStore
     private var historyLoaded = false
     private var liveTask: Task<Void, Never>?
@@ -60,7 +71,14 @@ final class DiscoverSearch: ObservableObject {
     /// The field changed (each keystroke).
     func textChanged(_ text: String) {
         let q = SearchHistoryStore.tidy(text)
-        if q != addonQuery { addonTask?.cancel(); addonResults = []; addonsSearching = false; addonQuery = "" }
+        // Only what changes is written (1.30.3): each write redraws the page.
+        if q != addonQuery {
+            addonTask?.cancel()
+            if !addonResults.isEmpty { addonResults = [] }
+            if addonsSearching { addonsSearching = false }
+            addonQuery = ""
+        }
+        if q != fullerQuery { resetFuller() }
         guard q != current else { return }          // only spaces changed
         start(q, wait: true)
     }
@@ -73,12 +91,77 @@ final class DiscoverSearch: ObservableObject {
         commit(q)
         if q != current || phase != .done { start(q, wait: false, minLength: 1) }
         searchAddons(q)
+        // Search pressed: every movie and show with it in the title (1.30.3).
+        loadFuller(type: "movie", for: q)
+        loadFuller(type: "series", for: q)
     }
 
     /// A result was opened: the query that found it goes into history.
     func opened(from query: String) { commit(SearchHistoryStore.tidy(query)) }
 
     func retry() { start(current, wait: false, minLength: 1) }
+
+    // MARK: Fuller lists (1.30.3)
+
+    /// IMDb's suggestions with the fuller lists after them, each title once
+    /// (the suggestions' order is kept: nothing already on screen moves).
+    nonisolated static func merged(_ suggestions: [MetaItem], fuller: [String: [MetaItem]]) -> [MetaItem] {
+        var seen = Set<String>()
+        var out: [MetaItem] = []
+        for m in suggestions + (fuller["movie"] ?? []) + (fuller["series"] ?? []) where seen.insert(m.id).inserted { out.append(m) }
+        return out
+    }
+
+    /// Whether a kind's fuller list is still to ask for `query`: once per
+    /// query and kind, and not for a single letter.
+    nonisolated static func shouldAskFuller(type: String, query: String, current: String, asked: Set<String>) -> Bool {
+        guard query.count >= minLength else { return false }
+        return query != current || !asked.contains(type)
+    }
+
+    /// Every movie or show (`type`: "movie", "series") with the text in its
+    /// title. An answer for an older text is dropped, as the live search's.
+    func loadFuller(type: String, for text: String) {
+        let q = SearchHistoryStore.tidy(text)
+        guard Self.shouldAskFuller(type: type, query: q, current: fullerQuery, asked: fullerAsked) else { return }
+        if q != fullerQuery { resetFuller(); fullerQuery = q }
+        fullerAsked.insert(type)
+        fullerLoading.insert(type)
+        let gen = fullerGeneration
+        let kids = KidsProfile.shared.activeLimits
+        fullerTasks[type] = Task { [weak self] in
+            let t0 = CACurrentMediaTime()
+            var items = await Self.lookUpFuller(q, type: type)
+            if let kids, let found = items, !Task.isCancelled { items = await Self.kidsFiltered(found, limits: kids) }
+            guard let self, gen == self.fullerGeneration, !Task.isCancelled else { return }   // a newer query took over
+            self.fullerLoading.remove(type)
+            self.fullerTasks[type] = nil
+            if let items {
+                self.fuller[type] = items
+                dlog("search", String(format: "fuller %@ list: %d title(s) in %.0f ms", type, items.count, (CACurrentMediaTime() - t0) * 1000))
+            } else {
+                // Not read (offline, IMDb out of reach): asked again the next time it's wanted.
+                self.fullerAsked.remove(type)
+                dlog("search/error", "fuller \(type) list not read")
+            }
+        }
+    }
+
+    private func resetFuller() {
+        fullerGeneration += 1
+        fullerTasks.values.forEach { $0.cancel() }
+        fullerTasks = [:]
+        fullerAsked = []
+        fullerQuery = ""
+        if !fuller.isEmpty { fuller = [:] }
+        if !fullerLoading.isEmpty { fullerLoading = [] }
+    }
+
+    /// Lab (`-labSearchOffline`): not read, as without a connection.
+    private static func lookUpFuller(_ q: String, type: String) async -> [MetaItem]? {
+        if CommandLine.arguments.contains("-labSearchOffline") { return nil }
+        return await IMDbSource.titleSearch(q, type: type)
+    }
 
     func delete(_ entry: SearchHistoryEntry) {
         history.removeAll { $0.id == entry.id }
@@ -97,9 +180,9 @@ final class DiscoverSearch: ObservableObject {
         generation += 1
         current = q
         guard q.count >= minLength else {
-            phase = .idle
-            titles = []
-            titlesQuery = ""
+            if phase != .idle { phase = .idle }
+            if !titles.isEmpty { titles = [] }
+            if !titlesQuery.isEmpty { titlesQuery = "" }
             return
         }
         let gen = generation
@@ -122,6 +205,11 @@ final class DiscoverSearch: ObservableObject {
             } catch {
                 guard let self, gen == self.generation, !IMDbSource.isCancellation(error) else { return }
                 let offline = Self.isOffline(error)
+                // The query before's titles don't stay under the error (1.30.3).
+                if self.titlesQuery != q {
+                    if !self.titles.isEmpty { self.titles = [] }
+                    self.titlesQuery = ""
+                }
                 self.phase = .failed(offline: offline)
                 dlog("search/error", "\(error.localizedDescription)\(offline ? " (offline)" : "")")
             }
@@ -210,7 +298,10 @@ struct AddonSearchView: View {
     @StateObject private var catalogs = CatalogSearch()
     @ObservedObject private var kids = KidsProfile.shared
     @ObservedObject private var local = LocalMediaStore.shared
-    @ObservedObject private var index = LibraryIndexStore.shared
+    /// Not observed (1.30.3): a refresh's progress, four times a second,
+    /// redrew the whole page. Its files are followed by `indexSignature`,
+    /// its progress by the status line's own view (SearchIndexingLine).
+    private let index = LibraryIndexStore.shared
     @ObservedObject private var webdav = ServerStore.shared
     @AppStorage(SettingsKey.cleanTitles) private var cleanTitles = true
     @State private var opened: Opened?
@@ -230,16 +321,66 @@ struct AddonSearchView: View {
     /// Jellyfin), changes: the lists above are made again then.
     @State private var indexTick = 0
     @State private var answersTick = 0
+    /// What each server's index held when the lists were last made.
+    @State private var indexSignature: [UUID: IndexSignature] = [:]
+    /// The page is on screen: an index that changes behind another tab
+    /// waits for the next visit.
+    @State private var visible = false
+    /// The text the page shows results for (1.30.3). It follows the field
+    /// at once while there's text; emptied, it follows a moment later or
+    /// when the page has gone. Cancel empties the field as the search
+    /// closes, and the whole list was swapped for the start page (recent
+    /// searches' chips, the Continue watching posters) in the frames of the
+    /// field closing and the tab changing: the lag on dismissing.
+    @State private var shownQuery = ""
+    @State private var emptying: Task<Void, Never>?
+
+    private struct IndexSignature: Equatable {
+        let files: Int
+        let refreshed: Date?
+    }
+
+    private static func signature(_ states: [UUID: LibraryIndexStore.State]) -> [UUID: IndexSignature] {
+        states.mapValues { IndexSignature(files: $0.searchable.count, refreshed: $0.index?.refreshed) }
+    }
 
     private var typed: String { SearchHistoryStore.tidy(query) }
+    private var showsStart: Bool { SearchHistoryStore.tidy(shownQuery).isEmpty }
     private static let chipsID = "searchChips"
+    private static let startID = "searchStart"
+    private static let emptyingDelay: Duration = .milliseconds(350)
 
     var body: some View {
+        answered
+            .navigationDestination(item: $opened) { o in
+                MetaDetailView(preview: o.meta, sourceAddon: o.addon).zoomDestination("search|" + o.meta.id, in: zoomNS, zoom: false)
+            }
+            .navigationDestination(item: $route) { r in LibraryRoute.destination(r) }
+            .navigationDestination(item: $openedEntry) { o in
+                // The client the search made, not a new one at each redraw (1.30.3).
+                if let source = catalogs.client(for: o.server) {
+                    CatalogBrowserView(source: source, parent: o.entry, title: CatalogTitles.rowTitle(o.entry))
+                }
+            }
+    }
+    @Namespace private var zoomNS
+
+    private var watched: some View {
         page
             .onChange(of: query) { _, text in
+                emptying?.cancel()
+                emptying = nil
+                guard !SearchHistoryStore.tidy(text).isEmpty else {
+                    // Emptied: nothing is redrawn now (see shownQuery).
+                    emptying = Task {
+                        do { try await Task.sleep(for: Self.emptyingDelay) } catch { return }   // text came back
+                        emptied()
+                    }
+                    return
+                }
+                shownQuery = text
                 search.textChanged(text)
                 catalogs.textChanged(kids.isOn ? "" : text)
-                if SearchHistoryStore.tidy(text).isEmpty { scope = .all }
                 refilter()
             }
             .onSubmit(of: .search) { search.submit(query) }
@@ -251,13 +392,36 @@ struct AddonSearchView: View {
             // kept from the last search asked again.
             .onAppear {
                 HitchProbe.mark("search", "page appeared")
+                visible = true
+                emptying?.cancel()
+                emptying = nil
+                shownQuery = query
+                // Home asks for the Real-Debrid server only; the others are asked for here.
                 if !kids.isOn { for server in webdav.servers { index.refreshIfNeeded(server) } }
+                // Each of these does nothing for the text it already answered (1.30.3).
                 search.textChanged(query)
                 catalogs.textChanged(kids.isOn ? "" : query)
-                groups = LibraryOrganizer.groups(local.files)
-                refilter(force: true)
+                if SearchHistoryStore.tidy(query).isEmpty { scope = .all }
+                let grouped = LibraryOrganizer.groups(local.files)
+                let now = Self.signature(index.states)
+                // Made again only when the library or an index changed while away.
+                let changed = grouped != groups || now != indexSignature
+                if grouped != groups { groups = grouped }
+                indexSignature = now
+                refilter(force: changed)
                 HitchProbe.mark("search", "page set up")
             }
+            .onDisappear {
+                visible = false
+                // Out of sight: the emptied field's start page is set up now.
+                if emptying != nil { emptying?.cancel(); emptying = nil; emptied() }
+            }
+    }
+
+    /// The second half of the page's watching (two halves: one chain was
+    /// long for the compiler).
+    private var answered: some View {
+        watched
             .onChange(of: local.files) { _, files in
                 groups = LibraryOrganizer.groups(files)
                 refilter(force: true)
@@ -266,28 +430,56 @@ struct AddonSearchView: View {
             .onChange(of: kids.isOn) { refilter(force: true) }
             // A counter, not the index itself: comparing two indexes at
             // every redraw would cost more than the search does.
-            .onReceive(index.$states) { _ in indexTick &+= 1 }
+            // Only when a server's files changed (1.30.3): `states` also
+            // changes with a refresh's progress, up to four times a second,
+            // and each change found and put together the whole list again,
+            // behind another tab too.
+            .onReceive(index.$states) { states in
+                guard visible else { return }
+                let now = Self.signature(states)
+                guard now != indexSignature else { return }
+                indexSignature = now
+                indexTick &+= 1
+            }
             .onChange(of: indexTick) { refilter(force: true) }
-            .onReceive(search.$titles) { _ in answersTick &+= 1 }
-            .onReceive(search.$addonResults) { _ in answersTick &+= 1 }
-            .onReceive(catalogs.$results) { _ in answersTick &+= 1 }
+            // Nothing to put together when an empty answer replaces an empty one.
+            .onReceive(search.$titles) { new in if !(new.isEmpty && search.titles.isEmpty) { answersTick &+= 1 } }
+            .onReceive(search.$addonResults) { new in if !(new.isEmpty && search.addonResults.isEmpty) { answersTick &+= 1 } }
+            .onReceive(search.$fuller) { new in if !(new.isEmpty && search.fuller.isEmpty) { answersTick &+= 1 } }
+            // The Movies or Shows chip (or "Show all … shows"): every title
+            // of that kind with the text in its name, not only the few of
+            // the suggestions (1.30.3). Asked again for the text typed on
+            // while the chip stays chosen, once the suggestions answered.
+            .onChange(of: scope) { loadFuller() }
+            .onChange(of: search.titlesQuery) { loadFuller() }
+            .onReceive(catalogs.$results) { new in if !(new.isEmpty && catalogs.results.isEmpty) { answersTick &+= 1 } }
             .onChange(of: answersTick) { compose() }
-            .navigationDestination(item: $opened) { o in
-                MetaDetailView(preview: o.meta, sourceAddon: o.addon).zoomDestination("search|" + o.meta.id, in: zoomNS, zoom: false)
-            }
-            .navigationDestination(item: $route) { r in LibraryRoute.destination(r) }
-            .navigationDestination(item: $openedEntry) { o in
-                if let source = CatalogSearch.source(for: o.server) {
-                    CatalogBrowserView(source: source, parent: o.entry, title: CatalogTitles.rowTitle(o.entry))
-                }
-            }
     }
-    @Namespace private var zoomNS
+
+    /// The field has been empty for a moment, or the page has gone: the
+    /// start page, and every search told so.
+    private func emptied() {
+        emptying = nil
+        guard SearchHistoryStore.tidy(query).isEmpty else { return }
+        shownQuery = ""
+        scope = .all
+        search.textChanged(query)
+        catalogs.textChanged(kids.isOn ? "" : query)
+        refilter()
+    }
+
+    private func loadFuller() {
+        switch scope {
+        case .movies: search.loadFuller(type: "movie", for: query)
+        case .shows: search.loadFuller(type: "series", for: query)
+        case .all, .yours: break
+        }
+    }
 
     private var page: some View {
         ScrollViewReader { proxy in
             List {
-                if typed.isEmpty {
+                if showsStart {
                     // Recent not in the kids profile (1.28.6): the grown-ups' searches showed, and ran.
                     SearchEmptyState(recent: kids.isOn ? [] : search.history,
                                      run: { entry in
@@ -298,6 +490,7 @@ struct AddonSearchView: View {
                                      clear: { search.clearHistory() })
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
+                        .id(Self.startID)
                 } else {
                     resultRows { target in
                         withAnimation(.easeOut(duration: 0.2)) {
@@ -317,6 +510,8 @@ struct AddonSearchView: View {
             .scrollDismissesKeyboard(.immediately)
             .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.inline)
+            // The start page from its top, not from where the results were scrolled to (1.30.3).
+            .onChange(of: showsStart) { _, start in if start { proxy.scrollTo(Self.startID, anchor: .top) } }
         }
     }
 
@@ -337,7 +532,7 @@ struct AddonSearchView: View {
         // A release's files are one row ("MobLand · 10 files"), not a row each.
         let clean = cleanTitles
         found += ServerFile.releases(files).map { SearchItem(release: $0, clean: clean) }
-        mine = found
+        if !(found.isEmpty && mine.isEmpty) { mine = found }
         compose(mine: found)
     }
 
@@ -345,10 +540,16 @@ struct AddonSearchView: View {
     /// then IMDb's titles and the addons'.
     private func compose(mine found: [SearchItem]? = nil) {
         var owned = found ?? mine
-        if !LibrarySearchText.words(query).isEmpty {
+        let words = LibrarySearchText.words(query)
+        // Plex and Jellyfin's entries for these words only (1.30.3): the
+        // query before's stayed, as the top card too, until the answer came.
+        if !words.isEmpty, catalogs.resultsWords == words {
             for r in catalogs.results { owned += r.entries.map { SearchItem(entry: $0, server: r.server) } }
         }
-        results = SearchResults(owned: owned, imdb: search.titles, addons: search.addonResults)
+        // Nothing found and nothing shown: nothing to make again.
+        if words.isEmpty, owned.isEmpty, search.titles.isEmpty, search.fuller.isEmpty, search.addonResults.isEmpty,
+           results.owned.isEmpty, results.titles.isEmpty { return }
+        results = SearchResults(owned: owned, imdb: DiscoverSearch.merged(search.titles, fuller: search.fuller), addons: search.addonResults)
     }
 
     // MARK: Results
@@ -362,11 +563,13 @@ struct AddonSearchView: View {
             .listRowSeparator(.hidden)
             .id(Self.chipsID)
         if let status { statusLine(status.text, working: status.working) }
+        // A server's index being read: its own view, so its progress redraws one line.
+        else if !kids.isOn { SearchIndexingLine(servers: webdav.servers) }
         switch active {
         case .all:
             if let top = results.top { topCard(top) }
             ForEach(results.ownedShort) { row($0) }
-            if results.hiddenOwned > 0 { showAll("Show all \(results.owned.count) in Yours", .yours, show) }
+            if results.hiddenOwned > 0 { showAll("Show all \(results.owned.count) in Library", .yours, show) }
             catalogErrors
             titleProblem
             ForEach(results.titlesShort) { row($0) }
@@ -390,26 +593,19 @@ struct AddonSearchView: View {
     private var status: (text: String, working: Bool)? {
         if typed.count < DiscoverSearch.minLength, search.phase == .idle { return (text: "Keep typing to search titles.", working: false) }
         if search.phase == .loading { return (text: "Searching movies and shows…", working: true) }
+        // The fuller list on its way (1.30.3).
+        if !search.fullerLoading.isEmpty {
+            let kind = search.fullerLoading.count > 1 ? "movies and shows" : search.fullerLoading.contains("series") ? "shows" : "movies"
+            return (text: "Finding more \(kind)…", working: true)
+        }
         if catalogs.searching { return (text: "Searching Plex and Jellyfin…", working: true) }
         if search.addonsSearching { return (text: "Searching your addons…", working: true) }
-        if !kids.isOn, let server = webdav.servers.first(where: { index.state($0.id).refreshing }) {
-            let st = index.state(server.id)
-            return (text: "Indexing \(server.name)… \(st.done) of \(st.total) folders", working: true)
-        }
         if let limits = kids.activeLimits { return (text: "Movies and shows rated \(KidsRules.summary(limits)).", working: false) }
         return nil
     }
 
     private func statusLine(_ text: String, working: Bool) -> some View {
-        HStack(spacing: 8) {
-            if working { FolioSpinner(size: .small) }
-            Text(text).font(.footnote).foregroundStyle(.secondary)
-            Spacer(minLength: 0)
-        }
-        .listRowBackground(Color.clear)
-        .listRowSeparator(.hidden)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("searchStatus")
+        SearchStatusLine(text: text, working: working)
     }
 
     /// Every result's row, whatever found it.
@@ -439,7 +635,7 @@ struct AddonSearchView: View {
             .listRowSeparator(.hidden)
     }
 
-    /// "Show all 14 in Yours": "All" shows the first few of each kind, the chip all of them.
+    /// "Show all 14 in Library": "All" shows the first few of each kind, the chip all of them.
     private func showAll(_ title: String, _ target: SearchScope, _ show: @escaping (SearchScope) -> Void) -> some View {
         Button { show(target) } label: {
             HStack(spacing: 6) {
@@ -458,7 +654,7 @@ struct AddonSearchView: View {
     /// A Plex or Jellyfin server that didn't answer.
     @ViewBuilder
     private var catalogErrors: some View {
-        ForEach(catalogs.results.filter { $0.error != nil }) { r in
+        ForEach(catalogs.resultsWords == LibrarySearchText.words(query) ? catalogs.results.filter { $0.error != nil } : []) { r in
             Label(r.error ?? "", systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(.secondary)
                 .listRowBackground(Color.clear)
         }
@@ -581,6 +777,38 @@ struct AddonSearchView: View {
         .padding(.vertical, 4)
         .listRowBackground(Color.clear)
         .accessibilityElement(children: .contain)
+    }
+}
+
+/// The one quiet line under the chips.
+private struct SearchStatusLine: View {
+    let text: String
+    let working: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if working { FolioSpinner(size: .small) }
+            Text(text).font(.footnote).foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+        }
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("searchStatus")
+    }
+}
+
+/// "Indexing Real-Debrid… 12 of 220 folders" (1.30.3): the only part of
+/// the page that follows a refresh's progress.
+private struct SearchIndexingLine: View {
+    let servers: [WebDAVServer]
+    @ObservedObject private var index = LibraryIndexStore.shared
+
+    var body: some View {
+        if let server = servers.first(where: { index.state($0.id).refreshing }) {
+            let st = index.state(server.id)
+            SearchStatusLine(text: "Indexing \(server.name)… \(st.done) of \(st.total) folders", working: true)
+        }
     }
 }
 

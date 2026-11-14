@@ -130,7 +130,10 @@ struct LibraryIndexer: Sendable {
         return false
     }
 
-    func refresh(_ old: LibraryIndex, rootURL: URL, full: Bool, now: Date = Date(),
+    /// `turns` false (1.30.3): Home's quick check of the start folder. What
+    /// was added or removed shows in that one listing; folders only due
+    /// "in their turn" wait for the next regular refresh.
+    func refresh(_ old: LibraryIndex, rootURL: URL, full: Bool, turns: Bool = true, now: Date = Date(),
                  progress: @escaping @Sendable (Int, Int) -> Void = { _, _ in }) async -> (LibraryIndex, Report) {
         let start = Date()
         var report = Report()
@@ -153,7 +156,7 @@ struct LibraryIndexer: Sendable {
         // that one refresh took 30 s. In turns, each folder is seen again
         // within a few hours and no refresh lists them all.
         let turn: Set<String> = {
-            guard !full else { return [] }
+            guard !full, turns else { return [] }
             let due = old.folders.filter { $0.key != fresh.root && now.timeIntervalSince($0.value.listed) > 3600 }
             let share = max(12, old.folders.count / 12)
             return Set(due.sorted { $0.value.listed < $1.value.listed }.prefix(share).map(\.key))
@@ -264,7 +267,7 @@ final class LibraryIndexStore: ObservableObject {
         var total = 0
     }
 
-    struct Searchable: Equatable {
+    struct Searchable: Equatable, Sendable {
         let file: LibraryIndex.File
         /// Lower-cased name and clean title.
         let haystack: String
@@ -286,6 +289,37 @@ final class LibraryIndexStore: ObservableObject {
     /// The WebDAV browser script's listing cache lasts 10 minutes (cache_ttl).
     static let freshFor: TimeInterval = 600
 
+    /// Home's Real-Debrid row asks for the start folder's listing again when
+    /// the last answer is older than this (1.30.3). Until then the library
+    /// was read once per launch (Home's task) and at most every 10 minutes,
+    /// so a release deleted on Real-Debrid stayed in the row while See all,
+    /// which lists the folder live, no longer had it.
+    nonisolated static let rootCheckEvery: TimeInterval = 60
+    /// When the folders due "in their turn" were last listed (this launch).
+    private var lastTurns: [UUID: Date] = [:]
+
+    nonisolated static func rootCheckDue(last: Date?, now: Date, every: TimeInterval) -> Bool {
+        guard let last else { return true }
+        // A clock set back counts as due.
+        return now.timeIntervalSince(last) >= every || last > now
+    }
+
+    /// The start folder listed again (one PROPFIND) when the last check is
+    /// older than `every`: releases gone from it leave the index and Home's
+    /// row, new ones are read. The other folders keep their own rule, their
+    /// turns at most every 10 minutes as before (1.30.3).
+    func checkRoot(_ server: WebDAVServer, every: TimeInterval = LibraryIndexStore.rootCheckEvery) {
+        Task {
+            await load(server)
+            let s = state(server.id)
+            guard !s.refreshing, refreshes[server.id] == nil else { return }
+            let now = Date()
+            guard Self.rootCheckDue(last: s.index?.lastCheck?.date, now: now, every: every) else { return }
+            let turns = now.timeIntervalSince(lastTurns[server.id] ?? .distantPast) >= Self.freshFor
+            await refresh(server, full: false, turns: turns)
+        }
+    }
+
     func state(_ id: UUID) -> State { states[id] ?? State() }
 
     nonisolated static var directory: URL {
@@ -301,9 +335,12 @@ final class LibraryIndexStore: ObservableObject {
         let t = Task {
             let read = await Task.detached(priority: .userInitiated) { Self.read(Self.file(id), account: account) }.value
             guard !Task.isCancelled else { return }        // cleared while reading (account changed)
-            readFromDisk.insert(id)
             if let note = read.note { dlog("index", "\(server.name): \(note)") }
-            if let index = read.index, states[id]?.index == nil { apply(index, to: id) }
+            if let index = read.index, states[id]?.index == nil { await apply(index, to: id) }
+            guard !Task.isCancelled else { return }
+            // After the index is in memory (1.30.3, apply waits now): a
+            // second caller waits for this task, not for a missing index.
+            readFromDisk.insert(id)
         }
         loading[id] = t
         await t.value
@@ -348,12 +385,13 @@ final class LibraryIndexStore: ObservableObject {
     }
 
     /// Lists the server again (`full`: every folder, as pull to refresh).
-    func refresh(_ server: WebDAVServer, full: Bool) async {
+    func refresh(_ server: WebDAVServer, full: Bool, turns: Bool = true) async {
         if let running = refreshes[server.id] {
             if !full { await running.value; return }
             running.cancel()
         }
         let id = server.id
+        if full || turns { lastTurns[id] = Date() }
         let t = Task {
             await load(server)
             let client = WebDAVClient(server: server)
@@ -362,7 +400,7 @@ final class LibraryIndexStore: ObservableObject {
             var s = state(id); s.refreshing = true; s.full = full; s.done = 0; s.total = 1; states[id] = s
             let signpost = LibTrace.index.begin("refresh")
             let indexer = LibraryIndexer(list: { try await client.list($0) })
-            let (fresh, report) = await indexer.refresh(old, rootURL: rootURL, full: full) { done, total in
+            let (fresh, report) = await indexer.refresh(old, rootURL: rootURL, full: full, turns: turns) { done, total in
                 Task { @MainActor in
                     guard var s = self.states[id], s.refreshing,
                           Date().timeIntervalSince(self.lastProgress[id] ?? .distantPast) > 0.25 || done >= total else { return }
@@ -376,7 +414,7 @@ final class LibraryIndexStore: ObservableObject {
             dlog("index", "\(server.name): \(full ? "full" : "changes only") refresh in \(report.ms) ms — listed \(report.listed) folder(s), kept \(report.kept), "
                  + "failed \(report.failed)\(report.unauthorized ? " (login refused)" : ""); \(fresh.folders.count) folders, \(files.count) media files"
                  + (report.changedWithoutSign > 0 ? "; \(report.changedWithoutSign) folder(s) changed without a new getetag/getlastmodified" : ""))
-            apply(fresh, to: id)
+            await apply(fresh, to: id)
             // Trace: the release names, for the release-name parser's tests.
             if LibTrace.on, let root = fresh.folders[fresh.root] {
                 let names = root.subfolders.compactMap { fresh.folders[$0]?.name }.prefix(400)
@@ -400,6 +438,8 @@ final class LibraryIndexStore: ObservableObject {
         refreshes[id]?.cancel()
         refreshes[id] = nil
         states[id] = nil
+        applying[id, default: 0] += 1
+        lastTurns[id] = nil
         readFromDisk.remove(id)
         summaries.set(nil, for: id)
         try? FileManager.default.removeItem(at: Self.file(id))
@@ -411,7 +451,7 @@ final class LibraryIndexStore: ObservableObject {
     /// collage took the four newest folders anywhere in the index, so the
     /// same title could show twice (31 Oct screenshot: Daemons of the Shadow
     /// Realm twice, The Gentlemen twice), and folders inside a release too.
-    static func newestReleases(_ index: LibraryIndex, limit: Int) -> [Summary.Release] {
+    nonisolated static func newestReleases(_ index: LibraryIndex, limit: Int) -> [Summary.Release] {
         var seen = Set<String>()
         return (index.folders[index.root]?.subfolders ?? [])
             .compactMap { key in index.folders[key].flatMap { f in ReleaseName.folder(f.name).map { (key, f, $0) } } }
@@ -425,23 +465,39 @@ final class LibraryIndexStore: ObservableObject {
     /// year, so a show's season packs with and without one ("Show 2024
     /// S02", "Show S01") were two tiles of one show (review, 2 Nov). A film
     /// keeps its year: a remake is another film.
-    static func rowKey(_ r: ReleaseName) -> String {
+    nonisolated static func rowKey(_ r: ReleaseName) -> String {
         let title = ReleaseMatch.norm(r.title)
         return ReleaseMatch.kind(of: r) == .movie ? title + "|" + (r.year ?? "") : title
     }
 
-    private func apply(_ index: LibraryIndex, to id: UUID) {
+    /// The newest index a server is being given: an older one still being
+    /// worked out when it arrives is dropped.
+    private var applying: [UUID: Int] = [:]
+
+    /// What search looks through and Home's summary, worked out off the main
+    /// thread (1.30.3): on it, a title cleaned for every file, the releases
+    /// parsed and sorted, held up the frames of whatever was on screen.
+    private func apply(_ index: LibraryIndex, to id: UUID) async {
+        let turn = (applying[id] ?? 0) + 1
+        applying[id] = turn
+        let built = await Task.detached(priority: .userInitiated) { Self.build(index) }.value
+        guard applying[id] == turn else { return }       // a newer index, or cleared
         var s = state(id)
         s.index = index
-        s.searchable = index.allFiles.map { f in
+        s.searchable = built.searchable
+        states[id] = s
+        summaries.set(built.summary, for: id)
+    }
+
+    nonisolated static func build(_ index: LibraryIndex) -> (searchable: [Searchable], summary: Summary) {
+        let searchable = index.allFiles.map { f in
             Searchable(file: f, haystack: (f.name + " " + TitleParser.clean(f.name)).lowercased())
         }
-        states[id] = s
-        let summary = Summary(files: s.searchable.count, bytes: s.searchable.reduce(0) { $0 + ($1.file.size ?? 0) },
+        let summary = Summary(files: searchable.count, bytes: searchable.reduce(0) { $0 + ($1.file.size ?? 0) },
                               refreshed: index.refreshed, unauthorized: index.lastCheck?.unauthorized == true,
                               offline: index.lastCheck.map { !$0.ok && !$0.unauthorized } ?? false,
-                              releases: Self.newestReleases(index, limit: RealDebrid.rowLimit))
-        summaries.set(summary, for: id)
+                              releases: newestReleases(index, limit: RealDebrid.rowLimit))
+        return (searchable, summary)
     }
 
     // MARK: Disk
@@ -487,7 +543,7 @@ final class LibraryIndexStore: ObservableObject {
 final class IndexSummaries: ObservableObject {
     static let shared = IndexSummaries()
 
-    struct Summary: Codable, Equatable {
+    struct Summary: Codable, Equatable, Sendable {
         var files: Int
         var bytes: Int64
         /// The last refresh that worked (nil: never).
@@ -499,7 +555,7 @@ final class IndexSummaries: ObservableObject {
         /// Optional: summaries saved by 1.19.0 don't have it.
         var releases: [Release]?
 
-        struct Release: Codable, Equatable, Identifiable {
+        struct Release: Codable, Equatable, Identifiable, Sendable {
             /// The folder's name, as the server has it.
             var name: String
             /// The folder's address (LibraryIndex.key).

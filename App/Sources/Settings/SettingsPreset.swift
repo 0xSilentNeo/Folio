@@ -56,7 +56,8 @@ enum SettingsPreset {
     ]
     /// Never exported: app bookkeeping, not choices. The test switches too
     /// (1.30.2): a preset made with Test on turned it on wherever it was imported.
-    private static let skip: Set<String> = ["enhancedQuality", SettingsKey.notifyTest, SettingsKey.engageQuick]
+    /// Keeping the traces on is a test switch as well (1.30.3).
+    private static let skip: Set<String> = ["enhancedQuality", SettingsKey.notifyTest, SettingsKey.engageQuick, SettingsKey.diagnosticsKeepOn]
 
     private static func kind(of v: Any) -> Kind? {
         if let n = v as? NSNumber {

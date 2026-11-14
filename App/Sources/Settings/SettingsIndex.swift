@@ -73,6 +73,8 @@ enum SettingsIndex {
         e("Weather City", .notifications, "just for fun weather location", .notifyCity),
         e("Notification Test", .help, "try every kind send now debug", .notifyTest),
         e("Sent Notifications", .notifications, "history log test", .notifySent),
+        // (1.30.3)
+        e("News from Folio", .notifications, "announcements updates new version release github"),
 
         // Kids Profile
         e("Change Passcode", .kids, "kids pin code lock"),
@@ -166,6 +168,8 @@ enum SettingsIndex {
 
         // Help & Diagnostics
         e("Diagnostics & Report", .help, "bug report logs energy cpu battery", .diagnostics),
+        // (1.30.3) On the Diagnostics page, so the result opens it.
+        e("Keep Traces On", .help, "logs diagnostics trace logging keep on until I turn them off day", .diagnostics),
         e("Native Menu Morph", .help, "experimental animation"),
 
         // About

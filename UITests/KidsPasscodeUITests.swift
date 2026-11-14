@@ -54,6 +54,65 @@ final class KidsPasscodeUITests: XCTestCase {
 
     /// 1.26.1: going to the background with the profile on closes Settings and
     /// the page opened from it; turning the profile on doesn't (test1).
+    /// The 13 Nov recording (1.30.3): turned on from Settings, Back asked for
+    /// Face ID for the Settings already open, then Settings took no touches
+    /// at all, and Home's FOLIO broke over two lines beside the kids pill.
+    func test3SettingsStayUsableAfterTurningOn() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-labNoEngine", "-noSplash", "-labKidsReset", "-appearance", "dark"]
+        app.launch()
+        app.buttons["Settings"].firstMatch.tap()
+        app.staticTexts["Kids Profile"].firstMatch.tap()
+        app.buttons["kidsTurnOn"].tap()
+        XCTAssertTrue(app.staticTexts["Enter New Passcode"].waitForExistence(timeout: 5))
+        type("2580", in: app)
+        XCTAssertTrue(app.staticTexts["Re-enter New Passcode"].waitForExistence(timeout: 3))
+        type("2580", in: app)
+        XCTAssertTrue(app.buttons["kidsTurnOff"].waitForExistence(timeout: 5))
+        shot("kids-on")
+
+        // Back to Settings: no passcode for the Settings already open.
+        let back = app.buttons["Back"].firstMatch
+        if back.waitForExistence(timeout: 3) { back.tap() } else { app.navigationBars.buttons.firstMatch.tap() }
+        let playback = app.staticTexts["Playback"].firstMatch
+        XCTAssertTrue(playback.waitForExistence(timeout: 5), "Settings' list isn't there after Back")
+        XCTAssertFalse(app.staticTexts["Enter Passcode"].exists, "Back asked for the passcode")
+        shot("kids-settings")
+
+        // Settings still take touches: a page opens and closes.
+        playback.tap()
+        let playbackPage = app.navigationBars["Playback"].firstMatch
+        let opened = playbackPage.waitForExistence(timeout: 5) || app.staticTexts["Playback"].firstMatch.waitForExistence(timeout: 1)
+        XCTAssertTrue(opened, "a row in Settings didn't open")
+        let back2 = app.buttons["Back"].firstMatch
+        if back2.waitForExistence(timeout: 3) { back2.tap() } else { app.navigationBars.buttons.firstMatch.tap() }
+        XCTAssertTrue(app.staticTexts["Kids Profile"].firstMatch.waitForExistence(timeout: 5), "not back on Settings")
+
+        // Home: the kids button, and FOLIO on one line.
+        let back3 = app.buttons["Back"].firstMatch
+        if back3.waitForExistence(timeout: 3) { back3.tap() } else { app.navigationBars.buttons.firstMatch.tap() }
+        XCTAssertTrue(app.buttons["kidsBadge"].waitForExistence(timeout: 5), "no kids button on Home")
+        let mark = app.staticTexts["Folio"].firstMatch
+        XCTAssertTrue(mark.waitForExistence(timeout: 3))
+        XCTAssertLessThan(mark.frame.height, 40, "FOLIO broke over two lines: \(mark.frame)")
+        shot("kids-home")
+
+        // Settings opened again: the passcode, with no search field over it,
+        // and Cancel goes back to Home.
+        app.buttons["Settings"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Enter Passcode"].waitForExistence(timeout: 5), "Settings opened without the passcode")
+        let field = app.searchFields["Search Settings"].firstMatch
+        XCTAssertFalse(field.exists && field.isHittable, "the search field is over the lock")
+        shot("kids-settings-locked")
+        app.buttons["Cancel"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["kidsBadge"].waitForExistence(timeout: 5), "Cancel didn't go back to Home")
+
+        app.terminate()
+        app.launchArguments = ["-uiTestLibrary", "-labNoEngine", "-noSplash", "-labKidsReset"]
+        app.launch()
+        app.terminate()
+    }
+
     func test2BackgroundClosesSettings() {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTestLibrary", "-labNoEngine", "-noSplash", "-labKidsReset", "-appearance", "dark"]

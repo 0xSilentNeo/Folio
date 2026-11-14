@@ -33,7 +33,7 @@ final class SearchResultsTests: XCTestCase {
         let owned = (1...7).map { entry($0) }
         let titles = (1...6).map { meta($0) } + (7...11).map { meta($0, series: true) }
         let r = SearchResults(owned: owned, imdb: titles)
-        // The top result and four more of what's yours; the rest under Yours.
+        // The top result and four more of what's yours; the rest under Library.
         XCTAssertEqual(r.top?.id, owned[0].id)
         XCTAssertEqual(r.ownedShort.map(\.id), owned[1...4].map(\.id))
         XCTAssertEqual(r.hiddenOwned, 2)

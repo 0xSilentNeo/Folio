@@ -1,0 +1,12 @@
+{
+  "announcements": [
+    {
+      "id": "2026-11-14-update-1-30-3",
+      "title": "Folio 1.30.3 is out",
+      "body": "Kids profile and Settings fixes, addon playlists and the stream picker, and a tidier search.",
+      "url": "https://github.com/0xSilentNeo/Folio/releases/tag/v1.30.3",
+      "version": "1.30.3",
+      "date": "2026-11-14"
+    }
+  ]
+}
