@@ -1,0 +1,8 @@
+42 |         XCTAssertTrue(allowed.contains(SystemProgress.prefix + "*"), "\(allowed)")
+43 |         XCTAssertTrue(allowed.contains(AiringBackground.taskID), "the airing refresh stays")
+44 |         XCTAssertTrue(SystemProgress.prefix.hasPrefix("dev.silentneo.folio."), "under the bundle ID")
+42 |         XCTAssertTrue(allowed.contains(SystemProgress.prefix + "*"), "\(allowed)")
+43 |         XCTAssertTrue(allowed.contains(AiringBackground.taskID), "the airing refresh stays")
+44 |         XCTAssertTrue(SystemProgress.prefix.hasPrefix("dev.silentneo.folio."), "under the bundle ID")
+46 |         XCTAssertTrue(Set(["audio", "picture-in-picture", "fetch", "processing"]).isSubset(of: Set(modes)), "\(modes)")
+2026-11-14 15:30:18.502131+0000 Folio[7428:27846] [ProcessSuspension] 0x1211486c0 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'XPCConnectionTerminationWatchdog' for process with PID=7721, error: (null)
