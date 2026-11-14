@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Network
 import UIKit
 
 /// Sends what you watch to the services you've connected (1.26.0): Trakt
@@ -17,8 +18,13 @@ final class SyncCenter: ObservableObject {
     /// The last thing each service did, for Settings ("Sent: Frieren E5 · E5 of 28").
     @Published private(set) var lastResult: [SyncService: String] = [:]
     @Published private(set) var waiting = 0
+    /// Services whose saved sign-in was refused when it was renewed (1.30.4):
+    /// their jobs wait for a new sign-in instead of 60 tries; Settings says
+    /// "Sign in again" (lastResult).
+    @Published private(set) var needsSignIn: Set<SyncService> = []
 
-    private struct Job: Codable, Hashable {
+    /// Internal, not private (1.30.4): the tests read the queue's decoding.
+    struct Job: Codable, Hashable {
         var service: SyncService
         var event: SyncEvent?
         var watchlist: WatchlistItem?
@@ -72,20 +78,33 @@ final class SyncCenter: ObservableObject {
         for s in SyncService.allCases {
             if let t = SyncTokens.load(s) { accounts[s] = t.user ?? "" }
         }
-        if let data = try? Data(contentsOf: file) {
-            let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601
-            jobs = (try? d.decode([Job].self, from: data)) ?? []
-        }
-        if let data = try? Data(contentsOf: sentFile) {
-            let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601
-            sent = Self.prunedSent((try? d.decode([String: Date].self, from: data)) ?? [:], now: Date())
-        }
+        // One entry by entry (1.30.4): one this version can't read emptied
+        // the whole queue, and the next save wrote the empty one over it.
+        if let data = try? Data(contentsOf: file) { jobs = Self.decodeJobs(data) }
+        if let data = try? Data(contentsOf: sentFile) { sent = Self.prunedSent(Self.decodeSent(data), now: Date()) }
+        _ = Self.path
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
             .sink { [weak self] _ in self?.flushSoon() }
+            .store(in: &bag)
+        // A service switched on again (1.30.4): what waited for it goes now.
+        switchedOn = Set(SyncService.allCases.filter(isOn))
+        NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.switchesChanged() }
             .store(in: &bag)
         WatchlistStore.shared.changes
             .sink { [weak self] change in self?.watchlistChanged(change.item, added: change.added) }
             .store(in: &bag)
+    }
+
+    private var switchedOn: Set<SyncService> = []
+
+    private func switchesChanged() {
+        let on = Set(SyncService.allCases.filter(isOn))
+        guard on != switchedOn else { return }
+        let turnedOn = !on.subtracting(switchedOn).isEmpty
+        switchedOn = on
+        if turnedOn { flushSoon() }
     }
 
     /// Starts the queue (called at launch).
@@ -100,7 +119,9 @@ final class SyncCenter: ObservableObject {
         accounts[s] = t.user ?? ""
         UserDefaults.standard.set(true, forKey: s.enabledKey)
         lastResult[s] = "Connected"
+        needsSignIn.remove(s)
         dlog("sync", "\(s.name): connected\(t.user.map { " as \($0)" } ?? "")")
+        flushSoon()         // what waited for the sign-in (1.30.4)
     }
 
     func disconnect(_ s: SyncService) {
@@ -118,6 +139,7 @@ final class SyncCenter: ObservableObject {
             saveSent()
         }
         lastResult[s] = nil
+        needsSignIn.remove(s)
         dlog("sync", "\(s.name): disconnected")
     }
 
@@ -174,11 +196,49 @@ final class SyncCenter: ObservableObject {
     private func flushSoon() {
         guard !jobs.isEmpty, !flushing else { return }
         flushing = true
+        // Time in the background (1.30.4): a play sent as Folio left the
+        // screen was cut off mid-request and sent again, or not, next time.
+        let bg = BackgroundTime("folio.sync")
         Task {
             await flush()
             flushing = false
+            bg.end()
         }
     }
+
+    // MARK: Reading the saved queue (1.30.4)
+
+    /// The saved queue, entry by entry: one this version can't read is left out, not the rest.
+    nonisolated static func decodeJobs(_ data: Data) -> [Job] {
+        let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601
+        return d.decodeLossy(Job.self, from: data) ?? []
+    }
+
+    private struct SentDate: Decodable {
+        var value: Date?
+        // Through the container, so the decoder's ISO 8601 dates apply.
+        init(from decoder: Decoder) throws { value = try? decoder.singleValueContainer().decode(Date.self) }
+    }
+
+    /// What was sent and when, entry by entry.
+    nonisolated static func decodeSent(_ data: Data) -> [String: Date] {
+        let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601
+        return ((try? d.decode([String: SentDate].self, from: data)) ?? [:]).compactMapValues(\.value)
+    }
+
+    /// A refused renewal of the sign-in (Trakt's and MyAnimeList's
+    /// invalid_grant, HTTP 400 or 401): a new sign-in is needed, not another try.
+    nonisolated static func refusedRefresh(status: Int, body: String) -> Bool {
+        status == 401 || (status == 400 && body.contains("invalid_grant"))
+    }
+
+    /// Whether the phone has a network now (1.30.4): offline, a job not
+    /// reached holds the whole queue; online, only its own service's jobs.
+    private static let path: NWPathMonitor = {
+        let m = NWPathMonitor()
+        m.start(queue: DispatchQueue(label: "folio.sync.path", qos: .utility))
+        return m
+    }()
 
     /// The service is busy or down, or wants a new sign-in: the job is kept
     /// for a later try rather than counted towards being dropped.
@@ -192,7 +252,10 @@ final class SyncCenter: ObservableObject {
         var waiting = Set<SyncService>()
         while i < jobs.count {
             let job = jobs[i]
-            guard isOn(job.service) else { jobs.remove(at: i); continue }
+            // Switched off, not disconnected (1.30.4): kept until it's on
+            // again (disconnecting removes them). They were deleted here.
+            guard isConnected(job.service) else { jobs.remove(at: i); continue }
+            guard isOn(job.service), !needsSignIn.contains(job.service) else { i += 1; continue }
             if waiting.contains(job.service) { i += 1; continue }
             do {
                 let outcome = try await send(job)
@@ -209,8 +272,10 @@ final class SyncCenter: ObservableObject {
                 j.attempts += 1
                 let why = (error as? SyncHTTP.Failure).map { "\($0.errorDescription ?? "") \($0.body.prefix(160))" } ?? error.localizedDescription
                 dlog("sync/error", "\(job.service.name): \(job.event?.label ?? job.watchlist?.name ?? "?") not sent (\(why)), try \(j.attempts)")
+                // Waiting for a new sign-in (1.30.4): kept as it is, not counted.
+                if needsSignIn.contains(job.service) { i += 1; continue }
                 lastResult[job.service] = "Not sent yet: \(job.event?.label ?? job.watchlist?.name ?? "") (\(error.localizedDescription))"
-                // Not reached: this and the rest wait for the next try.
+                // Not reached: this (and, offline, the rest) waits for the next try.
                 let status = (error as? SyncHTTP.Failure)?.status
                 let unreachable = status == 0
                 // Dropped after six refusals of the job itself (1.30.1). An
@@ -222,7 +287,9 @@ final class SyncCenter: ObservableObject {
                 if let k = jobs.firstIndex(of: job) {
                     if j.attempts >= (transient ? 60 : 6) && !unreachable { jobs.remove(at: k) } else { jobs[k] = j; i += 1 }
                 }
-                if unreachable { break }
+                // Online, only this service or its anime lookup wasn't reached
+                // (1.30.4): its jobs wait, the other services' still go.
+                if unreachable, Self.path.currentPath.status != .satisfied { break }
                 if transient { waiting.insert(job.service) }
             }
             save()
@@ -243,9 +310,18 @@ final class SyncCenter: ObservableObject {
         case .trakt:
             return try await TraktClient.addToHistory(e, token: token) ? "Sent: \(e.label)" : "Skipped \(e.label) (no IMDb id)"
         case .anilist, .mal:
-            guard let hint = e.anime, let episode = hint.episode ?? e.episode,
-                  let ids = await SkipService.shared.animeIDs(hint, season: e.season) else {
+            guard let hint = e.anime, let episode = hint.episode ?? e.episode else {
                 return "Skipped \(e.label) (not found on \(s.name))"
+            }
+            let ids: AnimeHint
+            switch await SkipService.shared.animeIDLookup(hint, season: e.season) {
+            case .found(let found): ids = found
+            case .notFound: return "Skipped \(e.label) (not found on \(s.name))"
+            case .unreachable:
+                // Not reached isn't "not found" (1.30.4): the job waits, never
+                // dropped. Until then an offline or rate-limited scrobble was skipped.
+                let offline = Self.path.currentPath.status != .satisfied
+                throw SyncHTTP.Failure(status: 0, body: "the anime lookup wasn't reached (\(offline ? "offline" : "AniList or ids.moe didn't answer"))")
             }
             if s == .anilist {
                 guard let id = ids.anilistId else { return "Skipped \(e.label) (no AniList id)" }
@@ -280,11 +356,24 @@ final class SyncCenter: ObservableObject {
                 return fresh
             } catch {
                 // Cancelled by disconnect: the entry is no longer this task's.
-                if !Task.isCancelled { self.refreshing[s] = nil }
+                if !Task.isCancelled {
+                    self.refreshing[s] = nil
+                    // Refused, not unreachable (1.30.4): "Sign in again" in
+                    // Settings, and its jobs wait for that, not 60 more tries.
+                    if let f = error as? SyncHTTP.Failure, self.accounts[s] != nil, Self.refusedRefresh(status: f.status, body: f.body) {
+                        self.needsSignIn.insert(s)
+                        self.lastResult[s] = "Sign in again: \(s.name) no longer accepts Folio's sign-in. Disconnect, then connect again; what's waiting is sent then."
+                        dlog("sync/error", "\(s.name): the sign-in's renewal was refused (HTTP \(f.status)): sign in again")
+                    }
+                }
                 throw error
             }
         }
         refreshing[s] = task
+        // Its own time in the background (1.30.4): Trakt's refresh token is
+        // single-use, and a renewal cut off half-way could lose the sign-in.
+        let bg = BackgroundTime("folio.sync.refresh")
+        defer { bg.end() }
         return try await task.value.access
     }
 

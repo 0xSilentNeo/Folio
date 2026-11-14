@@ -61,11 +61,19 @@ private struct PageSearchField: ViewModifier {
                 .onChange(of: focused) { _, f in if f { HitchProbe.mark("search", "field focused") } }
                 .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in HitchProbe.mark("search", "keyboard up") }
         } else {
-            content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
+            drawer(content)
         }
         #else
-        content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
+        drawer(content)
         #endif
+    }
+
+    /// Before iOS 26: the field under the title, with the same relay for
+    /// the Search key (1.30.4). Only iOS 26's passed it on, so Search did
+    /// nothing here: no addons asked, nothing kept in Recent.
+    private func drawer(_ content: Content) -> some View {
+        content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
+            .onSubmit(of: .search) { NotificationCenter.default.post(name: .searchTabSubmitted, object: text) }
     }
 }
 

@@ -173,6 +173,11 @@ final class PiPManager: NSObject {
     /// Keeps the PiP progress bar in sync with mpv.
     func updatePlayback(position: Double, rate: Double) {
         guard let timebase, position.isFinite else { return }
+        // Only when it has drifted or the rate changed (1.30.4): the player
+        // calls this every second, and each set tells the layer and PiP the
+        // time jumped. Between sets it runs on by itself at `rate`.
+        let drift = abs(CMTimebaseGetTime(timebase).seconds - max(0, position))
+        guard CMTimebaseGetRate(timebase) != rate || !(drift < 0.25) else { return }
         CMTimebaseSetTime(timebase, time: CMTime(seconds: max(0, position), preferredTimescale: 1000))
         CMTimebaseSetRate(timebase, rate: rate)
     }

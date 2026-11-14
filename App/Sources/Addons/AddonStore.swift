@@ -15,8 +15,14 @@ enum AddonAPI {
     static let session: URLSession = {
         let c = URLSessionConfiguration.default
         c.timeoutIntervalForRequest = 20
+        // A whole answer within 45 s (1.30.4): a server sending a few bytes
+        // now and then kept the request, and its spinner, going for good.
+        c.timeoutIntervalForResource = 45
         c.requestCachePolicy = .useProtocolCachePolicy
-        c.urlCache = URLCache(memoryCapacity: 20_000_000, diskCapacity: 100_000_000)
+        // A folder of its own (1.30.4): without one it shared the app's
+        // default cache with every other session's answers.
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("AddonAPI", isDirectory: true)
+        c.urlCache = URLCache(memoryCapacity: 20_000_000, diskCapacity: 100_000_000, directory: dir)
         return URLSession(configuration: c)
     }()
 
@@ -180,16 +186,32 @@ final class AddonStore: ObservableObject {
         installing = true
         defer { installing = false }
         let manifest = try await AddonAPI.manifest(url)
-        let addon = InstalledAddon(transportURL: url, manifest: manifest)
+        var addon = InstalledAddon(transportURL: url, manifest: manifest)
         // The same addon from the same server with a new configuration (a
         // different key or options in its link) replaces the old copy; it
         // used to be added as a second one. Another server's copy stays apart.
         let host = URL(string: url)?.host
         if let i = addons.firstIndex(where: { $0.transportURL == url || ($0.manifest.id == manifest.id && URL(string: $0.transportURL)?.host == host) }) {
+            let old = addons[i]
+            // Its switch, its catalogs taken off Discover and how it last
+            // answered stay with it (1.30.4): they went with the old address.
+            addon.isOff = old.isOff
+            if old.id != addon.id {
+                hiddenCatalogs = Self.movedKeys(hiddenCatalogs, from: old.id, to: addon.id)
+                if let a = AddonHealth.shared.last[old.id] {
+                    AddonHealth.shared.forget(old.id)
+                    AddonHealth.shared.note(addon.id, ms: a.ms, ok: a.ok, what: a.what)
+                }
+            }
             addons[i] = addon
         } else {
             addons.append(addon)
         }
+    }
+
+    /// Catalog keys ("<addon id>|type|id") of one addon moved onto its new id.
+    nonisolated static func movedKeys(_ keys: Set<String>, from old: String, to new: String) -> Set<String> {
+        Set(keys.map { $0.hasPrefix(old + "|") ? new + $0.dropFirst(old.count) : $0 })
     }
 
     private var checkedThisLaunch = false

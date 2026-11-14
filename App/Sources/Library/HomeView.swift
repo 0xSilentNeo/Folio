@@ -65,7 +65,7 @@ struct HomeView: View {
             .background(HomeBackdrop().ignoresSafeArea())
             .background(TouchTracker.Host().frame(width: 0, height: 0).accessibilityHidden(true))
             .toolbar(.hidden, for: .navigationBar)
-            .refreshable { local.refresh() }
+            .refreshable { await refreshLibrary() }
             .sheet(isPresented: $showOpenURL) { OpenURLSheet() }
             .sheet(item: $editingServer) { ServerEditView(server: $0) }
             .sheet(isPresented: $showAddFiles) { addFilesSheet }
@@ -81,15 +81,19 @@ struct HomeView: View {
             // the passcode; opening Settings again asks (1.26.1). Not when the
             // profile is turned on, on its own page.
             .onChange(of: kids.backgroundedAt) {
-                guard kids.isOn, let i = path.firstIndex(where: { if case .settings = $0 { return true }; return false }) else { return }
-                path.removeSubrange(i...)
+                guard kids.isOn, settingsIndex != nil else { return }
+                guard KidsGate.shown > 0 else { closeSettings(); return }
+                // A passcode pad up on a Settings page closes first (1.30.4):
+                // closed under it, the page left the pad with nothing to close it.
+                KidsGate.closeAll()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { MainActor.assumeIsolated { closeSettings() } }
             }
             .onAppear {
                 LaunchTiming.homeAppeared()
-                if let r = HomeRouter.shared.take() { open(r) }
+                if let r = HomeRouter.shared.take() { openFromOutside(r) }
             }
             // A widget's link to a release's folder (1.24.0, HomeRouter).
-            .onReceive(HomeRouter.shared.routes) { _ in if let r = HomeRouter.shared.take() { open(r) } }
+            .onReceive(HomeRouter.shared.routes) { _ in if let r = HomeRouter.shared.take() { openFromOutside(r) } }
             // The Real-Debrid section's library, checked again in the
             // background (again when the account is added or changed).
             .task(id: realDebrid.map(LibraryIndex.account)) { if let rd = realDebrid { LibraryIndexStore.shared.refreshIfNeeded(rd) } }
@@ -139,6 +143,33 @@ struct HomeView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { openPending(after: "SwiftUI kept the page in its path") }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { openPending(after: "still waiting after 3 s") }
+    }
+
+    /// Pull to refresh (1.30.4): the spinner stays until the files are read
+    /// again, and Real-Debrid's library with them. `local.refresh()` returns
+    /// at once, so the spinner went before anything was looked at; the scan
+    /// here is the same listing, waited for.
+    private func refreshLibrary() async {
+        local.refresh()
+        _ = await Task.detached(priority: .userInitiated) { LocalMediaStore.scan() }.value
+        if let rd = realDebrid { await LibraryIndexStore.shared.refresh(rd, full: true) }
+    }
+
+    /// Settings and every page opened from it, closed while the kids profile is on.
+    private func closeSettings() {
+        guard kids.isOn, let i = settingsIndex else { return }
+        path.removeSubrange(i...)
+    }
+
+    private var settingsIndex: Int? { path.firstIndex { if case .settings = $0 { return true }; return false } }
+
+    /// A widget's route (1.30.4): on Home itself, in place of what's open
+    /// (Settings), not pushed on top of it. `.id(route)` on the page keeps
+    /// another route there from reusing its view (see open(_:)).
+    private func openFromOutside(_ route: LibraryRoute) {
+        guard !path.isEmpty else { open(route); return }
+        LibTrace.title.event("open", "home opens \(route.logName) in place of \(path.count) page(s)")
+        path = [route]
     }
 
     private func openPending(after why: String? = nil) {
@@ -204,8 +235,12 @@ struct HomeView: View {
             LibraryRoute.destination(route).zoomDestination(zoomID(id), in: zoomNS, zoom: !listPushes)
         case .folder(let path):
             LibraryRoute.destination(route).zoomDestination(zoomID("d|" + path), in: zoomNS, zoom: !listPushes)
+        case .settingsPage, .settingsSubpage:
+            // The probe that shows the bar again after a swipe back let go (1.30.4), as Settings has.
+            LibraryRoute.destination(route).ignoresTapsWhileLeaving()
         default:
-            LibraryRoute.destination(route)
+            // Its own view for each route (1.30.4): a widget's route replaces the path (openFromOutside).
+            LibraryRoute.destination(route).id(route)
         }
     }
 
@@ -436,7 +471,12 @@ struct HomeView: View {
     /// What the kids profile lets through (everything when it's off).
     private var kidsGroups: [LibraryGroup] {
         guard let limits = kids.activeLimits else { return allGroups }
-        return allGroups.filter { metaIndex.kidsAllow($0, limits) }
+        let all = allGroups
+        let key = KidsKey(groups: all, limits: limits, metas: metaIndex.metas.count)
+        if let m = lists.kids, m.key == key { return m.list }
+        let list = all.filter { metaIndex.kidsAllow($0, limits) }
+        lists.kids = (key, list)
+        return list
     }
 
     private var filter: LibraryFilter { LibraryFilter(watch: filterWatch, genre: filterGenre, year: filterYear) }
@@ -445,8 +485,24 @@ struct HomeView: View {
     private var groups: [LibraryGroup] {
         let f = filter, list = kidsGroups
         guard f.isActive else { return list }
-        return list.filter { f.matches(any: metaIndex.facts(of: $0)) }
+        let key = FilterKey(groups: list, filter: f, history: history.version, metas: metaIndex.metas.count)
+        if let m = lists.filtered, m.key == key { return m.list }
+        let out = list.filter { f.matches(any: metaIndex.facts(of: $0)) }
+        lists.filtered = (key, out)
+        return out
     }
+
+    /// Both lists, kept until what they're made from changes (1.30.4): with
+    /// the kids profile on its filter ran 3–4 times a body, and an active
+    /// filter looked up every title's history at every redraw. The groups
+    /// compare by identity first: LibraryOrganizer hands back the same array.
+    private final class ListsMemo {
+        var kids: (key: KidsKey, list: [LibraryGroup])?
+        var filtered: (key: FilterKey, list: [LibraryGroup])?
+    }
+    private struct KidsKey: Equatable { var groups: [LibraryGroup]; var limits: KidsRules.Limits; var metas: Int }
+    private struct FilterKey: Equatable { var groups: [LibraryGroup]; var filter: LibraryFilter; var history: Int; var metas: Int }
+    @State private var lists = ListsMemo()
 
     private func clearFilters() {
         withAnimation(.smooth(duration: 0.3)) { filterWatch = LibraryFilter.Watch.all.rawValue; filterGenre = ""; filterYear = "" }
@@ -455,6 +511,13 @@ struct HomeView: View {
     @AppStorage(SettingsKey.tileArtwork) private var tileArtwork = "poster"
 
     @State private var pendingDelete: LibraryGroup?
+    /// A folder's files, counted once when its delete question opens (1.30.4): every redraw walked the folder.
+    @State private var folderContents: (count: Int, size: Int64) = (0, 0)
+
+    private func askDelete(_ g: LibraryGroup) {
+        if let folder = g.folder { folderContents = Self.contents(of: folder) }
+        pendingDelete = g
+    }
 
     /// The delete question, attached to the title's own tile or row so it
     /// points at it (iOS shows confirmation dialogs as a popover from the view
@@ -468,11 +531,11 @@ struct HomeView: View {
     }
 
     private func deleteQuestion(_ g: LibraryGroup) -> String {
-        if let folder = g.folder {
+        if g.folder != nil {
             // Everything in it is deleted, so everything is counted (it used to
             // count only the videos). Listed only when the question is asked.
             guard pendingDelete?.id == g.id else { return "" }
-            let c = Self.contents(of: folder)
+            let c = folderContents
             return "Delete the folder \(g.title) and the \(c.count) file\(c.count == 1 ? "" : "s") in it (\(c.size.byteString))?"
         }
         if g.count > 1 { return "Delete all \(g.count) episodes of \(g.title) (\(g.size.byteString))?" }
@@ -579,7 +642,7 @@ struct HomeView: View {
                         folderLink(g, folder, menu: menu) { FolderRow(group: g, detail: mode == .details, zoom: style == .push ? nil : ZoomSource(zoomID(g.id), zoomNS), zoomWholeRow: style == .row) }
                     } else {
                         groupLink(g, menu: menu) {
-                            LibraryRow(file: g.nextUp, mode: mode, progress: history.entry(forURL: g.nextUp.path)?.progress,
+                            LibraryRow(file: g.nextUp, mode: mode, progress: LibraryGroup.state(g.nextUp)?.progress,
                                        fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
                                        poster: posters, zoom: opensPage(g) && style != .push ? ZoomSource(zoomID(g.id), zoomNS) : nil,
                                        zoomWholeRow: style == .row,
@@ -648,7 +711,7 @@ struct HomeView: View {
                 groupLink(g, menu: menu) {
                     MediaTile(title: g.title, subtitle: g.isSeries ? seriesSubtitle(g) : g.files[0].pathExtension.uppercased(),
                               key: g.nextUp.path, fileURL: g.nextUp, lookupName: g.nextUp.lastPathComponent,
-                              progress: history.entry(forURL: g.nextUp.path)?.progress,
+                              progress: LibraryGroup.state(g.nextUp)?.progress,
                               fixedTitle: g.isSeries ? g.title : nil, fixedSubtitle: g.isSeries ? seriesSubtitle(g) : nil,
                               poster: posters, zoom: opensPage(g) ? ZoomSource(zoomID(g.id), zoomNS) : nil,
                               watched: allWatched(g), sizeBadge: g.size)
@@ -662,19 +725,23 @@ struct HomeView: View {
     /// both when some are), Delete (asks first).
     private func menuActions(_ g: LibraryGroup) -> [TileMenuAction] {
         if g.folder != nil {
-            return [TileMenuAction(title: "Delete folder", systemImage: "trash", destructive: true) { pendingDelete = g }]
+            // No Delete in the kids profile (1.30.4): it took no passcode.
+            return kids.isOn ? [] : [TileMenuAction(title: "Delete folder", systemImage: "trash", destructive: true) { askDelete(g) }]
         }
-        let watched = g.files.filter { history.isWatched($0) }.count
+        // Both sides of each episode, as the title page counts them (1.30.4).
+        let watched = g.files.filter { LibraryGroup.state($0)?.isFinished == true }.count
         let offers = WatchedMenuItems.offers(watched: watched, total: g.files.count)
         let all = g.isSeries ? "all " : ""
         var a = [TileMenuAction(title: g.isSeries ? "Play next episode" : "Play", systemImage: "play") { playLocal(g.nextUp) }]
         if offers.markWatched {
-            a.append(TileMenuAction(title: "Mark \(all)as watched", systemImage: "eye") { history.setWatched(g.files, true) })
+            a.append(TileMenuAction(title: "Mark \(all)as watched", systemImage: "eye") { history.setWatched(LibraryGroup.markKeys(g.files), true, item: HistoryStore.libraryItem) })
         }
         if offers.markUnwatched {
-            a.append(TileMenuAction(title: "Mark \(all)as unwatched", systemImage: "eye.slash") { history.setWatched(g.files, false) })
+            a.append(TileMenuAction(title: "Mark \(all)as unwatched", systemImage: "eye.slash") { history.setWatched(LibraryGroup.markKeys(g.files), false, item: HistoryStore.libraryItem) })
         }
-        a.append(TileMenuAction(title: g.isSeries ? "Delete all episodes" : "Delete", systemImage: "trash", destructive: true) { pendingDelete = g })
+        if !kids.isOn {
+            a.append(TileMenuAction(title: g.isSeries ? "Delete all episodes" : "Delete", systemImage: "trash", destructive: true) { pendingDelete = g })
+        }
         return a
     }
 
@@ -683,16 +750,18 @@ struct HomeView: View {
     /// destructive role), right for watched / unwatched.
     @ViewBuilder
     private func deleteSwipe(_ g: LibraryGroup) -> some View {
-        Button { pendingDelete = g } label: { Label("Delete", systemImage: "trash") }.tint(.red)
+        if !kids.isOn {
+            Button { askDelete(g) } label: { Label("Delete", systemImage: "trash") }.tint(.red)
+        }
     }
 
     @ViewBuilder
     private func watchedSwipe(_ g: LibraryGroup) -> some View {
         if g.folder == nil {
             if allWatched(g) {
-                Button { history.setWatched(g.files, false) } label: { Label("Unwatched", systemImage: "eye.slash") }.tint(.gray)
+                Button { history.setWatched(LibraryGroup.markKeys(g.files), false, item: HistoryStore.libraryItem) } label: { Label("Unwatched", systemImage: "eye.slash") }.tint(.gray)
             } else {
-                Button { history.setWatched(g.files, true) } label: { Label("Watched", systemImage: "eye") }.tint(Theme.swipeTint)
+                Button { history.setWatched(LibraryGroup.markKeys(g.files), true, item: HistoryStore.libraryItem) } label: { Label("Watched", systemImage: "eye") }.tint(Theme.swipeTint)
             }
         }
     }
@@ -766,8 +835,10 @@ struct HomeView: View {
 
     private func historyActions(_ e: HistoryEntry) -> [TileMenuAction] {
         [TileMenuAction(title: e.canResume ? "Resume" : "Play", systemImage: "play") { ContinueQueue.play(e.item) },
-         TileMenuAction(title: "Mark as watched", systemImage: "checkmark.circle") { history.markWatched(e) },
-         TileMenuAction(title: "Remove", systemImage: "trash", destructive: true) { history.remove(e) }]
+         // With the show's other episodes in progress (1.30.4): one of them took the card's place.
+         TileMenuAction(title: "Mark as watched", systemImage: "checkmark.circle") { history.markWatchedFromContinueWatching(e) },
+         // The show's card goes, not only this entry (1.30.4): another of its episodes took its place.
+         TileMenuAction(title: "Remove", systemImage: "trash", destructive: true) { history.removeFromContinueWatching(e) }]
     }
 
     private func pasteAndPlay() {
@@ -798,7 +869,8 @@ struct HomeView: View {
             if p.episode != nil { m.anime = AnimeHint(title: p.title, episode: p.episode) }
             return m
         }
-        PlayerPresenter.play(queue: queue, index: list.firstIndex(of: f) ?? 0)
+        // From the stream's place when the file has none (1.30.4), as its title page plays it.
+        PlayerPresenter.play(queue: queue, index: list.firstIndex(of: f) ?? 0, startAt: LibraryGroup.carriedPosition(f))
     }
 }
 
@@ -943,14 +1015,20 @@ struct HeroCard: View {
                 Text(thumb.meta?.name ?? entry.item.displayTitle).font(.headline.weight(.bold)).lineLimit(1)
                 if let line = Self.line(entry.item, meta: thumb.meta) { Text(line).font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(1) }
                 HStack(spacing: 12) {
-                    Label("Resume", systemImage: "play.fill")
+                    // The episode after one watched to its end (1.30.4): from
+                    // its start, and its length isn't known before it plays.
+                    Label(entry.follows == nil ? "Resume" : "Play", systemImage: "play.fill")
                         .font(.subheadline.weight(.semibold))
                         .padding(.horizontal, 16).padding(.vertical, 9)
                         .glass(cornerRadius: 20, interactive: true)
-                    VStack(alignment: .leading, spacing: 5) {
-                        ProgressView(value: entry.progress).tint(.white)
-                        Text("\(PlayerModel.format(max(0, entry.duration - entry.position))) left")
-                            .font(.caption2.monospacedDigit()).foregroundStyle(.white.opacity(0.75))
+                    if entry.follows == nil {
+                        VStack(alignment: .leading, spacing: 5) {
+                            ProgressView(value: entry.progress).tint(.white)
+                            Text("\(PlayerModel.format(max(0, entry.duration - entry.position))) left")
+                                .font(.caption2.monospacedDigit()).foregroundStyle(.white.opacity(0.75))
+                        }
+                    } else {
+                        Text("Next episode").font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.75))
                     }
                 }
             }
@@ -1148,7 +1226,9 @@ struct TileRow: Identifiable {
         let n = max(1, columns)
         return stride(from: 0, to: groups.count, by: n).enumerated().map { i, start in
             let slice = Array(groups[start..<min(start + n, groups.count)])
-            return TileRow(id: "\(n)|" + slice.map(\.id).joined(separator: "|"), index: i,
+            // By place and column count (1.30.4): by its titles, one new title
+            // renamed every row after it, and each of their tiles loaded again.
+            return TileRow(id: "\(n)|\(i)", index: i,
                            groups: slice, isLast: start + n >= groups.count)
         }
     }

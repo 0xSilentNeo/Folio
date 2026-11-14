@@ -74,11 +74,12 @@ struct LibraryGroup: Identifiable, Hashable {
     /// The episode watched last; if that one is finished, the episode after
     /// it. Nothing watched yet: the first unfinished, else the first.
     /// (Until 1.14.1 this took the FIRST resumable episode, so an episode
-    /// left half-watched long ago kept the highlight.)
+    /// left half-watched long ago kept the highlight.) Episodes watched from
+    /// streams count too (1.30.4, `state`).
     @MainActor static func nextUp(in files: [URL]) -> URL {
         // Kept until the history changes (1.28.2): each Home tile asked
         // four times a redraw, each a pass over the show's history.
-        let key = memoKey(files), version = HistoryStore.shared.version
+        let key = memoKey(files), version = stateVersion
         if let m = nextUpMemo[key], m.version == version { return m.url }
         let url = findNextUp(in: files)
         if nextUpMemo.count > 2000 { nextUpMemo.removeAll() }
@@ -89,17 +90,67 @@ struct LibraryGroup: Identifiable, Hashable {
     /// Every file watched (a tile's tick), kept like `nextUp`.
     @MainActor static func allWatched(_ files: [URL]) -> Bool {
         guard !files.isEmpty else { return false }
-        let key = memoKey(files), version = HistoryStore.shared.version
+        let key = memoKey(files), version = stateVersion
         if let m = watchedMemo[key], m.version == version { return m.all }
-        let h = HistoryStore.shared
-        let all = files.allSatisfy { h.isWatched($0) }
+        let all = files.allSatisfy { state($0)?.isFinished == true }
         if watchedMemo.count > 2000 { watchedMemo.removeAll() }
         watchedMemo[key] = (version, all)
         return all
     }
 
-    @MainActor private static var nextUpMemo: [Int: (version: Int, url: URL)] = [:]
-    @MainActor private static var watchedMemo: [Int: (version: Int, all: Bool)] = [:]
+    // MARK: One watched state on Home (1.30.4)
+
+    /// A file's state on either side, as its title page has it (WatchedState):
+    /// its own entry, or the addon entry of the same episode. Home read the
+    /// file's own only: E1-E5 watched from Discover's streams of a show whose
+    /// files are in the library, and Home's "Play next episode" played E1
+    /// from 0:00 while the title page offered E6.
+    @MainActor static func state(_ f: URL) -> HistoryEntry? {
+        let h = HistoryStore.shared
+        let own = h.entry(forURL: f.path)
+        guard let key = linkedKey(f), let other = h.entry(for: key) else { return own }
+        return WatchedState.combined([own, other])
+    }
+
+    /// The addon key of a file's episode (or film), by the IMDb title the
+    /// library matched it to and the season and episode in its name. Only
+    /// what's known without asking: an episode numbered without a season
+    /// isn't linked here (its title page looks its season up).
+    @MainActor static func linkedKey(_ f: URL) -> String? {
+        guard let m = LibraryMetaIndex.shared.meta(for: f) else { return nil }
+        let p = TitleParser.parse(f.lastPathComponent)
+        return WatchedState.identity(imdb: m.id, type: m.type, parsed: p, metaSeason: nil, metaEpisode: nil).map(WatchedState.addonKey)
+    }
+
+    /// What marking files watched or unwatched marks: each file, and the
+    /// same episode's addon entry when there is one (the title page's unit).
+    @MainActor static func markKeys(_ files: [URL]) -> [String] {
+        let h = HistoryStore.shared
+        return files.flatMap { f in
+            WatchedState.markKeys(own: [f.path], others: [linkedKey(f)].compactMap { $0 }) { h.entry(for: $0) != nil }
+        }
+    }
+
+    /// Where a file starts when its place is kept by the stream of the same
+    /// episode (WatchedState.carriedPosition); nil: its own place, or 0.
+    @MainActor static func carriedPosition(_ f: URL) -> Double? {
+        let h = HistoryStore.shared
+        return WatchedState.carriedPosition(own: h.entry(forURL: f.path), others: [linkedKey(f).flatMap { h.entry(for: $0) }])
+    }
+
+    /// The memos last until the history changes, or the library's metadata
+    /// (the links come from it).
+    @MainActor private static var stateVersion: StateVersion {
+        StateVersion(history: HistoryStore.shared.version, metas: LibraryMetaIndex.shared.metas.count)
+    }
+
+    private struct StateVersion: Equatable {
+        var history: Int
+        var metas: Int
+    }
+
+    @MainActor private static var nextUpMemo: [Int: (version: StateVersion, url: URL)] = [:]
+    @MainActor private static var watchedMemo: [Int: (version: StateVersion, all: Bool)] = [:]
 
     /// A file list by its length and every file (1.30.2: by its ends only,
     /// two lists of one length that differed in between shared an answer).
@@ -111,16 +162,15 @@ struct LibraryGroup: Identifiable, Hashable {
     }
 
     @MainActor private static func findNextUp(in files: [URL]) -> URL {
-        let h = HistoryStore.shared
-        let watched = files.compactMap { f in h.entry(forURL: f.path).map { (file: f, entry: $0) } }
+        // The same rule over both sides' entries (WatchedState.nextUp is this one's).
+        let states = files.map(state)
+        let watched = files.indices.compactMap { i in states[i].map { (index: i, entry: $0) } }
         if let last = watched.max(by: { $0.entry.updated < $1.entry.updated }) {
-            guard last.entry.isFinished else { return last.file }
-            if let i = files.firstIndex(of: last.file) {
-                if let next = files[(i + 1)...].first(where: { h.entry(forURL: $0.path)?.isFinished != true }) { return next }
-            }
-            return last.file
+            guard last.entry.isFinished else { return files[last.index] }
+            if let next = files.indices.dropFirst(last.index + 1).first(where: { states[$0]?.isFinished != true }) { return files[next] }
+            return files[last.index]
         }
-        return files.first(where: { h.entry(forURL: $0.path)?.isFinished != true }) ?? files[0]
+        return files.indices.first(where: { states[$0]?.isFinished != true }).map { files[$0] } ?? files[0]
     }
 }
 

@@ -10,6 +10,8 @@ enum SettingsIndex {
         let page: SettingsPage
         let keywords: String
         let route: LibraryRoute
+        /// When its page shows it (1.30.4).
+        var shown: Shown = .always
 
         var id: String { title + "|" + page.rawValue }
 
@@ -17,13 +19,35 @@ enum SettingsIndex {
         var location: String { page.title }
     }
 
+    /// A setting its page shows only sometimes (1.30.4): found only then,
+    /// as the page has it (AdvancedSettings, MPVSettings). Until then the
+    /// search found Native Menu Morph before iOS 26, and Flip Video with Metal.
+    enum Shown: Hashable {
+        case always
+        /// iOS 26 and later.
+        case iOS26
+        /// The OpenGL renderer.
+        case openGL
+    }
+
+    /// What this device and the settings show now.
+    static var showing: Set<Shown> {
+        var s: Set<Shown> = [.always]
+        if #available(iOS 26.0, *) { s.insert(.iOS26) }
+        if UserDefaults.standard.string(forKey: SettingsKey.renderer) == "gl" { s.insert(.openGL) }
+        return s
+    }
+
     /// Every word of the query has to be in the title or the keywords (not
     /// the page's name: "subtitle" listed every setting on Audio & Subtitles);
     /// titles that start with the query come first.
-    static func search(_ query: String) -> [Entry] {
+    static func search(_ query: String) -> [Entry] { search(query, showing: showing) }
+
+    static func search(_ query: String, showing: Set<Shown>) -> [Entry] {
         let words = query.split(whereSeparator: \.isWhitespace).map(String.init)
         guard !words.isEmpty else { return [] }
         let found = all.filter { e in
+            guard showing.contains(e.shown) else { return false }
             let text = "\(e.title) \(e.keywords)"
             return words.allSatisfy { text.localizedStandardContains($0) }
         }
@@ -38,8 +62,8 @@ enum SettingsIndex {
             .map(\.element)
     }
 
-    private static func e(_ title: String, _ page: SettingsPage, _ keywords: String = "", _ sub: SettingsSubpage? = nil) -> Entry {
-        Entry(title: title, page: page, keywords: keywords, route: sub.map { .settingsSubpage($0) } ?? .settingsPage(page))
+    private static func e(_ title: String, _ page: SettingsPage, _ keywords: String = "", _ sub: SettingsSubpage? = nil, shown: Shown = .always) -> Entry {
+        Entry(title: title, page: page, keywords: keywords, route: sub.map { .settingsSubpage($0) } ?? .settingsPage(page), shown: shown)
     }
 
     static let all: [Entry] = pages + notifications + sync + settings
@@ -120,7 +144,7 @@ enum SettingsIndex {
         e("Picture", .engine, "efficient balanced enhanced quality battery"),
         e("HDR Output", .engine, "dolby vision tone mapping brightness"),
         e("Hardware Decoding", .engine, "videotoolbox hwdec decoder"),
-        e("Flip Video", .engine, "mirror"),
+        e("Flip Video", .engine, "mirror", shown: .openGL),
         e("Streaming", .engine, "cache buffer network readahead"),
         e("Scripts", .engine, "lua mpv", .scripts),
         e("Shaders", .engine, "anime4k glsl upscaling sharpen", .shaders),
@@ -170,7 +194,7 @@ enum SettingsIndex {
         e("Diagnostics & Report", .help, "bug report logs energy cpu battery", .diagnostics),
         // (1.30.3) On the Diagnostics page, so the result opens it.
         e("Keep Traces On", .help, "logs diagnostics trace logging keep on until I turn them off day", .diagnostics),
-        e("Native Menu Morph", .help, "experimental animation"),
+        e("Native Menu Morph", .help, "experimental animation", shown: .iOS26),
 
         // About
         e("Version", .about, "build number"),

@@ -99,9 +99,14 @@ struct RootView: View {
         }
         .background(AppearanceProbe(mode: appearance).frame(width: 1, height: 1))
         .toggleStyle(BrandSwitchStyle())
-        .sheet(isPresented: $whatsNew) { WhatsNewSheet(since: WhatsNew.updatedFrom) }
+        // Done once it's up (1.30.4), not when it was asked for (presentLaunchSheet).
+        .sheet(isPresented: $whatsNew) { WhatsNewSheet(since: WhatsNew.updatedFrom).onAppear { WhatsNew.pending = false } }
         .sheet(isPresented: $welcome, onDismiss: goToWelcomePick) {
             WelcomeSheet { welcomePick = $0 }
+                .onAppear {
+                    FirstRun.pending = false
+                    PlayerGesturesTip.isNewUser = true
+                }
         }
         .onChange(of: splash) { _, on in if !on { showWhatsNew() } }
         // Handoff (1.22.0): a title page, or what was playing, from the other device.
@@ -114,6 +119,8 @@ struct RootView: View {
             // scene), and the launch splash with it.
             dlog("app", "root view appeared (\(RootView.appearances) in this run, splash \(splash ? "on" : "off"))")
             if !splash { showWhatsNew() }
+            // On with no passcode to leave by (1.30.4): restored from a backup without the Keychain's.
+            kids.leaveIfNoPasscode()
             if kids.isOn && tab == 2 { tab = 0 }          // Network started on, but it's hidden
             // Addons up to date (1.27.1): once a launch, after it has settled.
             if !FirstRun.automated {
@@ -148,15 +155,48 @@ struct RootView: View {
     }
 
     private func showWhatsNew() {
+        guard !Self.launchSheetAsked else { return }
         if FirstRun.pending {
-            FirstRun.pending = false
-            PlayerGesturesTip.isNewUser = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { welcome = true }
+            Self.launchSheetAsked = true
+            presentLaunchSheet(welcome: true)
             return
         }
         guard WhatsNew.pending else { return }
-        WhatsNew.pending = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { whatsNew = true }
+        Self.launchSheetAsked = true
+        presentLaunchSheet(welcome: false)
+    }
+
+    /// What's New or the welcome is on its way (once a run).
+    @MainActor private static var launchSheetAsked = false
+
+    /// The welcome or What's New, once nothing else is up on Folio's window
+    /// (1.30.4): a title from Handoff, Tracking, Downloads or an alert, which
+    /// UIKit puts up there, kept the sheet from coming up, and `pending`
+    /// was cleared already, so it was gone. Asked again if it didn't come
+    /// up; each sheet clears its own `pending` when it appears.
+    private func presentLaunchSheet(welcome isWelcome: Bool, tries: Int = 0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + (tries == 0 ? 0.4 : 1)) {
+            MainActor.assumeIsolated {
+                let pending = isWelcome ? FirstRun.pending : WhatsNew.pending
+                guard pending, tries < 30 else { return }
+                guard !Self.windowPresents else { presentLaunchSheet(welcome: isWelcome, tries: tries + 1); return }
+                if isWelcome { welcome = true } else { whatsNew = true }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    MainActor.assumeIsolated {
+                        guard isWelcome ? FirstRun.pending : WhatsNew.pending else { return }
+                        dlog("app", "\(isWelcome ? "welcome" : "what's new") didn't come up: asked again")
+                        if isWelcome { welcome = false } else { whatsNew = false }
+                        presentLaunchSheet(welcome: isWelcome, tries: tries + 1)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Something presented on Folio's own window (the player has its own).
+    @MainActor private static var windowPresents: Bool {
+        UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
+            .contains { !($0 is PlayerWindowMarker) && $0.rootViewController?.presentedViewController != nil }
     }
 
     /// `-glassLab`: the Liquid Glass morph test screen over everything (CI only).
@@ -185,7 +225,11 @@ struct RootView: View {
                 .frame(width: 0, height: 0)
                 .accessibilityHidden(true)
         }
-        .onChange(of: kids.isOn) { _, on in if on && tab == 2 { tab = 0 } }
+        .onChange(of: kids.isOn) { _, on in
+            if on && tab == 2 { tab = 0 }
+            // Not one profile's search in the other's (1.30.4): the text is shared by every tab.
+            searchText = ""
+        }
         // One search for every tab (1.28.11): the text stays between them.
         .onChange(of: tab) { old, new in
             // How smoothly a tab switch (and its zoom) goes, in the report (1.23.1).
@@ -265,7 +309,9 @@ struct RootView: View {
         if #available(iOS 18.0, *) {
             TabView(selection: $tab) {
                 Tab("Home", systemImage: "play.rectangle.fill", value: 0) { HomeView().tabZoom() }
-                Tab("Discover", systemImage: "sparkles.tv", value: 1) { DiscoverView().tabZoom() }
+                // A new Discover for the other profile (1.30.4): pages it had
+                // open stayed, and played anything. Its content, not the tabs.
+                Tab("Discover", systemImage: "sparkles.tv", value: 1) { DiscoverView().id(kids.isOn).tabZoom() }
                 // Not in the kids profile (1.22.0): servers play anything on them.
                 // Hidden, not left out (1.30.3): leaving it out changed the
                 // tab view's own tabs when the profile was turned on, iOS
@@ -283,14 +329,17 @@ struct RootView: View {
                 HomeView().tabZoom()
                     .tabItem { Label("Home", systemImage: "play.rectangle.fill") }
                     .tag(0)
-                DiscoverView().tabZoom()
+                DiscoverView().id(kids.isOn).tabZoom()
                     .tabItem { Label("Discover", systemImage: "sparkles.tv") }
                     .tag(1)
-                if !kids.isOn {
-                    NetworkView().tabZoom()
-                        .tabItem { Label("Network", systemImage: "externaldrive.connected.to.line.below") }
-                        .tag(2)
+                // Always there (1.30.4), as iOS 18's is: leaving it out changed
+                // the tab view's tabs under the open page (1.30.3's freeze).
+                // Closed in the kids profile.
+                Group {
+                    if kids.isOn { KidsServersBlockedView() } else { NetworkView().tabZoom() }
                 }
+                .tabItem { Label("Network", systemImage: "externaldrive.connected.to.line.below") }
+                .tag(2)
                 SearchTabView(query: $searchText)
                     .tabItem { Label("Search", systemImage: "magnifyingglass") }
                     .tag(3)
@@ -369,6 +418,13 @@ struct RootView: View {
         // Kids profile: nothing from outside the app (a widget, a link, a file
         // or script from another app) opens, plays or installs; the profile's
         // own screens decide what plays.
+        // Home only (1.30.4), as the empty Continue widget's Browse opens:
+        // nothing opens or plays, so the kids profile lets it through
+        // instead of saying Folio is in it.
+        if !url.isFileURL, url.scheme?.lowercased() == "folio", url.host?.lowercased() == "home" {
+            tab = 0
+            return
+        }
         if KidsProfile.isOnNow {
             dlog("open", "kids profile: \(url.isFileURL ? "file" : "link") not opened")
             FileOpener.showAlert("Kids profile", "Folio is in the kids profile. Leave it from the badge on Home to open this.")
@@ -435,11 +491,17 @@ struct RootView: View {
             // card does. The widget's copy can be a moment behind; an entry
             // removed since then is only logged. With next=1 (the Episode
             // widget, 1.24.0): the episode after it.
-            guard let id = ContinueLink.id(from: url), let entry = HistoryStore.shared.entry(for: id) else {
-                dlog("open", "folio://continue for an entry that's no longer in the history")
-                return
+            guard let id = ContinueLink.id(from: url) else { return }
+            // A next-episode card exists once the library and the servers'
+            // libraries are read (1.30.4): on a cold launch it's waited for.
+            let next = ContinueLink.wantsNext(url)
+            Task { @MainActor in
+                guard let entry = await HistoryStore.shared.continueEntry(for: id) else {
+                    dlog("open", "folio://continue for an entry that's no longer in the history")
+                    return
+                }
+                if next { ContinueQueue.playNext(entry.item) } else { ContinueQueue.play(entry.item) }
             }
-            if ContinueLink.wantsNext(url) { ContinueQueue.playNext(entry.item) } else { ContinueQueue.play(entry.item) }
         case "track":
             // folio://track?id=<tracked show id>: a new-episode notification
             // or the Airing widget (1.21.0) opens the show's tracking page;

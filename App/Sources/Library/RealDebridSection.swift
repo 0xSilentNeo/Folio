@@ -25,7 +25,9 @@ enum RealDebrid {
     static let rowLimit = 20
 
     static func subtitle(_ s: LibraryIndexStore.Summary) -> String {
-        "\(s.files) item\(s.files == 1 ? "" : "s") · \(s.bytes.byteString)"
+        // The library cut at the index's cap is said (1.30.4), not hidden.
+        let capped: String = (s.unread ?? 0) > 0 ? " · first \(LibraryIndexer.folderCap.formatted()) folders" : ""
+        return "\(s.files) item\(s.files == 1 ? "" : "s") · \(s.bytes.byteString)" + capped
     }
 }
 
@@ -54,6 +56,8 @@ struct RealDebridSection: View {
     @Environment(\.scenePhase) private var scenePhase
     /// The library was opened from here: checked again when Home is back.
     @State private var wentToLibrary = false
+    /// A check skipped while the player was up, made when it closes (1.30.4).
+    @State private var checkAfterPlayer = false
 
     /// The start folder's listing asked again (1.30.3): when the row shows,
     /// when Folio comes back to the front, and when See all or a release
@@ -65,6 +69,10 @@ struct RealDebridSection: View {
         // Not the screenshots' made-up library (ShotsSeed): no server to ask.
         guard !CommandLine.arguments.contains(where: { $0.hasPrefix("-shotsRealDebrid") }),
               let rd = ServerStore.shared.servers.first(where: RealDebrid.isRealDebrid) else { return }
+        // Not behind the player (1.30.4): Home stays alive under it, and each
+        // return to Folio listed Real-Debrid again, 2–5 s of network, 8 times
+        // in an evening of watching. Once when the player closes instead.
+        if PlayerPresenter.current != nil { checkAfterPlayer = true; return }
         LibraryIndexStore.shared.checkRoot(rd, every: every)
     }
 
@@ -89,6 +97,11 @@ struct RealDebridSection: View {
             wentToLibrary = false
         }
         .onChange(of: scenePhase) { _, phase in if phase == .active { check() } }
+        .onReceive(NotificationCenter.default.publisher(for: .playerDidHide)) { _ in
+            guard checkAfterPlayer else { return }
+            checkAfterPlayer = false
+            check()
+        }
     }
 
     /// "Real-Debrid", what's in it (and Offline), See all. At the largest

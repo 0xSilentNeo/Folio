@@ -225,7 +225,11 @@ struct UpNextCard: View {
     @ObservedObject var clock: PlaybackClock
     @StateObject private var thumb = ThumbLoader()
 
-    private var remaining: Double { max(0, upNext.start + PlayerModel.upNextCountdown - clock.position) }
+    /// The model's countdown (1.30.4): real seconds from when the card is
+    /// seen, standing still while paused, seeking, waiting or scrubbing. It
+    /// was the playback position past the card's time, which a seek into
+    /// the credits used up at once.
+    private var remaining: Double { min(PlayerModel.upNextCountdown, max(0, clock.upNextLeft ?? PlayerModel.upNextCountdown)) }
     private var parsed: TitleParser.Parsed { TitleParser.parse(upNext.next.fileName) }
     private var heading: String {
         if let e = parsed.episode { return String(format: "S%02dE%02d", parsed.season ?? 1, e) }
@@ -279,8 +283,12 @@ struct UpNextCard: View {
         .padding(10)
         .glass(cornerRadius: 20)
         .onAppear {
+            // Counted down only while it's on screen (1.30.4): a panel or the
+            // lock hides it.
+            model.upNextCardShown(true)
             let n = upNext.next
             thumb.load(key: "upnext|" + (n.historyKey ?? n.url), fileURL: nil, artwork: n.artwork, lookupName: n.fileName, preferMeta: true, points: 112)
         }
+        .onDisappear { model.upNextCardShown(false) }
     }
 }

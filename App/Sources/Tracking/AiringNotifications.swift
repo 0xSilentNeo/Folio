@@ -218,6 +218,12 @@ final class AiringNotificationDelegate: NSObject, UNUserNotificationCenterDelega
                   let link = response.notification.request.content.userInfo["engage"] as? String {
             // A 1.24 reminder delivered after the update: plays what it was about.
             DispatchQueue.main.async { MainActor.assumeIsolated { NotifyCenter.open(link) } }
+        } else if response.actionIdentifier == UNNotificationDefaultActionIdentifier,
+                  let id = response.notification.request.content.userInfo["announcement"] as? String {
+            // News from Folio (1.30.4): its page, or its banner. The link is
+            // checked again there (GitHub only), whatever the notification says.
+            let link = response.notification.request.content.userInfo["url"] as? String
+            DispatchQueue.main.async { MainActor.assumeIsolated { Announcements.shared.tapped(id: id, url: link) } }
         }
         completionHandler()
     }

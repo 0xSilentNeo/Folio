@@ -109,6 +109,10 @@ struct DownloadPillOverlay: View {
     @State private var snap = DownloadPillSnapshot.now()
     @ObservedObject private var page = DownloadsPage.shared
     @ObservedObject private var lift = DownloadPillLift.shared
+    /// The kids profile (1.30.4): no pill. It opened Downloads, whose
+    /// finished rows played any grown-up download, and it floated over the
+    /// Settings lock's keypad.
+    @ObservedObject private var kids = KidsProfile.shared
     @State private var showing = false
     @Namespace private var ns
     @Environment(\.horizontalSizeClass) private var widthClass
@@ -121,13 +125,13 @@ struct DownloadPillOverlay: View {
     var body: some View {
         VStack {
             Spacer()
-            if snap.hasWork && page.shown == 0 {
+            if pillShown {
                 pill
                     .padding(.bottom, bottomGap + lift.lift)
                     .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.7)))
             }
         }
-        .animation(.spring(response: 0.42, dampingFraction: 0.8), value: snap.hasWork && page.shown == 0)
+        .animation(.spring(response: 0.42, dampingFraction: 0.8), value: pillShown)
         .onReceive(DownloadManager.shared.objectWillChange
             .throttle(for: .seconds(0.5), scheduler: DispatchQueue.main, latest: true)
             .receive(on: DispatchQueue.main)) { _ in
@@ -139,15 +143,20 @@ struct DownloadPillOverlay: View {
             NavigationStack { DownloadsView(inSheet: true) }
                 .modifier(ZoomSheet(id: "downloads", ns: ns))
         }
+        .onChange(of: kids.isOn) { _, on in if on { showing = false } }
     }
+
+    private var pillShown: Bool { snap.shown && page.shown == 0 && !kids.isOn }
 
     private var pill: some View {
         HStack(spacing: 10) {
             Button { showing = true } label: {
                 HStack(spacing: 10) {
                     PulsingDot(active: snap.active > 0)
-                    Text(snap.active == 0 ? "Waiting" : speedString(snap.speed)).font(.subheadline.weight(.bold).monospacedDigit())
-                    Text("\(snap.active) file\(snap.active == 1 ? "" : "s")").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                    Text(snap.active > 0 ? speedString(snap.speed) : (snap.hasWork ? "Waiting" : "Paused")).font(.subheadline.weight(.bold).monospacedDigit())
+                    // Paused, the files that are (1.30.4): it counted running ones, "0 files".
+                    let n = snap.active == 0 && !snap.hasWork ? snap.paused : snap.active
+                    Text("\(n) file\(n == 1 ? "" : "s")").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
                     Sparkline(values: snap.history).frame(width: 54, height: 20)
                 }
                 .padding(.leading, 16).frame(height: 44)
@@ -155,17 +164,19 @@ struct DownloadPillOverlay: View {
                 .pointerHover(cornerRadius: 22)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Downloads, \(speedString(snap.speed))")
+            .accessibilityLabel(snap.active == 0 && !snap.hasWork ? "Downloads, \(snap.paused) paused" : "Downloads, \(speedString(snap.speed))")
+            // Resume all when something is paused and nothing runs (1.30.4):
+            // with files only waiting (queued), play did nothing.
             Button {
-                snap.active == 0 ? dm.resumeAll() : dm.pauseAll()
+                snap.resumes ? dm.resumeAll() : dm.pauseAll()
                 snap = DownloadPillSnapshot.now()      // the icon at the tap, not at the next refresh
             } label: {
-                Image(systemName: snap.active == 0 ? "play.fill" : "pause.fill").font(.system(size: 12, weight: .bold))
+                Image(systemName: snap.resumes ? "play.fill" : "pause.fill").font(.system(size: 12, weight: .bold))
                     .frame(width: 30, height: 30).background(Theme.fill, in: Circle())
             }
             .buttonStyle(.plain)
             .padding(.trailing, 7)
-            .accessibilityLabel(snap.active == 0 ? "Resume all downloads" : "Pause all downloads")
+            .accessibilityLabel(snap.resumes ? "Resume all downloads" : "Pause all downloads")
         }
         .glass(cornerRadius: 22, interactive: true)
         .shadow(color: Theme.shadow, radius: 12, y: 6)
@@ -187,22 +198,24 @@ struct DownloadPillOverlay: View {
 /// room was there, above the tab bar, and the list's end still went under).
 struct DownloadPillRoom: ViewModifier {
     @ObservedObject private var page = DownloadsPage.shared
+    @ObservedObject private var kids = KidsProfile.shared
     /// Whether the pill shows, noted only when it changes (1.24.1): the
     /// download manager announces each progress tick, many a second, and
     /// this sits on whole pages (Home, Discover, Search).
-    @State private var working = DownloadManager.shared.hasWork
+    @State private var working = DownloadPillSnapshot.now().shown
     static let height: CGFloat = 78
 
     func body(content: Content) -> some View {
         content.safeAreaInset(edge: .bottom, spacing: 0) {
             // With no tab bar under the pill (a wide iPad window, 1.30.0) the
             // page's safe area ends at the screen's: the same room clears it.
-            if working && page.shown == 0 { Color.clear.frame(height: Self.height).allowsHitTesting(false) }
+            if working && page.shown == 0 && !kids.isOn { Color.clear.frame(height: Self.height).allowsHitTesting(false) }
         }
         .onReceive(DownloadManager.shared.objectWillChange
             .throttle(for: .seconds(0.5), scheduler: DispatchQueue.main, latest: true)
             .receive(on: DispatchQueue.main)) { _ in
-            let now = DownloadManager.shared.hasWork
+            // As the pill decides (1.30.4: it stays for paused files).
+            let now = DownloadPillSnapshot.now().shown
             if now != working { working = now }
         }
     }
@@ -294,6 +307,8 @@ func speedString(_ bps: Double) -> String {
 struct DownloadsView: View {
     var inSheet = false
     @ObservedObject private var dm = DownloadManager.shared
+    /// The kids profile (1.30.4): finished files aren't played from here.
+    @ObservedObject private var kids = KidsProfile.shared
     @Environment(\.dismiss) private var dismiss
     @State private var filter: Filter = .all
     @State private var details = false
@@ -375,7 +390,8 @@ struct DownloadsView: View {
                     if !folded {
                         ForEach(p.shown) { d in
                             FileRow(item: d, speed: d.state == .running ? speeds[d.id] : nil,
-                                    connections: d.state == .running ? dm.connectionCount(d) : 0)
+                                    connections: d.state == .running ? dm.connectionCount(d) : 0,
+                                    waiting: dm.waitReason(d), playable: !kids.isOn)
                                 .equatable()
                                 .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 6))
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) { swipeActions(d) }
@@ -464,7 +480,7 @@ struct DownloadsView: View {
 
     @ViewBuilder
     private func menu(_ d: DownloadItem) -> some View {
-        if d.state == .done, d.isMedia {
+        if d.state == .done, d.isMedia, !kids.isOn {
             Button { FileRow.play(d) } label: { Label("Play", systemImage: "play") }
         }
         if d.state == .running || d.state == .queued { Button { dm.pause(d.id) } label: { Label("Pause", systemImage: "pause") } }
@@ -688,6 +704,10 @@ private struct FileRow: View, Equatable {
     /// Bytes per second while it runs (DownloadManager.itemSpeeds), 1.24.1.
     let speed: Double?
     let connections: Int
+    /// Why it isn't downloading now ("Waiting for Wi-Fi"), 1.30.4.
+    var waiting: String? = nil
+    /// Off in the kids profile (1.30.4): a finished file isn't played from here.
+    var playable = true
 
     var body: some View {
         HStack(spacing: 10) {
@@ -704,7 +724,7 @@ private struct FileRow: View, Equatable {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .disabled(item.state == .done && !item.isMedia)
+            .disabled(item.state == .done && (!item.isMedia || !playable))
             .accessibilityLabel(actionLabel)
         }
         .padding(.vertical, 10)
@@ -717,11 +737,13 @@ private struct FileRow: View, Equatable {
     private var meta: String {
         switch item.state {
         case .running:
+            if let waiting, item.received == 0 { return waiting }
             var parts = ["\(item.received.byteString) of \(item.expected.byteString)"]
+            if let waiting { parts.append(waiting) }
             if let speed, speed >= 1 { parts.append(speedString(speed)) }
             if connections > 1 { parts.append("\(connections) connections") }
             return parts.joined(separator: " · ")
-        case .queued: return "Queued · \(item.expected.byteString)" + (item.held ? " · waiting" : "")
+        case .queued: return "Queued · \(item.expected.byteString)" + (waiting.map { " · \($0)" } ?? (item.held ? " · waiting" : ""))
         case .paused: return "Paused · \(item.received.byteString) of \(item.expected.byteString)"
         case .failed: return item.error ?? "Failed"
         case .done: return "\(item.expected.byteString) · in your library"
@@ -734,7 +756,7 @@ private struct FileRow: View, Equatable {
         case .queued: return "clock"
         case .paused: return "play.fill"
         case .failed: return "arrow.clockwise"
-        case .done: return item.isMedia ? "play.circle.fill" : "checkmark"
+        case .done: return item.isMedia && playable ? "play.circle.fill" : "checkmark"
         }
     }
 
@@ -743,7 +765,7 @@ private struct FileRow: View, Equatable {
         case .running, .queued: return "Pause \(item.fileName)"
         case .paused: return "Resume \(item.fileName)"
         case .failed: return "Retry \(item.fileName)"
-        case .done: return "Play \(item.fileName)"
+        case .done: return playable ? "Play \(item.fileName)" : "\(item.fileName), downloaded"
         }
     }
 
@@ -752,7 +774,7 @@ private struct FileRow: View, Equatable {
         switch item.state {
         case .running, .queued: dm.pause(item.id)
         case .paused, .failed: dm.resume(item.id)
-        case .done: Self.play(item)
+        case .done: if playable { Self.play(item) }
         }
     }
 
@@ -861,7 +883,7 @@ struct DownloadSettingsView: View {
                 Toggle("Only while charging", isOn: $charging)
                 Stepper(value: $retries, in: 0...10) { LabeledContent("Retries on error", value: "\(retries)") }
             } header: { Text("Network & battery") } footer: {
-                Text("Folio downloads files itself, not through iOS's background downloads. On iOS 26 and later they carry on in the background with iOS's own progress on the Lock Screen and in the Dynamic Island; its stop button pauses them. On older iOS they pause a little after you leave Folio and carry on when you're back. A paused file continues where it stopped.")
+                Text("Folio downloads files itself, not through iOS's background downloads. On iOS 26 and later they carry on in the background with iOS's own progress on the Lock Screen and in the Dynamic Island; its stop button holds them until Folio is open again. On older iOS they pause a little after you leave Folio and carry on when you're back. A paused file continues where it stopped.")
             }
             // 1.22.0: AutoDownload and WatchedCleanup.
             Section {
@@ -900,12 +922,15 @@ struct DownloadSettingsView: View {
         .onChange(of: cellular) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: charging) { _, _ in DownloadManager.shared.settingsChanged() }
         .onChange(of: liveActivities) { _, _ in LiveActivities.settingChanged() }
-        // Turning it on deletes finished downloads at once: asked first (1.26.1).
+        // Turning it on deletes finished downloads at once: asked first
+        // (1.26.1). Made shorter too (1.30.4: 7 days to 1 deleted at once).
         .onChange(of: deleteWatched) { old, new in
-            if old == 0, new > 0, !deleteConfirmed {
+            // The value put back while asking: not a new choice.
+            if askingDelete, old == askDelete { return }
+            if WatchedCleanup.asksBeforeDeleting(old: old, new: new), !deleteConfirmed {
                 askDelete = new
                 askingDelete = true
-                deleteWatched = 0
+                deleteWatched = old
                 return
             }
             deleteConfirmed = false

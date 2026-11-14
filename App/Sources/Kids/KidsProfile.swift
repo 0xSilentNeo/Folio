@@ -215,6 +215,47 @@ final class KidsProfile: ObservableObject {
         return waits[min(max(0, n), waits.count - 1)]
     }
 
+    /// Lockouts in a row so far: the next one waits `lockout(after:)` this.
+    var lockoutsInARow: Int { UserDefaults.standard.integer(forKey: Self.lockoutsKey) }
+
+    /// The last try's warning, with the wait it leads to (1.30.4): it said
+    /// 30 seconds after every lockout, though later ones wait up to an hour.
+    nonisolated static func lastTryNote(lockouts n: Int) -> String {
+        "Wrong passcode. One more try before a \(waitLength(lockout(after: n))) wait."
+    }
+
+    /// "30-second", "5-minute", "1-hour".
+    nonisolated static func waitLength(_ wait: TimeInterval) -> String {
+        let s = Int(wait.rounded())
+        if s < 60 { return "\(s)-second" }
+        if s < 3600 { return "\(s / 60)-minute" }
+        return "\(s / 3600)-hour"
+    }
+
+    /// The countdown under the circles (1.30.4): minutes past a minute, not "3600 s".
+    nonisolated static func waitNote(seconds: Int) -> String {
+        let left = seconds <= 60 ? "\(max(0, seconds)) s" : "\((seconds + 59) / 60) min"
+        return "Too many tries. Try again in \(left)."
+    }
+
+    // MARK: Restored without the passcode
+
+    /// On with no passcode to leave it by (1.30.4): the switch is in
+    /// UserDefaults, which a backup restores, the passcode in the Keychain,
+    /// which it may not. Decided only when the Keychain can be read (the
+    /// device unlocked), so a launch before the first unlock leaves it on.
+    nonisolated static func offWithoutPasscode(isOn: Bool, hasPasscode: Bool, keychainReadable: Bool) -> Bool {
+        isOn && !hasPasscode && keychainReadable
+    }
+
+    /// At launch (RootView): turned off when it's on with no way out.
+    func leaveIfNoPasscode() {
+        guard Self.offWithoutPasscode(isOn: isOn, hasPasscode: hasPasscode,
+                                      keychainReadable: UIApplication.shared.isProtectedDataAvailable) else { return }
+        dlog("kids", "kids profile on with no passcode in the Keychain (restored from a backup?): turned off")
+        turnOff()
+    }
+
     private func resetTries() {
         UserDefaults.standard.removeObject(forKey: Self.triesKey)
         UserDefaults.standard.removeObject(forKey: Self.lockoutsKey)

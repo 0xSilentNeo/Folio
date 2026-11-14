@@ -76,6 +76,12 @@ enum WatchedCleanup {
 
     // MARK: Rules
 
+    /// Asked first (1.30.4): turned on, or made shorter (7 days to 1), it
+    /// deletes files at once. Until then only turning it on asked.
+    nonisolated static func asksBeforeDeleting(old: Int, new: Int) -> Bool {
+        new > 0 && (old <= 0 || new < old)
+    }
+
     /// A download whose entry is finished, finished at least `delay` ago.
     nonisolated static func isDue(_ entry: HistoryEntry?, now: Date, delay: TimeInterval) -> Bool {
         guard delay > 0, let entry, entry.isFinished else { return false }

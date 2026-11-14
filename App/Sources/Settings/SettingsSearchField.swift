@@ -68,13 +68,21 @@ struct SettingsSearchBar: ViewModifier {
                 .toolbar(active ? .automatic : .hidden, for: .bottomBar)
                 // The tab bar would sit on the field: Settings' root has the
                 // bottom to itself. Only where the tab bar is at the bottom
-                // (1.28.10): an iPad's is at the top.
-                .toolbar(width == .compact ? .hidden : .automatic, for: .tabBar)
+                // (1.28.10): an iPad's is at the top. By TabChrome (1.30.4): a
+                // Plus or Max phone on its side is regular width, its bar
+                // still at the bottom. None over the lock either.
+                .toolbar(!active || TabChrome.atBottom(regularWidth: width == .regular) ? .hidden : .automatic, for: .tabBar)
         } else {
-            content
+            older(content)
         }
         #else
-        content
+        older(content)
         #endif
+    }
+
+    /// Before iOS 26 the field is a row of the list; the tab bar goes while
+    /// Settings is locked (1.30.4), as on iOS 26: it showed over the pad.
+    private func older(_ content: Content) -> some View {
+        content.toolbar(active ? .automatic : .hidden, for: .tabBar)
     }
 }

@@ -17,6 +17,9 @@ final class IMDbPageLoader: NSObject, WKNavigationDelegate {
 
     private var webView: WKWebView?
     private var rulesReady = false
+    /// The content rules still compiling (1.30.4): the first page waits for
+    /// them, 2 s at most. It loaded at once, with every image, font and script.
+    private var rulesPending = false
     private struct Job { var id = UUID(); let url: URL; let continuation: CheckedContinuation<String?, Never> }
     private var queue: [Job] = []
     private var current: Job?
@@ -84,18 +87,36 @@ final class IMDbPageLoader: NSObject, WKNavigationDelegate {
         wv.navigationDelegate = self
         wv.isHidden = true
         webView = wv
+        rulesPending = true
         WKContentRuleListStore.default()?.compileContentRuleList(forIdentifier: "imdb-lite", encodedContentRuleList: Self.rules) { [weak self] list, error in
             Task { @MainActor in
                 if let list { cfg.userContentController.add(list); self?.rulesReady = true }
                 else { dlog("imdb/error", "content rules: \(error?.localizedDescription ?? "?")") }
+                self?.rulesDone()
             }
+        }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            guard let self, self.rulesPending else { return }
+            dlog("imdb", "content rules not ready after 2 s: loading without them")
+            self.rulesDone()
         }
         return wv
     }
 
+    private func rulesDone() {
+        guard rulesPending else { return }
+        rulesPending = false
+        pump()
+    }
+
     private func pump() {
-        guard current == nil, let job = queue.first else { return }
-        queue.removeFirst()
+        guard current == nil, !queue.isEmpty else { return }
+        _ = makeWebView()
+        // Waits for the rules (rulesDone pumps again); the page stays queued,
+        // so its caller can still give it up.
+        guard !rulesPending else { return }
+        let job = queue.removeFirst()
         current = job
         navigations = 0
         let wv = makeWebView()

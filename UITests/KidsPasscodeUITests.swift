@@ -113,6 +113,45 @@ final class KidsPasscodeUITests: XCTestCase {
         app.terminate()
     }
 
+    /// 1.30.4: the passcode pad up on the Kids Profile page when Folio goes to
+    /// the background closes before Settings does, so nothing is left over
+    /// Home with no way to close it.
+    func test4BackgroundClosesThePasscodePad() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestLibrary", "-labNoEngine", "-noSplash", "-labKidsReset", "-appearance", "dark"]
+        app.launch()
+        app.buttons["Settings"].firstMatch.tap()
+        app.staticTexts["Kids Profile"].firstMatch.tap()
+        app.buttons["kidsTurnOn"].tap()
+        XCTAssertTrue(app.staticTexts["Enter New Passcode"].waitForExistence(timeout: 5))
+        type("2580", in: app)
+        XCTAssertTrue(app.staticTexts["Re-enter New Passcode"].waitForExistence(timeout: 3))
+        type("2580", in: app)
+        XCTAssertTrue(app.buttons["kidsTurnOff"].waitForExistence(timeout: 5))
+
+        // The pad up (Change Passcode asks for the current one), then the background.
+        app.buttons["kidsChangePasscode"].tap()
+        XCTAssertTrue(app.staticTexts["Enter Passcode"].waitForExistence(timeout: 5))
+        XCUIDevice.shared.press(.home)
+        sleep(2)
+        app.activate()
+
+        // Home, with no pad over it, and it still takes touches: Settings asks, Cancel comes back.
+        XCTAssertTrue(app.buttons["kidsBadge"].waitForExistence(timeout: 5), "not back on Home")
+        XCTAssertFalse(app.buttons["kidsTurnOff"].exists, "the Kids Profile page stayed open after the background")
+        XCTAssertFalse(app.otherElements["kidsPasscode"].exists, "the passcode pad stayed up over Home")
+        app.buttons["Settings"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Enter Passcode"].waitForExistence(timeout: 5), "Settings didn't ask for the passcode")
+        app.buttons["Cancel"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["kidsBadge"].waitForExistence(timeout: 5), "Cancel didn't go back to Home")
+
+        // The next test starts with the profile off and no passcode.
+        app.terminate()
+        app.launchArguments = ["-uiTestLibrary", "-labNoEngine", "-noSplash", "-labKidsReset"]
+        app.launch()
+        app.terminate()
+    }
+
     func test2BackgroundClosesSettings() {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTestLibrary", "-labNoEngine", "-noSplash", "-labKidsReset", "-appearance", "dark"]

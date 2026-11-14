@@ -180,6 +180,25 @@ enum ChunkPlan {
         return next == total ? ordered : nil
     }
 
+    /// What a range does when the address a link led to refuses it (1.30.4).
+    enum Refusal: Equatable {
+        /// Not about the address: the request's answer stands (a failure).
+        case stands
+        /// Asked through the link again; the address it leads to now is used from then on.
+        case askLink
+        /// The address never worked: this run asks through the link, as before 1.30.4.
+        case stopUsingAddress
+    }
+
+    /// `address`: the address the request went to, when not the link;
+    /// `current`: the one in use now; `worked`: bytes came from it.
+    static func refusal(status: Int, address: URL?, current: URL?, worked: Bool) -> Refusal {
+        guard let address, [401, 403, 404, 410].contains(status) else { return .stands }
+        // An address given up on already: asked again where the others are.
+        guard address == current else { return .askLink }
+        return worked ? .askLink : .stopUsingAddress
+    }
+
     /// A web page where a file was asked for: an expired link, a login or a
     /// captcha page. It must not be written into the file.
     static func isPage(contentType: String?, fileName: String) -> Bool {
@@ -222,6 +241,9 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         case failed(message: String, chunks: [DownloadChunk])
         /// A line for the log (splits, restarts, retries).
         case note(String)
+        /// No network it may use (Wi-Fi only, or mobile data off): it waits
+        /// for one (1.30.4, URLSession's taskIsWaitingForConnectivity).
+        case waitingForNetwork
     }
 
     let id: UUID
@@ -240,7 +262,21 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
     private var ranges: Bool?
     /// Running requests by task identifier: their range, when they started
     /// and what they brought.
-    private var tasks: [Int: (task: URLSessionDataTask, chunk: Int, started: Date, bytes: Int64)] = [:]
+    /// `address`: where it was sent when not to the link (1.30.4);
+    /// `answered`: when its answer came: only from then on is it judged slow.
+    private var tasks: [Int: (task: URLSessionDataTask, chunk: Int, started: Date, bytes: Int64, address: URL?, answered: Date?)] = [:]
+    /// Where the link led on its first answer (1.30.4): the ranges are asked
+    /// there, not through the link each time. An addon's link goes through
+    /// the addon's own server to the debrid service for every request (every
+    /// range, retry and takeover), each a few seconds or more.
+    private var address: URL?
+    /// Bytes came from `address`: a refusal from it later is its expiry.
+    private var addressWorked = false
+    /// Off for this run once the address refused before it ever worked.
+    private var useAddress = true
+    /// A resumed file waits for its first answer before the other
+    /// connections start, so they go to the address it gives (1.30.4).
+    private var firstAnswer = false
     /// Speeds of the last connections that finished their range.
     private var finishedSpeeds: [Double] = []
     private var retries: [Int: Int] = [:]
@@ -368,6 +404,8 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
     private func fillConnections() {
         guard !stopped else { return }
         while tasks.count < connections {
+            // One request until the first answer (1.30.4).
+            if !firstAnswer, !tasks.isEmpty { return }
             let busy = Set(tasks.values.map { $0.chunk })
             if let i = ChunkPlan.waiting(chunks, busy: busy) {
                 guard startTask(i) else { return }
@@ -387,14 +425,19 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         // A delayed retry may come after the ranges changed (the server stopped answering ranges).
         guard let session, !stopped, chunks.indices.contains(index), !chunks[index].isDone,
               !tasks.values.contains(where: { $0.chunk == index }) else { return false }
-        var req = URLRequest(url: request.url)
+        let target = useAddress ? address : nil
+        var req = URLRequest(url: target ?? request.url)
         req.timeoutInterval = 60
         req.allowsCellularAccess = request.allowCellular && !request.unmeteredOnly
         if request.unmeteredOnly {
             req.allowsExpensiveNetworkAccess = false
             req.allowsConstrainedNetworkAccess = false
         }
-        for (k, v) in request.headers { req.setValue(v, forHTTPHeaderField: k) }
+        for (k, v) in request.headers {
+            // A login isn't sent on to another host the link led to.
+            if let target, target.host != request.url.host, k.caseInsensitiveCompare("Authorization") == .orderedSame { continue }
+            req.setValue(v, forHTTPHeaderField: k)
+        }
         let c = chunks[index]
         req.setValue(c.end >= 0 ? "bytes=\(c.current)-\(c.end)" : "bytes=\(c.current)-", forHTTPHeaderField: "Range")
         // Byte offsets mean bytes of the file, not of a compressed stream.
@@ -402,7 +445,7 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         let task = session.dataTask(with: req)
         // Ahead of other traffic of Folio's (1.27.0).
         task.priority = URLSessionTask.highPriority
-        tasks[task.taskIdentifier] = (task, index, Date(), 0)
+        tasks[task.taskIdentifier] = (task, index, Date(), 0, target, nil)
         task.resume()
         return true
     }
@@ -423,6 +466,26 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
             return
         }
         guard (200..<300).contains(status) else {
+            // The address the link led to ran out, or never took a direct
+            // request (1.30.4): the range is asked through the link again.
+            let sentTo = tasks[dataTask.taskIdentifier]?.address
+            switch ChunkPlan.refusal(status: status, address: sentTo, current: address, worked: addressWorked) {
+            case .askLink:
+                if sentTo == address { address = nil; addressWorked = false }
+                emit(.note("\(host) refused the address the link led to (HTTP \(status)): asked through the link again"))
+                restarting.insert(dataTask.taskIdentifier)
+                completionHandler(.cancel)
+                return
+            case .stopUsingAddress:
+                address = nil
+                useAddress = false
+                emit(.note("\(host) refused a direct request (HTTP \(status)): every range through the link"))
+                restarting.insert(dataTask.taskIdentifier)
+                completionHandler(.cancel)
+                return
+            case .stands:
+                break
+            }
             completionHandler(.cancel)
             fail(status == 401 ? "Wrong username or password (HTTP 401)" : "Server returned HTTP \(status)")
             return
@@ -489,6 +552,19 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
             answered = true
             emit(.answered(total: total, ranges: ranges == true, host: host))
         }
+        tasks[dataTask.taskIdentifier]?.answered = Date()
+        // Where the link led (1.30.4): the next ranges go there.
+        if useAddress, address == nil, tasks[dataTask.taskIdentifier]?.address == nil,
+           let final = http.url, final != request.url, final.scheme?.lowercased() == "https" || final.scheme?.lowercased() == "http" {
+            address = final
+            addressWorked = false
+            emit(.note("the link leads to \(final.host ?? "another host"): its ranges are asked there"))
+        }
+        if !firstAnswer {
+            firstAnswer = true
+            // A resumed file's other connections, now that the address is known.
+            if ranges == true { fillConnections() }
+        }
         completionHandler(.allow)
     }
 
@@ -515,6 +591,7 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
             buffers[index] = (chunk.current, d)
         }
         chunks[index].current += Int64(payload.count)
+        if !addressWorked, let a = tasks[dataTask.taskIdentifier]?.address, a == address { addressWorked = true }
         windowBytes[dataTask.taskIdentifier, default: 0] += Int64(payload.count)
         tasks[dataTask.taskIdentifier]?.bytes += Int64(payload.count)
         if chunks[index].isDone || (buffers[index]?.data.count ?? 0) >= Self.flushAt {
@@ -566,6 +643,13 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         emit(.note("\(fileName): the server answers over \(name)"))
     }
 
+    /// No network this download may use (1.30.4): said, so its row can say
+    /// why it sits at 0 B, and it doesn't take one of the file slots.
+    func urlSession(_ session: URLSession, taskIsWaitingForConnectivity task: URLSessionTask) {
+        guard !stopped else { return }
+        emit(.waitingForNetwork)
+    }
+
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         guard let entry = tasks.removeValue(forKey: task.taskIdentifier) else { return }
         windowBytes[task.taskIdentifier] = nil
@@ -590,7 +674,7 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
             if chunks[index].current == 0 { complete(); return }
         }
         if chunks[index].isDone {
-            let age = Date().timeIntervalSince(entry.started)
+            let age = Date().timeIntervalSince(entry.answered ?? entry.started)
             if age >= ChunkPlan.countAfter { finishedSpeeds = Array((finishedSpeeds + [Double(entry.bytes) / age]).suffix(8)) }
             if chunks.allSatisfy(\.isDone) {
                 if tasks.isEmpty { complete() }
@@ -634,10 +718,15 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         }
         guard elapsed > 0 else { return }
         // Each over its own time in the window: one that started in it isn't made slower than it is.
-        let readings = tasks.map { id, t in
-            let span = max(1, now.timeIntervalSince(max(windowStart, t.started)))
+        // Timed from its answer (1.30.4): one still waiting for the link's
+        // redirect (an addon's server, a debrid service) isn't slow, and was
+        // started again with nothing after 12 s.
+        let readings = tasks.compactMap { entry -> ChunkPlan.Reading? in
+            let id = entry.key, t = entry.value
+            guard let answered = t.answered else { return nil }
+            let span = max(1, now.timeIntervalSince(max(windowStart, answered)))
             return ChunkPlan.Reading(task: id, speed: Double(windowBytes[id] ?? 0) / span,
-                                     age: now.timeIntervalSince(t.started), remaining: chunks[t.chunk].remaining)
+                                     age: now.timeIntervalSince(answered), remaining: chunks[t.chunk].remaining)
         }
         for id in ChunkPlan.slow(readings, finished: finishedSpeeds) {
             guard let t = tasks[id] else { continue }
@@ -654,7 +743,8 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
         let now = Date()
         var out: [Int: Double?] = [:]
         for t in tasks.values {
-            let age = now.timeIntervalSince(t.started)
+            // Not answered yet: too new to say (1.30.4).
+            let age = t.answered.map { now.timeIntervalSince($0) } ?? 0
             out[t.chunk] = age >= ChunkPlan.countAfter ? Double(t.bytes) / age : nil
         }
         return out

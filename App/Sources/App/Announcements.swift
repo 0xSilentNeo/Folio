@@ -170,6 +170,22 @@ final class Announcements: ObservableObject {
         return Selection(show: show, markSeen: mark + show.map(\.id))
     }
 
+    /// The banners waiting (1.30.4): those there, then the new ones, no id
+    /// twice, none no longer worth showing by this version. Only the first
+    /// of a check's entries became the banner, and the second was marked
+    /// seen anyway, never shown.
+    nonisolated static func queued(_ pending: [Entry], adding new: [Entry], appVersion: String) -> [Entry] {
+        var ids = Set<String>()
+        return (pending + new).filter { relevant($0, appVersion: appVersion) && ids.insert($0.id).inserted }
+    }
+
+    /// Ids marked seen now (1.30.4): what the look skipped for good, not
+    /// what it picked to show; those are marked once shown or posted.
+    nonisolated static func seenNow(_ s: Selection) -> [String] {
+        let shown = Set(s.show.map(\.id))
+        return s.markSeen.filter { !shown.contains($0) }
+    }
+
     /// Time for another look: never looked, 12 hours ago or more, or the clock went back.
     nonisolated static func due(now: Date, last: Double, every: TimeInterval = Announcements.every) -> Bool {
         let t = now.timeIntervalSince1970
@@ -193,10 +209,13 @@ final class Announcements: ObservableObject {
         static let etag = "announcementsETag"
         static let cache = "announcementsFeed"
         static let current = "announcementsCurrent"
+        static let pending = "announcementsPending"
     }
 
     /// The newest entry not yet dismissed: the banner. Kept over a relaunch.
     @Published private(set) var current: Entry?
+    /// The banners waiting, `current` first (1.30.4). Kept over a relaunch.
+    private var pending: [Entry] = []
 
     private var started = false
     private var task: Task<Void, Never>?
@@ -208,20 +227,30 @@ final class Announcements: ObservableObject {
     private var enabled: Bool { UserDefaults.standard.bool(forKey: SettingsKey.announcements) }
 
     private init() {
-        if let data = UserDefaults.standard.data(forKey: Key.current), let e = try? JSONDecoder().decode(Entry.self, from: data) {
-            if Self.relevant(e, appVersion: Self.appVersion) { current = e } else { UserDefaults.standard.removeObject(forKey: Key.current) }
-        }
+        let d = UserDefaults.standard
+        var saved = d.data(forKey: Key.pending).flatMap { JSONDecoder().decodeLossy(Entry.self, from: $0) } ?? []
+        // 1.30.3 kept one banner only.
+        if saved.isEmpty, let data = d.data(forKey: Key.current), let e = try? JSONDecoder().decode(Entry.self, from: data) { saved = [e] }
+        d.removeObject(forKey: Key.current)
+        setPending(Self.queued(saved, adding: [], appVersion: Self.appVersion))
     }
 
     // MARK: Checking
 
     /// Once, at launch (FolioApp): looks each time Folio comes to the front.
+    /// Under tests or the labs (1.30.4): no request, and no banner either.
+    /// A banner saved by an ordinary launch on the same simulator showed in
+    /// the UI tests and moved Home's sections down.
+    nonisolated static var testRun: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || CommandLine.arguments.contains(where: { $0.hasPrefix("-ui") || $0.hasPrefix("-lab") || $0.hasPrefix("-shots") })
+    }
+
     func start() {
         guard !started else { return }
         started = true
         // Not under tests or the labs: no network of its own there.
-        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil,
-              !CommandLine.arguments.contains(where: { $0.hasPrefix("-ui") || $0.hasPrefix("-lab") || $0.hasPrefix("-shots") }) else { return }
+        guard !Self.testRun else { return }
         let nc = NotificationCenter.default
         nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { Announcements.shared.becameActive() }
@@ -295,22 +324,33 @@ final class Announcements: ObservableObject {
         let d = UserDefaults.standard
         let seen = d.stringArray(forKey: Key.seen) ?? []
         let firstRun = !d.bool(forKey: Key.seeded)
-        let s = Self.select(entries, seen: Set(seen), firstRun: firstRun, appVersion: Self.appVersion)
+        // Waiting banners aren't picked again.
+        let s = Self.select(entries, seen: Set(seen).union(pending.map(\.id)), firstRun: firstRun, appVersion: Self.appVersion)
         d.set(true, forKey: Key.seeded)
-        if !s.markSeen.isEmpty { d.set(Array((seen + s.markSeen).suffix(Self.seenCap)), forKey: Key.seen) }
+        markSeen(Self.seenNow(s))
         dlog("news", "\(entries.count) in the feed, \(s.show.count) new\(firstRun ? " (first look)" : "")")
-        guard let first = s.show.first else { return }
-        setCurrent(first)
-        toNotify = s.show
+        guard !s.show.isEmpty else { return }
+        setPending(Self.queued(pending, adding: s.show, appVersion: Self.appVersion))
+        toNotify += s.show.filter { e in !toNotify.contains { $0.id == e.id } }
         deliver()
     }
 
-    private func setCurrent(_ e: Entry?) {
-        current = e
-        if let e, let data = try? JSONEncoder().encode(e) {
-            UserDefaults.standard.set(data, forKey: Key.current)
-        } else {
-            UserDefaults.standard.removeObject(forKey: Key.current)
+    private func markSeen(_ ids: [String]) {
+        guard !ids.isEmpty else { return }
+        let d = UserDefaults.standard
+        let seen = d.stringArray(forKey: Key.seen) ?? []
+        let new = ids.filter { !seen.contains($0) }
+        guard !new.isEmpty else { return }
+        d.set(Array((seen + new).suffix(Self.seenCap)), forKey: Key.seen)
+    }
+
+    private func setPending(_ list: [Entry]) {
+        pending = list
+        if current != list.first { current = list.first }
+        if list.isEmpty {
+            UserDefaults.standard.removeObject(forKey: Key.pending)
+        } else if let data = try? JSONEncoder().encode(list) {
+            UserDefaults.standard.set(data, forKey: Key.pending)
         }
     }
 
@@ -322,13 +362,21 @@ final class Announcements: ObservableObject {
     /// these over the app. They go when Folio leaves the screen.
     private func deliver() {
         guard !toNotify.isEmpty, UIApplication.shared.applicationState != .active else { return }
+        // Kept for later (1.30.4): the queue was emptied before these were
+        // looked at, and its entries lost. Off or the kids profile: they wait.
+        guard enabled, !KidsProfile.shared.isOn else { return }
         let entries = toNotify
         toNotify = []
-        guard enabled, !KidsProfile.shared.isOn, !UserDefaults.standard.bool(forKey: SettingsKey.notifyAllOff) else { return }
+        // Notifications off: the banners are there; nothing to post.
+        guard !UserDefaults.standard.bool(forKey: SettingsKey.notifyAllOff) else { return }
+        // Time to post them as Folio leaves the screen (1.30.4).
+        let bg = BackgroundTime("folio.announcements")
         Task(priority: .utility) {
+            defer { bg.end() }
             let center = UNUserNotificationCenter.current()
             let status = await center.notificationSettings().authorizationStatus
             guard [.authorized, .provisional, .ephemeral].contains(status) else { return }
+            var posted: [String] = []
             for e in entries {
                 let content = UNMutableNotificationContent()
                 content.title = e.title
@@ -340,19 +388,26 @@ final class Announcements: ObservableObject {
                 content.userInfo = info
                 // No trigger: at once.
                 let request = UNNotificationRequest(identifier: Announcements.notificationPrefix + e.id, content: content, trigger: nil)
-                do { try await center.add(request) } catch { dlog("news", "notification: \(error.localizedDescription)") }
+                do { try await center.add(request); posted.append(e.id) } catch { dlog("news", "notification: \(error.localizedDescription)") }
             }
+            // Seen once posted (1.30.4).
+            Announcements.shared.markSeen(posted)
         }
     }
 
     // MARK: The banner's buttons
 
-    /// Closes the banner; the entry isn't shown again.
+    /// Closes the banner; the entry isn't shown again, and the next one waiting shows.
     func dismiss() {
         guard let e = current else { return }
-        toNotify.removeAll { $0.id == e.id }
-        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [Self.notificationPrefix + e.id])
-        setCurrent(nil)
+        done(e.id)
+    }
+
+    private func done(_ id: String) {
+        toNotify.removeAll { $0.id == id }
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [Self.notificationPrefix + id])
+        markSeen([id])
+        setPending(pending.filter { $0.id != id })
     }
 
     /// Opens the entry's page (GitHub only) and closes the banner.
@@ -360,6 +415,20 @@ final class Announcements: ObservableObject {
         guard let e = current else { return }
         if let u = Self.link(e.url) { UIApplication.shared.open(u) }
         dismiss()
+    }
+
+    /// Its notification tapped (1.30.4: the tap only opened Folio): its page
+    /// when it has one (GitHub only, as the banner's View), else its banner first.
+    func tapped(id: String, url: String?) {
+        guard !KidsProfile.shared.isOn else { return }
+        if let u = Self.link(url) {
+            UIApplication.shared.open(u)
+            done(id)
+        } else if let i = pending.firstIndex(where: { $0.id == id }) {
+            var list = pending
+            list.insert(list.remove(at: i), at: 0)
+            setPending(list)
+        }
     }
 }
 
@@ -372,7 +441,7 @@ struct AnnouncementBanner: View {
     @AppStorage(SettingsKey.announcements) private var on = true
 
     var body: some View {
-        if let a = model.current, on, !kids.isOn {
+        if let a = model.current, on, !kids.isOn, !Announcements.testRun {
             HStack(alignment: .top, spacing: 8) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(a.title)

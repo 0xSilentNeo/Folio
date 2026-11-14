@@ -13,6 +13,9 @@ struct WatchlistItem: Codable, Identifiable, Hashable, Sendable {
     var rating: String?
     var genres: [String]?
     var added: Date
+    /// The id it was saved under before its IMDb id was known ("tmdb:…",
+    /// "anilist:…"), so tiles that still have that one find it (1.30.4).
+    var altID: String?
 
     init(meta: MetaItem, added: Date = Date()) {
         id = meta.id

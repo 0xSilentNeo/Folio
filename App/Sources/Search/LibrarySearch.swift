@@ -30,15 +30,40 @@ enum LibrarySearchResults {
 
     /// Library titles whose name has every word: the kids profile's titles
     /// only, as Home shows them.
+    ///
+    /// Each title of a folder of several is found by its own name too
+    /// (1.30.4): only the folder's name and its first file were looked at,
+    /// so its other films couldn't be found. The kids profile judges each
+    /// title, and only those that match.
     @MainActor
     static func libraryMatches(_ words: [String], in groups: [LibraryGroup], limits: KidsRules.Limits?) -> [LibraryGroup] {
         guard !words.isEmpty else { return [] }
-        var groups = groups
-        if let limits { groups = groups.filter { LibraryMetaIndex.shared.kidsAllow($0, limits) } }
-        return Array(groups.lazy.filter { g in
-            let name = (g.title + " " + (g.files.first.map { $0.deletingPathExtension().lastPathComponent } ?? "")).lowercased()
-            return words.allSatisfy { name.contains($0) }
-        }.prefix(20))
+        func found(_ g: LibraryGroup, _ name: String) -> Bool {
+            let n = (name + " " + (g.files.first.map { $0.deletingPathExtension().lastPathComponent } ?? "")).lowercased()
+            return words.allSatisfy { n.contains($0) }
+        }
+        func allowed(_ g: LibraryGroup) -> Bool { limits.map { LibraryMetaIndex.shared.kidsAllow(g, $0) } ?? true }
+        var out: [LibraryGroup] = []
+        var seen = Set<String>()
+        func add(_ g: LibraryGroup) { if seen.insert(g.id).inserted { out.append(g) } }
+        for g in groups where out.count < 20 {
+            guard g.folder != nil else {
+                if found(g, g.title), allowed(g) { add(g) }
+                continue
+            }
+            if found(g, g.title), allowed(g) { add(g) }
+            for files in LibraryMetaIndex.titles(of: g) where out.count < 20 && files.count < g.files.count {
+                guard let first = files.first else { continue }
+                let series = LibraryOrganizer.titleKey(first).hasPrefix("s|")
+                let title = series ? TitleParser.parse(first.lastPathComponent).title : TitleParser.clean(first.lastPathComponent)
+                let name = (title + " " + first.deletingPathExtension().lastPathComponent).lowercased()
+                guard words.allSatisfy({ name.contains($0) }) else { continue }
+                // The title's own group only for a match: made from its files on the spot.
+                let t = LibraryGroup.ofTitle(files)
+                if allowed(t) { add(t) }
+            }
+        }
+        return out
     }
 
     /// How many releases of one server a search lists.

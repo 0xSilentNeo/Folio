@@ -178,6 +178,25 @@ enum DAVOrder {
             }
         }.map(\.item)
     }
+
+    /// What a file plays with (1.30.4): an episode with its show's other
+    /// episodes here, in episode order whatever the folder's sort (under
+    /// Recently Added or Z to A a season played backwards); anything else
+    /// (a film) alone. Until then every file queued the folder as shown.
+    static func queue(for item: DAVItem, in media: [DAVItem]) -> [DAVItem] {
+        let p = TitleParser.parse(item.name)
+        guard p.episode != nil else { return [item] }
+        let show = p.title.lowercased()
+        let same = media.map { ($0, TitleParser.parse($0.name)) }
+            .filter { $0.1.episode != nil && $0.1.title.lowercased() == show }
+            .sorted { a, b in
+                if (a.1.season ?? 0) != (b.1.season ?? 0) { return (a.1.season ?? 0) < (b.1.season ?? 0) }
+                if (a.1.episode ?? 0) != (b.1.episode ?? 0) { return (a.1.episode ?? 0) < (b.1.episode ?? 0) }
+                return a.0.name.localizedStandardCompare(b.0.name) == .orderedAscending
+            }
+            .map { $0.0 }
+        return same.contains(item) ? same : [item]
+    }
 }
 
 struct WebDAVBrowserView: View {
@@ -186,6 +205,7 @@ struct WebDAVBrowserView: View {
     let title: String
 
     @ObservedObject private var history = HistoryStore.shared
+    @ObservedObject private var kids = KidsProfile.shared
     @State private var items: [DAVItem] = []
     /// `items` with their sort keys (worked out when the listing or Clean
     /// titles changes), and in the chosen order.
@@ -261,6 +281,8 @@ struct WebDAVBrowserView: View {
         }
         .listStyle(.plain)
         .overlay { if loading && items.isEmpty { FolioSpinner(size: .large) } }
+        // Not in the kids profile (1.30.4): a guard behind the pages that close it.
+        .kidsServerGuard(kids.isOn)
         .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
@@ -268,30 +290,32 @@ struct WebDAVBrowserView: View {
         // opened from Home or Network, searches every server's files.
         .refreshable { await load() }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                LibrarySortMenu(sort: $sort, ascending: $ascending, inToolbar: true)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    // Menus show a toggle as a checkmark item only in the
-                    // automatic style; the app-wide switch style
-                    // (FolioApp, BrandSwitchStyle) left them disabled in
-                    // menus (1.18.0 UI test: enabled=false).
-                    Group {
-                        Toggle("Clean titles", isOn: $cleanTitles)
-                        Toggle("Only media files", isOn: $onlyMedia)
-                    }
-                    .toggleStyle(.automatic)
-                    let media = visible.filter(\.isMedia)
-                    if !media.isEmpty {
-                        Divider()
-                        Button {
-                            DownloadManager.shared.enqueue(media + items.filter(\.isSubtitle), server: server, package: package)
-                        } label: { Label("Download all \(media.count) videos", systemImage: "arrow.down.circle") }
-                    }
-                } label: { ToolbarGlyph("ellipsis.circle") }
-                .accessibilityLabel("More")
-                .accessibilityIdentifier("davMoreMenu")
+            if !kids.isOn {
+                ToolbarItem(placement: .topBarTrailing) {
+                    LibrarySortMenu(sort: $sort, ascending: $ascending, inToolbar: true)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        // Menus show a toggle as a checkmark item only in the
+                        // automatic style; the app-wide switch style
+                        // (FolioApp, BrandSwitchStyle) left them disabled in
+                        // menus (1.18.0 UI test: enabled=false).
+                        Group {
+                            Toggle("Clean titles", isOn: $cleanTitles)
+                            Toggle("Only media files", isOn: $onlyMedia)
+                        }
+                        .toggleStyle(.automatic)
+                        let media = visible.filter(\.isMedia)
+                        if !media.isEmpty {
+                            Divider()
+                            Button {
+                                DownloadManager.shared.enqueue(media + items.filter(\.isSubtitle), server: server, package: package)
+                            } label: { Label("Download all \(media.count) videos", systemImage: "arrow.down.circle") }
+                        }
+                    } label: { ToolbarGlyph("ellipsis.circle") }
+                    .accessibilityLabel("More")
+                    .accessibilityIdentifier("davMoreMenu")
+                }
             }
         }
         .task {
@@ -349,7 +373,8 @@ struct WebDAVBrowserView: View {
             PlayerPresenter.play(client.mediaItem(for: item, cleanTitles: cleanTitles))
             return
         }
-        let media = visible.filter(\.isMedia)
+        // An episode with its show's others in episode order, a film alone (1.30.4, DAVOrder.queue).
+        let media = DAVOrder.queue(for: item, in: visible.filter(\.isMedia))
         let subs = items.filter(\.isSubtitle)
         let queue: [MediaItem] = media.map { m in
             var mi = client.mediaItem(for: m, cleanTitles: cleanTitles)

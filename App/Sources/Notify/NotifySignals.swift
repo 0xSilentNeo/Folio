@@ -332,7 +332,16 @@ enum TitleLink {
         let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         func v(_ n: String) -> String? { q.first { $0.name == n }?.value }
         guard let id = v("id"), id.hasPrefix("tt") else { return nil }
-        return MetaItem(id: id, type: v("type") ?? "movie", name: v("name") ?? "", poster: v("poster"), description: nil, releaseInfo: nil, imdbRating: nil, genres: nil)
+        // A poster on the image hosts Folio's titles come from only (1.30.4):
+        // any link could make Folio fetch any address.
+        return MetaItem(id: id, type: v("type") ?? "movie", name: v("name") ?? "", poster: v("poster").flatMap(posterAllowed), description: nil, releaseInfo: nil, imdbRating: nil, genres: nil)
+    }
+
+    /// https on IMDb's (Amazon's) or TMDB's image hosts; nil otherwise.
+    static func posterAllowed(_ s: String) -> String? {
+        guard let u = URL(string: s), u.scheme?.lowercased() == "https", let host = u.host?.lowercased() else { return nil }
+        let ok = host == "image.tmdb.org" || host == "m.media-amazon.com" || host.hasSuffix(".media-amazon.com") || host.hasSuffix(".media-imdb.com")
+        return ok ? s : nil
     }
 }
 
@@ -348,5 +357,18 @@ enum LibraryLink {
 
     static func path(from url: URL) -> String? {
         URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "path" }?.value
+    }
+
+    /// `path` when it's a file in Media (or one of `library`'s files), as
+    /// the notifications make them (1.30.4); nil for anything else in the
+    /// app's container, which any link could name.
+    static func allowed(_ path: String, media: String, library: Set<String> = []) -> String? {
+        guard path.hasPrefix("/"), !path.split(separator: "/").contains(where: { $0 == ".." || $0 == "." }) else { return nil }
+        // /private/var and /var are one place on iOS: compared without it.
+        func plain(_ p: String) -> String { p.hasPrefix("/private/var/") ? String(p.dropFirst("/private".count)) : p }
+        let clean = URL(fileURLWithPath: path).standardizedFileURL.path
+        let root = plain(URL(fileURLWithPath: media).standardizedFileURL.path)
+        if plain(clean).hasPrefix(root + "/") || library.contains(clean) || library.map(plain).contains(plain(clean)) { return clean }
+        return nil
     }
 }

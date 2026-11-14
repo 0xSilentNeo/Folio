@@ -15,8 +15,17 @@ final class EnergyMonitor {
     private var mainThread: thread_t = 0
     private var observers: [NSObjectProtocol] = []
     /// Set by the player while a file plays, so the line says what the load is for.
-    var playing = false
+    var playing = false { didSet { if playing != oldValue { updateNet() } } }
     var note = ""
+
+    /// Bytes received per 2-s slot while a file plays (1.30.4): bursts let
+    /// the radio sleep between them, a trickle keeps it up all film.
+    private var netTimer: Timer?
+    private var netLast: (cell: UInt32, wifi: UInt32)?
+    private var netLastAt: CFTimeInterval = 0
+    private var netCell: [UInt64] = []
+    private var netWifi: [UInt64] = []
+    private var netSeconds: Double = 0
 
     func start() {
         mainThread = pthread_mach_thread_np(pthread_self())   // called on the main thread
@@ -31,6 +40,7 @@ final class EnergyMonitor {
         observers.append(nc.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
             self?.sample(reason: "going to background")
             self?.timer?.invalidate(); self?.timer = nil
+            self?.updateNet()
         })
         observers.append(nc.addObserver(forName: NSNotification.Name.NSProcessInfoPowerStateDidChange, object: nil, queue: .main) { _ in
             dlog("energy", "low power mode \(ProcessInfo.processInfo.isLowPowerModeEnabled ? "on" : "off")")
@@ -44,6 +54,38 @@ final class EnergyMonitor {
         t.tolerance = 5
         RunLoop.main.add(t, forMode: .common)
         timer = t
+        updateNet()
+    }
+
+    /// The 2-s sampling runs while a file plays with Folio in front (the
+    /// line it feeds is only written then).
+    private func updateNet() {
+        let want = playing && timer != nil
+        if want, netTimer == nil {
+            netLast = NetSlots.counters()
+            netLastAt = CACurrentMediaTime()
+            netCell = []; netWifi = []; netSeconds = 0
+            let t = Timer(timeInterval: NetSlots.slot, repeats: true) { [weak self] _ in self?.netTick() }
+            t.tolerance = 0.5
+            RunLoop.main.add(t, forMode: .common)
+            netTimer = t
+        } else if !want, let t = netTimer {
+            t.invalidate()
+            netTimer = nil
+            netLast = nil
+        }
+    }
+
+    private func netTick() {
+        let now = NetSlots.counters(), at = CACurrentMediaTime()
+        if let last = netLast {
+            // 32-bit counters: the difference wraps with them.
+            netCell.append(UInt64(now.cell &- last.cell))
+            netWifi.append(UInt64(now.wifi &- last.wifi))
+            netSeconds += at - netLastAt
+        }
+        netLast = now
+        netLastAt = at
     }
 
     /// The app's memory footprint (what iOS counts against its limit) and
@@ -98,6 +140,10 @@ final class EnergyMonitor {
         line += " \(Self.memory) thermal=\(Self.thermal) playing=\(playing ? "yes" : "no")"
         line += Self.power
         if ProcessInfo.processInfo.isLowPowerModeEnabled { line += " lowPower" }
+        if netTimer != nil {
+            if let net = NetSlots.line(cell: netCell, wifi: netWifi, seconds: netSeconds) { line += " " + net }
+            netCell = []; netWifi = []; netSeconds = 0
+        }
         if !note.isEmpty { line += " " + note }
         if let reason { line += " · \(reason)" }
         dlog("energy", line)
@@ -148,5 +194,53 @@ final class EnergyMonitor {
         if s.hasPrefix("com.apple.NSURLSession") || s.hasPrefix("com.apple.CFNetwork") { return "network" }
         if s.hasPrefix("com.apple.root") || s.hasPrefix("com.apple.coremedia") { return "gcd" }
         return s.count > 18 ? String(s.prefix(18)) : s
+    }
+}
+
+/// What the radios received (1.30.4), from the interfaces' counters: the
+/// whole phone's, nearly all Folio's while a video plays.
+enum NetSlots {
+    /// One slot, in seconds.
+    static let slot: TimeInterval = 2
+    /// Less than this in a slot is quiet: keep-alives, a full TCP window's probes.
+    static let busyBytes: UInt64 = 64 * 1024
+
+    /// "net cellular 26.4 Mb/s (data in 15 of 15 2-s slots)": a stream that
+    /// keeps the radio up has data in every slot; read in bursts, in a few.
+    /// Nil when neither received anything worth saying.
+    static func line(cell: [UInt64], wifi: [UInt64], seconds: Double) -> String? {
+        guard seconds > 0 else { return nil }
+        var parts: [String] = []
+        for (name, slots) in [("cellular", cell), ("Wi-Fi", wifi)] {
+            let total = slots.reduce(0, +)
+            guard total >= busyBytes else { continue }
+            let mbps = Double(total) * 8 / 1_000_000 / seconds
+            let busy = slots.filter { $0 >= busyBytes }.count
+            parts.append(String(format: "%@ %.1f Mb/s (data in %ld of %ld %.0f-s slots)", name, mbps, busy, slots.count, slot))
+        }
+        return parts.isEmpty ? nil : "net " + parts.joined(separator: ", ")
+    }
+
+    /// Bytes received so far: cellular (pdp_ip*) and Wi-Fi (en0). 32-bit
+    /// counters, which wrap: only their differences mean anything.
+    static func counters() -> (cell: UInt32, wifi: UInt32) {
+        var cell: UInt32 = 0, wifi: UInt32 = 0
+        var head: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&head) == 0 else { return (0, 0) }
+        defer { freeifaddrs(head) }
+        var p = head
+        while let a = p {
+            let i = a.pointee
+            p = i.ifa_next
+            guard let addr = i.ifa_addr, addr.pointee.sa_family == UInt8(AF_LINK), let data = i.ifa_data, let cname = i.ifa_name else { continue }
+            let name = String(cString: cname)
+            let received = data.assumingMemoryBound(to: if_data.self).pointee.ifi_ibytes
+            if name.hasPrefix("pdp_ip") {
+                cell = cell &+ received
+            } else if name == "en0" {
+                wifi = wifi &+ received
+            }
+        }
+        return (cell, wifi)
     }
 }

@@ -1,6 +1,14 @@
 {
   "announcements": [
     {
+      "id": "2026-11-15-update-1-30-4",
+      "title": "Folio 1.30.4 is out",
+      "body": "Up Next no longer skips an episode, Continue Watching offers the next episode, and playback is easier on the battery.",
+      "url": "https://github.com/0xSilentNeo/Folio/releases/tag/v1.30.4",
+      "version": "1.30.4",
+      "date": "2026-11-15"
+    },
+    {
       "id": "2026-11-14-update-1-30-3",
       "title": "Folio 1.30.3 is out",
       "body": "Kids profile and Settings fixes, addon playlists and the stream picker, and a tidier search.",

@@ -19,6 +19,8 @@ struct LibraryIndex: Codable, Equatable, Sendable {
     /// The last time the server was asked, and how it answered.
     var lastCheck: Check?
     var folders: [String: Folder] = [:]
+    /// Folders past LibraryIndexer's cap, not read (1.30.4); nil: none.
+    var unread: Int?
 
     struct Check: Codable, Equatable, Sendable {
         var date: Date
@@ -96,7 +98,12 @@ struct LibraryIndexer: Sendable {
     var maxConcurrent = 3
     var maxAge: TimeInterval = 24 * 3600
     var maxDepth = 6
-    var maxFolders = 3000
+    var maxFolders = LibraryIndexer.folderCap
+    /// Raised from 3,000 (1.30.4), past which a library lost the rest with
+    /// nothing said. A folder costs about 3 KB in memory with its files
+    /// (3 a folder in the 11 Nov log; their addresses, names and search
+    /// text) and 1.3 KB in the saved file: about 15 MB at the cap.
+    static let folderCap = 5000
 
     struct Report: Equatable, Sendable {
         var listed = 0
@@ -104,6 +111,8 @@ struct LibraryIndexer: Sendable {
         var failed = 0
         var unauthorized = false
         var rootFailed = false
+        /// Folders found past `maxFolders`, not read.
+        var unread = 0
         /// Folders listed again whose files or subfolders changed although
         /// their getetag / getlastmodified hadn't.
         var changedWithoutSign = 0
@@ -155,12 +164,12 @@ struct LibraryIndexer: Sendable {
         // then jumped (539 files, then 635 with the same 220 folders), and
         // that one refresh took 30 s. In turns, each folder is seen again
         // within a few hours and no refresh lists them all.
-        let turn: Set<String> = {
-            guard !full, turns else { return [] }
-            let due = old.folders.filter { $0.key != fresh.root && now.timeIntervalSince($0.value.listed) > 3600 }
-            let share = max(12, old.folders.count / 12)
-            return Set(due.sorted { $0.value.listed < $1.value.listed }.prefix(share).map(\.key))
-        }()
+        //
+        // Only the start folder's own folders take turns (1.30.4): folders
+        // inside releases (Subs, Featurettes) took them too, and the release
+        // folders waited for the 24 h reset. A folder inside is listed again
+        // when its release is and shows it changed.
+        let turn: Set<String> = Self.turnFolders(old, root: fresh.root, now: now, enabled: !full && turns)
 
         func keep(_ key: String) {
             guard let f = old.folders[key], fresh.folders[key] == nil else { return }
@@ -187,7 +196,11 @@ struct LibraryIndexer: Sendable {
                 let key = LibraryIndex.key(done.url)
                 guard let items = done.items else {
                     report.failed += 1
-                    if done.unauthorized { report.unauthorized = true }
+                    // The start folder's refusal only (1.30.4): one release
+                    // folder answering 401/403 hid Home's whole section
+                    // behind "Real-Debrid refused the login". Another keeps
+                    // what was saved for it, as any failed listing.
+                    if done.unauthorized, key == fresh.root { report.unauthorized = true }
                     if key == fresh.root { report.rootFailed = true }
                     // Gone from the server: its files leave the search, not
                     // kept from the last listing (review, 5 Nov).
@@ -210,7 +223,9 @@ struct LibraryIndexer: Sendable {
                         let k = LibraryIndex.key(item.url)
                         guard seen.insert(k).inserted else { continue }
                         folder.subfolders.append(k)
-                        guard done.depth + 1 <= maxDepth, seen.count <= maxFolders else { continue }
+                        guard done.depth + 1 <= maxDepth else { continue }
+                        // Counted (1.30.4): the log and Home say the library is cut.
+                        guard seen.count <= maxFolders else { report.unread += 1; continue }
                         let prev = old.folders[k]
                         let why: String?
                         if full { why = "full refresh" }
@@ -243,9 +258,23 @@ struct LibraryIndexer: Sendable {
         }
         if report.rootFailed && fresh.folders[fresh.root] == nil { keep(fresh.root) }
         fresh.lastCheck = LibraryIndex.Check(date: now, ok: !report.rootFailed, unauthorized: report.unauthorized)
-        if !report.rootFailed { fresh.refreshed = now }
+        if !report.rootFailed {
+            fresh.refreshed = now
+            fresh.unread = report.unread > 0 ? report.unread : nil
+        }
         report.ms = Int(Date().timeIntervalSince(start) * 1000)
         return (fresh, report)
+    }
+
+    /// The folders listed "in their turn": the start folder's own, unlisted
+    /// for over an hour, oldest first, a twelfth of them (at least 12).
+    static func turnFolders(_ old: LibraryIndex, root: String, now: Date, enabled: Bool = true) -> Set<String> {
+        guard enabled else { return [] }
+        let children = old.folders[root]?.subfolders ?? []
+        let due = children.compactMap { k in old.folders[k].map { (key: k, listed: $0.listed) } }
+            .filter { $0.key != root && now.timeIntervalSince($0.listed) > 3600 }
+        let share = max(12, children.count / 12)
+        return Set(due.sorted { $0.listed < $1.listed }.prefix(share).map { $0.key })
     }
 }
 
@@ -392,6 +421,7 @@ final class LibraryIndexStore: ObservableObject {
         }
         let id = server.id
         if full || turns { lastTurns[id] = Date() }
+        let cleared = clears[id, default: 0]
         let t = Task {
             await load(server)
             let client = WebDAVClient(server: server)
@@ -411,9 +441,12 @@ final class LibraryIndexStore: ObservableObject {
             LibTrace.index.end("refresh", signpost)
             guard !Task.isCancelled else { return }
             let files = fresh.allFiles
+            // Said (1.30.4): the folders past the cap were dropped silently.
+            let capped: String = report.unread > 0 ? "; \(report.unread) folder(s) past the \(indexer.maxFolders)-folder cap not read" : ""
             dlog("index", "\(server.name): \(full ? "full" : "changes only") refresh in \(report.ms) ms — listed \(report.listed) folder(s), kept \(report.kept), "
                  + "failed \(report.failed)\(report.unauthorized ? " (login refused)" : ""); \(fresh.folders.count) folders, \(files.count) media files"
-                 + (report.changedWithoutSign > 0 ? "; \(report.changedWithoutSign) folder(s) changed without a new getetag/getlastmodified" : ""))
+                 + (report.changedWithoutSign > 0 ? "; \(report.changedWithoutSign) folder(s) changed without a new getetag/getlastmodified" : "")
+                 + capped)
             await apply(fresh, to: id)
             // Trace: the release names, for the release-name parser's tests.
             if LibTrace.on, let root = fresh.folders[fresh.root] {
@@ -421,7 +454,17 @@ final class LibraryIndexStore: ObservableObject {
                 LibTrace.index.log("release names in the start folder (\(names.count)):\n" + names.joined(separator: "\n"))
             }
             let url = Self.file(id)
-            await Task.detached(priority: .utility) { Self.write(fresh, to: url) }.value
+            // The server removed (or its account changed) meanwhile
+            // (1.30.4): its file isn't written again.
+            guard clears[id, default: 0] == cleared else { return }
+            // Not rewritten for a check that changed only its dates
+            // (1.30.4): Home's check of the start folder, once a minute,
+            // wrote the whole library each time. The new dates stay in memory.
+            await Task.detached(priority: .utility) {
+                if !Self.sameOnDisk(old, fresh) { Self.write(fresh, to: url) }
+            }.value
+            // Cleared while it was being written: it goes again.
+            if clears[id, default: 0] != cleared { try? FileManager.default.removeItem(at: url) }
         }
         refreshes[id] = t
         await t.value
@@ -439,6 +482,7 @@ final class LibraryIndexStore: ObservableObject {
         refreshes[id] = nil
         states[id] = nil
         applying[id, default: 0] += 1
+        clears[id, default: 0] += 1
         lastTurns[id] = nil
         readFromDisk.remove(id)
         summaries.set(nil, for: id)
@@ -473,6 +517,22 @@ final class LibraryIndexStore: ObservableObject {
     /// The newest index a server is being given: an older one still being
     /// worked out when it arrives is dropped.
     private var applying: [UUID: Int] = [:]
+    /// Bumped by `clear`: a refresh begun before doesn't leave its file.
+    private var clears: [UUID: Int] = [:]
+
+    /// The same as saved, but for the dates every check moves: its own,
+    /// the refresh's and the start folder's listing (1.30.4).
+    nonisolated static func sameOnDisk(_ a: LibraryIndex, _ b: LibraryIndex) -> Bool {
+        func plain(_ i: LibraryIndex) -> LibraryIndex {
+            var i = i
+            if i.refreshed != nil { i.refreshed = .distantPast }
+            i.lastCheck?.date = .distantPast
+            let root = i.root
+            i.folders[root]?.listed = .distantPast
+            return i
+        }
+        return plain(a) == plain(b)
+    }
 
     /// What search looks through and Home's summary, worked out off the main
     /// thread (1.30.3): on it, a title cleaned for every file, the releases
@@ -496,7 +556,7 @@ final class LibraryIndexStore: ObservableObject {
         let summary = Summary(files: searchable.count, bytes: searchable.reduce(0) { $0 + ($1.file.size ?? 0) },
                               refreshed: index.refreshed, unauthorized: index.lastCheck?.unauthorized == true,
                               offline: index.lastCheck.map { !$0.ok && !$0.unauthorized } ?? false,
-                              releases: newestReleases(index, limit: RealDebrid.rowLimit))
+                              releases: newestReleases(index, limit: RealDebrid.rowLimit), unread: index.unread)
         return (searchable, summary)
     }
 
@@ -546,7 +606,8 @@ final class IndexSummaries: ObservableObject {
     struct Summary: Codable, Equatable, Sendable {
         var files: Int
         var bytes: Int64
-        /// The last refresh that worked (nil: never).
+        /// A refresh that worked (nil: never). Only whether there is one is
+        /// read: a new date alone isn't published (1.30.4, `changed`).
         var refreshed: Date?
         var unauthorized: Bool
         /// The last check couldn't reach the server.
@@ -554,6 +615,8 @@ final class IndexSummaries: ObservableObject {
         /// The newest releases, one per title (Home's Real-Debrid row).
         /// Optional: summaries saved by 1.19.0 don't have it.
         var releases: [Release]?
+        /// Folders past the index's cap, not read (1.30.4).
+        var unread: Int?
 
         struct Release: Codable, Equatable, Identifiable, Sendable {
             /// The folder's name, as the server has it.
@@ -575,9 +638,19 @@ final class IndexSummaries: ObservableObject {
     }
 
     func set(_ summary: Summary?, for id: UUID) {
-        guard all[id] != summary else { return }
+        guard Self.changed(all[id], summary) else { return }
         all[id] = summary
         let s = Dictionary(uniqueKeysWithValues: all.map { ($0.key.uuidString, $0.value) })
         UserDefaults.standard.set(try? JSONEncoder().encode(s), forKey: Self.key)
+    }
+
+    /// Whether Home would show something else (1.30.4): each check of the
+    /// start folder moved `refreshed`, so Home was redrawn and UserDefaults
+    /// written once a minute with nothing new. The date counts only when it
+    /// comes or goes.
+    nonisolated static func changed(_ old: Summary?, _ new: Summary?) -> Bool {
+        guard var old, let new else { return (old == nil) != (new == nil) }
+        if old.refreshed != nil, new.refreshed != nil { old.refreshed = new.refreshed }
+        return old != new
     }
 }

@@ -14,6 +14,12 @@ struct AiringNowRow: View {
 
     private var kind: AiringCatalog.Kind { AiringCatalog.Kind(rawValue: kindRaw) ?? .series }
 
+    /// The season in a tile's note ("S3 · E5 today"); nil without one (anime's "E5 …").
+    nonisolated static func season(fromNote note: String?) -> Int? {
+        guard let note, note.hasPrefix("S") else { return nil }
+        return Int(note.dropFirst().prefix { $0.isNumber })
+    }
+
     var body: some View {
         if enabled {
             let all = model.lists[kind] ?? []
@@ -46,7 +52,9 @@ struct AiringNowRow: View {
                         }
                         ForEach(entries) { e in
                             NavigationLink {
-                                MetaDetailView(preview: e.meta, sourceAddon: nil).zoomDestination("air|" + e.id, in: zoomNS)
+                                // On the airing episode's season (1.30.4), not Season 1.
+                                MetaDetailView(preview: e.meta, sourceAddon: nil, openSeason: Self.season(fromNote: e.note))
+                                    .zoomDestination("air|" + e.id, in: zoomNS)
                             } label: {
                                 VStack(alignment: .leading, spacing: 0) {
                                     PosterCard(meta: e.meta, width: 118, zoom: ZoomSource("air|" + e.id, zoomNS))

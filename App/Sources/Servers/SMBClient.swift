@@ -160,6 +160,7 @@ final class SMBClient: @unchecked Sendable {
     init(host: String, username: String, password: String) {
         self.host = host
         login = SMBLogin(username: username, password: password)
+        PhoneNetwork.start()
     }
 
     deinit {
@@ -195,29 +196,40 @@ final class SMBClient: @unchecked Sendable {
 
     /// A folder's entries ("/" lists the host's shares), without "." and "..",
     /// printer and IPC shares or hidden ones ("C$"). Files and folders get
-    /// their size and date (one stat each, up to `statLimit`).
+    /// their size and date (from the listing; where it has none, one stat
+    /// each, up to `statLimit`).
     func list(_ path: String) async throws -> [SMBEntry] {
-        try await run(seconds: Double(Self.timeoutMS) / 1000 + 8) { try self.listNow(path) }
+        try await run(seconds: Double(Self.timeoutMS) / 1000 + 8) { call in try self.listNow(path, call) }
     }
 
     /// Starts the context without connecting anywhere: that libsmbclient
     /// starts in this build at all (unit test).
     func startContext() async throws {
-        try await run(seconds: 10) { _ = try self.makeContext() }
+        try await run(seconds: 10) { _ in _ = try self.makeContext() }
     }
 
     /// The work on the queue, with a deadline of our own too: a call stuck
     /// past libsmbclient's timeout (a name that never resolves) still ends
     /// in an answer for the browser.
-    private func run<T>(seconds: Double, _ work: @escaping () throws -> T) async throws -> T {
+    ///
+    /// The deadline runs from when the work starts (1.30.4): it ran from
+    /// when it was queued, so a listing behind a slow one timed out with
+    /// seconds of its own. Still waiting after `seconds` (the one before it
+    /// is stuck), it's given up and skipped when its turn comes; given up
+    /// while working, it stops between entries (`SMBCall.ended`).
+    private func run<T>(seconds: Double, _ work: @escaping (SMBCall) throws -> T) async throws -> T {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<T, Error>) in
-            let once = Once()
-            queue.async {
-                let r = Result { try work() }
-                if once.claim() { cont.resume(with: r) }
-            }
+            let call = SMBCall()
             DispatchQueue.global().asyncAfter(deadline: .now() + seconds) {
-                if once.claim() { cont.resume(throwing: SMBError.timedOut) }
+                if call.end(onlyIfWaiting: true) { cont.resume(throwing: SMBError.timedOut) }
+            }
+            queue.async {
+                guard call.start() else { return }
+                DispatchQueue.global().asyncAfter(deadline: .now() + seconds) {
+                    if call.end() { cont.resume(throwing: SMBError.timedOut) }
+                }
+                let r = Result { try work(call) }
+                if call.end() { cont.resume(with: r) }
             }
         }
     }
@@ -244,7 +256,7 @@ final class SMBClient: @unchecked Sendable {
 
     private static let nameOffset = MemoryLayout<smbc_dirent>.offset(of: \smbc_dirent.name) ?? 0
 
-    private func listNow(_ path: String) throws -> [SMBEntry] {
+    private func listNow(_ path: String, _ call: SMBCall) throws -> [SMBEntry] {
         let ctx = try makeContext()
         guard let opendir = smbc_getFunctionOpendir(ctx), let readdir = smbc_getFunctionReaddir(ctx),
               let closedir = smbc_getFunctionClosedir(ctx), let statFn = smbc_getFunctionStat(ctx) else { throw SMBError.noContext }
@@ -257,22 +269,46 @@ final class SMBClient: @unchecked Sendable {
             throw e
         }
         var out: [SMBEntry] = []
-        while let d = readdir(ctx, dir) {
-            let name = String(cString: UnsafeRawPointer(d).advanced(by: Self.nameOffset).assumingMemoryBound(to: CChar.self))
-            guard name != ".", name != "..", !name.isEmpty else { continue }
-            switch Int32(d.pointee.smbc_type) {
-            case SMBC_FILE_SHARE: if !name.hasSuffix("$") { out.append(SMBEntry(name: name, kind: .share)) }
-            case SMBC_DIR: out.append(SMBEntry(name: name, kind: .folder))
-            case SMBC_FILE: out.append(SMBEntry(name: name, kind: .file))
-            default: break      // workgroups, servers, printers, IPC, links
+        // A folder in a share: each entry with its size and date in the one
+        // listing (readdirplus, 1.30.4), not one stat round trip per file.
+        // Not the host's shares ("/"), which have none of that; a listing
+        // whose first call gives nothing is read as before. (readdirplus
+        // moves readdir's place too, so the two aren't mixed in one listing.)
+        var plus = false
+        let inShare = !path.split(separator: "/", omittingEmptySubsequences: true).isEmpty
+        if inShare, let readdirplus = smbc_getFunctionReaddirPlus(ctx) {
+            while !call.ended, let f = readdirplus(ctx, dir) {
+                plus = true
+                guard let cName = f.pointee.name else { continue }
+                let name = String(cString: cName)
+                guard name != ".", name != "..", !name.isEmpty else { continue }
+                let isFolder = f.pointee.attrs & UInt16(SMBC_DOS_MODE_DIRECTORY) != 0
+                out.append(SMBEntry(name: name, kind: isFolder ? .folder : .file, size: isFolder ? nil : Int64(clamping: f.pointee.size),
+                                    modified: Date(timeIntervalSince1970: TimeInterval(f.pointee.mtime_ts.tv_sec))))
+            }
+        }
+        if !plus {
+            while !call.ended, let d = readdir(ctx, dir) {
+                let name = String(cString: UnsafeRawPointer(d).advanced(by: Self.nameOffset).assumingMemoryBound(to: CChar.self))
+                guard name != ".", name != "..", !name.isEmpty else { continue }
+                switch Int32(d.pointee.smbc_type) {
+                case SMBC_FILE_SHARE: if !name.hasSuffix("$") { out.append(SMBEntry(name: name, kind: .share)) }
+                case SMBC_DIR: out.append(SMBEntry(name: name, kind: .folder))
+                case SMBC_FILE: out.append(SMBEntry(name: name, kind: .file))
+                default: break      // workgroups, servers, printers, IPC, links
+                }
             }
         }
         _ = closedir(ctx, dir)
+        // Given up (its deadline): the caller has its answer already.
+        if call.ended { throw SMBError.timedOut }
+        guard !plus else { return out }
         // Sizes and dates: one round trip each. Other files (artwork, .nfo) aren't asked.
         let wanted = out.indices.filter { i in
             out[i].kind == .folder || out[i].kind == .file && (TitleParser.isMedia(out[i].name) || TitleParser.isSubtitle(out[i].name))
         }
         for i in wanted.prefix(Self.statLimit) {
+            if call.ended { throw SMBError.timedOut }
             var st = Darwin.stat()
             let address = SMBURL.address(host: host, path: SMBPath.join(path, out[i].name))
             guard statFn(ctx, address, &st) == 0 else { continue }
@@ -280,5 +316,32 @@ final class SMBClient: @unchecked Sendable {
             out[i].modified = Date(timeIntervalSince1970: TimeInterval(st.st_mtimespec.tv_sec))
         }
         return out
+    }
+}
+
+/// One SMB call across the queue and its deadlines (1.30.4): whether its
+/// work has started, and whether it has ended (answered or given up).
+final class SMBCall: @unchecked Sendable {
+    private let lock = NSLock()
+    private var started = false
+    private var done = false
+
+    /// Answered or given up: the work stops at its next entry.
+    var ended: Bool { lock.lock(); defer { lock.unlock() }; return done }
+
+    /// The work's turn: false when it was given up while it waited.
+    func start() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        if done { return false }
+        started = true
+        return true
+    }
+
+    /// True for the first to end the call. `onlyIfWaiting`: not once its work has started.
+    func end(onlyIfWaiting: Bool = false) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        if done || (onlyIfWaiting && started) { return false }
+        done = true
+        return true
     }
 }

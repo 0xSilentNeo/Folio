@@ -18,14 +18,22 @@ enum ContinueQueue {
     static func play(_ item: MediaItem) {
         pending?.cancel()
         let before = PlayerPresenter.current.map(ObjectIdentifier.init)
+        // A WebDAV file downloaded since (1.30.4): its library copy plays,
+        // from the stream's place when the copy has none of its own.
+        // Continue Watching went on streaming it.
+        let copy = downloadedCopy(of: item)
+        let own = copy.flatMap { HistoryStore.shared.entry(forURL: $0.path) }
+        let startAt = copy == nil ? nil : WatchedState.carriedPosition(own: own, others: [HistoryStore.shared.entry(forURL: item.url)])
+        let target = copy.map { own?.item ?? libraryItem($0) } ?? item
+        if let copy { dlog("player", "continue: \(copy.lastPathComponent) is downloaded: the library copy plays") }
         pending = Task { @MainActor in
             let t0 = Date()
-            if case .webdav = item.source {
+            if case .webdav = target.source {
                 // The player opens at once and the folder's other files join
                 // its queue when the listing comes (1.23.2): the listing took
                 // 1.2 s on Real-Debrid ("built in 1212 ms", 5 Nov log) before
                 // the file was even asked for.
-                let it = await webdavAddress(item)
+                let it = await webdavAddress(target)
                 guard !Task.isCancelled, PlayerPresenter.current.map(ObjectIdentifier.init) == before else { return }
                 PlayerPresenter.play(queue: [it], index: 0)
                 let opened = PlayerPresenter.current.map(ObjectIdentifier.init)
@@ -35,15 +43,36 @@ enum ContinueQueue {
                 if queue.count > 1 { player.model.adoptQueue(queue, index: index) }
                 return
             }
-            let (queue, index) = await build(item)
+            if target.streamPick != nil, !target.url.isEmpty {
+                // An addon episode with its stream, the same way (1.30.4): the
+                // season came from IMDb's episodes page (1.7-4 MB, up to 20 s)
+                // before the player opened, and the card did nothing meanwhile.
+                PlayerPresenter.play(queue: [target], index: 0)
+                let opened = PlayerPresenter.current.map(ObjectIdentifier.init)
+                let (queue, index) = await build(target)
+                guard !Task.isCancelled, let player = PlayerPresenter.current, ObjectIdentifier(player) == opened else { return }
+                dlog("player", String(format: "continue: %d item(s) in queue, starting at %d (built in %.0f ms, the player already open)", queue.count, index + 1, Date().timeIntervalSince(t0) * 1000))
+                if queue.count > 1 { player.model.adoptQueue(queue, index: index) }
+                return
+            }
+            let (queue, index) = await build(target)
             guard !Task.isCancelled else { return }
             guard PlayerPresenter.current.map(ObjectIdentifier.init) == before else {
                 dlog("player", "continue: another player opened while the queue was built; not replaced")
                 return
             }
             dlog("player", String(format: "continue: %d item(s) in queue, starting at %d (built in %.0f ms)", queue.count, index + 1, Date().timeIntervalSince(t0) * 1000))
-            PlayerPresenter.play(queue: queue, index: index)
+            PlayerPresenter.play(queue: queue, index: index, startAt: startAt)
         }
+    }
+
+    /// A WebDAV file's finished download, when its file is there (1.30.4).
+    @MainActor
+    static func downloadedCopy(of item: MediaItem) -> URL? {
+        guard case .webdav = item.source, let u = URL(string: item.url),
+              let d = DownloadManager.shared.items.last(where: { $0.state == .done && $0.url == u }),
+              FileManager.default.fileExists(atPath: d.destination.path) else { return nil }
+        return d.destination
     }
 
     /// A WebDAV episode saved under its download address (1.23.1 and older
@@ -73,7 +102,8 @@ enum ContinueQueue {
         // The old entry goes only when the new one is another entry: with
         // the same id, removing it removed the one just written, and the
         // episode left Continue Watching with its place (1.30.1).
-        if let e = HistoryStore.shared.entry(for: item.id) {
+        // A next-episode card isn't an entry (1.30.4): nothing to move.
+        if let e = HistoryStore.shared.entry(for: item.id), e.follows == nil {
             HistoryStore.shared.record(it, position: e.position, duration: e.duration)
             if it.id != e.id { HistoryStore.shared.remove(e) }
         }
@@ -116,13 +146,20 @@ enum ContinueQueue {
         let list = group.files.sorted(by: LibraryOrganizer.episodeOrder)
         let queue = list.map { u -> MediaItem in
             if u == file { return item }                       // keeps resume position, subtitles, hints
-            var m = MediaItem(url: u.path, title: TitleParser.clean(u.lastPathComponent), source: .local)
-            m.historyKey = u.path
-            let p = TitleParser.parse(u.lastPathComponent)
-            if p.episode != nil { m.anime = AnimeHint(title: p.title, episode: p.episode) }
-            return m
+            return libraryItem(u)
         }
         return (queue, list.firstIndex(of: file) ?? 0)
+    }
+
+    /// A library file as a queue item: its history key, and its show and
+    /// episode for the intro lookups. Also Continue Watching's next-episode
+    /// card (1.30.4, ContinueNext), so the card is the queue's own item.
+    static func libraryItem(_ u: URL) -> MediaItem {
+        var m = MediaItem(url: u.path, title: TitleParser.clean(u.lastPathComponent), source: .local)
+        m.historyKey = u.path
+        let p = TitleParser.parse(u.lastPathComponent)
+        if p.episode != nil { m.anime = AnimeHint(title: p.title, episode: p.episode) }
+        return m
     }
 
     @MainActor
@@ -145,11 +182,21 @@ enum ContinueQueue {
         guard media.count > 1, let index = media.firstIndex(where: { $0.url.absoluteString == item.url || $0.url.standardized == fileURL.standardized }) else { return nil }
         // On unless switched off, as everywhere else (1.30.2: off when never set here).
         let clean = UserDefaults.standard.object(forKey: SettingsKey.cleanTitles) as? Bool ?? true
-        let queue: [MediaItem] = media.enumerated().map { i, m in
-            if i == index { return item }
-            var mi = client.mediaItem(for: m, cleanTitles: clean)
+        func subtitles(_ m: DAVItem) -> [ExternalSubtitle] {
             // The browser's rule (1.30.2): a plain prefix gave "Ep 1" the subtitles of "Ep 10".
-            mi.subtitles = subs.filter { SubtitleMatch.belongs($0.name, to: m.name) }.map { ExternalSubtitle(url: $0.url.absoluteString, lang: nil, title: $0.name) }
+            subs.filter { SubtitleMatch.belongs($0.name, to: m.name) }.map { ExternalSubtitle(url: $0.url.absoluteString, lang: nil, title: $0.name) }
+        }
+        let queue: [MediaItem] = media.enumerated().map { i, m in
+            if i == index {
+                // A next-episode card's item (1.30.4) never had its folder's
+                // subtitles: they're added when the listing comes before the file.
+                guard item.subtitles.isEmpty else { return item }
+                var it = item
+                it.subtitles = subtitles(m)
+                return it
+            }
+            var mi = client.mediaItem(for: m, cleanTitles: clean)
+            mi.subtitles = subtitles(m)
             return mi
         }
         return (queue, index)
@@ -163,7 +210,8 @@ enum ContinueQueue {
         let parts = c.videoId.split(separator: ":")
         guard parts.count >= 3, let season = Int(parts[parts.count - 2]), let episode = Int(parts[parts.count - 1]) else { return nil }
         let eps = await IMDbSource.episodes(id: c.metaId, season: season).sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
-        let rest = eps.filter { ($0.episode ?? 0) > episode }
+        // Not those still to air (1.30.4): they have no streams to find.
+        let rest = eps.filter { ($0.episode ?? 0) > episode && !$0.airsLater() }
         guard !rest.isEmpty else { return nil }
         let queue = [item] + rest.map { v in
             AddonPlayback.placeholder(PlayContext(name: c.name, poster: c.poster, type: c.type, metaId: c.metaId, isAnime: c.isAnime,

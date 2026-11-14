@@ -181,6 +181,33 @@ enum PictureMode: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Below this on-screen scale Metal's frames are the video's own size
+    /// and the video layer scales them (1.30.4); 0: never. Balanced's
+    /// catmull_rom upscale was 3.1 of 3.8 ms a frame for 1080p at 1.22×
+    /// (14 Nov log). `custom`: Anime4K, shaders, mpv.conf scalers.
+    func nativeFramesBelow(custom: Bool) -> Double {
+        guard !custom else { return 0 }
+        switch self {
+        case .efficient: return 1.5
+        case .balanced: return 1.25
+        case .enhanced: return 0
+        }
+    }
+
+    /// mpv.conf picks scalers, a profile or shaders of its own (a line
+    /// that isn't a comment): its scaling is left to mpv (1.30.4).
+    static func confSetsScaling(_ conf: String) -> Bool {
+        for raw in conf.split(whereSeparator: \.isNewline) {
+            let line = raw.trimmingCharacters(in: .whitespaces)
+            guard !line.isEmpty, !line.hasPrefix("#") else { continue }
+            var key = (line.split(separator: "=", maxSplits: 1).first.map(String.init) ?? "")
+                .trimmingCharacters(in: .whitespaces).lowercased()
+            if key.hasPrefix("--") { key.removeFirst(2) }
+            if ["scale", "cscale", "dscale", "profile"].contains(key) || key.hasPrefix("glsl-shader") { return true }
+        }
+        return false
+    }
+
     static var current: PictureMode {
         get {
             let d = UserDefaults.standard

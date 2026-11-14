@@ -61,6 +61,9 @@ struct VideoSurface: UIViewRepresentable {
         private enum PanMode { case none, seek, brightness, volume }
         private var panMode: PanMode = .none
         private var panStartValue: Double = 0
+        /// The file a seeking swipe began on (1.30.4): its start was that
+        /// file's position, so it ends if another file loads under it.
+        private var panFile = 0
         private var longPressActive = false
         private var hudWork: DispatchWorkItem?
 
@@ -196,6 +199,7 @@ struct VideoSurface: UIViewRepresentable {
                     guard model.duration > 0 else { panMode = .none; return }
                     panMode = .seek
                     panStartValue = model.position
+                    panFile = model.loadToken
                     ui.scrubbing = true
                 } else {
                     // Vertical swipes: brightness on the outer left 25%, volume on
@@ -219,6 +223,16 @@ struct VideoSurface: UIViewRepresentable {
             case .changed:
                 switch panMode {
                 case .seek:
+                    // Another file opened under the finger (Up Next, the end of
+                    // the file): the swipe ends here, without a seek in it.
+                    guard model.loadToken == panFile else {
+                        dlog("player", "swipe to seek ended: another file opened under it")
+                        ui.scrubbing = false
+                        model.clock.scrubTime = nil
+                        hideHUD(after: 0.3)
+                        panMode = .none
+                        return
+                    }
                     let range = min(max(model.duration * 0.25, 90), 360)
                     let delta = Double(t.x / max(v.bounds.width, 1)) * range
                     let target = min(max(0, panStartValue + delta), model.duration)
@@ -245,7 +259,7 @@ struct VideoSurface: UIViewRepresentable {
                 case .none: break
                 }
             case .ended, .cancelled, .failed:
-                if panMode == .seek, let target = model.clock.scrubTime, g.state == .ended {
+                if panMode == .seek, let target = model.clock.scrubTime, g.state == .ended, model.loadToken == panFile {
                     model.seek(to: target)
                 }
                 ui.scrubbing = false

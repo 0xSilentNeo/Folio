@@ -248,9 +248,24 @@ final class ThumbLoader: ObservableObject {
                 again.run()
             }
         }
+        // The title was matched again (Fix Match, 1.30.4): Home's tiles kept
+        // their picture and details, as the load below stops at a key it has.
+        metaChanged = NotificationCenter.default.addObserver(forName: .folioMetadataChanged, object: nil, queue: .main) { [weak self] note in
+            MainActor.assumeIsolated {
+                guard let self, let pin = note.object as? String, let name = self.lookupName, let again = self.lastLoad,
+                      MetadataService.pinKey(TitleParser.parse(name)) == pin else { return }
+                self.loadedKey = nil
+                self.meta = nil
+                self.image = nil
+                again.run()
+            }
+        }
     }
 
-    deinit { if let saved { NotificationCenter.default.removeObserver(saved) } }
+    deinit {
+        if let saved { NotificationCenter.default.removeObserver(saved) }
+        if let metaChanged { NotificationCenter.default.removeObserver(metaChanged) }
+    }
 
     /// The item (and kind of picture) loaded last, whatever its size.
     private var loadedItem: String?
@@ -258,6 +273,9 @@ final class ThumbLoader: ObservableObject {
     /// The last load asked for, to run again when its saved frame arrives.
     private var lastLoad: (key: String, run: () -> Void)?
     nonisolated(unsafe) private var saved: NSObjectProtocol?
+    nonisolated(unsafe) private var metaChanged: NSObjectProtocol?
+    /// The file name the last load looks the metadata up by.
+    private var lookupName: String?
 
     /// Trace: the end of a key (a file name or an id), not the whole path.
     nonisolated static func short(_ key: String) -> String { String((key as NSString).lastPathComponent.prefix(60)) }
@@ -292,6 +310,7 @@ final class ThumbLoader: ObservableObject {
     func load(key: String, fileURL: URL?, artwork: String?, lookupName: String? = nil, preferMeta: Bool? = nil, art: Art = .wide,
               points: CGFloat = 300, hero: Int? = nil) {
         self.hero = hero
+        self.lookupName = lookupName
         lastLoad = (key, { [weak self] in
             self?.load(key: key, fileURL: fileURL, artwork: artwork, lookupName: lookupName, preferMeta: preferMeta, art: art, points: points, hero: hero)
         })
@@ -393,6 +412,7 @@ final class ThumbLoader: ObservableObject {
     /// Addon items ("type|metaId|videoId"): a 16:9 picture from IMDb by id —
     /// the episode still, else the title's backdrop — else the given poster.
     func loadAddonArt(key: String, ref: String, fallback: String?, points: CGFloat) {
+        lookupName = nil
         pixels = Self.pixels(points: points, hero: nil)
         let cacheKey = Self.cacheKey(key, art: .wide, pixels: pixels)
         guard loadedKey != cacheKey else { return }

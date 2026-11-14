@@ -30,13 +30,16 @@ enum AddonPlayback {
     /// A playable item from a picked stream.
     @MainActor
     static func makeItem(_ c: PlayContext, stream s: AddonStream, addon: InstalledAddon, extraSubtitles: [ExternalSubtitle]) -> MediaItem? {
-        guard let url = s.url else { return nil }
+        // Network streams only (1.30.4), as folio://play allows: an addon's
+        // link reached mpv whatever it was (edl://, lavfi://, a local path).
+        guard let url = s.url, AddonStream.isPlayable(url) else { return nil }
         var item = MediaItem(url: url, title: c.name, subtitle: c.videoLabel, source: .addon(name: addon.manifest.name))
         item.artwork = c.poster
         item.historyKey = "addon:\(c.videoId)"
         item.addonRef = "\(c.type)|\(c.metaId)|\(c.videoId)"
         item.headers = s.behaviorHints?.proxyHeaders?.request ?? [:]
-        let subs = (s.subtitles ?? []).map { ExternalSubtitle(url: $0.url, lang: $0.lang, title: $0.lang) } + extraSubtitles
+        let subs = ((s.subtitles ?? []).map { ExternalSubtitle(url: $0.url, lang: $0.lang, title: $0.lang) } + extraSubtitles)
+            .filter { AddonStream.isPlayable($0.url) }
         item.subtitles = Array(subs.prefix(40))
         // Remembered with the history entry, so Continue Watching can queue the
         // rest of the season from the same addon and release (the URL is set,
@@ -152,7 +155,12 @@ enum AddonPlayback {
     static func screen(_ pick: StreamPick) async -> Match {
         let c = pick.context
         guard let addon = addon(for: pick) else { return .other }       // gone: let you pick
-        guard let streams = try? await AddonAPI.streams(addon, type: c.type, id: c.videoId) else { return .none }
+        guard var streams = try? await AddonAPI.streams(addon, type: c.type, id: c.videoId) else { return .none }
+        // An empty answer may be this app's cache of an earlier one (1.30.4):
+        // asked once more of the addon itself before "nothing playable".
+        if !streams.contains(where: \.isPlayable), let again = try? await AddonAPI.streams(addon, type: c.type, id: c.videoId, fresh: true) {
+            streams = again
+        }
         recentStreams[recentKey(addon.id, c.videoId)] = (Date(), streams)
         guard streams.contains(where: \.isPlayable) else { return .none }
         if let s = sameRelease(streams, as: pick), let item = makeItem(c, stream: s, addon: addon, extraSubtitles: []) { return .same(item) }
@@ -208,6 +216,7 @@ enum AddonPlayback {
         for a in sources {
             Task { @MainActor in
                 let list = ((try? await a.fetch()) ?? [])
+                    .filter { AddonStream.isPlayable($0.url) }
                     .map { ExternalSubtitle(url: $0.url, lang: $0.lang, title: $0.lang) }
                 wait.left -= 1
                 if wait.open {
@@ -406,6 +415,9 @@ actor ResolvedLinks {
 
     private func save() {
         try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-        if let data = try? JSONEncoder().encode(entries ?? [:]) { try? data.write(to: file, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]) }
+        guard let data = try? JSONEncoder().encode(entries ?? [:]),
+              (try? data.write(to: file, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])) != nil else { return }
+        // Out of backups (1.30.4): debrid addresses, made from your key.
+        file.keepOutOfBackups()
     }
 }

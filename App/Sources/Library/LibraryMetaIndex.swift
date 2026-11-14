@@ -78,24 +78,43 @@ final class LibraryMetaIndex: ObservableObject {
         let t0 = Date()
         task = Task { [weak self] in
             var found = 0
+            // Published at most every 1.5 s, and at the end (1.30.4): a batch
+            // at a time, a first index of 1,000 titles redrew Home 84 times.
+            var pending: [String: MediaMeta] = [:]
+            var published = Date.distantPast
             for start in stride(from: 0, to: names.count, by: 12) {
                 let batch = Array(names[start..<min(start + 12, names.count)])
                 let answers = await ForYou.each(batch, limit: 3) { name in (name, await MetadataService.shared.lookup(filename: name)) }
                 guard let self, !Task.isCancelled else { return }
                 let at = Date()
-                var add = self.metas
                 for (name, meta) in answers {
                     self.looked[name] = at
-                    if let meta { add[name] = meta; found += 1 }
+                    if let meta { pending[name] = meta; found += 1 }
                 }
-                if add != self.metas { self.metas = add }
+                if at.timeIntervalSince(published) >= LibraryMetaIndex.publishEvery {
+                    self.publish(&pending)
+                    published = at
+                }
             }
             guard let self else { return }
+            self.publish(&pending)
             dlog("library", "metadata index: \(found) of \(names.count) title(s) found in \(Int(Date().timeIntervalSince(t0) * 1000)) ms")
             self.task = nil
             self.complete = true
             if self.again { self.again = false; self.update(self.files) }
         }
+    }
+
+    static let publishEvery: TimeInterval = 1.5
+
+    /// Answers waiting into `metas`, but not a name forgotten meanwhile (Fix
+    /// Match): it's looked up again.
+    private func publish(_ pending: inout [String: MediaMeta]) {
+        guard !pending.isEmpty else { return }
+        var add = metas
+        for (name, meta) in pending where looked[name] != nil { add[name] = meta }
+        pending = [:]
+        if add != metas { metas = add }
     }
 
     // MARK: Facts for the filters

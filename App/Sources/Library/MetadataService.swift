@@ -124,16 +124,28 @@ actor MetadataService {
         all[Self.pinKey(p)] = pin
         pins = all
         if let d = try? JSONEncoder().encode(all) { try? d.write(to: Self.pinsFile, options: .atomic) }
-        let prefix = p.title.lowercased() + "|"
-        for k in cache.keys where k.hasPrefix(prefix) { cache[k] = nil }
+        // Every entry the pin covers (1.30.4): by the parsed title, fixing
+        // from an OVA's page ("Show OVA") left the show's episodes ("Show")
+        // as they were, and the other way round.
+        let key = Self.pinKey(p)
+        for k in cache.keys where Self.pinKey(cacheKey: k) == key { cache[k] = nil }
         save()
         dlog("meta", "fix match: \(p.title) \(pin.map { "pinned to \($0.id)" } ?? "back to the automatic match")")
     }
 
-    private static func cacheKey(_ p: TitleParser.Parsed) -> String {
+    static func cacheKey(_ p: TitleParser.Parsed) -> String {
         var key = [p.title.lowercased(), p.year.map(String.init) ?? "", p.season.map(String.init) ?? "", p.episode.map(String.init) ?? ""].joined(separator: "|")
         if let x = p.extra { key += "|" + x.lowercased() + (p.part.map { String($0) } ?? "") + "|" + (p.subtitle?.lowercased() ?? "") }
         return key
+    }
+
+    /// The pin a cached entry follows, from its key (cacheKey's parts read
+    /// back into what pinKey looks at). 1.30.4.
+    static func pinKey(cacheKey k: String) -> String {
+        let c = k.components(separatedBy: "|")
+        guard c.count >= 4 else { return k }
+        let extra: String? = c.count > 4 ? (c[4].hasPrefix("movie") ? "Movie" : c[4]) : nil
+        return pinKey(TitleParser.Parsed(title: c[0], season: Int(c[2]), episode: Int(c[3]), year: Int(c[1]), resolution: nil, extra: extra))
     }
 
     /// What's kept for a file already, without asking IMDb (1.30.0: the

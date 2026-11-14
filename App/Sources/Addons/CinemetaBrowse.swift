@@ -27,6 +27,12 @@ enum CinemetaBrowse {
         return extra
     }
 
+    /// The genre is asked for (1.30.4): New's catalog takes the year in its place.
+    static func appliesGenre(_ manifest: AddonManifest, sort: BrowseModel.Sort, type: String) -> Bool {
+        guard let cat = catalog(in: manifest, sort: sort, type: type) else { return false }
+        return cat.id != "year"
+    }
+
     static func page(_ addon: InstalledAddon, sort: BrowseModel.Sort, type: String, genre: String?, year: String, skip: Int) async throws -> [MetaItem] {
         guard let cat = catalog(in: addon.manifest, sort: sort, type: type) else { return [] }
         return try await AddonAPI.catalog(addon, cat, extra: extra(for: cat, genre: genre, year: year, skip: skip))

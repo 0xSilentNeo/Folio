@@ -6,6 +6,8 @@ import QuartzCore
 struct MetaDetailView: View {
     let preview: MetaItem
     let sourceAddon: InstalledAddon?
+    /// The season to open on (1.30.4): Airing now's episode's, not Season 1.
+    var openSeason: Int? = nil
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var meta: MetaItem?
     @State private var season: Int = 1
@@ -32,6 +34,12 @@ struct MetaDetailView: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     /// The title's details have been asked for (the kids profile decides on them, not on the list's tile).
     @State private var loaded = false
+    /// They came (1.30.4): IMDb's or the addon's own, not the tile's stand-in
+    /// after they failed. The kids profile went by the tile's genres then.
+    @State private var detailsKnown = false
+    /// The season's episodes came back empty (1.30.4), and Try Again asks again.
+    @State private var episodesFailed = false
+    @State private var episodesAttempt = 0
     @AppStorage(SettingsKey.castPosition) private var castPosition = "bottom"
     @AppStorage(SettingsKey.showRatings) private var showRatings = true
 
@@ -41,14 +49,44 @@ struct MetaDetailView: View {
     private var allSeasons: [Int] { usesIMDb ? seasons : m.seasons }
     private var allVideos: [MetaVideo] { usesIMDb ? episodes : (m.videos ?? []) }
     private var isSeries: Bool { m.type != "movie" }
-    private var seasonEpisodes: [MetaVideo] {
+    private var seasonEpisodes: [MetaVideo] { seasonLists.all }
+
+    /// The season's episodes that are out (1.30.4): what the big button, ⋯
+    /// Play and a row's queue play. One not out yet was queued, and its
+    /// streams page had nothing.
+    private var airedEpisodes: [MetaVideo] { seasonLists.aired }
+
+    /// At most this many episodes in a queue (1.30.4): a long anime's row
+    /// queued every later episode, about 1,100 placeholders.
+    static let queueCap = 50
+
+    /// The rest of the season from `v`, aired and capped; empty when nothing follows.
+    private func queue(from v: MetaVideo) -> [MetaVideo] {
+        Array(AddonPlayback.seasonVideos(from: v, in: airedEpisodes).prefix(Self.queueCap))
+    }
+
+    /// Worked out once per change, not at each of the ~7 places a body asks (1.30.4).
+    private var seasonLists: (all: [MetaVideo], aired: [MetaVideo]) {
+        let videos = allVideos
+        let key = EpisodesKey(season: season, imdb: usesIMDb, seasons: seasons.count, count: videos.count, first: videos.first?.id,
+                              last: videos.last?.id, dates: tvDates.count, minute: Int(Date().timeIntervalSince1970 / 60))
+        if let memo = episodesMemo.value, memo.key == key { return (memo.all, memo.aired) }
         let now = Date()
         // Once, not per episode: `m.seasons` builds a set and sorts it each
         // time (quadratic for an addon anime with a thousand episodes).
         let anySeason = allSeasons.isEmpty
-        return allVideos.filter { anySeason || $0.season == season }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
+        let all = videos.filter { anySeason || $0.season == season }.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
             .map { checkedDate($0, now: now) }
+        let aired = all.filter { !$0.airsLater(now: now) }
+        episodesMemo.value = (key, all, aired)
+        return (all, aired)
     }
+    private struct EpisodesKey: Equatable {
+        var season: Int; var imdb: Bool; var seasons: Int; var count: Int; var first: String?; var last: String?; var dates: Int; var minute: Int
+    }
+    /// Not state: what's remembered here never redraws anything.
+    private final class EpisodesMemo { var value: (key: EpisodesKey, all: [MetaVideo], aired: [MetaVideo])? }
+    @State private var episodesMemo = EpisodesMemo()
 
     /// An episode's date, checked against TVmaze when it's out lately or
     /// still to come (1.22.6). IMDb's dates for coming episodes are often
@@ -80,18 +118,34 @@ struct MetaDetailView: View {
     /// only when they couldn't be loaded.
     private var kidsVerdict: KidsRules.Verdict? {
         guard let limits = kids.activeLimits else { return nil }
+        // Only on the title's own details (1.30.4): without them, the tile's genres were a guess.
+        guard detailsKnown else { return .unknown }
         let v = KidsRules.verdict(m, limits: limits)
         return v == .allowed ? nil : v
     }
 
     var body: some View {
+        gated
+            // On every branch (1.30.4): on the page alone, a streams page
+            // pushed from it stayed when the kids profile blocked the title.
+            .navigationDestination(item: $go) { t in
+                // Zooms only from a page that draws its own bar (see pageButtons).
+                StreamsView(meta: m, video: t.video, seasonVideos: t.queue, fromStart: t.fromStart, startAt: t.startAt)
+                    .zoomDestination(t.source, in: streamsNS, zoom: zooms)
+            }
+            .onChange(of: kids.isOn) { _, on in if on { go = nil } }
+    }
+
+    @ViewBuilder
+    private var gated: some View {
         if kids.isOn && !loaded {
             LoadingQuips()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.background.ignoresSafeArea())
                 .pageButtons(zooms: zooms, back: { dismiss() }) { EmptyView() }
                 .landscapeTopGap()
-                .task { await load(); loaded = true }
+                // Not "loaded" when it was cancelled (1.30.4): the stand-in was judged then.
+                .task { await load(); if !Task.isCancelled { loaded = true } }
         } else if let v = kidsVerdict {
             KidsBlockedView(verdict: v)
                 .pageButtons(zooms: zooms, back: { dismiss() }) { EmptyView() }
@@ -149,7 +203,10 @@ struct MetaDetailView: View {
                             Text((isSeries ? "Created by " : "Directed by ") + d.prefix(3).joined(separator: ", "))
                                 .font(.footnote).foregroundStyle(.secondary)
                         }
-                        TitleLinks(name: m.name, year: m.releaseInfo.map { String($0.prefix(4)) }, type: m.type, imdbID: usesIMDb ? resolvedID : nil)
+                        // Not in the kids profile (1.30.4), as on the library's page: they lead out of Folio.
+                        if !kids.isOn {
+                            TitleLinks(name: m.name, year: m.releaseInfo.map { String($0.prefix(4)) }, type: m.type, imdbID: usesIMDb ? resolvedID : nil)
+                        }
                     }
                     .padding(.horizontal, side)
                     .padding(.top, 14)
@@ -172,23 +229,19 @@ struct MetaDetailView: View {
         // Landscape phone: the floating tab bar sat on Track and the episodes,
         // as it did on the library's title page (1.22.1).
         .toolbar(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
-        .navigationDestination(item: $go) { t in
-            // Zooms only from a page that draws its own bar (see pageButtons).
-            StreamsView(meta: m, video: t.video, seasonVideos: t.queue, fromStart: t.fromStart, startAt: t.startAt)
-                .zoomDestination(t.source, in: streamsNS, zoom: zooms)
-        }
-        .task { LibTrace.title.event("appeared", "addon title page appeared"); await load(); loaded = true }
+        .task { LibTrace.title.event("appeared", "addon title page appeared"); await load(); if !Task.isCancelled { loaded = true } }
         // The library's files of this title (1.30.0), once it's known which
         // title it is, and again when the library or its metadata changes.
         .task(id: LibraryKey(imdb: usesIMDb ? resolvedID : "", files: local.files.count, metas: libraryMeta.metas.count)) {
             let found = usesIMDb ? await WatchedState.libraryFiles(imdb: resolvedID) : [:]
             if !Task.isCancelled, found != libraryFiles { libraryFiles = found }
         }
-        .task(id: season) {
+        .task(id: EpisodesLoad(season: season, attempt: episodesAttempt)) {
             guard usesIMDb, isSeries, !seasons.isEmpty else { return }
             loadingEpisodes = true
+            episodesFailed = false
             let eps = await IMDbSource.episodes(id: resolvedID, season: season)
-            if !Task.isCancelled { episodes = eps; loadingEpisodes = false; logDateChecks() }
+            if !Task.isCancelled { episodes = eps; loadingEpisodes = false; episodesFailed = eps.isEmpty; logDateChecks() }
         }
         // A running series' dates, from TVmaze (1.22.6). Not anime: TVmaze
         // and IMDb often number their seasons differently.
@@ -303,20 +356,36 @@ struct MetaDetailView: View {
 
     @ViewBuilder
     private var findButton: some View {
-        let eps = seasonEpisodes
-        if isSeries, eps.count > 1 {
+        let lists = seasonLists
+        let eps = lists.aired
+        if idPending {
+            // Until the IMDb id is known (1.30.4, idPending).
+            TiltPlayButton(title: "Find streams", subtitle: "loading…", shimmer: false) {}
+                .opacity(0.55).allowsHitTesting(false)
+        } else if isSeries, eps.count > 1 {
             // Whole season, from the first episode not finished yet, in the
             // library or from a stream (1.30.0: only streams counted, so a
             // season watched from your own files began at episode 1 again).
+            // Of the episodes out (1.30.4).
             let startAt = WatchedState.firstUnwatched(eps.map { state($0.id)?.isFinished == true })
             let ep = eps[startAt]
             TiltPlayButton(title: startAt == 0 ? (season == 0 ? "Play all specials" : "Play Season \(season)") : "Continue Season \(season)",
                            subtitle: startAt == 0 ? "\(eps.count) episodes" : "from episode \(ep.episode ?? startAt + 1)",
                            icon: "play.square.stack.fill") {
-                go = StreamsTarget(video: ep, queue: Array(eps[startAt...]), startAt: carried(ep.id))
+                go = StreamsTarget(video: ep, queue: Array(eps[startAt...].prefix(Self.queueCap)), startAt: carried(ep.id))
             }
         } else if isSeries, eps.count == 1, let ep = eps.first {
             TiltPlayButton(title: "Find streams", subtitle: ep.title) { go = StreamsTarget(video: ep, queue: [], startAt: carried(ep.id)) }
+        } else if isSeries, !lists.all.isEmpty {
+            // None of the season's episodes is out yet (1.30.4).
+            TiltPlayButton(title: "Not out yet", subtitle: season == 0 ? "Specials" : "Season \(season)", shimmer: false) {}
+                .opacity(0.55).allowsHitTesting(false)
+        } else if isSeries, episodesFailed, !loadingEpisodes {
+            // The season's episodes didn't come (1.30.4): "loading episodes…" stayed for good.
+            TiltPlayButton(title: "Try Again", subtitle: "Couldn't load the episodes", icon: "arrow.clockwise") {
+                loadingEpisodes = true
+                episodesAttempt += 1
+            }
         } else if !isSeries || (!loadingEpisodes && allSeasons.isEmpty) {
             let resume = resumeLabel(for: m.id)
             TiltPlayButton(title: resume == nil ? "Find streams" : "Resume", subtitle: resume) { go = StreamsTarget(video: nil, queue: [], startAt: carried(m.id)) }
@@ -344,12 +413,12 @@ struct MetaDetailView: View {
     /// What the big button would play, from the beginning: only when that
     /// has a place to resume from (the library's "Start over", 1.30.0).
     private var startOverTarget: StreamsTarget? {
-        let eps = seasonEpisodes
+        let eps = airedEpisodes
         if isSeries {
             guard !eps.isEmpty else { return nil }
             let i = nextIndex(eps)
             guard state(eps[i].id)?.canResume == true else { return nil }
-            return StreamsTarget(video: eps[i], queue: eps.count > 1 ? Array(eps[i...]) : [], fromStart: true)
+            return StreamsTarget(video: eps[i], queue: eps.count > 1 ? Array(eps[i...].prefix(Self.queueCap)) : [], fromStart: true)
         }
         guard state(m.id)?.canResume == true else { return nil }
         return StreamsTarget(video: nil, queue: [], fromStart: true)
@@ -359,6 +428,13 @@ struct MetaDetailView: View {
 
     /// The task that finds the library's files of this title runs again when any of these changes.
     private struct LibraryKey: Hashable { var imdb: String; var files: Int; var metas: Int }
+    /// The season's episodes are asked for again when either changes.
+    private struct EpisodesLoad: Hashable { var season: Int; var attempt: Int }
+
+    /// A TMDB or AniList title whose IMDb id is still being looked up
+    /// (1.30.4): addons were asked for "tmdb:…" and found nothing, and
+    /// opening the streams page cancelled the lookup.
+    private var idPending: Bool { meta == nil && !loaded && (preview.id.hasPrefix("tmdb:") || preview.id.hasPrefix("anilist:")) }
 
     /// The library's files of an episode (a film: of the title).
     private func files(for videoID: String) -> [URL] {
@@ -406,9 +482,11 @@ struct MetaDetailView: View {
                 return true
             }
             if isSeries {
-                if !eps.isEmpty {
-                    let i = nextIndex(eps)
-                    Button { go = StreamsTarget(video: eps[i], queue: eps.count > 1 ? Array(eps[i...]) : [], startAt: carried(eps[i].id)) } label: { Label("Play", systemImage: "play") }
+                // As the big button: of the episodes out, at most queueCap (1.30.4).
+                let aired = airedEpisodes
+                if !aired.isEmpty {
+                    let i = nextIndex(aired)
+                    Button { go = StreamsTarget(video: aired[i], queue: aired.count > 1 ? Array(aired[i...].prefix(Self.queueCap)) : [], startAt: carried(aired[i].id)) } label: { Label("Play", systemImage: "play") }
                 }
                 if !out.isEmpty {
                     WatchedMenuItems(units: out.map { unit($0.id) }, scope: allSeasons.count > 1 ? .season : .all, item: historyItem)
@@ -417,7 +495,7 @@ struct MetaDetailView: View {
                 Button { go = StreamsTarget(video: nil, queue: [], startAt: carried(m.id)) } label: { Label("Play", systemImage: "play") }
                 WatchedMenuItems(units: [unit(m.id)], item: historyItem)
             }
-            if usesIMDb, let link = URL(string: "https://www.imdb.com/title/\(resolvedID)/") {
+            if !kids.isOn, usesIMDb, let link = URL(string: "https://www.imdb.com/title/\(resolvedID)/") {
                 ShareLink(item: link) { Label("Share", systemImage: "square.and.arrow.up") }
             }
         } label: {
@@ -462,7 +540,7 @@ struct MetaDetailView: View {
                     // The rest of the season follows a stream picked from an
                     // episode's own row too (1.30.3): it queued that episode
                     // alone, so nothing played after it. Built on the tap, not per row.
-                    Button { go = StreamsTarget(video: v, queue: AddonPlayback.seasonVideos(from: v, in: seasonEpisodes), source: "ep|" + v.id, startAt: carried(v.id)) } label: {
+                    Button { go = StreamsTarget(video: v, queue: queue(from: v), source: "ep|" + v.id, startAt: carried(v.id)) } label: {
                         // A tracked episode's time is the badge's, in your time zone: the
                         // row's own date is the network's (IMDb's US date), so it's left out.
                         // Only under "Airs…": the "New" badge has no date (1.22.6; until
@@ -481,7 +559,7 @@ struct MetaDetailView: View {
                     // As the library's episode rows have (1.30.0).
                     .contextMenu {
                         if !notOut {
-                            Button { go = StreamsTarget(video: v, queue: AddonPlayback.seasonVideos(from: v, in: seasonEpisodes), startAt: carried(v.id)) } label: { Label("Play", systemImage: "play") }
+                            Button { go = StreamsTarget(video: v, queue: queue(from: v), startAt: carried(v.id)) } label: { Label("Play", systemImage: "play") }
                             WatchedMenuItems(units: [unit(v.id)], item: historyItem)
                         }
                     }
@@ -506,6 +584,8 @@ struct MetaDetailView: View {
             guard let imdb = await AnimeLink.imdbID(for: preview) else { return }
             id = imdb
         }
+        // A title saved under its TMDB or AniList id moves to its IMDb one (1.30.4).
+        if id != preview.id { WatchlistStore.shared.migrate(from: preview.id, to: id) }
         if id.hasPrefix("tt") {
             let t0 = CACurrentMediaTime()
             let signpost = LibTrace.title.begin("title page data")
@@ -534,6 +614,7 @@ struct MetaDetailView: View {
                 }
                 if full.type == "movie" && preview.type == "series" { full.type = "series" }
                 meta = full
+                detailsKnown = true
             } else {
                 // Left before the details came (Find streams tapped early): the
                 // load was cancelled, not empty. Keep `meta` unset so coming back
@@ -550,11 +631,13 @@ struct MetaDetailView: View {
                 // after a season you'd tapped meanwhile, it replaced that
                 // season's episodes: the list went empty and the button stuck
                 // on "loading episodes…" (review, 2 Nov).
-                if let first = seasons.first, season != first {
+                // Airing now's season when the title has it (1.30.4), else the first.
+                let start = openSeason.flatMap { seasons.contains($0) ? $0 : nil } ?? seasons.first
+                if let first = start, season != first {
                     season = first
-                } else if let first = seasons.first {
+                } else if let first = start {
                     let eps = await IMDbSource.episodes(id: id, season: first)
-                    if season == first { episodes = eps; loadingEpisodes = false }
+                    if season == first { episodes = eps; loadingEpisodes = false; episodesFailed = eps.isEmpty }
                 } else {
                     loadingEpisodes = false
                 }
@@ -565,6 +648,7 @@ struct MetaDetailView: View {
             if var full = try? await AddonAPI.meta(addon, type: preview.type, id: id) {
                 full.poster = preview.poster ?? full.poster
                 meta = full
+                detailsKnown = true
             }
             if let first = meta?.seasons.first { season = first }
         }

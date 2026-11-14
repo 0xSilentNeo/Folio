@@ -214,8 +214,11 @@ final class BrowseModel: ObservableObject {
         // A page of titles already shown: the next, up to three in a row.
         for _ in 0..<3 {
             var page: [MetaItem]
+            /// What Cinemeta sent, before any title was left out: where its next page starts.
+            let count: Int
             do {
                 page = try await CinemetaBrowse.page(addon, sort: sort, type: type, genre: genre, year: year, skip: cinemetaSkip)
+                count = page.count
             } catch {
                 dlog("discover", "Cinemeta \(sort.rawValue) \(type) failed: \(error.localizedDescription)")
                 guard gen == generation else { return true }
@@ -225,16 +228,24 @@ final class BrowseModel: ObservableObject {
                 }
                 return true        // asked again on reaching the end
             }
-            if kids { page = Self.tagged(page, genre: genre) }
+            // New is Cinemeta's catalog by year: it can't be asked for a
+            // genre too (1.30.4). The genre is kept by the titles' own, and
+            // they aren't labelled with it (the kids profile's Family let
+            // any untagged title through as Family).
+            if CinemetaBrowse.appliesGenre(addon.manifest, sort: sort, type: type) {
+                if kids { page = Self.tagged(page, genre: genre) }
+            } else if let genre {
+                page = page.filter { m in m.genres?.isEmpty != false || m.genres!.contains { $0.caseInsensitiveCompare(genre) == .orderedSame } }
+            }
             dlog("discover", "Cinemeta \(sort.rawValue) \(type)\(genre.map { " · " + $0 } ?? ""): \(page.count) title(s) from \(cinemetaSkip)\(gen == generation ? "" : " (stale)")")
             guard gen == generation else { return true }
-            if page.isEmpty {
+            if count == 0 {
                 exhausted = true
                 // Nothing at all for this sort or genre: the next source may have it.
                 if metas.isEmpty && !last { return false }
                 return true
             }
-            cinemetaSkip += page.count
+            cinemetaSkip += count
             let known = Set(metas.map(\.id))
             let new = page.filter { !known.contains($0.id) }
             metas += new
@@ -336,6 +347,17 @@ struct DiscoverView: View {
     @State private var showPlatformSettings = false
     /// Pulls to refresh so far (the Airing now row reloads on each).
     @State private var refreshCount = 0
+    /// The title page open from the grid or For you (1.30.4), by value: a
+    /// link inside a list that empties itself (a reload as the kids profile
+    /// or a source changes) took the page it had pushed with it, and Back
+    /// couldn't close it.
+    @State private var openTitle: OpenTitle?
+
+    struct OpenTitle: Hashable {
+        let meta: MetaItem
+        /// The tile it zooms out of.
+        let zoom: String
+    }
     /// What decides Discover's source (1.27.1): a change reloads the grid.
     @AppStorage(DiscoverSource.orderKey) private var sourceOrder = ""
     @AppStorage("tmdbApiKey") private var tmdbKey = ""
@@ -362,9 +384,14 @@ struct DiscoverView: View {
                         platformStrip(margin)
                         // Installed addons' catalogs (1.27.0), not in the kids
                         // profile: what they carry isn't rated.
+                        // A lazy stack of their own (1.30.4): each row asks its
+                        // addon as it comes on screen, not all at once; a pull
+                        // to refresh asks again those that failed.
                         if !kids.isOn {
-                            ForEach(store.discoverCatalogs) { ref in
-                                CatalogRow(addon: ref.addon, catalog: ref.catalog, margin: margin)
+                            LazyVStack(alignment: .leading, spacing: 24) {
+                                ForEach(store.discoverCatalogs) { ref in
+                                    CatalogRow(addon: ref.addon, catalog: ref.catalog, margin: margin, refresh: refreshCount)
+                                }
                             }
                         }
                         gridSection(margin: margin, cols: cols, shown: shown, minHeight: geo.size.height)
@@ -409,6 +436,21 @@ struct DiscoverView: View {
                 browse.reload()
             }
             .sheet(isPresented: $showPlatformSettings) { PlatformSettingsView() }
+            .navigationDestination(item: $openTitle) { t in
+                MetaDetailView(preview: t.meta, sourceAddon: nil).zoomDestination(t.zoom, in: zoomNS)
+            }
+        }
+    }
+
+    /// The grid's next page. In the kids profile a page can hold only titles
+    /// it hides, and nothing new came on screen to ask for the next: up to
+    /// three pages more (1.30.4).
+    private func loadMoreShown() async {
+        for _ in 0..<3 {
+            guard !browse.loading else { return }
+            let before = browse.shown(kids.activeLimits).count
+            await browse.loadMore()
+            guard kids.isOn, !browse.exhausted, browse.shown(kids.activeLimits).count == before else { return }
         }
     }
 
@@ -437,12 +479,12 @@ struct DiscoverView: View {
                     .accessibilityHidden(true)
                 }
                 ForEach(shown) { m in
-                    NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS) } label: {
+                    Button { openTitle = OpenTitle(meta: m, zoom: m.id) } label: {
                         PosterCard(meta: m, width: nil, zoom: ZoomSource(m.id, zoomNS))
                     }
                         .buttonStyle(.plain)
                         .contextMenu { WatchlistMenuButton(meta: m) }
-                        .onAppear { if m.id == shown.last?.id { Task { await browse.loadMore() } } }
+                        .onAppear { if m.id == shown.last?.id { Task { await loadMoreShown() } } }
                 }
             }
             .padding(.horizontal, margin)
@@ -544,7 +586,7 @@ struct DiscoverView: View {
                             .accessibilityHidden(true)
                         }
                         ForEach(metas) { m in
-                            NavigationLink { MetaDetailView(preview: m, sourceAddon: nil).zoomDestination("fy|" + m.id, in: zoomNS) } label: {
+                            Button { openTitle = OpenTitle(meta: m, zoom: "fy|" + m.id) } label: {
                                 PosterCard(meta: m, width: 118, zoom: ZoomSource("fy|" + m.id, zoomNS))
                             }
                             .buttonStyle(.plain)

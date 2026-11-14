@@ -98,7 +98,13 @@ struct TitleHeroView: View {
 
     /// A series page (all episodes merged) or a single file.
     init(group: LibraryGroup, focus: URL? = nil) {
-        self.group = group
+        // A folder of several titles is the file's own title here (1.30.4):
+        // as the folder, Play queued every film and Delete All deleted them.
+        if group.folder != nil, let f = focus ?? group.files.first {
+            self.group = LibraryGroup.ownTitle(of: f, in: group)
+        } else {
+            self.group = group
+        }
         self.focus = focus
     }
     init(file: URL) {
@@ -128,11 +134,13 @@ struct TitleHeroView: View {
     private var siblings: [URL] {
         let files = local.files, current = file
         if let m = memo.siblings, m.group == group.id, m.files == files, m.file == current { return m.list }
-        let live = files.filter { group.files.contains($0) }
+        // A set (1.30.4): `contains` on the array was the library times the title's files.
+        let own = Set(group.files)
+        let live = files.filter { own.contains($0) }
         let list: [URL]
         if group.isSeries {
             let show = TitleParser.parse(current.lastPathComponent).title.lowercased()
-            let extra = files.filter { f in !group.files.contains(f) && TitleParser.parse(f.lastPathComponent).title.lowercased() == show }
+            let extra = files.filter { f in !own.contains(f) && TitleParser.parse(f.lastPathComponent).title.lowercased() == show }
             list = (live + extra).sorted(by: LibraryOrganizer.episodeOrder)
         } else {
             list = live.sorted(by: LibraryOrganizer.episodeOrder)
@@ -229,7 +237,8 @@ struct TitleHeroView: View {
                         if castPosition == "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c, inset: side > base ? side : 16).padding(.horizontal, -side) }
                         if siblings.count > 1 { episodes } else if !untiledEpisodes.isEmpty { comingUp.padding(.top, 10) }
                         if castPosition != "top", let c = meta?.credits, !c.isEmpty { CastStrip(credits: c, inset: side > base ? side : 16).padding(.horizontal, -side) }
-                        if let m = meta, m.id.hasPrefix("tt") {
+                        // Not in the kids profile (1.30.4): IMDb and Wikipedia lead out of Folio.
+                        if !kids.isOn, let m = meta, m.id.hasPrefix("tt") {
                             TitleLinks(name: m.name, year: m.year.map { String($0.prefix(4)) }, type: m.type, imdbID: m.id)
                         }
                       }
@@ -447,8 +456,9 @@ struct TitleHeroView: View {
                         airing: airing.map { a in { airingMark($0, a) } },
                         linkedKey: links.isEmpty ? nil : { linkedKey($0) },
                         swipe: { f in
-                            [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = f },
-                             state(f)?.isFinished == true
+                            // No Delete in the kids profile (1.30.4): it took no passcode.
+                            (kids.isOn ? [] : [SwipeAction(title: "Delete", icon: "trash", tint: .red) { pendingDelete = f }])
+                            + [state(f)?.isFinished == true
                                 ? SwipeAction(title: "Unwatched", icon: "eye.slash", tint: .gray) { setWatched(f, false) }
                                 : SwipeAction(title: "Watched", icon: "eye", tint: Theme.swipeTint) { setWatched(f, true) }]
                         },
@@ -472,17 +482,20 @@ struct TitleHeroView: View {
             } else {
                 WatchedMenuItems(units: [unit(file)], item: HistoryStore.libraryItem)
             }
-            // The title's IMDb link, as Discover's page shares it (1.30.0).
-            if let m = meta, m.id.hasPrefix("tt"), let link = URL(string: "https://www.imdb.com/title/\(m.id)/") {
-                ShareLink(item: link) { Label("Share", systemImage: "square.and.arrow.up") }
-            }
-            // The wrong title, poster or episode names (1.29.0).
-            Button { fixingMatch = true } label: { Label("Fix Match…", systemImage: "wand.and.stars") }
-            if siblings.count > 1 {
-                Button(role: .destructive) { confirmDelete = true } label: { Label("Delete \(deleteLabel)", systemImage: "trash") }
-                Button(role: .destructive) { confirmDeleteAll = true } label: { Label("Delete All \(siblings.count) Episodes", systemImage: "trash") }
-            } else {
-                Button(role: .destructive) { confirmDelete = true } label: { Label("Delete File", systemImage: "trash") }
+            // Share, Fix Match and Delete aren't in the kids profile (1.30.4): none asked for the passcode.
+            if !kids.isOn {
+                // The title's IMDb link, as Discover's page shares it (1.30.0).
+                if let m = meta, m.id.hasPrefix("tt"), let link = URL(string: "https://www.imdb.com/title/\(m.id)/") {
+                    ShareLink(item: link) { Label("Share", systemImage: "square.and.arrow.up") }
+                }
+                // The wrong title, poster or episode names (1.29.0).
+                Button { fixingMatch = true } label: { Label("Fix Match…", systemImage: "wand.and.stars") }
+                if siblings.count > 1 {
+                    Button(role: .destructive) { confirmDelete = true } label: { Label("Delete \(deleteLabel)", systemImage: "trash") }
+                    Button(role: .destructive) { confirmDeleteAll = true } label: { Label("Delete All \(siblings.count) Episodes", systemImage: "trash") }
+                } else {
+                    Button(role: .destructive) { confirmDelete = true } label: { Label("Delete File", systemImage: "trash") }
+                }
             }
         } label: {
             PageButtonLabel(systemName: "ellipsis", width: 56)
@@ -543,6 +556,30 @@ struct TitleHeroView: View {
 
     private func restart() {
         play(file, fromStart: true)
+    }
+}
+
+// MARK: - One title of a folder (1.30.4)
+
+extension LibraryGroup {
+    /// The show `file` is an episode of, or the film alone, from a folder of
+    /// several titles: its title page and the search see that title, not the folder.
+    static func ownTitle(of file: URL, in folder: LibraryGroup) -> LibraryGroup {
+        let key = LibraryOrganizer.titleKey(file)
+        let same = folder.files.filter { LibraryOrganizer.titleKey($0) == key }
+        return ofTitle(same.isEmpty ? [file] : same)
+    }
+
+    /// A title's group from its files, as the library makes one (LibraryOrganizer.groups).
+    static func ofTitle(_ files: [URL]) -> LibraryGroup {
+        let list = files.sorted(by: LibraryOrganizer.episodeOrder)
+        guard let first = list.first else { return LibraryGroup(id: "", title: "", files: [], isSeries: false, date: .distantPast, size: 0) }
+        let key = LibraryOrganizer.titleKey(first)
+        let series = key.hasPrefix("s|")
+        let infos = list.map { LibraryOrganizer.info($0) }
+        return LibraryGroup(id: key, title: series ? TitleParser.parse(first.lastPathComponent).title : TitleParser.clean(first.lastPathComponent),
+                            files: list, isSeries: series,
+                            date: infos.map(\.date).max() ?? .distantPast, size: infos.map(\.size).reduce(0, +))
     }
 }
 
@@ -623,6 +660,7 @@ struct LibraryList: View {
     var delete: ((URL) -> Void)? = nil
     let play: (URL) -> Void
     @ObservedObject private var history = HistoryStore.shared
+    @ObservedObject private var kids = KidsProfile.shared
     @AppStorage(SettingsKey.openTitlePage) private var openTitlePage = true
     @State private var openRow: String?
     /// Without a question from the caller, the list asks its own. Until 1.20.3
@@ -680,9 +718,12 @@ struct LibraryList: View {
             Button { play(f) } label: { Label("Play", systemImage: "play") }
             WatchedMenuItems(units: [WatchedState.markKeys(own: [f.path], others: [linkedKey?(f)].compactMap { $0 }) { history.entry(for: $0) != nil }],
                              item: HistoryStore.libraryItem)
-            Button(role: .destructive) {
-                pending.wrappedValue = f
-            } label: { Label("Delete", systemImage: "trash") }
+            // Not in the kids profile (1.30.4): it took no passcode.
+            if !kids.isOn {
+                Button(role: .destructive) {
+                    pending.wrappedValue = f
+                } label: { Label("Delete", systemImage: "trash") }
+            }
         }
     }
 

@@ -70,7 +70,26 @@ enum AiringBackground {
         if !ok { dlog("tracking", "background refresh not registered (not in Info.plist?)") }
     }
 
+    /// The task completed once (1.30.4): when the work ends, or at once when
+    /// iOS's time is up. The expiry only cancelled the work, which went on
+    /// waiting for posters' downloads, so it completed late, if at all.
+    private final class Completion: @unchecked Sendable {
+        private let lock = NSLock()
+        private var done = false
+        private let task: BGTask
+        init(_ task: BGTask) { self.task = task }
+
+        func complete(_ success: Bool) {
+            lock.lock()
+            let first = !done
+            done = true
+            lock.unlock()
+            if first { task.setTaskCompleted(success: success) }
+        }
+    }
+
     private static func run(_ task: BGAppRefreshTask) {
+        let completion = Completion(task)
         let work = Task { @MainActor in
             let store = TrackingStore.shared
             await store.whenLoaded()
@@ -91,9 +110,13 @@ enum AiringBackground {
                 // Not while Test is on (1.28.6): each background run sent its whole run again.
                 if !NotifyPrefs.test { NotifyCenter.replan("background refresh") }
             }
-            task.setTaskCompleted(success: !Task.isCancelled)
+            completion.complete(!Task.isCancelled)
         }
-        task.expirationHandler = { work.cancel() }
+        task.expirationHandler = {
+            work.cancel()
+            dlog("tracking", "background refresh: iOS's time is up")
+            completion.complete(false)
+        }
     }
 
     /// Submitting can block (BGTaskScheduler docs): done on a queue of its own.

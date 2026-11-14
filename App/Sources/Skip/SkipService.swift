@@ -163,51 +163,95 @@ actor SkipService {
 
     // MARK: TV & films (IntroDB, TheIntroDB)
 
-    private var tvCache: [String: (lookup: SkipLookup, at: Date)] = [:]
+    /// `complete`: both services answered (an answer of "nothing" counts);
+    /// a lookup one of them failed is asked again sooner (1.30.4).
+    private var tvCache: [String: (lookup: SkipLookup, at: Date, complete: Bool)] = [:]
+    /// How long a lookup one service failed is kept before both are asked again.
+    private let partialTTL: TimeInterval = 60
 
     /// Both services are asked at once. They used to be asked one after the
     /// other, and IntroDB running into its 15 s timeout held the Skip button
     /// back until 15.5 s into each episode (29 Oct log: four episodes in a
-    /// row, the segments 15.5 s after the file loaded). IntroDB is still
-    /// preferred: its answer wins when it comes within 2 s of TheIntroDB's.
-    func lookupTV(imdbId: String, season: Int?, episode: Int?, duration: Double) async -> SkipLookup {
+    /// row, the segments 15.5 s after the file loaded). IntroDB is preferred
+    /// (merge): each kind of segment it has is its own.
+    ///
+    /// 1.30.4: the slower one is no longer cut off. Until then the lookup
+    /// ended 2 s after TheIntroDB's answer and cancelled IntroDB's request,
+    /// without a word in the log; 14 Nov, Tulsa King S01E07: TheIntroDB had
+    /// only the credits, and the recap and intro IntroDB had for every other
+    /// episode never came (and that answer was kept for the session). Now
+    /// the first usable answer goes to `early` (IntroDB's at once, or
+    /// TheIntroDB's when IntroDB hasn't answered 2 s later), and the result
+    /// returned is both merged, once both have answered or failed.
+    func lookupTV(imdbId: String, season: Int?, episode: Int?, duration: Double,
+                  early: (@Sendable (SkipLookup) async -> Void)? = nil) async -> SkipLookup {
         let key = "\(imdbId)|\(season ?? -1)|\(episode ?? -1)"
-        if let c = tvCache[key], !c.lookup.segments.isEmpty || c.lookup.postCredits || Date().timeIntervalSince(c.at) < missTTL {
-            return c.lookup
+        if let c = tvCache[key] {
+            let age = Date().timeIntervalSince(c.at)
+            let keep = c.complete ? (!c.lookup.segments.isEmpty || c.lookup.postCredits || age < missTTL) : age < partialTTL
+            if keep { return c.lookup }
         }
-        enum Answer { case introDB(SkipLookup), theIntroDB(SkipLookup), graceOver }
-        let r: SkipLookup = await withTaskGroup(of: Answer.self) { g in
+        let label = "\(imdbId) s\(season ?? 0)e\(episode ?? 0)"
+        // nil: the service didn't answer (logged by fetch with the reason).
+        enum Answer { case introDB(SkipLookup?), theIntroDB(SkipLookup?), graceOver }
+        let r: (lookup: SkipLookup, complete: Bool) = await withTaskGroup(of: Answer.self) { g in
             g.addTask { .introDB(await self.introDB(imdbId: imdbId, season: season, episode: episode, duration: duration)) }
             g.addTask { .theIntroDB(await self.theIntroDB(imdbId: imdbId, season: season, episode: episode, duration: duration)) }
-            var fallback: SkipLookup?
-            var postCredits = false
-            var introDone = false
-            var chosen: SkipLookup?
-            while chosen == nil, let answer = await g.next() {
+            var intro: SkipLookup?, the: SkipLookup?
+            var introDone = false, theDone = false, shown = false
+            while let answer = await g.next() {
                 switch answer {
                 case .introDB(let res):
                     introDone = true
-                    postCredits = res.postCredits
-                    if !res.segments.isEmpty { chosen = res } else if let f = fallback { chosen = f }
+                    intro = res
+                    if let res, !res.segments.isEmpty, !theDone, !shown, let early {
+                        shown = true
+                        await early(res)
+                    }
                 case .theIntroDB(let res):
-                    guard !res.segments.isEmpty else { continue }
-                    if introDone { chosen = res; break }
-                    fallback = res
-                    g.addTask { try? await Task.sleep(nanoseconds: 2_000_000_000); return .graceOver }
+                    theDone = true
+                    the = res
+                    if let res, !res.segments.isEmpty, !introDone {
+                        g.addTask { try? await Task.sleep(nanoseconds: 2_000_000_000); return .graceOver }
+                    }
                 case .graceOver:
-                    chosen = fallback
+                    if !introDone, !shown, let t = the, !t.segments.isEmpty, let early {
+                        shown = true
+                        dlog("skip", "IntroDB hasn't answered for \(label) 2 s after TheIntroDB: TheIntroDB's segments for now, IntroDB's added when it answers")
+                        await early(t)
+                    }
                 }
+                // Both in: only the grace timer may be left, and it ends now.
+                if introDone && theDone { g.cancelAll() }
             }
-            g.cancelAll()
-            var out = chosen ?? fallback ?? SkipLookup()
-            out.postCredits = postCredits
-            return out
+            if intro == nil || the == nil {
+                dlog("skip", "\(intro == nil ? "IntroDB" : "TheIntroDB") gave no answer for \(label)\(intro == nil && the == nil ? ", nor did TheIntroDB" : ""): asked again in \(Int(partialTTL)) s")
+            }
+            return (Self.merge(preferred: intro ?? SkipLookup(), other: the ?? SkipLookup()), intro != nil && the != nil)
         }
-        tvCache[key] = (r, Date())
-        return r
+        tvCache[key] = (r.lookup, Date(), r.complete)
+        return r.lookup
     }
 
-    private func introDB(imdbId: String, season: Int?, episode: Int?, duration: Double) async -> SkipLookup {
+    /// Two databases' answers for one episode as one (1.30.4): `preferred`
+    /// gives every kind of segment it has, and its post-credits scene; the
+    /// other adds the kinds it lacks, unless one overlaps a preferred
+    /// segment (they disagree on where the credits and a preview sit: S01E02,
+    /// TheIntroDB "preview 2174-2205", IntroDB "outro 2190-2223").
+    static func merge(preferred: SkipLookup, other: SkipLookup) -> SkipLookup {
+        var out = preferred
+        let kinds = Set(preferred.segments.map(\.kind))
+        for s in other.segments where !kinds.contains(s.kind) {
+            let overlaps = preferred.segments.contains { min($0.end, s.end) - max($0.start, s.start) > 0 }
+            if !overlaps { out.segments.append(s) }
+        }
+        out.segments.sort { $0.start < $1.start }
+        out.postCredits = preferred.postCredits
+        return out
+    }
+
+    /// nil when IntroDB didn't answer; an empty lookup when it has nothing.
+    private func introDB(imdbId: String, season: Int?, episode: Int?, duration: Double) async -> SkipLookup? {
         var c = URLComponents(string: "https://api.introdb.app/segments")!
         c.queryItems = [URLQueryItem(name: "imdb_id", value: imdbId)]
         if let episode {
@@ -215,7 +259,15 @@ actor SkipService {
         } else {
             c.queryItems!.append(URLQueryItem(name: "is_movie", value: "true"))
         }
-        guard let url = c.url, let obj = await json(url) as? [String: Any] else { return SkipLookup() }
+        guard let url = c.url else { return nil }
+        let obj: [String: Any]
+        switch await fetch(url) {
+        case .failed: return nil
+        case .missing:
+            dlog("skip", "IntroDB \(imdbId) s\(season ?? 0)e\(episode ?? 0): nothing for it")
+            return SkipLookup()
+        case .object(let o): obj = o as? [String: Any] ?? [:]
+        }
         func seg(_ k: String) -> (Double, Double?)? {
             guard let o = obj[k] as? [String: Any] else { return nil }
             let s = (o["start_sec"] as? NSNumber)?.doubleValue ?? (o["start_ms"] as? NSNumber).map { $0.doubleValue / 1000 }
@@ -236,12 +288,21 @@ actor SkipService {
         return out
     }
 
-    private func theIntroDB(imdbId: String, season: Int?, episode: Int?, duration: Double) async -> SkipLookup {
+    /// nil when TheIntroDB didn't answer; an empty lookup when it has nothing.
+    private func theIntroDB(imdbId: String, season: Int?, episode: Int?, duration: Double) async -> SkipLookup? {
         var c = URLComponents(string: "https://api.theintrodb.org/v3/media")!
         c.queryItems = [URLQueryItem(name: "imdb_id", value: imdbId)]
         if let episode { c.queryItems! += [URLQueryItem(name: "season", value: String(season ?? 1)), URLQueryItem(name: "episode", value: String(episode))] }
         if duration > 0 { c.queryItems!.append(URLQueryItem(name: "duration_ms", value: String(Int(duration * 1000)))) }
-        guard let url = c.url, let obj = await json(url) as? [String: Any] else { return SkipLookup() }
+        guard let url = c.url else { return nil }
+        let obj: [String: Any]
+        switch await fetch(url) {
+        case .failed: return nil
+        case .missing:
+            dlog("skip", "TheIntroDB \(imdbId) s\(season ?? 0)e\(episode ?? 0): nothing for it")
+            return SkipLookup()
+        case .object(let o): obj = o as? [String: Any] ?? [:]
+        }
         var out = SkipLookup()
         let map: [(String, SkipSegment.Kind)] = [("recap", .recap), ("intro", .intro), ("credits", .outro), ("preview", .preview)]
         for (k, kind) in map {
@@ -269,10 +330,11 @@ actor SkipService {
         // season's entry and refuse a match that isn't clearly it (season 1's
         // times on a season 2 episode would be wrong).
         if let season, season > 1, h.malId == nil, h.anilistId == nil, h.kitsuId == nil, let t = h.title {
-            guard let found = await aniListSearch("\(t) Season \(season)", requireSeason: season) else { return [] }
-            h.anilistId = found.0; h.malId = found.1
+            let found = await aniListSearch("\(t) Season \(season)", requireSeason: season)
+            guard case .match(let al, let mal) = found else { return [] }
+            h.anilistId = al; h.malId = mal
         }
-        let ids = await resolveIDs(h)
+        let ids = await resolveIDs(h).ids
         if let mal = ids.malId {
             let s = await aniSkip(malId: mal, episode: episode, duration: duration)
             if !s.isEmpty { return s }
@@ -284,31 +346,60 @@ actor SkipService {
         return []
     }
 
+    /// What the sync services get from the id lookup (1.30.4): ids, an
+    /// answer of none, or no answer at all (offline, AniList's rate limit,
+    /// ids.moe down). Until then both of the last were nil, and a scrobble
+    /// whose lookup wasn't answered was skipped as "not found".
+    enum AnimeIDLookup: Sendable, Equatable { case found(AnimeHint), notFound, unreachable }
+
     /// An anime's AniList and MyAnimeList ids for its season, as the skip
     /// lookup finds them (1.26.0: the sync services use the same answer,
-    /// from the same cache). A later season must be found as itself, or nil.
-    func animeIDs(_ hint: AnimeHint, season: Int?) async -> AnimeHint? {
+    /// from the same cache). A later season must be found as itself.
+    func animeIDLookup(_ hint: AnimeHint, season: Int?) async -> AnimeIDLookup {
         var h = hint
         if let season, season > 1, h.malId == nil, h.anilistId == nil, h.kitsuId == nil, let t = h.title {
-            guard let found = await aniListSearch("\(t) Season \(season)", requireSeason: season) else { return nil }
-            h.anilistId = found.0; h.malId = found.1
+            switch await aniListSearch("\(t) Season \(season)", requireSeason: season) {
+            case .match(let al, let mal): h.anilistId = al; h.malId = mal
+            case .noMatch: return .notFound
+            case .noAnswer: return .unreachable
+            }
         }
-        let ids = await resolveIDs(h)
-        return ids.anilistId != nil || ids.malId != nil ? ids : nil
+        let r = await resolveIDs(h)
+        return Self.idLookup(r.ids, failed: r.failed)
     }
 
-    private func resolveIDs(_ hint: AnimeHint) async -> AnimeHint {
+    /// The ids only, nil for "not found" and "not reached" alike.
+    func animeIDs(_ hint: AnimeHint, season: Int?) async -> AnimeHint? {
+        let r = await animeIDLookup(hint, season: season)
+        if case .found(let ids) = r { return ids }
+        return nil
+    }
+
+    /// The lookups' answers as one (1.30.4): an AniList or MyAnimeList id is
+    /// found however the rest went; none, with a service unanswered, is
+    /// "not reached", not "not found".
+    static func idLookup(_ ids: AnimeHint, failed: Bool) -> AnimeIDLookup {
+        if ids.anilistId != nil || ids.malId != nil { return .found(ids) }
+        return failed ? .unreachable : .notFound
+    }
+
+    /// `failed`: AniList or ids.moe gave no answer (offline, 429, 5xx).
+    private func resolveIDs(_ hint: AnimeHint) async -> (ids: AnimeHint, failed: Bool) {
         var h = hint
-        if h.malId != nil && h.anidbId != nil { return h }
+        if h.malId != nil && h.anidbId != nil { return (h, false) }
         let key = "\(h.anilistId ?? 0)|\(h.kitsuId ?? 0)|\(h.malId ?? 0)|\(h.title ?? "")"
         if let c = idCache[key], c.hint.malId != nil || c.hint.anidbId != nil || Date().timeIntervalSince(c.at) < missTTL {
-            return c.hint
+            return (c.hint, false)
         }
 
+        var failed = false
         if h.anilistId == nil && h.kitsuId == nil && h.malId == nil, let title = h.title, !title.isEmpty {
-            if let found = await aniListSearch(title) {
-                h.anilistId = found.0
-                h.malId = h.malId ?? found.1
+            switch await aniListSearch(title) {
+            case .match(let al, let mal):
+                h.anilistId = al
+                h.malId = h.malId ?? mal
+            case .noMatch: break
+            case .noAnswer: failed = true
             }
         }
         // ids.moe fills in AniDB (and MAL if missing).
@@ -316,18 +407,28 @@ actor SkipService {
         if let al = h.anilistId { path = "anilist/\(al)" }
         else if let k = h.kitsuId { path = "kitsu/\(k)" }
         else if let m = h.malId { path = "myanimelist/\(m)" }
-        if let path, let url = URL(string: "https://ids.moe/\(path)"),
-           let obj = await json(url) as? [String: Any] {
-            if h.anidbId == nil { h.anidbId = obj["anidb"] as? Int }
-            if h.malId == nil { h.malId = obj["myanimelist"] as? Int }
-            if h.anilistId == nil { h.anilistId = obj["anilist"] as? Int }
+        if let path, let url = URL(string: "https://ids.moe/\(path)") {
+            switch await fetch(url) {
+            case .object(let o):
+                let obj = o as? [String: Any] ?? [:]
+                if h.anidbId == nil { h.anidbId = obj["anidb"] as? Int }
+                if h.malId == nil { h.malId = obj["myanimelist"] as? Int }
+                if h.anilistId == nil { h.anilistId = obj["anilist"] as? Int }
+            case .missing: dlog("skip", "ids.moe has nothing for \(path) (HTTP 404)")
+            case .failed(let transient): if transient { failed = true }
+            }
         }
-        idCache[key] = (h, Date())
-        return h
+        // Not kept when a service didn't answer (1.30.4): a miss was kept
+        // 10 minutes, and the scrobble asking again in that time was skipped.
+        if !failed { idCache[key] = (h, Date()) }
+        return (h, failed)
     }
 
-    private func aniListSearch(_ title: String, requireSeason: Int? = nil) async -> (Int, Int?)? {
-        guard let url = URL(string: "https://graphql.anilist.co") else { return nil }
+    /// AniList's answer to a search (1.30.4): no answer (offline, 429, 5xx) isn't "no match".
+    private enum AniListMatch { case match(Int, Int?), noMatch, noAnswer }
+
+    private func aniListSearch(_ title: String, requireSeason: Int? = nil) async -> AniListMatch {
+        guard let url = URL(string: "https://graphql.anilist.co") else { return .noMatch }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -337,10 +438,15 @@ actor SkipService {
             "variables": ["s": title],
         ]
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        guard let result = try? await session.data(for: req),
-              let obj = try? JSONSerialization.jsonObject(with: result.0) as? [String: Any],
-              let media = (obj["data"] as? [String: Any])?["Media"] as? [String: Any],
-              let id = media["id"] as? Int else { return nil }
+        // Through fetch (1.30.4): a 429 or no network was an empty answer.
+        let obj: [String: Any]
+        switch await fetch(req) {
+        case .object(let o): obj = o as? [String: Any] ?? [:]
+        case .missing: return .noMatch          // AniList's "Not Found." is HTTP 404
+        case .failed(let transient): return transient ? .noAnswer : .noMatch
+        }
+        guard let media = (obj["data"] as? [String: Any])?["Media"] as? [String: Any],
+              let id = media["id"] as? Int else { return .noMatch }
         if let n = requireSeason {
             let titles = ((media["title"] as? [String: Any]) ?? [:]).values.compactMap { ($0 as? String)?.lowercased() }
             let roman = ["", "", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix"]
@@ -352,10 +458,10 @@ actor SkipService {
             }
             guard titles.contains(where: { t in marks.contains { has(t, $0) } }) else {
                 dlog("skip", "AniList: no confident match for \(title)")
-                return nil
+                return .noMatch
             }
         }
-        return (id, media["idMal"] as? Int)
+        return .match(id, media["idMal"] as? Int)
     }
 
     private func aniSkip(malId: Int, episode: Int, duration: Double) async -> [SkipSegment] {
@@ -443,22 +549,53 @@ actor SkipService {
     }
 
     private func json(_ url: URL, timeout: TimeInterval = 15) async -> Any? {
-        var req = URLRequest(url: url)
+        switch await fetch(url, timeout: timeout) {
+        case .object(let o): return o
+        case .missing: dlog("skip", "\(url.host ?? "?") has nothing for it (HTTP 404)"); return nil
+        case .failed: return nil
+        }
+    }
+
+    /// What a service said (1.30.4): its JSON; "nothing for that" (HTTP 404);
+    /// or no answer, logged with why. `transient`: worth asking again (no
+    /// network, a timeout, 429, 5xx, a page that isn't JSON), not a refusal (400, 403).
+    private enum Fetched { case object(Any), missing, failed(transient: Bool) }
+
+    /// An HTTP status that says "not now" rather than "no" (1.30.4); 0 is no answer.
+    static func failedForNow(status: Int) -> Bool {
+        status == 0 || status == 408 || status == 429 || (500...599).contains(status)
+    }
+
+    private func fetch(_ url: URL, timeout: TimeInterval = 15) async -> Fetched {
+        await fetch(URLRequest(url: url), timeout: timeout)
+    }
+
+    /// Any request (1.30.4: AniList's search is a POST).
+    private func fetch(_ request: URLRequest, timeout: TimeInterval = 15) async -> Fetched {
+        var req = request
         req.timeoutInterval = timeout
         req.setValue("Folio/1.0", forHTTPHeaderField: "User-Agent")
+        let host = req.url?.host ?? "?"
         let t0 = CFAbsoluteTimeGetCurrent()
         func took() -> Int { Int((CFAbsoluteTimeGetCurrent() - t0) * 1000) }
         let result: (Data, URLResponse)
         do { result = try await session.data(for: req) } catch {
-            // A lookup that lost the race is cancelled on purpose: not a failure.
-            if (error as? URLError)?.code != .cancelled { dlog("skip", "\(url.host ?? "?") didn't answer in \(took()) ms: \(error.localizedDescription)") }
-            return nil
+            // Said whatever it was (1.30.4): a cancelled request was left out
+            // of the log, and that is how IntroDB's answers went missing.
+            let why = (error as? URLError)?.code == .cancelled || error is CancellationError ? "cancelled" : error.localizedDescription
+            dlog("skip", "\(host) didn't answer in \(took()) ms: \(why)")
+            return .failed(transient: true)
         }
         let status = (result.1 as? HTTPURLResponse)?.statusCode ?? 0
+        if status == 404 { return .missing }
         guard (200..<300).contains(status) else {
-            dlog("skip", "\(url.host ?? "?") answered HTTP \(status) in \(took()) ms")
-            return nil
+            dlog("skip", "\(host) answered HTTP \(status) in \(took()) ms")
+            return .failed(transient: Self.failedForNow(status: status))
         }
-        return try? JSONSerialization.jsonObject(with: result.0)
+        guard let obj = try? JSONSerialization.jsonObject(with: result.0) else {
+            dlog("skip", "\(host) answered in \(took()) ms with \(result.0.count) bytes that aren't JSON")
+            return .failed(transient: true)
+        }
+        return .object(obj)
     }
 }

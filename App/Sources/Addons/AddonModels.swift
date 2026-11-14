@@ -472,7 +472,15 @@ struct AddonStream: Codable, Hashable, Identifiable {
         subtitles = c.lossy(Sub.self, .subtitles)
     }
 
-    var isPlayable: Bool { url != nil }
+    /// A link Folio plays (1.30.4): a network stream, by the same schemes
+    /// folio://play allows (SharedPlayLink), not mpv's own protocols or a
+    /// local path. It was any `url` at all.
+    var isPlayable: Bool { url.map(Self.isPlayable) ?? false }
+
+    static func isPlayable(_ link: String) -> Bool {
+        guard let u = URL(string: link.trimmingCharacters(in: .whitespacesAndNewlines)) else { return false }
+        return SharedPlayLink.isPlayable(u)
+    }
     var displayTitle: String { (description ?? title ?? "").trimmingCharacters(in: .whitespacesAndNewlines) }
     var displayName: String { (name ?? "Stream").replacingOccurrences(of: "\n", with: " ") }
 }
@@ -511,7 +519,18 @@ extension MetaVideo {
     /// tile doesn't open the streams page (1.22.2). A date that can't be read
     /// counts as out.
     func airsLater(now: Date = Date(), calendar: Calendar = .autoupdatingCurrent) -> Bool {
-        guard let r = released?.trimmingCharacters(in: .whitespaces), r.count >= 10 else { return false }
+        guard let r = released?.trimmingCharacters(in: .whitespaces) else { return false }
+        // A year or a month alone (IMDb's date for an episode not scheduled
+        // yet, 1.30.4): out only once that year or month is over. Such an
+        // episode counted as out, and its tile opened an empty streams page.
+        if r.count == 4 || r.count == 7 {
+            let parts = r.split(separator: "-", omittingEmptySubsequences: false).map { Int($0) }
+            guard let y = parts.first ?? nil, parts.count == (r.count == 4 ? 1 : 2), parts.allSatisfy({ $0 != nil }),
+                  let start = calendar.date(from: DateComponents(year: y, month: parts.count == 2 ? parts[1]! : 1, day: 1)),
+                  let end = calendar.date(byAdding: parts.count == 2 ? .month : .year, value: 1, to: start) else { return false }
+            return end > now
+        }
+        guard r.count >= 10 else { return false }
         if r.count > 10, let t = ISO8601DateFormatter.withFraction.date(from: r) ?? ISO8601DateFormatter().date(from: r) {
             return t > now
         }

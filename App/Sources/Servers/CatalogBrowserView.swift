@@ -12,6 +12,7 @@ struct CatalogBrowserView: View {
     let title: String
 
     @ObservedObject private var history = HistoryStore.shared
+    @ObservedObject private var kids = KidsProfile.shared
     @State private var entries: [CatalogEntry] = []
     @State private var ordered: [CatalogEntry] = []
     @State private var loading = true
@@ -71,6 +72,8 @@ struct CatalogBrowserView: View {
         }
         .listStyle(.plain)
         .overlay { if loading && entries.isEmpty { FolioSpinner(size: .large) } }
+        // Not in the kids profile (1.30.4): a guard behind the pages that close it.
+        .kidsServerGuard(kids.isOn)
         .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
@@ -78,7 +81,7 @@ struct CatalogBrowserView: View {
         // opened from Home or Network, asks every Plex and Jellyfin server.
         .refreshable { await load() }
         .toolbar {
-            if parent != nil {
+            if parent != nil, !kids.isOn {
                 ToolbarItem(placement: .topBarTrailing) { LibrarySortMenu(sort: $sort, ascending: $ascending, inToolbar: true) }
             }
         }
@@ -112,9 +115,26 @@ struct CatalogBrowserView: View {
     }
 
     private func play(_ e: CatalogEntry) {
-        let list = visible.filter(\.isPlayable)
-        let queue = list.map { source.mediaItem(for: $0, parent: parent) }
+        let list = Self.queue(for: e, in: visible.filter(\.isPlayable))
+        // A film without the list it was in (1.30.4): Continue Watching queued the whole library after it.
+        let queue = list.map { source.mediaItem(for: $0, parent: $0.kind == .movie ? nil : parent) }
         PlayerPresenter.play(queue: queue, index: list.firstIndex(of: e) ?? 0)
+    }
+
+    /// What plays (1.30.4): a film alone; an episode with its season's
+    /// others, in episode order whatever the list's sort (under Recently
+    /// Added or Z to A a season played backwards); anything else with the
+    /// list as shown. Until then every film queued every other film.
+    static func queue(for e: CatalogEntry, in playable: [CatalogEntry]) -> [CatalogEntry] {
+        switch e.kind {
+        case .movie:
+            return [e]
+        case .episode:
+            return playable.filter { $0.kind == .episode && $0.seriesName == e.seriesName && $0.season == e.season }
+                .sorted { ($0.season ?? 0, $0.episode ?? 0, $0.name) < ($1.season ?? 0, $1.episode ?? 0, $1.name) }
+        default:
+            return playable
+        }
     }
 
     /// This list's own choice, else the last one made in any folder (the WebDAV browser's).

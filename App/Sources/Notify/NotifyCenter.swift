@@ -158,7 +158,8 @@ enum NotifyCenter {
             let now = Date()
             let keep = keepOutside && !NotifyPrefs.test ? await pendingKept(now: now) : []
             settle(now: now, keep: keep)
-            await removePending(keeping: Set(keep.map(\.request)), asked: asked)
+            // "Tomorrow" ones go too while the kids profile is on (1.30.4).
+            await removePending(keeping: Set(keep.map(\.request)), asked: asked || KidsProfile.isOnNow)
             if !keep.isEmpty { dlog("notify", "back in Folio: \(keep.count) left pending (\(keep.map(\.kind.rawValue).joined(separator: ", ")))") }
         }
     }
@@ -723,6 +724,12 @@ enum NotifyCenter {
             if info["test"] == nil { dismissed(kind) }
             markLog(req.identifier, "Dismissed")
         case "tomorrow":
+            // Not in the kids profile (1.30.4): one delivered before it came
+            // on was planned again, grown-up title and all.
+            guard !KidsProfile.isOnNow else {
+                markLog(req.identifier, "Not again tomorrow: kids profile")
+                return true
+            }
             let c = (req.content.mutableCopy() as? UNMutableNotificationContent) ?? UNMutableNotificationContent()
             c.attachments = []
             let again = UNNotificationRequest(identifier: prefix + "snooze." + UUID().uuidString, content: c,
@@ -769,7 +776,8 @@ enum NotifyCenter {
                 return
             }
             guard let id = ContinueLink.id(from: url) else { return }
-            guard let entry = HistoryStore.shared.entry(for: id) else {
+            // A next-episode card is there once the libraries are read (1.30.4: a cold launch).
+            guard let entry = await HistoryStore.shared.continueEntry(for: id) else {
                 dlog("notify", "notification for an entry that's no longer in the history")
                 return
             }
@@ -792,7 +800,14 @@ enum NotifyCenter {
 
     /// folio://libtitle?path=…: the library title's page.
     static func openLibraryTitle(_ url: URL) {
-        guard let path = LibraryLink.path(from: url), FileManager.default.fileExists(atPath: path) else {
+        guard let raw = LibraryLink.path(from: url) else { return }
+        // Media and the library's own files only (1.30.4): any path in the app's container was opened.
+        let library = Set(LocalMediaStore.shared.files.map { $0.standardizedFileURL.path })
+        guard let path = LibraryLink.allowed(raw, media: MPVFiles.mediaDir.path, library: library) else {
+            dlog("open", "folio://libtitle for a file outside the library: not opened")
+            return
+        }
+        guard FileManager.default.fileExists(atPath: path) else {
             dlog("open", "folio://libtitle for a file that's gone")
             return
         }

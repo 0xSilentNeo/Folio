@@ -21,10 +21,15 @@ struct SettingsView: View {
     /// to go back (simulator run: Back started the pop, the page stayed).
     var body: some View {
         list
+            .pageChrome(zooms: zooms, title: "Settings", back: { dismiss() }) { EmptyView() }
+            // The page's own bar with the list (1.30.4): its Back was still
+            // drawn under the lock, and reachable by VoiceOver.
             .opacity(locked ? 0 : 1)
             .allowsHitTesting(!locked)
             .accessibilityHidden(locked)
-            .pageChrome(zooms: zooms, title: "Settings", back: { dismiss() }) { EmptyView() }
+            // The system bar too (iOS 17): it showed above the pad. Hidden as
+            // pageChrome has it where Settings draws its own.
+            .toolbar(locked || ownsBar ? .hidden : .automatic, for: .navigationBar)
             // Turned on from here: this visit stays open (1.30.3). Going
             // back from the Kids Profile page met the lock, for Settings you
             // were already in. Turning it off, its ratings and its passcode
@@ -36,6 +41,12 @@ struct SettingsView: View {
                         .transition(.opacity)
                 }
             }
+    }
+
+    /// pageChrome draws Settings' bar itself (iOS 18, zooming from its button).
+    private var ownsBar: Bool {
+        if #available(iOS 18.0, *), zooms { return true }
+        return false
     }
 
     /// 1.26.1: five sections, every row opens a page (eight sections, four
@@ -960,6 +971,7 @@ struct ConfigEditorView: View {
     @State private var original = ""
     /// The file isn't UTF-8 text: shown read-only, never saved over.
     @State private var unreadable = false
+    @State private var confirmRevert = false
     @Environment(\.dismiss) private var dismiss
 
     private var changed: Bool { !unreadable && text != original }
@@ -985,10 +997,17 @@ struct ConfigEditorView: View {
                 if let t = MPVFiles.readEditableText(url) { text = t; original = t } else { unreadable = true }
             }
             .toolbar {
-                Button(changed ? "Save" : "Saved") {
-                    if (try? MPVFiles.writeText(text, to: url)) != nil { original = text }
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    // Leaving saves (1.30.4): Revert is the way back to the file as it is.
+                    if changed { Button("Revert") { confirmRevert = true } }
+                    Button(changed ? "Save" : "Saved") {
+                        if (try? MPVFiles.writeText(text, to: url)) != nil { original = text }
+                    }
+                    .disabled(!changed)
                 }
-                .disabled(!changed)
+            }
+            .confirmationDialog("Discard your changes to \(title)?", isPresented: $confirmRevert, titleVisibility: .visible) {
+                Button("Discard Changes", role: .destructive) { text = original }
             }
             .onDisappear { if changed { try? MPVFiles.writeText(text, to: url) } }
     }
@@ -1065,8 +1084,13 @@ struct LogView: View {
 
 struct DiagnosticsView: View {
     @State private var tail = ""
-    @State private var report: URL?
+    /// The report just made, for the share sheet: made again at each tap (1.30.4).
+    @State private var report: ReportFile?
     @State private var making = false
+    @State private var reportFailed = false
+    @State private var confirmClear = false
+
+    private struct ReportFile: Identifiable { let url: URL; var id: String { url.path } }
     @AppStorage(SettingsKey.pipTrace) private var pipTrace = false
     @AppStorage(SettingsKey.netTrace) private var netTrace = false
     @AppStorage(SettingsKey.libTrace) private var libTrace = false
@@ -1099,19 +1123,27 @@ struct DiagnosticsView: View {
                 Text("Normally the traces above switch themselves off after a day, so they don't use battery and space. Keeping them on helps catch a problem that only shows up now and then.")
             }
             HistoryLinkSection()
+            // Made at each tap, with what the logs hold then (1.30.4): the first
+            // report was shared for as long as the page stayed open, and a
+            // report that couldn't be made said nothing.
             Section {
-                if let report {
-                    ShareLink(item: report) { Label("Share report (.zip)", systemImage: "square.and.arrow.up") }
-                } else {
-                    Button {
-                        making = true
-                        DispatchQueue.global(qos: .userInitiated).async {
-                            let r = Diagnostics.shared.makeReport()
-                            DispatchQueue.main.async { report = r; making = false }
+                Button {
+                    making = true
+                    reportFailed = false
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        let r = Diagnostics.shared.makeReport()
+                        DispatchQueue.main.async {
+                            making = false
+                            if let r { report = ReportFile(url: r) } else { reportFailed = true }
                         }
-                    } label: {
-                        HStack { Label("Prepare report", systemImage: "doc.zipper"); Spacer(); if making { FolioSpinner(size: .small) } }
                     }
+                } label: {
+                    HStack { Label("Share report (.zip)", systemImage: "square.and.arrow.up"); Spacer(); if making { FolioSpinner(size: .small) } }
+                }
+                .disabled(making)
+                if reportFailed {
+                    Label("Couldn't make the report. Try again, or free some space on this device.", systemImage: "exclamationmark.triangle")
+                        .font(.footnote).foregroundStyle(.secondary)
                 }
             } footer: {
                 Text("The report bundles the app log, the last mpv log, crash and hang records and your settings. Passwords, keys and tokens are removed; server addresses stay. With Trace Picture in Picture on, it also includes screenshots of the player and app-switcher pictures.")
@@ -1122,18 +1154,25 @@ struct DiagnosticsView: View {
                     .textSelection(.enabled)
             }
             Section {
-                Button("Clear Logs", role: .destructive) {
-                    // Through the logger itself, which closes its open file
-                    // first: deleting app.log under it left later lines going
-                    // to a file that was gone (1.20.3, 2 Nov).
-                    Diagnostics.shared.clearLogs()
-                    tail = ""
-                }
+                // Asked first (1.30.4): one tap deleted every log and record.
+                Button("Clear Logs", role: .destructive) { confirmClear = true }
+                    .confirmationDialog("Clear the app's logs?", isPresented: $confirmClear, titleVisibility: .visible) {
+                        Button("Clear Logs", role: .destructive) {
+                            // Through the logger itself, which closes its open file
+                            // first: deleting app.log under it left later lines going
+                            // to a file that was gone (1.20.3, 2 Nov).
+                            Diagnostics.shared.clearLogs()
+                            tail = ""
+                        }
+                    } message: {
+                        Text("The app log, crash and hang records go. A report made after this has only what comes next.")
+                    }
             }
         }
         .brandListBackground()
         .navigationTitle("Diagnostics & Report")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $report) { ShareSheet(items: [$0.url]) }
         .task {
             // Off the main thread, and only the end of the file (1.24.1): the
             // whole app.log (up to 2 MB) was read and split on main to show 80 lines.

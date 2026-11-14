@@ -19,7 +19,9 @@ enum ServerPlayback {
     @MainActor
     static func prepared(_ item: MediaItem, _ ref: ServerItemRef) -> MediaItem {
         guard let server = MediaServerStore.shared.server(id: ref.serverID) else { return item }
-        return prepared(item, ref, server: server, token: server.token, password: server.password)
+        // Only the login this kind uses (1.30.4): each was a Keychain read, per item of the queue.
+        let smb = ref.kind == .smb
+        return prepared(item, ref, server: server, token: smb ? nil : server.token, password: smb ? server.password : nil)
     }
 
     /// The same with the login given (tests, and no Keychain read).
@@ -74,6 +76,10 @@ enum ServerQueue {
     @MainActor
     static func build(_ item: MediaItem) async -> ([MediaItem], Int)? {
         guard let ref = item.remote, let parent = ref.parent, let server = MediaServerStore.shared.server(id: ref.serverID) else { return nil }
+        // Episodes only (1.30.4): a film's parent was its whole library (a
+        // folder of films on SMB), listed again to queue every film after it.
+        // Items get an episode hint only as episodes.
+        guard item.anime != nil else { return nil }
         let clean = UserDefaults.standard.object(forKey: SettingsKey.cleanTitles) as? Bool ?? true
         let device = JellyfinAPI.deviceModel
         // Don't keep the user waiting on a slow server: 4 s, then the one file.

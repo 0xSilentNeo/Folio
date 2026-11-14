@@ -95,7 +95,8 @@ enum AiringCatalog {
             for u in urls {
                 group.addTask {
                     guard let (data, resp) = try? await session.data(from: u), (resp as? HTTPURLResponse)?.statusCode == 200 else { return [] }
-                    return (try? JSONDecoder().decode([TVItem].self, from: data)) ?? []
+                    // Entry by entry (1.30.4): one odd entry in TVmaze's day dropped the whole day.
+                    return JSONDecoder().decodeLossy(TVItem.self, from: data) ?? []
                 }
             }
             var all: [TVItem] = []

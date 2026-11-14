@@ -85,7 +85,45 @@ enum IMDbSource {
         }
     }
 
+    // MARK: Failing fast (1.30.4)
+
+    /// No plain request before then: IMDb asked us to slow down, or the
+    /// network didn't answer. Under `lock`.
+    nonisolated(unsafe) private static var quietUntil = Date.distantPast
+
+    /// IMDb's bot check, which only the hidden browser can answer: HTTP 202,
+    /// or a 403 (or 200) whose page is the AWS WAF challenge.
+    static func needsBrowser(status: Int, body: String) -> Bool {
+        if status == 202 { return true }
+        guard status == 403 || status == 200 else { return false }
+        let b = body.lowercased()
+        return b.contains("awswaf") || b.contains("gokuprops") || b.contains("challenge.js")
+    }
+
+    /// How long plain requests hold off after an answer like this one
+    /// (`status`, or the request's error); nil: no hold.
+    static func backoff(status: Int?, error: URLError.Code?) -> TimeInterval? {
+        if status == 429 { return 30 }
+        guard let error else { return nil }
+        switch error {
+        case .timedOut, .networkConnectionLost, .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed,
+             .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff:
+            return 10
+        default:
+            return nil
+        }
+    }
+
+    private static func hold(_ seconds: TimeInterval, _ why: String, _ path: String) {
+        lock.lock()
+        quietUntil = max(quietUntil, Date().addingTimeInterval(seconds))
+        lock.unlock()
+        dlog("imdb", "\(path): \(why); plain requests wait \(Int(seconds)) s, nothing goes to the web view")
+    }
+
     private static func fetch(_ url: URL, _ path: String) async -> String? {
+        lock.lock(); let quiet = quietUntil; lock.unlock()
+        if quiet > Date() { dlog("imdb", "\(path): held off a moment (IMDb busy or not reached)"); return nil }
         await IMDbPageLoader.shared.ensureUserAgent()
         var req = URLRequest(url: url)
         req.setValue(language + ",en;q=0.8", forHTTPHeaderField: "Accept-Language")
@@ -106,12 +144,21 @@ enum IMDbSource {
                 dlog("imdb", "HTTP \(status) for \(path): no page")
                 return nil
             }
+            // Only the bot check goes to the web view (1.30.4): a 429, or a
+            // 403 that isn't the challenge, went there too, 25 s each, one
+            // at a time, holding up every page behind them.
+            guard needsBrowser(status: status, body: String(decoding: data.prefix(64 * 1024), as: UTF8.self)) else {
+                if let wait = backoff(status: status, error: nil) { hold(wait, "HTTP \(status)", path) } else { dlog("imdb", "HTTP \(status) for \(path): no page") }
+                return nil
+            }
             dlog("imdb", "HTTP \(status) for \(path) (\(data.count) bytes) → web view")
         } catch {
-            if error is CancellationError { return nil }
-            // Offline: the browser can't do better.
-            if (error as? URLError)?.code == .notConnectedToInternet { dlog("imdb", "\(path): offline"); return nil }
-            dlog("imdb", "\(path): \(error.localizedDescription) → web view")
+            if error is CancellationError || (error as? URLError)?.code == .cancelled { return nil }
+            // Not reached (offline, a timeout, a lost connection, no such
+            // host): the browser can't do better, and waited 25 s each (1.30.4).
+            let code = (error as? URLError)?.code
+            if let wait = backoff(status: nil, error: code) { hold(wait, error.localizedDescription, path) } else { dlog("imdb", "\(path): \(error.localizedDescription)") }
+            return nil
         }
         if Task.isCancelled { return nil }
         let r = await IMDbPageLoader.shared.load(url)
@@ -732,6 +779,10 @@ enum IMDbSource {
                 if let rd = d["releaseDate"] as? [String: Any] {
                     if let y = rd["year"] as? Int, let mo = rd["month"] as? Int, let day = rd["day"] as? Int {
                         v.released = String(format: "%04d-%02d-%02d", y, mo, day)
+                    } else if let y = rd["year"] as? Int {
+                        // A year (or month) alone (1.30.4): kept as that, so
+                        // airsLater holds the episode until it's over.
+                        v.released = (rd["month"] as? Int).map { String(format: "%04d-%02d", y, $0) } ?? String(format: "%04d", y)
                     }
                 } else if let s = d["releaseDate"] as? String { v.released = s }
                 v.rating = Self.rating(d["aggregateRating"])

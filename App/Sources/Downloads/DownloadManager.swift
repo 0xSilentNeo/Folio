@@ -273,6 +273,12 @@ final class DownloadManager: ObservableObject {
     private var graceHolding = false
     /// What iOS's own progress counts: the in-app files of this run.
     private var systemRun = Set<UUID>()
+    /// Files in Folio waiting for a network they may use (Wi-Fi only, or
+    /// mobile data off), 1.30.4: their rows say so, and they don't hold one
+    /// of the file slots (a file allowed on mobile data sat queued behind one).
+    @Published private(set) var waitingNetwork = Set<UUID>()
+    /// Where each running file was when free space was last looked at (1.30.4).
+    private var spaceCheckedAt: [UUID: Int64] = [:]
 
     var active: [DownloadItem] { items.filter { $0.state == .running } }
     var hasWork: Bool { items.contains { $0.state == .running || $0.state == .queued } }
@@ -448,8 +454,13 @@ final class DownloadManager: ObservableObject {
 
     // MARK: Controls
 
+    /// Files paused since Folio started (1.30.4): the downloads pill stays
+    /// for these only, so a file paused weeks ago doesn't pin it to every page.
+    private(set) var pausedThisRun = Set<UUID>()
+
     func pause(_ id: UUID) {
         guard let i = index(id) else { return }
+        if items[i].state == .running || items[i].state == .queued { pausedThisRun.insert(id) }
         switch items[i].state {
         case .running:
             items[i].state = .paused
@@ -491,8 +502,25 @@ final class DownloadManager: ObservableObject {
         forgetRun(id)
         if item.state == .running || item.parts != nil { Task { await engine.cancel(id) } }
         removeFiles(of: item)
-        if deleteFile, item.state == .done { LocalMediaStore.shared.delete(item.destination) }
+        if deleteFile, item.state == .done {
+            // Its subtitles too (1.30.4): they came with it and stayed in the library.
+            let subs = item.isMedia ? items.filter { $0.state == .done && Self.isSubtitle($0, of: item) } : []
+            if !subs.isEmpty {
+                let ids = Set(subs.map(\.id))
+                items.removeAll { ids.contains($0.id) }
+                dlog("dl", "\(item.fileName): its \(subs.count) subtitle file(s) deleted with it")
+            }
+            LocalMediaStore.shared.delete([item.destination] + subs.map(\.destination))
+        }
         save(); pump()
+    }
+
+    /// A finished subtitle download that came with `video`: same package and
+    /// folder, a name that belongs to the video's (1.30.4).
+    nonisolated static func isSubtitle(_ s: DownloadItem, of video: DownloadItem) -> Bool {
+        s.id != video.id && s.package == video.package && TitleParser.isSubtitle(s.fileName)
+            && s.destination.deletingLastPathComponent().standardizedFileURL == video.destination.deletingLastPathComponent().standardizedFileURL
+            && SubtitleMatch.belongs(s.fileName, to: video.fileName)
     }
 
     /// Several at once without starting the queued ones in between (1.25.0:
@@ -574,14 +602,83 @@ final class DownloadManager: ObservableObject {
 
     /// Low Power Mode and "Only while charging" allow downloads now (also
     /// read by the downloads Live Activity).
-    var conditionsOK: Bool {
+    var conditionsOK: Bool { holdReason == nil }
+
+    /// Why every file is held now (1.30.4: the rows say it; they only said "waiting").
+    var holdReason: String? {
         let d = UserDefaults.standard
-        if d.bool(forKey: SettingsKey.downloadPauseLowPower), ProcessInfo.processInfo.isLowPowerModeEnabled { return false }
-        if d.bool(forKey: SettingsKey.downloadOnlyCharging) {
-            let s = UIDevice.current.batteryState
-            if s != .charging && s != .full { return false }
+        return Self.holdReason(lowPowerSetting: d.bool(forKey: SettingsKey.downloadPauseLowPower), lowPower: ProcessInfo.processInfo.isLowPowerModeEnabled,
+                               chargingSetting: d.bool(forKey: SettingsKey.downloadOnlyCharging), battery: UIDevice.current.batteryState)
+    }
+
+    nonisolated static func holdReason(lowPowerSetting: Bool, lowPower: Bool, chargingSetting: Bool, battery: UIDevice.BatteryState) -> String? {
+        if lowPowerSetting, lowPower { return "Paused for Low Power Mode" }
+        if chargingSetting, battery != .charging, battery != .full { return "Waiting for charging" }
+        return nil
+    }
+
+    /// Why a file isn't downloading now, for its row (1.30.4); nil when nothing holds it.
+    func waitReason(_ it: DownloadItem) -> String? {
+        if it.state == .running, waitingNetwork.contains(it.id) { return Self.wantsWiFi(it) ? "Waiting for Wi-Fi" : "Waiting for a network" }
+        guard it.state == .queued else { return nil }
+        if let hold = holdReason { return hold }
+        if let t = it.notBefore, t > Date() { return "Waiting to retry" }
+        if !mayRunInApp, !it.usesSession { return "Carries on when Folio is open" }
+        return nil
+    }
+
+    private static func wantsWiFi(_ it: DownloadItem) -> Bool {
+        it.wifiOnly == true || !UserDefaults.standard.bool(forKey: SettingsKey.downloadCellular)
+    }
+
+    // MARK: Free space (1.30.4)
+
+    /// Kept free beyond what a file still needs: iOS itself needs room, and
+    /// a full disk ends recordings, updates and Folio's own saves.
+    nonisolated static let spaceMargin: Int64 = 1 << 30
+    /// How often a running file looks again.
+    nonisolated static let spaceCheckEvery: Int64 = 500 << 20
+
+    /// Nil when there's room for the rest of a file (`remaining`, 0 when its
+    /// size isn't known) and the margin; else what its row says.
+    nonisolated static func spaceShortfall(remaining: Int64, available: Int64?) -> String? {
+        guard let available else { return nil }
+        let needs = max(0, remaining) + spaceMargin
+        guard needs > available else { return nil }
+        return "\(ChunkPlan.noSpace) (needs \(needs.byteString), \(max(0, available).byteString) free)"
+    }
+
+    private func spaceShortfall(_ it: DownloadItem) -> String? {
+        let values = try? MPVFiles.documents.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+        let remaining = it.expected > 0 ? it.expected - it.received : 0
+        return Self.spaceShortfall(remaining: remaining, available: values?.volumeAvailableCapacityForImportantUsage)
+    }
+
+    /// The file stops, kept for Retry, instead of filling the disk.
+    private func holdForSpace(_ i: Int, _ why: String) {
+        let id = items[i].id
+        let running = items[i].state == .running
+        items[i].state = .failed
+        items[i].error = why
+        items[i].held = false
+        dlog("dl", "\(items[i].fileName): \(why)")
+        if running { halt(id) }
+        spaceCheckedAt[id] = nil
+        save()
+    }
+
+    /// Every `spaceCheckEvery` bytes a running file gets: room for the rest? False when it was stopped.
+    private func checkSpace(_ i: Int) -> Bool {
+        let id = items[i].id, got = items[i].received
+        guard got - (spaceCheckedAt[id] ?? got) >= Self.spaceCheckEvery else {
+            if spaceCheckedAt[id] == nil { spaceCheckedAt[id] = got }
+            return true
         }
-        return true
+        spaceCheckedAt[id] = got
+        guard let why = spaceShortfall(items[i]) else { return true }
+        holdForSpace(i, why)
+        save(); pump()
+        return false
     }
 
     private var maxConcurrent: Int { max(1, min(6, UserDefaults.standard.integer(forKey: SettingsKey.downloadConcurrent))) }
@@ -624,7 +721,8 @@ final class DownloadManager: ObservableObject {
         // Asks for iOS's own progress before the files start, so a refusal
         // is known when each one's way of downloading is chosen (start).
         syncSystemProgress()
-        var running = items.filter { $0.state == .running }.count
+        // One waiting for a network it may use doesn't hold a slot (1.30.4).
+        var running = items.filter { $0.state == .running && !waitingNetwork.contains($0.id) }.count
         let now = Date()
         let inApp = mayRunInApp
         for i in items.indices where running < maxConcurrent && items[i].state == .queued && (items[i].notBefore ?? now) <= now {
@@ -633,6 +731,10 @@ final class DownloadManager: ObservableObject {
             guard inApp || items[i].usesSession else { continue }
             // Paused a moment ago and still writing: it starts once that's done.
             guard stopping[items[i].id] == nil, !haltingSession.contains(items[i].id) else { continue }
+            // Room for the rest of it first (1.30.4): only a full disk
+            // stopped a file, after it had filled the disk.
+            if let why = spaceShortfall(items[i]) { holdForSpace(i, why); continue }
+            spaceCheckedAt[items[i].id] = items[i].received
             start(i)
             running += 1
         }
@@ -842,6 +944,7 @@ final class DownloadManager: ObservableObject {
     private func halt(_ id: UUID) {
         guard let i = index(id) else { return }
         runs[id] = (runs[id] ?? 0) + 1
+        waitingNetwork.remove(id)
         if let t = transfers.removeValue(forKey: id) {
             stopping[id] = t
             connectionCounts[id] = nil
@@ -957,6 +1060,7 @@ final class DownloadManager: ObservableObject {
         switch event {
         case .answered(let total, let ranges, let host):
             guard live else { return }
+            waitingNetwork.remove(id)
             if let total, total > 0 { items[i].expected = total }
             items[i].ranges = ranges
             if !ranges { items[i].singleOnly = true }
@@ -967,9 +1071,11 @@ final class DownloadManager: ObservableObject {
             save()
         case .progress(let received, let chunks, let n):
             guard live, items[i].state == .running else { return }
+            if waitingNetwork.contains(id) { waitingNetwork.remove(id) }
             items[i].received = received
             items[i].chunks = chunks
             connectionCounts[id] = n
+            guard checkSpace(i) else { return }
             peakConnections[id] = max(peakConnections[id] ?? 0, n)
             // The ranges are what a relaunch carries on from: saved every
             // few seconds (each save writes the whole list).
@@ -1005,6 +1111,11 @@ final class DownloadManager: ObservableObject {
             stoppedOne()
         case .note(let line):
             dlog("dl", "\(name): \(line)")
+        case .waitingForNetwork:
+            guard live, items[i].state == .running, !waitingNetwork.contains(id) else { return }
+            waitingNetwork.insert(id)
+            dlog("dl", "\(name): waiting for \(Self.wantsWiFi(items[i]) ? "Wi-Fi" : "a network"); its slot goes to the next file")
+            pump()
         }
     }
 
@@ -1108,14 +1219,17 @@ final class DownloadManager: ObservableObject {
         guard background else { return }
         var n = 0
         if stopTime == nil { stopTime = BackgroundTime("folio.download.stop") }
+        // Held, not paused (1.30.4): they carry on when Folio is open again,
+        // as a file paused for want of background time does. As paused ones
+        // they needed Resume by hand. Those you paused stay paused.
         for i in items.indices where !items[i].usesSession && (items[i].state == .running || items[i].state == .queued) {
             let running = items[i].state == .running
-            items[i].state = .paused
-            items[i].held = false
+            items[i].state = .queued
+            items[i].held = true
             if running { halt(items[i].id) }
             n += 1
         }
-        dlog("dl", "\(n) download(s) paused: iOS's progress was stopped")
+        dlog("dl", "\(n) download(s) held: iOS's progress was stopped; they carry on when Folio is open")
         updateTicker()
         saveNow()
         if stopping.isEmpty { stopTime?.end(); stopTime = nil }
@@ -1156,6 +1270,7 @@ final class DownloadManager: ObservableObject {
             items[i].received = got
             if let total, total > 0 { items[i].expected = total }
         }
+        _ = checkSpace(i)
     }
 
     /// A file's bytes: its parts' (done ones in full).
@@ -1274,7 +1389,18 @@ final class DownloadManager: ObservableObject {
             // The whole file downloaded in Folio stays, so Retry tries the
             // move again instead of downloading it all again (review, 5 Nov);
             // removing the download deletes it (removePartFiles).
-            if tmp.standardizedFileURL != Self.inAppFile(id).standardizedFileURL { try? fm.removeItem(at: tmp) }
+            if tmp.standardizedFileURL != Self.inAppFile(id).standardizedFileURL {
+                try? fm.removeItem(at: tmp)
+            } else if let size = (try? tmp.resourceValues(forKeys: [.fileSizeKey]))?.fileSize, size > 0 {
+                // Its ranges say it's whole (1.30.4): Retry went by the last
+                // saved ranges, or none for a server without byte ranges, and
+                // fetched the file again; now it only moves it.
+                let total = Int64(size)
+                items[i].expected = total
+                items[i].received = total
+                items[i].ranges = true
+                items[i].chunks = [DownloadChunk(start: 0, end: total - 1, current: total)]
+            }
             save(); pump()
             return
         }
@@ -1449,6 +1575,8 @@ final class DownloadManager: ObservableObject {
         peakConnections[id] = nil
         lastChunkSave[id] = nil
         systemRun.remove(id)
+        waitingNetwork.remove(id)
+        spaceCheckedAt[id] = nil
         for k in inFlight where k.hasPrefix(id.uuidString) { inFlight.remove(k) }
     }
 
@@ -1533,11 +1661,13 @@ final class DownloadManager: ObservableObject {
               UIApplication.shared.applicationState != .active else { return }
         let c = UNMutableNotificationContent()
         c.title = "Downloads finished"
-        c.body = done.count == 1 ? done[0].fileName : "\(done.count) files are in your library."
+        // The kids profile (1.30.4): no file's name, which may be a grown-up title.
+        let kids = KidsProfile.isOnNow
+        c.body = kids ? Self.neutralDone(done.count) : (done.count == 1 ? done[0].fileName : "\(done.count) files are in your library.")
         // One file, in Settings → Notifications' personality (1.25.0; an
         // episode's name as "Show S2 · E6", a film's cleaned title), each
         // time the kind's next line.
-        if done.count == 1, let what = Self.downloadName(done[0].fileName), NotifyPrefs.tone != .subtle,
+        if !kids, done.count == 1, let what = Self.downloadName(done[0].fileName), NotifyPrefs.tone != .subtle,
            let w = NotifyWording.text(.downloadFinished, NotifyPrefs.tone, ["what": what], variation: NotifyCenter.bumpVariation(.downloadFinished)) {
             c.title = w.title ?? c.title
             c.body = w.body
@@ -1547,6 +1677,10 @@ final class DownloadManager: ObservableObject {
         NotifyCenter.appendLog(.init(id: "downloads-done.\(Int(Date().timeIntervalSince1970))", kind: .downloadFinished, at: Date(),
                                      title: c.title, body: c.body, reason: "\(done.count) download\(done.count == 1 ? "" : "s") finished", test: false))
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "downloads-done", content: c, trigger: nil))
+    }
+
+    nonisolated static func neutralDone(_ n: Int) -> String {
+        n == 1 ? "A download is in your library." : "\(n) files are in your library."
     }
 
     /// "Harbor Lights S2 · E6" for an episode, the cleaned title for anything else.
@@ -1571,7 +1705,14 @@ final class DownloadManager: ObservableObject {
         let snapshot = items, url = file
         // On the queue every write is on (1.30.2), and waited for: one
         // already being written a moment ago ends first, not after this.
-        Self.saveQueue.sync { if let d = try? JSONEncoder().encode(snapshot) { try? d.write(to: url, options: .atomic) } }
+        Self.saveQueue.sync { Self.write(snapshot, to: url) }
+    }
+
+    /// Out of backups (1.30.4): it holds addon links with their keys and
+    /// request headers. Set after each write: an atomic write is a new file.
+    private nonisolated static func write(_ list: [DownloadItem], to url: URL) {
+        guard let d = try? JSONEncoder().encode(list), (try? d.write(to: url, options: .atomic)) != nil else { return }
+        url.keepOutOfBackups()
     }
 
     /// One write of the list at a time, in the order asked (1.30.2): an
@@ -1581,7 +1722,7 @@ final class DownloadManager: ObservableObject {
     private func save() {
         saveWork?.cancel()
         let snapshot = items, url = file
-        let w = DispatchWorkItem { if let d = try? JSONEncoder().encode(snapshot) { try? d.write(to: url, options: .atomic) } }
+        let w = DispatchWorkItem { Self.write(snapshot, to: url) }
         saveWork = w
         Self.saveQueue.asyncAfter(deadline: .now() + 0.4, execute: w)
     }
@@ -1591,10 +1732,22 @@ private extension Array {
     subscript(safe i: Int) -> Element? { indices.contains(i) ? self[i] : nil }
 }
 
+extension URL {
+    /// Not in iCloud or computer backups (1.30.4): files holding addon links
+    /// with their keys (downloads.json, resolved-links.json).
+    func keepOutOfBackups() {
+        var u = self
+        var v = URLResourceValues()
+        v.isExcludedFromBackup = true
+        try? u.setResourceValues(v)
+    }
+}
+
 /// A little more time when Folio may be in the background (woken by iOS
 /// for a transfer): ended when the work is, or when iOS says time is up.
+/// Internal since 1.30.4: the sync queue and News from Folio use it too.
 @MainActor
-private final class BackgroundTime {
+final class BackgroundTime {
     private var id: UIBackgroundTaskIdentifier = .invalid
 
     init(_ name: String) {

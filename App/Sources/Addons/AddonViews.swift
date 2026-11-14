@@ -5,10 +5,14 @@ struct CatalogRow: View {
     let addon: InstalledAddon
     let catalog: AddonManifest.Catalog
     var margin: CGFloat = 16
+    /// Discover's pulls to refresh (1.30.4): a row that failed asks again.
+    var refresh = 0
     @Namespace private var zoomNS
     @State private var metas: [MetaItem] = []
     @State private var failed = false
     @State private var loaded = false
+    /// Tries so far, so Retry asks again even with no pull to refresh.
+    @State private var tries = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -40,17 +44,35 @@ struct CatalogRow: View {
                         .buttonStyle(.plain)
                     }
                     if failed {
-                        Text("Couldn't load").font(.caption).foregroundStyle(.secondary).frame(height: 177)
+                        // A way to ask again (1.30.4): a failed row stayed so for the session.
+                        Button { tries += 1 } label: {
+                            Label("Couldn't load · Retry", systemImage: "arrow.clockwise").font(.caption)
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                        .frame(height: 177)
                     }
                 }
                 .padding(.horizontal, margin)
             }
         }
-        .task {
-            guard !loaded else { return }
+        // Asked when the row comes on screen, and again on a pull to refresh
+        // or Retry after a failure (1.30.4). A load cut short (the row went
+        // off screen, a push, a tab switch) isn't a failure: it marked the row
+        // failed and loaded, and nothing asked again for the session.
+        .task(id: "\(refresh)|\(tries)") {
+            guard !loaded || failed else { return }
             var extra: [String: String] = [:]
             if catalog.requiredExtras.contains("genre"), let g = catalog.genreOptions.first { extra["genre"] = g }
-            do { metas = try await AddonAPI.catalog(addon, catalog, extra: extra) } catch { failed = true }
+            do {
+                let list = try await AddonAPI.catalog(addon, catalog, extra: extra)
+                metas = list
+                failed = false
+            } catch {
+                if Task.isCancelled || error is CancellationError || (error as? URLError)?.code == .cancelled { return }
+                // What was shown stays; the row says it couldn't load only with nothing to show.
+                failed = metas.isEmpty
+            }
             loaded = true
         }
     }
@@ -125,6 +147,9 @@ struct CatalogGridView: View {
     /// Goes up with each change of genre; a load belongs to the one it began in.
     @State private var generation = 0
     @State private var loadingGeneration: Int?
+    /// The last page didn't come (1.30.4): said, with Retry. A first page
+    /// that failed left the grid empty with no word, as if the catalog were.
+    @State private var loadError: String?
     @Namespace private var zoomNS
 
     var body: some View {
@@ -152,6 +177,20 @@ struct CatalogGridView: View {
             }
             .padding(16)
             if loading { FolioSpinner().padding() }
+            if !loading, let loadError {
+                if metas.isEmpty {
+                    ContentUnavailableView {
+                        Label("Couldn't Load", systemImage: "wifi.exclamationmark")
+                    } description: {
+                        Text("\(addon.manifest.name) didn't answer: \(loadError)")
+                    } actions: {
+                        Button("Try Again") { Task { await loadMore() } }.buttonStyle(.borderedProminent).tint(Theme.action)
+                    }
+                } else {
+                    Button { Task { await loadMore() } } label: { Label("Couldn't load more · Retry", systemImage: "arrow.clockwise").font(.footnote) }
+                        .buttonStyle(.plain).foregroundStyle(.secondary).padding()
+                }
+            }
         }
         .background(Theme.background)
         .brandListBackground()
@@ -170,7 +209,7 @@ struct CatalogGridView: View {
         }
         .onChange(of: genre) { _, _ in
             generation += 1
-            metas = []; exhausted = false
+            metas = []; exhausted = false; loadError = nil
             Task { await loadMore() }
         }
     }
@@ -197,9 +236,19 @@ struct CatalogGridView: View {
         var extra: [String: String] = [:]
         if let genre { extra["genre"] = genre }
         if !metas.isEmpty { extra["skip"] = String(metas.count) }
-        let page = (try? await AddonAPI.catalog(addon, catalog, extra: extra)) ?? []
+        let page: [MetaItem]
+        do {
+            page = try await AddonAPI.catalog(addon, catalog, extra: extra)
+        } catch {
+            guard gen == generation else { return }
+            loading = false; loadingGeneration = nil
+            // Cut short (the page closed) isn't the addon's failure.
+            if !(Task.isCancelled || error is CancellationError || (error as? URLError)?.code == .cancelled) { loadError = error.localizedDescription }
+            return
+        }
         guard gen == generation else { return }     // the newer load has the spinner
         defer { loading = false; loadingGeneration = nil }
+        loadError = nil
         let known = Set(metas.map(\.id))
         let fresh = page.filter { !known.contains($0.id) }
         if fresh.isEmpty { exhausted = true }
@@ -275,12 +324,32 @@ struct StreamsView: View {
     @State private var groups: [StreamGroup] = []
     @State private var loading = true
     @State private var starting = false
+    /// Every addon answered (or failed) once (1.30.4): a load cut short
+    /// (the page left mid-way) is asked again when the page is back.
+    @State private var complete = false
+    /// The kids profile (1.30.4): a page left open when it came on shows nothing to play.
+    @ObservedObject private var kids = KidsProfile.shared
 
     private var videoId: String { video?.id ?? meta.id }
     @Environment(\.dismiss) private var dismiss
     @Environment(\.zoomsFromTile) private var zooms
 
+    private var kidsVerdict: KidsRules.Verdict? {
+        guard let limits = kids.activeLimits else { return nil }
+        let v = KidsRules.verdict(meta, limits: limits)
+        return v == .allowed ? nil : v
+    }
+
     var body: some View {
+        if let v = kidsVerdict {
+            KidsBlockedView(verdict: v)
+                .pageChrome(zooms: zooms, title: video?.label ?? meta.name, back: { dismiss() }) { EmptyView() }
+        } else {
+            streamsList
+        }
+    }
+
+    private var streamsList: some View {
         List {
             if seasonVideos.count > 1 {
                 Section {
@@ -337,28 +406,48 @@ struct StreamsView: View {
         }
         .brandListBackground()
         .pageChrome(zooms: zooms, title: video?.label ?? meta.name, back: { dismiss() }) { EmptyView() }
-        .task { if groups.isEmpty { await load() } }
-        .refreshable { await load() }
+        .task { if !complete { await load(fresh: false) } }
+        // Past this app's cache of the addons' answers (1.30.4): a pull to
+        // refresh got the cached, possibly empty, answer again.
+        .refreshable { await load(fresh: true) }
     }
 
-    private func load() async {
+    /// `fresh`: asked of the addons themselves. What's listed stays when an
+    /// addon fails or comes back empty this time (1.30.4: a failed refresh
+    /// emptied the list).
+    private func load(fresh: Bool) async {
         loading = true
         let addons = AddonStore.shared.streamAddons(type: meta.type, id: videoId)
-        groups = addons.map { StreamGroup(id: $0.id, addon: $0, streams: []) }
+        let had = Dictionary(groups.map { ($0.id, $0.streams) }, uniquingKeysWith: { a, _ in a })
+        groups = addons.map { StreamGroup(id: $0.id, addon: $0, streams: had[$0.id] ?? []) }
+        let type = meta.type, vid = videoId
         await withTaskGroup(of: (String, [AddonStream]?, String?).self) { tg in
             for a in addons {
                 tg.addTask {
-                    do { return (a.id, try await AddonAPI.streams(a, type: meta.type, id: videoId), nil) }
-                    catch { return (a.id, nil, error.localizedDescription) }
+                    do {
+                        var list = try await AddonAPI.streams(a, type: type, id: vid, fresh: fresh)
+                        // Nothing playable from the cache: the addon itself, once.
+                        if !fresh, !list.contains(where: \.isPlayable), let again = try? await AddonAPI.streams(a, type: type, id: vid, fresh: true) { list = again }
+                        return (a.id, list, nil)
+                    } catch {
+                        // Cut short: no error under the addon, and asked again on return.
+                        if Task.isCancelled || error is CancellationError || (error as? URLError)?.code == .cancelled { return (a.id, nil, nil) }
+                        return (a.id, nil, error.localizedDescription)
+                    }
                 }
             }
             for await (id, streams, err) in tg {
-                if let i = groups.firstIndex(where: { $0.id == id }) {
-                    groups[i].streams = streams ?? []
+                guard let i = groups.firstIndex(where: { $0.id == id }) else { continue }
+                if let streams, !streams.isEmpty || groups[i].streams.isEmpty {
+                    groups[i].streams = streams
+                    groups[i].error = nil
+                } else if groups[i].streams.isEmpty {
                     groups[i].error = err
                 }
             }
         }
+        guard !Task.isCancelled else { return }
+        complete = true
         loading = false
     }
 
@@ -514,7 +603,7 @@ struct StreamPickerSheet: View {
                              ? "None of your addons that are switched on has streams for this title."
                              : "No addon gave a stream for \(label) just now.")
                     } actions: {
-                        Button("Ask Again") { Task { await loader.load(fresh: true) } }
+                        Button("Ask Again") { loader.ask(fresh: true) }
                             .buttonStyle(.borderedProminent)
                     }
                     .listRowBackground(Color.clear)
@@ -525,6 +614,10 @@ struct StreamPickerSheet: View {
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { if let onCancel { onCancel() } else { dismiss() } } } }
             .refreshable { await loader.load(fresh: true) }
         }
+        // Closed (1.30.4): the asking stops; it went on after the picker had gone.
+        // Shown again with nothing listed: asked again.
+        .onDisappear { loader.cancel() }
+        .onAppear { if !loader.loading && loader.isEmpty { loader.ask(fresh: false) } }
     }
 }
 
@@ -537,13 +630,28 @@ final class StreamPickerLoader: ObservableObject {
     let context: PlayContext
     /// The latest asking: an older one that answers later changes nothing.
     private var asking = 0
+    /// The asking under way (1.30.4), stopped when the picker closes.
+    private var work: Task<Void, Never>?
 
     var isEmpty: Bool { groups.allSatisfy { $0.streams.isEmpty } }
     private var label: String { context.videoLabel ?? context.name }
 
     init(context: PlayContext) {
         self.context = context
-        Task { await self.load(fresh: false) }
+        ask(fresh: false)
+    }
+
+    func ask(fresh: Bool) {
+        work?.cancel()
+        work = Task { [weak self] in await self?.load(fresh: fresh) }
+    }
+
+    /// The picker closed: nothing more is asked, and an answer still on its way changes nothing.
+    func cancel() {
+        work?.cancel()
+        work = nil
+        asking += 1
+        loading = false
     }
 
     /// 27 Oct report: E7 and E8 showed the addon's name and no streams here,

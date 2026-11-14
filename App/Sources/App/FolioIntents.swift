@@ -29,6 +29,17 @@ enum ContinueSnapshotWriter {
     private static var toldNoGroup = false
     private static var toldGroup = false
 
+    /// The store's reads and writes, one at a time and off the main thread
+    /// (1.30.4), as GlanceWriter's since 1.28.8: without an App Group each is
+    /// a Keychain round trip to another process, and they ran on the main thread.
+    private static let disk = DispatchQueue(label: "folio.continue-store", qos: .utility)
+
+    private static func offMain<T>(_ work: @escaping @Sendable () -> T) async -> T {
+        await withCheckedContinuation { (done: CheckedContinuation<T, Never>) in
+            disk.async { done.resume(returning: work()) }
+        }
+    }
+
     static func watch(_ store: HistoryStore) {
         guard subscription == nil else { return }
         subscription = store.objectWillChange
@@ -110,14 +121,18 @@ enum ContinueSnapshotWriter {
             items.append(item)
         }
         let snapshot = ContinueSnapshot(items: items)
-        if written == nil { written = ContinueSnapshot.read(from: dir) }
+        if written == nil { written = await offMain { ContinueSnapshot.read(from: dir) } }
         if snapshot != written {
-            do { try snapshot.write(to: dir) } catch {
-                dlog("widget", "snapshot not written: \(error.localizedDescription)")
+            let failure: String? = await offMain {
+                do { try snapshot.write(to: dir); return nil } catch { return error.localizedDescription }
+            }
+            if let failure {
+                dlog("widget", "snapshot not written: \(failure)")
                 return
             }
             written = snapshot
-            sweep(dir, keeping: Set(items.flatMap { [$0.picture, $0.poster] }.compactMap { $0 }))
+            let keep = Set(items.flatMap { [$0.picture, $0.poster] }.compactMap { $0 })
+            disk.async { sweep(dir, keeping: keep) }
             for kind in WidgetKind.continueKinds { WidgetCenter.shared.reloadTimelines(ofKind: kind) }
             dlog("widget", "snapshot: \(items.count) item(s), \(items.filter { $0.picture != nil }.count) with a picture\(dir.isKeychain ? " (Keychain)" : "")")
         }
@@ -157,7 +172,7 @@ enum ContinueSnapshotWriter {
         let frame = ThumbnailStore.url(for: e.id)
         if let saved = (try? frame.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate {
             let name = "\(base)-\(Int(saved.timeIntervalSince1970)).jpg"
-            if dir.exists(name) { return name }
+            if await offMain({ dir.exists(name) }) { return name }
             return await Task.detached(priority: .utility) { () -> String? in
                 guard let data = try? Data(contentsOf: frame),
                       let img = ImageCache.downsample(data, maxPixel: ContinueSnapshot.picturePixels) else { return nil }
@@ -167,7 +182,7 @@ enum ContinueSnapshotWriter {
         let art = e.item.addonRef == nil ? (meta?.wideArt ?? e.item.artwork) : e.item.artwork
         guard let art, let url = URL(string: art) else { return nil }
         let name = "\(base)-\(hash(art)).jpg"
-        if dir.exists(name) { return name }
+        if await offMain({ dir.exists(name) }) { return name }
         // ImageCache: from its disk copy when Home has shown the art before.
         guard let img = await ImageCache.shared.image(url, maxPixel: ContinueSnapshot.picturePixels) else { return nil }
         return await Task.detached(priority: .utility) { save(img, name, in: dir) }.value
@@ -180,7 +195,7 @@ enum ContinueSnapshotWriter {
         let art = e.item.addonRef == nil ? meta?.poster : (e.item.artwork ?? meta?.poster)
         guard let art, let url = URL(string: art) else { return nil }
         let name = "\(hash(e.id))-p-\(hash(art)).jpg"
-        if dir.exists(name) { return name }
+        if await offMain({ dir.exists(name) }) { return name }
         guard let img = await ImageCache.shared.image(url, maxPixel: posterPixels) else { return nil }
         return await Task.detached(priority: .utility) { save(img, name, in: dir) }.value
     }
@@ -193,9 +208,9 @@ enum ContinueSnapshotWriter {
     }
 
     /// Pictures no entry uses any more.
-    static func sweep(_ dir: URL, keeping: Set<String>) { sweep(.folder(dir), keeping: keeping) }
+    nonisolated static func sweep(_ dir: URL, keeping: Set<String>) { sweep(.folder(dir), keeping: keeping) }
 
-    static func sweep(_ dir: WidgetStore, keeping: Set<String>) {
+    nonisolated static func sweep(_ dir: WidgetStore, keeping: Set<String>) {
         for f in dir.names() where f.hasSuffix(".jpg") && !keeping.contains(f) { dir.remove(f) }
     }
 
@@ -403,14 +418,17 @@ struct TrackedShowQuery: EntityStringQuery {
         return identifiers.compactMap { id in TrackingStore.shared.show(id: id).map(Self.entity) }
     }
 
+    /// None in the kids profile (1.30.4): the names are grown-up tracking.
     @MainActor
     func suggestedEntities() async throws -> [TrackedShowEntity] {
+        guard !KidsProfile.isOnNow else { return [] }
         await TrackingStore.shared.whenLoaded()
         return TrackingStore.shared.shows.map(Self.entity)
     }
 
     @MainActor
     func entities(matching string: String) async throws -> [TrackedShowEntity] {
+        guard !KidsProfile.isOnNow else { return [] }
         await TrackingStore.shared.whenLoaded()
         let q = string.trimmingCharacters(in: .whitespaces)
         return TrackingStore.shared.shows
@@ -440,6 +458,11 @@ struct NextEpisodeIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        // The kids profile (1.30.4): no word about grown-up tracked shows.
+        guard !KidsProfile.isOnNow else {
+            dlog("intents", "next episode: kids profile, not answered")
+            return .result(dialog: "Folio is in the kids profile.")
+        }
         let store = TrackingStore.shared
         await store.whenLoaded()
         guard let s = store.show(id: show.id) else {

@@ -108,7 +108,8 @@ enum AiringSnapshotWriter {
         // The size in the name: posters kept smaller before are fetched again
         // (and swept as no show uses them).
         let name = hash(poster) + "-\(Int(AiringSnapshot.picturePixels)).jpg"
-        if dir.exists(name) { return name }
+        // Asked off the main thread (1.30.4): a Keychain call without an App Group.
+        if await Task.detached(priority: .utility, operation: { dir.exists(name) }).value { return name }
         guard let img = await ImageCache.shared.image(url, maxPixel: AiringSnapshot.picturePixels) else { return nil }
         return await Task.detached(priority: .utility) { () -> String? in
             guard let jpeg = img.jpegData(compressionQuality: 0.8), (try? dir.write(jpeg, name)) != nil else { return nil }

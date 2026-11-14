@@ -67,6 +67,11 @@ final class MetalFrameRenderer: FrameRenderer {
     private var videoSize: (Int, Int)?
     private var pipSize: (Int, Int)?
     private var frameSize = (0, 0)
+    /// The picture mode, Anime4K or your shaders changed (1.30.4): the
+    /// frames' size is decided again (nativeFramesBelow).
+    private var settingsWatch: NSObjectProtocol?
+    /// mpv.conf sets scalers or shaders of its own (1.30.4): read once.
+    private lazy var confScales = PictureMode.confSetsScaling(MPVFiles.readText(MPVFiles.mpvConf))
 
     init?(output: @escaping (CVPixelBuffer) -> Void) {
         guard Self.available, let device = MTLCreateSystemDefaultDevice() else { return nil }
@@ -96,10 +101,14 @@ final class MetalFrameRenderer: FrameRenderer {
                 guard let ctx else { return }
                 Unmanaged<MetalFrameRenderer>.fromOpaque(ctx).takeUnretainedValue().present(token, ok)
             }))
+        settingsWatch = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.updateFrameSize()
+        }
     }
 
     /// mpv is gone (its shutdown has finished): the hook can go.
     func engineDone() {
+        if let w = settingsWatch { NotificationCenter.default.removeObserver(w); settingsWatch = nil }
         let ctx = target.pointee.ctx
         target.deinitialize(count: 1)
         target.deallocate()
@@ -163,22 +172,43 @@ final class MetalFrameRenderer: FrameRenderer {
     /// As OpenGL's: the video's shape fitted inside the view (at most twice
     /// its own size, even numbers), PiP's size while PiP says so, the view's
     /// while the video's isn't known.
-    static func frameSize(view: (Int, Int), video: (Int, Int)?, pip: (Int, Int)?) -> (Int, Int) {
+    ///
+    /// `nativeBelow` (1.30.4): shown at 1× up to that scale, the frames are
+    /// exactly the video's size (odd 803 lines too: rounded, mpv would
+    /// scale) and the layer scales them.
+    static func frameSize(view: (Int, Int), video: (Int, Int)?, pip: (Int, Int)?, nativeBelow: Double = 0) -> (Int, Int) {
         if let pip, pip.0 > 0, pip.1 > 0 { return pip }
         guard let v = video, view.0 > 0, view.1 > 0 else { return view }
-        let scale = min(Double(view.0) / Double(v.0), Double(view.1) / Double(v.1), 2)
+        let fit = min(Double(view.0) / Double(v.0), Double(view.1) / Double(v.1))
+        if fit >= 1, fit < nativeBelow { return v }
+        let scale = min(fit, 2)
         return (max(2, Int(Double(v.0) * scale) & ~1), max(2, Int(Double(v.1) * scale) & ~1))
     }
 
+    /// Below which scale the frames are the video's own size now (1.30.4).
+    private var nativeBelow: Double {
+        let custom = Anime4K.mode != .off || !MPVFiles.activeShaderNames.isEmpty || confScales
+        return PictureMode.current.nativeFramesBelow(custom: custom)
+    }
+
     private func updateFrameSize() {
-        let s = Self.frameSize(view: viewSize, video: videoSize, pip: pipSize)
+        let s = Self.frameSize(view: viewSize, video: videoSize, pip: pipSize, nativeBelow: nativeBelow)
         guard s.0 > 0, s.1 > 0, s != frameSize else { return }
         frameSize = s
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         Self.size(layer, s.0, s.1)
         CATransaction.commit()
-        trace("Metal frames now \(s.0)×\(s.1)\(pipSize != nil ? " (PiP's size)" : videoSize != nil ? " (the video's shape in the player view)" : " (the player view's size)")")
+        let why: String
+        if pipSize != nil {
+            why = " (PiP's size)"
+        } else if let v = videoSize, s == v, viewSize.0 > 0, viewSize.1 > 0 {
+            let fit = min(Double(viewSize.0) / Double(v.0), Double(viewSize.1) / Double(v.1))
+            why = String(format: " (the video's own size; the video layer shows it %.2f×)", fit)
+        } else {
+            why = videoSize != nil ? " (the video's shape in the player view)" : " (the player view's size)"
+        }
+        trace("Metal frames now \(s.0)×\(s.1)\(why)")
         onResize?()
     }
 

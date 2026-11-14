@@ -9,6 +9,10 @@ struct WatchlistView: View {
     @Namespace private var zoomNS
     @State private var filter: Filter = .all
     @State private var sort: Sort = .added
+    /// The title opened (1.30.4): by a value, not a link in the grid, so
+    /// removing it from the watchlist on its own page doesn't close the
+    /// page (its link left the grid, and the page with it).
+    @State private var opened: MetaItem?
 
     enum Filter: String, CaseIterable, Identifiable {
         case all, series, movies
@@ -54,9 +58,7 @@ struct WatchlistView: View {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 12)], spacing: 16) {
                         ForEach(items) { item in
                             let m = item.meta
-                            NavigationLink {
-                                MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS)
-                            } label: {
+                            Button { opened = m } label: {
                                 PosterCard(meta: m, width: nil, zoom: ZoomSource(m.id, zoomNS))
                             }
                             .buttonStyle(.plain)
@@ -75,6 +77,9 @@ struct WatchlistView: View {
             .onChange(of: sort) { withAnimation(.snappy) { scroller.scrollTo(Self.top, anchor: .top) } }
         }
         .background(HomeBackdrop().ignoresSafeArea())
+        .navigationDestination(item: $opened) { m in
+            MetaDetailView(preview: m, sourceAddon: nil).zoomDestination(m.id, in: zoomNS)
+        }
         .navigationTitle("Watchlist")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

@@ -27,5 +27,7 @@ struct SettingsPageStyle: ViewModifier {
             // A setting's text under its group is a row as tall as the text
             // (SettingGroup), not the 44 pt rows are at least.
             .environment(\.defaultMinListRowHeight, 1)
+            // Room under the last row for the downloads pill (1.30.4), as Home, Discover and Search have.
+            .downloadPillRoom()
     }
 }

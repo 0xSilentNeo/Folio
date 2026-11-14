@@ -20,7 +20,10 @@ final class ImageCache: @unchecked Sendable {
     private let dir: URL
     private let session: URLSession
     private let lock = NSLock()
-    private var inflight: [String: Task<UIImage?, Never>] = [:]
+    /// Loads under way and how many callers wait for each (1.30.4): one
+    /// stops when all of them have gone, so a cancelled caller (iOS ending
+    /// a background refresh) isn't held by a download nobody waits for.
+    private var inflight: [String: (task: Task<UIImage?, Never>, waiting: Int)] = [:]
 
     private init() {
         memory.totalCostLimit = 120 * 1024 * 1024
@@ -69,18 +72,77 @@ final class ImageCache: @unchecked Sendable {
         let mk = memKey(url, px)
         if let m = memory.object(forKey: mk) { return m }
         let key = "\(px)|\(url.absoluteString)"
-        lock.lock()
-        if let t = inflight[key] { lock.unlock(); return await t.value }
         let file = dir.appendingPathComponent(fileKey(url))
-        let task = Task.detached(priority: .userInitiated) { [session] in
-            await Self.load(url, file: file, maxPixel: maxPixel, session: session)
+        let img = await joinLoad(key) { [session] in
+            Task.detached(priority: .userInitiated) { await Self.load(url, file: file, maxPixel: maxPixel, session: session) }
         }
-        inflight[key] = task
-        lock.unlock()
-        let img = await task.value
-        lock.lock(); inflight[key] = nil; lock.unlock()
         if let img { memory.setObject(img, forKey: mk, cost: Self.cost(img)) }
         return img
+    }
+
+    /// Joins the load under way for `key`, or starts one. A caller that's
+    /// cancelled stops waiting at once and, the last to go, stops the load
+    /// (1.30.4: the loads were detached, out of cancellation's reach).
+    private func joinLoad(_ key: String, start: () -> Task<UIImage?, Never>) async -> UIImage? {
+        if Task.isCancelled { return nil }
+        lock.lock()
+        let task: Task<UIImage?, Never>
+        if let out = inflight[key] {
+            task = out.task
+            inflight[key]?.waiting += 1
+        } else {
+            task = start()
+            inflight[key] = (task, 1)
+        }
+        lock.unlock()
+        let gate = WaitGate()
+        let img = await withTaskCancellationHandler {
+            await withCheckedContinuation { (c: CheckedContinuation<UIImage?, Never>) in
+                gate.set(c)
+                Task { gate.resume(await task.value) }
+            }
+        } onCancel: {
+            gate.resume(nil)
+            self.leave(key, task)
+        }
+        // Answered (not given up): the load is over, for everyone. A caller
+        // that gave up was counted out by `leave`.
+        let gaveUp = Task.isCancelled
+        lock.lock()
+        if !gaveUp, inflight[key]?.task == task { inflight[key] = nil }
+        lock.unlock()
+        return img
+    }
+
+    private func leave(_ key: String, _ task: Task<UIImage?, Never>) {
+        lock.lock(); defer { lock.unlock() }
+        guard var out = inflight[key], out.task == task else { return }
+        out.waiting -= 1
+        if out.waiting <= 0 { task.cancel(); inflight[key] = nil } else { inflight[key] = out }
+    }
+
+    /// A continuation resumed once: by the load's answer or by cancellation, whichever is first.
+    private final class WaitGate: @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<UIImage?, Never>?
+        private var answer: UIImage??
+
+        func set(_ c: CheckedContinuation<UIImage?, Never>) {
+            lock.lock()
+            if let answer { lock.unlock(); c.resume(returning: answer); return }
+            continuation = c
+            lock.unlock()
+        }
+
+        func resume(_ image: UIImage?) {
+            lock.lock()
+            guard answer == nil else { lock.unlock(); return }
+            answer = .some(image)
+            let c = continuation
+            continuation = nil
+            lock.unlock()
+            c?.resume(returning: image)
+        }
     }
 
     /// The stored file, else a download. Only data that decodes is kept on
@@ -92,6 +154,8 @@ final class ImageCache: @unchecked Sendable {
             if let img = downsample(data, maxPixel: maxPixel) { return img }
             try? FileManager.default.removeItem(at: file)
         }
+        // Everyone waiting has gone (1.30.4): no download.
+        if Task.isCancelled { return nil }
         guard let (d, resp) = try? await session.data(from: url),
               (resp as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true, !d.isEmpty,
               let img = downsample(d, maxPixel: maxPixel) else { return nil }
@@ -123,16 +187,10 @@ final class ImageCache: @unchecked Sendable {
         let px = Int(maxPixel)
         let key = "poster|\(id)|\(px)"
         if let m = picture(forKey: key) { return m }
-        lock.lock()
-        if let t = inflight[key] { lock.unlock(); return await t.value }
         let file = dir.appendingPathComponent("poster-" + SHA256.hash(data: Data(id.utf8)).prefix(16).map { String(format: "%02x", $0) }.joined())
-        let task = Task.detached(priority: .userInitiated) { [session] in
-            await Self.load(url, file: file, maxPixel: maxPixel, session: session)
+        let img = await joinLoad(key) { [session] in
+            Task.detached(priority: .userInitiated) { await Self.load(url, file: file, maxPixel: maxPixel, session: session) }
         }
-        inflight[key] = task
-        lock.unlock()
-        let img = await task.value
-        lock.lock(); inflight[key] = nil; lock.unlock()
         if let img { remember(img, forKey: key) }
         return img
     }

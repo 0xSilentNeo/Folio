@@ -58,11 +58,6 @@ struct NotifySettingsView: View {
             prefs.changed()
             NotifyCenter.settingsChanged()
         }
-        // Off is stored as no hours (start == end); on again, the times shown.
-        .onChange(of: quietOn) { _, on in
-            quietStart = on ? Self.minutes(from) : 0
-            quietEnd = on ? Self.minutes(to) : 0
-        }
         .onChange(of: from) { _, d in if quietOn { quietStart = Self.minutes(d) } }
         .onChange(of: to) { _, d in if quietOn { quietEnd = Self.minutes(d) } }
         .onChange(of: quietStart) { _, _ in NotifyCenter.settingsChanged() }
@@ -120,7 +115,7 @@ struct NotifySettingsView: View {
         }
 
         Section {
-            Toggle("Quiet Hours", isOn: $quietOn.animation(.smooth))
+            Toggle("Quiet Hours", isOn: quietSwitch.animation(.smooth))
                 .accessibilityIdentifier("notifyQuiet")
             if quietOn {
                 DatePicker("From", selection: $from, displayedComponents: .hourAndMinute)
@@ -176,6 +171,18 @@ struct NotifySettingsView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityValue(on ? "On" : "Off")
+    }
+
+    /// Off is stored as no hours (start == end); on again, the times shown.
+    /// Written by the switch itself (1.30.4): as an onChange of `quietOn`,
+    /// opening the page wrote them too, and hours kept with the same From
+    /// and To became 0 – 0, which took back what was planned.
+    private var quietSwitch: Binding<Bool> {
+        Binding(get: { quietOn }, set: { on in
+            quietOn = on
+            quietStart = on ? Self.minutes(from) : 0
+            quietEnd = on ? Self.minutes(to) : 0
+        })
     }
 
     /// Off: the switch off, and 10 PM – 9 AM ready for when it's turned on.

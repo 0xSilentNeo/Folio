@@ -1,4 +1,5 @@
 import Foundation
+import Network
 
 /// One entry of a Jellyfin or Plex server, as the browser shows it: a
 /// library, a folder, a show, a season, or something to play. Both servers'
@@ -75,10 +76,55 @@ enum ServerError: LocalizedError, Equatable {
 
     /// Said plainly, as the WebDAV browser does.
     static func message(_ error: Error, server: String) -> (text: String, offline: Bool) {
+        message(error, server: server, online: PhoneNetwork.online)
+    }
+
+    /// The same with the phone's network given (nil: not known yet).
+    /// Offline only when the phone has no network (1.30.4): a server that
+    /// was off said "You're Offline" with the phone on Wi-Fi.
+    static func message(_ error: Error, server: String, online: Bool?) -> (text: String, offline: Bool) {
         let codes: [URLError.Code] = [.notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed]
-        if let u = error as? URLError, codes.contains(u.code) { return ("You're offline, or \(server) can't be reached right now.", true) }
-        if let s = error as? SMBError, s.isOffline { return ("\(server) can't be reached right now. \(s.localizedDescription)", true) }
+        let smb = error as? SMBError
+        if let u = error as? URLError, codes.contains(u.code) {
+            switch online {
+            case true?: return ("Couldn't reach \(server) right now.", false)
+            case false?: return ("You're offline. \(server) can be opened once the phone is back on a network.", true)
+            case nil: return ("You're offline, or \(server) can't be reached right now.", true)
+            }
+        }
+        if let smb, smb.isOffline {
+            switch online {
+            case true?: return ("Couldn't reach \(server). \(smb.localizedDescription)", false)
+            case false?: return ("You're offline. \(server) can be opened once the phone is back on a network.", true)
+            case nil: return ("\(server) can't be reached right now. \(smb.localizedDescription)", true)
+            }
+        }
         return (error.localizedDescription, false)
+    }
+}
+
+/// The phone's network as NWPathMonitor last gave it (1.30.4), for the
+/// servers' error messages. Started with the first server request, so it
+/// has answered by the first error.
+enum PhoneNetwork {
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var status: NWPath.Status?
+    private static let monitor: NWPathMonitor = {
+        let m = NWPathMonitor()
+        m.pathUpdateHandler = { path in
+            PhoneNetwork.lock.lock(); PhoneNetwork.status = path.status; PhoneNetwork.lock.unlock()
+        }
+        m.start(queue: DispatchQueue(label: "folio.servers.path", qos: .utility))
+        return m
+    }()
+
+    static func start() { _ = monitor }
+
+    /// Whether the phone has a network; nil before the monitor's first answer.
+    static var online: Bool? {
+        start()
+        lock.lock(); defer { lock.unlock() }
+        return status.map { $0 == .satisfied }
     }
 }
 
@@ -90,15 +136,42 @@ enum ServerHTTP {
         c.timeoutIntervalForRequest = 20
         c.httpMaximumConnectionsPerHost = 4
         c.urlCache = nil
+        PhoneNetwork.start()
         return URLSession(configuration: c)
     }()
 
+    /// Server pictures on disk (1.30.4): they were kept in memory only, so
+    /// every launch fetched each poster again. Pictures only (stored by
+    /// hand below, not the session's cache), under their address without
+    /// headers or token, so nothing of the login is written down.
+    private static let art: URLCache = {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("server-art", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return URLCache(memoryCapacity: 0, diskCapacity: 50_000_000, directory: dir)
+    }()
+
+    /// The request a picture is kept under: a GET's address without a token
+    /// in its query, and no headers.
+    static func artKey(_ request: URLRequest) -> URLRequest? {
+        guard (request.httpMethod ?? "GET") == "GET", let url = request.url,
+              var c = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return nil }
+        c.queryItems = c.queryItems?.filter { !ServerItemRef.secretHeaders.contains($0.name.lowercased()) && $0.name.lowercased() != "api_key" }
+        if c.queryItems?.isEmpty == true { c.queryItems = nil }
+        return c.url.map { URLRequest(url: $0) }
+    }
+
     /// The body of a 2xx answer. Logs nothing: the request carries a token.
     static func data(_ request: URLRequest) async throws -> Data {
+        let key = artKey(request)
+        if let key, let hit = art.cachedResponse(for: key) { return hit.data }
         let (data, resp) = try await session.data(for: request)
         guard let http = resp as? HTTPURLResponse else { throw ServerError.parse }
         if http.statusCode == 401 || http.statusCode == 403 { throw ServerError.unauthorized }
         guard (200..<300).contains(http.statusCode) else { throw ServerError.http(http.statusCode) }
+        if let key, let url = key.url, let mime = http.mimeType, mime.hasPrefix("image/"),
+           let kept = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: ["Content-Type": mime]) {
+            art.storeCachedResponse(CachedURLResponse(response: kept, data: data), for: key)
+        }
         return data
     }
 

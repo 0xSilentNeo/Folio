@@ -101,6 +101,24 @@ final class DiscoverSearch: ObservableObject {
 
     func retry() { start(current, wait: false, minLength: 1) }
 
+    /// The kids profile turned on or off (1.30.4): nothing found under the
+    /// other profile's limits stays (IMDb's titles, the fuller lists, the
+    /// addons'), and the same text is asked again. Until then the same
+    /// text did nothing, and the grown-ups' results stayed in the kids profile.
+    func reset() {
+        liveTask?.cancel()
+        addonTask?.cancel()
+        generation += 1
+        resetFuller()
+        current = ""
+        addonQuery = ""
+        if !titles.isEmpty { titles = [] }
+        if !titlesQuery.isEmpty { titlesQuery = "" }
+        if !addonResults.isEmpty { addonResults = [] }
+        if addonsSearching { addonsSearching = false }
+        if phase != .idle { phase = .idle }
+    }
+
     // MARK: Fuller lists (1.30.3)
 
     /// IMDb's suggestions with the fuller lists after them, each title once
@@ -275,7 +293,8 @@ final class DiscoverSearch: ObservableObject {
     }
 
     private func commit(_ q: String) {
-        guard !q.isEmpty else { return }
+        // Not in the kids profile (1.30.4): Recent is the grown-ups' list.
+        guard !q.isEmpty, !KidsProfile.shared.isOn else { return }
         Task { history = await store.add(q) }
     }
 }
@@ -334,6 +353,8 @@ struct AddonSearchView: View {
     /// field closing and the tab changing: the lag on dismissing.
     @State private var shownQuery = ""
     @State private var emptying: Task<Void, Never>?
+    @State private var filtering: Task<Void, Never>?
+    static let filterDelay: Duration = .milliseconds(150)
 
     private struct IndexSignature: Equatable {
         let files: Int
@@ -356,6 +377,9 @@ struct AddonSearchView: View {
                 MetaDetailView(preview: o.meta, sourceAddon: o.addon).zoomDestination("search|" + o.meta.id, in: zoomNS, zoom: false)
             }
             .navigationDestination(item: $route) { r in LibraryRoute.destination(r) }
+            // What the pages opened here push by value (1.30.4): a folder's
+            // titles, a file's page. The search's stack had nothing for them.
+            .navigationDestination(for: LibraryRoute.self) { r in LibraryRoute.destination(r) }
             .navigationDestination(item: $openedEntry) { o in
                 // The client the search made, not a new one at each redraw (1.30.3).
                 if let source = catalogs.client(for: o.server) {
@@ -370,6 +394,7 @@ struct AddonSearchView: View {
             .onChange(of: query) { _, text in
                 emptying?.cancel()
                 emptying = nil
+                filtering?.cancel()
                 guard !SearchHistoryStore.tidy(text).isEmpty else {
                     // Emptied: nothing is redrawn now (see shownQuery).
                     emptying = Task {
@@ -381,9 +406,15 @@ struct AddonSearchView: View {
                 shownQuery = text
                 search.textChanged(text)
                 catalogs.textChanged(kids.isOn ? "" : text)
-                refilter()
+                // After a pause (1.30.4): every indexed file of every server
+                // was looked through on the main thread at each keystroke.
+                filtering?.cancel()
+                filtering = Task {
+                    do { try await Task.sleep(for: Self.filterDelay) } catch { return }
+                    refilter()
+                }
             }
-            .onSubmit(of: .search) { search.submit(query) }
+            // The Search key comes through the tab's field on every iOS (1.30.4, PageSearchField).
             .onReceive(NotificationCenter.default.publisher(for: .searchTabSubmitted)) { note in
                 search.submit((note.object as? String) ?? query)
             }
@@ -427,7 +458,17 @@ struct AddonSearchView: View {
                 refilter(force: true)
             }
             .onChange(of: webdav.servers) { refilter(force: true) }
-            .onChange(of: kids.isOn) { refilter(force: true) }
+            // The profile turned on or off (1.30.4): what the other profile
+            // opened here closes, the text goes (RootView), and nothing it
+            // found stays. Pages left open kept playing anything.
+            .onChange(of: kids.isOn) {
+                opened = nil
+                route = nil
+                openedEntry = nil
+                search.reset()
+                catalogs.textChanged(kids.isOn ? "" : query)
+                refilter(force: true)
+            }
             // A counter, not the index itself: comparing two indexes at
             // every redraw would cost more than the search does.
             // Only when a server's files changed (1.30.3): `states` also
@@ -671,7 +712,13 @@ struct AddonSearchView: View {
     private func open(_ item: SearchItem) {
         switch item.kind {
         case .library(let g):
-            route = .group(g.id)
+            // A folder opens as one, and a title found in a folder as its file's page (1.30.4):
+            // `.group` opened a folder's first film, and a title in one isn't a group of its own.
+            if let folder = g.folder {
+                route = .folder(folder.path)
+            } else {
+                route = groups.contains { $0.id == g.id } ? .group(g.id) : .file(g.nextUp.path)
+            }
         case .release(let r):
             // One file found: it plays, as a file's row did. More: the release's folder.
             if r.count == 1, let f = r.files.first { play(f) } else { open(r) }

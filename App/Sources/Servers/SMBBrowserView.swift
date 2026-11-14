@@ -14,6 +14,7 @@ struct SMBBrowserView: View {
     let title: String
 
     @ObservedObject private var history = HistoryStore.shared
+    @ObservedObject private var kids = KidsProfile.shared
     @State private var items: [DAVItem] = []
     @State private var keyed: [DAVOrder.Keyed] = []
     @State private var ordered: [DAVItem] = []
@@ -85,25 +86,29 @@ struct SMBBrowserView: View {
         }
         .listStyle(.plain)
         .overlay { if loading && items.isEmpty { FolioSpinner(size: .large) } }
+        // Not in the kids profile (1.30.4): a guard behind the pages that close it.
+        .kidsServerGuard(kids.isOn)
         .brandListBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         // No search bar on Network's pages (1.22.5): the tab bar has the search.
         .refreshable { await load() }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                LibrarySortMenu(sort: $sort, ascending: $ascending, inToolbar: true)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    // The automatic style: the app-wide switch style leaves toggles disabled in menus (1.18.0).
-                    Group {
-                        Toggle("Clean titles", isOn: $cleanTitles)
-                        Toggle("Only media files", isOn: $onlyMedia)
-                    }
-                    .toggleStyle(.automatic)
-                } label: { ToolbarGlyph("ellipsis.circle") }
-                .accessibilityLabel("More")
+            if !kids.isOn {
+                ToolbarItem(placement: .topBarTrailing) {
+                    LibrarySortMenu(sort: $sort, ascending: $ascending, inToolbar: true)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        // The automatic style: the app-wide switch style leaves toggles disabled in menus (1.18.0).
+                        Group {
+                            Toggle("Clean titles", isOn: $cleanTitles)
+                            Toggle("Only media files", isOn: $onlyMedia)
+                        }
+                        .toggleStyle(.automatic)
+                    } label: { ToolbarGlyph("ellipsis.circle") }
+                    .accessibilityLabel("More")
+                }
             }
         }
         .task {
@@ -165,7 +170,8 @@ struct SMBBrowserView: View {
             PlayerPresenter.play(mediaItem(item))          // unknown extension: let mpv try
             return
         }
-        let media = visible.filter(\.isMedia)
+        // An episode with its show's others in episode order, anything else alone (1.30.4, DAVOrder.queue).
+        let media = DAVOrder.queue(for: item, in: visible.filter(\.isMedia))
         let subs = items.filter(\.isSubtitle).map(\.name)
         let queue = media.map { mediaItem($0, subtitles: ServerPlayback.matchingSubtitles(for: $0.name, in: subs)) }
         PlayerPresenter.play(queue: queue, index: media.firstIndex(of: item) ?? 0)

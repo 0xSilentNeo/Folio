@@ -17,8 +17,9 @@ import UniformTypeIdentifiers
 ///   whatever this version understands.
 @MainActor
 enum SettingsPreset {
-    static let format = "folio-preset"
-    static let version = 1
+    // Nonisolated (1.30.4): read by `plan`, which the tests call off the main actor.
+    nonisolated static let format = "folio-preset"
+    nonisolated static let version = 1
 
     /// The kind of value a setting holds.
     enum Kind { case bool, int, double, string, strings, data, dictionary }
@@ -174,52 +175,155 @@ enum SettingsPreset {
         var errorDescription: String? { "This file isn't a Folio settings preset." }
     }
 
-    static func importPreset(_ data: Data) throws -> Report {
+    /// A preset read but not applied (1.30.4): what it would change, shown
+    /// for a yes first. Until then the file picker's answer installed its
+    /// mpv scripts, mpv.conf and input.conf, addons and servers at once: a
+    /// shared preset could run a Lua script on every playback.
+    struct Plan {
+        enum FileKind: String { case script, conf, shader }
+        struct MPVFile: Equatable { var path: String; var text: String; var kind: FileKind }
+        struct Addon: Equatable { var json: Data; var name: String; var host: String; var transportURL: String }
+        struct Server: Equatable { var name: String; var url: String; var username: String; var root: String; var password: String? }
+
+        /// Applied as before (name and type checked): every setting but the two below.
+        var settings: [String: Any] = [:]
+        var skipped: [String] = []
+        var newerVersion = false
+        var addons: [Addon] = []
+        var servers: [Server] = []
+        var tmdbKey: String?
+        var files: [MPVFile] = []
+        /// mpv files outside the places a preset writes (left out).
+        var strayFiles: [String] = []
+        /// The player's command buttons (mpv commands, as input.conf's): with the conf files.
+        var commandButtons: Data?
+        /// "Delete watched downloads" turned on or made shorter (deletes files): asked on its own.
+        var deleteWatched: Int?
+
+        func filesOf(_ kind: FileKind) -> [MPVFile] { files.filter { $0.kind == kind } }
+
+        /// What goes in. Scripts, conf files and a shorter "Delete watched"
+        /// only when ticked: they're off until you say.
+        struct Choices: Equatable {
+            var addons = true
+            var servers = true
+            var shaders = true
+            var scripts = false
+            var conf = false
+            var deleteWatched = false
+
+            func allows(_ kind: FileKind) -> Bool {
+                switch kind {
+                case .script: return scripts
+                case .conf: return conf
+                case .shader: return shaders
+                }
+            }
+        }
+    }
+
+    /// Where a preset's mpv file goes: scripts (anything Lua or JavaScript),
+    /// mpv.conf, input.conf and script options, or shaders. Nil: not one of
+    /// the places a preset writes, or a path that leaves the mpv folder.
+    nonisolated static func fileKind(_ path: String) -> Plan.FileKind? {
+        let parts = path.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        guard !path.hasPrefix("/"), !parts.isEmpty, !parts.contains(".."), !parts.contains(""), !parts.contains(".") else { return nil }
+        let ext = (path as NSString).pathExtension.lowercased()
+        if ext == "lua" || ext == "js" { return .script }
+        if parts.count == 1 { return ["mpv.conf", "input.conf"].contains(parts[0]) ? .conf : nil }
+        switch parts[0] {
+        case "scripts", "scripts-disabled": return .script
+        case "script-opts": return .conf
+        case "shaders": return .shader
+        default: return nil
+        }
+    }
+
+    /// Reads a preset without changing anything. `known`: the settings this
+    /// version has (SettingsPreset.known); `deleteWatchedNow`: the current
+    /// "Delete watched downloads", to tell whether the file's would delete more.
+    nonisolated static func plan(_ data: Data, known: [String: Kind], deleteWatchedNow: Int) throws -> Plan {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               root["format"] as? String == format else { throw ImportError.notAPreset }
-        var r = Report()
-        if let v = root["version"] as? Int, v > version {
-            r.notes.append("The file is from a newer version of Folio; everything this version knows was imported.")
-        }
-        let d = UserDefaults.standard
-        let known = self.known
+        var p = Plan()
+        if let v = root["version"] as? Int, v > version { p.newerVersion = true }
         for (k, raw) in (root["settings"] as? [String: Any]) ?? [:] {
-            guard let kind = known[k], let value = decode(raw, kind) else { r.skipped.append(k); continue }
-            d.set(value, forKey: k)
-            r.applied += 1
+            guard let kind = known[k], let value = decode(raw, kind) else { p.skipped.append(k); continue }
+            if k == SettingsKey.scriptCommands {
+                p.commandButtons = value as? Data
+            } else if k == SettingsKey.downloadDeleteWatched, let days = value as? Int,
+                      WatchedCleanup.asksBeforeDeleting(old: deleteWatchedNow, new: days) {
+                p.deleteWatched = days
+            } else {
+                p.settings[k] = value
+            }
         }
+        for item in (root["addons"] as? [Any]) ?? [] {
+            guard let one = try? JSONSerialization.data(withJSONObject: item),
+                  let a = try? JSONDecoder().decode(InstalledAddon.self, from: one) else { continue }
+            p.addons.append(.init(json: one, name: a.manifest.name, host: URL(string: a.transportURL)?.host ?? a.transportURL, transportURL: a.transportURL))
+        }
+        for e in (root["webdav"] as? [[String: Any]]) ?? [] {
+            guard let name = e["name"] as? String, let url = e["url"] as? String else { continue }
+            p.servers.append(.init(name: name, url: url, username: e["username"] as? String ?? "", root: e["root"] as? String ?? "/",
+                                   password: e["password"] as? String))
+        }
+        if let secrets = root["secrets"] as? [String: Any], let key = secrets["tmdbApiKey"] as? String, !key.isEmpty { p.tmdbKey = key }
+        for (rel, text) in ((root["mpv"] as? [String: String]) ?? [:]).sorted(by: { $0.key < $1.key }) {
+            if let kind = fileKind(rel) { p.files.append(.init(path: rel, text: text, kind: kind)) } else { p.strayFiles.append(rel) }
+        }
+        p.skipped.sort()
+        return p
+    }
+
+    /// The plan, with what you ticked.
+    static func apply(_ p: Plan, _ c: Plan.Choices) -> Report {
+        var r = Report()
+        r.skipped = p.skipped
+        if p.newerVersion { r.notes.append("The file is from a newer version of Folio; everything this version knows was imported.") }
+        let d = UserDefaults.standard
+        for (k, v) in p.settings { d.set(v, forKey: k); r.applied += 1 }
+        if c.conf, let b = p.commandButtons { d.set(b, forKey: SettingsKey.scriptCommands); r.applied += 1 }
+        if c.deleteWatched, let days = p.deleteWatched { d.set(days, forKey: SettingsKey.downloadDeleteWatched); r.applied += 1 }
         // Addons: added if not already installed (by address); existing ones stay.
-        if let list = root["addons"], let json = try? JSONSerialization.data(withJSONObject: list) {
-            r.addons = AddonStore.shared.merge(json)
+        if c.addons, !p.addons.isEmpty {
+            let list = p.addons.compactMap { try? JSONSerialization.jsonObject(with: $0.json) }
+            if let json = try? JSONSerialization.data(withJSONObject: list) { r.addons = AddonStore.shared.merge(json) }
         }
-        if let servers = root["webdav"] as? [[String: Any]] {
-            for e in servers {
-                guard let name = e["name"] as? String, let url = e["url"] as? String else { continue }
-                if ServerStore.shared.servers.contains(where: { $0.baseURL == url && $0.username == (e["username"] as? String ?? "") }) { continue }
-                let s = WebDAVServer(name: name, baseURL: url, username: e["username"] as? String ?? "", rootPath: e["root"] as? String ?? "/")
-                if let p = e["password"] as? String { s.password = p }
+        if c.servers {
+            for e in p.servers {
+                if ServerStore.shared.servers.contains(where: { $0.baseURL == e.url && $0.username == e.username }) { continue }
+                let s = WebDAVServer(name: e.name, baseURL: e.url, username: e.username, rootPath: e.root)
+                if let pw = e.password { s.password = pw }
                 ServerStore.shared.upsert(s)
                 r.servers += 1
             }
         }
-        if let secrets = root["secrets"] as? [String: Any], let key = secrets["tmdbApiKey"] as? String, !key.isEmpty, TMDB.apiKey.isEmpty {
-            TMDB.apiKey = key
+        if let key = p.tmdbKey, TMDB.apiKey.isEmpty { TMDB.apiKey = key }
+        let base = MPVFiles.configDir.standardizedFileURL
+        var left: [Plan.FileKind: Int] = [:]
+        for f in p.files {
+            guard c.allows(f.kind) else { left[f.kind, default: 0] += 1; continue }
+            let dest = base.appendingPathComponent(f.path).standardizedFileURL
+            // Stay inside the mpv folder, whatever the file says.
+            guard dest.path.hasPrefix(base.path + "/") else { continue }
+            try? FileManager.default.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if (try? f.text.write(to: dest, atomically: true, encoding: .utf8)) != nil { r.mpvFiles += 1 }
         }
-        if let files = root["mpv"] as? [String: String] {
-            let base = MPVFiles.configDir.standardizedFileURL
-            for (rel, text) in files {
-                let dest = base.appendingPathComponent(rel).standardizedFileURL
-                // Stay inside the mpv folder, whatever the file says.
-                guard dest.path.hasPrefix(base.path + "/"), !rel.contains("..") else { continue }
-                try? FileManager.default.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
-                if (try? text.write(to: dest, atomically: true, encoding: .utf8)) != nil { r.mpvFiles += 1 }
-            }
-        }
-        dlog("app", "preset imported: \(r.applied) settings, skipped \(r.skipped), addons +\(r.addons), servers +\(r.servers), mpv files \(r.mpvFiles)")
+        var out: [String] = []
+        if let n = left[.script] { out.append("\(n) script\(n == 1 ? "" : "s")") }
+        if let n = left[.conf] { out.append("\(n) mpv setting file\(n == 1 ? "" : "s")") }
+        if let n = left[.shader] { out.append("\(n) shader\(n == 1 ? "" : "s")") }
+        if !c.conf, p.commandButtons != nil { out.append("the player's command buttons") }
+        if !c.deleteWatched, p.deleteWatched != nil { out.append("Delete watched downloads") }
+        if !c.addons, !p.addons.isEmpty { out.append("\(p.addons.count) addon\(p.addons.count == 1 ? "" : "s")") }
+        if !c.servers, !p.servers.isEmpty { out.append("\(p.servers.count) server\(p.servers.count == 1 ? "" : "s")") }
+        if !out.isEmpty { r.notes.append("Left out: " + out.joined(separator: ", ") + ".") }
+        dlog("app", "preset imported: \(r.applied) settings, skipped \(r.skipped), addons +\(r.addons), servers +\(r.servers), mpv files \(r.mpvFiles), left out \(out)")
         return r
     }
 
-    private static func decode(_ v: Any, _ kind: Kind) -> Any? {
+    nonisolated private static func decode(_ v: Any, _ kind: Kind) -> Any? {
         switch kind {
         case .bool:
             guard let n = v as? NSNumber, CFGetTypeID(n) == CFBooleanGetTypeID() else { return nil }
@@ -245,7 +349,7 @@ enum SettingsPreset {
     /// A JSON value as UserDefaults can keep it. A null anywhere inside a
     /// dictionary setting (an edited file) made `set` throw and the import
     /// crash; nulls are now left out, however deep.
-    private static func propertyList(_ x: Any) -> Any? {
+    nonisolated private static func propertyList(_ x: Any) -> Any? {
         switch x {
         case is NSNull: return nil
         case let dict as [String: Any]: return dict.compactMapValues(propertyList)
@@ -266,7 +370,8 @@ struct PresetsView: View {
     @State private var includeSecrets = false
     @State private var exportURL: URL?
     @State private var importing = false
-    @State private var confirmLoad = false
+    /// A file read and waiting for your yes, with what it would add (1.30.4).
+    @State private var review: PresetReview?
     @State private var message: String?
     @State private var error: String?
 
@@ -279,16 +384,11 @@ struct PresetsView: View {
                 Text("Saves every setting, your WebDAV servers and your mpv files (mpv.conf, input.conf, scripts, script options, shaders) in one file. With passwords and keys on, it also has your server passwords, your TMDB key and your addons (addon links usually contain your debrid key) — anyone with the file can read them.")
             }
             Section {
-                Button { confirmLoad = true } label: { Label("Load Settings from a File…", systemImage: "square.and.arrow.down") }
-                    // Asked first (1.26.1): a file replaced settings, mpv.conf and
-                    // input.conf, and installed and turned on its scripts, at once.
-                    .confirmationDialog("Load settings from a file?", isPresented: $confirmLoad, titleVisibility: .visible) {
-                        Button("Choose File…") { importing = true }
-                    } message: {
-                        Text("Its settings replace yours, and its mpv.conf, input.conf and scripts are installed and turned on. Load only files you made or trust.")
-                    }
+                // What the file adds is shown before anything changes (1.30.4):
+                // scripts and mpv's own files only when you tick them.
+                Button { importing = true } label: { Label("Load Settings from a File…", systemImage: "square.and.arrow.down") }
             } header: { Text("Load") } footer: {
-                Text("Settings in the file replace yours; anything the file doesn't have stays as it is. Addons and servers are added next to the ones you have. Settings an older or newer version of Folio had that this one doesn't use are skipped, not an error.")
+                Text("Settings in the file replace yours; anything the file doesn't have stays as it is. Addons and servers are added next to the ones you have. You see what the file adds first: its mpv scripts, mpv.conf and input.conf are installed only if you tick them. Settings an older or newer version of Folio had that this one doesn't use are skipped, not an error.")
             }
         }
         .brandListBackground()
@@ -301,6 +401,14 @@ struct PresetsView: View {
             switch result {
             case .success(let url): load(url)
             case .failure(let e): error = e.localizedDescription
+            }
+        }
+        .sheet(item: $review) { r in
+            PresetReviewView(plan: r.plan) { choices in
+                review = nil
+                let summary = SettingsPreset.apply(r.plan, choices).summary
+                // Once the sheet has gone: an alert asked for while it closes isn't shown.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { message = summary }
             }
         }
         .alert("Settings loaded", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
@@ -325,11 +433,98 @@ struct PresetsView: View {
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         do {
             let data = try Data(contentsOf: url)
-            message = try SettingsPreset.importPreset(data).summary
+            let now = UserDefaults.standard.integer(forKey: SettingsKey.downloadDeleteWatched)
+            let next = PresetReview(plan: try SettingsPreset.plan(data, known: SettingsPreset.known, deleteWatchedNow: now))
+            // After the file picker has closed: a sheet asked for while it closes isn't shown.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { review = next }
         } catch { self.error = error.localizedDescription }
     }
 
     private struct ShareURL: Identifiable { let url: URL; var id: String { url.path } }
+    private struct PresetReview: Identifiable { let id = UUID(); let plan: SettingsPreset.Plan }
+}
+
+/// What a preset adds, before anything changes (1.30.4). Settings apply as
+/// they are; addons, servers and shaders are ticked; scripts, mpv.conf,
+/// input.conf, script options, the command buttons and a shorter "Delete
+/// watched downloads" are not, until you tick them.
+private struct PresetReviewView: View {
+    let plan: SettingsPreset.Plan
+    let onImport: (SettingsPreset.Plan.Choices) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var choices = SettingsPreset.Plan.Choices()
+
+    private func count(_ n: Int, _ one: String) -> String { "\(n) \(one)\(n == 1 ? "" : "s")" }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    LabeledContent("Settings", value: "\(plan.settings.count)")
+                    if plan.tmdbKey != nil { LabeledContent("TMDB key", value: TMDB.apiKey.isEmpty ? "Added" : "Yours kept") }
+                } footer: {
+                    Text("These replace yours." + (plan.skipped.isEmpty ? "" : " \(count(plan.skipped.count, "setting")) this version doesn't use are skipped."))
+                }
+                if !plan.addons.isEmpty {
+                    Section {
+                        Toggle("Add \(count(plan.addons.count, "addon"))", isOn: $choices.addons)
+                        ForEach(Array(plan.addons.enumerated()), id: \.offset) { _, a in LabeledContent(a.name, value: a.host) }
+                    } footer: { Text("Addons are asked for catalogs and streams; their links usually carry a debrid key. Ones you have already stay as they are.") }
+                }
+                if !plan.servers.isEmpty {
+                    Section {
+                        Toggle("Add \(count(plan.servers.count, "server"))", isOn: $choices.servers)
+                        ForEach(Array(plan.servers.enumerated()), id: \.offset) { _, s in
+                            LabeledContent(s.name, value: URL(string: s.url)?.host ?? s.url)
+                        }
+                    }
+                }
+                fileSection(.shader, title: "Install \(count(plan.filesOf(.shader).count, "shader"))", isOn: $choices.shaders,
+                            note: "GPU shaders for the picture, used only when you pick them.")
+                fileSection(.script, title: "Install \(count(plan.filesOf(.script).count, "mpv script"))", isOn: $choices.scripts,
+                            note: "A script runs on every playback and can do anything mpv can. Tick this only for scripts you wrote or trust.")
+                if !plan.filesOf(.conf).isEmpty || plan.commandButtons != nil {
+                    Section {
+                        Toggle("Replace mpv's settings files", isOn: $choices.conf)
+                        ForEach(plan.filesOf(.conf), id: \.path) { f in Text(f.path).font(.footnote.monospaced()) }
+                        if plan.commandButtons != nil { Text("The player's command buttons").font(.footnote) }
+                    } footer: {
+                        Text("mpv.conf, input.conf and script options decide what mpv does and what keys and buttons run; mpv.conf can load scripts of its own. Tick this only for a file you made or trust.")
+                    }
+                }
+                if let days = plan.deleteWatched {
+                    Section {
+                        Toggle(days == 1 ? "Delete watched downloads after 1 day" : "Delete watched downloads after \(days) days", isOn: $choices.deleteWatched)
+                    } footer: {
+                        Text("Downloaded videos you finished longer ago than that are deleted at once. Files you added yourself are never deleted.")
+                    }
+                }
+                if !plan.strayFiles.isEmpty {
+                    Section {
+                        ForEach(plan.strayFiles, id: \.self) { Text($0).font(.footnote.monospaced()) }
+                    } footer: { Text("Not in a place mpv's files go: left out.") }
+                }
+            }
+            .brandListBackground()
+            .navigationTitle("Load Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Load") { onImport(choices) } }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func fileSection(_ kind: SettingsPreset.Plan.FileKind, title: String, isOn: Binding<Bool>, note: String) -> some View {
+        let files = plan.filesOf(kind)
+        if !files.isEmpty {
+            Section {
+                Toggle(title, isOn: isOn)
+                ForEach(files, id: \.path) { f in Text(f.path).font(.footnote.monospaced()) }
+            } footer: { Text(note) }
+        }
+    }
 }
 
 /// The system share sheet (Save to Files, AirDrop…).

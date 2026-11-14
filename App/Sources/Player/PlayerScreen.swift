@@ -394,9 +394,7 @@ struct PlayerScreen: View {
                 // picker, which was written long ago and never placed. The
                 // sound goes to an AirPlay speaker or Apple TV; the picture
                 // goes there by Screen Mirroring, which the same sheet offers.
-                AirPlayButton()
-                    .frame(width: 44, height: 44)
-                    .glassCircle()
+                AirPlayButton(route: model.audioRoute)
                     .opacity(ui.locked ? 0 : 1)
                     .allowsHitTesting(!ui.locked)
                     .accessibilityHidden(ui.locked)
@@ -629,7 +627,9 @@ struct PlayerScreen: View {
         }
         if problem.kind == .gone, let entry = model.problemHistoryEntry {
             actions.append(.init(title: "Remove from Continue Watching", role: .destructive) {
-                HistoryStore.shared.remove(entry)
+                // Through the model (1.30.4): it then saves nothing back on close.
+                _ = entry
+                model.removeFromContinueWatching()
                 onClose()
             })
         }
@@ -1253,14 +1253,155 @@ struct GestureHUDView: View {
     }
 }
 
-struct AirPlayButton: UIViewRepresentable {
+/// The AirPlay button (1.30.4): a static symbol of Folio's. iOS's picker
+/// view sat in the controls (a paused film keeps them up) with its glyph
+/// pulsing, which kept the screen and the glass under it redrawing. The
+/// picker view is now made only for a tap (RoutePickerLauncher).
+struct AirPlayButton: View {
+    /// Where the sound goes: the button is drawn again when it changes.
+    let route: AudioRoute?
+    @State private var launcher = RoutePickerLauncher()
+    @State private var systemButton = RoutePickerLauncher.useSystemButton
+
+    /// iOS 18 named the symbol anew; iOS 17 has only the old name.
+    private static var symbol: String {
+        if #available(iOS 18.0, *) { return "airplay.video" }
+        return "airplayvideo"
+    }
+
+    private var onAirPlay: Bool {
+        AVAudioSession.sharedInstance().currentRoute.outputs.contains { $0.portType == .airPlay }
+    }
+
+    var body: some View {
+        if systemButton {
+            SystemAirPlayButton(delegate: launcher)
+                .frame(width: 44, height: 44)
+                .glassCircle()
+        } else {
+            Button {
+                launcher.open { systemButton = true }
+            } label: {
+                Image(systemName: Self.symbol)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(onAirPlay ? Color(uiColor: .systemBlue) : Color.white)
+                    .frame(width: 44, height: 44)
+                    .glassCircle()
+                    .contentShape(Circle())
+            }
+            .buttonStyle(PressStyle())
+            .background { AnchorView { launcher.anchor = $0 } }
+        }
+    }
+}
+
+/// iOS's own AirPlay button, as before 1.30.4: only where Folio's can't
+/// open the list.
+private struct SystemAirPlayButton: UIViewRepresentable {
+    let delegate: RoutePickerLauncher
     func makeUIView(context: Context) -> AVRoutePickerView {
         let v = AVRoutePickerView()
         v.tintColor = .white
         // Its own tint while another output is in use, so the button shows it.
         v.activeTintColor = .systemBlue
         v.prioritizesVideoDevices = true
+        v.delegate = delegate
         return v
     }
     func updateUIView(_ uiView: AVRoutePickerView, context: Context) {}
+}
+
+/// Opens iOS's route list from Folio's button (1.30.4): an unseen
+/// AVRoutePickerView made for the tap, its button pressed, let go when the
+/// list closes. No list a second later: iOS's own button for this run.
+@MainActor
+final class RoutePickerLauncher: NSObject, AVRoutePickerViewDelegate {
+    static var useSystemButton = false
+    /// The view the list is opened from (its place: an iPad's popover points at it).
+    weak var anchor: UIView?
+    private var picker: AVRoutePickerView?
+    private var opened = false
+    private var onFailed: (() -> Void)?
+    private var openedAt: CFTimeInterval = 0
+
+    /// `failed`: this iOS didn't open the list (the button becomes iOS's own).
+    func open(failed: @escaping () -> Void) {
+        // A tap while the list is on its way: nothing. Later, a fresh picker
+        // even if iOS never said "closed" for the last one.
+        guard CACurrentMediaTime() - openedAt > 1.5 else { return }
+        letGo()
+        guard let anchor, anchor.window != nil else {
+            dlog("ui/warn", "AirPlay: the button isn't on screen yet")
+            return
+        }
+        let p = AVRoutePickerView(frame: anchor.bounds)
+        p.prioritizesVideoDevices = true
+        p.alpha = 0
+        p.isUserInteractionEnabled = false
+        p.delegate = self
+        anchor.addSubview(p)
+        p.layoutIfNeeded()
+        picker = p
+        opened = false
+        openedAt = CACurrentMediaTime()
+        onFailed = failed
+        guard let button = Self.control(in: p) else { giveUp("AVRoutePickerView has no button inside"); return }
+        let before = anchor.window?.rootViewController?.topMostPresented
+        button.sendActions(for: .touchUpInside)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self, self.picker === p, !self.listUp(anchor, before) else { return }
+            button.sendActions(for: .primaryActionTriggered)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { [weak self] in
+                guard let self, self.picker === p, !self.listUp(anchor, before) else { return }
+                self.giveUp("the route list didn't open from Folio's button")
+            }
+        }
+    }
+
+    /// The list is up: the delegate said so, or a new controller is presented.
+    private func listUp(_ anchor: UIView, _ before: UIViewController?) -> Bool {
+        opened || anchor.window?.rootViewController?.topMostPresented !== before
+    }
+
+    /// The picker's button: a UIButton if there is one, else any control.
+    static func control(in view: UIView) -> UIControl? {
+        var queue = view.subviews
+        var other: UIControl?
+        while !queue.isEmpty {
+            let v = queue.removeFirst()
+            if let b = v as? UIButton { return b }
+            if other == nil, let c = v as? UIControl { other = c }
+            queue.append(contentsOf: v.subviews)
+        }
+        return other
+    }
+
+    private func letGo() {
+        picker?.delegate = nil
+        picker?.removeFromSuperview()
+        picker = nil
+    }
+
+    private func giveUp(_ why: String) {
+        letGo()
+        Self.useSystemButton = true
+        dlog("ui/warn", "AirPlay: \(why); iOS's own button from now on")
+        let f = onFailed
+        onFailed = nil
+        f?()
+    }
+
+    nonisolated func routePickerViewWillBeginPresentingRoutes(_ routePickerView: AVRoutePickerView) {
+        MainActor.assumeIsolated {
+            self.opened = true
+            dlog("ui", "AirPlay: route list open")
+        }
+    }
+
+    nonisolated func routePickerViewDidEndPresentingRoutes(_ routePickerView: AVRoutePickerView) {
+        MainActor.assumeIsolated {
+            dlog("ui", "AirPlay: route list closed")
+            self.letGo()
+        }
+    }
 }

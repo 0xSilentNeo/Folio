@@ -152,6 +152,7 @@ struct LocalFolderView: View {
     @State private var items: [URL] = []
     @AppStorage("libraryView") private var libraryView = LibraryViewMode.grid.rawValue
     @ObservedObject private var history = HistoryStore.shared
+    @ObservedObject private var kids = KidsProfile.shared
 
     /// In the kids profile no subfolders (nothing in them was rated, review
     /// 5 Nov) and only the files whose title it allows.
@@ -196,7 +197,10 @@ struct LocalFolderView: View {
                                 .buttonStyle(PressStyle(scale: 0.97))
                                 .contextMenu {
                                     Button { play(f) } label: { Label("Play", systemImage: "play") }
-                                    Button(role: .destructive) { pendingDelete = f } label: { Label("Delete", systemImage: "trash") }
+                                    // Not in the kids profile (1.30.4): it took no passcode.
+                                    if !kids.isOn {
+                                        Button(role: .destructive) { pendingDelete = f } label: { Label("Delete", systemImage: "trash") }
+                                    }
                                 }
                                 .modifier(DeleteQuestion(file: f, pending: $pendingDelete, delete: deleteFile))
                             }
@@ -231,13 +235,17 @@ struct LocalFolderView: View {
         reload()
     }
 
+    /// Its own title only, in episode order (1.30.4): a film alone, a show's
+    /// episodes. The whole folder was the queue, every other film after it.
     private func play(_ u: URL) {
-        let queue = media.map { f -> MediaItem in
+        let key = LibraryOrganizer.titleKey(u)
+        let list = media.filter { LibraryOrganizer.titleKey($0) == key }.sorted(by: LibraryOrganizer.episodeOrder)
+        let queue = list.map { f -> MediaItem in
             var m = MediaItem(url: f.path, title: TitleParser.clean(f.lastPathComponent), source: .local)
             m.historyKey = f.path
             return m
         }
-        if let i = media.firstIndex(of: u) { PlayerPresenter.play(queue: queue, index: i) }
+        if let i = list.firstIndex(of: u) { PlayerPresenter.play(queue: queue, index: i) }
     }
 
     private func reload() {

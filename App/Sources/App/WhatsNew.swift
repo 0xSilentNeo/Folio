@@ -20,6 +20,16 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.30.4", items: [
+            Item(icon: "forward.end", title: "Up Next waits for you",
+                 text: "Its countdown runs ten real seconds from when the card shows, so seeking around the credits no longer jumps an episode ahead."),
+            Item(icon: "play.rectangle.on.rectangle", title: "Continue Watching moves on",
+                 text: "Finish an episode and its card offers the next one, from your library, your server or an addon. A show you watch from both is one card."),
+            Item(icon: "battery.75percent", title: "Easier on the battery",
+                 text: "Streams are read in bursts so the radio can rest, a video is drawn at its own size, and the AirPlay button no longer searches all the time."),
+            Item(icon: "figure.and.child.holdinghands", title: "A safer kids profile",
+                 text: "Pages left open are closed when it comes on, downloads are out of reach, and nothing can be deleted while it's on."),
+        ]),
         // (1.30.3) 1.30.1 and 1.30.2 had no list, so an update showed nothing new.
         Release(version: "1.30.3", items: [
             Item(icon: "magnifyingglass", title: "A tidier search",

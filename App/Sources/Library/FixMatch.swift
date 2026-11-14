@@ -116,8 +116,17 @@ struct FixMatchSheet: View {
             await MetadataService.shared.setPin(pin, forFile: file.lastPathComponent)
             ImageCache.shared.forgetPictures()
             LibraryMetaIndex.shared.forget(titleOf: file)
+            // Tiles already showing the title look it up again (1.30.4):
+            // Home's kept their poster and details until the next launch.
+            NotificationCenter.default.post(name: .folioMetadataChanged, object: MetadataService.pinKey(TitleParser.parse(file.lastPathComponent)))
             onChange()
             dismiss()
         }
     }
+}
+
+extension Notification.Name {
+    /// A title was matched by hand or put back (Fix Match). Object: its
+    /// key, MetadataService.pinKey.
+    static let folioMetadataChanged = Notification.Name("FolioMetadataChanged")
 }

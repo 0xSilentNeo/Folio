@@ -356,7 +356,7 @@ struct KidsPasscodeScreen: View {
     }
 
     private var message: String? {
-        if let s = waitLeft { return "Too many tries. Try again in \(s) s." }
+        if let s = waitLeft { return KidsProfile.waitNote(seconds: s) }
         if let note { return note }
         // Only what went wrong, as on the Lock Screen's pad: nothing else under
         // the circles (the reason is still Face ID's prompt).
@@ -398,7 +398,7 @@ struct KidsPasscodeScreen: View {
                 finish(nil)
                 return .accepted
             case .wrong(let left):
-                note = left == 1 ? "Wrong passcode. One more try before a 30-second wait." : "Wrong passcode."
+                note = left == 1 ? KidsProfile.lastTryNote(lockouts: kids.lockoutsInARow) : "Wrong passcode."
                 return .wrong
             case .locked:
                 note = nil
@@ -478,6 +478,19 @@ struct KidsGate: Identifiable {
     static func close(_ gate: Binding<KidsGate?>) {
         withTransaction(\.disablesAnimations, true) { gate.wrappedValue = nil }
     }
+
+    /// Passcode screens up now (1.30.4): Home closes them before it closes
+    /// Settings under one, which left the pad up with nothing to close it.
+    @MainActor static var shown = 0
+
+    /// Every passcode screen closes, as Cancel does.
+    @MainActor
+    static func closeAll() { NotificationCenter.default.post(name: .kidsGatesClose, object: nil) }
+}
+
+extension Notification.Name {
+    /// KidsGate.closeAll (1.30.4).
+    static let kidsGatesClose = Notification.Name("folio.kidsGatesClose")
 }
 
 extension View {
@@ -488,6 +501,9 @@ extension View {
             KidsPasscodeCover(gate: g, binding: gate)
                 .presentationBackground(.clear)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .kidsGatesClose)) { _ in
+            MainActor.assumeIsolated { if gate.wrappedValue != nil { KidsGate.close(gate) } }
+        }
     }
 }
 
@@ -496,6 +512,12 @@ private struct KidsPasscodeCover: View {
     let binding: Binding<KidsGate?>
 
     var body: some View {
+        screen
+            .onAppear { KidsGate.shown += 1 }
+            .onDisappear { KidsGate.shown = max(0, KidsGate.shown - 1) }
+    }
+
+    private var screen: some View {
         KidsPasscodeScreen(purpose: gate.purpose) {
             KidsGate.close(binding)
         } done: { code in
@@ -636,6 +658,33 @@ struct KidsBlockedView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(HomeBackdrop().ignoresSafeArea())
         .accessibilityIdentifier("kidsBlocked")
+    }
+}
+
+/// Network and a server's pages while the kids profile is on (1.30.4):
+/// what's on a server isn't rated, and plays.
+struct KidsServersBlockedView: View {
+    var body: some View {
+        ContentUnavailableView {
+            Label("Not in the kids profile", systemImage: "hand.raised")
+        } description: {
+            Text("Servers can play anything on them, so the kids profile keeps them closed.")
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(HomeBackdrop().ignoresSafeArea())
+        .accessibilityIdentifier("kidsBlocked")
+    }
+}
+
+extension View {
+    /// A server's page under KidsServersBlockedView while the kids profile
+    /// is on (1.30.4), as a guard behind the pages that close it. Laid
+    /// over, not swapped in: the page and what it pushed keep their way back.
+    func kidsServerGuard(_ on: Bool) -> some View {
+        opacity(on ? 0 : 1)
+            .allowsHitTesting(!on)
+            .accessibilityHidden(on)
+            .overlay { if on { KidsServersBlockedView() } }
     }
 }
 

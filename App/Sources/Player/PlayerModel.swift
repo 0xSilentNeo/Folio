@@ -5,6 +5,7 @@ import AVFoundation
 import MediaPlayer
 import Combine
 import CoreVideo
+import Network
 import os
 
 struct MediaTrack: Identifiable, Hashable {
@@ -134,6 +135,10 @@ final class PlaybackClock: ObservableObject {
     /// until then): set on every touch move, so it lives with what only the
     /// time bar watches, not with the whole player's chrome.
     @Published var scrubTime: Double?
+    /// Seconds left on the Up Next card's countdown (1.30.4): counted in
+    /// real time from when the card is seen, so the card's button fills
+    /// with it and not with the playback position.
+    @Published var upNextLeft: Double?
 }
 
 @MainActor
@@ -274,6 +279,29 @@ final class PlayerModel: ObservableObject {
     private var started = false
     private var closed = false
     private var loadStarted = Date()
+    /// Counts load() calls (1.30.4): a seek or skip begun for one file is
+    /// dropped once another is loading. 14 Nov report: a scrub begun in
+    /// S01E03's credits went on after Up Next had moved to S01E04, and its
+    /// release seeked E04 to 38:32, its own credits.
+    private(set) var loadToken = 0
+    /// The file the finger on the seek bar or the video went down on.
+    private var scrubSession = ScrubSession()
+    /// load() clears the scrub's time; that isn't the finger lifting.
+    private var clearingScrub = false
+    private var scrubWatch: AnyCancellable?
+    private var scrubDropLogged = false
+    /// A time-pos of this file has come since it loaded (1.30.4): until
+    /// then `position` is the last file's, or 0.
+    private var positionFresh = false
+    /// "aid=…", "sid=…", "secondary-sid=…" as mpv had them before any file
+    /// (1.30.4): given to each file's loadfile, so it starts on its own.
+    private var fileTrackDefaults: [String] = []
+    /// With show memory on, it decides each file's tracks from a clean
+    /// start; with it off, a track picked carries on by its number as mpv
+    /// does (episodes of one release number their tracks alike).
+    private var trackDefaultsForFile: [String] { rememberOn ? fileTrackDefaults : [] }
+    /// Playing when an audio interruption began (1.30.4): played on after it.
+    private var playingBeforeInterruption = false
     private var pendingW = 0, pendingH = 0
     /// Closes the player's screen (PlayerViewController.closePlayer, which
     /// calls close()): for a close the screen didn't ask for, such as mpv
@@ -319,6 +347,13 @@ final class PlayerModel: ObservableObject {
     func start() {
         guard !started else { return }
         started = true
+        // The finger lifting off a scrub (1.30.4): both the seek bar and the
+        // video's swipe end it by clearing scrubTime.
+        scrubWatch = clock.$scrubTime.sink { [weak self] t in
+            guard t == nil else { return }
+            MainActor.assumeIsolated { self?.scrubLifted() }
+        }
+        _ = PlayerNetwork.shared          // its first answer comes a moment after it starts
         configureAudioSession()
         dlog("player", "start renderer=\(renderer)")
         if CommandLine.arguments.contains("-labNoEngine") { dlog("lab", "engine not started (lab)"); return }
@@ -339,6 +374,10 @@ final class PlayerModel: ObservableObject {
         c.delegate = self
         client = c
         subMarginBase = Int(c.int("sub-margin-x") ?? 25)
+        // The tracks each file starts on, as the settings and mpv.conf have
+        // them (1.30.4): a track picked in one file (or by a show's memory)
+        // is mpv's option from then on, and the next file took that number.
+        fileTrackDefaults = ["aid", "sid", "secondary-sid"].compactMap { k in c.string(k).map { "\(k)=\($0)" } }
         observe(c)
         probeAudioFilters(c)
 
@@ -410,12 +449,29 @@ final class PlayerModel: ObservableObject {
         // The tasks that wake on a timer end with the player (1.30.2).
         copyWatch?.cancel(); copyWatch = nil
         passLog?.cancel(); passLog = nil
+        stopUpNextCountdown()                       // (1.30.4)
+        stallCheck?.cancel(); stallCheck = nil
+        scrubWatch?.cancel(); scrubWatch = nil
         dlog("player", "close at \(Self.format(position))")
         // Silent and still at once (1.28.2): the player goes off the screen
         // now and mpv finishes behind it.
         client?.setAsync("pause", true)
         audioCoolWork?.cancel(); pauseSideWork?.cancel()
         zoomTicker.stop()
+        // Closed with Up Next's move still under way: it was left for the next (1.30.4).
+        if finishOnNextLoad { leftFinished = true }
+        // Closed in the credits, where Up Next comes up (1.30.4): watched,
+        // even with more than 90 s of long credits left. It stayed "in
+        // progress" in the credits, and Continue Watching offered the end
+        // credits again instead of the next episode.
+        // By the credits alone, whatever Up Next's setting or a next episode.
+        if fileLoaded, positionFresh, duration > 120,
+           let t = Self.upNextTrigger(segments: segments, duration: duration, postCredits: postCredits, autoplay: false),
+           position >= t.time { leftFinished = true }
+        // Removed from Continue Watching on the problem card (1.30.4): not
+        // written back by the close. PlayerScreen removes the entry itself
+        // and closes; a failed file whose entry is gone was removed there.
+        if errorMessage != nil, let it = playingItem, HistoryStore.shared.entry(for: it.id) == nil { historyRemoved = true }
         saveHistory(force: true)
         HistoryStore.shared.flush()
         WatchLog.shared.flush()
@@ -552,9 +608,16 @@ final class PlayerModel: ObservableObject {
         c.setOption("save-position-on-quit", "no")
         c.setOption("cache", "yes")
         let cacheMB = max(32, defaults.integer(forKey: SettingsKey.cacheMB))
-        c.setOption("demuxer-max-bytes", "\(cacheMB)MiB")
+        // The buffer ahead as bufferMB says (1.30.4): longer reads, longer
+        // rests for the radio when memory allows; behind it, your setting's.
+        c.setOption("demuxer-max-bytes", "\(bufferMB)MiB")
         c.setOption("demuxer-max-back-bytes", "\(max(16, cacheMB / 3))MiB")
         c.setOption("demuxer-readahead-secs", "60")
+        // Read in bursts (1.30.4): with the buffer full, mpv reads again only
+        // once 15 s are left (demux.c, hyst_secs), not as soon as room frees
+        // up. 14 Nov: a 26 Mb/s remux trickled in over 5G all evening, the
+        // radio never resting (about 14% battery an hour).
+        c.setOption("demuxer-hysteresis-secs", "15")
         c.setOption("network-timeout", "30")
         c.setOption("hr-seek-framedrop", "yes")
         // Audio: multichannel PCM out (AirPlay / HDMI surround, Spatial Audio on AirPods).
@@ -793,17 +856,31 @@ final class PlayerModel: ObservableObject {
             subsFetched.insert(queueIndex)
             let index = queueIndex
             isLoading = true
+            // The last file plays on meanwhile, with queueIndex already on
+            // this one (1.30.4): its end mustn't move on from here.
+            pendingNavigation = index
+            lookupToken += 1
+            let token = lookupToken
             Task { [weak self] in
                 guard let self else { return }
                 var it = item
                 it.subtitles += await AddonPlayback.subtitles(type: ctx.type, videoId: ctx.videoId)
                 self.resolvedItems[index] = it
-                // Not into a player closed meanwhile (1.30.2).
-                guard self.queueIndex == index, !self.closed else { return }
+                // Not into a player closed meanwhile (1.30.2), nor after a
+                // newer choice (1.30.4: Try Again twice loaded it twice).
+                guard self.queueIndex == index, !self.closed, self.lookupToken == token else { return }
                 self.load(it)
             }
             return
         }
+        // From here the last file is let go of: its end, its countdown and
+        // its scrubs are guarded by fileLoaded and loadToken (1.30.4).
+        pendingNavigation = nil
+        // Up Next moved on from it: it counts as played to its end (1.30.4:
+        // marked when the next file really loads, not at the tap, so a
+        // cancelled picker doesn't leave it "finished").
+        if finishOnNextLoad { leftFinished = true }
+        finishOnNextLoad = false
         saveHistory(force: true)            // the file that was playing, under its own entry
         // Another file: the place a stream stopped at isn't its (1.30.2).
         if retryAt?.id != item.id { retryAt = nil }
@@ -841,6 +918,24 @@ final class PlayerModel: ObservableObject {
         tracks = []
         chapters = []
         loadStarted = Date()
+        // Another file (1.30.4): what was begun for the last one stops here.
+        // A scrub under the finger stays the last file's until it lifts
+        // (ScrubSession), skips still gathering are dropped, and the Up Next
+        // countdown and the slow-connection count start again.
+        loadToken += 1
+        positionFresh = false
+        endSkipRun()
+        clearingScrub = true; clock.scrubTime = nil; clearingScrub = false
+        eofWhileScrubbing = false
+        stopUpNextCountdown()
+        chaptersInjected = false
+        stallWaits = []
+        stallCheck?.cancel(); stallCheck = nil
+        needRate = 0
+        historyRemoved = false
+        skipSuppressedUntil = .distantPast
+        // A video track saved while away was the last file's (1.30.4).
+        vidSaved = nil
         userMarkers = MarkerStore.shared.markers(for: item.id)
         mediaTitle = item.displayTitle
         lastGamma = ""
@@ -867,11 +962,14 @@ final class PlayerModel: ObservableObject {
             }
         }
 
-        let opts = startOptions(for: item, toast: true)
+        // A reconnect (1.30.4) opens the same file on the tracks it played.
+        let keep = reconnectTracks?.id == item.id ? reconnectTracks?.opts ?? [] : []
+        reconnectTracks = nil
+        let opts = startOptions(for: item, toast: true) + trackDefaultsForFile + keep
         c.set("demuxer-readahead-secs", "60")
         if raisedBuffer, !bufferTrimmed {
             raisedBuffer = false
-            c.set("demuxer-max-bytes", "\(max(32, defaults.integer(forKey: SettingsKey.cacheMB)))MiB")
+            c.set("demuxer-max-bytes", "\(bufferMB)MiB")
         }
         readToEndCheck?.invalidate(); readToEndCheck = nil
         if let a = appended, a.index == queueIndex, a.path == mpvPath(item) {
@@ -893,10 +991,21 @@ final class PlayerModel: ObservableObject {
                 // here for an earlier file whose address was still awaited
                 // (Next tapped twice left the third file paused), and not
                 // mpv's own at the end of the last file (keep-open).
-                let wasPaused = paused && !linkHoldPause && !advancingFromEnd
+                // While held, `paused` is what you asked for (1.30.4), so an
+                // earlier hold reads as it.
+                let wasPaused = paused && !advancingFromEnd
                 advancingFromEnd = false
-                if !wasPaused { c.set("pause", true); linkHoldPause = true }
+                // Held whatever it was (1.30.4): a play or pause asked for
+                // meanwhile (you, AirPods, a call, the Lock Screen) is kept
+                // for the new file (setPaused), not done to the last one,
+                // which played on under the opening card and could reach its
+                // end there.
+                if !paused { c.set("pause", true) }
+                linkHoldPause = true
+                playAfterLink = !wasPaused
+                if paused != wasPaused { paused = wasPaused; pipState.paused = wasPaused }
                 let id = item.id
+                let token = loadToken
                 // Said after 4 s (1.28.9): an addon's server can take half a
                 // minute to hand the stream over, with nothing on screen.
                 // Kept up for as long as it waits (1.28.10; one 1.6 s note
@@ -906,20 +1015,26 @@ final class PlayerModel: ObservableObject {
                 Task { [weak self] in
                     let answer = await LinkWarmer.resolveFast(u, headers: item.headers, purpose: "this file")
                     let final = answer.address
-                    guard let self, !self.closed, self.playingItem?.id == id, self.appended == nil else { return }
+                    // This load's own answer only (1.30.4): after Try Again the
+                    // first attempt's came up to 40 s later and opened the file
+                    // again at that attempt's start.
+                    guard let self, !self.closed, self.loadToken == token, self.playingItem?.id == id, self.appended == nil else { return }
                     if let final, final != u { self.playLinks[id] = final } else if final == u { LinkWarmer.direct.insert(u.host ?? "") }
                     // Saved once the file has really loaded (see rememberAddress).
                     self.followed = final.flatMap { $0 != u && !answer.fromSaved ? (id, u, $0) : nil }
                     self.loadFile(item, opts, c)
-                    if !wasPaused { self.linkHoldPause = false; c.set("pause", false) }
+                    self.endLinkHold(c)
                 }
             } else {
                 loadFile(item, opts, c)
                 // Playing again after a pause that wasn't the user's: the one
                 // held for an address (above), or mpv's at the end of the
                 // last file, which stays on across loadfile (1.30.1).
-                if linkHoldPause || advancingFromEnd {
-                    linkHoldPause = false; advancingFromEnd = false
+                if linkHoldPause {
+                    advancingFromEnd = false
+                    endLinkHold(c)
+                } else if advancingFromEnd {
+                    advancingFromEnd = false
                     c.set("pause", false)
                 }
             }
@@ -930,6 +1045,24 @@ final class PlayerModel: ObservableObject {
 
     /// The pause is one `load` put on while a file's address was awaited.
     private var linkHoldPause = false
+    /// What was asked for while held (1.30.4): play once the file is asked for.
+    private var playAfterLink = false
+
+    /// The hold over: the new file plays if that's what was last asked for.
+    private func endLinkHold(_ c: MPVClient) {
+        guard linkHoldPause else { return }
+        linkHoldPause = false
+        if playAfterLink {
+            warmAudioForPlay(c)
+            c.set("pause", false)
+        } else {
+            // mpv's pause during the hold wasn't reported; it's yours now.
+            pipState.paused = true
+            pip.updatePlayback(position: position, rate: 0)
+            UIApplication.shared.isIdleTimerDisabled = false
+            scheduleAudioCool()
+        }
+    }
     /// The next file is being opened because the last one ended by itself
     /// (autoplay): mpv paused at its end, the user didn't.
     private var advancingFromEnd = false
@@ -1126,6 +1259,17 @@ final class PlayerModel: ObservableObject {
         return HistoryStore.shared.entry(for: it.id)
     }
 
+    /// The problem card's "Remove from Continue Watching" (1.30.4): removed,
+    /// and not written back by the close that follows.
+    func removeFromContinueWatching() {
+        guard let e = problemHistoryEntry else { return }
+        historyRemoved = true
+        HistoryStore.shared.remove(e)
+    }
+    /// The playing file's history entry was removed in the player: nothing
+    /// more is saved for it.
+    private var historyRemoved = false
+
     /// Start over (TitleHeroView): the first file opens at 0. Until 1.20.3 its
     /// history was deleted before the player opened, so a file that failed to
     /// open, or a quick close, lost its resume point and watched mark.
@@ -1175,18 +1319,23 @@ final class PlayerModel: ObservableObject {
         checkingProblem = false
         mediaTitle = [pick.context.name, pick.context.videoLabel].compactMap { $0 }.joined(separator: " · ")
         showToast("Finding \(pick.context.videoLabel ?? "next episode")…")
+        // The latest choice wins (1.30.4: Try Again while one was still being
+        // found loaded both), and a file still playing doesn't move on meanwhile.
+        lookupToken += 1
+        let token = lookupToken
+        pendingNavigation = index
         Task { [weak self] in
             guard let self else { return }
             let p = self.pick(for: index) ?? pick
             let match = await AddonPlayback.screen(p)
             // Not into a player closed meanwhile (1.30.2).
-            guard self.queueIndex == index, !self.closed else { return }
+            guard self.queueIndex == index, !self.closed, self.lookupToken == token else { return }
             switch match {
             case .same(var found):
                 self.episodeStates[index] = .ready
                 found.subtitles += await AddonPlayback.subtitles(type: p.context.type, videoId: p.context.videoId)
                 self.subsFetched.insert(index)
-                guard self.queueIndex == index, !self.closed else { return }
+                guard self.queueIndex == index, !self.closed, self.lookupToken == token else { return }
                 self.resolvedItems[index] = found
                 self.load(found)
             case .other:
@@ -1196,6 +1345,7 @@ final class PlayerModel: ObservableObject {
             case .none:
                 self.episodeStates[index] = .unavailable
                 self.isLoading = false
+                self.pendingNavigation = nil
                 self.errorMessage = "No stream found for \(pick.context.videoLabel ?? "this episode") from the same addon. Pick one from the title page."
             }
         }
@@ -1234,6 +1384,8 @@ final class PlayerModel: ObservableObject {
     private func startScreener() {
         guard screener == nil, defaults.bool(forKey: SettingsKey.prepareNext),
               queue.indices.contains(where: { $0 > queueIndex && queue[$0].url.isEmpty && queue[$0].streamPick != nil }) else { return }
+        screenerRun += 1
+        let run = screenerRun
         screener = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 5_000_000_000)
             var ready = 0, picks = 0, missing = 0
@@ -1246,7 +1398,14 @@ final class PlayerModel: ObservableObject {
                 guard !self.closed, !Task.isCancelled, i < self.queue.count else { break }
                 guard self.queue[i].url.isEmpty, self.resolvedItems[i] == nil, self.episodeStates[i] == nil, let p = self.pick(for: i) else { continue }
                 self.episodeStates[i] = .checking
-                switch await AddonPlayback.screen(p) {
+                let result = await AddonPlayback.screen(p)
+                // Cancelled meanwhile (1.30.4): a stream picked by hand changed
+                // the release, and this answer was for the old one.
+                guard !Task.isCancelled, !self.closed else {
+                    if self.episodeStates[i] == .checking { self.episodeStates[i] = nil }
+                    break
+                }
+                switch result {
                 case .same(let item): self.resolvedItems[i] = item; self.episodeStates[i] = .ready; ready += 1
                 case .other: self.episodeStates[i] = .pick; picks += 1
                 case .none: self.episodeStates[i] = .unavailable; missing += 1
@@ -1254,9 +1413,12 @@ final class PlayerModel: ObservableObject {
                 try? await Task.sleep(nanoseconds: 1_500_000_000)   // one request at a time, gently
             }
             dlog("player", "season check: \(ready) ready, \(picks) need a pick, \(missing) unavailable")
-            self?.screener = nil
+            // Only its own handle (1.30.4): a check started after this one was
+            // cancelled lost its handle here, and a third could start.
+            if self?.screenerRun == run { self?.screener = nil }
         }
     }
+    private var screenerRun = 0
 
     /// Near the end of an episode: get the next one ready (Settings →
     /// Playback → Get the next episode ready). Network items only; library
@@ -1272,6 +1434,9 @@ final class PlayerModel: ObservableObject {
         // end only, and with long credits the countdown finished before
         // anything was ready (27 Oct log: credits 3506–3750, card at 3506).
         let cardAt = upNextTrigger?.time ?? duration
+        // Not for the episode after one being moved to (1.30.4): queueIndex
+        // may be that one's while the last file still plays.
+        guard pendingNavigation == nil, playingItem?.id == item.id else { return }
         guard defaults.bool(forKey: SettingsKey.prepareNext), hasNext, playbackMode == "playlist", preparing == nil, fileLoaded,
               duration > 120, position >= cardAt - Self.prepareLead || duration - position < Self.prepareLead + 60 else { return }
         let i = queueIndex + 1
@@ -1279,8 +1444,9 @@ final class PlayerModel: ObservableObject {
         let next = resolvedItems[i] ?? queue[i]
         guard next.url.isEmpty || next.resolvedURL?.isFileURL == false else { return }
         preparing = i
+        let token = loadToken
         Task { [weak self] in
-            await self?.prepare(i)
+            await self?.prepare(i, for: token)
             self?.preparing = nil
         }
     }
@@ -1297,11 +1463,18 @@ final class PlayerModel: ObservableObject {
     /// and 768 MB, until the next file starts (not after a memory warning).
     private var raisedBuffer = false
     private var readToEndCheck: Timer?
+
+    /// (1.30.4) At least 384 MB ahead while iOS leaves the app over 3 GB:
+    /// ~2 min of a remux per read, the radio quiet longer between reads.
+    private var bufferMB: Int {
+        let mine = max(32, defaults.integer(forKey: SettingsKey.cacheMB))
+        return os_proc_available_memory() > 3 << 30 ? max(mine, 384) : mine
+    }
     private func readToEnd() {
         guard let c = client, duration > 0 else { return }
         let mb = 1_048_576.0
         let size = Double(c.int("file-size") ?? 0)
-        let limit = Double(max(32, defaults.integer(forKey: SettingsKey.cacheMB))) * mb
+        let limit = Double(bufferMB) * mb
         let left = size > 0 ? size * max(0, duration - position) / duration * 1.15 + 16 * mb : 0
         if left > limit, !bufferTrimmed {
             let cap = min(768 * mb, Double(os_proc_available_memory()) / 4)
@@ -1342,7 +1515,7 @@ final class PlayerModel: ObservableObject {
     private func lowerRaisedBuffer() {
         guard raisedBuffer, !bufferTrimmed, let c = client, !c.isShutDown else { return }
         raisedBuffer = false
-        let mb = max(32, defaults.integer(forKey: SettingsKey.cacheMB))
+        let mb = bufferMB
         c.setAsync("demuxer-max-bytes", "\(mb)MiB")
         dlog("player", "next episode: buffer limit back to \(mb) MB for the next file (\(EnergyMonitor.memory))")
     }
@@ -1352,7 +1525,10 @@ final class PlayerModel: ObservableObject {
         (c.string("demuxer-cache-state") ?? "").range(of: #""eof"\s*:\s*true"#, options: .regularExpression) != nil
     }
 
-    private func prepare(_ i: Int) async {
+    /// `token`: the file it was asked for (1.30.4). Another loaded meanwhile
+    /// (a reconnect, Try Again), it isn't appended behind that one: asked
+    /// again from its own position.
+    private func prepare(_ i: Int, for token: Int) async {
         var item: MediaItem
         if let r = resolvedItems[i] {
             item = r
@@ -1375,7 +1551,7 @@ final class PlayerModel: ObservableObject {
         if let u = item.resolvedURL, !u.isFileURL, playLinks[item.id] == nil, let final = await LinkWarmer.resolve(u, headers: item.headers), final != u {
             playLinks[item.id] = final
         }
-        guard queueIndex + 1 == i, !closed, fileLoaded, let c = client else { return }
+        guard queueIndex + 1 == i, !closed, fileLoaded, loadToken == token, let c = client else { return }
         // Next in mpv's playlist: mpv opens it and starts filling its buffer as
         // soon as this file has been read to the end (prefetch-playlist; mpv
         // 0.41 loadfile.c, prefetch_next → demux_start_prefetch). Reading ahead
@@ -1386,7 +1562,7 @@ final class PlayerModel: ObservableObject {
         if !bufferTrimmed { c.set("prefetch-playlist", "yes") }
         c.set("demuxer-readahead-secs", String(Int(max(60, duration - position + 30))))
         c.command(["playlist-clear"])
-        let opts = startOptions(for: item, toast: false)
+        let opts = startOptions(for: item, toast: false) + trackDefaultsForFile      // (1.30.4) as load()
         c.command(["loadfile", mpvPath(item), "append", "-1", opts.joined(separator: ",")])
         appended = (i, mpvPath(item))
         readToEnd()
@@ -1397,10 +1573,22 @@ final class PlayerModel: ObservableObject {
     /// on until a stream is picked (1.17.0 paused it, and the picker could not
     /// open over the Now Playing menu — 27 Oct report).
     private func askToPick(_ index: Int) {
+        pendingNavigation = nil             // the move waits for the picker now (1.30.4)
         guard let ctx = queue[index].streamPick?.context else { return }
         pickRequest = PickRequest(id: index, context: ctx)
         dlog("player", "episode \(ctx.videoLabel ?? ctx.videoId): no stream of the same release; asking")
     }
+
+    /// An episode being moved to while the last file still plays (1.30.4):
+    /// its stream looked up, its subtitles fetched, a picked stream's
+    /// subtitles awaited. Meanwhile the last file's end and Up Next's
+    /// countdown don't move on (from an index that may already be the new
+    /// episode's: S01E05 → S01E07). load() clears it once it lets the last
+    /// file go; the picker, when the move ends there.
+    private var pendingNavigation: Int?
+    /// Up Next moved on: the file counts as played to its end once the next
+    /// one really loads (1.30.4).
+    private var finishOnNextLoad = false
 
     /// Lab (`-pickLab`): the picker for a made-up episode, over whatever is open.
     func labShowPicker() {
@@ -1415,7 +1603,15 @@ final class PlayerModel: ObservableObject {
         // (1.30.3). Cleared when the picker opened, a stream picked after an
         // episode ended by itself opened paused.
         advancingFromEnd = false
+        // Up Next didn't move on after all (1.30.4): not "finished".
+        finishOnNextLoad = false
         pickRequest = nil
+        // The player's first episode needed a pick and none was made (1.30.4):
+        // a black player with nothing on it until now.
+        if playingItem == nil, !fileLoaded, errorMessage == nil, let ctx = queue[queueIndex].streamPick?.context {
+            isLoading = false
+            errorMessage = "No stream was picked for \(ctx.videoLabel ?? ctx.name)."
+        }
     }
 
     /// A tap on a playlist row. The row of the episode playing now does nothing.
@@ -1442,6 +1638,12 @@ final class PlayerModel: ObservableObject {
     private func goTo(_ i: Int) {
         guard queue.indices.contains(i) else { return }
         lookupToken += 1
+        // A move of yours (or Up Next's): the card goes and doesn't count on
+        // over it, and a picker for another episode is no longer asked (1.30.4).
+        upNext = nil
+        upNextDismissed = true
+        stopUpNextCountdown()
+        if let r = pickRequest, r.id != i { pickRequest = nil }
         if let done = resolvedItems[i] { queueIndex = i; load(done); return }
         guard queue[i].url.isEmpty, let p = pick(for: i) else { queueIndex = i; load(queue[i]); return }
         switch episodeStates[i] {
@@ -1452,6 +1654,7 @@ final class PlayerModel: ObservableObject {
             let label = p.context.videoLabel ?? "episode \(i + 1)"
             showToast("Finding \(label)…")
             episodeStates[i] = .checking
+            pendingNavigation = i
             Task { [weak self] in
                 guard let self else { return }
                 let match = await AddonPlayback.screen(p)
@@ -1485,13 +1688,17 @@ final class PlayerModel: ObservableObject {
         lookupToken += 1
         let token = lookupToken
         episodeStates[request.id] = .checking
+        pendingNavigation = request.id      // (1.30.4) while its subtitles are asked for
         Task { [weak self] in
             guard let self else { return }
             let ctx = request.context
             let subs = await AddonPlayback.subtitles(type: ctx.type, videoId: ctx.videoId)
             // A later choice (another pick, another episode) wins (review, 5 Nov).
             guard self.lookupToken == token, !self.closed else { return }
-            guard let item = AddonPlayback.makeItem(ctx, stream: s, addon: addon, extraSubtitles: subs) else { return }
+            guard let item = AddonPlayback.makeItem(ctx, stream: s, addon: addon, extraSubtitles: subs) else {
+                self.pendingNavigation = nil
+                return
+            }
             self.pickOverride = AddonPlayback.pick(from: s, addon: addon, context: ctx)
             // Later episodes are checked again against the new release.
             for j in self.queue.indices where j > request.id && self.queue[j].url.isEmpty { self.episodeStates[j] = nil; self.resolvedItems[j] = nil }
@@ -2114,6 +2321,13 @@ final class PlayerModel: ObservableObject {
         // that was cancelled, and un-paused a later Next).
         advancingFromEnd = false
         guard let c = client else { return }
+        // The next file's link is being followed (1.30.4): the last file
+        // stays held, and this is done once the new one is asked for.
+        if linkHoldPause {
+            playAfterLink = !p
+            if p != paused { paused = p; pipState.paused = p }
+            return
+        }
         if !p { warmAudioForPlay(c) }
         if p != paused {
             paused = p; pipState.paused = p
@@ -2205,6 +2419,9 @@ final class PlayerModel: ObservableObject {
     // button that was tapped.
     func seek(by seconds: Double) {
         guard let c = client else { return }
+        // Not while the next file is still opening (1.30.4): mpv keeps a seek
+        // asked for then and applies it to the new file once it opens.
+        guard fileLoaded else { dlog("player", "skip of \(Int(seconds)) s dropped: the file isn't open yet"); return }
         // A place of your own: Try again no longer goes back to where the
         // stream stopped (1.30.3).
         retryAt = nil
@@ -2217,13 +2434,32 @@ final class PlayerModel: ObservableObject {
         }
         // A skip while one is still landing is added to the next one: one
         // seek for a run of taps instead of one each.
-        if skipRunning {
+        if skipRunning, skipFor == loadToken {
             skipPending += seconds
             skipsGathered += 1
             return
         }
         skipRunning = true
+        skipFor = loadToken
         sendSkip(seconds, c)
+    }
+
+    /// The file a run of quick skips began on (1.30.4).
+    private var skipFor = 0
+
+    /// A run of skips ends with its file (1.30.4): what was gathered for the
+    /// last file isn't sent to the next, and the sound comes back.
+    private func endSkipRun() {
+        if skipPending != 0 {
+            dlog("player", "skips: \(Int(skipPending)) s still gathered for the last file dropped")
+        }
+        skipRunning = false
+        skipPending = 0
+        skipsGathered = 0
+        if mutedForSkip {
+            mutedForSkip = false
+            _ = client?.setAsync("mute", false)
+        }
     }
 
     // MARK: Quick skips (1.22.2)
@@ -2255,7 +2491,7 @@ final class PlayerModel: ObservableObject {
     /// with none, the sound comes back.
     private func skipLanded() {
         guard skipRunning || mutedForSkip else { return }
-        if skipRunning, skipPending != 0, let c = client {
+        if skipRunning, skipPending != 0, skipFor == loadToken, fileLoaded, let c = client {
             let s = skipPending
             skipPending = 0
             sendSkip(s, c)
@@ -2274,10 +2510,22 @@ final class PlayerModel: ObservableObject {
     }
 
     func seek(to seconds: Double, exact: Bool = true) {
+        // The release of a scrub begun on the last file, or a place asked for
+        // before this one has opened (1.30.4): not a place in this file.
+        guard scrubSession.mayRelease(currentFile: loadToken) else {
+            dlog("player", "seek to \(Self.format(seconds)) dropped: the scrub began on the last file")
+            return
+        }
+        guard fileLoaded else { dlog("player", "seek to \(Self.format(seconds)) dropped: the file isn't open yet"); return }
         retryAt = nil                   // as in seek(by:) (1.30.3)
         if ended, duration > 0, seconds < duration - 0.5 { ended = false }
         // A place chosen outright: skips still waiting would move it on.
         skipPending = 0
+        // A scrub let go inside a skippable part (1.30.4): you went there, so
+        // it isn't skipped from under you. The scrub itself skips nothing.
+        if scrubSession.active, defaults.bool(forKey: SettingsKey.skipEnabled) {
+            for s in segments where seconds >= s.start && seconds < s.end - 0.5 { autoSkipped.insert(s.id) }
+        }
         _ = client?.commandAsync(["seek", String(max(0, seconds)), exact ? "absolute+exact" : "absolute+keyframes"])
     }
 
@@ -2285,11 +2533,46 @@ final class PlayerModel: ObservableObject {
     /// as the finger moves (throttled), so the main screen shows where you are.
     private var lastScrubSeek = Date.distantPast
     func scrub(to seconds: Double) {
+        // A finger that went down on the last file moves nothing in this one
+        // (1.30.4); the bar shows where this file plays until it lifts.
+        guard scrubSession.move(currentFile: loadToken), fileLoaded else {
+            if clock.scrubTime != nil { clearingScrub = true; clock.scrubTime = nil; clearingScrub = false }
+            if !scrubDropLogged {
+                scrubDropLogged = true
+                dlog("player", "scrub ignored until the finger lifts: it began \(fileLoaded ? "on the last file" : "before this file opened")")
+            }
+            return
+        }
         clock.position = seconds
         guard Date().timeIntervalSince(lastScrubSeek) > 0.1 else { return }
         lastScrubSeek = Date()
         _ = client?.commandAsync(["seek", String(max(0, seconds)), "absolute+keyframes"])
     }
+
+    /// The finger is off the seek bar or the video (scrubTime cleared by
+    /// either, 1.30.4).
+    private func scrubLifted() {
+        guard !clearingScrub else { return }
+        scrubSession.lift()
+        scrubDropLogged = false
+        // The end was reached under the finger: what happens there waits for
+        // it to lift. Its release seek (if any) lands first; still at the
+        // end then, the end goes on as usual.
+        guard eofWhileScrubbing else { return }
+        eofWhileScrubbing = false
+        let token = loadToken, handled = eofHandled
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+            guard let self, !self.closed, self.loadToken == token, self.eofHandled == handled, let c = self.client else { return }
+            c.query({ $0.flag("eof-reached") ?? false }) { [weak self] atEnd in
+                guard let self, atEnd, !self.closed, self.loadToken == token, self.eofHandled == handled, !self.scrubSession.active else { return }
+                self.handleEOF()
+            }
+        }
+    }
+    /// The file reached its end while a scrub was under way (1.30.4).
+    private var eofWhileScrubbing = false
+    /// handleEOF's runs, so the check after a scrub doesn't run it twice.
+    private var eofHandled = 0
 
     /// At once (1.28.2): shown at the tap, set without waiting for mpv's
     /// core (a speed change rebuilds its audio filters).
@@ -2719,13 +3002,14 @@ final class PlayerModel: ObservableObject {
         list.append(UserMarker(time: t, title: "Marker \(list.count + 1) · \(Self.format(t))"))
         list.sort { $0.time < $1.time }
         userMarkers = list
-        MarkerStore.shared.set(list, for: item.id)
+        // The open file's (1.30.4): `item` is the episode being moved to while one is looked up.
+        MarkerStore.shared.set(list, for: (playingItem ?? item).id)
         showToast("Marker added at \(Self.format(t))")
     }
 
     func removeMarker(_ m: UserMarker) {
         userMarkers.removeAll { $0.id == m.id }
-        MarkerStore.shared.set(userMarkers, for: item.id)
+        MarkerStore.shared.set(userMarkers, for: (playingItem ?? item).id)
     }
 
     @discardableResult
@@ -2777,7 +3061,10 @@ final class PlayerModel: ObservableObject {
     private var playingItem: MediaItem?
 
     func saveHistory(force: Bool = false) {
-        guard fileLoaded, duration > 0 || position > 0 else { return }
+        // Not before this file has given its own position (1.30.4): between
+        // its loading and its first time-pos, `position` is 0 and a save
+        // (a pause, the app leaving) wrote 0:00 over the place it resumes from.
+        guard fileLoaded, positionFresh, !historyRemoved, duration > 0 || position > 0 else { return }
         if !force && Date().timeIntervalSince(lastHistorySave) < 5 { return }
         lastHistorySave = Date()
         flushWatched()
@@ -3169,35 +3456,62 @@ final class PlayerModel: ObservableObject {
         Task { [weak self] in
             var found = SkipLookup()
             let meta = await MetadataService.shared.lookup(filename: fileName)
+            let animation = meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false
+            let namedAnime = explicitAnime || animation || (meta == nil && fansubName)
             if let meta, meta.id.hasPrefix("tt") {
+                // The first database's answer shows at once; the other's is
+                // merged in when it comes (1.30.4: it was cut off 2 s after
+                // the first, and S01E07 got its credits but no recap or intro).
                 found = await SkipService.shared.lookupTV(imdbId: meta.id, season: parsed.episode != nil ? (parsed.season ?? 1) : nil,
-                                                          episode: parsed.episode, duration: dur)
+                                                          episode: parsed.episode, duration: dur) { [weak owner = self] first in
+                    guard let model = owner else { return }
+                    await MainActor.run {
+                        guard model.item.id == key, !model.closed else { return }
+                        model.postCredits = first.postCredits
+                        model.applyLookedUp(first.segments, anime: namedAnime, duration: dur)
+                    }
+                }
             }
             // Anime databases only for anime: an anime id, animation per IMDb,
             // or a title IMDb doesn't know (AniList's search decides). Never
             // for a show IMDb knows as live action.
-            let animation = meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false
             if found.segments.isEmpty, hint.episode != nil, explicitAnime || animation || meta == nil {
                 found.segments = await SkipService.shared.lookup(hint: hint, season: parsed.season, duration: dur, oatLength: len > 0 ? len : 90)
                 dlog("skip", "anime lookup \(hint.title ?? "?") s\(parsed.season ?? 1)e\(hint.episode ?? 0): \(found.segments.count) segment(s)")
             }
+            let result = found
             await MainActor.run {
                 guard let self, self.item.id == key else { return }
-                self.postCredits = found.postCredits
+                self.postCredits = result.postCredits
                 // Whatever the sources said: the phone looks for an intro
                 // none of them gave (1.30.0).
                 defer { self.findIntroOnDevice() }
-                guard !found.segments.isEmpty else { return }
-                let anime = explicitAnime || animation || (meta == nil && fansubName) || found.segments.contains { $0.source == "AniSkip" || $0.source == "OAT" }
-                self.segmentsAnime = anime
-                self.segments = SkipService.tidy(found.segments, duration: dur, chapters: self.chapters.map { ($0.title, $0.time) }, anime: anime)
-                dlog("skip", "segments: \(self.segments.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })")
-                if self.defaults.bool(forKey: SettingsKey.skipInjectChapters), self.chapters.isEmpty {
-                    self.injectChapters(self.segments)
-                }
+                guard !result.segments.isEmpty else { return }
+                let anime = namedAnime || result.segments.contains { $0.source == "AniSkip" || $0.source == "OAT" }
+                self.applyLookedUp(result.segments, anime: anime, duration: dur)
             }
         }
     }
+
+    /// The online lookup's segments, for the Skip pill, Up Next and chapters
+    /// (1.30.4: once for the first database's answer, again when the other's
+    /// is merged in). An intro the phone found stays when they have none.
+    private func applyLookedUp(_ found: [SkipSegment], anime: Bool, duration dur: Double) {
+        var all = found
+        if !found.contains(where: { $0.kind == .intro }) { all += segments.filter { $0.source == "On device" } }
+        let next = SkipService.tidy(all, duration: dur, chapters: chapters.map { ($0.title, $0.time) }, anime: anime)
+        guard next != segments else { return }
+        segmentsAnime = anime
+        segments = next
+        dlog("skip", "segments: \(segments.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })")
+        // Chapters made from the first answer are made again with the second.
+        if defaults.bool(forKey: SettingsKey.skipInjectChapters), chapters.isEmpty || chaptersInjected {
+            injectChapters(segments)
+        }
+    }
+
+    /// The file's chapters are ones made from its segments (1.30.4).
+    private var chaptersInjected = false
 
     // MARK: Intro found on the phone (1.30.0)
 
@@ -3312,13 +3626,23 @@ final class PlayerModel: ObservableObject {
         // Not before this file has loaded (1.28.6): a late position of the
         // last file could bring the card up for the new one.
         guard fileLoaded else { return }
+        // Nor while another episode is being moved to (1.30.4): its "next"
+        // is queueIndex + 1, which may be that episode's already.
+        guard pendingNavigation == nil, playingItem?.id == item.id else {
+            if upNext != nil { upNext = nil; stopUpNextCountdown() }
+            return
+        }
+        // "Keep Watching" was for these credits: a seek well before them
+        // brings the card back the next time they come (1.30.4).
+        if upNextDismissed, let t = upNextTrigger, position < t.time - 30 { upNextDismissed = false }
         guard !upNextDismissed, let trigger = upNextTrigger else {
-            if upNext != nil { upNext = nil }
+            if upNext != nil { upNext = nil; stopUpNextCountdown() }
             return
         }
         if position >= trigger.time && position < duration - 0.3 {
             if upNext == nil {
                 upNext = UpNext(start: trigger.time, autoplay: trigger.autoplay, next: queue[queueIndex + 1], stay: trigger.stay)
+                if trigger.autoplay { startUpNextCountdown() }
                 // Whether Play Next will be instant: the next file is in mpv's
                 // playlist, and this one has been read to the end (mpv opens the
                 // next one only then).
@@ -3329,20 +3653,88 @@ final class PlayerModel: ObservableObject {
                     dlog("player", "\(what), this file \(read ? "read to the end" : "not read to the end yet")")
                 }
             }
-            if trigger.autoplay, !paused, position >= trigger.time + Self.upNextCountdown {
-                // Once: until the next file loads (load() clears this), the card
-                // stays down. 1.17.0 put it back on the next position update while
-                // an addon episode was still being looked up, finished it again,
-                // and moved on again — six times in the 27 Oct log, from E1 to E6.
-                upNext = nil
-                upNextDismissed = true
-                dlog("player", "up next: countdown finished")
-                finishedHere()
-                playNext()
-            }
+            // The countdown runs on its own clock (startUpNextCountdown): until
+            // 1.30.4 it ended at the card's time + 10 s of the *position*, so a
+            // seek or scrub into the credits ended it at once and moved on (14
+            // Nov report: card at 2300 s, "countdown finished" 167 ms later).
         } else if upNext != nil {
             upNext = nil      // seeked back before the credits
+            stopUpNextCountdown()
         }
+    }
+
+    // MARK: Up Next's countdown (1.30.4)
+
+    private var upNextCountdownState: UpNextCountdown?
+    private var upNextTimer: Timer?
+    /// Up Next cards on screen (UpNextCard's appear and disappear): hidden
+    /// under a panel or the lock, it doesn't count down.
+    private var upNextCardViews = 0
+
+    func upNextCardShown(_ shown: Bool) {
+        upNextCardViews = max(0, upNextCardViews + (shown ? 1 : -1))
+    }
+
+    /// The countdown counts while you can see it count: the card on screen
+    /// (or the player not, in PiP or the background, as before), playing,
+    /// and not seeking, waiting for data or under a scrub.
+    private var upNextCounting: Bool {
+        let seen = upNextCardViews > 0 || isPiPActive || UIApplication.shared.applicationState == .background
+        return seen && fileLoaded && !paused && !buffering && !isLoading && clock.scrubTime == nil && !scrubSession.active
+    }
+
+    private func startUpNextCountdown() {
+        upNextTimer?.invalidate()
+        var countdown = UpNextCountdown(length: Self.upNextCountdown)
+        countdown.tick(at: CACurrentMediaTime(), counting: upNextCounting)
+        upNextCountdownState = countdown
+        clock.upNextLeft = countdown.left
+        let token = loadToken
+        let t = Timer(timeInterval: 0.25, repeats: true) { [weak self] timer in
+            MainActor.assumeIsolated {
+                guard let self, !self.closed, self.loadToken == token, self.upNext != nil, var cd = self.upNextCountdownState else {
+                    timer.invalidate(); return
+                }
+                cd.tick(at: CACurrentMediaTime(), counting: self.upNextCounting)
+                self.upNextCountdownState = cd
+                if abs((self.clock.upNextLeft ?? -1) - cd.left) >= 0.2 || cd.finished { self.clock.upNextLeft = cd.left }
+                if cd.finished { self.finishUpNextCountdown() }
+            }
+        }
+        RunLoop.main.add(t, forMode: .common)
+        upNextTimer = t
+    }
+
+    private func stopUpNextCountdown() {
+        upNextTimer?.invalidate(); upNextTimer = nil
+        upNextCountdownState = nil
+        if clock.upNextLeft != nil { clock.upNextLeft = nil }
+    }
+
+    /// Whether the end of the open file, or Up Next's countdown, may move on
+    /// to the next episode now (1.30.4): only from the file mpv has open,
+    /// loaded, as the queue's current one, with no other move under way.
+    nonisolated static func mayMoveOn(fileLoaded: Bool, playingID: String?, itemID: String, navigating: Bool) -> Bool {
+        fileLoaded && playingID == itemID && !navigating
+    }
+
+    private func finishUpNextCountdown() {
+        stopUpNextCountdown()
+        // From the open file only, with no other move under way (1.30.4; as handleEOF).
+        guard upNext != nil, !closed, clock.scrubTime == nil, !scrubSession.active,
+              Self.mayMoveOn(fileLoaded: fileLoaded, playingID: playingItem?.id, itemID: item.id, navigating: pendingNavigation != nil) else {
+            upNext = nil            // not left at "Play in 0"; updateUpNext brings a new one if it's due
+            return
+        }
+        // Once: until the next file loads (load() clears this), the card
+        // stays down. 1.17.0 put it back on the next position update while
+        // an addon episode was still being looked up, finished it again,
+        // and moved on again — six times in the 27 Oct log, from E1 to E6.
+        upNext = nil
+        upNextDismissed = true
+        dlog("player", "up next: countdown finished")
+        finishedHere()
+        playNext()
     }
 
     /// The card's Play Now.
@@ -3357,13 +3749,17 @@ final class PlayerModel: ObservableObject {
     /// episode left at its "Ending" chapter stayed "2:10 / 2:30", in
     /// progress: 87% and 20 s left is under History's "finished" line.
     private func finishedHere() {
-        leftFinished = true             // saveHistory records it played to its end
+        // saveHistory records it played to its end, once the next file
+        // loads (1.30.4): at the tap, an Up Next that ended in a cancelled
+        // picker left it "finished" (and scrobbled) while you watched on.
+        finishOnNextLoad = true
     }
     private var leftFinished = false
 
     func dismissUpNext() {
         upNextDismissed = true
         upNext = nil
+        stopUpNextCountdown()
     }
 
     private func injectChapters(_ segs: [SkipSegment]) {
@@ -3378,6 +3774,7 @@ final class PlayerModel: ObservableObject {
             if s.end < nextStart - 1, s.end < duration - 1 { marks.append(("Episode", s.end)) }
         }
         client?.setChapters(marks)
+        chaptersInjected = true
     }
 
     // MARK: GPU work per frame (1.23.2)
@@ -3418,7 +3815,9 @@ final class PlayerModel: ObservableObject {
             let since = self.lastDrops.map { (drops.0 - $0.dropped, drops.1 - $0.delayed) } ?? drops
             self.lastDrops = (drops.0, drops.1)
             let passes = r.0.flatMap { RenderPasses.summary($0) } ?? (r.0.map { "pass list unreadable: \($0.prefix(120))" } ?? "the renderer gives no pass list")
-            dlog("player", "GPU per frame (\(renderer), \(a4k)): \(passes); \(since.0) dropped, \(since.1) late since the last line; display \(Int(r.3.rounded())) Hz")
+            // The display's rate only when mpv knows it (1.30.4: "display 0 Hz" on the video layer).
+            let hz = Int(r.3.rounded())
+            dlog("player", "GPU per frame (\(renderer), \(a4k)): \(passes); \(since.0) dropped, \(since.1) late since the last line\(hz > 0 ? "; display \(hz) Hz" : "")")
         }
     }
 
@@ -3454,18 +3853,110 @@ final class PlayerModel: ObservableObject {
     private func logWaitForData(_ waiting: Bool) {
         if waiting {
             guard waitStarted == nil, fileLoaded else { return }
-            waitStarted = CACurrentMediaTime()
-            client?.query({ c -> String in
-                let ahead = c.double("demuxer-cache-duration") ?? 0
-                let speed = (c.double("cache-speed") ?? 0) / 1_048_576
-                return String(format: "%.1f s buffered ahead, reading %.1f MB/s", ahead, speed)
-            }) { [weak self] s in
-                guard let self else { return }
-                dlog("player", "waiting for data at \(Self.format(self.position)) (\((self.playingItem ?? self.item).resolvedURL?.isFileURL == true ? "local file" : "streamed")): \(s)")
+            let started = CACurrentMediaTime()
+            waitStarted = started
+            // Counted towards a reconnect (1.30.4), unless a seek just asked
+            // for a part that isn't buffered.
+            if started - lastSeekAt > 3 {
+                stallWaits.append(StallRecovery.Wait(start: started))
+                stallWaits = stallWaits.filter { started - $0.start <= StallRecovery.window }
             }
+            let token = loadToken
+            client?.query({ c -> (ahead: Double, speed: Double, size: Int64, bitrate: Int64) in
+                (c.double("demuxer-cache-duration") ?? 0, c.double("cache-speed") ?? 0, c.int("file-size") ?? 0,
+                 (c.int("video-bitrate") ?? 0) + (c.int("audio-bitrate") ?? 0))
+            }) { [weak self] r in
+                guard let self else { return }
+                let s = String(format: "%.1f s buffered ahead, reading %.1f MB/s", r.ahead, r.speed / 1_048_576)
+                dlog("player", "waiting for data at \(Self.format(self.position)) (\((self.playingItem ?? self.item).resolvedURL?.isFileURL == true ? "local file" : "streamed")): \(s)")
+                guard self.loadToken == token else { return }
+                if let i = self.stallWaits.lastIndex(where: { $0.start == started }) { self.stallWaits[i].readRate = r.speed }
+                self.needRate = StallRecovery.needRate(fileBytes: Double(r.size), duration: self.duration, bitsPerSecond: Double(r.bitrate))
+                self.considerReconnect()
+            }
+            // One long wait is looked at again once it alone could be enough.
+            stallCheck?.cancel()
+            let w = DispatchWorkItem { [weak self] in
+                guard let self, self.waitStarted == started, self.loadToken == token else { return }
+                self.considerReconnect()
+            }
+            stallCheck = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + StallRecovery.secondsWaited + 0.5, execute: w)
         } else if let t = waitStarted {
             waitStarted = nil
+            stallCheck?.cancel(); stallCheck = nil
+            if let i = stallWaits.lastIndex(where: { $0.start == t }) { stallWaits[i].end = CACurrentMediaTime() }
             dlog("player", String(format: "waiting for data over after %.0f ms", (CACurrentMediaTime() - t) * 1000))
+        }
+    }
+
+    // MARK: A slow connection (1.30.4)
+
+    /// 14 Nov report, 21:05: S01E05, a Blu-ray remux of 3.0 MB/s, read at
+    /// 1.0–2.3 MB/s on one connection: "waiting for data" every few seconds
+    /// for 70 s until it was closed; opened again a minute later it played
+    /// with no wait at all. mpv stays on the slow connection; the file is
+    /// opened again where it is, on a link followed afresh.
+    private var stallWaits: [StallRecovery.Wait] = []
+    private var stallCheck: DispatchWorkItem?
+    /// What the open file needs to play without waiting, bytes per second.
+    private var needRate: Double = 0
+    private var lastSeekAt: CFTimeInterval = 0
+    /// When each file was last reconnected (CACurrentMediaTime), and how often.
+    private var lastReconnect: [String: CFTimeInterval] = [:]
+    private var reconnects: [String: Int] = [:]
+    /// The tracks the reconnected file goes on with (load() passes them to mpv).
+    private var reconnectTracks: (id: String, opts: [String])?
+
+    private func considerReconnect() {
+        let it = playingItem ?? item
+        guard !closed, fileLoaded, !isLoading, errorMessage == nil, pickRequest == nil, pendingNavigation == nil, mode == .main, !isPiPActive,
+              playingItem?.id == item.id, UIApplication.shared.applicationState == .active,
+              let u = it.resolvedURL, !u.isFileURL, ["http", "https"].contains(u.scheme?.lowercased() ?? ""),
+              client.map({ !$0.isShutDown }) ?? false else { return }
+        if case .local = it.source { return }
+        let now = CACurrentMediaTime()
+        guard let rate = StallRecovery.reconnectReadRate(waits: stallWaits, now: now, needRate: needRate, lastReconnect: lastReconnect[it.id]) else { return }
+        guard PlayerNetwork.shared.online else {
+            dlog("player", "slow connection: no network, so no reconnect")
+            return
+        }
+        guard (reconnects[it.id] ?? 0) < StallRecovery.maxPerFile else {
+            if reconnects[it.id] == StallRecovery.maxPerFile {
+                reconnects[it.id] = StallRecovery.maxPerFile + 1           // said once
+                dlog("player", "slow connection: reconnected \(StallRecovery.maxPerFile) times already; staying on this one")
+            }
+            return
+        }
+        reconnect(it, read: rate)
+    }
+
+    /// The file again from where it is, on its link followed afresh (as Try
+    /// again does), on the tracks it played.
+    private func reconnect(_ it: MediaItem, read: Double) {
+        let at = position
+        lastReconnect[it.id] = CACurrentMediaTime()
+        reconnects[it.id, default: 0] += 1
+        dlog("player", String(format: "slow connection: reconnecting at %@ (read %.1f MB/s, needs %.1f MB/s)",
+                              Self.format(at), read / 1_048_576, needRate / 1_048_576))
+        var opts: [String] = []
+        if let a = tracks.first(where: { $0.type == "audio" && $0.selected }) { opts.append("aid=\(a.id)") }
+        if let s = tracks.first(where: { $0.type == "sub" && $0.selected }) {
+            if !s.external { opts.append("sid=\(s.id)") }                 // an added file's number may change
+        } else if tracks.contains(where: { $0.type == "sub" }) {
+            opts.append("sid=no")
+        }
+        reconnectTracks = (it.id, opts)
+        playLinks[it.id] = nil
+        if followed?.id == it.id { followed = nil }
+        retryAt = (it.id, at)
+        let link = it.resolvedURL
+        Task { [weak self] in
+            // Its saved download address forgotten before it's asked again.
+            if let link { await ResolvedLinks.shared.forget(link) }
+            guard let self, !self.closed, self.playingItem?.id == it.id, self.fileLoaded else { return }
+            self.load(it)
+            self.showToast("Reconnecting…")
         }
     }
 
@@ -3558,7 +4049,9 @@ final class PlayerModel: ObservableObject {
         guard fileLoaded, Date() >= skipSuppressedUntil, defaults.bool(forKey: SettingsKey.skipEnabled) else { return }
         let seg = segments.first { position >= $0.start && position < $0.end - 0.5 && !introHidden($0) }
         if seg != activeSegment { activeSegment = seg }
-        guard let seg, !autoSkipped.contains(seg.id) else { return }
+        // Not under a scrub's live picture (1.30.4): it jumped the video out
+        // of the intro while the finger was still moving through it.
+        guard let seg, !autoSkipped.contains(seg.id), !scrubSession.active else { return }
         if seg.kind == .intro { introsShown.insert(seg.id) }
         let key: String
         switch seg.kind {
@@ -3612,6 +4105,13 @@ final class PlayerModel: ObservableObject {
     private func pipWindowSized(_ size: CMVideoDimensions) {
         guard onLayer, isPiPActive, !pipStopping else { return }
         PiPTrace.event("PiP window renders at \(size.width)×\(size.height)")
+        pickPiPSizeSoon()
+    }
+
+    /// PiP's frame size for the video, half a second after the last change:
+    /// the window's (above), or a new file's picture while in PiP (1.30.4:
+    /// the next episode kept the last one's size).
+    private func pickPiPSizeSoon() {
         pipSizeWork?.cancel()
         let w = DispatchWorkItem { [weak self] in
             guard let self, self.isPiPActive, !self.pipStopping, self.pendingW > 0, self.pendingH > 0 else { return }
@@ -3634,7 +4134,7 @@ final class PlayerModel: ObservableObject {
         return nil                    // the simulator's Metal driver aborts on readback
         #endif
         guard fileLoaded, mode == .main, let c = client, !c.isShutDown else { return nil }
-        let key = item.id
+        let key = (playingItem ?? item).id         // the open file's (1.30.4)
         return {
             guard !c.isShutDown else { return }
             var w: Int32 = 0, h: Int32 = 0
@@ -4061,14 +4561,30 @@ final class PlayerModel: ObservableObject {
         })
         observers.append(nc.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             guard let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
-                  AVAudioSession.InterruptionType(rawValue: raw) == .began else { return }
+                  let type = AVAudioSession.InterruptionType(rawValue: raw) else { return }
+            let options = (note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt).map(AVAudioSession.InterruptionOptions.init(rawValue:)) ?? []
             MainActor.assumeIsolated {
-                // iOS stopped the audio unit (Siri, an alarm, a call). With
-                // the output kept open while paused, play no longer starts it
-                // again by itself: it's opened anew at the next play (1.28.2).
-                self?.audioWarm = false
-                self?.audioCoolWork?.cancel()
-                self?.setPaused(true)
+                guard let self else { return }
+                if type == .began {
+                    // iOS stopped the audio unit (Siri, an alarm, a call). With
+                    // the output kept open while paused, play no longer starts it
+                    // again by itself: it's opened anew at the next play (1.28.2).
+                    self.playingBeforeInterruption = !self.paused
+                    self.audioWarm = false
+                    self.audioCoolWork?.cancel()
+                    self.setPaused(true)
+                } else if type == .ended {
+                    // Over, and iOS says to go on (1.30.4): it plays again if it
+                    // was playing (a call, Siri). It stayed paused.
+                    // Not in the background with background playback off (it pauses there anyway).
+                    let away = UIApplication.shared.applicationState == .background && !self.defaults.bool(forKey: SettingsKey.backgroundAudio)
+                    let resume = self.playingBeforeInterruption && options.contains(.shouldResume) && !self.closed && !away
+                    self.playingBeforeInterruption = false
+                    if resume {
+                        dlog("player", "audio interruption over: playing on")
+                        self.setPaused(false)
+                    }
+                }
             }
         })
         observers.append(nc.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { [weak self] _ in
@@ -4775,6 +5291,13 @@ extension PlayerModel: MPVClientDelegate {
             // No position (between files, 1.28.6): read as 0 it was saved
             // to history as 0:00.
             guard let p = value.double else { break }
+            // Not before this file has loaded (1.30.4): positions of the last
+            // file still on their way after load() went into `position` and
+            // the time bar (14 Nov report: "seek 38:32 → 38:29" in a file
+            // that had just opened at 0:00), and from there into seeks and
+            // the next episode's preparation.
+            guard fileLoaded else { break }
+            positionFresh = true
             let before = position
             position = p
             learnIntros(from: before, to: p)
@@ -4796,6 +5319,10 @@ extension PlayerModel: MPVClientDelegate {
         case "pause":
             let p = value.bool ?? false
             pauseAnswered(p)
+            // The hold while the next file's link is followed (1.30.4) isn't
+            // a pause of yours: the button, PiP and history go by what you
+            // asked for (endLinkHold settles them).
+            if linkHoldPause, p { break }
             if p != paused { paused = p }
             pipState.paused = p
             pip.updatePlayback(position: position, rate: p ? 0 : speed)
@@ -4818,6 +5345,7 @@ extension PlayerModel: MPVClientDelegate {
             if buffering != waiting { buffering = waiting }
             logWaitForData(waiting)
         case "seeking":
+            if value.bool == true { lastSeekAt = CACurrentMediaTime() }       // (1.30.4) a wait just after it isn't the connection's
             if value.bool == true, CACurrentMediaTime() > swapSeekQuietUntil {
                 if !buffering { buffering = true }
                 if seekStarted == nil { seekStarted = (CACurrentMediaTime(), position) }
@@ -4900,7 +5428,10 @@ extension PlayerModel: MPVClientDelegate {
 
     private func applyVideoSize() {
         let size = CGSize(width: pendingW, height: pendingH)
-        if size != videoSize { videoSize = size; refitAnime4K(); applyLayerZoom(animated: false); applySubtitleFraming() }
+        if size != videoSize {
+            videoSize = size; refitAnime4K(); applyLayerZoom(animated: false); applySubtitleFraming()
+            if onLayer, isPiPActive, !pipStopping, pendingW > 0, pendingH > 0 { pickPiPSizeSoon() }     // (1.30.4)
+        }
         if pendingW > 0, pendingH > 0, ownLayerMetal {
             sw.setVideoSize(width: pendingW, height: pendingH)
         }
@@ -4908,9 +5439,33 @@ extension PlayerModel: MPVClientDelegate {
     }
 
     private func handleEOF() {
+        // Only the open file's own end moves on (1.30.4). Not the last file's,
+        // reaching its end after load() let go of it (its credits played on
+        // under the next one's opening card, or its end was still on its way),
+        // and not while a move to another episode is under way: queueIndex
+        // may be that episode's already, and "next" from it skipped one.
+        guard Self.mayMoveOn(fileLoaded: fileLoaded, playingID: playingItem?.id, itemID: item.id, navigating: pendingNavigation != nil) else {
+            if fileLoaded, pendingNavigation != nil {
+                // The episode being moved to plays when it opens (mpv paused here).
+                advancingFromEnd = true
+                saveHistory(force: true)
+            }
+            dlog("player", "end of file: \(fileLoaded ? "a move to another episode is under way" : "the last file's"); not moving on from it")
+            return
+        }
         saveHistory(force: true)
-        // The picker is up for the next episode: wait for the choice.
-        if pickRequest != nil { ended = true; return }
+        // A scrub took the picture to the end with the finger still down
+        // (1.30.4): nothing moves on until it lifts (scrubLifted looks again).
+        if scrubSession.active || clock.scrubTime != nil {
+            eofWhileScrubbing = true
+            dlog("player", "end of file under a scrub: waiting for the finger to lift")
+            return
+        }
+        eofHandled += 1
+        // The picker is up for the next episode: wait for the choice. A
+        // stream picked then plays (1.30.4: it opened paused, mpv being
+        // paused at this end); cancelPick clears it.
+        if pickRequest != nil { ended = true; advancingFromEnd = true; return }
         // A stream that ends well before its length: the connection dropped
         // and mpv gave up, which it reports as the end. Said so, with Try
         // again (from where it stopped) and Play next, instead of going on
@@ -5064,5 +5619,122 @@ final class PiPStateBox: @unchecked Sendable {
     var duration: Double {
         get { lock.lock(); defer { lock.unlock() }; return _duration }
         set { lock.lock(); _duration = newValue; lock.unlock() }
+    }
+}
+
+// MARK: - Up Next's countdown, scrubs and slow connections (1.30.4)
+
+/// The Up Next card's countdown, in real seconds: it counts only while it
+/// runs (the card seen, playing, no seek, wait or scrub). Until 1.30.4 it
+/// was the playback position past the card's time, so a seek into the
+/// credits ended it at once.
+struct UpNextCountdown: Equatable {
+    /// The most one look at the clock adds: a gap longer than that (the app
+    /// held up) isn't counted as watched.
+    static let maxStep = 0.5
+    let length: Double
+    private(set) var elapsed: Double = 0
+    private var last: Double?
+
+    init(length: Double) { self.length = length }
+
+    var left: Double { max(0, length - elapsed) }
+    var finished: Bool { elapsed >= length }
+
+    /// A look at the clock (`now` in seconds). The time since the last look
+    /// counts only when it ran then and runs now: after a pause the first
+    /// look only starts it again, so the card never gives less than its time.
+    mutating func tick(at now: Double, counting: Bool) {
+        if counting, let last { elapsed += min(max(0, now - last), Self.maxStep) }
+        last = counting ? now : nil
+    }
+}
+
+/// Which file a scrub (the seek bar, a swipe on the video) went down on.
+/// A file loaded under the finger leaves the rest of that scrub without
+/// effect: its moves and its release were for the last file.
+struct ScrubSession: Equatable {
+    private(set) var file: Int?
+
+    var active: Bool { file != nil }
+
+    /// A move of the finger; the first one starts the scrub on `currentFile`.
+    /// True when it may seek in the file open now.
+    mutating func move(currentFile: Int) -> Bool {
+        if file == nil { file = currentFile }
+        return file == currentFile
+    }
+
+    /// A seek asked for now (the scrub's release, or any other): not when a
+    /// scrub begun on another file is under way.
+    func mayRelease(currentFile: Int) -> Bool { file == nil || file == currentFile }
+
+    mutating func lift() { file = nil }
+}
+
+/// When a stream that keeps waiting for data is opened again on a new
+/// connection (1.30.4).
+enum StallRecovery {
+    struct Wait: Equatable {
+        var start: Double
+        var end: Double?
+        /// mpv's cache-speed as the wait began, bytes per second.
+        var readRate: Double?
+    }
+
+    /// Waits looked at: those begun in the last 45 s.
+    static let window: Double = 45
+    /// Three waits in that time, or 15 s spent waiting, is a slow connection…
+    static let waitsInWindow = 3
+    static let secondsWaited: Double = 15
+    /// …when it reads slower than the file plays.
+    /// At most once per 2 minutes for a file, three times in a player.
+    static let spacing: Double = 120
+    static let maxPerFile = 3
+
+    /// What the file needs to play without waiting, bytes per second: its
+    /// size over its length, or mpv's bitrates (bits per second) without a size.
+    static func needRate(fileBytes: Double, duration: Double, bitsPerSecond: Double) -> Double {
+        if fileBytes > 0, duration > 0 { return fileBytes / duration }
+        return max(0, bitsPerSecond / 8)
+    }
+
+    /// The read rate (bytes per second, the average over the waits) when
+    /// the connection should be opened again now; nil otherwise.
+    static func reconnectReadRate(waits: [Wait], now: Double, needRate: Double, lastReconnect: Double?) -> Double? {
+        guard needRate > 0 else { return nil }
+        if let last = lastReconnect, now - last < spacing { return nil }
+        let recent = waits.filter { $0.start <= now && now - $0.start <= window }
+        let waited = recent.reduce(0.0) { $0 + max(0, ($1.end ?? now) - $1.start) }
+        guard recent.count >= waitsInWindow || waited >= secondsWaited else { return nil }
+        let rates = recent.compactMap(\.readRate)
+        guard !rates.isEmpty else { return nil }
+        let rate = rates.reduce(0, +) / Double(rates.count)
+        return rate < needRate ? rate : nil
+    }
+}
+
+/// Whether the phone has a network at all (1.30.4): a slow stream is
+/// opened again only when it has.
+final class PlayerNetwork: @unchecked Sendable {
+    static let shared = PlayerNetwork()
+
+    private let lock = NSLock()
+    private var satisfied = true
+    private let monitor = NWPathMonitor()
+
+    private init() {
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard let self else { return }
+            self.lock.lock()
+            self.satisfied = path.status == .satisfied
+            self.lock.unlock()
+        }
+        monitor.start(queue: DispatchQueue(label: "folio.player-network", qos: .utility))
+    }
+
+    var online: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return satisfied
     }
 }
