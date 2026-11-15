@@ -1336,7 +1336,11 @@ final class RoutePickerLauncher: NSObject, AVRoutePickerViewDelegate {
         }
         let p = AVRoutePickerView(frame: anchor.bounds)
         p.prioritizesVideoDevices = true
-        p.alpha = 0
+        // Just above invisible, not 0 (1.30.5): iOS grows its list out of the
+        // view that opened it, and from a view at alpha 0 it doesn't — the
+        // list came up on its own, unlike the panels that grow out of their
+        // buttons. Ours sits right under it, so the list grows out of ours.
+        p.alpha = 0.02
         p.isUserInteractionEnabled = false
         p.delegate = self
         anchor.addSubview(p)

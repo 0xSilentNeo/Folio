@@ -200,19 +200,80 @@ struct SearchSource: Hashable {
 
 // MARK: - The one list
 
-/// Which results the list shows: everything, what's yours (the library,
-/// the servers, Plex and Jellyfin), or IMDb's and the addons' titles by kind.
-enum SearchScope: String, CaseIterable, Identifiable {
-    case all, yours, movies, shows
+/// The search's two tabs (1.30.5, the user's design): Library, what's
+/// yours (the library, your servers, Plex and Jellyfin), and Search, IMDb's
+/// and the addons' titles. The last one chosen is kept across launches
+/// (SettingsKey.searchTabLast). Until 1.30.5: All, Library, Movies, Shows chips.
+enum SearchTab: String, CaseIterable, Identifiable {
+    case library, search
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .all: return "All"
-        // "Library" (1.30.3); the case and the chip's identifier keep the old name.
-        case .yours: return "Library"
-        case .movies: return "Movies"
-        case .shows: return "Shows"
+        case .library: return "Library"
+        case .search: return "Search"
         }
+    }
+
+    /// The tab kept from last time; Library when none (or an unknown one) is.
+    static func remembered(_ raw: String?) -> SearchTab {
+        raw.flatMap { SearchTab(rawValue: $0) } ?? .library
+    }
+
+    /// The row under the tabs when this tab found nothing and the other did.
+    struct Hint: Equatable {
+        let text: String
+        let target: SearchTab
+    }
+
+    /// The hint (1.30.5): only once this tab is done looking (`settled`), so
+    /// it doesn't flash while an answer is on the way. The tab itself stays.
+    static func hint(on tab: SearchTab, owned: Int, titles: Int, settled: Bool) -> Hint? {
+        guard settled else { return nil }
+        switch tab {
+        case .library:
+            guard owned == 0, titles > 0 else { return nil }
+            return Hint(text: "Nothing in your library — \(results(titles)) in Search", target: .search)
+        case .search:
+            guard titles == 0, owned > 0 else { return nil }
+            return Hint(text: "No movies or shows found — \(results(owned)) in Library", target: .library)
+        }
+    }
+
+    static func results(_ n: Int) -> String { n == 1 ? "1 result" : "\(n) results" }
+}
+
+/// The Search tab's Shows and Movies pills (1.30.5): none chosen lists
+/// every title, one chosen only its kind. Not kept: a new query starts on
+/// every title again.
+enum SearchKindFilter: String, CaseIterable, Identifiable {
+    case shows, movies
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .shows: return "Shows"
+        case .movies: return "Movies"
+        }
+    }
+
+    /// IMDb's kind, for its fuller title search.
+    var imdbType: String {
+        switch self {
+        case .shows: return "series"
+        case .movies: return "movie"
+        }
+    }
+
+    /// A pill tapped: its kind, or every title again when it was the one chosen.
+    static func toggled(_ current: SearchKindFilter?, by tapped: SearchKindFilter) -> SearchKindFilter? {
+        current == tapped ? nil : tapped
+    }
+
+    /// The same search typed on or back ("mon" to "mono" and back) keeps the
+    /// filter; another text is a new query, which starts on every title.
+    static func keeps(from old: String, to new: String) -> Bool {
+        let a = SearchHistoryStore.key(old), b = SearchHistoryStore.key(new)
+        guard !a.isEmpty, !b.isEmpty else { return false }
+        return a.hasPrefix(b) || b.hasPrefix(a)
     }
 }
 
@@ -296,7 +357,7 @@ struct SearchItem: Identifiable {
         }
     }
 
-    /// An IMDb or addon series (the Shows chip); every other title is under Movies.
+    /// An IMDb or addon series (the Shows pill); every other title is under Movies.
     var isSeries: Bool {
         if case .title(let m, _) = kind { return m.type == "series" }
         return false
@@ -326,26 +387,19 @@ struct SearchItem: Identifiable {
     }
 }
 
-/// Everything a query found, in the list's order, worked out when the
-/// query or what was found changes (not at each redraw): what's yours
-/// first (library, servers, Plex and Jellyfin), then IMDb's titles, then
-/// the addons' (a title IMDb or an earlier addon already gave is left out).
+/// Everything a query found, worked out when the query or what was found
+/// changes (not at each redraw). The Library tab: what's yours (library,
+/// servers, Plex and Jellyfin), the first as the top card. The Search tab:
+/// IMDb's titles, then the addons' (a title IMDb or an earlier addon
+/// already gave is left out), all of them or one kind's. Every match of
+/// each (1.30.5): no caps, no "Show all" rows.
 struct SearchResults {
-    /// How many of what's yours "All" shows (the top result is one of them).
-    static let ownedCap = 5
-    /// How many IMDb and addon titles "All" shows.
-    static let titlesCap = 8
-
     let owned: [SearchItem]
     let titles: [SearchItem]
     let movies: [SearchItem]
     let shows: [SearchItem]
-    /// "All": what's yours after the top result, and the first titles.
-    let ownedShort: [SearchItem]
-    let titlesShort: [SearchItem]
-    /// Titles "All" leaves out, by the chip that lists them.
-    let hiddenMovies: Int
-    let hiddenShows: Int
+    /// The Library tab under its top card: the rest of what's yours.
+    let ownedRest: [SearchItem]
 
     init(owned: [SearchItem] = [], imdb: [MetaItem] = [], addons: [AddonSearchView.SearchResult] = []) {
         var seen = Set<String>()
@@ -358,24 +412,27 @@ struct SearchResults {
         self.titles = titles
         movies = titles.filter { !$0.isSeries }
         shows = titles.filter(\.isSeries)
-        ownedShort = Array(owned.dropFirst().prefix(Self.ownedCap - 1))
-        titlesShort = Array(titles.prefix(Self.titlesCap))
-        let hidden = titles.dropFirst(Self.titlesCap)
-        hiddenShows = hidden.filter(\.isSeries).count
-        hiddenMovies = hidden.count - hiddenShows
+        ownedRest = Array(owned.dropFirst())
     }
 
     /// The first of what's yours, shown as a card above the rest.
     var top: SearchItem? { owned.first }
-    var hiddenOwned: Int { max(0, owned.count - Self.ownedCap) }
 
-    /// The chips to show: All always, the others only with something under them.
-    var scopes: [SearchScope] {
-        var out: [SearchScope] = [.all]
-        if !owned.isEmpty { out.append(.yours) }
-        if !movies.isEmpty { out.append(.movies) }
-        if !shows.isEmpty { out.append(.shows) }
-        return out
+    /// The Search tab's titles: every one, or the chosen kind's.
+    func filtered(_ filter: SearchKindFilter?) -> [SearchItem] {
+        switch filter {
+        case nil: return titles
+        case .shows?: return shows
+        case .movies?: return movies
+        }
+    }
+
+    /// How many results a tab has (the hint's count; Search's unfiltered).
+    func count(_ tab: SearchTab) -> Int {
+        switch tab {
+        case .library: return owned.count
+        case .search: return titles.count
+        }
     }
 }
 
@@ -557,36 +614,58 @@ struct SearchTopCard: View {
     }
 }
 
-/// All, Library, Movies, Shows: the chosen one filled. Only the chips with
-/// something under them are given (SearchResults.scopes).
-struct SearchScopeChips: View {
-    let scopes: [SearchScope]
-    let selection: SearchScope
-    let select: (SearchScope) -> Void
+/// The search's capsule pills (1.30.5): Library and Search across the top
+/// of the results, and the Search tab's smaller Shows and Movies
+/// (`compact`). The chosen one is filled and slides to the next; none
+/// chosen is the bare track. Each segment is 44 pt tall to tap.
+struct SearchPillBar: View {
+    struct Option: Identifiable {
+        /// The segment's accessibility identifier ("searchTab:library").
+        let id: String
+        let title: String
+        let selected: Bool
+        let action: () -> Void
+    }
+
+    let options: [Option]
+    var compact = false
+    @Namespace private var thumb
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(scopes) { s in
-                    let on = s == selection
-                    Button { select(s) } label: {
-                        Text(s.title)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(on ? Theme.onAccent : Color.primary.opacity(0.8))
-                            .padding(.horizontal, 14).padding(.vertical, 8)
-                            .background(on ? Theme.accent : Theme.fill, in: Capsule())
-                            .contentShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(on ? .isSelected : [])
-                    .accessibilityIdentifier("searchScope:" + s.rawValue)
+        // compact: a 36 pt track, tapped in 44 pt (the 4 pt above and below it).
+        let height: CGFloat = compact ? 30 : 36
+        let inset: CGFloat = compact ? 3 : 4
+        let extra: CGFloat = compact ? 4 : 0
+        let maxWidth: CGFloat? = compact ? nil : CGFloat.infinity
+        let font: Font = compact ? Font.footnote.weight(.semibold) : Font.subheadline.weight(.semibold)
+        let chosen: String? = options.first(where: { $0.selected })?.id
+        let slide: Animation? = reduceMotion ? nil : Animation.snappy(duration: 0.28)
+        HStack(spacing: 0) {
+            ForEach(options) { o in
+                Button(action: o.action) {
+                    Text(o.title)
+                        .font(font)
+                        .foregroundStyle(o.selected ? Theme.onAccent : Color.primary.opacity(0.8))
+                        .lineLimit(1)
+                        .padding(.horizontal, compact ? 16 : 12)
+                        .frame(maxWidth: maxWidth, minHeight: height)
+                        .background {
+                            if o.selected { Capsule().fill(Theme.accent).matchedGeometryEffect(id: "thumb", in: thumb) }
+                        }
+                        .padding(.vertical, inset + extra)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(o.selected ? .isSelected : [])
+                .accessibilityIdentifier(o.id)
             }
         }
-        // The chips run to the screen's edge when they don't fit, not to the row's margin.
-        .scrollClipDisabled()
-        // A sideways swipe isn't scrolling the results: the keyboard stays (1.30.3).
-        .scrollDismissesKeyboard(.never)
+        .padding(.horizontal, inset)
+        .background { Capsule().fill(Theme.fill).padding(.vertical, extra) }
+        // The thumb slides however the choice arrives (a stored setting's write may not carry the caller's animation).
+        .animation(slide, value: chosen)
+        .accessibilityElement(children: .contain)
     }
 }
 

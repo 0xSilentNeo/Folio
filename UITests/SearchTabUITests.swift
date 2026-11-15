@@ -1,7 +1,8 @@
 import XCTest
 
 /// The search tab (1.22.4): the button beside the tab bar opens into the
-/// field, and your library's titles come first (the top result's card). With $SHOTS_DIR set, a
+/// field, and your library's titles are under the Library tab (1.30.5),
+/// the first as the top result's card. With $SHOTS_DIR set, a
 /// file marks each screen and the test holds it for 4 s so the screen can
 /// be taken from outside (this Mac's simulator gives the test black shots).
 final class SearchTabUITests: XCTestCase {
@@ -9,6 +10,12 @@ final class SearchTabUITests: XCTestCase {
         guard let dir = ProcessInfo.processInfo.environment["SHOTS_DIR"] else { return }
         try? Data().write(to: URL(fileURLWithPath: dir).appendingPathComponent(name + ".ready"))
         sleep(4)
+    }
+
+    /// Whether the element comes to match `predicate` in time (no failure of its own).
+    private func waitFor(_ predicate: String, _ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
+        let e = XCTNSPredicateExpectation(predicate: NSPredicate(format: predicate), object: element)
+        return XCTWaiter().wait(for: [e], timeout: timeout) == .completed
     }
 
     func test1LibraryTitlesFirst() {
@@ -23,14 +30,30 @@ final class SearchTabUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5), "keyboard didn't come up")
         field.typeText("lab show")
+        // Two tabs, no All (1.30.5); the tab is kept across launches, so it's chosen here.
+        let library = app.buttons["searchTab:library"].firstMatch
+        let titles = app.buttons["searchTab:search"].firstMatch
+        XCTAssertTrue(library.waitForExistence(timeout: 5), "no Library tab")
+        XCTAssertTrue(titles.exists, "no Search tab")
+        XCTAssertFalse(app.buttons["searchScope:all"].exists, "the old All chip is back")
+        library.tap()
+        XCTAssertTrue(waitFor("isSelected == true", library), "the Library tab isn't chosen")
         let row = app.buttons["searchLibrary:Lab Show"].firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 5), "the library's Lab Show isn't in the results")
-        // One list (no "In your library" header): what's yours has its
-        // chip, and the library's title is above the titles from IMDb.
-        XCTAssertTrue(app.buttons["searchScope:yours"].exists, "no Library chip with a library title found")
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "the library's Lab Show isn't under Library")
+        // Library is what's yours only: no title from IMDb under it.
         let imdb = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'searchTitle:'")).firstMatch
-        if imdb.exists { XCTAssertLessThan(row.frame.minY, imdb.frame.minY, "an IMDb title is above the library's") }
+        XCTAssertFalse(imdb.exists, "an IMDb title under the Library tab")
         hold("search-1-results")
+        // Search is IMDb's and the addons' titles, with Shows and Movies; nothing of yours.
+        titles.tap()
+        XCTAssertTrue(waitFor("isSelected == true", titles), "the Search tab isn't chosen")
+        XCTAssertTrue(app.buttons["searchFilter:shows"].waitForExistence(timeout: 3), "no Shows pill on the Search tab")
+        XCTAssertTrue(app.buttons["searchFilter:movies"].exists, "no Movies pill on the Search tab")
+        XCTAssertTrue(waitFor("exists == false", row), "the library's title is under the Search tab")
+        hold("search-1b-titles")
+        // Back to Library: the title opens.
+        library.tap()
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "Lab Show didn't come back under Library")
         row.tap()
         XCTAssertTrue(app.descendants(matching: .any)["heroPlay"].waitForExistence(timeout: 8), "the title page didn't open")
     }

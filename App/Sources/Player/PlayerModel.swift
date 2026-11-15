@@ -613,11 +613,14 @@ final class PlayerModel: ObservableObject {
         c.setOption("demuxer-max-bytes", "\(bufferMB)MiB")
         c.setOption("demuxer-max-back-bytes", "\(max(16, cacheMB / 3))MiB")
         c.setOption("demuxer-readahead-secs", "60")
-        // Read in bursts (1.30.4): with the buffer full, mpv reads again only
-        // once 15 s are left (demux.c, hyst_secs), not as soon as room frees
-        // up. 14 Nov: a 26 Mb/s remux trickled in over 5G all evening, the
-        // radio never resting (about 14% battery an hour).
-        c.setOption("demuxer-hysteresis-secs", "15")
+        // No reading in bursts (1.30.5). 1.30.4 let mpv rest until 15 s were
+        // left (demuxer-hysteresis-secs), and every read after a rest began
+        // with corrupt data: 16 Nov, Real-Debrid over 5G, "Corrupt file
+        // detected" every ~95 s, each one buffer (~380 MB) on from the last,
+        // the hardware decoder failing on it 24 times in an evening (3 on
+        // 1.30.3) and the picture stuttering and breaking up. The connection
+        // left idle through the rest is the likely cause. Reading steadily
+        // again, as through 1.30.3.
         c.setOption("network-timeout", "30")
         c.setOption("hr-seek-framedrop", "yes")
         // Audio: multichannel PCM out (AirPlay / HDMI surround, Spatial Audio on AirPods).
@@ -861,6 +864,8 @@ final class PlayerModel: ObservableObject {
             pendingNavigation = index
             lookupToken += 1
             let token = lookupToken
+            // Its skip segments asked for while the subtitles are (1.30.5).
+            prefetchSegments(for: item)
             Task { [weak self] in
                 guard let self else { return }
                 var it = item
@@ -945,6 +950,8 @@ final class PlayerModel: ObservableObject {
         decoderRenewals = []
         copyTooSlowForFile = false
         copyWatch?.cancel(); copyWatch = nil
+        // The skip lookup starts with the item, as the file starts opening (1.30.5).
+        startSegmentLookup(for: item, duration: clock.duration)
 
         if let old = scopedURL { old.stopAccessingSecurityScopedResource(); scopedURL = nil }
         if let u = item.resolvedURL, u.isFileURL, !u.path.hasPrefix(MPVFiles.documents.path) {
@@ -1464,11 +1471,11 @@ final class PlayerModel: ObservableObject {
     private var raisedBuffer = false
     private var readToEndCheck: Timer?
 
-    /// (1.30.4) At least 384 MB ahead while iOS leaves the app over 3 GB:
-    /// ~2 min of a remux per read, the radio quiet longer between reads.
+    /// The buffer ahead: your setting (1.30.5). 1.30.4 raised it to at least
+    /// 384 MB for longer rests between reads; with steady reading again
+    /// there is no rest to lengthen.
     private var bufferMB: Int {
-        let mine = max(32, defaults.integer(forKey: SettingsKey.cacheMB))
-        return os_proc_available_memory() > 3 << 30 ? max(mine, 384) : mine
+        max(32, defaults.integer(forKey: SettingsKey.cacheMB))
     }
     private func readToEnd() {
         guard let c = client, duration > 0 else { return }
@@ -1543,6 +1550,10 @@ final class PlayerModel: ObservableObject {
             item = queue[i]
         }
         guard queueIndex + 1 == i, !closed else { return }
+        // Its skip segments now, minutes ahead (1.30.5): kept by SkipService,
+        // they show as it opens (16 Nov: 1.4 s after a prepared episode
+        // opened in 0.05 s).
+        prefetchSegments(for: item)
         if let ctx = item.streamPick?.context, !subsFetched.contains(i) {
             item.subtitles += await AddonPlayback.subtitles(type: ctx.type, videoId: ctx.videoId)
             subsFetched.insert(i)
@@ -3428,23 +3439,7 @@ final class PlayerModel: ObservableObject {
             }
         }
 
-        let name = item.resolvedURL?.lastPathComponent ?? item.title
-        let fileName = TitleParser.isMedia(name) ? name : item.title
-        let parsed = TitleParser.parse(fileName)
-        var hint = item.anime ?? AnimeHint()
-        if hint.title == nil { hint.title = parsed.title }
-        if hint.episode == nil { hint.episode = parsed.episode }
-        // An anime database's id for it. Not just a hint: every episode file
-        // gets one with its title and number (WebDAVClient.mediaItem and the
-        // other sources), so "has a hint" was true for live-action shows too,
-        // which then got anime lookups and Opening/Ending names (MobLand in
-        // the 5 Nov log: "Skip Opening", "Skip Ending").
-        let explicitAnime = item.anime?.hasAnimeID == true
-        // Fansub naming ("[Group] Title - 05") is a strong anime signal.
-        let fansubName = fileName.hasPrefix("[") || fileName.range(of: #" - \d{1,4}\b"#, options: .regularExpression) != nil
         let key = item.id
-        let dur = duration
-        let len = defaults.double(forKey: SettingsKey.skipOATLength)
         // An intro the phone found before is there at once, not after the
         // sources have answered (a slow network kept it past the intro).
         segmentsAnime = nil
@@ -3453,53 +3448,78 @@ final class PlayerModel: ObservableObject {
                 if let known = await IntroFinder.shared.known(for: url) { self?.addIntroFromDevice(known, for: key) }
             }
         }
+        // The online lookup began with load() (1.30.5): an answer already in
+        // shows now, later ones as they come.
+        if skipAnswers.token != loadToken { startSegmentLookup(for: playingItem ?? item, duration: duration) }
+        if let a = skipAnswers.show() { showLookedUp(a) }
+    }
+
+    /// The online lookup's answers for the open load (1.30.5).
+    private var skipAnswers = SkipAnswers(token: -1)
+
+    /// What the online lookup asks about an item (1.30.5).
+    private func skipQuery(for it: MediaItem, duration: Double) -> SkipQuery {
+        SkipQuery(name: it.resolvedURL?.lastPathComponent ?? it.title, title: it.title, anime: it.anime,
+                  duration: duration, oatLength: defaults.double(forKey: SettingsKey.skipOATLength))
+    }
+
+    /// Started by load() with the item, as the file starts opening (1.30.5).
+    /// It waited for the file, its length and its chapters: 16 Nov, a
+    /// Real-Debrid stream opened in 6.7 s and its pills came 1.4 s after
+    /// that. Its answers are kept for this load (loadToken, the item's id)
+    /// and shown once the file has loaded, at once if they are in by then.
+    private func startSegmentLookup(for it: MediaItem, duration: Double) {
+        let token = loadToken, key = it.id
+        skipAnswers = SkipAnswers(token: token)
+        let q = skipQuery(for: it, duration: duration)
         Task { [weak self] in
-            var found = SkipLookup()
-            let meta = await MetadataService.shared.lookup(filename: fileName)
-            let animation = meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false
-            let namedAnime = explicitAnime || animation || (meta == nil && fansubName)
-            if let meta, meta.id.hasPrefix("tt") {
-                // The first database's answer shows at once; the other's is
-                // merged in when it comes (1.30.4: it was cut off 2 s after
-                // the first, and S01E07 got its credits but no recap or intro).
-                found = await SkipService.shared.lookupTV(imdbId: meta.id, season: parsed.episode != nil ? (parsed.season ?? 1) : nil,
-                                                          episode: parsed.episode, duration: dur) { [weak owner = self] first in
-                    guard let model = owner else { return }
-                    await MainActor.run {
-                        guard model.item.id == key, !model.closed else { return }
-                        model.postCredits = first.postCredits
-                        model.applyLookedUp(first.segments, anime: namedAnime, duration: dur)
-                    }
+            let r = await SkipService.shared.lookUp(q) { [weak owner = self] first, anime in
+                guard let model = owner else { return }
+                await MainActor.run {
+                    model.segmentsAnswered(SkipAnswers.Answer(lookup: first, anime: anime, done: false), token: token, key: key)
                 }
             }
-            // Anime databases only for anime: an anime id, animation per IMDb,
-            // or a title IMDb doesn't know (AniList's search decides). Never
-            // for a show IMDb knows as live action.
-            if found.segments.isEmpty, hint.episode != nil, explicitAnime || animation || meta == nil {
-                found.segments = await SkipService.shared.lookup(hint: hint, season: parsed.season, duration: dur, oatLength: len > 0 ? len : 90)
-                dlog("skip", "anime lookup \(hint.title ?? "?") s\(parsed.season ?? 1)e\(hint.episode ?? 0): \(found.segments.count) segment(s)")
-            }
-            let result = found
-            await MainActor.run {
-                guard let self, self.item.id == key else { return }
-                self.postCredits = result.postCredits
-                // Whatever the sources said: the phone looks for an intro
-                // none of them gave (1.30.0).
-                defer { self.findIntroOnDevice() }
-                guard !result.segments.isEmpty else { return }
-                let anime = namedAnime || result.segments.contains { $0.source == "AniSkip" || $0.source == "OAT" }
-                self.applyLookedUp(result.segments, anime: anime, duration: dur)
-            }
+            self?.segmentsAnswered(SkipAnswers.Answer(lookup: r.lookup, anime: r.anime, done: true), token: token, key: key)
         }
+    }
+
+    /// The next episode's segments asked for while this one plays (1.30.5):
+    /// SkipService keeps the answer, and the lookup its load() starts finds it.
+    private func prefetchSegments(for it: MediaItem) {
+        let q = skipQuery(for: it, duration: it.durationHint ?? 0)
+        let name = it.displayTitle
+        Task.detached(priority: .utility) {
+            let r = await SkipService.shared.lookUp(q)
+            dlog("skip", "asked ahead for \(name): \(r.lookup.segments.count) segment(s)")
+        }
+    }
+
+    /// An answer of the lookup for load `token` (1.30.5): never another
+    /// load's, and shown only once the file has loaded without segments of
+    /// its own (chapters win).
+    private func segmentsAnswered(_ a: SkipAnswers.Answer, token: Int, key: String) {
+        guard !closed, token == loadToken, playingItem?.id == key, let now = skipAnswers.add(a, from: token) else { return }
+        showLookedUp(now)
+    }
+
+    private func showLookedUp(_ a: SkipAnswers.Answer) {
+        postCredits = a.lookup.postCredits
+        if !a.lookup.segments.isEmpty { applyLookedUp(a.lookup.segments, anime: a.anime, duration: duration) }
+        // Whatever the sources said: the phone looks for an intro none of
+        // them gave (1.30.0).
+        if a.done { findIntroOnDevice() }
     }
 
     /// The online lookup's segments, for the Skip pill, Up Next and chapters
     /// (1.30.4: once for the first database's answer, again when the other's
     /// is merged in). An intro the phone found stays when they have none.
     private func applyLookedUp(_ found: [SkipSegment], anime: Bool, duration dur: Double) {
-        var all = found
-        if !found.contains(where: { $0.kind == .intro }) { all += segments.filter { $0.source == "On device" } }
-        let next = SkipService.tidy(all, duration: dur, chapters: chapters.map { ($0.title, $0.time) }, anime: anime)
+        // Fitted to the file (1.30.5): asked before it opened, an open end is its end.
+        var all = SkipService.fit(found, duration: dur)
+        if !all.contains(where: { $0.kind == .intro }) { all += segments.filter { $0.source == "On device" } }
+        let tidied = SkipService.tidy(all, duration: dur, chapters: chapters.map { ($0.title, $0.time) }, anime: anime)
+        // A later answer leaves the pill on screen, or a part skipped, as it was (1.30.5).
+        let next = SkipService.keepShown(tidied, current: segments, position: position, handled: autoSkipped)
         guard next != segments else { return }
         segmentsAnime = anime
         segments = next

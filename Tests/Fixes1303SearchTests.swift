@@ -3,8 +3,8 @@ import XCTest
 
 /// 1.30.3: Home's Real-Debrid row follows what the server's start folder
 /// lists (a deleted release leaves it), the search's Movies and Shows chips
-/// get a fuller list, "Yours" reads "Library", and a server's matches are
-/// capped by release, not by file.
+/// get a fuller list (the Search tab's pills since 1.30.5), "Yours" reads
+/// "Library", and a server's matches are capped by release, not by file.
 final class Fixes1303SearchTests: XCTestCase {
     // MARK: Real-Debrid row
 
@@ -119,9 +119,10 @@ final class Fixes1303SearchTests: XCTestCase {
                  releaseInfo: "2024", imdbRating: nil, genres: nil)
     }
 
-    func testLibraryIsTheChipsName() {
-        XCTAssertEqual(SearchScope.yours.title, "Library")
-        XCTAssertEqual(SearchScope.yours.rawValue, "yours", "the chip's identifier changed")
+    /// The chip is the Library tab since 1.30.5 (identifier `searchTab:library`).
+    func testLibraryIsTheTabsName() {
+        XCTAssertEqual(SearchTab.library.title, "Library")
+        XCTAssertEqual(SearchTab.library.rawValue, "library", "the tab's identifier changed")
     }
 
     /// The suggestions keep their places; the fuller lists come after, each title once.
@@ -134,16 +135,17 @@ final class Fixes1303SearchTests: XCTestCase {
         XCTAssertEqual(DiscoverSearch.merged(suggestions, fuller: [:]).map(\.id), ["tt1", "tt2", "tt3"])
     }
 
+    /// The Shows pill (the chip until 1.30.5) lists the fuller list.
     @MainActor
-    func testTheShowsChipListsTheFullerList() {
+    func testTheShowsPillListsTheFullerList() {
         let suggestions = [meta(1, series: true), meta(2), meta(3, series: true)]
         let more = (10..<40).map { meta($0, series: true) }
         let r = SearchResults(imdb: DiscoverSearch.merged(suggestions, fuller: ["series": more]))
-        XCTAssertEqual(r.shows.count, 32)
-        XCTAssertEqual(r.movies.count, 1)
-        // "All" still opens on the suggestions.
-        XCTAssertEqual(r.titlesShort.prefix(3).map(\.id), ["title|tt1", "title|tt2", "title|tt3"])
-        XCTAssertEqual(r.hiddenShows, 32 - 7)
+        XCTAssertEqual(r.filtered(.shows).count, 32)
+        XCTAssertEqual(r.filtered(.movies).count, 1)
+        // No pill: every title, the suggestions first.
+        XCTAssertEqual(r.filtered(nil).prefix(3).map(\.id), ["title|tt1", "title|tt2", "title|tt3"])
+        XCTAssertEqual(r.filtered(nil).count, 33)
     }
 
     func testAFullerListIsAskedOncePerQueryAndKind() {

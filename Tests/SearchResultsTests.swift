@@ -1,9 +1,9 @@
 import XCTest
 @testable import Folio
 
-/// The search's one list: what's yours first, IMDb's titles, then the
-/// addons' without the ones already there; a release's files as one row;
-/// and what "All" leaves for the chips.
+/// The search's results: what's yours (the Library tab), IMDb's titles,
+/// then the addons' without the ones already there (the Search tab); a
+/// release's files as one row; every match of each tab (1.30.5: no caps).
 @MainActor
 final class SearchResultsTests: XCTestCase {
     private func meta(_ n: Int, series: Bool = false) -> MetaItem {
@@ -23,26 +23,28 @@ final class SearchResultsTests: XCTestCase {
         XCTAssertNil(r.top)
     }
 
-    func testChipsOnlyWithSomethingUnderThem() {
-        XCTAssertEqual(SearchResults().scopes, [.all])
-        XCTAssertEqual(SearchResults(imdb: [meta(1)]).scopes, [.all, .movies])
-        XCTAssertEqual(SearchResults(owned: [entry(1)], imdb: [meta(1, series: true)]).scopes, [.all, .yours, .shows])
+    func testEmptyResults() {
+        let r = SearchResults()
+        XCTAssertNil(r.top)
+        XCTAssertTrue(r.ownedRest.isEmpty)
+        XCTAssertTrue(r.filtered(nil).isEmpty)
+        XCTAssertEqual(r.count(.library), 0)
+        XCTAssertEqual(r.count(.search), 0)
     }
 
-    func testAllShowsTheFirstFewAndCountsTheRest() {
+    /// Library: the top card and every other match under it; Search: every
+    /// title, none held back for a "Show all" row (1.30.5).
+    func testEachTabListsEveryMatch() {
         let owned = (1...7).map { entry($0) }
         let titles = (1...6).map { meta($0) } + (7...11).map { meta($0, series: true) }
         let r = SearchResults(owned: owned, imdb: titles)
-        // The top result and four more of what's yours; the rest under Library.
         XCTAssertEqual(r.top?.id, owned[0].id)
-        XCTAssertEqual(r.ownedShort.map(\.id), owned[1...4].map(\.id))
-        XCTAssertEqual(r.hiddenOwned, 2)
-        XCTAssertEqual(r.titlesShort.count, SearchResults.titlesCap)
+        XCTAssertEqual(r.ownedRest.map(\.id), owned.dropFirst().map(\.id))
+        XCTAssertEqual(r.count(.library), 7)
+        XCTAssertEqual(r.filtered(nil).count, 11)
+        XCTAssertEqual(r.count(.search), 11)
         XCTAssertEqual(r.movies.count, 6)
         XCTAssertEqual(r.shows.count, 5)
-        // Eight titles shown (six films, two shows): three shows are left for their chip.
-        XCTAssertEqual(r.hiddenMovies, 0)
-        XCTAssertEqual(r.hiddenShows, 3)
     }
 
     func testTitleRow() {

@@ -29,6 +29,9 @@ struct SkipSegment: Identifiable, Hashable {
     /// What the pill calls it: the file's own chapter name when it has a real
     /// one ("Opening", "Next Episode Preview"), else set by `SkipService.tidy`.
     var name: String? = nil
+    /// The episode length AniSkip's times were measured on, kept when the
+    /// file's own wasn't known yet (1.30.5): `SkipService.fit` rescales.
+    var length: Double? = nil
 
     var label: String {
         if let name { return "Skip " + name }
@@ -42,6 +45,75 @@ struct SkipLookup {
     var segments: [SkipSegment] = []
     /// A scene follows the credits (IntroDB `post_credits`): Up Next must not auto-play.
     var postCredits = false
+}
+
+/// What the online lookup asks about one file (1.30.5): all of it known
+/// from the item, so it is asked as the file starts opening, not after.
+struct SkipQuery {
+    var fileName: String
+    var parsed: TitleParser.Parsed
+    var hint: AnimeHint
+    /// An anime database's id for it. Not just a hint: every episode file
+    /// gets one with its title and number (WebDAVClient.mediaItem and the
+    /// other sources), so "has a hint" was true for live-action shows too,
+    /// which then got anime lookups and Opening/Ending names (MobLand in
+    /// the 5 Nov log: "Skip Opening", "Skip Ending").
+    var explicitAnime: Bool
+    /// Fansub naming ("[Group] Title - 05") is a strong anime signal.
+    var fansubName: Bool
+    /// The item's own length (Jellyfin, Plex), else 0: the file's isn't
+    /// known yet, and what the services leave open is fitted to it later.
+    var duration: Double
+    var oatLength: Double
+
+    /// `name`: the file's name in its address; the item's title when that isn't a media file's.
+    init(name: String, title: String, anime: AnimeHint?, duration: Double, oatLength: Double) {
+        let file = TitleParser.isMedia(name) ? name : title
+        let p = TitleParser.parse(file)
+        var h = anime ?? AnimeHint()
+        if h.title == nil { h.title = p.title }
+        if h.episode == nil { h.episode = p.episode }
+        fileName = file
+        parsed = p
+        hint = h
+        explicitAnime = anime?.hasAnimeID == true
+        fansubName = file.hasPrefix("[") || file.range(of: #" - \d{1,4}\b"#, options: .regularExpression) != nil
+        self.duration = duration
+        self.oatLength = oatLength > 0 ? oatLength : 90
+    }
+}
+
+/// The online lookup's answers for one load of the player (1.30.5): kept
+/// until the file has loaded (the pills need its length and position),
+/// then the latest shows at once; after that each one as it comes.
+struct SkipAnswers {
+    struct Answer {
+        var lookup: SkipLookup
+        var anime: Bool
+        /// The lookup is over: both databases (and the anime ones) are in.
+        var done: Bool
+    }
+    /// The load they are for (PlayerModel.loadToken).
+    let token: Int
+    private(set) var latest: Answer?
+    /// The file has loaded with no segments of its own (chapters).
+    private(set) var showing = false
+
+    init(token: Int) { self.token = token }
+
+    /// An answer of load `from`'s lookup: what to show now, if anything.
+    /// Another load's is dropped, and nothing comes after the last one.
+    mutating func add(_ a: Answer, from: Int) -> Answer? {
+        guard from == token, latest?.done != true else { return nil }
+        latest = a
+        return showing ? a : nil
+    }
+
+    /// The file has loaded: the answer in so far, if any, shows now.
+    mutating func show() -> Answer? {
+        showing = true
+        return latest
+    }
 }
 
 /// Finds intro/credits/recap/preview ranges:
@@ -60,7 +132,10 @@ actor SkipService {
     private var idCache: [String: (hint: AnimeHint, at: Date)] = [:]
     /// An empty answer may just mean a service was offline: it is asked
     /// again after this long. Real answers are kept for the session.
-    private let missTTL: TimeInterval = 600
+    static let missTTL: TimeInterval = 600
+    /// Answers kept per cache, the oldest let go first (1.30.5): a few
+    /// hundred bytes an episode.
+    static let cacheLimit = 400
     private let session: URLSession = {
         let c = URLSessionConfiguration.default
         c.timeoutIntervalForRequest = 15
@@ -161,13 +236,100 @@ actor SkipService {
         return t.prefix(1).uppercased() + t.dropFirst()
     }
 
+    // MARK: Before the file's length is known (1.30.5)
+
+    /// An end a database left open ("to the end of the file") while the
+    /// file's length isn't known yet: the lookup starts as the file starts
+    /// opening. `fit` makes it the file's end.
+    static let untilEnd: Double = 1_000_000_000
+
+    /// The looked-up segments for a file of this length: an open end is
+    /// its end, AniSkip's times measured on another length are rescaled to
+    /// it, and what lies past its end goes.
+    static func fit(_ segs: [SkipSegment], duration: Double) -> [SkipSegment] {
+        guard duration > 0 else { return segs }
+        return segs.compactMap { seg -> SkipSegment? in
+            var s = seg
+            if let len = s.length, len > 0, abs(len - duration) > 3 {
+                let k = duration / len
+                s.start *= k
+                if s.end < untilEnd { s.end *= k }
+            }
+            s.length = nil
+            s.end = min(s.end, duration)
+            return s.end > s.start ? s : nil
+        }
+    }
+
+    /// A segment as the log says it ("intro 268-333", "outro 2202-end").
+    static func span(_ s: SkipSegment) -> String {
+        "\(s.kind.rawValue) \(Int(s.start))-\(s.end >= untilEnd ? "end" : String(Int(s.end)))"
+    }
+
+    /// A later answer over segments already on screen (the first database's
+    /// answer shows at once, the other's is merged in when it comes). A
+    /// segment the playback is in, or one skipped, stays as it is in place
+    /// of the new answer's of its kind over the same stretch, so its pill
+    /// doesn't jump or go and come back, and it isn't skipped twice. The
+    /// rest take the new answer.
+    static func keepShown(_ next: [SkipSegment], current: [SkipSegment], position: Double, handled: Set<String>) -> [SkipSegment] {
+        let kept = current.filter { handled.contains($0.id) || (position >= $0.start && position < $0.end) }
+        guard !kept.isEmpty else { return next }
+        let rest = next.filter { n in
+            !kept.contains { k in k.kind == n.kind && min(k.end, n.end) - max(k.start, n.start) > 0 }
+        }
+        return (rest + kept).sorted { $0.start < $1.start }
+    }
+
+    // MARK: The whole lookup (1.30.5)
+
+    /// Everything online for one file, moved here from the player, which
+    /// starts it in load() as the file starts opening, and in prepare() for
+    /// the next episode minutes ahead (the answers are kept here). `early`
+    /// gets the first database's answer while the other is still asked,
+    /// with whether it is an anime's.
+    func lookUp(_ q: SkipQuery, early: (@Sendable (SkipLookup, Bool) async -> Void)? = nil) async -> (lookup: SkipLookup, anime: Bool) {
+        var found = SkipLookup()
+        let meta = await MetadataService.shared.lookup(filename: q.fileName)
+        let animation = meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false
+        let namedAnime = q.explicitAnime || animation || (meta == nil && q.fansubName)
+        if let meta, meta.id.hasPrefix("tt") {
+            // The first database's answer shows at once; the other's is
+            // merged in when it comes (1.30.4: it was cut off 2 s after
+            // the first, and S01E07 got its credits but no recap or intro).
+            // None for a lookup ahead: nothing waits on it.
+            var onFirst: (@Sendable (SkipLookup) async -> Void)?
+            if let early { onFirst = { first in await early(first, namedAnime) } }
+            found = await lookupTV(imdbId: meta.id, season: q.parsed.episode != nil ? (q.parsed.season ?? 1) : nil,
+                                   episode: q.parsed.episode, duration: q.duration, early: onFirst)
+        }
+        // Anime databases only for anime: an anime id, animation per IMDb,
+        // or a title IMDb doesn't know (AniList's search decides). Never
+        // for a show IMDb knows as live action.
+        if found.segments.isEmpty, q.hint.episode != nil, q.explicitAnime || animation || meta == nil {
+            found.segments = await lookup(hint: q.hint, season: q.parsed.season, duration: q.duration, oatLength: q.oatLength)
+            dlog("skip", "anime lookup \(q.hint.title ?? "?") s\(q.parsed.season ?? 1)e\(q.hint.episode ?? 0): \(found.segments.count) segment(s)")
+        }
+        let anime = namedAnime || found.segments.contains { $0.source == "AniSkip" || $0.source == "OAT" }
+        return (found, anime)
+    }
+
     // MARK: TV & films (IntroDB, TheIntroDB)
 
     /// `complete`: both services answered (an answer of "nothing" counts);
     /// a lookup one of them failed is asked again sooner (1.30.4).
     private var tvCache: [String: (lookup: SkipLookup, at: Date, complete: Bool)] = [:]
     /// How long a lookup one service failed is kept before both are asked again.
-    private let partialTTL: TimeInterval = 60
+    static let partialTTL: TimeInterval = 60
+
+    /// Whether an episode's answer is taken from the cache (1.30.5: the
+    /// next episode's, asked in prepare(), is taken by its load()). Both
+    /// databases answered: kept for the session when they found something,
+    /// `missTTL` when they found nothing. One didn't answer: `partialTTL`,
+    /// then both are asked again.
+    static func reuse(complete: Bool, found: Bool, age: TimeInterval) -> Bool {
+        complete ? (found || age < missTTL) : age < partialTTL
+    }
 
     /// Both services are asked at once. They used to be asked one after the
     /// other, and IntroDB running into its 15 s timeout held the Skip button
@@ -175,61 +337,53 @@ actor SkipService {
     /// row, the segments 15.5 s after the file loaded). IntroDB is preferred
     /// (merge): each kind of segment it has is its own.
     ///
-    /// 1.30.4: the slower one is no longer cut off. Until then the lookup
-    /// ended 2 s after TheIntroDB's answer and cancelled IntroDB's request,
-    /// without a word in the log; 14 Nov, Tulsa King S01E07: TheIntroDB had
-    /// only the credits, and the recap and intro IntroDB had for every other
-    /// episode never came (and that answer was kept for the session). Now
-    /// the first usable answer goes to `early` (IntroDB's at once, or
-    /// TheIntroDB's when IntroDB hasn't answered 2 s later), and the result
-    /// returned is both merged, once both have answered or failed.
+    /// 1.30.4: the slower one is no longer cut off (14 Nov, Tulsa King
+    /// S01E07: IntroDB's recap and intro never came). The result returned
+    /// is both merged, once both have answered or failed.
+    ///
+    /// 1.30.5: the first answer with segments goes to `early` at once,
+    /// whichever it is. TheIntroDB's waited up to 2 s for IntroDB's: 16 Nov,
+    /// S01E09, its answer came 0.9 s before IntroDB's and the pills only
+    /// with IntroDB's. The player keeps a pill on screen as it is when the
+    /// other's is merged in (keepShown).
     func lookupTV(imdbId: String, season: Int?, episode: Int?, duration: Double,
                   early: (@Sendable (SkipLookup) async -> Void)? = nil) async -> SkipLookup {
         let key = "\(imdbId)|\(season ?? -1)|\(episode ?? -1)"
         if let c = tvCache[key] {
-            let age = Date().timeIntervalSince(c.at)
-            let keep = c.complete ? (!c.lookup.segments.isEmpty || c.lookup.postCredits || age < missTTL) : age < partialTTL
-            if keep { return c.lookup }
+            let found = !c.lookup.segments.isEmpty || c.lookup.postCredits
+            if Self.reuse(complete: c.complete, found: found, age: Date().timeIntervalSince(c.at)) { return c.lookup }
+            // Asked again, one database having failed (1.30.5): what the
+            // other had shows meanwhile.
+            if !c.complete, !c.lookup.segments.isEmpty, let early { await early(c.lookup) }
         }
         let label = "\(imdbId) s\(season ?? 0)e\(episode ?? 0)"
         // nil: the service didn't answer (logged by fetch with the reason).
-        enum Answer { case introDB(SkipLookup?), theIntroDB(SkipLookup?), graceOver }
+        enum Answer { case introDB(SkipLookup?), theIntroDB(SkipLookup?) }
         let r: (lookup: SkipLookup, complete: Bool) = await withTaskGroup(of: Answer.self) { g in
             g.addTask { .introDB(await self.introDB(imdbId: imdbId, season: season, episode: episode, duration: duration)) }
             g.addTask { .theIntroDB(await self.theIntroDB(imdbId: imdbId, season: season, episode: episode, duration: duration)) }
             var intro: SkipLookup?, the: SkipLookup?
-            var introDone = false, theDone = false, shown = false
+            var first = true
             while let answer = await g.next() {
+                let got: SkipLookup?
                 switch answer {
-                case .introDB(let res):
-                    introDone = true
-                    intro = res
-                    if let res, !res.segments.isEmpty, !theDone, !shown, let early {
-                        shown = true
-                        await early(res)
-                    }
-                case .theIntroDB(let res):
-                    theDone = true
-                    the = res
-                    if let res, !res.segments.isEmpty, !introDone {
-                        g.addTask { try? await Task.sleep(nanoseconds: 2_000_000_000); return .graceOver }
-                    }
-                case .graceOver:
-                    if !introDone, !shown, let t = the, !t.segments.isEmpty, let early {
-                        shown = true
-                        dlog("skip", "IntroDB hasn't answered for \(label) 2 s after TheIntroDB: TheIntroDB's segments for now, IntroDB's added when it answers")
-                        await early(t)
-                    }
+                case .introDB(let a): intro = a; got = a
+                case .theIntroDB(let a): the = a; got = a
                 }
-                // Both in: only the grace timer may be left, and it ends now.
-                if introDone && theDone { g.cancelAll() }
+                // The other is still being asked: this one shows now (1.30.5).
+                if first, let got, !got.segments.isEmpty, let early {
+                    if intro == nil { dlog("skip", "TheIntroDB's segments for \(label) shown; IntroDB's merged in when it answers") }
+                    await early(got)
+                }
+                first = false
             }
             if intro == nil || the == nil {
-                dlog("skip", "\(intro == nil ? "IntroDB" : "TheIntroDB") gave no answer for \(label)\(intro == nil && the == nil ? ", nor did TheIntroDB" : ""): asked again in \(Int(partialTTL)) s")
+                dlog("skip", "\(intro == nil ? "IntroDB" : "TheIntroDB") gave no answer for \(label)\(intro == nil && the == nil ? ", nor did TheIntroDB" : ""): asked again in \(Int(Self.partialTTL)) s")
             }
             return (Self.merge(preferred: intro ?? SkipLookup(), other: the ?? SkipLookup()), intro != nil && the != nil)
         }
         tvCache[key] = (r.lookup, Date(), r.complete)
+        if tvCache.count > Self.cacheLimit, let oldest = tvCache.min(by: { $0.value.at < $1.value.at })?.key { tvCache[oldest] = nil }
         return r.lookup
     }
 
@@ -279,12 +433,13 @@ actor SkipService {
         let map: [(String, SkipSegment.Kind)] = [("recap", .recap), ("intro", .intro), ("outro", .outro)]
         for (k, kind) in map {
             guard let (s, e) = seg(k) else { continue }
-            let end = min(e ?? duration, duration > 0 ? duration : .greatestFiniteMagnitude)
+            // No end, and the file's length not known yet: to its end (1.30.5; it was left out).
+            let end = duration > 0 ? min(e ?? duration, duration) : (e ?? Self.untilEnd)
             if end > s { out.segments.append(SkipSegment(kind: kind, start: s, end: end, source: "IntroDB")) }
         }
         out.postCredits = seg("post_credits") != nil
         out.segments.sort { $0.start < $1.start }
-        dlog("skip", "IntroDB \(imdbId) s\(season ?? 0)e\(episode ?? 0): \(out.segments.map { "\($0.kind.rawValue) \(Int($0.start))-\(Int($0.end))" }) postCredits=\(out.postCredits)")
+        dlog("skip", "IntroDB \(imdbId) s\(season ?? 0)e\(episode ?? 0): \(out.segments.map { Self.span($0) }) postCredits=\(out.postCredits)")
         return out
     }
 
@@ -311,20 +466,37 @@ actor SkipService {
                 let eMs = (o["end_ms"] as? NSNumber)?.doubleValue ?? 0
                 if sMs == 0 && eMs == 0 { continue }                    // "no segment"
                 let start = sMs / 1000
-                var end = eMs > 0 ? eMs / 1000 : duration               // null end = end of the file
+                // null end = end of the file (1.30.5: fitted later when its length isn't known yet)
+                var end = eMs > 0 ? eMs / 1000 : (duration > 0 ? duration : Self.untilEnd)
                 if duration > 0 { end = min(end, duration) }
                 if end > start { out.segments.append(SkipSegment(kind: kind, start: start, end: end, source: "TheIntroDB")) }
             }
         }
         out.segments.sort { $0.start < $1.start }
-        dlog("skip", "TheIntroDB \(imdbId) s\(season ?? 0)e\(episode ?? 0): \(out.segments.map { "\($0.kind.rawValue) \(Int($0.start))-\(Int($0.end))" })")
+        dlog("skip", "TheIntroDB \(imdbId) s\(season ?? 0)e\(episode ?? 0): \(out.segments.map { Self.span($0) })")
         return out
     }
 
     // MARK: Anime (AniSkip, Open Anime Timestamps)
 
+    /// Anime segments found, by episode (1.30.5): the next episode's, asked
+    /// in prepare(), are there when it opens. Only answers with segments are
+    /// kept: an empty one may be a service that was offline.
+    private var animeCache: [String: (segments: [SkipSegment], at: Date)] = [:]
+
     func lookup(hint: AnimeHint, season: Int? = nil, duration: Double, oatLength: Double) async -> [SkipSegment] {
         guard let episode = hint.episode, episode > 0 else { return [] }
+        let key = "\(hint.malId ?? 0)|\(hint.anilistId ?? 0)|\(hint.kitsuId ?? 0)|\(hint.anidbId ?? 0)|\(hint.title ?? "")|s\(season ?? 0)e\(episode)|\(Int(duration.rounded()))|\(Int(oatLength))"
+        if let c = animeCache[key] { return c.segments }
+        let found = await findAnime(hint: hint, episode: episode, season: season, duration: duration, oatLength: oatLength)
+        if !found.isEmpty {
+            animeCache[key] = (found, Date())
+            if animeCache.count > Self.cacheLimit, let oldest = animeCache.min(by: { $0.value.at < $1.value.at })?.key { animeCache[oldest] = nil }
+        }
+        return found
+    }
+
+    private func findAnime(hint: AnimeHint, episode: Int, season: Int?, duration: Double, oatLength: Double) async -> [SkipSegment] {
         var h = hint
         // Later seasons are separate MyAnimeList entries: search for that
         // season's entry and refuse a match that isn't clearly it (season 1's
@@ -388,7 +560,7 @@ actor SkipService {
         var h = hint
         if h.malId != nil && h.anidbId != nil { return (h, false) }
         let key = "\(h.anilistId ?? 0)|\(h.kitsuId ?? 0)|\(h.malId ?? 0)|\(h.title ?? "")"
-        if let c = idCache[key], c.hint.malId != nil || c.hint.anidbId != nil || Date().timeIntervalSince(c.at) < missTTL {
+        if let c = idCache[key], c.hint.malId != nil || c.hint.anidbId != nil || Date().timeIntervalSince(c.at) < Self.missTTL {
             return (c.hint, false)
         }
 
@@ -478,10 +650,17 @@ actor SkipService {
                   let e = (iv["endTime"] as? NSNumber)?.doubleValue,
                   let type = r["skipType"] as? String else { continue }
             var start = s, end = e
-            // Rescale if AniSkip's episode length differs noticeably.
-            if let len = (r["episodeLength"] as? NSNumber)?.doubleValue, len > 0, duration > 0, abs(len - duration) > 3 {
-                let k = duration / len
-                start *= k; end *= k
+            var measuredOn: Double?
+            // Rescale if AniSkip's episode length differs noticeably; with
+            // the file's not known yet (1.30.5: episodeLength=0, any
+            // length), fit does it once it is.
+            if let len = (r["episodeLength"] as? NSNumber)?.doubleValue, len > 0 {
+                if duration <= 0 {
+                    measuredOn = len
+                } else if abs(len - duration) > 3 {
+                    let k = duration / len
+                    start *= k; end *= k
+                }
             }
             let kind: SkipSegment.Kind
             switch type {
@@ -490,7 +669,7 @@ actor SkipService {
             case "recap": kind = .recap
             default: continue
             }
-            out.append(SkipSegment(kind: kind, start: start, end: end, source: "AniSkip"))
+            out.append(SkipSegment(kind: kind, start: start, end: end, source: "AniSkip", length: measuredOn))
         }
         return out.sorted { $0.start < $1.start }
     }
@@ -516,7 +695,7 @@ actor SkipService {
         if oatCache == nil || (oatFetched.map { Date().timeIntervalSince($0) > 86400 } ?? true) {
             // The file is large: after a failed download it's tried again in
             // 10 minutes, not for every episode (an older copy is still used).
-            if let failed = oatFailed, Date().timeIntervalSince(failed) < missTTL {
+            if let failed = oatFailed, Date().timeIntervalSince(failed) < Self.missTTL {
                 if oatCache == nil { return [] }
             } else if let url = URL(string: "https://raw.githubusercontent.com/jonbarrow/open-anime-timestamps/master/timestamps.json"),
                       let obj = await json(url, timeout: 60) as? [String: Any] {
@@ -544,7 +723,8 @@ actor SkipService {
         if recap >= 0 { out.append(SkipSegment(kind: .recap, start: recap, end: next(after: recap), source: "OAT")) }
         if op >= 0 { out.append(SkipSegment(kind: .intro, start: op, end: min(op + length, next(after: op)), source: "OAT")) }
         if ed >= 0 { out.append(SkipSegment(kind: .outro, start: ed, end: min(ed + length, next(after: ed)), source: "OAT")) }
-        if pv >= 0, duration > pv { out.append(SkipSegment(kind: .preview, start: pv, end: duration, source: "OAT")) }
+        // The length not known yet (1.30.5): to the end, fitted later.
+        if pv >= 0, duration <= 0 || duration > pv { out.append(SkipSegment(kind: .preview, start: pv, end: duration > 0 ? duration : Self.untilEnd, source: "OAT")) }
         return out.filter { $0.end > $0.start }
     }
 

@@ -141,6 +141,7 @@ enum SettingsKey {
     // Library
     static let cleanTitles = "cleanTitles"
     static let searchServerLayout = "searchServerLayout"   // files | posters: what the search shows of the servers' files (1.23.0)
+    static let searchTabLast = "searchTabLast"             // library | search: the search page's last tab (1.30.5, SearchTab)
     static let showOnlyMedia = "showOnlyMedia"
     static let folderSorts = "folderSorts"
     static let folderSortLast = "folderSortLast"         // WebDAV: the last sort chosen, for folders without their own
@@ -253,6 +254,7 @@ enum SettingsKey {
             audioBoost: 0,
             playbackMode: "playlist",
             cleanTitles: true,
+            searchTabLast: "library",       // (1.30.5)
             showOnlyMedia: false,
             airingAlerts: "air",
             engageNotes: true,

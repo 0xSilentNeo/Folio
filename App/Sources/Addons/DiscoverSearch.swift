@@ -41,14 +41,17 @@ final class DiscoverSearch: ObservableObject {
 
     /// The fuller lists (1.30.3): movies or shows with the typed text in
     /// their title, by kind ("movie", "series"), for `fullerQuery`. Asked
-    /// when the Movies or Shows chip is chosen or Search is pressed, once
-    /// per query and kind; typing in All stays the quick suggestions.
+    /// when Search is pressed, the Shows or Movies pill is chosen, or typing
+    /// pauses on the Search tab (1.30.5), once per query and kind; the
+    /// Library tab asks none.
     @Published private(set) var fuller: [String: [MetaItem]] = [:]
     @Published private(set) var fullerLoading: Set<String> = []
     private var fullerQuery = ""
     private var fullerAsked: Set<String> = []
     private var fullerTasks: [String: Task<Void, Never>] = [:]
     private var fullerGeneration = 0
+    /// The Search tab's pause before both kinds are asked (1.30.5).
+    private var pauseTask: Task<Void, Never>?
 
     private let store: SearchHistoryStore
     private var historyLoaded = false
@@ -80,6 +83,8 @@ final class DiscoverSearch: ObservableObject {
         }
         if q != fullerQuery { resetFuller() }
         guard q != current else { return }          // only spaces changed
+        // A pause the last text waited for asks nothing for this one (1.30.5).
+        pauseTask?.cancel()
         start(q, wait: true)
     }
 
@@ -108,6 +113,7 @@ final class DiscoverSearch: ObservableObject {
     func reset() {
         liveTask?.cancel()
         addonTask?.cancel()
+        pauseTask?.cancel()
         generation += 1
         resetFuller()
         current = ""
@@ -163,6 +169,26 @@ final class DiscoverSearch: ObservableObject {
                 dlog("search/error", "fuller \(type) list not read")
             }
         }
+    }
+
+    /// The Search tab (1.30.5): every movie and show with the text in its
+    /// title, so its "all" is more than IMDb's 8 suggestions. `wait`: once
+    /// typing has paused (`debounce`, as the live search); without, now
+    /// (the tab chosen). Once per query and kind, kids-filtered (loadFuller).
+    func loadBothKinds(for text: String, wait: Bool) {
+        pauseTask?.cancel()
+        let q = SearchHistoryStore.tidy(text)
+        guard q.count >= Self.minLength else { return }
+        guard wait else { askBothKinds(q); return }
+        pauseTask = Task { [weak self] in
+            do { try await Task.sleep(for: Self.debounce) } catch { return }   // typed on
+            self?.askBothKinds(q)
+        }
+    }
+
+    private func askBothKinds(_ q: String) {
+        loadFuller(type: "movie", for: q)
+        loadFuller(type: "series", for: q)
     }
 
     private func resetFuller() {
@@ -300,11 +326,12 @@ final class DiscoverSearch: ObservableObject {
 }
 
 /// The one search page (1.28.11), behind the tab bar's search button on
-/// every tab. One list, one kind of row: what's yours first (the library,
-/// your servers' releases, Plex and Jellyfin), then movies and shows from
-/// IMDb as you type, and your addons' titles after Search. Until then each
-/// source was a section of its own with its own rows, a file on a server
-/// was a row each (a season: 24), and each addon catalog a carousel.
+/// every tab. One kind of row, in two tabs (1.30.5): Library, what's yours
+/// (the library, your servers' releases, Plex and Jellyfin) under a top
+/// card, and Search, movies and shows from IMDb as you type and your
+/// addons' titles after Search, with Shows and Movies pills. Until 1.28.11
+/// each source was a section of its own with its own rows, a file on a
+/// server was a row each (a season: 24), and each addon catalog a carousel.
 struct AddonSearchView: View {
     /// The tab bar's search field owns the text.
     @Binding var query: String
@@ -328,8 +355,11 @@ struct AddonSearchView: View {
     @State private var groups: [LibraryGroup] = []
     @State private var route: LibraryRoute?
     @State private var openedEntry: LibrarySearchResults.OpenedEntry?
-    /// The chip chosen; All again when the field is emptied.
-    @State private var scope = SearchScope.all
+    /// Library or Search, kept across launches (1.30.5).
+    @AppStorage(SettingsKey.searchTabLast) private var tabRaw = SearchTab.library.rawValue
+    /// Shows or Movies on the Search tab; none (every title) again for a new query (1.30.5).
+    @State private var filter: SearchKindFilter?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The library's and the servers' matches for `filteredWords`, as rows.
     @State private var mine: [SearchItem] = []
     @State private var filteredWords: [String] = []
@@ -367,7 +397,9 @@ struct AddonSearchView: View {
 
     private var typed: String { SearchHistoryStore.tidy(query) }
     private var showsStart: Bool { SearchHistoryStore.tidy(shownQuery).isEmpty }
-    private static let chipsID = "searchChips"
+    private var tab: SearchTab { SearchTab.remembered(tabRaw) }
+    private var motion: Animation? { reduceMotion ? nil : Animation.snappy(duration: 0.28) }
+    private static let tabsID = "searchTabs"
     private static let startID = "searchStart"
     private static let emptyingDelay: Duration = .milliseconds(350)
 
@@ -392,6 +424,8 @@ struct AddonSearchView: View {
     private var watched: some View {
         page
             .onChange(of: query) { _, text in
+                // Emptied a moment ago and typed again: a new query too (1.30.5).
+                let wasEmptied = emptying != nil
                 emptying?.cancel()
                 emptying = nil
                 filtering?.cancel()
@@ -403,8 +437,12 @@ struct AddonSearchView: View {
                     }
                     return
                 }
+                // Another text, not this one typed on: every title again (1.30.5).
+                if filter != nil, wasEmptied || !SearchKindFilter.keeps(from: shownQuery, to: text) { filter = nil }
                 shownQuery = text
                 search.textChanged(text)
+                // The Search tab: both kinds' fuller lists once typing pauses (1.30.5).
+                if tab == .search { search.loadBothKinds(for: text, wait: true) }
                 catalogs.textChanged(kids.isOn ? "" : text)
                 // After a pause (1.30.4): every indexed file of every server
                 // was looked through on the main thread at each keystroke.
@@ -432,7 +470,8 @@ struct AddonSearchView: View {
                 // Each of these does nothing for the text it already answered (1.30.3).
                 search.textChanged(query)
                 catalogs.textChanged(kids.isOn ? "" : query)
-                if SearchHistoryStore.tidy(query).isEmpty { scope = .all }
+                // Nothing asked twice (once per query and kind, 1.30.5).
+                if SearchHistoryStore.tidy(query).isEmpty { filter = nil } else if tab == .search { search.loadBothKinds(for: query, wait: false) }
                 let grouped = LibraryOrganizer.groups(local.files)
                 let now = Self.signature(index.states)
                 // Made again only when the library or an index changed while away.
@@ -487,12 +526,6 @@ struct AddonSearchView: View {
             .onReceive(search.$titles) { new in if !(new.isEmpty && search.titles.isEmpty) { answersTick &+= 1 } }
             .onReceive(search.$addonResults) { new in if !(new.isEmpty && search.addonResults.isEmpty) { answersTick &+= 1 } }
             .onReceive(search.$fuller) { new in if !(new.isEmpty && search.fuller.isEmpty) { answersTick &+= 1 } }
-            // The Movies or Shows chip (or "Show all … shows"): every title
-            // of that kind with the text in its name, not only the few of
-            // the suggestions (1.30.3). Asked again for the text typed on
-            // while the chip stays chosen, once the suggestions answered.
-            .onChange(of: scope) { loadFuller() }
-            .onChange(of: search.titlesQuery) { loadFuller() }
             .onReceive(catalogs.$results) { new in if !(new.isEmpty && catalogs.results.isEmpty) { answersTick &+= 1 } }
             .onChange(of: answersTick) { compose() }
     }
@@ -503,18 +536,33 @@ struct AddonSearchView: View {
         emptying = nil
         guard SearchHistoryStore.tidy(query).isEmpty else { return }
         shownQuery = ""
-        scope = .all
+        filter = nil
         search.textChanged(query)
         catalogs.textChanged(kids.isOn ? "" : query)
         refilter()
     }
 
-    private func loadFuller() {
-        switch scope {
-        case .movies: search.loadFuller(type: "movie", for: query)
-        case .shows: search.loadFuller(type: "series", for: query)
-        case .all, .yours: break
+    /// A tab chosen, by its pill or the hint (1.30.5): kept for next time
+    /// (the hint is a choice too), the list from its top, and on Search
+    /// both kinds' fuller lists asked now.
+    private func choose(_ t: SearchTab, proxy: ScrollViewProxy) {
+        guard t != tab else { return }
+        withAnimation(motion) {
+            tabRaw = t.rawValue
+            proxy.scrollTo(Self.tabsID, anchor: .top)
         }
+        if t == .search { search.loadBothKinds(for: query, wait: false) }
+    }
+
+    /// A Shows or Movies pill: that kind only, or every title again. A kind
+    /// chosen asks for its fuller list, as its chip did (1.30.3).
+    private func pick(_ k: SearchKindFilter, proxy: ScrollViewProxy) {
+        let next = SearchKindFilter.toggled(filter, by: k)
+        withAnimation(motion) {
+            filter = next
+            proxy.scrollTo(Self.tabsID, anchor: .top)
+        }
+        if let next { search.loadFuller(type: next.imdbType, for: query) }
     }
 
     private var page: some View {
@@ -533,12 +581,7 @@ struct AddonSearchView: View {
                         .listRowSeparator(.hidden)
                         .id(Self.startID)
                 } else {
-                    resultRows { target in
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            scope = target
-                            proxy.scrollTo(Self.chipsID, anchor: .top)
-                        }
-                    }
+                    resultRows(onTab: { choose($0, proxy: proxy) }, onFilter: { pick($0, proxy: proxy) })
                 }
             }
             .listStyle(.plain)
@@ -595,54 +638,119 @@ struct AddonSearchView: View {
 
     // MARK: Results
 
+    /// Library | Search, then (Search) Shows | Movies, the status line, the
+    /// hint, and the tab's rows (1.30.5).
     @ViewBuilder
-    private func resultRows(show: @escaping (SearchScope) -> Void) -> some View {
-        // A chip whose results went away (a new query) falls back to All.
-        let active = results.scopes.contains(scope) ? scope : SearchScope.all
-        SearchScopeChips(scopes: results.scopes, selection: active, select: show)
+    private func resultRows(onTab: @escaping (SearchTab) -> Void, onFilter: @escaping (SearchKindFilter) -> Void) -> some View {
+        let active = tab
+        SearchPillBar(options: tabOptions(active, onTab))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
-            .id(Self.chipsID)
+            .id(Self.tabsID)
+        if active == .search {
+            HStack(spacing: 0) {
+                SearchPillBar(options: filterOptions(onFilter), compact: true)
+                Spacer(minLength: 0)
+            }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+        }
         if let status { statusLine(status.text, working: status.working) }
         // A server's index being read: its own view, so its progress redraws one line.
-        else if !kids.isOn { SearchIndexingLine(servers: webdav.servers) }
+        else if active == .library, !kids.isOn { SearchIndexingLine(servers: webdav.servers) }
+        // Each side counted for this text only: the last answers stay up while the next are asked for.
+        let owned = filteredWords == LibrarySearchText.words(query) ? results.count(.library) : 0
+        let titles = search.titlesQuery == typed ? results.count(.search) : 0
+        let hint = SearchTab.hint(on: active, owned: owned, titles: titles, settled: active == .library ? librarySettled : titlesSettled)
+        if let hint { hintRow(hint, onTab: onTab) }
         switch active {
-        case .all:
+        case .library:
             if let top = results.top { topCard(top) }
-            ForEach(results.ownedShort) { row($0) }
-            if results.hiddenOwned > 0 { showAll("Show all \(results.owned.count) in Library", .yours, show) }
+            ForEach(results.ownedRest) { row($0) }
             catalogErrors
-            titleProblem
-            ForEach(results.titlesShort) { row($0) }
-            if results.hiddenMovies > 0 { showAll("Show all \(results.movies.count) movies", .movies, show) }
-            if results.hiddenShows > 0 { showAll("Show all \(results.shows.count) shows", .shows, show) }
-        case .yours:
-            ForEach(results.owned) { row($0) }
-            catalogErrors
-        case .movies:
-            titleProblem
-            ForEach(results.movies) { row($0) }
-        case .shows:
-            titleProblem
-            ForEach(results.shows) { row($0) }
+            // Once Search has answered too, so it doesn't give way to the hint a moment later.
+            if hint == nil, results.owned.isEmpty, librarySettled, titlesSettled {
+                statusRow("Nothing in your library matches “\(typed)”.", detail: nil, icon: "magnifyingglass", retry: false)
+            }
+        case .search:
+            titleProblem(hinted: hint != nil)
+            ForEach(results.filtered(filter)) { row($0) }
         }
     }
 
-    /// The one quiet line under the chips: what the search is still doing
-    /// (the most telling of it), or what it's waiting for. Until the one
-    /// list each of these was a spinner row of its own.
-    private var status: (text: String, working: Bool)? {
-        if typed.count < DiscoverSearch.minLength, search.phase == .idle { return (text: "Keep typing to search titles.", working: false) }
-        if search.phase == .loading { return (text: "Searching movies and shows…", working: true) }
-        // The fuller list on its way (1.30.3).
-        if !search.fullerLoading.isEmpty {
-            let kind = search.fullerLoading.count > 1 ? "movies and shows" : search.fullerLoading.contains("series") ? "shows" : "movies"
-            return (text: "Finding more \(kind)…", working: true)
+    private func tabOptions(_ active: SearchTab, _ onTab: @escaping (SearchTab) -> Void) -> [SearchPillBar.Option] {
+        SearchTab.allCases.map { t in
+            SearchPillBar.Option(id: "searchTab:" + t.rawValue, title: t.title, selected: t == active, action: { onTab(t) })
         }
-        if catalogs.searching { return (text: "Searching Plex and Jellyfin…", working: true) }
-        if search.addonsSearching { return (text: "Searching your addons…", working: true) }
+    }
+
+    private func filterOptions(_ onFilter: @escaping (SearchKindFilter) -> Void) -> [SearchPillBar.Option] {
+        let chosen = filter
+        return SearchKindFilter.allCases.map { k in
+            SearchPillBar.Option(id: "searchFilter:" + k.rawValue, title: k.title, selected: k == chosen, action: { onFilter(k) })
+        }
+    }
+
+    /// What's yours is all in for the typed words (1.30.5): the library and
+    /// servers looked through (after their pause), Plex and Jellyfin answered.
+    private var librarySettled: Bool {
+        let words = LibrarySearchText.words(query)
+        return !words.isEmpty && words == filteredWords && !catalogs.searching
+    }
+
+    /// IMDb, the fuller lists and the addons have all answered (1.30.5).
+    private var titlesSettled: Bool {
+        switch search.phase {
+        case .done, .failed: return search.fullerLoading.isEmpty && !search.addonsSearching
+        case .idle, .loading: return false
+        }
+    }
+
+    /// The one quiet line under the tabs: what the tab's search is still
+    /// doing (the most telling of it), or what it's waiting for. Until the
+    /// one list each of these was a spinner row of its own.
+    private var status: (text: String, working: Bool)? {
+        if typed.count < DiscoverSearch.minLength, search.phase == .idle {
+            return (text: tab == .library ? "Keep typing to search your library." : "Keep typing to search titles.", working: false)
+        }
+        // Each tab says what it's waiting for, not the other's (1.30.5).
+        switch tab {
+        case .library:
+            if catalogs.searching { return (text: "Searching Plex and Jellyfin…", working: true) }
+            // Nothing of yours, and Search still looking (1.30.5): said, not a
+            // blank page until the hint to Search can count its results.
+            if results.owned.isEmpty, !titlesSettled { return (text: "Searching…", working: true) }
+        case .search:
+            if search.phase == .loading { return (text: "Searching movies and shows…", working: true) }
+            // The fuller list on its way (1.30.3).
+            if !search.fullerLoading.isEmpty {
+                let kind = search.fullerLoading.count > 1 ? "movies and shows" : search.fullerLoading.contains("series") ? "shows" : "movies"
+                return (text: "Finding more \(kind)…", working: true)
+            }
+            if search.addonsSearching { return (text: "Searching your addons…", working: true) }
+        }
         if let limits = kids.activeLimits { return (text: "Movies and shows rated \(KidsRules.summary(limits)).", working: false) }
         return nil
+    }
+
+    /// "Nothing in your library — 12 results in Search" (1.30.5): the other
+    /// tab a tap away; the tab chosen this way is kept, as with its pill.
+    private func hintRow(_ hint: SearchTab.Hint, onTab: @escaping (SearchTab) -> Void) -> some View {
+        Button { onTab(hint.target) } label: {
+            HStack(spacing: 6) {
+                Text(hint.text).font(.subheadline.weight(.semibold))
+                Image(systemName: "chevron.right").font(.caption.weight(.bold)).accessibilityHidden(true)
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(Theme.action)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .accessibilityHint("Shows the \(hint.target.title) tab")
+        .accessibilityIdentifier("searchTabHint")
     }
 
     private func statusLine(_ text: String, working: Bool) -> some View {
@@ -674,22 +782,6 @@ struct AddonSearchView: View {
             .modifier(OpenFolderActions(action: folder))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
-    }
-
-    /// "Show all 14 in Library": "All" shows the first few of each kind, the chip all of them.
-    private func showAll(_ title: String, _ target: SearchScope, _ show: @escaping (SearchScope) -> Void) -> some View {
-        Button { show(target) } label: {
-            HStack(spacing: 6) {
-                Text(title).font(.subheadline.weight(.semibold))
-                Image(systemName: "chevron.right").font(.caption.weight(.bold)).accessibilityHidden(true)
-                Spacer(minLength: 0)
-            }
-            .foregroundStyle(Theme.action)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .listRowBackground(Color.clear)
-        .accessibilityIdentifier("searchShowAll:" + target.rawValue)
     }
 
     /// A Plex or Jellyfin server that didn't answer.
@@ -791,17 +883,27 @@ struct AddonSearchView: View {
 
     // MARK: Titles' problems
 
-    /// Offline, IMDb out of reach, or nothing found: said in a row where the titles would be.
+    /// Offline, IMDb out of reach, or nothing found: said in a row where the
+    /// titles would be. Nothing found waits for the fuller lists (1.30.5:
+    /// the Search tab asks them as you type), and gives way to the hint
+    /// (`hinted`), which says it already.
     @ViewBuilder
-    private var titleProblem: some View {
+    private func titleProblem(hinted: Bool) -> some View {
         switch search.phase {
         case .failed(let offline):
             statusRow(offline ? "You're offline." : "Couldn't reach IMDb.",
                       detail: offline ? "Search works again once you're connected." : "Check the connection and try again.",
                       icon: offline ? "wifi.slash" : "exclamationmark.triangle", retry: true)
-        case .done where results.titles.isEmpty && search.titlesQuery == typed:
-            statusRow(kids.isOn ? "No titles rated for the kids profile match “\(typed)”." : "No titles match “\(typed)”.",
-                      detail: nil, icon: "magnifyingglass", retry: false)
+        case .done where search.titlesQuery == typed && search.fullerLoading.isEmpty && !hinted:
+            if results.titles.isEmpty {
+                statusRow(kids.isOn ? "No titles rated for the kids profile match “\(typed)”." : "No titles match “\(typed)”.",
+                          detail: nil, icon: "magnifyingglass", retry: false)
+            } else if let filter, results.filtered(filter).isEmpty {
+                // Titles, none of the chosen kind (1.30.5).
+                let kind = filter.title.lowercased()
+                statusRow(kids.isOn ? "No \(kind) rated for the kids profile match “\(typed)”." : "No \(kind) match “\(typed)”.",
+                          detail: nil, icon: "magnifyingglass", retry: false)
+            }
         default:
             EmptyView()
         }
@@ -814,9 +916,13 @@ struct AddonSearchView: View {
                 Text(title).font(.body.weight(.semibold))
                 if let detail { Text(detail).font(.subheadline).foregroundStyle(.secondary) }
                 if retry {
-                    Button("Try Again") { search.retry() }
-                        .buttonStyle(.bordered)
-                        .tint(Theme.accent)
+                    Button("Try Again") {
+                        search.retry()
+                        // A fuller list not read is asked again too (1.30.5).
+                        if tab == .search { search.loadBothKinds(for: query, wait: false) }
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(Theme.accent)
                 }
             }
             Spacer(minLength: 0)
@@ -827,7 +933,7 @@ struct AddonSearchView: View {
     }
 }
 
-/// The one quiet line under the chips.
+/// The one quiet line under the tabs.
 private struct SearchStatusLine: View {
     let text: String
     let working: Bool

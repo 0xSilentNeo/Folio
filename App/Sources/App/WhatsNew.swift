@@ -20,6 +20,14 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.30.5", items: [
+            Item(icon: "play.tv", title: "Smooth playback again",
+                 text: "Streams from Real-Debrid play without the stutters and broken picture 1.30.4 brought."),
+            Item(icon: "magnifyingglass", title: "Library and Search",
+                 text: "Search has two tabs: what you have, and everything else, with Shows and Movies to narrow it. Folio remembers the one you used."),
+            Item(icon: "forward.end", title: "Skip sooner",
+                 text: "Skip Recap and Skip Intro are ready as the video starts, and on the next episode before it opens."),
+        ]),
         Release(version: "1.30.4", items: [
             Item(icon: "forward.end", title: "Up Next waits for you",
                  text: "Its countdown runs ten real seconds from when the card shows, so seeking around the credits no longer jumps an episode ahead."),
