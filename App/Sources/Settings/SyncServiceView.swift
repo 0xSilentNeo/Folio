@@ -58,11 +58,20 @@ struct SyncServiceView: View {
                 if let last = center.lastResult[s] {
                     Text(last).font(.footnote).foregroundStyle(.secondary)
                 }
+                // Its sign-in refused (1.30.6): a new one without disconnecting,
+                // which deleted the plays waiting for it. connected() sends them.
+                if center.needsSignIn.contains(s) {
+                    Button { connect(s) } label: {
+                        if busy == s { ProgressView() } else { Label("Sign In Again", systemImage: "person.crop.circle.badge.exclamationmark") }
+                    }
+                    .disabled(busy != nil)
+                }
                 Button("Disconnect", role: .destructive) { confirmDisconnect = true }
                     .confirmationDialog("Disconnect \(s.name)?", isPresented: $confirmDisconnect, titleVisibility: .visible) {
                         Button("Disconnect", role: .destructive) { center.disconnect(s) }
                     } message: {
-                        Text("Folio stops sending what you watch and forgets the sign-in. What's already on \(s.name) stays there.")
+                        Text("Folio stops sending what you watch and forgets the sign-in. What's already on \(s.name) stays there."
+                             + (center.needsSignIn.contains(s) ? " What's waiting to be sent is deleted; Sign In Again keeps it." : ""))
                     }
             } else {
                 ClientIDField(service: s, busy: busy == s, blocked: busy != nil) { connect(s) }

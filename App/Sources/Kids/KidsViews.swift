@@ -469,23 +469,43 @@ struct KidsGate: Identifiable {
     @MainActor
     static func open(_ gate: Binding<KidsGate?>, _ purpose: KidsPasscodePurpose, then: @escaping (String?) -> Void) {
         let g = KidsGate(purpose: purpose, then: then)
+        opening[g.id] = Date()
         DispatchQueue.main.async {
+            // Closed by closeAll before its turn came: not opened at all.
+            guard opening[g.id] != nil else { return }
             withTransaction(\.disablesAnimations, true) { gate.wrappedValue = g }
         }
     }
 
     @MainActor
     static func close(_ gate: Binding<KidsGate?>) {
+        if let id = gate.wrappedValue?.id { opening[id] = nil }
         withTransaction(\.disablesAnimations, true) { gate.wrappedValue = nil }
     }
 
     /// Passcode screens up now (1.30.4): Home closes them before it closes
     /// Settings under one, which left the pad up with nothing to close it.
-    @MainActor static var shown = 0
+    /// Opening ones count too (1.30.6): asked for but not up yet (open waits
+    /// a turn of the run loop, the cover a frame), Home saw none and closed
+    /// Settings under a pad then coming up.
+    @MainActor static var shown: Int {
+        let now = Date()
+        return up + opening.values.filter { now.timeIntervalSince($0) < openingFor }.count
+    }
 
-    /// Every passcode screen closes, as Cancel does.
+    /// Covers on screen (onAppear to onDisappear).
+    @MainActor fileprivate static var up = 0
+    /// Asked for and not up yet, with when. One whose page went before it
+    /// came up stops counting after `openingFor`.
+    @MainActor fileprivate static var opening: [UUID: Date] = [:]
+    private static let openingFor: TimeInterval = 2
+
+    /// Every passcode screen closes, as Cancel does, and none still opening comes up.
     @MainActor
-    static func closeAll() { NotificationCenter.default.post(name: .kidsGatesClose, object: nil) }
+    static func closeAll() {
+        opening.removeAll()
+        NotificationCenter.default.post(name: .kidsGatesClose, object: nil)
+    }
 }
 
 extension Notification.Name {
@@ -513,8 +533,11 @@ private struct KidsPasscodeCover: View {
 
     var body: some View {
         screen
-            .onAppear { KidsGate.shown += 1 }
-            .onDisappear { KidsGate.shown = max(0, KidsGate.shown - 1) }
+            .onAppear {
+                KidsGate.opening[gate.id] = nil
+                KidsGate.up += 1
+            }
+            .onDisappear { KidsGate.up = max(0, KidsGate.up - 1) }
     }
 
     private var screen: some View {

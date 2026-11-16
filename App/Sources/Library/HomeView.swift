@@ -149,10 +149,61 @@ struct HomeView: View {
     /// again, and Real-Debrid's library with them. `local.refresh()` returns
     /// at once, so the spinner went before anything was looked at; the scan
     /// here is the same listing, waited for.
+    ///
+    /// 1.30.6: the library is listed once, here; LocalMediaStore lists it
+    /// again only when this listing differs from what it has (both listed
+    /// it every time). Real-Debrid's full refresh lists every folder again
+    /// (220 folders took 30 s in the 11 Nov log): the spinner waits for it
+    /// at most `refreshWait`, and the refresh carries on after it has gone.
     private func refreshLibrary() async {
-        local.refresh()
-        _ = await Task.detached(priority: .userInitiated) { LocalMediaStore.scan() }.value
-        if let rd = realDebrid { await LibraryIndexStore.shared.refresh(rd, full: true) }
+        let media = await Task.detached(priority: .userInitiated) { LocalMediaStore.scan() }.value
+        if media != local.files { local.refresh() }
+        guard let rd = realDebrid else { return }
+        // Its own task: not cancelled with the spinner's. A pull while the
+        // last one's is still listing waits for that one: begun again, the
+        // whole listing started over (LibraryIndexStore.refresh).
+        let account = LibraryIndex.account(rd), pull = pullRefresh
+        if pull.account != account || pull.task == nil {
+            let token = UUID()
+            pull.account = account
+            pull.token = token
+            pull.task = Task {
+                await LibraryIndexStore.shared.refresh(rd, full: true)
+                if pull.token == token { pull.task = nil }
+            }
+        }
+        if let refresh = pull.task { await Self.wait(for: refresh, atMost: Self.refreshWait) }
+    }
+
+    static let refreshWait: Duration = .seconds(3)
+
+    /// The full refresh a pull began, while it lists (1.30.6).
+    private final class PullRefresh {
+        var account: String?
+        var token: UUID?
+        var task: Task<Void, Never>?
+    }
+    @State private var pullRefresh = PullRefresh()
+
+    /// Waits for `task` to end, or for `limit`, whichever comes first; the task isn't cancelled.
+    nonisolated static func wait(for task: Task<Void, Never>, atMost limit: Duration) async {
+        final class Once: @unchecked Sendable {
+            private let lock = NSLock()
+            private var done = false
+            let c: CheckedContinuation<Void, Never>
+            init(_ c: CheckedContinuation<Void, Never>) { self.c = c }
+            func resume() {
+                lock.lock(); defer { lock.unlock() }
+                guard !done else { return }
+                done = true
+                c.resume()
+            }
+        }
+        await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
+            let once = Once(c)
+            Task { await task.value; once.resume() }
+            Task { try? await Task.sleep(for: limit); once.resume() }
+        }
     }
 
     /// Settings and every page opened from it, closed while the kids profile is on.
@@ -472,7 +523,7 @@ struct HomeView: View {
     private var kidsGroups: [LibraryGroup] {
         guard let limits = kids.activeLimits else { return allGroups }
         let all = allGroups
-        let key = KidsKey(groups: all, limits: limits, metas: metaIndex.metas.count)
+        let key = KidsKey(groups: all, limits: limits, metas: metaIndex.metas)
         if let m = lists.kids, m.key == key { return m.list }
         let list = all.filter { metaIndex.kidsAllow($0, limits) }
         lists.kids = (key, list)
@@ -485,7 +536,7 @@ struct HomeView: View {
     private var groups: [LibraryGroup] {
         let f = filter, list = kidsGroups
         guard f.isActive else { return list }
-        let key = FilterKey(groups: list, filter: f, history: history.version, metas: metaIndex.metas.count)
+        let key = FilterKey(groups: list, filter: f, history: history.version, metas: metaIndex.metas)
         if let m = lists.filtered, m.key == key { return m.list }
         let out = list.filter { f.matches(any: metaIndex.facts(of: $0)) }
         lists.filtered = (key, out)
@@ -496,12 +547,19 @@ struct HomeView: View {
     /// the kids profile on its filter ran 3–4 times a body, and an active
     /// filter looked up every title's history at every redraw. The groups
     /// compare by identity first: LibraryOrganizer hands back the same array.
+    ///
+    /// The metadata itself, not how many titles have it (1.30.6): Fix Match
+    /// takes a title's metadata away and brings the new one back (another
+    /// rating, other genres), the same count, so the kids profile's and the
+    /// filters' lists from before it read as current. A dictionary compares
+    /// by identity first too: the same one until LibraryMetaIndex publishes
+    /// another.
     private final class ListsMemo {
         var kids: (key: KidsKey, list: [LibraryGroup])?
         var filtered: (key: FilterKey, list: [LibraryGroup])?
     }
-    private struct KidsKey: Equatable { var groups: [LibraryGroup]; var limits: KidsRules.Limits; var metas: Int }
-    private struct FilterKey: Equatable { var groups: [LibraryGroup]; var filter: LibraryFilter; var history: Int; var metas: Int }
+    private struct KidsKey: Equatable { var groups: [LibraryGroup]; var limits: KidsRules.Limits; var metas: [String: MediaMeta] }
+    private struct FilterKey: Equatable { var groups: [LibraryGroup]; var filter: LibraryFilter; var history: Int; var metas: [String: MediaMeta] }
     @State private var lists = ListsMemo()
 
     private func clearFilters() {

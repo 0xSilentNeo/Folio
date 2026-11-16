@@ -218,31 +218,45 @@ struct LibraryIndexer: Sendable {
                 let p = props[key]
                 var folder = LibraryIndex.Folder(name: p?.name ?? done.url.lastPathComponent, etag: p?.etag, modified: p?.modified, added: p?.added,
                                                  listed: now, subfolders: [], files: [])
+                var dirs: [(item: DAVItem, key: String)] = []
                 for item in items {
                     if item.isDirectory {
                         let k = LibraryIndex.key(item.url)
                         guard seen.insert(k).inserted else { continue }
                         folder.subfolders.append(k)
                         guard done.depth + 1 <= maxDepth else { continue }
-                        // Counted (1.30.4): the log and Home say the library is cut.
-                        guard seen.count <= maxFolders else { report.unread += 1; continue }
-                        let prev = old.folders[k]
-                        let why: String?
-                        if full { why = "full refresh" }
-                        else if prev == nil { why = "new" }
-                        else if let e = item.etag, let pe = prev?.etag { why = e != pe ? "etag changed" : nil }
-                        else if let m = item.modified, let pm = prev?.modified { why = m != pm ? "date changed" : nil }
-                        else { why = nil }
-                        let stale = prev.map { now.timeIntervalSince($0.listed) > maxAge } ?? false
-                        if let why = why ?? (stale ? "older than 24 h" : turn.contains(k) ? "its turn" : nil) {
-                            props[k] = (item.name, item.etag, item.modified, item.added)
-                            queue.append((item.url, done.depth + 1))
-                            LibTrace.index.log("\(item.name): list (\(why))")
-                        } else {
-                            keep(k)
-                        }
+                        dirs.append((item, k))
                     } else if item.isMedia {
                         folder.files.append(LibraryIndex.File(url: item.url, name: item.name, size: item.size, added: item.added))
+                    }
+                }
+                // The cap (1.30.6) counts what's in the index or on its way
+                // to it, and only a folder not indexed before is turned away;
+                // those indexed before go first, so what they keep is counted
+                // before a new one is let in. It counted every folder seen,
+                // with the whole of each kept folder as it came: near the cap,
+                // a changes-only refresh reached it partway through the start
+                // folder and dropped releases already indexed until the next
+                // full refresh.
+                let ordered = dirs.filter { old.folders[$0.key] != nil } + dirs.filter { old.folders[$0.key] == nil }
+                for (item, k) in ordered {
+                    let prev = old.folders[k]
+                    // Counted (1.30.4): the log and Home say the library is cut.
+                    // (+ 1: this folder, saved below.)
+                    if prev == nil, fresh.folders.count + queue.count + running + 1 >= maxFolders { report.unread += 1; continue }
+                    let why: String?
+                    if full { why = "full refresh" }
+                    else if prev == nil { why = "new" }
+                    else if let e = item.etag, let pe = prev?.etag { why = e != pe ? "etag changed" : nil }
+                    else if let m = item.modified, let pm = prev?.modified { why = m != pm ? "date changed" : nil }
+                    else { why = nil }
+                    let stale = prev.map { now.timeIntervalSince($0.listed) > maxAge } ?? false
+                    if let why = why ?? (stale ? "older than 24 h" : turn.contains(k) ? "its turn" : nil) {
+                        props[k] = (item.name, item.etag, item.modified, item.added)
+                        queue.append((item.url, done.depth + 1))
+                        LibTrace.index.log("\(item.name): list (\(why))")
+                    } else {
+                        keep(k)
                     }
                 }
                 // Did the contents change while the folder's own etag / date stayed the same?
@@ -294,6 +308,10 @@ final class LibraryIndexStore: ObservableObject {
         var full = false
         var done = 0
         var total = 0
+        /// The store's `contentVersion` when this index last changed in
+        /// what's made from it (1.30.6): its files, folders or how the server
+        /// answered, not the dates each check moves.
+        var version = 0
     }
 
     struct Searchable: Equatable, Sendable {
@@ -302,7 +320,19 @@ final class LibraryIndexStore: ObservableObject {
         let haystack: String
     }
 
-    @Published private(set) var states: [UUID: State] = [:]
+    /// Announced by hand (1.30.6): a check that changed only the dates
+    /// keeps them in memory without a word (`quiet`). Each of Home's checks
+    /// of the start folder (up to once a minute, as its Real-Debrid row
+    /// shows) gave every screen a new index, and Continue Watching and the
+    /// search's files were worked out again with nothing new.
+    private(set) var states: [UUID: State] = [:] {
+        willSet { if !quiet { objectWillChange.send() } }
+    }
+    private var quiet = false
+
+    /// Goes up when any server's index changes in what's made from it
+    /// (State.version); Continue Watching's next episodes follow it.
+    @Published private(set) var contentVersion = 0
     private var loading: [UUID: Task<Void, Never>] = [:]
     /// Servers whose saved index was read (or found missing) this launch:
     /// a refresh right after the first load doesn't read the disk again
@@ -481,6 +511,7 @@ final class LibraryIndexStore: ObservableObject {
         refreshes[id]?.cancel()
         refreshes[id] = nil
         states[id] = nil
+        contentVersion += 1
         applying[id, default: 0] += 1
         clears[id, default: 0] += 1
         lastTurns[id] = nil
@@ -537,16 +568,53 @@ final class LibraryIndexStore: ObservableObject {
     /// What search looks through and Home's summary, worked out off the main
     /// thread (1.30.3): on it, a title cleaned for every file, the releases
     /// parsed and sorted, held up the frames of whatever was on screen.
+    ///
+    /// An index that differs from the one in memory only in its dates
+    /// (1.30.6, sameContent) replaces it quietly: the next check's time and
+    /// the refreshes' freshness are read from it, and nothing made from it
+    /// changes.
     private func apply(_ index: LibraryIndex, to id: UUID) async {
         let turn = (applying[id] ?? 0) + 1
         applying[id] = turn
+        if let current = states[id]?.index {
+            let same = await Task.detached(priority: .utility) { Self.sameContent(current, index) }.value
+            guard applying[id] == turn else { return }   // a newer index, or cleared
+            if same {
+                var s = state(id)
+                s.index = index
+                quiet = true
+                states[id] = s
+                quiet = false
+                return
+            }
+        }
         let built = await Task.detached(priority: .userInitiated) { Self.build(index) }.value
         guard applying[id] == turn else { return }       // a newer index, or cleared
+        let version = contentVersion + 1
         var s = state(id)
         s.index = index
         s.searchable = built.searchable
+        s.version = version
         states[id] = s
+        contentVersion = version
         summaries.set(built.summary, for: id)
+    }
+
+    /// The same files, folders and answer from the server, whatever the
+    /// dates (1.30.6): what search, Home's summary and Continue Watching
+    /// are made from. Every folder's `listed` is left out too, unlike
+    /// sameOnDisk: the folders listed in their turn move only theirs.
+    nonisolated static func sameContent(_ a: LibraryIndex, _ b: LibraryIndex) -> Bool {
+        guard a.schema == b.schema, a.account == b.account, a.root == b.root, a.unread == b.unread,
+              (a.refreshed == nil) == (b.refreshed == nil),
+              a.lastCheck?.ok == b.lastCheck?.ok, a.lastCheck?.unauthorized == b.lastCheck?.unauthorized,
+              a.folders.count == b.folders.count else { return false }
+        for (key, f) in a.folders {
+            guard var g = b.folders[key] else { return false }
+            g.listed = f.listed
+            guard g == f else { return false }
+        }
+        return true
     }
 
     nonisolated static func build(_ index: LibraryIndex) -> (searchable: [Searchable], summary: Summary) {

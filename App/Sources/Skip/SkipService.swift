@@ -116,6 +116,32 @@ struct SkipAnswers {
     }
 }
 
+/// Whether a load's lookup may go on to the anime databases (1.30.6):
+/// decided once the file's chapters are read (no, when they give the
+/// segments), or no when another file loads or the player closes. Every
+/// gate is opened one way or the other, so no lookup waits for ever.
+@MainActor
+final class SkipGate {
+    private var answer: Bool?
+    private var waiting: [CheckedContinuation<Bool, Never>] = []
+
+    func wait() async -> Bool {
+        if let answer { return answer }
+        return await withCheckedContinuation { waiting.append($0) }
+    }
+
+    /// Lookups waiting on it (for the tests).
+    var waiters: Int { waiting.count }
+
+    func open(_ yes: Bool) {
+        guard answer == nil else { return }
+        answer = yes
+        let w = waiting
+        waiting = []
+        for c in w { c.resume(returning: yes) }
+    }
+}
+
 /// Finds intro/credits/recap/preview ranges:
 ///   1. chapters already in the file (named Opening/OP/Ending/ED/Credits...)
 ///   2. TV & films: IntroDB.app, then TheIntroDB.org — community databases
@@ -288,7 +314,14 @@ actor SkipService {
     /// the next episode minutes ahead (the answers are kept here). `early`
     /// gets the first database's answer while the other is still asked,
     /// with whether it is an anime's.
-    func lookUp(_ q: SkipQuery, early: (@Sendable (SkipLookup, Bool) async -> Void)? = nil) async -> (lookup: SkipLookup, anime: Bool) {
+    ///
+    /// `mayAskAnime` (1.30.6): the anime databases (AniList, ids.moe,
+    /// AniSkip, Open Anime Timestamps) wait for it, and aren't asked when it
+    /// says no. The player says so once the file's chapters are read: a
+    /// file whose chapters give the segments needs none of them, and they
+    /// were asked while it was still filling its first buffer.
+    func lookUp(_ q: SkipQuery, early: (@Sendable (SkipLookup, Bool) async -> Void)? = nil,
+                mayAskAnime: (@Sendable () async -> Bool)? = nil) async -> (lookup: SkipLookup, anime: Bool) {
         var found = SkipLookup()
         let meta = await MetadataService.shared.lookup(filename: q.fileName)
         let animation = meta?.genres?.contains { $0.localizedCaseInsensitiveContains("anim") } ?? false
@@ -307,6 +340,9 @@ actor SkipService {
         // or a title IMDb doesn't know (AniList's search decides). Never
         // for a show IMDb knows as live action.
         if found.segments.isEmpty, q.hint.episode != nil, q.explicitAnime || animation || meta == nil {
+            if let mayAskAnime, !(await mayAskAnime()) {
+                return (found, namedAnime)
+            }
             found.segments = await lookup(hint: q.hint, season: q.parsed.season, duration: q.duration, oatLength: q.oatLength)
             dlog("skip", "anime lookup \(q.hint.title ?? "?") s\(q.parsed.season ?? 1)e\(q.hint.episode ?? 0): \(found.segments.count) segment(s)")
         }
@@ -356,6 +392,40 @@ actor SkipService {
             // other had shows meanwhile.
             if !c.complete, !c.lookup.segments.isEmpty, let early { await early(c.lookup) }
         }
+        // Being asked already (1.30.6): the next episode's lookup ahead and
+        // its load()'s, or an addon episode's subtitles and its load(), each
+        // asked both databases. This one waits for that answer, and gets
+        // its first one as the other caller does.
+        if let running = tvInFlight[key] {
+            if let early {
+                if let first = tvFirst[key] { await early(first) } else { tvEarly[key, default: []].append(early) }
+            }
+            return await running.value.lookup
+        }
+        if let early { tvEarly[key] = [early] }
+        let ask = Task { await self.askBothTV(imdbId: imdbId, season: season, episode: episode, duration: duration, key: key) }
+        tvInFlight[key] = ask
+        let r = await ask.value
+        tvInFlight[key] = nil; tvFirst[key] = nil; tvEarly[key] = nil
+        tvCache[key] = (r.lookup, Date(), r.complete)
+        if tvCache.count > Self.cacheLimit, let oldest = tvCache.min(by: { $0.value.at < $1.value.at })?.key { tvCache[oldest] = nil }
+        return r.lookup
+    }
+
+    /// Lookups of both TV databases being asked, by tvCache's key (1.30.6),
+    /// the first answer with segments of each, and who waits for one.
+    private var tvInFlight: [String: Task<(lookup: SkipLookup, complete: Bool), Never>] = [:]
+    private var tvFirst: [String: SkipLookup] = [:]
+    private var tvEarly: [String: [@Sendable (SkipLookup) async -> Void]] = [:]
+
+    private func firstTVAnswer(_ got: SkipLookup, key: String) async {
+        tvFirst[key] = got
+        let waiting = tvEarly[key] ?? []
+        tvEarly[key] = nil
+        for w in waiting { await w(got) }
+    }
+
+    private func askBothTV(imdbId: String, season: Int?, episode: Int?, duration: Double, key: String) async -> (lookup: SkipLookup, complete: Bool) {
         let label = "\(imdbId) s\(season ?? 0)e\(episode ?? 0)"
         // nil: the service didn't answer (logged by fetch with the reason).
         enum Answer { case introDB(SkipLookup?), theIntroDB(SkipLookup?) }
@@ -371,9 +441,9 @@ actor SkipService {
                 case .theIntroDB(let a): the = a; got = a
                 }
                 // The other is still being asked: this one shows now (1.30.5).
-                if first, let got, !got.segments.isEmpty, let early {
+                if first, let got, !got.segments.isEmpty {
                     if intro == nil { dlog("skip", "TheIntroDB's segments for \(label) shown; IntroDB's merged in when it answers") }
-                    await early(got)
+                    await self.firstTVAnswer(got, key: key)
                 }
                 first = false
             }
@@ -382,9 +452,7 @@ actor SkipService {
             }
             return (Self.merge(preferred: intro ?? SkipLookup(), other: the ?? SkipLookup()), intro != nil && the != nil)
         }
-        tvCache[key] = (r.lookup, Date(), r.complete)
-        if tvCache.count > Self.cacheLimit, let oldest = tvCache.min(by: { $0.value.at < $1.value.at })?.key { tvCache[oldest] = nil }
-        return r.lookup
+        return r
     }
 
     /// Two databases' answers for one episode as one (1.30.4): `preferred`
@@ -483,12 +551,19 @@ actor SkipService {
     /// in prepare(), are there when it opens. Only answers with segments are
     /// kept: an empty one may be a service that was offline.
     private var animeCache: [String: (segments: [SkipSegment], at: Date)] = [:]
+    private var animeInFlight: [String: Task<[SkipSegment], Never>] = [:]
 
     func lookup(hint: AnimeHint, season: Int? = nil, duration: Double, oatLength: Double) async -> [SkipSegment] {
         guard let episode = hint.episode, episode > 0 else { return [] }
         let key = "\(hint.malId ?? 0)|\(hint.anilistId ?? 0)|\(hint.kitsuId ?? 0)|\(hint.anidbId ?? 0)|\(hint.title ?? "")|s\(season ?? 0)e\(episode)|\(Int(duration.rounded()))|\(Int(oatLength))"
         if let c = animeCache[key] { return c.segments }
-        let found = await findAnime(hint: hint, episode: episode, season: season, duration: duration, oatLength: oatLength)
+        // Being asked already (1.30.6): that answer, not a second round of
+        // AniList (which answers too many questions with 429) and AniSkip.
+        if let running = animeInFlight[key] { return await running.value }
+        let ask = Task { await self.findAnime(hint: hint, episode: episode, season: season, duration: duration, oatLength: oatLength) }
+        animeInFlight[key] = ask
+        let found = await ask.value
+        animeInFlight[key] = nil
         if !found.isEmpty {
             animeCache[key] = (found, Date())
             if animeCache.count > Self.cacheLimit, let oldest = animeCache.min(by: { $0.value.at < $1.value.at })?.key { animeCache[oldest] = nil }
@@ -502,7 +577,7 @@ actor SkipService {
         // season's entry and refuse a match that isn't clearly it (season 1's
         // times on a season 2 episode would be wrong).
         if let season, season > 1, h.malId == nil, h.anilistId == nil, h.kitsuId == nil, let t = h.title {
-            let found = await aniListSearch("\(t) Season \(season)", requireSeason: season)
+            let found = await seasonSearch(t, season: season)
             guard case .match(let al, let mal) = found else { return [] }
             h.anilistId = al; h.malId = mal
         }
@@ -524,20 +599,44 @@ actor SkipService {
     /// whose lookup wasn't answered was skipped as "not found".
     enum AnimeIDLookup: Sendable, Equatable { case found(AnimeHint), notFound, unreachable }
 
+    /// The id a sync service sends by (1.30.6).
+    enum AnimeIDSite: Sendable { case anilist, mal }
+
     /// An anime's AniList and MyAnimeList ids for its season, as the skip
     /// lookup finds them (1.26.0: the sync services use the same answer,
     /// from the same cache). A later season must be found as itself.
-    func animeIDLookup(_ hint: AnimeHint, season: Int?) async -> AnimeIDLookup {
+    /// `need` (1.30.6): the id the asking service sends by; see idLookup.
+    func animeIDLookup(_ hint: AnimeHint, season: Int?, need: AnimeIDSite? = nil) async -> AnimeIDLookup {
         var h = hint
         if let season, season > 1, h.malId == nil, h.anilistId == nil, h.kitsuId == nil, let t = h.title {
-            switch await aniListSearch("\(t) Season \(season)", requireSeason: season) {
+            switch await seasonSearch(t, season: season) {
             case .match(let al, let mal): h.anilistId = al; h.malId = mal
             case .noMatch: return .notFound
             case .noAnswer: return .unreachable
             }
         }
-        let r = await resolveIDs(h)
-        return Self.idLookup(r.ids, failed: r.failed)
+        let r = await resolveIDs(h, need: need)
+        return Self.idLookup(r.ids, failed: r.failed, need: need)
+    }
+
+    /// Later seasons' AniList searches, by title and season (1.30.6), kept
+    /// as idCache keeps the ids: a match for the session, no match for
+    /// `missTTL`, no answer not at all. A season 2 episode's scrobble
+    /// searched again for each service on every try, and its skip lookup
+    /// once more.
+    private var seasonCache: [String: (match: AniListMatch, at: Date)] = [:]
+
+    private func seasonSearch(_ title: String, season: Int) async -> AniListMatch {
+        let key = "\(title)|s\(season)"
+        if let c = seasonCache[key] {
+            if case .match = c.match { return c.match }
+            if Date().timeIntervalSince(c.at) < Self.missTTL { return c.match }
+        }
+        let found = await aniListSearch("\(title) Season \(season)", requireSeason: season)
+        if case .noAnswer = found { return found }
+        seasonCache[key] = (found, Date())
+        if seasonCache.count > Self.cacheLimit, let oldest = seasonCache.min(by: { $0.value.at < $1.value.at })?.key { seasonCache[oldest] = nil }
+        return found
     }
 
     /// The ids only, nil for "not found" and "not reached" alike.
@@ -550,15 +649,27 @@ actor SkipService {
     /// The lookups' answers as one (1.30.4): an AniList or MyAnimeList id is
     /// found however the rest went; none, with a service unanswered, is
     /// "not reached", not "not found".
-    static func idLookup(_ ids: AnimeHint, failed: Bool) -> AnimeIDLookup {
+    ///
+    /// With `need` (1.30.6): the id that service sends by is found, or with a
+    /// service unanswered it is "not reached" too. A `mal:` episode finished
+    /// offline had its MyAnimeList id only, came back found, and its AniList
+    /// scrobble was dropped as "no AniList id" though ids.moe would have given one.
+    static func idLookup(_ ids: AnimeHint, failed: Bool, need: AnimeIDSite? = nil) -> AnimeIDLookup {
+        if let need, failed {
+            let has = need == .anilist ? ids.anilistId != nil : ids.malId != nil
+            if !has { return .unreachable }
+        }
         if ids.anilistId != nil || ids.malId != nil { return .found(ids) }
         return failed ? .unreachable : .notFound
     }
 
     /// `failed`: AniList or ids.moe gave no answer (offline, 429, 5xx).
-    private func resolveIDs(_ hint: AnimeHint) async -> (ids: AnimeHint, failed: Bool) {
+    private func resolveIDs(_ hint: AnimeHint, need: AnimeIDSite? = nil) async -> (ids: AnimeHint, failed: Bool) {
         var h = hint
-        if h.malId != nil && h.anidbId != nil { return (h, false) }
+        // Enough for AniSkip and OAT; for AniList's sync its own id too
+        // (1.30.6, post-fix review: a hint with MAL and AniDB ids never
+        // asked ids.moe for it, and the scrobble was skipped).
+        if h.malId != nil && h.anidbId != nil && (need != .anilist || h.anilistId != nil) { return (h, false) }
         let key = "\(h.anilistId ?? 0)|\(h.kitsuId ?? 0)|\(h.malId ?? 0)|\(h.title ?? "")"
         if let c = idCache[key], c.hint.malId != nil || c.hint.anidbId != nil || Date().timeIntervalSince(c.at) < Self.missTTL {
             return (c.hint, false)

@@ -16,8 +16,23 @@ enum AiringSnapshotWriter {
     private static var toldNoGroup = false
 
     static func schedule(_ shows: [TrackedShow]) {
-        running?.cancel()
-        running = Task { await write(shows) }
+        // After the one before has stopped (1.30.6): cancelled past its
+        // posters, it still wrote, and could put the grown-ups' shows back
+        // after the kids profile's empty snapshot.
+        let previous = running
+        previous?.cancel()
+        running = Task {
+            await previous?.value
+            guard !Task.isCancelled else { return }
+            await write(shows)
+        }
+    }
+
+    /// The shows the widgets get (1.30.6): none in the kids profile, as
+    /// Tracked Shows and its alerts are hidden there. The widgets kept the
+    /// grown-ups' shows, and a tap on one opened nothing.
+    nonisolated static func shown(_ shows: [TrackedShow], kids: Bool) -> [TrackedShow] {
+        kids ? [] : shows
     }
 
     /// The shows with an episode out in the last six hours or still to come,
@@ -60,7 +75,8 @@ enum AiringSnapshotWriter {
         }
     }
 
-    private static func write(_ shows: [TrackedShow]) async {
+    private static func write(_ all: [TrackedShow]) async {
+        let shows = shown(all, kids: KidsProfile.isOnNow)
         guard let dir = WidgetStore.airing(create: true) else {
             if !toldNoGroup {
                 toldNoGroup = true

@@ -477,6 +477,10 @@ enum IMDbSource {
         guard let page = await html("/search/title/", params) else { return nil }
         var items = nextTitles(page, type: type)
         if items.isEmpty { items = jsonLDList(page, type: type) }
+        // No page data at all (1.30.6): not a results page (a consent or
+        // check page, a new layout), so no answer rather than "nothing
+        // found", which search remembers for a few minutes.
+        if items.isEmpty, nextData(page) == nil { return nil }
         items = items.filter { $0.type == type }
         // A place in this list, not a chart's.
         for i in items.indices { items[i].rank = nil }

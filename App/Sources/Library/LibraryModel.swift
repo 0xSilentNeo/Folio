@@ -79,22 +79,24 @@ struct LibraryGroup: Identifiable, Hashable {
     @MainActor static func nextUp(in files: [URL]) -> URL {
         // Kept until the history changes (1.28.2): each Home tile asked
         // four times a redraw, each a pass over the show's history.
-        let key = memoKey(files), version = stateVersion
-        if let m = nextUpMemo[key], m.version == version { return m.url }
+        checkMemos()
+        let key = memoKey(files)
+        if let url = nextUpMemo[key] { return url }
         let url = findNextUp(in: files)
         if nextUpMemo.count > 2000 { nextUpMemo.removeAll() }
-        nextUpMemo[key] = (version, url)
+        nextUpMemo[key] = url
         return url
     }
 
     /// Every file watched (a tile's tick), kept like `nextUp`.
     @MainActor static func allWatched(_ files: [URL]) -> Bool {
         guard !files.isEmpty else { return false }
-        let key = memoKey(files), version = stateVersion
-        if let m = watchedMemo[key], m.version == version { return m.all }
+        checkMemos()
+        let key = memoKey(files)
+        if let all = watchedMemo[key] { return all }
         let all = files.allSatisfy { state($0)?.isFinished == true }
         if watchedMemo.count > 2000 { watchedMemo.removeAll() }
-        watchedMemo[key] = (version, all)
+        watchedMemo[key] = all
         return all
     }
 
@@ -140,17 +142,34 @@ struct LibraryGroup: Identifiable, Hashable {
 
     /// The memos last until the history changes, or the library's metadata
     /// (the links come from it).
+    ///
+    /// The metadata itself, not how many titles have it (1.30.6): Fix Match
+    /// takes a title's metadata away and brings the new one back, the same
+    /// count, so answers from before it read as current, with the old
+    /// links. A dictionary compares by identity first: the same one until
+    /// LibraryMetaIndex publishes another. One version for both memos, so
+    /// they hold only the current metadata.
     @MainActor private static var stateVersion: StateVersion {
-        StateVersion(history: HistoryStore.shared.version, metas: LibraryMetaIndex.shared.metas.count)
+        StateVersion(history: HistoryStore.shared.version, metas: LibraryMetaIndex.shared.metas)
     }
 
     private struct StateVersion: Equatable {
         var history: Int
-        var metas: Int
+        var metas: [String: MediaMeta]
     }
 
-    @MainActor private static var nextUpMemo: [Int: (version: StateVersion, url: URL)] = [:]
-    @MainActor private static var watchedMemo: [Int: (version: StateVersion, all: Bool)] = [:]
+    @MainActor private static var memoVersion: StateVersion?
+    @MainActor private static var nextUpMemo: [Int: URL] = [:]
+    @MainActor private static var watchedMemo: [Int: Bool] = [:]
+
+    /// Both memos emptied when the history or the metadata changed.
+    @MainActor private static func checkMemos() {
+        let v = stateVersion
+        guard v != memoVersion else { return }
+        memoVersion = v
+        nextUpMemo.removeAll()
+        watchedMemo.removeAll()
+    }
 
     /// A file list by its length and every file (1.30.2: by its ends only,
     /// two lists of one length that differed in between shared an answer).

@@ -22,6 +22,10 @@ enum ContinueQueue {
         // from the stream's place when the copy has none of its own.
         // Continue Watching went on streaming it.
         let copy = downloadedCopy(of: item)
+        // The stream's place to the copy when it's the newer (1.30.6,
+        // HistoryStore.carry): a stream played again from the server's
+        // browser after the download.
+        if let copy { HistoryStore.shared.carry(streamURL: item.url, to: copy.path) }
         let own = copy.flatMap { HistoryStore.shared.entry(forURL: $0.path) }
         let startAt = copy == nil ? nil : WatchedState.carriedPosition(own: own, others: [HistoryStore.shared.entry(forURL: item.url)])
         let target = copy.map { own?.item ?? libraryItem($0) } ?? item

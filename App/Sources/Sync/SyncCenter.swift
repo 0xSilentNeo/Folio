@@ -18,9 +18,10 @@ final class SyncCenter: ObservableObject {
     /// The last thing each service did, for Settings ("Sent: Frieren E5 · E5 of 28").
     @Published private(set) var lastResult: [SyncService: String] = [:]
     @Published private(set) var waiting = 0
-    /// Services whose saved sign-in was refused when it was renewed (1.30.4):
-    /// their jobs wait for a new sign-in instead of 60 tries; Settings says
-    /// "Sign in again" (lastResult).
+    /// Services whose saved sign-in was refused when it was renewed (1.30.4),
+    /// or by the service itself (1.30.6): their jobs are kept and wait for a
+    /// new sign-in instead of 60 tries; Settings says "Sign in again"
+    /// (lastResult) and has a Sign In Again button for it.
     @Published private(set) var needsSignIn: Set<SyncService> = []
 
     /// Internal, not private (1.30.4): the tests read the queue's decoding.
@@ -34,6 +35,10 @@ final class SyncCenter: ObservableObject {
 
     private var jobs: [Job] = [] { didSet { waiting = jobs.count } }
     private var flushing = false
+    /// Asked for while a flush ran (1.30.6): one more runs when it ends. The
+    /// ask was dropped, so a sign-in or a service switched on during a
+    /// flush sent what waited only at the next return to Folio.
+    private var flushAgain = false
     private var bag: Set<AnyCancellable> = []
     /// One refresh per service that every caller waits for (1.30.2): two at
     /// once both used Trakt's single-use refresh token, and one failed.
@@ -194,13 +199,17 @@ final class SyncCenter: ObservableObject {
     // MARK: Sending
 
     private func flushSoon() {
-        guard !jobs.isEmpty, !flushing else { return }
+        guard !jobs.isEmpty else { return }
+        guard !flushing else { flushAgain = true; return }
         flushing = true
         // Time in the background (1.30.4): a play sent as Folio left the
         // screen was cut off mid-request and sent again, or not, next time.
         let bg = BackgroundTime("folio.sync")
         Task {
-            await flush()
+            repeat {
+                flushAgain = false
+                await flush()
+            } while flushAgain && !jobs.isEmpty
             flushing = false
             bg.end()
         }
@@ -241,7 +250,8 @@ final class SyncCenter: ObservableObject {
     }()
 
     /// The service is busy or down, or wants a new sign-in: the job is kept
-    /// for a later try rather than counted towards being dropped.
+    /// for a later try rather than counted towards being dropped. (An API's
+    /// 401 renews the sign-in once, then asks for a new one: send, 1.30.6.)
     nonisolated static func isTransient(status: Int) -> Bool {
         status == 0 || status == 401 || status == 408 || status == 429 || (500...599).contains(status)
     }
@@ -276,8 +286,13 @@ final class SyncCenter: ObservableObject {
                 if needsSignIn.contains(job.service) { i += 1; continue }
                 lastResult[job.service] = "Not sent yet: \(job.event?.label ?? job.watchlist?.name ?? "") (\(error.localizedDescription))"
                 // Not reached: this (and, offline, the rest) waits for the next try.
-                let status = (error as? SyncHTTP.Failure)?.status
-                let unreachable = status == 0
+                // Online, an anime id lookup not answered holds this job only
+                // (1.30.6, post-fix review): as the service's own "not reached"
+                // it held every later job of the service, for as long as
+                // ids.moe stayed down; it counts towards the 60 tries.
+                let lookupOnly = error is AnimeIDUnreached && Self.path.currentPath.status == .satisfied
+                let status = error is AnimeIDUnreached ? 0 : (error as? SyncHTTP.Failure)?.status
+                let unreachable = status == 0 && !lookupOnly
                 // Dropped after six refusals of the job itself (1.30.1). An
                 // outage or a rate limit counted too, so six tries during one
                 // deleted everything queued; those wait now (up to 60 tries,
@@ -290,7 +305,7 @@ final class SyncCenter: ObservableObject {
                 // Online, only this service or its anime lookup wasn't reached
                 // (1.30.4): its jobs wait, the other services' still go.
                 if unreachable, Self.path.currentPath.status != .satisfied { break }
-                if transient { waiting.insert(job.service) }
+                if transient, !lookupOnly { waiting.insert(job.service) }
             }
             save()
         }
@@ -301,6 +316,26 @@ final class SyncCenter: ObservableObject {
     private func send(_ job: Job) async throws -> String {
         let s = job.service
         let token = try await token(s)
+        do {
+            return try await send(job, token: token)
+        } catch let f as SyncHTTP.Failure where f.status == 401 {
+            // The service refused the token itself (1.30.6): a sign-in
+            // revoked on the service's site counted as "busy" for 60 tries
+            // and never asked for a new one. Renewed once (a refusal of
+            // that asks for a new sign-in, in token), then tried again.
+            dlog("sync/error", "\(s.name) refused Folio's sign-in (HTTP 401): renewing it once")
+            let fresh = try await self.token(s, force: true)
+            do {
+                return try await send(job, token: fresh)
+            } catch let again as SyncHTTP.Failure where again.status == 401 {
+                signInRefused(s, "the renewed sign-in was refused too (HTTP 401)")
+                throw again
+            }
+        }
+    }
+
+    private func send(_ job: Job, token: String) async throws -> String {
+        let s = job.service
         if let item = job.watchlist {
             try await TraktClient.watchlist(item, add: job.add ?? true, token: token)
             return "\(job.add == false ? "Removed from" : "Added to") watchlist: \(item.name)"
@@ -314,14 +349,17 @@ final class SyncCenter: ObservableObject {
                 return "Skipped \(e.label) (not found on \(s.name))"
             }
             let ids: AnimeHint
-            switch await SkipService.shared.animeIDLookup(hint, season: e.season) {
+            // The id this service sends by (1.30.6): when only the other was
+            // known and the lookup that gives it wasn't answered, the job
+            // waits as for no answer at all. It was skipped as "no AniList id".
+            switch await SkipService.shared.animeIDLookup(hint, season: e.season, need: s == .anilist ? .anilist : .mal) {
             case .found(let found): ids = found
             case .notFound: return "Skipped \(e.label) (not found on \(s.name))"
             case .unreachable:
                 // Not reached isn't "not found" (1.30.4): the job waits, never
                 // dropped. Until then an offline or rate-limited scrobble was skipped.
                 let offline = Self.path.currentPath.status != .satisfied
-                throw SyncHTTP.Failure(status: 0, body: "the anime lookup wasn't reached (\(offline ? "offline" : "AniList or ids.moe didn't answer"))")
+                throw AnimeIDUnreached(offline: offline)
             }
             if s == .anilist {
                 guard let id = ids.anilistId else { return "Skipped \(e.label) (no AniList id)" }
@@ -332,10 +370,20 @@ final class SyncCenter: ObservableObject {
         }
     }
 
-    /// A valid access token, refreshed when it's about to run out.
-    private func token(_ s: SyncService) async throws -> String {
+    /// A sign-in the service no longer takes (1.30.4; an API's 401 since
+    /// 1.30.6): its jobs are kept and wait for Settings' Sign In Again
+    /// (connected), not tried meanwhile. Disconnecting would delete them.
+    private func signInRefused(_ s: SyncService, _ why: String) {
+        needsSignIn.insert(s)
+        lastResult[s] = "Sign in again: \(s.name) no longer accepts Folio's sign-in. What's waiting is kept and sent once you sign in again."
+        dlog("sync/error", "\(s.name): \(why): sign in again")
+    }
+
+    /// A valid access token, refreshed when it's about to run out, or
+    /// when `force` (1.30.6: the service refused the one it had).
+    private func token(_ s: SyncService, force: Bool = false) async throws -> String {
         guard let t = SyncTokens.load(s) else { throw SyncHTTP.Failure(status: 401, body: "not signed in") }
-        guard t.expired else { return t.access }
+        guard t.expired || force else { return t.access }
         // One refresh at a time (1.30.2): whoever else asks waits for it.
         if let running = refreshing[s] { return try await running.value.access }
         let task = Task { () throws -> SyncTokens in
@@ -361,9 +409,7 @@ final class SyncCenter: ObservableObject {
                     // Refused, not unreachable (1.30.4): "Sign in again" in
                     // Settings, and its jobs wait for that, not 60 more tries.
                     if let f = error as? SyncHTTP.Failure, self.accounts[s] != nil, Self.refusedRefresh(status: f.status, body: f.body) {
-                        self.needsSignIn.insert(s)
-                        self.lastResult[s] = "Sign in again: \(s.name) no longer accepts Folio's sign-in. Disconnect, then connect again; what's waiting is sent then."
-                        dlog("sync/error", "\(s.name): the sign-in's renewal was refused (HTTP \(f.status)): sign in again")
+                        self.signInRefused(s, "the sign-in's renewal was refused (HTTP \(f.status))")
                     }
                 }
                 throw error
@@ -386,4 +432,11 @@ final class SyncCenter: ObservableObject {
         let e = JSONEncoder(); e.dateEncodingStrategy = .iso8601
         if let data = try? e.encode(sent) { try? data.write(to: sentFile, options: .atomic) }
     }
+}
+
+/// An anime's id for a service wasn't found because the lookup that gives
+/// it (AniList, ids.moe) didn't answer (1.30.6): the job waits.
+struct AnimeIDUnreached: LocalizedError {
+    var offline: Bool
+    var errorDescription: String? { "the anime lookup wasn't reached (\(offline ? "offline" : "AniList or ids.moe didn't answer"))" }
 }

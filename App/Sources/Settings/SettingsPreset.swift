@@ -197,6 +197,9 @@ enum SettingsPreset {
         var strayFiles: [String] = []
         /// The player's command buttons (mpv commands, as input.conf's): with the conf files.
         var commandButtons: Data?
+        /// The shaders in use (1.30.6): with the shader files, only when
+        /// they're ticked. It was applied with the settings either way.
+        var activeShaders: [String]?
         /// "Delete watched downloads" turned on or made shorter (deletes files): asked on its own.
         var deleteWatched: Int?
 
@@ -251,6 +254,8 @@ enum SettingsPreset {
             guard let kind = known[k], let value = decode(raw, kind) else { p.skipped.append(k); continue }
             if k == SettingsKey.scriptCommands {
                 p.commandButtons = value as? Data
+            } else if k == SettingsKey.activeShaders {
+                p.activeShaders = value as? [String]
             } else if k == SettingsKey.downloadDeleteWatched, let days = value as? Int,
                       WatchedCleanup.asksBeforeDeleting(old: deleteWatchedNow, new: days) {
                 p.deleteWatched = days
@@ -282,9 +287,20 @@ enum SettingsPreset {
         r.skipped = p.skipped
         if p.newerVersion { r.notes.append("The file is from a newer version of Folio; everything this version knows was imported.") }
         let d = UserDefaults.standard
-        for (k, v) in p.settings { d.set(v, forKey: k); r.applied += 1 }
-        if c.conf, let b = p.commandButtons { d.set(b, forKey: SettingsKey.scriptCommands); r.applied += 1 }
-        if c.deleteWatched, let days = p.deleteWatched { d.set(days, forKey: SettingsKey.downloadDeleteWatched); r.applied += 1 }
+        // Only what differs is written (1.30.6): every one of some 120 was,
+        // each a change notice for everything that watches the settings,
+        // and a default the file had became one set by hand.
+        var written = 0
+        func set(_ v: Any, _ k: String) {
+            r.applied += 1
+            guard !unchanged(d.object(forKey: k), v) else { return }
+            d.set(v, forKey: k)
+            written += 1
+        }
+        for (k, v) in p.settings { set(v, k) }
+        if c.conf, let b = p.commandButtons { set(b, SettingsKey.scriptCommands) }
+        if c.deleteWatched, let days = p.deleteWatched { set(days, SettingsKey.downloadDeleteWatched) }
+        if c.shaders, let list = p.activeShaders { set(list, SettingsKey.activeShaders) }
         // Addons: added if not already installed (by address); existing ones stay.
         if c.addons, !p.addons.isEmpty {
             let list = p.addons.compactMap { try? JSONSerialization.jsonObject(with: $0.json) }
@@ -319,8 +335,15 @@ enum SettingsPreset {
         if !c.addons, !p.addons.isEmpty { out.append("\(p.addons.count) addon\(p.addons.count == 1 ? "" : "s")") }
         if !c.servers, !p.servers.isEmpty { out.append("\(p.servers.count) server\(p.servers.count == 1 ? "" : "s")") }
         if !out.isEmpty { r.notes.append("Left out: " + out.joined(separator: ", ") + ".") }
-        dlog("app", "preset imported: \(r.applied) settings, skipped \(r.skipped), addons +\(r.addons), servers +\(r.servers), mpv files \(r.mpvFiles), left out \(out)")
+        dlog("app", "preset imported: \(r.applied) settings (\(written) changed), skipped \(r.skipped), addons +\(r.addons), servers +\(r.servers), mpv files \(r.mpvFiles), left out \(out)")
         return r
+    }
+
+    /// The value a setting has now is the file's (1.30.6): compared as
+    /// UserDefaults keeps them (numbers, strings, lists, data, dictionaries).
+    nonisolated static func unchanged(_ current: Any?, _ new: Any) -> Bool {
+        guard let current = current as? NSObject, let new = new as? NSObject else { return false }
+        return current.isEqual(new)
     }
 
     nonisolated private static func decode(_ v: Any, _ kind: Kind) -> Any? {

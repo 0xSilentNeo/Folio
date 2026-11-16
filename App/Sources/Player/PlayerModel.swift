@@ -446,6 +446,9 @@ final class PlayerModel: ObservableObject {
         problemCheck?.cancel(); problemCheck = nil
         nowPlayingArtTask?.cancel(); nowPlayingArtTask = nil
         introFinding?.cancel(); introFinding = nil
+        skipGate.open(false)                // a lookup waiting on the chapters ends (1.30.6)
+        decoderRenewWait?.cancel(); decoderRenewWait = nil
+        sizeGoneCheck?.cancel(); sizeGoneCheck = nil
         // The tasks that wake on a timer end with the player (1.30.2).
         copyWatch?.cancel(); copyWatch = nil
         passLog?.cancel(); passLog = nil
@@ -659,7 +662,9 @@ final class PlayerModel: ObservableObject {
         c.setOption("speed", String(defaults.double(forKey: SettingsKey.defaultSpeed)))
         // One by one: as a ":"-separated list, a shader whose name has a
         // ":" in it broke the whole list (review, 2 Nov).
-        for path in Anime4K.currentShaders() { c.setOption("glsl-shaders-append", path) }
+        let shaders = Anime4K.currentShaders()
+        for path in shaders { c.setOption("glsl-shaders-append", path) }
+        shadersOn = !shaders.isEmpty        // what mpv starts with (1.30.6: the renderer's scaling)
         for (k, v) in PictureMode.current.options { c.setOption(k, v) }
         c.setOption("volume-max", "200")
         let boost = defaults.integer(forKey: SettingsKey.audioBoost)
@@ -675,6 +680,7 @@ final class PlayerModel: ObservableObject {
             // Without waiting for mpv's core (1.28.6), as play and pause:
             // a menu tap waited on the main thread for each of these.
             for (k, v) in pictureMode.options { client?.setAsync(k, v) }
+            metalFrames?.setScaling(picture: pictureMode, shaders: shadersOn)    // (1.30.6)
             dlog("player", "picture mode \(pictureMode.rawValue)")
             applyHDRDecode()
         }
@@ -764,6 +770,8 @@ final class PlayerModel: ObservableObject {
             showToast(held ? "Anime4K paused while the phone is hot" : "Anime4K back on")
         }
         let list = (held ? [] : Anime4K.paths(mode: anime4kMode, quality: anime4kQuality, restoreOnly: restoreOnly)) + MPVFiles.activeShaderPaths
+        shadersOn = !list.isEmpty
+        metalFrames?.setScaling(picture: pictureMode, shaders: shadersOn)      // (1.30.6)
         // A change of size or heat that changes nothing: no reload.
         guard force || list != appliedShaders else { return }
         if anime4kMode != .off, appliedShaders != list {
@@ -782,6 +790,9 @@ final class PlayerModel: ObservableObject {
     // MARK: Anime4K fitted to the screen (1.23.1)
 
     private var appliedShaders: [String] = []
+    /// Shaders on in mpv now, Anime4K's or yours (1.30.6): set as mpv starts
+    /// and as the list is applied, for the Metal frames' size.
+    private var shadersOn = false
 
     /// How much bigger than its own size the video is shown, fitted in the
     /// player view; nil until both are known.
@@ -896,15 +907,20 @@ final class PlayerModel: ObservableObject {
         problem = nil
         checkingProblem = false
         problemCheck?.cancel(); problemCheck = nil
+        // The same file opened again on a new connection (1.30.6): what was
+        // skipped and shown stays, so an intro scrubbed into isn't skipped
+        // now, and a dismissed Up Next card doesn't come back to count down.
+        let carried = reconnectCarry?.id == item.id ? reconnectCarry : nil
+        reconnectCarry = nil
         segments = []
         activeSegment = nil
-        autoSkipped = []
-        introsShown = []
+        autoSkipped = carried?.skipped ?? []
+        introsShown = carried?.introsShown ?? []
         openTimelineLogged = false
         seekStarted = nil
         waitStarted = nil
         upNext = nil
-        upNextDismissed = false
+        upNextDismissed = carried?.upNextDismissed ?? false
         postCredits = false
         segmentsRequested = false
         introFinding?.cancel(); introFinding = nil
@@ -948,6 +964,8 @@ final class PlayerModel: ObservableObject {
         hardwareSeenForFile = false
         hardwareDecoderForFile = nil
         decoderRenewals = []
+        decoderRenewWait?.cancel(); decoderRenewWait = nil
+        segmentsAskedAhead = nil
         copyTooSlowForFile = false
         copyWatch?.cancel(); copyWatch = nil
         // The skip lookup starts with the item, as the file starts opening (1.30.5).
@@ -1449,6 +1467,12 @@ final class PlayerModel: ObservableObject {
         let i = queueIndex + 1
         guard appended?.index != i, episodeStates[i] != .pick, episodeStates[i] != .unavailable else { return }
         let next = resolvedItems[i] ?? queue[i]
+        if next.resolvedURL?.isFileURL == true {
+            // A library file opens at once, but its skip segments were asked
+            // for only then (1.30.6): ahead, as a stream's are in prepare().
+            if segmentsAskedAhead != i { segmentsAskedAhead = i; prefetchSegments(for: next) }
+            return
+        }
         guard next.url.isEmpty || next.resolvedURL?.isFileURL == false else { return }
         preparing = i
         let token = loadToken
@@ -1459,6 +1483,8 @@ final class PlayerModel: ObservableObject {
     }
 
     static let prepareLead: Double = 240
+    /// The library file whose skip segments were asked ahead (1.30.6).
+    private var segmentsAskedAhead: Int?
 
     /// mpv opens the next playlist entry only once this file has been read to
     /// its end (mpv manual, --prefetch-playlist: "opens the URL of the next
@@ -3433,6 +3459,7 @@ final class PlayerModel: ObservableObject {
             let chs = chapters.map { ($0.title, $0.time) }
             let s = SkipService.tidy(SkipService.segments(fromChapters: chs, duration: duration), duration: duration, chapters: chs, anime: item.anime?.hasAnimeID == true)
             if !s.isEmpty {
+                skipGate.open(false)        // no anime databases for it (1.30.6)
                 segments = s; dlog("skip", "from chapters: \(s.map { "\($0.label) \(Int($0.start))-\(Int($0.end))" })")
                 findIntroOnDevice()
                 return
@@ -3451,11 +3478,14 @@ final class PlayerModel: ObservableObject {
         // The online lookup began with load() (1.30.5): an answer already in
         // shows now, later ones as they come.
         if skipAnswers.token != loadToken { startSegmentLookup(for: playingItem ?? item, duration: duration) }
+        skipGate.open(true)                 // the chapters gave none: the anime databases may be asked
         if let a = skipAnswers.show() { showLookedUp(a) }
     }
 
     /// The online lookup's answers for the open load (1.30.5).
     private var skipAnswers = SkipAnswers(token: -1)
+    /// Whether its lookup may ask the anime databases (1.30.6).
+    private var skipGate = SkipGate()
 
     /// What the online lookup asks about an item (1.30.5).
     private func skipQuery(for it: MediaItem, duration: Double) -> SkipQuery {
@@ -3471,14 +3501,17 @@ final class PlayerModel: ObservableObject {
     private func startSegmentLookup(for it: MediaItem, duration: Double) {
         let token = loadToken, key = it.id
         skipAnswers = SkipAnswers(token: token)
+        skipGate.open(false)                // the last load's lookup asks no more
+        let gate = SkipGate()
+        skipGate = gate
         let q = skipQuery(for: it, duration: duration)
         Task { [weak self] in
-            let r = await SkipService.shared.lookUp(q) { [weak owner = self] first, anime in
+            let r = await SkipService.shared.lookUp(q, early: { [weak owner = self] first, anime in
                 guard let model = owner else { return }
                 await MainActor.run {
                     model.segmentsAnswered(SkipAnswers.Answer(lookup: first, anime: anime, done: false), token: token, key: key)
                 }
-            }
+            }, mayAskAnime: { await gate.wait() })
             self?.segmentsAnswered(SkipAnswers.Answer(lookup: r.lookup, anime: r.anime, done: true), token: token, key: key)
         }
     }
@@ -3488,8 +3521,13 @@ final class PlayerModel: ObservableObject {
     private func prefetchSegments(for it: MediaItem) {
         let q = skipQuery(for: it, duration: it.durationHint ?? 0)
         let name = it.displayTitle
+        // A library file's anime databases wait for its chapters, as at its
+        // load (1.30.6, post-fix review): a fansub file's usually give the
+        // segments, and asking ahead was the AniList traffic the gate saves.
+        // It opens at once, so they're asked then if needed.
+        let gated = it.resolvedURL?.isFileURL == true
         Task.detached(priority: .utility) {
-            let r = await SkipService.shared.lookUp(q)
+            let r = await SkipService.shared.lookUp(q, mayAskAnime: gated ? { false } : nil)
             dlog("skip", "asked ahead for \(name): \(r.lookup.segments.count) segment(s)")
         }
     }
@@ -3875,12 +3913,14 @@ final class PlayerModel: ObservableObject {
             guard waitStarted == nil, fileLoaded else { return }
             let started = CACurrentMediaTime()
             waitStarted = started
-            // Counted towards a reconnect (1.30.4), unless a seek just asked
-            // for a part that isn't buffered.
-            if started - lastSeekAt > 3 {
-                stallWaits.append(StallRecovery.Wait(start: started))
-                stallWaits = stallWaits.filter { started - $0.start <= StallRecovery.window }
-            }
+            // Counted towards a reconnect (1.30.4). One begun while a seek or
+            // the reading is starting again (stallQuietUntil) isn't one of
+            // the three, and its time counts only from when that's over
+            // (1.30.6): left out, a link that died just after an opening or
+            // a seek waited for ever.
+            let quiet = started <= stallQuietUntil
+            stallWaits.append(StallRecovery.Wait(start: started, quietUntil: quiet ? stallQuietUntil : nil))
+            stallWaits = stallWaits.filter { started - $0.start <= StallRecovery.window }
             let token = loadToken
             client?.query({ c -> (ahead: Double, speed: Double, size: Int64, bitrate: Int64) in
                 (c.double("demuxer-cache-duration") ?? 0, c.double("cache-speed") ?? 0, c.int("file-size") ?? 0,
@@ -3890,23 +3930,33 @@ final class PlayerModel: ObservableObject {
                 let s = String(format: "%.1f s buffered ahead, reading %.1f MB/s", r.ahead, r.speed / 1_048_576)
                 dlog("player", "waiting for data at \(Self.format(self.position)) (\((self.playingItem ?? self.item).resolvedURL?.isFileURL == true ? "local file" : "streamed")): \(s)")
                 guard self.loadToken == token else { return }
-                if let i = self.stallWaits.lastIndex(where: { $0.start == started }) { self.stallWaits[i].readRate = r.speed }
+                // A quiet one's rate is a connection still speeding up: not taken.
+                if !quiet, let i = self.stallWaits.lastIndex(where: { $0.start == started }) { self.stallWaits[i].readRate = r.speed }
                 self.needRate = StallRecovery.needRate(fileBytes: Double(r.size), duration: self.duration, bitsPerSecond: Double(r.bitrate))
                 self.considerReconnect()
             }
-            // One long wait is looked at again once it alone could be enough.
+            // One long wait is looked at again once it alone could be enough,
+            // with the rate it's reading at by then (1.30.6).
             stallCheck?.cancel()
             let w = DispatchWorkItem { [weak self] in
                 guard let self, self.waitStarted == started, self.loadToken == token else { return }
-                self.considerReconnect()
+                self.client?.query({ $0.double("cache-speed") ?? 0 }) { [weak self] speed in
+                    guard let self, self.waitStarted == started, self.loadToken == token else { return }
+                    if let i = self.stallWaits.lastIndex(where: { $0.start == started }) { self.stallWaits[i].readRate = speed }
+                    self.considerReconnect()
+                }
             }
             stallCheck = w
-            DispatchQueue.main.asyncAfter(deadline: .now() + StallRecovery.secondsWaited + 0.5, execute: w)
+            let countsFrom = quiet ? stallQuietUntil - started : 0
+            DispatchQueue.main.asyncAfter(deadline: .now() + countsFrom + StallRecovery.secondsWaited + 0.5, execute: w)
         } else if let t = waitStarted {
             waitStarted = nil
             stallCheck?.cancel(); stallCheck = nil
             if let i = stallWaits.lastIndex(where: { $0.start == t }) { stallWaits[i].end = CACurrentMediaTime() }
             dlog("player", String(format: "waiting for data over after %.0f ms", (CACurrentMediaTime() - t) * 1000))
+            // Looked at as a wait ends too (1.30.6): three with 4 s waited
+            // may only add up now (two short ones, then a long third).
+            considerReconnect()
         }
     }
 
@@ -3921,12 +3971,24 @@ final class PlayerModel: ObservableObject {
     private var stallCheck: DispatchWorkItem?
     /// What the open file needs to play without waiting, bytes per second.
     private var needRate: Double = 0
-    private var lastSeekAt: CFTimeInterval = 0
+    /// Waits before this aren't the connection's (1.30.6): 3 s from a
+    /// seek's start (1.30.4), 8 s from the first frame after a seek or an
+    /// opening, 10 s from a return to the app. 1.30.4 only had the first:
+    /// mpv says it's seeking until the first frame, which on Real-Debrid
+    /// over 5G came 1–4 s after a seek and 6.7 s after an opening, and the
+    /// waits just after, while a new connection was still speeding up,
+    /// counted, with its read rate at that moment.
+    private var stallQuietUntil: CFTimeInterval = 0
+    private func quietStalls(for seconds: Double) {
+        stallQuietUntil = max(stallQuietUntil, CACurrentMediaTime() + seconds)
+    }
     /// When each file was last reconnected (CACurrentMediaTime), and how often.
     private var lastReconnect: [String: CFTimeInterval] = [:]
     private var reconnects: [String: Int] = [:]
     /// The tracks the reconnected file goes on with (load() passes them to mpv).
     private var reconnectTracks: (id: String, opts: [String])?
+    /// What it had skipped and shown (1.30.6): load() keeps them for it.
+    private var reconnectCarry: (id: String, skipped: Set<String>, introsShown: Set<String>, upNextDismissed: Bool)?
 
     private func considerReconnect() {
         let it = playingItem ?? item
@@ -3967,6 +4029,7 @@ final class PlayerModel: ObservableObject {
             opts.append("sid=no")
         }
         reconnectTracks = (it.id, opts)
+        reconnectCarry = (it.id, autoSkipped, introsShown, upNextDismissed)
         playLinks[it.id] = nil
         if followed?.id == it.id { followed = nil }
         retryAt = (it.id, at)
@@ -4834,17 +4897,57 @@ final class PlayerModel: ObservableObject {
         guard let hw = hardwareDecoderForFile, hwdecCurrent != hw, !hdrCopyActive, mode == .main,
               UIApplication.shared.applicationState == .active,
               (defaults.string(forKey: SettingsKey.hwdec) ?? "auto") == "auto" else { return }
-        let now = CACurrentMediaTime()
-        guard now > decoderQuietUntil else { return }     // a rebuild passes through copy decoding
-        decoderRenewals = decoderRenewals.filter { now - $0 < 120 }
-        guard decoderRenewals.count < 2 else { return }
-        decoderRenewals.append(now)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self, !self.closed, self.hwdecCurrent != hw, self.mode == .main,
-                  UIApplication.shared.applicationState == .active else { return }
-            dlog("player/warn", "on screen: the decoder fell to \(self.hwdecCurrent.isEmpty ? "software" : self.hwdecCurrent), was \(hw); building the hardware one again")
+        guard CACurrentMediaTime() > decoderQuietUntil else { return }     // a rebuild passes through copy decoding
+        // One rebuild waiting at a time (1.30.6): mpv's fall goes through
+        // copy decoding to software, two changes, and each began a rebuild
+        // of its own 0.3 s later, both counted, so the check after the
+        // rebuild (renewHardwareDecoder) found none left.
+        guard decoderRenewWait == nil else { return }
+        renewDecoderOncePast(position, hw: hw, token: loadToken, until: CACurrentMediaTime() + 600)
+    }
+
+    /// A rebuild waiting for the playback to pass the bad data (1.30.6).
+    private var decoderRenewWait: DispatchWorkItem?
+    /// A video size gone for a moment, applied if still gone (applyVideoSize, 1.30.6).
+    private var sizeGoneCheck: DispatchWorkItem?
+    /// How far past where the decoder fell the playback goes first: past
+    /// the next keyframe on most encodes (x264's default is one each 250
+    /// frames, 10.4 s at 24 fps).
+    static let decoderRenewPast: Double = 12
+
+    /// The decoder fell at `from`: rebuilt once the playback is past it.
+    /// 0.3 s later, as before, the rebuild's seek went back to the keyframe
+    /// before the damage, still in the buffer: the new decoder was given the
+    /// same bad data, failed on it again, and the picture froze and jumped
+    /// twice more for the one bad read (16 Nov: 24 failures in an evening).
+    private func renewDecoderOncePast(_ from: Double, hw: String, token: Int, until: CFTimeInterval) {
+        let w = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.decoderRenewWait = nil
+            // Over: another file, the hardware decoder back, the setting
+            // changed, or ten minutes gone.
+            guard !self.closed, self.loadToken == token, self.fileLoaded, self.hwdecCurrent != hw, !self.hdrCopyActive,
+                  (self.defaults.string(forKey: SettingsKey.hwdec) ?? "auto") == "auto", CACurrentMediaTime() < until else { return }
+            // Only not yet: a moment away (Control Center, a call, PiP) waits
+            // on, rather than leaving the rest of the file on software.
+            if self.position < from + Self.decoderRenewPast || self.buffering || self.isLoading || self.mode != .main
+                || UIApplication.shared.applicationState != .active {
+                self.renewDecoderOncePast(from, hw: hw, token: token, until: until)
+                return
+            }
+            let now = CACurrentMediaTime()
+            self.decoderRenewals = self.decoderRenewals.filter { now - $0 < 120 }
+            guard self.decoderRenewals.count < 2 else {
+                dlog("player/warn", "on screen: the decoder is still \(self.hwdecCurrent.isEmpty ? "software" : self.hwdecCurrent); rebuilt twice in two minutes already")
+                return
+            }
+            self.decoderRenewals.append(now)
+            dlog("player/warn", String(format: "on screen: the decoder fell to %@ at %@, was %@; building the hardware one again %.0f s on",
+                                       self.hwdecCurrent.isEmpty ? "software" : self.hwdecCurrent, Self.format(from), hw, self.position - from))
             self.renewHardwareDecoder()
         }
+        decoderRenewWait = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: w)
     }
 
     private func renewHardwareDecoder() {
@@ -4988,6 +5091,7 @@ final class PlayerModel: ObservableObject {
 
     private func didBecomeActive() {
         PiPTrace.event("app active (PiP \(isPiPActive ? "up" : "not up"), renderer mode \(mode))")
+        quietStalls(for: 10)                // the demuxer reads again after the trip away (1.30.6)
         let fromBackground = wentToBackground
         wentToBackground = false
         if !returnFromPiP, fromBackground, isPiPActive, defaults.bool(forKey: SettingsKey.pipReturnOnOpen) {
@@ -5283,6 +5387,7 @@ extension PlayerModel: MPVClientDelegate {
             // assignment of the same value still redrew the whole player.
             if buffering { buffering = false }
             swapSeekQuietUntil = 0
+            quietStalls(for: 8)             // the reading speeds up again (1.30.6)
             metalWaitRestarted = true
             PiPTrace.event("mpv: playback restart (first frame after the seek)")
             if ownLayerMetal { scheduleSnapshot(after: 0.8) }
@@ -5365,7 +5470,7 @@ extension PlayerModel: MPVClientDelegate {
             if buffering != waiting { buffering = waiting }
             logWaitForData(waiting)
         case "seeking":
-            if value.bool == true { lastSeekAt = CACurrentMediaTime() }       // (1.30.4) a wait just after it isn't the connection's
+            if value.bool == true { quietStalls(for: 3) }       // (1.30.4) a wait just after it isn't the connection's
             if value.bool == true, CACurrentMediaTime() > swapSeekQuietUntil {
                 if !buffering { buffering = true }
                 if seekStarted == nil { seekStarted = (CACurrentMediaTime(), position) }
@@ -5447,6 +5552,26 @@ extension PlayerModel: MPVClientDelegate {
     }
 
     private func applyVideoSize() {
+        // No size for a moment while a file plays (1.30.6): a decoder or the
+        // video output starting again. Applied, it put Fill back to Fit and
+        // reloaded Anime4K's shaders, and again when the size came back a
+        // moment later. Applied only if it's still gone a second on.
+        if pendingW <= 0 || pendingH <= 0, videoSize.width > 0, videoSize.height > 0, fileLoaded {
+            guard sizeGoneCheck == nil else { return }
+            let w = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                self.sizeGoneCheck = nil
+                if self.pendingW <= 0 || self.pendingH <= 0 { self.applyVideoSizeNow() }
+            }
+            sizeGoneCheck = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: w)
+            return
+        }
+        sizeGoneCheck?.cancel(); sizeGoneCheck = nil
+        applyVideoSizeNow()
+    }
+
+    private func applyVideoSizeNow() {
         let size = CGSize(width: pendingW, height: pendingH)
         if size != videoSize {
             videoSize = size; refitAnime4K(); applyLayerZoom(animated: false); applySubtitleFraming()
@@ -5698,14 +5823,21 @@ enum StallRecovery {
     struct Wait: Equatable {
         var start: Double
         var end: Double?
-        /// mpv's cache-speed as the wait began, bytes per second.
+        /// mpv's cache-speed as the wait began (or 15 s into a long one),
+        /// bytes per second.
         var readRate: Double?
+        /// Begun while a seek or the reading was starting again (1.30.6):
+        /// not one of the three, its time counted from then.
+        var quietUntil: Double? = nil
     }
 
     /// Waits looked at: those begun in the last 45 s.
     static let window: Double = 45
-    /// Three waits in that time, or 15 s spent waiting, is a slow connection…
+    /// Three waits in that time with 4 s spent waiting in all (1.30.6: any
+    /// three before, a second's hiccups counted), or 15 s spent waiting, is
+    /// a slow connection…
     static let waitsInWindow = 3
+    static let waitedWithThree: Double = 4
     static let secondsWaited: Double = 15
     /// …when it reads slower than the file plays.
     /// At most once per 2 minutes for a file, three times in a player.
@@ -5725,8 +5857,9 @@ enum StallRecovery {
         guard needRate > 0 else { return nil }
         if let last = lastReconnect, now - last < spacing { return nil }
         let recent = waits.filter { $0.start <= now && now - $0.start <= window }
-        let waited = recent.reduce(0.0) { $0 + max(0, ($1.end ?? now) - $1.start) }
-        guard recent.count >= waitsInWindow || waited >= secondsWaited else { return nil }
+        let waited = recent.reduce(0.0) { $0 + max(0, ($1.end ?? now) - max($1.start, $1.quietUntil ?? $1.start)) }
+        let counted = recent.filter { $0.quietUntil == nil }.count
+        guard (counted >= waitsInWindow && waited >= waitedWithThree) || waited >= secondsWaited else { return nil }
         let rates = recent.compactMap(\.readRate)
         guard !rates.isEmpty else { return nil }
         let rate = rates.reduce(0, +) / Double(rates.count)

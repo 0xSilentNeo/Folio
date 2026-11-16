@@ -59,7 +59,9 @@ actor MetadataService {
                 cache = c.mapValues { e in Entry(meta: e.meta.map(Self.decodingEntities), date: e.date) }
                 Task { await self.saveDecoded() }
             }
-        } else {
+        } else if !UserDefaults.standard.bool(forKey: Self.textDecodedKey) {
+            // Written only when it changes (1.30.6): this runs wherever the
+            // service is first used, off the main thread too.
             UserDefaults.standard.set(true, forKey: Self.textDecodedKey)
         }
     }

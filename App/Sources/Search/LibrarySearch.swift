@@ -227,12 +227,16 @@ enum SearchTab: String, CaseIterable, Identifiable {
 
     /// The hint (1.30.5): only once this tab is done looking (`settled`), so
     /// it doesn't flash while an answer is on the way. The tab itself stays.
-    static func hint(on tab: SearchTab, owned: Int, titles: Int, settled: Bool) -> Hint? {
+    /// `counted` (1.30.6): `titles` is all the Search tab lists. The Library
+    /// tab asks IMDb's suggestions, not the fuller lists the Search tab adds,
+    /// so "8 results in Search" opened on 100; without the count it says
+    /// only that Search has results.
+    static func hint(on tab: SearchTab, owned: Int, titles: Int, settled: Bool, counted: Bool = true) -> Hint? {
         guard settled else { return nil }
         switch tab {
         case .library:
             guard owned == 0, titles > 0 else { return nil }
-            return Hint(text: "Nothing in your library — \(results(titles)) in Search", target: .search)
+            return Hint(text: "Nothing in your library — \(counted ? results(titles) : "results") in Search", target: .search)
         case .search:
             guard titles == 0, owned > 0 else { return nil }
             return Hint(text: "No movies or shows found — \(results(owned)) in Library", target: .library)
@@ -400,8 +404,12 @@ struct SearchResults {
     let shows: [SearchItem]
     /// The Library tab under its top card: the rest of what's yours.
     let ownedRest: [SearchItem]
+    /// Rows (their ids) held over from the last text's fuller lists (1.30.6):
+    /// dimmed, and not counted, until this text's answer replaces them.
+    let stale: Set<String>
 
-    init(owned: [SearchItem] = [], imdb: [MetaItem] = [], addons: [AddonSearchView.SearchResult] = []) {
+    /// `stale`: IMDb ids, as DiscoverSearch.staleIDs gives them.
+    init(owned: [SearchItem] = [], imdb: [MetaItem] = [], addons: [AddonSearchView.SearchResult] = [], stale: Set<String> = []) {
         var seen = Set<String>()
         var titles: [SearchItem] = []
         for m in imdb where seen.insert(m.id).inserted { titles.append(SearchItem(meta: m, addon: nil)) }
@@ -413,6 +421,10 @@ struct SearchResults {
         movies = titles.filter { !$0.isSeries }
         shows = titles.filter(\.isSeries)
         ownedRest = Array(owned.dropFirst())
+        self.stale = stale.isEmpty ? [] : Set(titles.lazy.filter { item in
+            if case .title(let m, .none) = item.kind { return stale.contains(m.id) }
+            return false
+        }.map(\.id))
     }
 
     /// The first of what's yours, shown as a card above the rest.
@@ -427,11 +439,12 @@ struct SearchResults {
         }
     }
 
-    /// How many results a tab has (the hint's count; Search's unfiltered).
+    /// How many results a tab has (the hint's count; Search's unfiltered,
+    /// and not the last text's held over).
     func count(_ tab: SearchTab) -> Int {
         switch tab {
         case .library: return owned.count
-        case .search: return titles.count
+        case .search: return titles.count - stale.count
         }
     }
 }
@@ -629,6 +642,9 @@ struct SearchPillBar: View {
 
     let options: [Option]
     var compact = false
+    /// Over the results (1.30.6, SearchBarsPinned): on iOS 26 the track is
+    /// glass, as a bar's controls are; before, and elsewhere, the fill.
+    var glass = false
     @Namespace private var thumb
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -648,6 +664,8 @@ struct SearchPillBar: View {
                         .font(font)
                         .foregroundStyle(o.selected ? Theme.onAccent : Color.primary.opacity(0.8))
                         .lineLimit(1)
+                        // The largest text sizes (1.30.6): smaller to fit its half, not "Libr…".
+                        .minimumScaleFactor(0.6)
                         .padding(.horizontal, compact ? 16 : 12)
                         .frame(maxWidth: maxWidth, minHeight: height)
                         .background {
@@ -662,11 +680,43 @@ struct SearchPillBar: View {
             }
         }
         .padding(.horizontal, inset)
-        .background { Capsule().fill(Theme.fill).padding(.vertical, extra) }
+        .modifier(PillTrack(glass: glass, extra: extra))
         // The thumb slides however the choice arrives (a stored setting's write may not carry the caller's animation).
         .animation(slide, value: chosen)
         .accessibilityElement(children: .contain)
     }
+}
+
+/// A pill bar's track: glass on iOS 26 over the results (1.30.6), the
+/// page's fill otherwise; `extra` above and below it are tapped, not drawn.
+/// The glass is the bar's own (its titles and the chosen thumb are on it):
+/// as a background of its own it was drawn over them, blurred and grey.
+private struct PillTrack: ViewModifier {
+    let glass: Bool
+    let extra: CGFloat
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *), glass {
+            content.glassEffect(.regular, in: InsetCapsule(vertical: extra))
+        } else {
+            flat(content)
+        }
+        #else
+        flat(content)
+        #endif
+    }
+
+    private func flat(_ content: Content) -> some View {
+        content.background { Capsule().fill(Theme.fill).padding(.vertical, extra) }
+    }
+}
+
+/// A capsule `vertical` points in from the top and bottom of its frame.
+private struct InsetCapsule: Shape {
+    let vertical: CGFloat
+    func path(in rect: CGRect) -> Path { Capsule().path(in: rect.insetBy(dx: 0, dy: vertical)) }
 }
 
 // MARK: - Before anything is typed

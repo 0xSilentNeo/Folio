@@ -67,11 +67,13 @@ final class MetalFrameRenderer: FrameRenderer {
     private var videoSize: (Int, Int)?
     private var pipSize: (Int, Int)?
     private var frameSize = (0, 0)
-    /// The picture mode, Anime4K or your shaders changed (1.30.4): the
-    /// frames' size is decided again (nativeFramesBelow).
-    private var settingsWatch: NSObjectProtocol?
     /// mpv.conf sets scalers or shaders of its own (1.30.4): read once.
     private lazy var confScales = PictureMode.confSetsScaling(MPVFiles.readText(MPVFiles.mpvConf))
+    /// Below which scale the frames are the video's own size (1.30.4),
+    /// from what the player has applied (setScaling, 1.30.6). Until it
+    /// says, from the saved settings.
+    private lazy var nativeBelow: Double = PictureMode.current.nativeFramesBelow(
+        custom: Anime4K.mode != .off || !MPVFiles.activeShaderNames.isEmpty || confScales)
 
     init?(output: @escaping (CVPixelBuffer) -> Void) {
         guard Self.available, let device = MTLCreateSystemDefaultDevice() else { return nil }
@@ -101,14 +103,10 @@ final class MetalFrameRenderer: FrameRenderer {
                 guard let ctx else { return }
                 Unmanaged<MetalFrameRenderer>.fromOpaque(ctx).takeUnretainedValue().present(token, ok)
             }))
-        settingsWatch = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.updateFrameSize()
-        }
     }
 
     /// mpv is gone (its shutdown has finished): the hook can go.
     func engineDone() {
-        if let w = settingsWatch { NotificationCenter.default.removeObserver(w); settingsWatch = nil }
         let ctx = target.pointee.ctx
         target.deinitialize(count: 1)
         target.deallocate()
@@ -185,10 +183,16 @@ final class MetalFrameRenderer: FrameRenderer {
         return (max(2, Int(Double(v.0) * scale) & ~1), max(2, Int(Double(v.1) * scale) & ~1))
     }
 
-    /// Below which scale the frames are the video's own size now (1.30.4).
-    private var nativeBelow: Double {
-        let custom = Anime4K.mode != .off || !MPVFiles.activeShaderNames.isEmpty || confScales
-        return PictureMode.current.nativeFramesBelow(custom: custom)
+    /// The picture mode and the shaders as the player applies them (1.30.6).
+    /// The frames' size was decided again on every settings write anywhere
+    /// in the app, from the saved settings: a show's own Anime4K mode, and
+    /// Anime4K held while the phone is hot, weren't seen, and with Anime4K
+    /// held the frames stayed fitted, upscaled by the GPU when it was hot.
+    func setScaling(picture: PictureMode, shaders: Bool) {
+        let n = picture.nativeFramesBelow(custom: shaders || confScales)
+        guard n != nativeBelow else { return }
+        nativeBelow = n
+        updateFrameSize()
     }
 
     private func updateFrameSize() {

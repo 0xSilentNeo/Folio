@@ -481,7 +481,12 @@ struct MetaDetailView: View {
                 if case .airs? = airing?.mark(season: v.season, episode: v.episode) { return false }
                 return true
             }
-            if isSeries {
+            if idPending {
+                // Not until the IMDb id is known (1.30.6), as the big button
+                // (idPending): Play opened the streams page with the tmdb: or
+                // anilist: id, which no addon has, and the watched marks were
+                // saved under it, where no other page looks.
+            } else if isSeries {
                 // As the big button: of the episodes out, at most queueCap (1.30.4).
                 let aired = airedEpisodes
                 if !aired.isEmpty {
@@ -501,6 +506,8 @@ struct MetaDetailView: View {
         } label: {
             PageButtonLabel(systemName: "ellipsis", width: 56)
         }
+        // Nothing in it until then: Share needs the IMDb id too.
+        .disabled(idPending)
         .accessibilityLabel("More")
     }
 

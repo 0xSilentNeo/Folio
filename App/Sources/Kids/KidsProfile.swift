@@ -69,6 +69,19 @@ final class KidsProfile: ObservableObject {
     /// until then turning the profile on asked for a new one every time).
     var hasPasscode: Bool { Keychain.get(Self.passcodeAccount) != nil }
 
+    /// Whether the Keychain has a passcode (1.30.6): nil when it couldn't
+    /// say. Keychain.get is nil for "not found" and for a read that failed
+    /// (errSecInteractionNotAllowed while the device is locked, say) alike,
+    /// and leaveIfNoPasscode took both for "no passcode". SecretCache keeps
+    /// "not found" but never a failure, so asking the cache again calls its
+    /// read only after a failure.
+    nonisolated static var passcodeStored: Bool? {
+        if Keychain.get(passcodeAccount) != nil { return true }
+        var failed = false
+        _ = Keychain.cache.value(for: passcodeAccount) { failed = true; return .failed }
+        return failed ? nil : false
+    }
+
     /// Turned on with the passcode chosen before, or with `passcode` the
     /// first time (or after it was cleared).
     func turnOn(passcode: String? = nil) {
@@ -87,6 +100,8 @@ final class KidsProfile: ObservableObject {
         NotifyCenter.takeBack(asked: true)
         AiringNotifications.reschedule(TrackingStore.shared.shows)
         GlanceWriter.kidsChanged()
+        // The Airing widgets too (1.30.6): they kept the tracked shows.
+        AiringSnapshotWriter.schedule(TrackingStore.shared.shows)
         dlog("kids", "kids profile on (\(KidsRules.summary(limits)))")
     }
 
@@ -107,12 +122,13 @@ final class KidsProfile: ObservableObject {
         ContinueSnapshotWriter.schedule()
         AiringNotifications.reschedule(TrackingStore.shared.shows)
         GlanceWriter.kidsChanged()
+        AiringSnapshotWriter.schedule(TrackingStore.shared.shows)
         dlog("kids", "kids profile off")
     }
 
     // MARK: Passcode
 
-    static let passcodeAccount = "kidsPasscode"
+    nonisolated static let passcodeAccount = "kidsPasscode"
     static let maxTries = 5
     static let lockout: TimeInterval = 30
 
@@ -248,12 +264,49 @@ final class KidsProfile: ObservableObject {
         isOn && !hasPasscode && keychainReadable
     }
 
+    /// What leaveIfNoPasscode does (1.30.6). `stored`: passcodeStored, nil
+    /// when the Keychain couldn't say. Only "not found" with the device
+    /// unlocked turns the profile off; a read that failed, or a locked
+    /// device, leaves it on and asks again later.
+    enum LeaveCheck: Equatable { case turnOff, stayOn, askAgain }
+
+    nonisolated static func leaveCheck(isOn: Bool, stored: Bool?, protectedData: Bool) -> LeaveCheck {
+        guard isOn else { return .stayOn }
+        guard protectedData, let stored else { return .askAgain }
+        return offWithoutPasscode(isOn: isOn, hasPasscode: stored, keychainReadable: true) ? .turnOff : .stayOn
+    }
+
     /// At launch (RootView): turned off when it's on with no way out.
     func leaveIfNoPasscode() {
-        guard Self.offWithoutPasscode(isOn: isOn, hasPasscode: hasPasscode,
-                                      keychainReadable: UIApplication.shared.isProtectedDataAvailable) else { return }
-        dlog("kids", "kids profile on with no passcode in the Keychain (restored from a backup?): turned off")
-        turnOff()
+        let stored = isOn ? Self.passcodeStored : true
+        switch Self.leaveCheck(isOn: isOn, stored: stored, protectedData: UIApplication.shared.isProtectedDataAvailable) {
+        case .stayOn: return
+        case .askAgain:
+            // Asked again once the device is unlocked or Folio is back in
+            // front (1.30.6): until then a launch before the first unlock
+            // left this undecided for the whole run.
+            dlog("kids", "kids profile on, the Keychain not readable now: the passcode is looked for again later")
+            askAgainLater()
+        case .turnOff:
+            dlog("kids", "kids profile on with no passcode in the Keychain (restored from a backup?): turned off")
+            turnOff()
+        }
+    }
+
+    private var askAgain: [NSObjectProtocol] = []
+
+    private func askAgainLater() {
+        guard askAgain.isEmpty else { return }
+        for name in [UIApplication.protectedDataDidBecomeAvailableNotification, UIApplication.didBecomeActiveNotification] {
+            askAgain.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated {
+                    let p = KidsProfile.shared
+                    p.askAgain.forEach { NotificationCenter.default.removeObserver($0) }
+                    p.askAgain = []
+                    p.leaveIfNoPasscode()
+                }
+            })
+        }
     }
 
     private func resetTries() {

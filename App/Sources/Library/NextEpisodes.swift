@@ -135,10 +135,15 @@ enum ContinueNext {
 
     // MARK: Saved libraries by show
 
+    /// Which index a map was made from: its version (1.30.6,
+    /// LibraryIndexStore.State.version). Until then when it was refreshed,
+    /// and its folder count, to make the map again once per refresh; Home's
+    /// check of the start folder (up to once a minute, as its Real-Debrid
+    /// row shows) is a refresh, so the map was made again each time with
+    /// nothing new.
     private struct Stamp: Equatable {
         var account: String
-        var refreshed: Date?
-        var folders: Int
+        var version: Int
     }
 
     private static var shows: [UUID: (stamp: Stamp, files: [String: [LibraryIndex.File]])] = [:]
@@ -155,8 +160,9 @@ enum ContinueNext {
         for e in entries { if case .webdav(let id) = e.item.source { ids.insert(id) } }
         for server in ServerStore.shared.servers where ids.contains(server.id) {
             await LibraryIndexStore.shared.load(server)
-            guard let index = LibraryIndexStore.shared.state(server.id).index else { continue }
-            let stamp = Stamp(account: index.account, refreshed: index.refreshed, folders: index.folders.count)
+            let state = LibraryIndexStore.shared.state(server.id)
+            guard let index = state.index else { continue }
+            let stamp = Stamp(account: index.account, version: state.version)
             guard shows[server.id]?.stamp != stamp else { continue }
             let files = index.allFiles
             let map = await Task.detached(priority: .userInitiated) { NextEpisodes.byShow(files) }.value
@@ -165,16 +171,17 @@ enum ContinueNext {
     }
 
     /// A server's saved library by show, worked out off the main thread once
-    /// per refresh of it (~1,500 names on Real-Debrid in the 14 Nov log);
+    /// per change of it (~1,500 names on Real-Debrid in the 14 Nov log);
     /// Continue Watching is told when it's ready. The last one meanwhile.
     static func showFiles(_ server: WebDAVServer) -> [String: [LibraryIndex.File]]? {
         let id = server.id
-        guard let index = LibraryIndexStore.shared.state(id).index else {
+        let state = LibraryIndexStore.shared.state(id)
+        guard let index = state.index else {
             // Not read yet this launch: read from disk now; the card follows.
             if loadAsked.insert(id).inserted { Task { await LibraryIndexStore.shared.load(server) } }
             return nil
         }
-        let stamp = Stamp(account: index.account, refreshed: index.refreshed, folders: index.folders.count)
+        let stamp = Stamp(account: index.account, version: state.version)
         if let s = shows[id], s.stamp == stamp { return s.files }
         if building[id] != stamp {
             building[id] = stamp

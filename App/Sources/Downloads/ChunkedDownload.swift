@@ -199,6 +199,19 @@ enum ChunkPlan {
         return worked ? .askLink : .stopUsingAddress
     }
 
+    /// What a range does when the address a link led to answers a server
+    /// error (HTTP 5xx) or a web page (1.30.6): asked through the link again,
+    /// as for a refusal, once a run (`faultedBefore`: it happened already
+    /// with the address in use, so the run asks every range through the
+    /// link). Until 1.30.6 the whole file failed for good. Through the link
+    /// itself the answer stands, as before.
+    static func fault(status: Int, page: Bool, address: URL?, current: URL?, faultedBefore: Bool) -> Refusal {
+        guard let address, page || (500...599).contains(status) else { return .stands }
+        // An address given up on already: asked again where the others are.
+        guard address == current else { return .askLink }
+        return faultedBefore ? .stopUsingAddress : .askLink
+    }
+
     /// A web page where a file was asked for: an expired link, a login or a
     /// captcha page. It must not be written into the file.
     static func isPage(contentType: String?, fileName: String) -> Bool {
@@ -249,6 +262,9 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
     let id: UUID
     let file: URL
     private let request: DownloadEngine.Request
+    /// Its session may use mobile data (1.30.6): set once, when it starts, so
+    /// a file waiting for Wi-Fi is started again when the setting changes.
+    var allowsCellular: Bool { request.allowCellular && !request.unmeteredOnly }
     private let fileName: String
     private let connections: Int
     private let onEvent: @Sendable (Event) -> Void
@@ -274,6 +290,9 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
     private var addressWorked = false
     /// Off for this run once the address refused before it ever worked.
     private var useAddress = true
+    /// The address answered a server error or a web page once already this
+    /// run (1.30.6): the next time, every range goes through the link.
+    private var addressFaulted = false
     /// A resumed file waits for its first answer before the other
     /// connections start, so they go to the address it gives (1.30.4).
     private var firstAnswer = false
@@ -465,10 +484,10 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
             completionHandler(.cancel)
             return
         }
+        let sentTo = tasks[dataTask.taskIdentifier]?.address
         guard (200..<300).contains(status) else {
             // The address the link led to ran out, or never took a direct
             // request (1.30.4): the range is asked through the link again.
-            let sentTo = tasks[dataTask.taskIdentifier]?.address
             switch ChunkPlan.refusal(status: status, address: sentTo, current: address, worked: addressWorked) {
             case .askLink:
                 if sentTo == address { address = nil; addressWorked = false }
@@ -486,11 +505,22 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
             case .stands:
                 break
             }
+            // A server error from it (1.30.6): through the link as well.
+            if throughLink(fault(status: status, page: false, sentTo: sentTo), task: dataTask.taskIdentifier, host: host, what: "HTTP \(status)") {
+                completionHandler(.cancel)
+                return
+            }
             completionHandler(.cancel)
             fail(status == 401 ? "Wrong username or password (HTTP 401)" : "Server returned HTTP \(status)")
             return
         }
         if ChunkPlan.isPage(contentType: http.value(forHTTPHeaderField: "Content-Type"), fileName: fileName) {
+            // From the address the link led to (1.30.6): through the link,
+            // as for a refusal. Through the link itself the file stops.
+            if throughLink(fault(status: status, page: true, sentTo: sentTo), task: dataTask.taskIdentifier, host: host, what: "a web page") {
+                completionHandler(.cancel)
+                return
+            }
             completionHandler(.cancel)
             fail("\(host) sent a web page instead of the file (an expired link or a login page)")
             return
@@ -566,6 +596,32 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
             if ranges == true { fillConnections() }
         }
         completionHandler(.allow)
+    }
+
+    /// A server error or a web page from the address the link led to (1.30.6):
+    /// what ChunkPlan.fault says, noted for the run.
+    private func fault(status: Int, page: Bool, sentTo: URL?) -> ChunkPlan.Refusal {
+        let answer = ChunkPlan.fault(status: status, page: page, address: sentTo, current: address, faultedBefore: addressFaulted)
+        if answer != .stands, sentTo == address { addressFaulted = true }
+        return answer
+    }
+
+    /// The request's range is asked again through the link (it starts again
+    /// once this request has ended); false when the answer stands.
+    private func throughLink(_ answer: ChunkPlan.Refusal, task: Int, host: String, what: String) -> Bool {
+        switch answer {
+        case .stands:
+            return false
+        case .askLink:
+            if tasks[task]?.address == address { address = nil; addressWorked = false }
+            emit(.note("\(host) answered \(what) at the address the link led to: asked through the link again"))
+        case .stopUsingAddress:
+            address = nil
+            useAddress = false
+            emit(.note("\(host) answered \(what) at the address the link led to again: every range through the link"))
+        }
+        restarting.insert(task)
+        return true
     }
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
@@ -644,7 +700,8 @@ final class ChunkedDownload: NSObject, URLSessionDataDelegate, @unchecked Sendab
     }
 
     /// No network this download may use (1.30.4): said, so its row can say
-    /// why it sits at 0 B, and it doesn't take one of the file slots.
+    /// why it sits at 0 B, and a file allowed on another network (mobile
+    /// data) may start in its slot (1.30.6: only such a file).
     func urlSession(_ session: URLSession, taskIsWaitingForConnectivity task: URLSessionTask) {
         guard !stopped else { return }
         emit(.waitingForNetwork)

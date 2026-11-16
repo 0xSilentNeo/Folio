@@ -20,6 +20,16 @@ enum WhatsNew {
     }
 
     static let releases: [Release] = [
+        Release(version: "1.30.6", items: [
+            Item(icon: "play.tv", title: "Steadier playback",
+                 text: "After a bad stretch of a stream the picture recovers once, instead of freezing and jumping again, and a stream that's fine on average isn't reopened."),
+            Item(icon: "magnifyingglass", title: "A calmer search",
+                 text: "Library, Search, Shows and Movies stay at the top as you scroll, and the list no longer jumps as you type."),
+            Item(icon: "arrow.down.circle", title: "Downloads take turns",
+                 text: "Only as many download at once as you chose, even when the network drops, and the stop button on the Lock Screen pauses them."),
+            Item(icon: "person.crop.circle.badge.checkmark", title: "Sign in again, nothing lost",
+                 text: "When Trakt, AniList or MyAnimeList needs you to sign in again, Settings has a button for it, and what's waiting to be sent is kept."),
+        ]),
         Release(version: "1.30.5", items: [
             Item(icon: "play.tv", title: "Smooth playback again",
                  text: "Streams from Real-Debrid play without the stutters and broken picture 1.30.4 brought."),

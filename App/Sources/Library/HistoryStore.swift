@@ -146,9 +146,42 @@ final class HistoryStore: ObservableObject {
     var continueWatching: [HistoryEntry] {
         if let c = index.continueWatching { return c }
         watchNextSources()
-        let c = Self.pickContinueWatching(entries, now: Date(), dismissed: dismissed) { ContinueNext.after($0) }
+        let shown = Self.hidingCopiedStreams(entries, copies: Self.downloadedCopies())
+        let c = Self.pickContinueWatching(shown, now: Date(), dismissed: dismissed) { ContinueNext.after($0) }
         lookup?.continueWatching = c
         return c
+    }
+
+    /// A WebDAV file and its downloaded copy are one card (1.30.6): of the
+    /// stream's entry and the copy's, the older isn't a card. A film is
+    /// keyed by its address on the server and by its name in Media, so
+    /// Home had two cards for it. Both entries stay: the server's browser
+    /// shows and resumes the stream's place, and the stream's place is
+    /// still there if the copy is deleted. `copies`: stream address → copy path.
+    nonisolated static func hidingCopiedStreams(_ entries: [HistoryEntry], copies: [String: String]) -> [HistoryEntry] {
+        guard !copies.isEmpty else { return entries }
+        var byURL: [String: HistoryEntry] = [:]
+        var byPlace: [String: HistoryEntry] = [:]
+        for e in entries {
+            byURL[e.item.url] = e; byURL[e.id] = e
+            if let rel = libraryRelative(e.id) { byPlace[rel] = e }
+        }
+        var hidden = Set<String>()
+        for (stream, copy) in copies {
+            // The copy also by its place inside Media: its path changes with a sideloaded update's container.
+            guard let s = byURL[stream], case .webdav = s.item.source,
+                  let c = byURL[copy] ?? byURL[URL(fileURLWithPath: copy).absoluteString] ?? libraryRelative(copy).flatMap({ byPlace[$0] })
+            else { continue }
+            hidden.insert(c.updated >= s.updated ? s.id : c.id)
+        }
+        return hidden.isEmpty ? entries : entries.filter { !hidden.contains($0.id) }
+    }
+
+    /// Finished downloads of WebDAV files: their address → the copy's path.
+    private static func downloadedCopies() -> [String: String] {
+        var out: [String: String] = [:]
+        for d in DownloadManager.shared.items where d.state == .done { out[d.url.absoluteString] = d.destination.path }
+        return out
     }
 
     /// The finished episodes that can bring their show's next episode to
@@ -252,7 +285,16 @@ final class HistoryStore: ObservableObject {
                     continue
                 }
             }
-            if let r = s.resume { out.append((r.entry, s.latest)) }
+            if let r = s.resume {
+                // Not an episode watched past since (1.30.6): with no next
+                // episode found (a season's last), the show's place to resume
+                // came back, though the episode played last, as far along or
+                // further, was finished after it. A stream's place left beside
+                // its downloaded copy came back after the finale that way.
+                if let last = s.last, last.entry.isFinished, last.entry.updated > r.entry.updated,
+                   let ln = last.number, let rn = r.number, ln >= rn { continue }
+                out.append((r.entry, s.latest))
+            }
         }
         return out.sorted { $0.at > $1.at }.map(\.entry)
     }
@@ -355,8 +397,18 @@ final class HistoryStore: ObservableObject {
         // A next-episode card has no entry (1.30.4): the widget's and the
         // notifications' links (folio://continue?id=) find it here. Never
         // for an addon key: the title pages ask by those whether one exists.
-        if !key.hasPrefix("addon:"), let c = continueWatching.first(where: { $0.follows != nil && $0.id == key }) { return c }
+        // A library file's card also by its place inside Media (1.30.6): a
+        // link made before a sideloaded update has the old container's path,
+        // and its first tap found nothing.
+        if !key.hasPrefix("addon:"), let c = Self.nextCard(key, in: continueWatching) { return c }
         return nil
+    }
+
+    /// The next-episode card with this id, or for a library file the one at
+    /// the same place inside Media.
+    nonisolated static func nextCard(_ key: String, in cards: [HistoryEntry]) -> HistoryEntry? {
+        let rel = libraryRelative(key)
+        return cards.first { c in c.follows != nil && (c.id == key || rel != nil && libraryRelative(c.id) == rel) }
     }
 
     /// What a widget's or a notification's link plays (1.30.4): an entry,
@@ -542,7 +594,11 @@ final class HistoryStore: ObservableObject {
                     HistoryStore.shared.forgetMissingLibraryFiles(files)
                     HistoryStore.shared.nextSourcesChanged()
                 } },
-            LibraryIndexStore.shared.objectWillChange
+            // Only when an index changed in what's made from it (1.30.6):
+            // each of Home's checks of the start folder (up to once a minute)
+            // and each step of a refresh worked Continue Watching out again.
+            LibraryIndexStore.shared.$contentVersion
+                .dropFirst()
                 .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
                 .sink { _ in MainActor.assumeIsolated { HistoryStore.shared.nextSourcesChanged() } },
             // Throttled, not debounced: progress changes the list all through a download.
@@ -592,28 +648,72 @@ final class HistoryStore: ObservableObject {
     /// A stream's place carried to its downloaded copy (1.30.4): the
     /// library file started at 0:00 and Continue Watching kept streaming.
     /// Only a place to resume, never a watched mark ("Delete watched
-    /// downloads" would take the new file), and only into a copy with no
-    /// entry of its own. Saved a second after the stream's, so the copy is
-    /// the card (the newer of one episode's two).
+    /// downloads" would take the new file). Saved a second after the
+    /// stream's, so the copy is the card (the newer of one episode's two).
+    ///
+    /// A WebDAV stream's newer place also goes to a copy that has an entry
+    /// (1.30.6, carry(streamURL:to:)), and the two are one card
+    /// (hidingCopiedStreams). Home had two cards for a film, and every tap
+    /// on either played the copy, so the stream's never moved: watched to
+    /// its end, the stream's card stayed at 40 minutes and played the copy
+    /// from 0:00. An addon's stream plays on its own (ContinueQueue plays
+    /// only a WebDAV file's copy): only a copy with no entry is given its place.
     private func carryToDownloads(_ items: [DownloadItem]) {
         var added = 0
         for d in items where d.state == .done {
             guard carried.insert(d.id).inserted else { continue }
             let dest = d.destination.path
-            guard Self.libraryRelative(dest) != nil, entry(forURL: dest) == nil,
+            guard Self.libraryRelative(dest) != nil,
                   let origin = entry(forURL: d.url.absoluteString), origin.canResume,
                   FileManager.default.fileExists(atPath: dest) else { continue }
-            if case .local = origin.item.source { continue }
-            var item = Self.libraryItem(dest)
-            let p = TitleParser.parse(d.destination.lastPathComponent)
-            if p.episode != nil { item.anime = AnimeHint(title: p.title, episode: p.episode) }
-            entries.append(HistoryEntry(item: item, position: origin.position, duration: origin.duration, updated: origin.updated.addingTimeInterval(1)))
-            added += 1
+            switch origin.item.source {
+            case .local: continue
+            case .webdav: if carry(streamURL: d.url.absoluteString, to: dest) { added += 1 }
+            default:
+                guard entry(forURL: dest) == nil, let e = Self.carriedToCopy(origin, copy: nil, item: ContinueQueue.libraryItem(d.destination)) else { continue }
+                entries.append(e)
+                added += 1
+            }
         }
         guard added > 0 else { return }
         dlog("history", "\(added) download(s) take their stream's place")
         trim()
         scheduleSave()
+    }
+
+    /// A WebDAV file's downloaded copy given its stream's place when the
+    /// stream's is the newer (1.30.6). Also when a stream's card plays the
+    /// copy (ContinueQueue.play): a stream played again from the server's
+    /// browser after the download is carried then. The stream's entry stays
+    /// (the browser shows and resumes it; it's there if the copy is
+    /// deleted); Continue Watching shows the newer of the two
+    /// (hidingCopiedStreams). Only a stream with a place to resume: a
+    /// watched stream's mark stays where it is. True when it changed.
+    @discardableResult
+    func carry(streamURL url: String, to copy: String) -> Bool {
+        guard Self.libraryRelative(copy) != nil, let origin = entry(forURL: url), origin.canResume,
+              case .webdav = origin.item.source else { return false }
+        let own = entry(forURL: copy)
+        guard let e = Self.carriedToCopy(origin, copy: own, item: ContinueQueue.libraryItem(URL(fileURLWithPath: copy))) else { return false }
+        var list = entries
+        if let own, let i = list.firstIndex(where: { $0.id == own.id }) { list[i] = e } else { list.append(e) }
+        entries = list
+        scheduleSave()
+        return true
+    }
+
+    /// The copy's entry as it should be after its stream's place is carried
+    /// to it; nil when it stays as it is (it was played since the stream).
+    /// A copy watched to its end and streamed again past the first minute
+    /// is being watched again, as record() has it (carryingWatched).
+    static func carriedToCopy(_ stream: HistoryEntry, copy: HistoryEntry?, item: MediaItem) -> HistoryEntry? {
+        guard let copy else {
+            return HistoryEntry(item: item, position: stream.position, duration: stream.duration, updated: stream.updated.addingTimeInterval(1))
+        }
+        guard stream.updated > copy.updated else { return nil }
+        let moved = HistoryEntry(item: copy.item, position: stream.position, duration: stream.duration > 0 ? stream.duration : copy.duration,
+                                 updated: stream.updated)
+        return carryingWatched(moved, from: copy)
     }
 
     /// Continue Watching worked out again; the pages (and the widget) are

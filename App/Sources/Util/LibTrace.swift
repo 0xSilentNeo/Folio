@@ -216,10 +216,19 @@ enum TraceExpiry {
     /// Watches the switches, so each is stamped when it's turned on.
     static func watch() {
         check()
-        NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { _ in
+        // On the thread that wrote the setting, not the main queue (1.30.6):
+        // with queue .main, every write from another thread waited for the
+        // main thread to run this. On a fresh install the library metadata
+        // is first opened off the main thread and writes a setting as it
+        // starts (MetadataService.init), while the main thread waited for
+        // that same start (ThumbLoader): Folio froze at launch. The look
+        // is cheap and thread-safe; only a change goes to the main thread.
+        NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: nil) { _ in
             // Only when a stamp is missing or left over: this fires for every setting.
             let d = UserDefaults.standard
-            if keys.contains(where: { d.bool(forKey: $0) != (d.object(forKey: stamp($0)) != nil) }) { check() }
+            if keys.contains(where: { d.bool(forKey: $0) != (d.object(forKey: stamp($0)) != nil) }) {
+                DispatchQueue.main.async { check() }
+            }
         }
     }
 }

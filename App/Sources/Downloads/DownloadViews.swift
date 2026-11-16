@@ -155,8 +155,10 @@ struct DownloadPillOverlay: View {
                     PulsingDot(active: snap.active > 0)
                     Text(snap.active > 0 ? speedString(snap.speed) : (snap.hasWork ? "Waiting" : "Paused")).font(.subheadline.weight(.bold).monospacedDigit())
                     // Paused, the files that are (1.30.4): it counted running ones, "0 files".
-                    let n = snap.active == 0 && !snap.hasWork ? snap.paused : snap.active
-                    Text("\(n) file\(n == 1 ? "" : "s")").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                    // Waiting, the queued ones (1.30.6): it still read "Waiting · 0 files".
+                    if let n = snap.count {
+                        Text("\(n) file\(n == 1 ? "" : "s")").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                    }
                     Sparkline(values: snap.history).frame(width: 54, height: 20)
                 }
                 .padding(.leading, 16).frame(height: 44)
@@ -164,11 +166,14 @@ struct DownloadPillOverlay: View {
                 .pointerHover(cornerRadius: 22)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(snap.active == 0 && !snap.hasWork ? "Downloads, \(snap.paused) paused" : "Downloads, \(speedString(snap.speed))")
-            // Resume all when something is paused and nothing runs (1.30.4):
-            // with files only waiting (queued), play did nothing.
+            .accessibilityLabel(snap.active > 0 ? "Downloads, \(speedString(snap.speed))"
+                                : snap.hasWork ? "Downloads, \(snap.queued) waiting" : "Downloads, \(snap.paused) paused")
+            // Resume when something is paused and nothing runs (1.30.4):
+            // with files only waiting (queued), play did nothing. Only the
+            // files it counts (1.30.6): Resume all also started files paused
+            // weeks ago and ones added paused ("Start automatically" off).
             Button {
-                snap.resumes ? dm.resumeAll() : dm.pauseAll()
+                snap.resumes ? dm.resumePausedThisRun() : dm.pauseAll()
                 snap = DownloadPillSnapshot.now()      // the icon at the tap, not at the next refresh
             } label: {
                 Image(systemName: snap.resumes ? "play.fill" : "pause.fill").font(.system(size: 12, weight: .bold))
@@ -176,7 +181,7 @@ struct DownloadPillOverlay: View {
             }
             .buttonStyle(.plain)
             .padding(.trailing, 7)
-            .accessibilityLabel(snap.resumes ? "Resume all downloads" : "Pause all downloads")
+            .accessibilityLabel(snap.resumes ? "Resume paused downloads" : "Pause all downloads")
         }
         .glass(cornerRadius: 22, interactive: true)
         .shadow(color: Theme.shadow, radius: 12, y: 6)
@@ -201,8 +206,10 @@ struct DownloadPillRoom: ViewModifier {
     @ObservedObject private var kids = KidsProfile.shared
     /// Whether the pill shows, noted only when it changes (1.24.1): the
     /// download manager announces each progress tick, many a second, and
-    /// this sits on whole pages (Home, Discover, Search).
-    @State private var working = DownloadPillSnapshot.now().shown
+    /// this sits on whole pages (Home, Discover, Search). Its first value is
+    /// worked out each time the page's parent draws, though only the first
+    /// is kept: the quick look (1.30.6), not a whole snapshot.
+    @State private var working = DownloadPillSnapshot.shownNow
     static let height: CGFloat = 78
 
     func body(content: Content) -> some View {
@@ -215,7 +222,7 @@ struct DownloadPillRoom: ViewModifier {
             .throttle(for: .seconds(0.5), scheduler: DispatchQueue.main, latest: true)
             .receive(on: DispatchQueue.main)) { _ in
             // As the pill decides (1.30.4: it stays for paused files).
-            let now = DownloadPillSnapshot.now().shown
+            let now = DownloadPillSnapshot.shownNow
             if now != working { working = now }
         }
     }
@@ -883,7 +890,7 @@ struct DownloadSettingsView: View {
                 Toggle("Only while charging", isOn: $charging)
                 Stepper(value: $retries, in: 0...10) { LabeledContent("Retries on error", value: "\(retries)") }
             } header: { Text("Network & battery") } footer: {
-                Text("Folio downloads files itself, not through iOS's background downloads. On iOS 26 and later they carry on in the background with iOS's own progress on the Lock Screen and in the Dynamic Island; its stop button holds them until Folio is open again. On older iOS they pause a little after you leave Folio and carry on when you're back. A paused file continues where it stopped.")
+                Text("Folio downloads files itself, not through iOS's background downloads. On iOS 26 and later they carry on in the background with iOS's own progress on the Lock Screen and in the Dynamic Island; its stop button pauses them, as Safari's does. On older iOS they pause a little after you leave Folio and carry on when you're back. A paused file continues where it stopped.")
             }
             // 1.22.0: AutoDownload and WatchedCleanup.
             Section {

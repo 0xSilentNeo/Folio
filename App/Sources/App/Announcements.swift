@@ -174,9 +174,26 @@ final class Announcements: ObservableObject {
     /// twice, none no longer worth showing by this version. Only the first
     /// of a check's entries became the banner, and the second was marked
     /// seen anyway, never shown.
+    ///
+    /// One "a new version is out" at most (1.30.6): the newest, first. A
+    /// newer one was put after the older one waiting, which stayed the
+    /// banner though it announced a version already out of date.
     nonisolated static func queued(_ pending: [Entry], adding new: [Entry], appVersion: String) -> [Entry] {
         var ids = Set<String>()
-        return (pending + new).filter { relevant($0, appVersion: appVersion) && ids.insert($0.id).inserted }
+        let all = (pending + new).filter { relevant($0, appVersion: appVersion) && ids.insert($0.id).inserted }
+        func isUpdateEntry(_ e: Entry) -> Bool { !(e.version ?? "").isEmpty }
+        guard let newest = all.filter(isUpdateEntry).max(by: { compare($0.version ?? "", $1.version ?? "") == .orderedAscending }) else {
+            return all
+        }
+        return [newest] + all.filter { !isUpdateEntry($0) }
+    }
+
+    /// Update entries that `queued` left out (1.30.6: a newer one replaced
+    /// them, or the update is installed): marked seen, or the next look
+    /// would pick a replaced one again.
+    nonisolated static func replaced(_ before: [Entry], by after: [Entry]) -> [String] {
+        let kept = Set(after.map(\.id))
+        return before.filter { !($0.version ?? "").isEmpty && !kept.contains($0.id) }.map(\.id)
     }
 
     /// Ids marked seen now (1.30.4): what the look skipped for good, not
@@ -232,7 +249,9 @@ final class Announcements: ObservableObject {
         // 1.30.3 kept one banner only.
         if saved.isEmpty, let data = d.data(forKey: Key.current), let e = try? JSONDecoder().decode(Entry.self, from: data) { saved = [e] }
         d.removeObject(forKey: Key.current)
-        setPending(Self.queued(saved, adding: [], appVersion: Self.appVersion))
+        let list = Self.queued(saved, adding: [], appVersion: Self.appVersion)
+        markSeen(Self.replaced(saved, by: list))
+        setPending(list)
     }
 
     // MARK: Checking
@@ -330,8 +349,16 @@ final class Announcements: ObservableObject {
         markSeen(Self.seenNow(s))
         dlog("news", "\(entries.count) in the feed, \(s.show.count) new\(firstRun ? " (first look)" : "")")
         guard !s.show.isEmpty else { return }
-        setPending(Self.queued(pending, adding: s.show, appVersion: Self.appVersion))
-        toNotify += s.show.filter { e in !toNotify.contains { $0.id == e.id } }
+        let list = Self.queued(pending, adding: s.show, appVersion: Self.appVersion)
+        // An older update replaced (1.30.6): seen, and not posted or left in Notification Center.
+        let gone = Self.replaced(pending + s.show, by: list)
+        if !gone.isEmpty {
+            markSeen(gone)
+            toNotify.removeAll { gone.contains($0.id) }
+            UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: gone.map { Self.notificationPrefix + $0 })
+        }
+        setPending(list)
+        toNotify += s.show.filter { e in list.contains { $0.id == e.id } && !toNotify.contains { $0.id == e.id } }
         deliver()
     }
 
