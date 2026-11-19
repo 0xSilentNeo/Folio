@@ -32,27 +32,34 @@ final class WhatsNewTests: XCTestCase {
         XCTAssertEqual(WhatsNew.decide(current: "", lastShown: nil, existingInstall: true, hasEntries: true), WhatsNew.Decision(show: false, remember: nil))
     }
 
+    /// A list as a version's entries are written, for the tests: the
+    /// app's own is empty at 0.90.0, where the numbers start again.
+    private let list: [WhatsNew.Release] = ["0.91.0", "0.90.10", "0.90.9", "0.90.8", "0.90.1"].map {
+        WhatsNew.Release(version: $0, items: [WhatsNew.Item(icon: "star", title: "A thing", text: "You'll see it.")])
+    }
+
+    /// 0.90.0: no entries (those of 1.21.0 to 1.30.6 are gone). What is
+    /// there is newest first, has items, and keeps to five a release.
     func testTheList() {
         let versions = WhatsNew.releases.map(\.version)
-        // 1.30.3: the version being released has a list (1.30.1 and 1.30.2 had none).
-        XCTAssertEqual(Array(versions.prefix(5)), ["1.30.6", "1.30.5", "1.30.4", "1.30.3", "1.30.0"])
-        XCTAssertEqual(WhatsNew.releases(after: "1.30.5", upTo: "1.30.6").map(\.version), ["1.30.6"])
-        XCTAssertEqual(WhatsNew.releases(after: "1.30.4", upTo: "1.30.5").map(\.version), ["1.30.5"])
-        XCTAssertEqual(WhatsNew.releases(after: "1.30.3", upTo: "1.30.4").map(\.version), ["1.30.4"])
-        XCTAssertEqual(WhatsNew.releases(after: "1.30.0", upTo: "1.30.3").map(\.version), ["1.30.3"])
-        XCTAssertEqual(WhatsNew.releases(after: "1.30.2", upTo: "1.30.3").map(\.version), ["1.30.3"])
-        XCTAssertEqual(versions, versions.sorted { $0.compare($1, options: .numeric) == .orderedDescending }, "newest first")
-        for r in WhatsNew.releases { XCTAssertFalse(r.items.isEmpty, r.version) }
-        XCTAssertNotNil(WhatsNew.release("1.21.0"))
+        XCTAssertFalse(versions.contains { $0.hasPrefix("1.") }, "nothing from before the numbers started again")
+        XCTAssertEqual(versions, versions.sorted { WhatsNew.newer($0, than: $1) }, "newest first")
+        XCTAssertEqual(Set(versions).count, versions.count)
+        for r in WhatsNew.releases {
+            XCTAssertFalse(r.items.isEmpty, r.version)
+            XCTAssertLessThanOrEqual(r.items.count, 5, r.version)
+        }
+        XCTAssertNil(WhatsNew.release("1.30.6"))
     }
 
     /// 1.28.11: an update over several versions lists each one since.
     func testEverythingSinceTheVersionYouHad() {
-        let since = WhatsNew.releases(after: "1.28.5", upTo: "1.28.8").map(\.version)
-        XCTAssertEqual(since, ["1.28.8", "1.28.7", "1.28.6"])
-        XCTAssertEqual(WhatsNew.releases(after: nil, upTo: "1.28.8").map(\.version), ["1.28.8"])
-        XCTAssertTrue(WhatsNew.releases(after: "1.28.8", upTo: "1.28.8").isEmpty)
-        // Numbered, not spelt: 1.28.10 is after 1.28.9.
-        XCTAssertEqual(WhatsNew.releases(after: "1.28.9", upTo: "1.28.10").map(\.version), ["1.28.10"])
+        func since(_ last: String?, _ current: String) -> [String] { WhatsNew.releases(after: last, upTo: current, in: list).map(\.version) }
+        XCTAssertEqual(since("0.90.1", "0.90.10"), ["0.90.10", "0.90.9", "0.90.8"])
+        XCTAssertEqual(since(nil, "0.90.8"), ["0.90.8"])
+        XCTAssertTrue(since("0.90.8", "0.90.8").isEmpty)
+        // Numbered, not spelt: 0.90.10 is after 0.90.9.
+        XCTAssertEqual(since("0.90.9", "0.90.10"), ["0.90.10"])
+        XCTAssertEqual(since("0.90.0", "0.90.1"), ["0.90.1"])
     }
 }

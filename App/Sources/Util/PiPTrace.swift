@@ -17,7 +17,8 @@ enum PiPTrace {
     nonisolated static let logger = Logger(subsystem: subsystem, category: "pip")
     nonisolated static let signposter = OSSignposter(subsystem: subsystem, category: "pip")
 
-    static var on: Bool { UserDefaults.standard.bool(forKey: SettingsKey.pipTrace) }
+    /// From TraceFlags' copy (0.90.0), not a settings read on every call.
+    nonisolated static var on: Bool { TraceFlags.pip }
 
     private static var t0: CFTimeInterval = 0
     static var sinceMark: Int { Int((CACurrentMediaTime() - t0) * 1000) }
@@ -32,7 +33,8 @@ enum PiPTrace {
     static func event(_ what: String) {
         guard on else { return }
         let line = "+\(sinceMark) ms \(what)"
-        logger.info("\(line, privacy: .public)")
+        // Debug level (0.90.0): no work unless the log is being read live (LibTrace.Channel.log).
+        logger.debug("\(line, privacy: .public)")
         signposter.emitEvent("pip", "\(what, privacy: .public)")
         dlog("pip", line)
     }

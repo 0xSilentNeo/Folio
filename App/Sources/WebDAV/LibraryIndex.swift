@@ -81,6 +81,10 @@ struct LibraryIndex: Codable, Equatable, Sendable {
 ///   (or renamed), with a different `getetag`, or — without one — a different
 ///   `getlastmodified`; when its saved listing is older than 24 hours; or on
 ///   a full refresh (pull to refresh).
+/// - "Older than 24 hours" is 18 to 24 hours, fixed per folder, and of the
+///   start folder's own folders only so many are listed for their age in one
+///   refresh, oldest first (0.90.0, `staleFolders`); the rest wait for the
+///   next one. A change the start folder's listing shows is never held back.
 /// - Otherwise its saved listing is kept, with everything under it. A folder
 ///   whose listing fails keeps what was saved for it.
 /// - Folders gone from their parent's listing go, with what was under them.
@@ -169,7 +173,26 @@ struct LibraryIndexer: Sendable {
         // inside releases (Subs, Featurettes) took them too, and the release
         // folders waited for the 24 h reset. A folder inside is listed again
         // when its release is and shows it changed.
-        let turn: Set<String> = Self.turnFolders(old, root: fresh.root, now: now, enabled: !full && turns)
+        //
+        // The start folder's own folders listed for their age in this
+        // refresh (0.90.0, `aged`): a capped number, oldest first, and none
+        // in Home's quick check, as with the turns. They count towards the
+        // turns' share, so a refresh lists the share when few are old and
+        // twice the share at most when many are.
+        let aged: Set<String> = Self.staleFolders(old, root: fresh.root, now: now, maxAge: maxAge, enabled: !full && turns)
+        let share = Self.turnShare(old.folders[fresh.root]?.subfolders.count ?? 0)
+        let turn: Set<String> = Set(Self.turnOrder(old, root: fresh.root, now: now, enabled: !full && turns)
+            .filter { !aged.contains($0) }.prefix(max(0, share - aged.count)))
+        // Trace (0.90.0): why folders were listed again, one line a reason
+        // at the end with a count and the first names. A line a folder was
+        // 104 lines, each written to the log, in the one refresh that was
+        // already the slow one.
+        let tracing = LibTrace.on
+        var reasons: [(why: String, names: [String])] = []
+        func note(_ name: String, _ why: String) {
+            guard tracing else { return }
+            if let i = reasons.firstIndex(where: { $0.why == why }) { reasons[i].names.append(name) } else { reasons.append((why, [name])) }
+        }
 
         func keep(_ key: String) {
             guard let f = old.folders[key], fresh.folders[key] == nil else { return }
@@ -250,11 +273,16 @@ struct LibraryIndexer: Sendable {
                     else if let e = item.etag, let pe = prev?.etag { why = e != pe ? "etag changed" : nil }
                     else if let m = item.modified, let pm = prev?.modified { why = m != pm ? "date changed" : nil }
                     else { why = nil }
-                    let stale = prev.map { now.timeIntervalSince($0.listed) > maxAge } ?? false
+                    // The start folder's own folders by `aged` (capped);
+                    // a folder inside a release whenever its release is
+                    // listed and its own listing is past its age.
+                    let stale: Bool
+                    if key == fresh.root { stale = aged.contains(k) }
+                    else { stale = prev.map { now.timeIntervalSince($0.listed) > Self.ageLimit(k, maxAge: maxAge) } ?? false }
                     if let why = why ?? (stale ? "older than 24 h" : turn.contains(k) ? "its turn" : nil) {
                         props[k] = (item.name, item.etag, item.modified, item.added)
                         queue.append((item.url, done.depth + 1))
-                        LibTrace.index.log("\(item.name): list (\(why))")
+                        note(item.name, why)
                     } else {
                         keep(k)
                     }
@@ -277,18 +305,63 @@ struct LibraryIndexer: Sendable {
             fresh.unread = report.unread > 0 ? report.unread : nil
         }
         report.ms = Int(Date().timeIntervalSince(start) * 1000)
+        for r in reasons { LibTrace.index.log(Self.listedLine(r.names, why: r.why)) }
         return (fresh, report)
+    }
+
+    /// "list 104 folder(s) (older than 24 h): A, B, C, D, E and 99 more" (0.90.0).
+    static func listedLine(_ names: [String], why: String, first: Int = 5) -> String {
+        let more = names.count - first
+        return "list \(names.count) folder(s) (\(why)): " + names.prefix(first).joined(separator: ", ") + (more > 0 ? " and \(more) more" : "")
+    }
+
+    /// How old a folder's listing may get before it's listed again
+    /// (0.90.0): between three quarters of `maxAge` and all of it (18 to
+    /// 24 hours), fixed for each folder by its address. With one limit for
+    /// all, the folders listed together after a quiet day came due together
+    /// the next day too: "listed 104 folder(s) … in 16067 ms", and again a
+    /// day later. With their own limits they drift apart. Never later than
+    /// before; sooner costs nothing, a folder takes its turn within hours
+    /// anyway. Not Swift's own hash, which differs from launch to launch.
+    static func ageLimit(_ key: String, maxAge: TimeInterval) -> TimeInterval {
+        var h: UInt64 = 0xcbf29ce484222325
+        for b in key.utf8 { h = (h ^ UInt64(b)) &* 0x100000001b3 }
+        return maxAge * (0.75 + 0.25 * Double(h % 1024) / 1023)
+    }
+
+    /// The share of the start folder's folders listed "in their turn" in
+    /// one refresh: a twelfth of them, at least 12.
+    static func turnShare(_ count: Int) -> Int { max(12, count / 12) }
+
+    /// The start folder's own folders listed again for their age in one
+    /// refresh (0.90.0): those past their limit, oldest first, at most
+    /// twice the turn share. All of them were listed at once before: after
+    /// a day without Folio that was every folder in the library in one
+    /// refresh. The rest are listed by the next refreshes, ten minutes apart.
+    static func staleFolders(_ old: LibraryIndex, root: String, now: Date, maxAge: TimeInterval, enabled: Bool = true) -> Set<String> {
+        guard enabled else { return [] }
+        let children = old.folders[root]?.subfolders ?? []
+        let due = children.compactMap { k in old.folders[k].map { (key: k, listed: $0.listed) } }
+            .filter { $0.key != root && now.timeIntervalSince($0.listed) > ageLimit($0.key, maxAge: maxAge) }
+        // By address among those of one moment, so the choice is the same each time.
+        let ordered = due.sorted { $0.listed != $1.listed ? $0.listed < $1.listed : $0.key < $1.key }
+        return Set(ordered.prefix(2 * turnShare(children.count)).map { $0.key })
     }
 
     /// The folders listed "in their turn": the start folder's own, unlisted
     /// for over an hour, oldest first, a twelfth of them (at least 12).
     static func turnFolders(_ old: LibraryIndex, root: String, now: Date, enabled: Bool = true) -> Set<String> {
+        Set(turnOrder(old, root: root, now: now, enabled: enabled).prefix(turnShare(old.folders[root]?.subfolders.count ?? 0)))
+    }
+
+    /// Every folder whose turn could come, oldest first (by address among
+    /// those listed at one moment, 0.90.0, so the choice is the same each time).
+    static func turnOrder(_ old: LibraryIndex, root: String, now: Date, enabled: Bool = true) -> [String] {
         guard enabled else { return [] }
         let children = old.folders[root]?.subfolders ?? []
         let due = children.compactMap { k in old.folders[k].map { (key: k, listed: $0.listed) } }
             .filter { $0.key != root && now.timeIntervalSince($0.listed) > 3600 }
-        let share = max(12, children.count / 12)
-        return Set(due.sorted { $0.listed < $1.listed }.prefix(share).map { $0.key })
+        return due.sorted { $0.listed != $1.listed ? $0.listed < $1.listed : $0.key < $1.key }.map { $0.key }
     }
 }
 
@@ -479,9 +552,17 @@ final class LibraryIndexStore: ObservableObject {
                  + capped)
             await apply(fresh, to: id)
             // Trace: the release names, for the release-name parser's tests.
+            // All of them after a full refresh only (0.90.0, pull to
+            // refresh); every refresh wrote the whole list, 237 lines every
+            // ten minutes. Otherwise how many, and the first few.
             if LibTrace.on, let root = fresh.folders[fresh.root] {
-                let names = root.subfolders.compactMap { fresh.folders[$0]?.name }.prefix(400)
-                LibTrace.index.log("release names in the start folder (\(names.count)):\n" + names.joined(separator: "\n"))
+                let names = root.subfolders.compactMap { fresh.folders[$0]?.name }
+                if full {
+                    LibTrace.index.log("release names in the start folder (\(min(names.count, 400))):\n" + names.prefix(400).joined(separator: "\n"))
+                } else {
+                    LibTrace.index.log("\(names.count) release(s) in the start folder: " + names.prefix(5).joined(separator: ", ")
+                                       + (names.count > 5 ? " and \(names.count - 5) more (pull to refresh logs every name)" : ""))
+                }
             }
             let url = Self.file(id)
             // The server removed (or its account changed) meanwhile

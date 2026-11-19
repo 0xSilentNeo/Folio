@@ -263,6 +263,9 @@ struct EpisodeRow: View {
     /// The episode's state on either side (1.30.0, WatchedState.combined):
     /// its addon entry or its library file's.
     let entry: HistoryEntry?
+    /// The episode the page was opened on (0.90.0): the library's
+    /// highlighted row's fill and play mark (LibraryRow).
+    var highlighted = false
     @AppStorage(SettingsKey.hideSpoilers) private var hideSpoilers = false
 
     private var episodeTitle: String {
@@ -300,10 +303,11 @@ struct EpisodeRow: View {
             // The library's eye, at the row's top right as there (1.30.0: a
             // checkmark and the word under the text). The row says it as its value.
             if watched { WatchedGlyph(spoken: false).padding(.top, 2) }
+            if highlighted { Image(systemName: "play.fill").font(.caption).foregroundStyle(Theme.accent).padding(.top, 2).accessibilityHidden(true) }
         }
         .padding(8)
         // The library's episode rows' radius (1.27.0: 14 here, 16 there).
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(highlighted ? Theme.accentSoft : Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

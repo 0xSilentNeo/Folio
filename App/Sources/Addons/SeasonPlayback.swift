@@ -303,19 +303,28 @@ enum LinkWarmer {
     /// ready with a short "downloading" clip, which would then have won
     /// every race for half a day. The player saves an address once the
     /// file it led to has really loaded (PlayerModel.rememberAddress).
-    static func resolveFast(_ url: URL, headers: [String: String], purpose: String) async -> (address: URL?, fromSaved: Bool) {
+    ///
+    /// `gaveUp` (0.90.0): the link was followed again after a failing
+    /// download host and still found none that answers, so the player
+    /// doesn't start the same round again by itself.
+    static func resolveFast(_ url: URL, headers: [String: String], purpose: String) async -> (address: URL?, fromSaved: Bool, gaveUp: Bool) {
         guard let saved = await ResolvedLinks.shared.address(for: url) else {
-            return (await resolve(url, headers: headers, purpose: purpose), false)
+            let led = await follow(url, headers: headers, purpose: purpose)
+            return (led.address, false, led.gaveUp)
         }
         let t0 = Date()
-        return await withTaskGroup(of: (url: URL?, saved: Bool).self) { group in
+        return await withTaskGroup(of: (url: URL?, saved: Bool, gaveUp: Bool).self) { group in
             // The saved address must answer as a file does: part of it (206), not a page.
-            group.addTask { (await resolve(saved, headers: [:], purpose: purpose + " (its saved address)", timeout: 8, asFile: true), true) }
-            group.addTask { (await resolve(url, headers: headers, purpose: purpose), false) }
-            var winner: (address: URL?, fromSaved: Bool) = (nil, false)
+            group.addTask { (await resolve(saved, headers: [:], purpose: purpose + " (its saved address)", timeout: 8, asFile: true), true, false) }
+            group.addTask {
+                let led = await follow(url, headers: headers, purpose: purpose)
+                return (led.address, false, led.gaveUp)
+            }
+            var winner: (address: URL?, fromSaved: Bool, gaveUp: Bool) = (nil, false, false)
             for await answer in group {
+                if !answer.saved, answer.url == nil { winner.gaveUp = answer.gaveUp }
                 if let u = answer.url {
-                    winner = (u, answer.saved)
+                    winner = (u, answer.saved, false)
                     if answer.saved {
                         dlog("player", String(format: "%@: played from its saved download address after %.1f s, without waiting for the link", purpose, Date().timeIntervalSince(t0)))
                     }
@@ -329,11 +338,70 @@ enum LinkWarmer {
         }
     }
 
+    /// The waits before a link is followed again (0.90.0).
+    static let retryWaits: [Double] = [0.3, 1, 2]
+
+    /// How long to wait before following the link again, or nil when it
+    /// isn't followed again (0.90.0). Only an answer of 5xx or 429 from a
+    /// host the link led on to: a debrid service sends each request through
+    /// its own server to one of many download hosts, and one of them failing
+    /// says nothing of the next. 18 Nov log: syn…-4.download.real-debrid.com
+    /// answered 503, Folio gave mpv the WebDAV address itself, and every one
+    /// of mpv's 12 connections was redirected afresh, to 5 hosts, 11.7 s to
+    /// open. `tries`: how often it has been followed again already.
+    ///
+    /// 429 is the host asking for fewer requests: one more only, after the
+    /// time it names (`retryAfter`, its Retry-After in seconds), 2 s at
+    /// least and 5 s at most.
+    static func retryWait(status: Int?, redirected: Bool, tries: Int, retryAfter: Double? = nil) -> Double? {
+        guard let status, redirected, tries >= 0 else { return nil }
+        if status == 429 { return tries == 0 ? min(5, max(2, retryAfter ?? 2)) : nil }
+        guard (500...599).contains(status), tries < retryWaits.count else { return nil }
+        return retryWaits[tries]
+    }
+
     /// `asFile`: only an answer a file gives counts (206 to the byte range,
     /// and not a web page): for a saved address, which an expired one may
     /// answer with its error page.
+    ///
+    /// A download host that answers 5xx or 429 has the link followed again,
+    /// three times at most (0.90.0, retryWait): the address returned is the
+    /// first host's that answers as it should.
     static func resolve(_ url: URL, headers: [String: String], purpose: String = "next episode", timeout: TimeInterval = 40, asFile: Bool = false) async -> URL? {
+        await follow(url, headers: headers, purpose: purpose, timeout: timeout, asFile: asFile).address
+    }
+
+    /// As `resolve`, saying too whether it was followed again and gave up.
+    static func follow(_ url: URL, headers: [String: String], purpose: String, timeout: TimeInterval = 40,
+                       asFile: Bool = false) async -> (address: URL?, gaveUp: Bool) {
+        var tries = 0
+        while true {
+            let answer = await ask(url, headers: headers, purpose: purpose, timeout: timeout, asFile: asFile, again: tries > 0)
+            if let address = answer.address { return (address, false) }
+            guard !asFile, let wait = retryWait(status: answer.status, redirected: answer.redirected, tries: tries, retryAfter: answer.retryAfter) else {
+                if tries > 0 { dlog("player", "\(purpose): followed again \(tries) time(s) without a download host that answers; the link itself is played") }
+                return (nil, tries > 0)
+            }
+            tries += 1
+            dlog("player", String(format: "%@: the download host answered HTTP %d; following the link again in %.1f s (%d of %d)",
+                                  purpose, answer.status ?? 0, wait, tries, retryWaits.count))
+            // Ended with the task (the race's other request won, the player closed).
+            do { try await Task.sleep(for: .seconds(wait)) } catch { return (nil, false) }
+        }
+    }
+
+    /// A Retry-After header given in seconds (a date isn't read).
+    static func retryAfter(_ header: String?) -> Double? {
+        guard let s = header?.trimmingCharacters(in: .whitespaces), let n = Double(s), n >= 0 else { return nil }
+        return n
+    }
+
+    /// One trip along the link. `again`: not the first, so nothing kept from
+    /// the last trip answers for it.
+    private static func ask(_ url: URL, headers: [String: String], purpose: String, timeout: TimeInterval, asFile: Bool,
+                            again: Bool) async -> (address: URL?, status: Int?, redirected: Bool, retryAfter: Double?) {
         var r = URLRequest(url: url, timeoutInterval: timeout)
+        if again { r.cachePolicy = .reloadIgnoringLocalCacheData }
         r.setValue("bytes=0-0", forHTTPHeaderField: "Range")
         r.setValue("libmpv", forHTTPHeaderField: "User-Agent")       // what the player sends
         for (k, v) in headers { r.setValue(v, forHTTPHeaderField: k) }
@@ -350,20 +418,22 @@ enum LinkWarmer {
             response = r
         } catch {
             // The race's other request, ended on purpose (1.28.10): not "didn't answer".
-            if Task.isCancelled || (error as? URLError)?.code == .cancelled || error is CancellationError { return nil }
+            if Task.isCancelled || (error as? URLError)?.code == .cancelled || error is CancellationError { return (nil, nil, false, nil) }
             NetTrace.report("link", url: url, others: others, started: c0, timer: timer, status: nil, bytes: nil, error: error)
             dlog("player", "\(purpose): link didn't answer")
-            return nil
+            return (nil, nil, false, nil)
         }
         NetTrace.report("link", url: url, others: others, started: c0, timer: timer, status: (response as? HTTPURLResponse)?.statusCode, bytes: 0, error: nil)
-        guard let http = response as? HTTPURLResponse else { return nil }
+        guard let http = response as? HTTPURLResponse else { return (nil, nil, false, nil) }
+        let after = retryAfter(http.value(forHTTPHeaderField: "Retry-After"))
+        let redirected = http.url?.host != url.host
         dlog("player", String(format: "%@: link answered HTTP %d in %.1f s%@", purpose, http.statusCode, Date().timeIntervalSince(t0),
-                              http.url?.host != url.host ? " (redirected to \(http.url?.host ?? "?"))" : ""))
+                              redirected ? " (redirected to \(http.url?.host ?? "?"))" : ""))
         if asFile {
             let page = ChunkPlan.isPage(contentType: http.value(forHTTPHeaderField: "Content-Type"), fileName: url.lastPathComponent)
-            guard http.statusCode == 206, !page else { return nil }
+            guard http.statusCode == 206, !page else { return (nil, http.statusCode, redirected, after) }
         }
-        return (200..<300).contains(http.statusCode) ? http.url : nil
+        return ((200..<300).contains(http.statusCode) ? http.url : nil, http.statusCode, redirected, after)
     }
 }
 

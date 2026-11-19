@@ -1,6 +1,80 @@
 import SwiftUI
 import QuartzCore
 
+/// The episode a title page opens on (0.90.0): the Airing sheet's episode
+/// out now and Continue Watching's "Go to Show" open the page with that
+/// episode's row in the middle and highlighted. By season and number, or
+/// by the addon's own video id when the numbers aren't known (an anime
+/// addon's "kitsu:<id>:<episode>" has no season).
+struct EpisodeFocus: Hashable {
+    var season: Int?
+    var episode: Int?
+    var videoID: String? = nil
+
+    func matches(_ v: MetaVideo) -> Bool {
+        if let videoID, v.id == videoID { return true }
+        guard let season, let episode else { return false }
+        return v.season == season && v.episode == episode
+    }
+}
+
+/// A title page to open, and the episode it opens on (0.90.0): what the
+/// Airing sheet and Home push for "Open Title Page" and "Go to Show".
+struct TitlePageTarget: Hashable, Identifiable {
+    var meta: MetaItem
+    var focus: EpisodeFocus?
+    var id: String { meta.id + "|" + (focus?.videoID ?? "") + "|\(focus?.season ?? -1):\(focus?.episode ?? -1)" }
+    var isSeries: Bool { meta.type != "movie" }
+
+    init(meta: MetaItem, focus: EpisodeFocus?) {
+        self.meta = meta
+        self.focus = focus
+    }
+
+    /// From an addon item's ref, "<type>|<metaId>|<videoId>" (MediaItem.addonRef):
+    /// the title, and for an episode the one the video id names
+    /// ("tt0944947:1:3" is season 1, episode 3). Nil when the ref has no title in it.
+    init?(addonRef ref: String, name: String, poster: String?) {
+        let parts = ref.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count >= 2, !parts[1].isEmpty else { return nil }
+        let type = parts[0].isEmpty ? "movie" : parts[0]
+        meta = MetaItem(id: parts[1], type: type, name: name, poster: poster, description: nil, releaseInfo: nil, imdbRating: nil, genres: nil)
+        let video = parts.count >= 3 ? parts[2] : ""
+        guard type != "movie", !video.isEmpty, video != parts[1] else { return }
+        // "tt…:S:E" only: another addon's id can end in numbers that mean
+        // something else ("kitsu:<id>:<episode>"), and its row is found by the id itself.
+        let n = video.split(separator: ":")
+        if parts[1].hasPrefix("tt"), n.count >= 3, let s = Int(n[n.count - 2]), let e = Int(n[n.count - 1]) {
+            focus = EpisodeFocus(season: s, episode: e, videoID: video)
+        } else {
+            focus = EpisodeFocus(season: nil, episode: nil, videoID: video)
+        }
+    }
+
+    /// A tracked show's page, on the episode out now when it has aired,
+    /// else the last one that did. Nil without an IMDb id: the page is
+    /// IMDb's. An episode with no season (AniList numbers each season on
+    /// its own) opens the page without a focus: its number could be another
+    /// season's on IMDb.
+    init?(show s: TrackedShow, now: Date) {
+        guard let imdb = s.imdb, imdb.hasPrefix("tt") else { return nil }
+        meta = MetaItem(id: imdb, type: "series", name: s.name, poster: s.poster, description: nil, releaseInfo: nil, imdbRating: nil, genres: nil)
+        if let e = Self.airedEpisode(of: s, now: now), let season = e.season, let number = e.number {
+            focus = EpisodeFocus(season: season, episode: number)
+        }
+    }
+
+    /// The episode a tracked show's page opens on: its headline when that
+    /// has aired (out in the last six hours), else the last aired.
+    static func airedEpisode(of s: TrackedShow, now: Date) -> AiringEpisode? {
+        if let h = s.headline(at: now), let d = h.airDate, d <= now { return h }
+        return s.lastAired
+    }
+
+    @MainActor
+    var page: some View { MetaDetailView(preview: meta, sourceAddon: nil, focus: focus) }
+}
+
 /// Discover title page: backdrop, poster beside a deciphering title, the
 /// synopsis, one big Find-streams button, episodes, cast, links.
 struct MetaDetailView: View {
@@ -8,6 +82,12 @@ struct MetaDetailView: View {
     let sourceAddon: InstalledAddon?
     /// The season to open on (1.30.4): Airing now's episode's, not Season 1.
     var openSeason: Int? = nil
+    /// The episode the page opens on (0.90.0): its season is the one shown
+    /// first, and its row is scrolled to the middle once and stays highlighted.
+    var focus: EpisodeFocus? = nil
+    /// The focused row has been scrolled to: once, not again when the
+    /// episodes load again or the season is picked again.
+    @State private var focusScrolled = false
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var meta: MetaItem?
     @State private var season: Int = 1
@@ -63,6 +143,13 @@ struct MetaDetailView: View {
     /// The rest of the season from `v`, aired and capped; empty when nothing follows.
     private func queue(from v: MetaVideo) -> [MetaVideo] {
         Array(AddonPlayback.seasonVideos(from: v, in: airedEpisodes).prefix(Self.queueCap))
+    }
+
+    /// The focused episode's row while it still has to be scrolled to
+    /// (0.90.0); nil before its season's episodes are there, and after.
+    private var focusRowID: String? {
+        guard let focus, !focusScrolled else { return nil }
+        return seasonEpisodes.first(where: focus.matches)?.id
     }
 
     /// Worked out once per change, not at each of the ~7 places a body asks (1.30.4).
@@ -163,6 +250,7 @@ struct MetaDetailView: View {
             // The text in a readable column, centred, on a wide iPad window
             // (1.30.0); the picture keeps the whole width.
             let side = PageLayout(width: geo.size.width).readableSide(16)
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     backdrop(geo.size)
@@ -216,6 +304,22 @@ struct MetaDetailView: View {
             .scrollIndicators(.hidden)
             .ignoresSafeArea(edges: .top)
             .topScrollScrim()
+            // Not once you've started scrolling yourself (on a slow
+            // connection the episodes come after you've begun reading).
+            .simultaneousGesture(DragGesture(minimumDistance: 12).onChanged { _ in if !focusScrolled { focusScrolled = true } },
+                                 including: focus == nil || focusScrolled ? .subviews : .all)
+            // The focused episode's row to the middle (0.90.0), once its
+            // season's episodes are there. After a moment: the rows above it
+            // are laid out and the page's own push is over by then.
+            .task(id: focusRowID) {
+                guard let id = focusRowID else { return }
+                try? await Task.sleep(nanoseconds: 450_000_000)
+                guard !Task.isCancelled, !focusScrolled else { return }
+                focusScrolled = true
+                dlog("nav", "title page: scrolling to the focused episode \(id)")
+                withAnimation(.smooth(duration: 0.4)) { proxy.scrollTo(id, anchor: .center) }
+            }
+            }
         }
         .background(Theme.background.ignoresSafeArea())
         .pageButtons(zooms: zooms, back: { dismiss() }) {
@@ -544,6 +648,8 @@ struct MetaDetailView: View {
                     // date-only release counts from midnight (review, 5 Nov).
                     let notOut = v.airsLater() || { if case .airs = mark { return true }; return false }()
                     let entry = state(v.id)
+                    // The episode the page was opened on (0.90.0).
+                    let focused = focus?.matches(v) == true
                     // The rest of the season follows a stream picked from an
                     // episode's own row too (1.30.3): it queued that episode
                     // alone, so nothing played after it. Built on the tap, not per row.
@@ -552,7 +658,7 @@ struct MetaDetailView: View {
                         // row's own date is the network's (IMDb's US date), so it's left out.
                         // Only under "Airs…": the "New" badge has no date (1.22.6; until
                         // then Tulsa King's newest episode showed none).
-                        EpisodeRow(video: { if case .airs = mark { var u = v; u.released = nil; return u }; return v }(), entry: entry)
+                        EpisodeRow(video: { if case .airs = mark { var u = v; u.released = nil; return u }; return v }(), entry: entry, highlighted: focused)
                             .overlay(alignment: .topLeading) {
                                 if let mark { AiringBadge(mark: mark, maxWidth: 116).padding(14) }
                             }
@@ -563,6 +669,8 @@ struct MetaDetailView: View {
                     .opacity(notOut ? 0.6 : 1)
                     .accessibilityHint(notOut ? "Not out yet." : "")
                     .accessibilityValue(WatchedState.spoken(entry))
+                    // VoiceOver says "selected" on the focused row (0.90.0).
+                    .accessibilityAddTraits(focused ? .isSelected : [])
                     // As the library's episode rows have (1.30.0).
                     .contextMenu {
                         if !notOut {
@@ -639,7 +747,8 @@ struct MetaDetailView: View {
                 // season's episodes: the list went empty and the button stuck
                 // on "loading episodes…" (review, 2 Nov).
                 // Airing now's season when the title has it (1.30.4), else the first.
-                let start = openSeason.flatMap { seasons.contains($0) ? $0 : nil } ?? seasons.first
+                // The focused episode's before either (0.90.0).
+                let start = (focus?.season ?? openSeason).flatMap { seasons.contains($0) ? $0 : nil } ?? seasons.first
                 if let first = start, season != first {
                     season = first
                 } else if let first = start {
@@ -657,7 +766,9 @@ struct MetaDetailView: View {
                 meta = full
                 detailsKnown = true
             }
-            if let first = meta?.seasons.first { season = first }
+            // The focused episode's season (0.90.0), else the first.
+            let focusSeason = focus.flatMap { f in meta?.videos?.first(where: f.matches)?.season }
+            if let first = focusSeason ?? meta?.seasons.first { season = first }
         }
     }
 }

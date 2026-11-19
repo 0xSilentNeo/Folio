@@ -21,6 +21,8 @@ struct NotifySettingsView: View {
     @State private var to = Date()
     @Environment(\.scenePhase) private var phase
     @AppStorage(SettingsKey.announcements) private var news = true
+    /// (0.90.0) Set by NotifyCenter when a setting changes: the planned line is drawn again.
+    @AppStorage("notifyPlanStale") private var planStale = false
 
     private var allowed: Bool { status.map { [.authorized, .provisional, .ephemeral].contains($0) } ?? true }
 
@@ -128,16 +130,33 @@ struct NotifySettingsView: View {
         }
 
         Section {
+            // (0.90.0) "Up to … a Day": it's a limit, not a promise, and
+            // the line under it says what's planned, so the gap shows.
             Stepper(value: $maxPerDay, in: 1...5) {
-                LabeledContent("Notifications a Day", value: "\(maxPerDay)")
+                Text("Up to \(maxPerDay) a Day")
             }
             .accessibilityIdentifier("notifyMax")
+            if let planned = plannedLine {
+                Text(planned)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("notifyPlanned")
+            }
             NavigationLink(value: LibraryRoute.settingsSubpage(.notifySounds)) {
                 Text("Sounds")
             }
         } header: { Text("Delivery") } footer: {
-            Text("At most this many a day. New episodes and finished downloads don't count towards it. More than one a day come at least two hours apart.")
+            Text("At most this many on a day with that much worth saying; most days have fewer. They're spread over the week and over the day, at least two hours apart. New episodes and finished downloads don't count towards it.")
         }
+    }
+
+    /// (0.90.0) What the last plan has for today and tomorrow. Read on each
+    /// draw (a few small values): the page draws again when a setting
+    /// changes, and the line then says it's planned again on leaving.
+    private var plannedLine: String? {
+        _ = prefs.revision
+        _ = (planStale, phase)
+        return NotifyCenter.plannedLine()
     }
 
     private var toneNote: String {

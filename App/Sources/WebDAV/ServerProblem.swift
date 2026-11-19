@@ -36,9 +36,11 @@ struct ServerProblem: Equatable {
 
     /// From what the server answered (`status`) or the error reaching it.
     /// `folder`: a folder page, not a file. `reason`: mpv's own words, for a
-    /// file the server does send.
+    /// file the server does send. `afterRedirect`: the answer came from a
+    /// host the server sent Folio on to (a debrid service's download host),
+    /// not from the server itself.
     static func classify(status: Int?, error: Error?, server: String, realDebrid: Bool,
-                         folder: Bool = false, reason: String? = nil) -> ServerProblem {
+                         folder: Bool = false, reason: String? = nil, afterRedirect: Bool = false) -> ServerProblem {
         let thing = folder ? (realDebrid ? "release" : "folder") : "file"
         if let status {
             switch status {
@@ -59,6 +61,16 @@ struct ServerProblem: Equatable {
                 return ServerProblem(kind: .serverError(429), title: "\(server) asks Folio to slow down",
                                      detail: "Too many requests in a short time. Try again in a minute.", icon: "hourglass")
             case 500...599:
+                // One of the hosts the server hands its files out from
+                // (0.90.0), not the server: the next try is sent to another.
+                // 18 Nov log: a Real-Debrid download host answered 503, the
+                // card said "Try again in a few minutes", and a try at once
+                // played from another host.
+                if afterRedirect {
+                    return ServerProblem(kind: .serverError(status), title: "One of \(server)'s download hosts didn't answer",
+                                         detail: "It answered with error \(status). Trying again usually works: each try is sent to another host.",
+                                         icon: "exclamationmark.icloud")
+                }
                 return ServerProblem(kind: .serverError(status), title: "\(server) is having trouble",
                                      detail: "It answered with error \(status). Try again in a few minutes.", icon: "exclamationmark.icloud")
             case 200...299:
@@ -95,8 +107,10 @@ struct ServerProblem: Equatable {
     }
 
     /// Asks the server for the file's first byte with the player's headers:
-    /// its answer says whether the file is there (8 s at most).
-    static func probe(_ url: URL, headers: [String: String]) async -> (status: Int?, error: Error?) {
+    /// its answer says whether the file is there (8 s at most), and whether
+    /// it came from another host than the one asked (0.90.0, `redirected`).
+    /// `retryAfter`: the answer's Retry-After, in seconds.
+    static func probe(_ url: URL, headers: [String: String]) async -> (status: Int?, error: Error?, redirected: Bool, retryAfter: Double?) {
         var req = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 8)
         req.httpMethod = "GET"
         for (k, v) in headers { req.setValue(v, forHTTPHeaderField: k) }
@@ -108,9 +122,11 @@ struct ServerProblem: Equatable {
         defer { session.finishTasksAndInvalidate() }
         do {
             let (_, response) = try await session.data(for: req)
-            return ((response as? HTTPURLResponse)?.statusCode, nil)
+            let from = response.url?.host
+            let http = response as? HTTPURLResponse
+            return (http?.statusCode, nil, from != nil && from != url.host, LinkWarmer.retryAfter(http?.value(forHTTPHeaderField: "Retry-After")))
         } catch {
-            return (nil, error)
+            return (nil, error, false, nil)
         }
     }
 }

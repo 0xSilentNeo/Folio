@@ -14,6 +14,8 @@ struct HomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var path: [LibraryRoute] = []
+    /// An addon title's page (0.90.0): Continue Watching's "Go to Show".
+    @State private var titlePage: TitlePageTarget?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -76,6 +78,8 @@ struct HomeView: View {
             .task(id: local.files) { metaIndex.update(local.files) }
             .background(PathWatch(path: $path, pending: pending, layout: layoutGeneration) { openPending() })
             .navigationDestination(for: LibraryRoute.self) { route in destination(route) }
+            // Go to Show on an addon's card (0.90.0): its Discover page, pushed the usual way.
+            .navigationDestination(item: $titlePage) { $0.page.zoomDestination($0.id, in: zoomNS, zoom: false) }
             // Folio went to the background with the kids profile on: Settings
             // and every page opened from it go, so none stays usable without
             // the passcode; opening Settings again asks (1.26.1). Not when the
@@ -218,6 +222,13 @@ struct HomeView: View {
     /// (Settings), not pushed on top of it. `.id(route)` on the page keeps
     /// another route there from reusing its view (see open(_:)).
     private func openFromOutside(_ route: LibraryRoute) {
+        // A title page opened from a Continue Watching card's menu (0.90.0)
+        // isn't in the path: it goes first, then the route opens on Home.
+        if titlePage != nil {
+            titlePage = nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { open(route) }
+            return
+        }
         guard !path.isEmpty else { open(route); return }
         LibTrace.title.event("open", "home opens \(route.logName) in place of \(path.count) page(s)")
         path = [route]
@@ -891,8 +902,54 @@ struct HomeView: View {
         .padding(.horizontal, margin)
     }
 
+    /// Where a Continue Watching card's "Go to Show" / "Go to Title" leads
+    /// (0.90.0): an addon item's Discover page on its episode, a library
+    /// file's title page (which highlights that file). A next-episode card
+    /// is the next episode's item, so it leads to that one.
+    enum GoToPage: Equatable {
+        case title(TitlePageTarget)
+        /// The file's path inside the library (HistoryStore.libraryRelative).
+        case library(relative: String, episode: Bool)
+
+        var menuTitle: String {
+            switch self {
+            case .title(let t): return t.isSeries ? "Go to Show" : "Go to Title"
+            case .library(_, let episode): return episode ? "Go to Show" : "Go to Title"
+            }
+        }
+    }
+
+    /// Nil for an entry with no page: a pasted link, a server's item, a file opened from outside the library.
+    nonisolated static func goToPage(_ e: HistoryEntry) -> GoToPage? {
+        if let ref = e.item.addonRef {
+            return TitlePageTarget(addonRef: ref, name: e.item.title, poster: e.item.artwork).map(GoToPage.title)
+        }
+        guard case .local = e.item.source, e.item.remote == nil, let rel = HistoryStore.libraryRelative(e.item.historyKey ?? e.item.url) else { return nil }
+        return .library(relative: rel, episode: TitleParser.parse((rel as NSString).lastPathComponent).episode != nil)
+    }
+
+    /// Opens it through Home's own stack, not a link in the menu (see folderLink).
+    private func go(to page: GoToPage) {
+        switch page {
+        case .title(let t):
+            dlog("nav", "home: go to \(t.meta.id)'s page from Continue Watching")
+            titlePage = t
+        case .library(let rel, _):
+            // The file as the library has it now: its path changes with the app's container.
+            guard let file = local.files.first(where: { HistoryStore.libraryRelative($0.path) == rel }) else {
+                FileOpener.showAlert("Not in your library any more", "This video's file has been deleted or moved.")
+                return
+            }
+            open(.file(file.path))
+        }
+    }
+
     private func historyActions(_ e: HistoryEntry) -> [TileMenuAction] {
-        [TileMenuAction(title: e.canResume ? "Resume" : "Play", systemImage: "play") { ContinueQueue.play(e.item) },
+        let page = Self.goToPage(e)
+        return [TileMenuAction(title: e.canResume ? "Resume" : "Play", systemImage: "play") { ContinueQueue.play(e.item) }]
+            // The title's page, on this episode (0.90.0).
+            + (page.map { p in [TileMenuAction(title: p.menuTitle, systemImage: p.menuTitle == "Go to Show" ? "rectangle.stack" : "film") { go(to: p) }] } ?? [])
+            + [
          // With the show's other episodes in progress (1.30.4): one of them took the card's place.
          TileMenuAction(title: "Mark as watched", systemImage: "checkmark.circle") { history.markWatchedFromContinueWatching(e) },
          // The show's card goes, not only this entry (1.30.4): another of its episodes took its place.

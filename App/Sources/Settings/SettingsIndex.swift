@@ -48,6 +48,8 @@ enum SettingsIndex {
         guard !words.isEmpty else { return [] }
         let found = all.filter { e in
             guard showing.contains(e.shown) else { return false }
+            // Its row is hidden while this version has no list (0.90.0).
+            if e.title == "What's New", WhatsNew.releases.isEmpty { return false }
             let text = "\(e.title) \(e.keywords)"
             return words.allSatisfy { text.localizedStandardContains($0) }
         }
@@ -92,7 +94,7 @@ enum SettingsIndex {
         // Notifications
         e("Personality", .notifications, "tone subtle balanced wording notification"),
         e("Quiet Hours", .notifications, "do not disturb night sleep notification"),
-        e("Notifications a Day", .notifications, "at most limit daily how many"),
+        e("Notifications a Day (Up To)", .notifications, "up to at most limit daily how many"),
         e("Notification Sounds", .notifications, "tone sound alert", .notifySounds),
         e("Weather City", .notifications, "just for fun weather location", .notifyCity),
         e("Notification Test", .help, "try every kind send now debug", .notifyTest),

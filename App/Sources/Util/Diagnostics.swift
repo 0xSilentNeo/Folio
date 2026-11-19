@@ -80,9 +80,14 @@ final class Diagnostics: NSObject {
     /// Objective-C exception on a full disk and ended the app (review, 2 Nov).
     /// The log moves to app.previous.log once it passes `maxBytes` within a
     /// session too, not only at launch.
+    ///
+    /// The time is taken on the caller's thread and written out on the
+    /// log's queue (0.90.0): the DateFormatter ran on the caller, the main
+    /// thread for most lines, once for every line traced.
     func log(_ tag: String, _ message: String) {
-        let stamp = Self.fmt.string(from: Date())
+        let now = Date()
         queue.async { [self] in
+            let stamp = Self.fmt.string(from: now)
             let line = "\(stamp) [\(tag)] \(Self.redact(message))\n"
             if handle == nil {
                 if !FileManager.default.fileExists(atPath: appLog.path) { FileManager.default.createFile(atPath: appLog.path, contents: nil) }
@@ -103,6 +108,9 @@ final class Diagnostics: NSObject {
         }
     }
     private var written = 0
+
+    /// Waits until every line logged so far is in the file (the tests read it).
+    func flush() { queue.sync {} }
 
     /// Settings → Diagnostics → Clear logs. Until 1.20.3 the button deleted
     /// app.log while this kept writing to the deleted file through its open

@@ -85,7 +85,9 @@ final class Announcements: ObservableObject {
     }
 
     /// Dotted versions as numbers: 1.30.10 is after 1.30.9, 1.30 is 1.30.0,
-    /// and a leading "v" or a suffix ("3-beta") doesn't count.
+    /// and a leading "v" or a suffix ("3-beta") doesn't count. Part by part,
+    /// so after the numbers started again at 0.90.0 (0.90.0): 0.90.0 is
+    /// after 0.9.0, 0.100.0 after 0.90.0, and 1.0.0 after every 0.x.
     nonisolated static func compare(_ a: String, _ b: String) -> ComparisonResult {
         func parts(_ s: String) -> [Int] {
             var t = s.trimmingCharacters(in: .whitespaces)
@@ -227,6 +229,32 @@ final class Announcements: ObservableObject {
         static let cache = "announcementsFeed"
         static let current = "announcementsCurrent"
         static let pending = "announcementsPending"
+    }
+
+    /// The version numbers started again at 0.90.0 (WhatsNew.resetVersionLine,
+    /// once, before `shared` is first read): "a new version is out" banners
+    /// waiting are dropped, since they announce 1.x versions, which every
+    /// 0.9x would take for newer than itself. Their ids are marked seen so
+    /// the feed doesn't bring them back; other news waiting stays, and so
+    /// do the ids seen. The copy of the feed, its tag and the time of the
+    /// last look go too, so the feed is read afresh soon after launch.
+    /// Nothing else here keeps a version. Nothing saved: nothing done.
+    nonisolated static func forgetUpdates(defaults d: UserDefaults = .standard) {
+        var saved = d.data(forKey: Key.pending).flatMap { JSONDecoder().decodeLossy(Entry.self, from: $0) } ?? []
+        if saved.isEmpty, let data = d.data(forKey: Key.current), let e = try? JSONDecoder().decode(Entry.self, from: data) { saved = [e] }
+        let updates = saved.filter { !($0.version ?? "").isEmpty }
+        if !updates.isEmpty {
+            let seen = d.stringArray(forKey: Key.seen) ?? []
+            let new = updates.map(\.id).filter { !seen.contains($0) }
+            if !new.isEmpty { d.set(Array((seen + new).suffix(seenCap)), forKey: Key.seen) }
+            let rest = saved.filter { ($0.version ?? "").isEmpty }
+            if rest.isEmpty { d.removeObject(forKey: Key.pending) } else if let data = try? JSONEncoder().encode(rest) { d.set(data, forKey: Key.pending) }
+            d.removeObject(forKey: Key.current)
+            if d === UserDefaults.standard {
+                UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: updates.map { notificationPrefix + $0.id })
+            }
+        }
+        for k in [Key.cache, Key.etag, Key.checked] where d.object(forKey: k) != nil { d.removeObject(forKey: k) }
     }
 
     /// The newest entry not yet dismissed: the banner. Kept over a relaunch.

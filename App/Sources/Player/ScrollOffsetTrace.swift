@@ -8,8 +8,8 @@ struct ScrollOffsetTrace: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 18.0, *) {
             content.onScrollGeometryChange(for: Int.self) { Int($0.contentOffset.y.rounded()) } action: { old, new in
-                guard LibTrace.on else { return }
-                LibTrace.panel.log("\(label) offset \(old) → \(new)")
+                // One line once the scroll rests (0.90.0): it logged every frame.
+                LibTrace.scrolled(label, from: old, to: new)
             }
         } else {
             content

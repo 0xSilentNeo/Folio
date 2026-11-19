@@ -7,6 +7,9 @@ import SwiftUI
 /// The list is written by hand here, newest version first; a version
 /// without its own entries shows nothing. The last version shown is kept in
 /// UserDefaults (SettingsKey.whatsNewShown).
+///
+/// The version numbers started again at 0.90.0 (after 1.30.6): see
+/// `resetVersionLine`, which runs once before anything here is read.
 enum WhatsNew {
     struct Item: Hashable {
         let icon: String
@@ -19,385 +22,22 @@ enum WhatsNew {
         let items: [Item]
     }
 
-    static let releases: [Release] = [
-        Release(version: "1.30.6", items: [
-            Item(icon: "play.tv", title: "Steadier playback",
-                 text: "After a bad stretch of a stream the picture recovers once, instead of freezing and jumping again, and a stream that's fine on average isn't reopened."),
-            Item(icon: "magnifyingglass", title: "A calmer search",
-                 text: "Library, Search, Shows and Movies stay at the top as you scroll, and the list no longer jumps as you type."),
-            Item(icon: "arrow.down.circle", title: "Downloads take turns",
-                 text: "Only as many download at once as you chose, even when the network drops, and the stop button on the Lock Screen pauses them."),
-            Item(icon: "person.crop.circle.badge.checkmark", title: "Sign in again, nothing lost",
-                 text: "When Trakt, AniList or MyAnimeList needs you to sign in again, Settings has a button for it, and what's waiting to be sent is kept."),
-        ]),
-        Release(version: "1.30.5", items: [
-            Item(icon: "play.tv", title: "Smooth playback again",
-                 text: "Streams from Real-Debrid play without the stutters and broken picture 1.30.4 brought."),
-            Item(icon: "magnifyingglass", title: "Library and Search",
-                 text: "Search has two tabs: what you have, and everything else, with Shows and Movies to narrow it. Folio remembers the one you used."),
-            Item(icon: "forward.end", title: "Skip sooner",
-                 text: "Skip Recap and Skip Intro are ready as the video starts, and on the next episode before it opens."),
-        ]),
-        Release(version: "1.30.4", items: [
-            Item(icon: "forward.end", title: "Up Next waits for you",
-                 text: "Its countdown runs ten real seconds from when the card shows, so seeking around the credits no longer jumps an episode ahead."),
-            Item(icon: "play.rectangle.on.rectangle", title: "Continue Watching moves on",
-                 text: "Finish an episode and its card offers the next one, from your library, your server or an addon. A show you watch from both is one card."),
-            Item(icon: "battery.75percent", title: "Easier on the battery",
-                 text: "Streams are read in bursts so the radio can rest, a video is drawn at its own size, and the AirPlay button no longer searches all the time."),
-            Item(icon: "figure.and.child.holdinghands", title: "A safer kids profile",
-                 text: "Pages left open are closed when it comes on, downloads are out of reach, and nothing can be deleted while it's on."),
-        ]),
-        // (1.30.3) 1.30.1 and 1.30.2 had no list, so an update showed nothing new.
-        Release(version: "1.30.3", items: [
-            Item(icon: "magnifyingglass", title: "A tidier search",
-                 text: "One list with a top result you can play at once, and All, Library, Movies and Shows to narrow it. Part of a name is enough."),
-            Item(icon: "list.and.film", title: "Next episodes and streams from addons",
-                 text: "An addon's show plays on into its next episode again, and the stream picker opens with its choices."),
-            Item(icon: "memorychip", title: "Lighter, and on time",
-                 text: "Getting the next episode ready takes less memory, and \"comes out today\" alerts come on the right day."),
-            Item(icon: "megaphone", title: "News from Folio",
-                 text: "Folio tells you about announcements and new versions. You can turn it off in Settings → Notifications."),
-        ]),
-        Release(version: "1.30.0", items: [
-            Item(icon: "forward.end", title: "Intros found on this iPhone",
-                 text: "For episodes in your library that no source knows, Folio compares an episode's sound with its neighbour's and offers Skip Intro from the next play. Nothing leaves the phone."),
-            Item(icon: "eye", title: "One watched state",
-                 text: "An episode watched from your library is watched in Discover too, and the other way round. Both title pages have the same marks and menu, and a half-watched episode resumes from either."),
-            Item(icon: "ipad.landscape", title: "Made for iPad",
-                 text: "Bigger posters, readable columns, tabs that turn into a sidebar, pointer highlights, and keys in the player: Space, arrows, F, N and Esc."),
-        ]),
-        Release(version: "1.29.0", items: [
-            Item(icon: "wand.and.stars", title: "Fix Match",
-                 text: "The wrong poster or title? On a title's page, tap ⋯ → Fix Match, search IMDb and pick the right one. Every episode follows."),
-            Item(icon: "play.rectangle", title: "An opening screen",
-                 text: "While a video opens you see what it is, where it's coming from and what it's waiting for, with Try Again if it takes long."),
-            Item(icon: "hand.wave", title: "A new welcome",
-                 text: "Three short pages on a first install: what Folio is, where your videos come from, and the player's gestures."),
-        ]),
-        Release(version: "1.28.11", items: [
-            Item(icon: "magnifyingglass", title: "One search",
-                 text: "The search button finds everything from any tab: your library and servers first, then movies and shows."),
-            Item(icon: "airplayvideo", title: "AirPlay in the player",
-                 text: "An AirPlay button in the player's top row sends the sound to a speaker or Apple TV, and offers Screen Mirroring for the picture."),
-            Item(icon: "play.fill", title: "Resume from the app icon",
-                 text: "Long-press Folio's icon on the Home Screen for Resume, with the name of what you watched last."),
-            Item(icon: "sparkles", title: "What's new since your version",
-                 text: "After an update over several versions, this page lists what each of them brought."),
-            Item(icon: "line.3.horizontal.decrease", title: "Genre under New, a steadier Real-Debrid count",
-                 text: "Discover's New sort keeps its genre filter, and Home's Real-Debrid count no longer runs short for a day and then jumps."),
-        ]),
-        Release(version: "1.28.10", items: [
-            Item(icon: "lock.shield", title: "Streams through Apple's encryption",
-                 text: "HTTPS streams are decrypted by iOS's own library, which uses the phone's hardware: less work on high-bitrate streams."),
-            Item(icon: "checkmark.shield", title: "Twelve fixes from a code check",
-                 text: "The saved stream address can no longer replay a placeholder clip, Try Again really starts afresh, and the kids profile's widgets stay clean."),
-        ]),
-        Release(version: "1.28.9", items: [
-            Item(icon: "bolt", title: "Continue Watching starts sooner",
-                 text: "A stream you've played recently starts from its saved download address, without waiting for a slow addon to hand it over again."),
-            Item(icon: "trash", title: "Clear opens from its pill",
-                 text: "The Clear pill over recent searches opens into its own menu, and comes up every time."),
-        ]),
-        Release(version: "1.28.8", items: [
-            Item(icon: "magnifyingglass", title: "System search in Settings",
-                 text: "Settings' search is iOS's own field, and the empty search pages are the system's too."),
-            Item(icon: "sun.max", title: "Brightness as a pill",
-                 text: "Swiping brightness shows its number in a pill with a sun that grows, and the volume swipe keeps iOS's own indicator."),
-            Item(icon: "battery.75percent", title: "Less in the background",
-                 text: "Widgets are written off the main thread and only when they change, the play button no longer runs the motion sensor, and diagnostic traces turn themselves off after a day."),
-        ]),
-        Release(version: "1.28.7", items: [
-            Item(icon: "trash", title: "Clear, as glass",
-                 text: "The Clear pill over your recent searches is a glass button, and its question opens out of it."),
-            Item(icon: "checkmark.shield", title: "1.28.6, checked again",
-                 text: "History comes back from its daily backup if its file is cut short, an expired download link fails once instead of retrying, and widgets retry hourly."),
-        ]),
-        Release(version: "1.28.6", items: [
-            Item(icon: "bell", title: "Real notifications again",
-                 text: "Notification Test was left on from a test build, so Folio sent its samples and held new-episode alerts. It's off now, and turns itself off after one run."),
-            Item(icon: "playpause", title: "A lighter, quicker player",
-                 text: "Menus and switches no longer wait on the engine, scrubbing redraws far less, and a video playing from the Lock Screen stops decoding pictures nobody sees."),
-            Item(icon: "switch.2", title: "Resume in Control Centre",
-                 text: "The control opens Folio and plays what you watched last. Remove the old one and add Resume in Folio again."),
-            Item(icon: "figure.and.child.holdinghands", title: "Kids profile, tighter",
-                 text: "No new-episode alerts, no grown-up titles on the widgets, and no recent searches while the kids profile is on."),
-            Item(icon: "arrow.down.circle", title: "Safer downloads and history",
-                 text: "An expired link's web page is no longer saved as a video, long downloads survive network blips, and an unreadable history is kept, not wiped."),
-        ]),
-        Release(version: "1.28.5", items: [
-            Item(icon: "faceid", title: "Kids passcode, as the Lock Screen",
-                 text: "Face ID looks first with the keys hidden; if it doesn't recognise you, the passcode comes up, with the Lock Screen's bigger keys."),
-            Item(icon: "bell.badge", title: "Notifications that wait for you",
-                 text: "Trending, the weekly briefing and Just for fun stay planned while you're in Folio, and one switch turns all of Folio's notifications off."),
-            Item(icon: "magnifyingglass", title: "Clear recent searches",
-                 text: "A Clear Recent Searches button at the end of Discover's recent searches."),
-            Item(icon: "photo", title: "Better posters and widgets",
-                 text: "Titles that share a name get the more popular one's poster, and Real-Debrid's widget updates in the background."),
-        ]),
-        Release(version: "1.28.4", items: [
-            Item(icon: "rectangle.on.rectangle", title: "Frosted glass widgets",
-                 text: "The widgets are frosted glass made from their own pictures, blurred and toned down, in light and dark mode alike."),
-            Item(icon: "bookmark", title: "Watchlist on Home",
-                 text: "Your Watchlist is a tap away at the top of Home too."),
-            Item(icon: "switch.2", title: "Resume in Control Centre",
-                 text: "The Resume control shows its play button and plays what you watched last."),
-        ]),
-        Release(version: "1.28.3", items: [
-            Item(icon: "arrow.down.circle", title: "Downloads don't crash Folio",
-                 text: "Folio no longer closes while a download runs, pauses or is removed, nor on every launch after that."),
-        ]),
-        Release(version: "1.28.2", items: [
-            Item(icon: "pip", title: "Picture in Picture, whole",
-                 text: "With the video filling the screen, PiP shows the whole picture in a window its own shape, subtitles and all. Zooming is smoother and follows your fingers."),
-            Item(icon: "playpause", title: "Instant play and pause",
-                 text: "Play, pause, tracks, speed and taps on the video answer at once, and closing the player no longer waits."),
-            Item(icon: "battery.100percent", title: "Lighter on the battery",
-                 text: "A glance at Notification Centre no longer has Folio redo its notifications and widgets, and Home does far less work as you scroll."),
-            Item(icon: "rectangle.on.rectangle", title: "Clear glass widgets",
-                 text: "Every widget is clear Liquid Glass, in light and dark mode."),
-            Item(icon: "square.and.arrow.up", title: "Share sheet",
-                 text: "A video shared from Files plays in Folio on any install."),
-        ]),
-        Release(version: "1.28.1", items: [
-            Item(icon: "thermometer.medium", title: "Cooler after a trip away",
-                 text: "Coming back from Notification Centre or the Home Screen, the video goes back to the hardware decoder. It could stay on the processor for the rest of the film, which made the phone hot."),
-        ]),
-        Release(version: "1.28.0", items: [
-            Item(icon: "cpu", title: "Metal without the stutter",
-                 text: "The Metal renderer now draws into the same picture as Picture in Picture: no stall when PiP starts, and no reload after Notification Centre or the Home Screen. Settings → Video Engine → Renderer → Metal to try it."),
-        ]),
-        Release(version: "1.27.1", items: [
-            Item(icon: "square.grid.3x3", title: "Discover from Cinemeta or TMDB",
-                 text: "Install Cinemeta in one tap, or add your TMDB key, in Addons: Discover's grid comes from them, past IMDb's 250 titles. Drag to choose which goes first."),
-            Item(icon: "square.and.arrow.up", title: "Folio in the share sheet",
-                 text: "Share a link, or a video from Files or Photos, and choose Folio: it opens and plays."),
-            Item(icon: "sparkles.tv", title: "HDR fixes",
-                 text: "Dolby Vision films no longer turn green in Balanced and Enhanced, and 4K HDR that can't keep up switches to smooth playback."),
-        ]),
-        Release(version: "1.27.0", items: [
-            Item(icon: "puzzlepiece.extension", title: "Addons on Discover",
-                 text: "The puzzle piece at the top of Discover opens your addons: switch one off, see how fast it answered, and drag to set the order of the streams list. Their catalogs are rows on Discover."),
-            Item(icon: "square.and.arrow.up", title: "Play in Folio",
-                 text: "Share a link from Safari or Messages and choose Play in Folio. Shortcuts and the Action Button can play a link too."),
-            Item(icon: "arrow.down.circle", title: "Steadier downloads",
-                 text: "Downloads keep the Dynamic Island when you come back to Folio, run at a higher priority in the background, and the widget shows a speed only while it's current."),
-        ]),
-        Release(version: "1.26.3", items: [
-            Item(icon: "gearshape", title: "Settings, the iOS way",
-                 text: "Each setting's explanation sits under it, as in iOS Settings; tap a long one to read it all. New icons in Folio's own colours."),
-            Item(icon: "bell.badge", title: "Personality slider",
-                 text: "Slide from Subtle to Unhinged and see a notification worded each way. Quiet Hours is one switch with your own times."),
-            Item(icon: "rectangle.split.3x1", title: "Chapters as segments",
-                 text: "The progress bar shows chapters as segments by default."),
-        ]),
-        Release(version: "1.26.2", items: [
-            Item(icon: "bookmark", title: "Watchlist in its own sheet",
-                 text: "The bookmark at the top of Discover opens it; titles open and play from there. Discover starts with Airing now again."),
-            Item(icon: "arrow.up.to.line", title: "New lists start at the top",
-                 text: "Another kind, sort or genre on Discover takes you to the first title of the new list, and Airing now's Series and Anime each start from their first."),
-            Item(icon: "list.bullet", title: "Now Playing on what's playing",
-                 text: "Playlist and Chapters open on the episode and chapter playing now, every time."),
-        ]),
-        Release(version: "1.26.1", items: [
-            Item(icon: "battery.100percent", title: "Longer watching, cooler phone",
-                 text: "With Picture → Efficient, HDR plays straight from the video chip, and AV1 never falls back to the processor. Less work in the background while a film plays."),
-            Item(icon: "gearshape", title: "Settings, tidied",
-                 text: "Search at the top, fewer sections, every row opens a page, short explanations with More, About Folio, and a question before anything is deleted."),
-            Item(icon: "bell.badge", title: "A clearer Notifications page",
-                 text: "Each kind says On or Off and opens its own page; Personality and Quiet Hours are simple lists; Test moved to Help & Diagnostics."),
-        ]),
-        Release(version: "1.26.0", items: [
-            Item(icon: "bookmark", title: "A watchlist",
-                 text: "Tap the bookmark on a title's page, or hold any poster in Discover, to save it for later. Your list is at the top of Discover."),
-            Item(icon: "dot.radiowaves.left.and.right", title: "Airing now",
-                 text: "A row on Discover with what's out this week: series or anime, one tap apart. Hide it in Settings → Discover."),
-            Item(icon: "arrow.triangle.2.circlepath", title: "Trakt, AniList, MyAnimeList",
-                 text: "Settings → Sync: what you finish can be marked watched there, and your watchlist goes to Trakt. Off until you connect one."),
-            Item(icon: "pip", title: "PiP after the next episode",
-                 text: "Leaving the app starts Picture in Picture again after the player has moved on to the next episode."),
-            Item(icon: "rectangle.portrait", title: "Portrait videos stay portrait",
-                 text: "Videos shot upright open upright, and HDR ones no longer stay black until the phone is turned."),
-        ]),
-        Release(version: "1.25.0", items: [
-            Item(icon: "app.badge", title: "Notifications, rebuilt",
-                 text: "Settings → Notifications: a switch for each group and each kind, a personality from Subtle to Unhinged, quiet hours and how many a day."),
-            Item(icon: "chart.line.uptrend.xyaxis", title: "What's trending",
-                 text: "IMDb's charts: what's climbing, what's rated high or oddly low, the Friday briefing and the month's recap. Plus your library, picks for you and a few jokes."),
-            Item(icon: "speaker.wave.2", title: "Sounds and pictures",
-                 text: "A sound for each group: Folio's own, Apple's alert tones or yours from Files. Posters on notifications, and Play, Tomorrow and Fewer Like This."),
-            Item(icon: "testtube.2", title: "Test them all",
-                 text: "With Test on, leave Folio and every notification comes, one every 20 seconds. Sent shows what came and why."),
-        ]),
-        Release(version: "1.24.1", items: [
-            Item(icon: "rectangle.3.group", title: "Widgets that fit in",
-                 text: "Glass in light mode, tinted in dark mode, and artwork in full colour in Clear and Tinted too."),
-            Item(icon: "arrow.down.circle", title: "Downloads, smoother",
-                 text: "Groups unfold in place, swipe to delete is iOS's own, each file shows its speed, and the Dynamic Island shows it too."),
-            Item(icon: "hand.tap", title: "One tile, its own menu",
-                 text: "Holding a title lifts just that title, with the right Watched wording. Swipe to delete is back in List and Details."),
-            Item(icon: "speedometer", title: "Quicker in places",
-                 text: "Play and pause no longer wait, series pages load once, and posters stop flashing."),
-            Item(icon: "quote.bubble", title: "Try the reminders",
-                 text: "Settings → Reminders: send a test, or turn on quick timing to get them seconds after you leave Folio."),
-        ]),
-        Release(version: "1.24.0", items: [
-            Item(icon: "rectangle.3.group", title: "New widgets",
-                 text: "Continue Watching in four styles, Airing in three, and Downloads, Your week, New on your server and Pick for tonight. Each follows your Home Screen's look: light, dark, clear or tinted."),
-            Item(icon: "play.circle", title: "Straight from the widget",
-                 text: "Resume, go on to the next episode, play an episode that's just out, or shuffle tonight's pick, without opening a menu first."),
-            Item(icon: "switch.2", title: "A Resume control",
-                 text: "Add Resume to Control Center, the Lock Screen or the Action button: one tap plays what you watched last."),
-            Item(icon: "quote.bubble", title: "Reminders, with some cheek",
-                 text: "Now and then a line about what you're watching, at most one a day and never at night. Turn them off in Settings → Reminders."),
-        ]),
-        Release(version: "1.23.4", items: [
-            Item(icon: "captions.bubble", title: "Subtitles stay in view",
-                 text: "Fill and pinching no longer push subtitles off the screen: they move and resize with the picture. Turn it off in the player's Subtitles menu (When zoomed)."),
-            Item(icon: "arrow.up.left.and.arrow.down.right", title: "A cleaner pinch",
-                 text: "No jump when your fingers lift: Fill and Fit take over in the same frame."),
-        ]),
-        Release(version: "1.23.3", items: [
-            Item(icon: "play.circle", title: "Resume resumes",
-                 text: "After an update, Resume on a title page and a tap on an episode started from the beginning though the button showed your place. They go on from it now."),
-            Item(icon: "rectangle.stack", title: "One place per file",
-                 text: "Each downloaded file keeps one saved place, not one per install, and a file no longer shows the progress of another with the same name."),
-        ]),
-        Release(version: "1.23.2", items: [
-            Item(icon: "forward.end", title: "On to the next episode",
-                 text: "A show you added on Real-Debrid one episode at a time now goes on to the next one, wherever its folder is."),
-            Item(icon: "bolt", title: "Real-Debrid opens faster",
-                 text: "Folio finds the file's download address first, so opening, resuming and seeking no longer go back through Real-Debrid's WebDAV each time."),
-            Item(icon: "text.badge.checkmark", title: "Up Next says what it covers",
-                 text: "Watch Ending, Watch Preview: named after the part. No card over a scene after the credits; a preview keeps it."),
-            Item(icon: "forward.frame", title: "Intros you watch",
-                 text: "Watch an intro through in two episodes and its Skip button stops showing for that show. Bring it back in Settings → Skip Intro & Credits."),
-            Item(icon: "circle.dashed", title: "Calmer seeks",
-                 text: "Seeking in a downloaded file no longer flashes the loading spinner."),
-        ]),
-        Release(version: "1.23.1", items: [
-            Item(icon: "rectangle.on.rectangle", title: "Widgets, another way in",
-                 text: "Without an App Group, the widgets now look in the Keychain the signing gives the app and the widget alike."),
-            Item(icon: "photo", title: "Sharp artwork in Control Center",
-                 text: "The Lock Screen and Control Center get the picture at full size, not the list's small one."),
-            Item(icon: "sparkles", title: "Anime4K, lighter",
-                 text: "On this screen a 1080p video gets the restore stages at its own size, not a 4K image every frame; it eases off when the phone is hot."),
-            Item(icon: "play.rectangle", title: "HDR on OpenGL no longer stuck loading",
-                 text: "The renderer stopped switching decoding back and forth while a 4K HDR file started."),
-            Item(icon: "slider.horizontal.3", title: "A steady time bar",
-                 text: "The bar no longer grows and shrinks while you press the menu buttons on iOS 27."),
-            Item(icon: "arrow.up.left.and.arrow.down.right", title: "Pinch follows your fingers",
-                 text: "Pinching the video moves the picture as you pinch, then settles on Fit or Fill."),
-        ]),
-        Release(version: "1.23.0", items: [
-            Item(icon: "magnifyingglass", title: "A smoother, tidier search",
-                 text: "Opens without the stall, starts with what it searches, shows server files as a list or as posters, and a pill opens a file's folder."),
-            Item(icon: "exclamationmark.icloud", title: "When a server lets you down",
-                 text: "A file Real-Debrid removed, a refused login or a server that's down is now said plainly, with what you can do."),
-            Item(icon: "photo", title: "Artwork in Control Center",
-                 text: "Control Center and the Lock Screen show the title's picture. The player's own Live Activity is gone: Now Playing does its job."),
-            Item(icon: "square.grid.2x2", title: "More on Discover",
-                 text: "Lists go on past 100 as you scroll, up to the 250 IMDb gives."),
-            Item(icon: "leaf", title: "Folio's own loading",
-                 text: "A light runs round the Folio leaf wherever something is loading."),
-            Item(icon: "rectangle.on.rectangle", title: "Widgets without an App Group",
-                 text: "When the install has no App Group, Folio tries to reach its widgets through the Keychain."),
-        ]),
-        Release(version: "1.22.7", items: [
-            Item(icon: "play.rectangle.on.rectangle", title: "Control Center and the Lock Screen",
-                 text: "What's playing should show there now. Like Music and TV, Folio's sound now pauses other apps' sound instead of mixing with it."),
-        ]),
-        Release(version: "1.22.6", items: [
-            Item(icon: "magnifyingglass", title: "Search on its own, on iOS 27 too",
-                 text: "The round search button sits beside the tab bar and opens into the field where it is. Cancel takes you back."),
-            Item(icon: "bell.slash", title: "No tracking for shows that have ended",
-                 text: "Dragon Ball no longer picks up another series' times, and an ended show is no longer tracked."),
-            Item(icon: "calendar", title: "Episode dates checked",
-                 text: "Coming and recent episodes are checked against TVmaze, and a release with no known hour shows its day only."),
-            Item(icon: "tv", title: "Streaming services' logos",
-                 text: "Netflix, Prime Video and the others on Discover show their own logos."),
-        ]),
-        Release(version: "1.22.5", items: [
-            Item(icon: "magnifyingglass", title: "Search the page you're on",
-                 text: "From Home: your library, Real-Debrid, WebDAV, Plex and Jellyfin. From Discover: titles on IMDb and your addons."),
-            Item(icon: "popcorn", title: "Loading, with popcorn",
-                 text: "A title page that takes a moment shows a line or two of nonsense instead of a spinner."),
-            Item(icon: "circle", title: "Round buttons stay round",
-                 text: "Settings and the other round buttons open from their own shape."),
-        ]),
-        Release(version: "1.22.4", items: [
-            Item(icon: "magnifyingglass", title: "Search beside the tab bar",
-                 text: "One search for your library, your servers' files and titles on IMDb and your addons, from the button beside the tab bar."),
-            Item(icon: "arrow.up.left.and.arrow.down.right", title: "Zoom between tabs",
-                 text: "An experiment, off at first: Settings → General → Zoom between tabs."),
-        ]),
-        Release(version: "1.22.3", items: [
-            Item(icon: "arrow.down.circle", title: "iOS's own download progress",
-                 text: "On iOS 26 and later, iOS shows your downloads in the Dynamic Island and on the Lock Screen, with a button to stop them."),
-            Item(icon: "speedometer", title: "Faster downloads",
-                 text: "Up to 8 connections per file, a slow connection is taken over, and the file is written straight into place."),
-            Item(icon: "chevron.down.circle", title: "Fold titles in Downloads",
-                 text: "Tap a title to hide its files, and again to show them."),
-            Item(icon: "square.grid.2x2", title: "A tidier Home",
-                 text: "Recently added is gone (the library sorts by date added too), and the round buttons open their menus smoothly."),
-        ]),
-        Release(version: "1.22.2", items: [
-            Item(icon: "lock", title: "One kids passcode",
-                 text: "Chosen the first time and kept until you change it. Turning the kids profile on again asks for nothing."),
-            Item(icon: "rectangle.expand.vertical", title: "Player controls, evenly",
-                 text: "Every width is the same distance from both edges, and the menu buttons no longer cover the time bar."),
-            Item(icon: "goforward.10", title: "Quick skips",
-                 text: "Taps while a skip lands go as one, with the sound off until the picture is there."),
-            Item(icon: "pip", title: "Sharper PiP with OpenGL",
-                 text: "Picture in Picture shows the video at its own size, up to 1080p."),
-            Item(icon: "bell", title: "Track only what's still running",
-                 text: "Shows that have ended have no Track button, and episodes not out yet don't open the streams page."),
-        ]),
-        Release(version: "1.22.1", items: [
-            Item(icon: "cpu", title: "Metal is the default again",
-                 text: "And the OpenGL renderer now plays 10-bit files and shows HDR as HDR, with Picture in Picture that never pauses. Try it in Settings → mpv → Renderer."),
-            Item(icon: "arrow.down.circle", title: "Faster, safer downloads",
-                 text: "Big files download in several parts at once, a download queued before an update no longer fails at the end, and the Live Activity keeps counting in the background."),
-            Item(icon: "lock", title: "The kids profile really locks",
-                 text: "Turning it off, its limits and Settings all ask for the passcode or Face ID, on a Lock Screen-style keypad. For you shows only titles rated within your limits."),
-            Item(icon: "bell.badge", title: "Tracking, clearer",
-                 text: "A tracked show says so on its page, and episode tiles show when the next one airs, in your own time zone."),
-            Item(icon: "rectangle.portrait.and.arrow.right", title: "The player closes at the end",
-                 text: "No more Replay card: the player closes when a file ends. Controls sit a little closer to the edges in landscape."),
-        ]),
-        Release(version: "1.22.0", items: [
-            Item(icon: "pip", title: "Picture in Picture without the pause",
-                 text: "The screen and Picture in Picture now show one and the same picture, so PiP, Notification Centre and the app switcher no longer pause the video. For HDR brightness, choose HDR (Metal) in Settings → mpv → Renderer."),
-            Item(icon: "livephoto", title: "Live Activities",
-                 text: "What's playing, with play/pause and skip, and your downloads, on the Lock Screen and in the Dynamic Island."),
-            Item(icon: "captions.bubble", title: "Two subtitles at once",
-                 text: "A second subtitle at the top of the picture, from the Tracks menu. Speed, and \"always skip openings\", are now remembered per show too."),
-            Item(icon: "arrow.down.circle", title: "Downloads that look after themselves",
-                 text: "The next episodes download on Wi-Fi while you watch, and watched downloads can delete themselves after a day or a week."),
-            Item(icon: "slider.horizontal.3", title: "Filter your library",
-                 text: "Show only unwatched titles, ones in progress or ones you've watched, by genre or by year. The filters stay set, and Clear filters brings everything back."),
-            Item(icon: "clock.arrow.circlepath", title: "Recently added",
-                 text: "The titles you added last, in a row on Home under Continue Watching."),
-            Item(icon: "dice", title: "Pick something for me",
-                 text: "Can't choose? Folio picks an unwatched film from your library, newer ones more often. Don't like it? Pick again."),
-            Item(icon: "figure.and.child.holdinghands", title: "Kids profile",
-                 text: "Only titles rated for kids in Discover, search and your library, with Settings locked behind a passcode (or Face ID). Settings → Kids profile."),
-            Item(icon: "iphone.and.arrow.forward", title: "Handoff",
-                 text: "A title page open on your iPhone opens on your iPad too, and the other way round; a video you're watching picks up where you were."),
-        ]),
-        Release(version: "1.21.0", items: [
-            Item(icon: "bell.badge", title: "Track airing shows",
-                 text: "A Track button on a series' page. Folio tells you when the next episode airs, in your own time zone, with a notification, a Home row, a widget and Siri."),
-            Item(icon: "xmark.circle", title: "Siri goes away when the video starts",
-                 text: "Continue watching with Siri, and its card no longer stays over the player."),
-            Item(icon: "externaldrive.connected.to.line.below", title: "Real-Debrid on Home without a restart",
-                 text: "Saving a server checks its library at once, and Home says when it's still reading it or the login was refused."),
-            Item(icon: "doc.text", title: "mpv files explained",
-                 text: "mpv.conf, input.conf, scripts and shaders now explain what you can do with them."),
-            Item(icon: "wrench.and.screwdriver", title: "14 more fixes",
-                 text: "Brightness goes back when the player closes, a deleted file's progress goes with it, and more."),
-        ]),
-    ]
+    /// Empty at 0.90.0, where the version numbers start again: the lists
+    /// of 1.21.0 to 1.30.6 are gone, and nothing is shown until a version
+    /// has entries here. Newest version first.
+    ///
+    /// The house rule for an entry:
+    /// - The title names the thing.
+    /// - The text is one short plain sentence saying what you'll see.
+    /// - One fact per item.
+    /// - No "so that" and no "instead of" clauses.
+    /// - No reference to earlier versions.
+    /// - At most five per release.
+    ///
+    ///     Release(version: "0.90.1", items: [
+    ///         Item(icon: "magnifyingglass", title: "Search", text: "Results appear as you type."),
+    ///     ]),
+    static let releases: [Release] = []
 
     static func release(_ version: String) -> Release? { releases.first { $0.version == version } }
 
@@ -405,11 +45,24 @@ enum WhatsNew {
     /// (1.28.11): an update over several versions shows what each one
     /// brought, not only the newest's. With no `last`, the current one's.
     static func releases(after last: String?, upTo current: String) -> [Release] {
-        releases.filter { r in
-            guard r.version.compare(current, options: .numeric) != .orderedDescending else { return false }
+        releases(after: last, upTo: current, in: releases)
+    }
+
+    /// The same from any list (the tests have their own, the app's being
+    /// empty at 0.90.0).
+    static func releases(after last: String?, upTo current: String, in list: [Release]) -> [Release] {
+        list.filter { r in
+            guard newer(current, than: r.version) || r.version == current else { return false }
             guard let last else { return r.version == current }
-            return r.version.compare(last, options: .numeric) == .orderedDescending
+            return newer(r.version, than: last)
         }
+    }
+
+    /// Versions as numbers, part by part (0.90.0): 0.90.0 is after 0.9.0,
+    /// 0.100.0 after 0.90.0 and 1.0.0 after them all. The same comparison
+    /// as the announcements'.
+    static func newer(_ a: String, than b: String) -> Bool {
+        Announcements.compare(a, b) == .orderedDescending
     }
 
     /// The version this install showed last, before this launch: what the
@@ -436,8 +89,36 @@ enum WhatsNew {
             return Decision(show: existingInstall && hasEntries, remember: current)
         }
         guard last != current else { return Decision(show: false, remember: nil) }
-        let newer = current.compare(last, options: .numeric) == .orderedDescending
-        return Decision(show: newer && hasEntries, remember: current)
+        return Decision(show: newer(current, than: last) && hasEntries, remember: current)
+    }
+
+    // MARK: The version numbers start again (0.90.0)
+
+    /// Once per install, before What's New and the announcements read what
+    /// they kept (0.90.0). After 1.30.6 the version is 0.90.0, then 0.90.1,
+    /// 0.91.0 … and 1.0.0 at launch: lower than what an install remembers,
+    /// and later the same numbers as old ones.
+    ///
+    /// - The version What's New remembers is forgotten: this launch shows
+    ///   the running version's list if it has one (0.90.0 has none).
+    /// - "A new version is out" banners waiting are dropped (they announce
+    ///   1.x), with the copy of the feed they came from.
+    ///
+    /// Kept by a flag, not by comparing versions: an install that goes
+    /// from 1.30.6 straight to 1.0.0 or 1.2.0, when those come round again,
+    /// can't be told from one that was always there by its number. A new
+    /// install has nothing saved, so nothing changes but the flag. Returns
+    /// whether this call was the one that did it.
+    @discardableResult
+    static func resetVersionLine(current: String = currentVersion, defaults d: UserDefaults = .standard) -> Bool {
+        guard !d.bool(forKey: SettingsKey.versionLineReset) else { return false }
+        // Forgotten, not set to the running version (review): an install
+        // that comes from 1.x straight to a 0.9x with a list is shown that
+        // list, as an update. At 0.90.0 the list is empty, so nothing shows.
+        d.removeObject(forKey: SettingsKey.whatsNewShown)
+        Announcements.forgetUpdates(defaults: d)
+        d.set(true, forKey: SettingsKey.versionLineReset)
+        return true
     }
 
     /// Something an earlier launch of Folio left behind: the library's
@@ -463,6 +144,13 @@ enum WhatsNew {
     static func noteLaunch() {
         let d = UserDefaults.standard
         let current = currentVersion
+        // The version numbers started again (0.90.0): what was remembered
+        // of 1.x is put right first. FolioApp calls this before the
+        // announcements are first touched.
+        let before = d.string(forKey: SettingsKey.whatsNewShown)
+        if resetVersionLine(current: current, defaults: d), let before, before != current {
+            dlog("app", "version numbers start again: \(before) was remembered, now \(current)")
+        }
         let last = d.string(forKey: SettingsKey.whatsNewShown)
         let used = usedBefore()
         // The first install's welcome (1.27.0), from the same evidence.
@@ -504,6 +192,13 @@ struct WhatsNewSheet: View {
                             Wordmark(size: 22)
                         }
                         Text("What's new").font(.system(.largeTitle, design: .rounded, weight: .bold))
+                        // No list (0.90.0: none yet, from Settings → About
+                        // or `-whatsNew`): said, not a page with only a title.
+                        if releases.isEmpty {
+                            Text("Nothing to list for this version.")
+                                .font(.subheadline).foregroundStyle(.secondary)
+                                .accessibilityIdentifier("whatsNewEmpty")
+                        }
                         if !all, let since, releases.count > 1 {
                             Text("Since \(since), the version you had")
                                 .font(.subheadline).foregroundStyle(.secondary)

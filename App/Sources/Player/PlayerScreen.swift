@@ -50,7 +50,9 @@ struct PlayerScreen: View {
                 // Opening (1.29.0): what's opening, from where, and what it's
                 // waiting for; a spinner alone once it plays and stalls.
                 OpeningCard(model: model, onClose: onClose)
-                BusySpinner(busy: model.buffering && !model.isLoading && model.errorMessage == nil,
+                // Not under the opening card while it waits for the first
+                // picture (0.90.0): the card has its own.
+                BusySpinner(busy: model.buffering && !model.isLoading && !model.awaitingFirstFrame && model.errorMessage == nil,
                             delay: model.spinnerDelay)
                     .offset(y: ui.controlsVisible && !ui.locked ? -10 : 0)
 
@@ -623,7 +625,7 @@ struct PlayerScreen: View {
             actions.append(.init(title: "Try again", primary: true) { model.load(model.item) })
         }
         if problem.kind == .stoppedEarly, model.hasNext {
-            actions.append(.init(title: "Play next") { model.playNext() })
+            actions.append(.init(title: "Play next") { model.playNext(by: "the problem card's Play next") })
         }
         if problem.kind == .gone, let entry = model.problemHistoryEntry {
             actions.append(.init(title: "Remove from Continue Watching", role: .destructive) {
@@ -1086,13 +1088,30 @@ struct PillIcon: View {
 /// Again and Close, where there was a spinner on black for as long as a
 /// server took (34 s in the 11 Nov log). Not for the first half second:
 /// a file on the phone opens faster than that.
+///
+/// 0.90.0: anything not on the phone shows it at once, and once up it stays
+/// a second at least, and until the first picture (18 Nov log: it came up
+/// half a second into the opening and went the moment the file loaded, on
+/// screen for under a second, then black until the picture).
 struct OpeningCard: View {
     @ObservedObject var model: PlayerModel
     let onClose: () -> Void
     @State private var shown = false
+    /// When it came up, for the least time it stays.
+    @State private var shownAt: Date?
+    /// It came up while the file was still opening: only then does it stay
+    /// its least time. Up only for the wait for the first picture, it goes
+    /// with that.
+    @State private var upBeforeLoaded = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var opening: Bool { model.isLoading && model.errorMessage == nil && !model.isPiPActive }
+    /// A file is opening, or has opened and hasn't shown a picture yet.
+    private var opening: Bool { (model.isLoading || model.awaitingFirstFrame) && !blocked }
+    /// The problem card or Picture in Picture has the screen: the card goes at once.
+    private var blocked: Bool { model.errorMessage != nil || model.isPiPActive }
+    private var visible: Bool { shown && !blocked }
+    /// Try Again and Close: only while the file itself is still opening.
+    private var offersRetry: Bool { model.openingSlow && model.isLoading }
 
     private var status: String {
         switch model.openStage {
@@ -1103,11 +1122,22 @@ struct OpeningCard: View {
 
     var body: some View {
         ZStack {
-            if shown && opening {
+            if visible {
                 ZStack {
                     if let art = model.openingArt {
-                        Image(uiImage: art)
-                            .resizable().scaledToFill()
+                        // The picture fills the card without being part of
+                        // its layout (0.90.0). Filling a ZStack by itself it
+                        // asked for its own size, larger than the screen,
+                        // and the whole player grew to it: 18 Nov log, about
+                        // 1,240 pt tall in a 440 pt landscape window with a
+                        // 2:3 poster, the spinner, title, time bar and
+                        // buttons off screen until the file loaded.
+                        Color.black
+                            .overlay {
+                                Image(uiImage: art)
+                                    .resizable().scaledToFill()
+                            }
+                            .clipped()
                             .blur(radius: 24, opaque: true)
                             .overlay(Color.black.opacity(0.62))
                             .transition(.opacity)
@@ -1125,7 +1155,7 @@ struct OpeningCard: View {
                                 .foregroundStyle(.white.opacity(0.7))
                                 .contentTransition(.opacity)
                         }
-                        if model.openingSlow {
+                        if offersRetry {
                             HStack(spacing: 10) {
                                 Button("Try Again") { model.load(model.item) }
                                     .buttonStyle(.borderedProminent)
@@ -1145,18 +1175,60 @@ struct OpeningCard: View {
                 }
                 .transition(.opacity)
                 .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("openingCard")
             }
         }
         .ignoresSafeArea()
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: shown && opening)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: model.openingSlow)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: visible)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: offersRetry)
         .animation(.easeOut(duration: 0.3), value: model.openingArt != nil)
-        .allowsHitTesting(shown && opening && model.openingSlow)
+        // Touches go to it exactly while its buttons are on screen.
+        .allowsHitTesting(visible && offersRetry)
         .task(id: opening) {
-            guard opening else { shown = false; return }
-            try? await Task.sleep(for: .milliseconds(500))
-            if !Task.isCancelled { shown = true }
+            if opening {
+                // Up already (the next try, the next file): it stays, and its
+                // time on screen counts from when it came.
+                guard !shown else { return }
+                let wait = OpeningCardTiming.showDelay(local: model.openingSource == "This iPhone", quick: model.openingQuick)
+                if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+                guard !Task.isCancelled else { return }
+                shown = true
+                shownAt = Date()
+                upBeforeLoaded = model.isLoading
+            } else {
+                guard shown else { return }
+                let rest = OpeningCardTiming.hideDelay(shownFor: shownAt.map { Date().timeIntervalSince($0) } ?? 0, blocked: blocked,
+                                                       upBeforeLoaded: upBeforeLoaded)
+                if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
+                // Opening again meanwhile: the card stays for that.
+                guard !Task.isCancelled else { return }
+                shown = false
+                shownAt = nil
+            }
         }
+    }
+}
+
+/// When the opening card comes and goes (0.90.0).
+enum OpeningCardTiming {
+    /// The least time the card is on screen once it's up.
+    static let leastShown: Double = 1.0
+
+    /// Seconds before it comes up. A file on the phone opens faster than
+    /// half a second, and a card would only flash. So would one over a file
+    /// likely there within a moment (`quick`: the prepared next episode, in
+    /// tens of milliseconds, the same file opened again, a server that
+    /// sends its files itself): 0.3 s for those, so a hand-over without a
+    /// gap shows no card. Anything else is waited for from the first moment.
+    static func showDelay(local: Bool, quick: Bool = false) -> Double { local ? 0.5 : quick ? 0.3 : 0 }
+
+    /// Seconds it stays once the opening is over, having been up for
+    /// `shownFor`. None when the problem card or Picture in Picture takes
+    /// the screen (`blocked`), or when it only came up after the file had
+    /// loaded, for the wait for its first picture (`upBeforeLoaded` false):
+    /// then it has nothing to keep from flashing, and goes with the picture.
+    static func hideDelay(shownFor: Double, blocked: Bool, upBeforeLoaded: Bool = true) -> Double {
+        blocked || !upBeforeLoaded ? 0 : min(leastShown, max(0, leastShown - shownFor))
     }
 }
 

@@ -94,9 +94,9 @@ final class NotifyTests: XCTestCase {
         XCTAssertEqual(Set(one.map { WatchLog.dayKey($0.fire, calendar: cal) }).count, one.count, "one a day")
         let three = NotifyPlanner.choose(c, rules(max: 3))
         XCTAssertEqual(three.count, 3)
-        let firstDay = three.filter { WatchLog.dayKey($0.fire, calendar: cal) == WatchLog.dayKey(three[0].fire, calendar: cal) }
-        XCTAssertGreaterThan(firstDay.count, 1)
-        for (a, b) in zip(firstDay, firstDay.dropFirst()) { XCTAssertGreaterThanOrEqual(b.fire.timeIntervalSince(a.fire), 2 * 3600) }
+        // Dealt out a day at a time (0.90.0): three days get one each before
+        // any day gets a second. They used to pile up on the first day.
+        XCTAssertEqual(Set(three.map { WatchLog.dayKey($0.fire, calendar: cal) }).count, 3)
     }
 
     func testFlexibleOnesComeAtTheUsualTimeOutsideQuietHours() {

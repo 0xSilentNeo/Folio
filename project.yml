@@ -143,7 +143,7 @@ targets:
       base:
         PRODUCT_NAME: Folio
         PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.folio
-        MARKETING_VERSION: "1.0.0"
+        MARKETING_VERSION: "0.90.0"
         CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_OBJC_BRIDGING_HEADER: App/Sources/Bridging/Folio-Bridging-Header.h
@@ -186,7 +186,7 @@ targets:
         INFOPLIST_FILE: App/Widget/Info.plist
         CODE_SIGN_ENTITLEMENTS: App/Widget/FolioWidget.entitlements
         # Overridden by CI's MARKETING_VERSION / CURRENT_PROJECT_VERSION, as the app's.
-        MARKETING_VERSION: "1.0.0"
+        MARKETING_VERSION: "0.90.0"
         CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1,2"
         SKIP_INSTALL: YES
@@ -214,7 +214,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.silentneo.folio.play
         INFOPLIST_FILE: App/PlayExtension/Info.plist
         CODE_SIGN_ENTITLEMENTS: App/PlayExtension/FolioPlay.entitlements
-        MARKETING_VERSION: "1.0.0"
+        MARKETING_VERSION: "0.90.0"
         CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1,2"
         SKIP_INSTALL: YES

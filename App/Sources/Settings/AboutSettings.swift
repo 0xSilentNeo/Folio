@@ -29,7 +29,8 @@ struct AboutSettings: View {
             }
             Section {
                 LabeledContent("Version", value: version)
-                Button("What's New") { whatsNew = true }
+                // Hidden while this version has no list (0.90.0).
+                if !WhatsNew.releases.isEmpty { Button("What's New") { whatsNew = true } }
                 LabeledContent("mpv folder") {
                     Text("Files → On My iPhone → Folio → mpv").multilineTextAlignment(.trailing)
                 }

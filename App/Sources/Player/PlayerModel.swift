@@ -293,6 +293,15 @@ final class PlayerModel: ObservableObject {
     /// A time-pos of this file has come since it loaded (1.30.4): until
     /// then `position` is the last file's, or 0.
     private var positionFresh = false
+    /// How far the open file has really played (0.90.0, PlayedPlace): what
+    /// the end of a stream is judged by.
+    private var played = PlayedPlace()
+    /// Where a stream stopped before its end (0.90.0): history keeps this
+    /// place, not mpv's, which may be parked on the last frame, and never
+    /// "finished", until it plays on, a place is chosen or another file loads.
+    private var stoppedAt: Double?
+    /// What had played when it stopped: more played since means it plays on.
+    private var stoppedPlayed: Double = 0
     /// "aid=…", "sid=…", "secondary-sid=…" as mpv had them before any file
     /// (1.30.4): given to each file's loadfile, so it starts on its own.
     private var fileTrackDefaults: [String] = []
@@ -468,9 +477,11 @@ final class PlayerModel: ObservableObject {
         // progress" in the credits, and Continue Watching offered the end
         // credits again instead of the next episode.
         // By the credits alone, whatever Up Next's setting or a next episode.
-        if fileLoaded, positionFresh, duration > 120,
+        // Not a stream that stopped there before its end (0.90.0).
+        if fileLoaded, positionFresh, duration > 120, stoppedAt == nil,
            let t = Self.upNextTrigger(segments: segments, duration: duration, postCredits: postCredits, autoplay: false),
            position >= t.time { leftFinished = true }
+        if awaitingFirstFrame { awaitingFirstFrame = false }
         // Removed from Continue Watching on the problem card (1.30.4): not
         // written back by the close. PlayerScreen removes the entry itself
         // and closes; a failed file whose entry is gone was removed there.
@@ -898,6 +909,21 @@ final class PlayerModel: ObservableObject {
         if finishOnNextLoad { leftFinished = true }
         finishOnNextLoad = false
         saveHistory(force: true)            // the file that was playing, under its own entry
+        stoppedAt = nil
+        // A load you asked for (a tap, Try Again, another episode): the
+        // tries Folio makes by itself are counted afresh (0.90.0).
+        if !silentLoad { silentTries = [:] }
+        // One of Folio's own tries of the file already opening: the card's
+        // 12 s to Try Again and Close go on counting from the first.
+        let sameOpening = silentLoad && openingSince?.id == item.id
+        silentLoad = false
+        linkGaveUp = nil
+        // Likely open within a moment (0.90.0): the prepared next episode,
+        // the same file again, a server that sends its files itself. The
+        // opening card waits a moment for those (OpeningCardTiming).
+        openingQuick = appended.map { $0.index == queueIndex && $0.path == mpvPath(item) } ?? false
+            || playingItem?.id == item.id
+            || (item.resolvedURL?.host).map { LinkWarmer.direct.contains($0) } ?? false
         // Another file: the place a stream stopped at isn't its (1.30.2).
         if retryAt?.id != item.id { retryAt = nil }
         leftFinished = false
@@ -910,8 +936,11 @@ final class PlayerModel: ObservableObject {
         // The same file opened again on a new connection (1.30.6): what was
         // skipped and shown stays, so an intro scrubbed into isn't skipped
         // now, and a dismissed Up Next card doesn't come back to count down.
+        // Kept until the file has loaded (0.90.0, as retryAt): a reconnect
+        // or one of Folio's own tries that fails to open is tried again, and
+        // the next try lost them.
         let carried = reconnectCarry?.id == item.id ? reconnectCarry : nil
-        reconnectCarry = nil
+        if reconnectCarry?.id != item.id { reconnectCarry = nil }
         segments = []
         activeSegment = nil
         autoSkipped = carried?.skipped ?? []
@@ -932,7 +961,9 @@ final class PlayerModel: ObservableObject {
         dropLayoutFilter(c)
         subtitleSearch?.cancel(); subtitleSearch = nil
         isLoading = true
-        beginOpening(item)
+        // The opening card stays until this file's first picture (0.90.0).
+        if !awaitingFirstFrame { awaitingFirstFrame = true }
+        beginOpening(item, sameOpening: sameOpening)
         position = 0
         clock.position = 0
         clock.duration = item.durationHint ?? 0
@@ -988,9 +1019,14 @@ final class PlayerModel: ObservableObject {
         }
 
         // A reconnect (1.30.4) opens the same file on the tracks it played.
+        // Kept until the file has loaded (0.90.0), as what it had skipped.
         let keep = reconnectTracks?.id == item.id ? reconnectTracks?.opts ?? [] : []
-        reconnectTracks = nil
+        if reconnectTracks?.id != item.id { reconnectTracks = nil }
         let opts = startOptions(for: item, toast: true) + trackDefaultsForFile + keep
+        // Where it's asked to start is where its playing is counted from (0.90.0).
+        played = PlayedPlace()
+        played.asked(opts.first { $0.hasPrefix("start=") }.flatMap { Double($0.dropFirst("start=".count)) } ?? 0, now: CACurrentMediaTime())
+        cameAsPrepared = false
         c.set("demuxer-readahead-secs", "60")
         if raisedBuffer, !bufferTrimmed {
             raisedBuffer = false
@@ -1003,6 +1039,8 @@ final class PlayerModel: ObservableObject {
             appended = nil
             linkHoldPause = false; advancingFromEnd = false
             c.set("pause", false)
+            cameAsPrepared = true
+            logCache("as the prepared episode takes over (still the last file's)")
             let r = c.command(["playlist-next"])
             dlog("player", "playlist-next → the prepared episode \(item.displayTitle) -> \(r)")
         } else {
@@ -1044,6 +1082,7 @@ final class PlayerModel: ObservableObject {
                     // first attempt's came up to 40 s later and opened the file
                     // again at that attempt's start.
                     guard let self, !self.closed, self.loadToken == token, self.playingItem?.id == id, self.appended == nil else { return }
+                    self.linkGaveUp = answer.gaveUp ? id : nil
                     if let final, final != u { self.playLinks[id] = final } else if final == u { LinkWarmer.direct.insert(u.host ?? "") }
                     // Saved once the file has really loaded (see rememberAddress).
                     self.followed = final.flatMap { $0 != u && !answer.fromSaved ? (id, u, $0) : nil }
@@ -1155,6 +1194,101 @@ final class PlayerModel: ObservableObject {
         }
     }
 
+    // MARK: Trying again without being asked (0.90.0)
+
+    /// How often each file has been opened again by Folio itself since you
+    /// last asked for it, or since it last played for half a minute.
+    private var silentTries: [String: Int] = [:]
+    /// The load under way is one of Folio's own: load() keeps the count.
+    private var silentLoad = false
+
+    /// Opens `it` again on its link followed afresh, without a card, when
+    /// its address came from a link (a WebDAV or addon link that a debrid
+    /// service sends on to one of its download hosts): each trip along the
+    /// link lands on another host, and most are healthy. 18 Nov log: a host
+    /// answered Folio's check, failed mpv 254 ms later ("loading failed"),
+    /// and Try Again played from another. Twice at most (SilentRetry), with
+    /// the opening card up, from `place` (or where the file was to start).
+    /// False when it isn't tried: the caller then shows its card.
+    private func tryAgainSilently(_ it: MediaItem, at place: Double?, why: String) -> Bool {
+        playLinks[it.id] = nil
+        let tries = silentTries[it.id] ?? 0
+        guard canRetry, let wait = SilentRetry.wait(tries: tries, followsLink: resolvesFirst(it), online: PlayerNetwork.shared.online) else {
+            if tries > 0 { dlog("player", "\(why): opened again \(tries) time(s) already without being asked; the card says so now") }
+            return false
+        }
+        reloadSilently(it, at: place, wait: wait, why: why)
+        return true
+    }
+
+    /// This load's link was followed again by LinkWarmer after a failing
+    /// download host and found none that answers: the file it then failed
+    /// to open isn't tried again by Folio itself.
+    private var linkGaveUp: String?
+
+    /// mpv couldn't open a file behind a link ("loading failed"): the server
+    /// is asked why before anything is tried again (0.90.0). A removed file
+    /// or a refused login is never tried again, a host asking for fewer
+    /// requests once and not at once, a server failing by itself not at all
+    /// (SilentRetry.waitAfterFailedOpen); what isn't tried again gets its
+    /// card from the same answer. False when there is nothing to ask: the
+    /// caller shows the card.
+    private func askWhyThenTryAgain(_ it: MediaItem, error: Int32) -> Bool {
+        playLinks[it.id] = nil
+        let tries = silentTries[it.id] ?? 0
+        guard canRetry, tries < SilentRetry.most, resolvesFirst(it), PlayerNetwork.shared.online, linkGaveUp != it.id,
+              let url = it.resolvedURL else {
+            if linkGaveUp == it.id { dlog("player", "loading failed: its link was followed again already without a download host that answers; not tried again without being asked") }
+            return false
+        }
+        let token = loadToken
+        problemCheck?.cancel()
+        problemCheck = Task { [weak self] in
+            let answer = await ServerProblem.probe(url, headers: it.headers)
+            guard let self, !Task.isCancelled, !self.closed, self.loadToken == token, self.playingItem?.id == it.id, self.errorMessage == nil else { return }
+            let said = answer.status.map { "HTTP \($0)\(answer.redirected ? " from a download host" : "")" }
+                ?? (answer.error as? URLError).map { "URLError \($0.code.rawValue)" } ?? "nothing"
+            let wait = SilentRetry.waitAfterFailedOpen(tries: tries, online: PlayerNetwork.shared.online, status: answer.status,
+                                                       redirected: answer.redirected,
+                                                       connectionFailed: (answer.error as? URLError).map { SilentRetry.connectionFailures.contains($0.code) } ?? false,
+                                                       retryAfter: answer.retryAfter)
+            guard let wait else {
+                dlog("player", "loading failed: the server answers \(said); not tried again without being asked")
+                self.openFailed(error: error, known: answer)
+                return
+            }
+            self.reloadSilently(it, at: nil, wait: wait, why: "loading failed (the server answers \(said))")
+        }
+        return true
+    }
+
+    /// The reload itself, `wait` seconds on, counted for the file.
+    private func reloadSilently(_ it: MediaItem, at place: Double?, wait: Double, why: String) {
+        let tries = silentTries[it.id] ?? 0
+        silentTries[it.id] = tries + 1
+        dlog("player", String(format: "%@: following its link again without asking, in %.1f s (%d of %d)%@", why, wait, tries + 1, SilentRetry.most,
+                              place.map { ", to go on from \(Self.format($0))" } ?? ""))
+        if followed?.id == it.id { followed = nil }
+        if let place { retryAt = (it.id, place) }
+        // A file that was playing goes on with its tracks and its skips, as a reconnect does.
+        if fileLoaded { keepForReload(it) }
+        if !isLoading { isLoading = true }                      // the opening card, not a frozen picture
+        let token = loadToken
+        let link = it.resolvedURL
+        Task { [weak self] in
+            // Its saved download address forgotten before the link is asked again.
+            if let link { await ResolvedLinks.shared.forget(link) }
+            try? await Task.sleep(for: .seconds(wait))
+            // Not after a choice of yours meanwhile (another load), a close,
+            // or a card; nor with a move to another episode under way, which
+            // changes neither loadToken nor the file open until it loads.
+            guard let self, !self.closed, self.loadToken == token, self.playingItem?.id == it.id, self.errorMessage == nil,
+                  self.pendingNavigation == nil, self.item.id == it.id else { return }
+            self.silentLoad = true
+            self.load(it)
+        }
+    }
+
     /// Continue Watching's queue, built after the player opened (a WebDAV
     /// folder's listing, 1.2 s on Real-Debrid, held the player back: "built
     /// in 1212 ms", 5 Nov log). Taken while nothing else has been queued
@@ -1191,11 +1325,55 @@ final class PlayerModel: ObservableObject {
     /// The title's picture, for the card's background, once it's found.
     @Published private(set) var openingArt: UIImage?
     private var openingTimer: DispatchWorkItem?
+    /// The file is asked for or open and its first picture isn't up yet
+    /// (0.90.0): the opening card stays over the black between "file
+    /// loaded" and the picture (6.7 s on Real-Debrid over 5G, 16 Nov). Ends
+    /// with the first frame (playback restart), an error, or 8 s after the
+    /// file loaded, whichever comes first.
+    @Published private(set) var awaitingFirstFrame = false
 
-    private func beginOpening(_ it: MediaItem) {
+    /// Lab (`-labHoldOpening=<seconds>`): the opening card held up that long
+    /// with a 2:3 picture behind it, for the test that the player keeps its
+    /// size under it (OpeningCardUITests).
+    private static let labHoldOpening: Double? = CommandLine.arguments.first { $0.hasPrefix("-labHoldOpening=") }
+        .flatMap { Double($0.dropFirst("-labHoldOpening=".count)) }
+    private static func labPoster() -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: 600, height: 900)).image { ctx in
+            UIColor.systemIndigo.setFill(); ctx.fill(CGRect(x: 0, y: 0, width: 600, height: 900))
+            UIColor.systemOrange.setFill(); ctx.fill(CGRect(x: 0, y: 300, width: 600, height: 300))
+        }
+    }
+
+    /// The first picture is up (or won't come): the opening card goes.
+    private func firstFrameSettled(lab: Bool = false) {
+        guard awaitingFirstFrame, lab || Self.labHoldOpening == nil || errorMessage != nil else { return }
+        awaitingFirstFrame = false
+    }
+
+    /// When the opening began that the card's 12 s count from. Folio's own
+    /// tries of the same file don't start them again (0.90.0): each load
+    /// did, and Try Again and Close stayed away through all of them.
+    private var openingSince: (id: String, at: Date)?
+    /// The file opening is likely there within a moment (set by load()).
+    private(set) var openingQuick = false
+    static let openingSlowAfter: Double = 12
+
+    private func beginOpening(_ it: MediaItem, sameOpening: Bool = false) {
         openStage = .connecting
-        openingSlow = false
+        if !sameOpening || openingSince?.id != it.id {
+            openingSince = (it.id, Date())
+            openingSlow = false
+        }
+        let slowIn = max(0, Self.openingSlowAfter - Date().timeIntervalSince(openingSince?.at ?? Date()))
         if nowPlayingArt?.id != it.id { openingArt = nil }
+        if let hold = Self.labHoldOpening {
+            openingArt = Self.labPoster()
+            let held = it.id
+            DispatchQueue.main.asyncAfter(deadline: .now() + hold) { [weak self] in
+                guard let self, (self.playingItem ?? self.item).id == held else { return }
+                self.firstFrameSettled(lab: true)
+            }
+        }
         openingTimer?.cancel()
         let id = it.id
         let w = DispatchWorkItem { [weak self] in
@@ -1203,7 +1381,7 @@ final class PlayerModel: ObservableObject {
             self.openingSlow = true
         }
         openingTimer = w
-        DispatchQueue.main.asyncAfter(deadline: .now() + 12, execute: w)
+        DispatchQueue.main.asyncAfter(deadline: .now() + slowIn, execute: w)
     }
 
     /// What's opening, by name.
@@ -1239,7 +1417,8 @@ final class PlayerModel: ObservableObject {
             let answer = await ServerProblem.probe(url, headers: it.headers)
             guard !Task.isCancelled, self.isLoading, !self.fileLoaded, self.playingItem?.id == id, self.errorMessage == nil else { return }
             let where_ = self.serverName(of: it)
-            let p = ServerProblem.classify(status: answer.status, error: answer.error, server: where_.name, realDebrid: where_.realDebrid)
+            let p = ServerProblem.classify(status: answer.status, error: answer.error, server: where_.name, realDebrid: where_.realDebrid,
+                                           afterRedirect: answer.redirected)
             dlog("player", "still opening after 12 s: the server answers \(answer.status.map(String.init) ?? "nothing") (\(p.kind))")
             guard p.kind == .gone || p.kind == .refused else { return }
             self.client?.command(["stop"])
@@ -1249,17 +1428,20 @@ final class PlayerModel: ObservableObject {
 
     /// mpv couldn't open the file: for a file on a server, the server is
     /// asked why, and the card says it.
-    private func diagnose(_ it: MediaItem, reason: String) {
+    /// `known`: the server's answer, when it has just been asked.
+    private func diagnose(_ it: MediaItem, reason: String,
+                          known: (status: Int?, error: Error?, redirected: Bool, retryAfter: Double?)? = nil) {
         guard let url = it.resolvedURL, ["http", "https"].contains(url.scheme?.lowercased() ?? "") else { return }
         problemCheck?.cancel()
         checkingProblem = true
         let id = it.id
         problemCheck = Task { [weak self] in
-            let answer = await ServerProblem.probe(url, headers: it.headers)
+            let answer: (status: Int?, error: Error?, redirected: Bool, retryAfter: Double?)
+            if let known { answer = known } else { answer = await ServerProblem.probe(url, headers: it.headers) }
             guard let self, !Task.isCancelled, self.playingItem?.id == id, self.errorMessage != nil else { return }
             let where_ = self.serverName(of: it)
             let p = ServerProblem.classify(status: answer.status, error: answer.error, server: where_.name,
-                                           realDebrid: where_.realDebrid, reason: reason)
+                                           realDebrid: where_.realDebrid, reason: reason, afterRedirect: answer.redirected)
             dlog("player/error", "the server answers \(answer.status.map(String.init) ?? (answer.error as? URLError).map { "URLError \($0.code.rawValue)" } ?? "nothing"): \(p.title)")
             self.show(p, for: it)
         }
@@ -1267,6 +1449,7 @@ final class PlayerModel: ObservableObject {
 
     private func show(_ p: ServerProblem, for it: MediaItem) {
         isLoading = false
+        if awaitingFirstFrame { awaitingFirstFrame = false }
         checkingProblem = false
         problem = p
         if errorMessage == nil { errorMessage = p.title }
@@ -1551,6 +1734,37 @@ final class PlayerModel: ObservableObject {
         let mb = bufferMB
         c.setAsync("demuxer-max-bytes", "\(mb)MiB")
         dlog("player", "next episode: buffer limit back to \(mb) MB for the next file (\(EnergyMonitor.memory))")
+        logCache("with the limit back (this file read to its end)")
+    }
+
+    /// The open file came as the prepared next episode (0.90.0, for logCache).
+    private var cameAsPrepared = false
+
+    /// What mpv's reader holds of the open file, beside what the app holds
+    /// in all (0.90.0). 18 Nov log: 1.1–1.6 GB through two episodes that
+    /// began as prepared hand-overs, with a 310 MB buffer; an episode opened
+    /// by itself sat near 305 MB. The log didn't say whether mpv still held
+    /// that much (a limit still raised, or the last file's data kept) or had
+    /// freed it and iOS still counted it. These lines do: mpv's own count
+    /// and its limits, as the limit goes back, as the prepared episode takes
+    /// over, when it has loaded and half a minute on.
+    private func logCache(_ when: String) {
+        guard let c = client, !c.isShutDown else { return }
+        c.query({ c in (c.string("demuxer-cache-state") ?? "", c.int("demuxer-max-bytes"), c.int("demuxer-max-back-bytes")) }) { r in
+            let mb = { (n: Int64?) in n.map { "\($0 / 1_048_576) MB" } ?? "?" }
+            let held = Self.cacheBytes(r.0)
+            dlog("player", "cache \(when): mpv holds \(mb(held?.total)) of this file, \(mb(held?.ahead)) of it ahead; its limits \(mb(r.1)) ahead, \(mb(r.2)) behind; \(EnergyMonitor.memory)")
+        }
+    }
+
+    /// "total-bytes" and "fw-bytes" from mpv's demuxer-cache-state.
+    nonisolated static func cacheBytes(_ state: String) -> (total: Int64, ahead: Int64)? {
+        func number(_ key: String) -> Int64? {
+            guard let r = state.range(of: "\"\(key)\"\\s*:\\s*(\\d+)", options: .regularExpression) else { return nil }
+            return Int64(state[r].drop { !$0.isNumber })
+        }
+        guard let total = number("total-bytes"), let ahead = number("fw-bytes") else { return nil }
+        return (total, ahead)
     }
 
     /// mpv's reader has hit the end of this file (demuxer-cache-state "eof").
@@ -1659,7 +1873,7 @@ final class PlayerModel: ObservableObject {
             if paused { setPaused(false) }
             return
         }
-        goTo(i)
+        goTo(i, by: "a playlist row")
     }
 
     /// The latest "go to episode" request; a lookup that finishes after a newer
@@ -1672,8 +1886,12 @@ final class PlayerModel: ObservableObject {
     /// instead. (1.17.0 moved `queueIndex` first and stopped the episode
     /// playing; with the picker up, history then went under the wrong episode
     /// and the end of the file skipped on.)
-    private func goTo(_ i: Int) {
+    ///
+    /// `who`: what asked for the move, for the log (0.90.0). 18 Nov log: the
+    /// player went from S02E07 to S02E08 with no line saying what moved it.
+    private func goTo(_ i: Int, by who: String) {
         guard queue.indices.contains(i) else { return }
+        dlog("player", "go to episode \(i + 1) of \(queue.count) from \(queueIndex + 1): asked by \(who), at \(Self.format(position)) of \(Self.format(duration))")
         lookupToken += 1
         // A move of yours (or Up Next's): the card goes and doesn't count on
         // over it, and a picker for another episode is no longer asked (1.30.4).
@@ -1748,14 +1966,15 @@ final class PlayerModel: ObservableObject {
         }
     }
 
-    func playNext() {
+    /// `who`: what asked, for the log (0.90.0).
+    func playNext(by who: String = "Next (a button or a key)") {
         guard hasNext else { return }
-        goTo(queueIndex + 1)
+        goTo(queueIndex + 1, by: who)
     }
 
     func playPrevious() {
         if position > 10 || !hasPrevious { seek(to: 0); return }
-        goTo(queueIndex - 1)
+        goTo(queueIndex - 1, by: "Previous")
     }
 
     /// A file the hardware decoder can't take (1.28.5), said once: 10 Nov,
@@ -1796,10 +2015,28 @@ final class PlayerModel: ObservableObject {
         fileLoaded = true
         if item.id == startFirstID { startFirstID = nil; startFirstAt = nil; startFirstAtZero = false }
         retryAt = nil
+        // Open: what was kept for a reload has been used (0.90.0).
+        reconnectTracks = nil
+        reconnectCarry = nil
+        openingSince = nil
         noteSoftwareDecoding()
         // The gestures tip comes up in the first plays after installing (1.27.0).
         FolioTips.note(PlayerGesturesTip.played)
         if isLoading { isLoading = false }
+        // The first picture comes with the playback restart; a file that
+        // shows none (or mpv not saying) doesn't keep the card for ever.
+        let loaded = loadToken
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+            guard let self, self.loadToken == loaded else { return }
+            self.firstFrameSettled()
+        }
+        if cameAsPrepared {
+            logCache("with the prepared episode loaded")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
+                guard let self, !self.closed, self.loadToken == loaded else { return }
+                self.logCache("30 s into the prepared episode")
+            }
+        }
         refreshTracks()
         refreshChapters()
         readDuration()
@@ -2462,6 +2699,9 @@ final class PlayerModel: ObservableObject {
         // A place of your own: Try again no longer goes back to where the
         // stream stopped (1.30.3).
         retryAt = nil
+        stoppedAt = nil
+        // Where the skip is to land (0.90.0); skips still gathering add to it.
+        askedPlace((skipRunning && skipFor == loadToken ? played.reached ?? position : position) + seconds)
         // The sound is off until the picture lands, so quick skips don't
         // play a few milliseconds from each place on the way (4 Nov
         // recording: seven +10 s taps in 2 s, the sound cutting in and out).
@@ -2555,6 +2795,8 @@ final class PlayerModel: ObservableObject {
         }
         guard fileLoaded else { dlog("player", "seek to \(Self.format(seconds)) dropped: the file isn't open yet"); return }
         retryAt = nil                   // as in seek(by:) (1.30.3)
+        stoppedAt = nil
+        askedPlace(seconds)
         if ended, duration > 0, seconds < duration - 0.5 { ended = false }
         // A place chosen outright: skips still waiting would move it on.
         skipPending = 0
@@ -2583,7 +2825,14 @@ final class PlayerModel: ObservableObject {
         clock.position = seconds
         guard Date().timeIntervalSince(lastScrubSeek) > 0.1 else { return }
         lastScrubSeek = Date()
+        askedPlace(seconds)
         _ = client?.commandAsync(["seek", String(max(0, seconds)), "absolute+keyframes"])
+    }
+
+    /// A place in the open file was asked for (a seek, a skip, a scrub):
+    /// playback is counted from there (0.90.0, PlayedPlace).
+    private func askedPlace(_ seconds: Double) {
+        played.asked(duration > 0 ? min(seconds, duration) : seconds, now: CACurrentMediaTime())
     }
 
     /// The finger is off the seek bar or the video (scrubTime cleared by
@@ -3052,12 +3301,23 @@ final class PlayerModel: ObservableObject {
     @discardableResult
     func run(command: String) -> Bool {
         guard let c = client else { return false }
+        played.mayJump(now: CACurrentMediaTime())       // (0.90.0) a seek typed in the console is asked for too
+        stoppedAt = nil
         let r = c.commandString(command)
         if r < 0 { showToast("Command failed: \(String(cString: mpv_error_string(r)))") }
         return r >= 0
     }
 
-    func keyDown(_ key: String) { _ = client?.commandAsync(["keydown", key]) }
+    func keyDown(_ key: String) {
+        // (0.90.0) A jump within 2 s of a key is taken as asked for. Any
+        // key, not only mpv's seeking ones (the arrows, Page Up and Down,
+        // the chapter keys): your input.conf can make any key seek, and
+        // Folio can't see what a key is bound to. A stream that drops within
+        // 2 s of a key that doesn't seek is judged by mpv's position then,
+        // as every end was before 0.90.0.
+        played.mayJump(now: CACurrentMediaTime())
+        _ = client?.commandAsync(["keydown", key])
+    }
     func keyUp(_ key: String) { _ = client?.commandAsync(["keyup", key]) }
 
     func setShaders(_ names: [String]) {
@@ -3107,6 +3367,12 @@ final class PlayerModel: ObservableObject {
         flushWatched()
         var stored = playingItem ?? item
         if stored.title.isEmpty { stored.title = mediaTitle }
+        // A stream that stopped before its end keeps the place it had played
+        // to (0.90.0): mpv's own may be the last frame, which read as watched.
+        if let stoppedAt {
+            HistoryStore.shared.record(stored, position: stoppedAt, duration: duration)
+            return
+        }
         HistoryStore.shared.record(stored, position: leftFinished && duration > 0 ? duration : position, duration: duration)
         // Handoff: the other device can pick up here (Handoff.swift). Every
         // 30 s is near enough for picking up; each update has iOS encode and
@@ -3684,6 +3950,13 @@ final class PlayerModel: ObservableObject {
         // Not before this file has loaded (1.28.6): a late position of the
         // last file could bring the card up for the new one.
         guard fileLoaded else { return }
+        // Not over a stream that stopped before its end (0.90.0): mpv's
+        // position may sit in the credits, and Play Now from the card that
+        // brought up marked the episode finished.
+        guard stoppedAt == nil else {
+            if upNext != nil { upNext = nil; stopUpNextCountdown() }
+            return
+        }
         // Nor while another episode is being moved to (1.30.4): its "next"
         // is queueIndex + 1, which may be that episode's already.
         guard pendingNavigation == nil, playingItem?.id == item.id else {
@@ -3792,14 +4065,14 @@ final class PlayerModel: ObservableObject {
         upNextDismissed = true
         dlog("player", "up next: countdown finished")
         finishedHere()
-        playNext()
+        playNext(by: "Up Next's countdown")
     }
 
     /// The card's Play Now.
     func playNextFromCard() {
         dismissUpNext()
         finishedHere()
-        playNext()
+        playNext(by: "Up Next's Play Now")
     }
 
     /// Up Next went on to the next episode: this one counts as watched,
@@ -3846,6 +4119,13 @@ final class PlayerModel: ObservableObject {
     private var passLog: Task<Void, Never>?
     private var lastDrops: (dropped: Int64, delayed: Int64)?
 
+    /// How many more than at the last line; all of them when the count has
+    /// started again from 0 since (lower than it was).
+    nonisolated static func countSince(now: Int64, last: Int64?) -> Int64 {
+        guard let last, now >= last else { return max(0, now) }
+        return now - last
+    }
+
     private func startPassLog() {
         passLog?.cancel()
         lastDrops = nil
@@ -3870,7 +4150,9 @@ final class PlayerModel: ObservableObject {
         }) { [weak self] r in
             guard let self else { return }
             let drops = (r.1, r.2)
-            let since = self.lastDrops.map { (drops.0 - $0.dropped, drops.1 - $0.delayed) } ?? drops
+            // mpv starts its counts again when the video output does (0.90.0:
+            // the line said "-212 dropped" after one).
+            let since = (Self.countSince(now: drops.0, last: self.lastDrops?.dropped), Self.countSince(now: drops.1, last: self.lastDrops?.delayed))
             self.lastDrops = (drops.0, drops.1)
             let passes = r.0.flatMap { RenderPasses.summary($0) } ?? (r.0.map { "pass list unreadable: \($0.prefix(120))" } ?? "the renderer gives no pass list")
             // The display's rate only when mpv knows it (1.30.4: "display 0 Hz" on the video layer).
@@ -4021,6 +4303,27 @@ final class PlayerModel: ObservableObject {
         reconnects[it.id, default: 0] += 1
         dlog("player", String(format: "slow connection: reconnecting at %@ (read %.1f MB/s, needs %.1f MB/s)",
                               Self.format(at), read / 1_048_576, needRate / 1_048_576))
+        keepForReload(it)
+        playLinks[it.id] = nil
+        if followed?.id == it.id { followed = nil }
+        retryAt = (it.id, at)
+        let link = it.resolvedURL
+        Task { [weak self] in
+            // Its saved download address forgotten before it's asked again.
+            if let link { await ResolvedLinks.shared.forget(link) }
+            // Not with a move to another episode under way (0.90.0): Next
+            // tapped meanwhile, and this opened the old episode again.
+            guard let self, !self.closed, self.playingItem?.id == it.id, self.fileLoaded,
+                  self.pendingNavigation == nil, self.item.id == it.id else { return }
+            self.silentLoad = true          // (0.90.0) not a load you asked for
+            self.load(it)
+            self.showToast("Reconnecting…")
+        }
+    }
+
+    /// The file is about to be opened again where it is: its tracks, and
+    /// what it had skipped and shown, are kept for that load.
+    private func keepForReload(_ it: MediaItem) {
         var opts: [String] = []
         if let a = tracks.first(where: { $0.type == "audio" && $0.selected }) { opts.append("aid=\(a.id)") }
         if let s = tracks.first(where: { $0.type == "sub" && $0.selected }) {
@@ -4030,17 +4333,6 @@ final class PlayerModel: ObservableObject {
         }
         reconnectTracks = (it.id, opts)
         reconnectCarry = (it.id, autoSkipped, introsShown, upNextDismissed)
-        playLinks[it.id] = nil
-        if followed?.id == it.id { followed = nil }
-        retryAt = (it.id, at)
-        let link = it.resolvedURL
-        Task { [weak self] in
-            // Its saved download address forgotten before it's asked again.
-            if let link { await ResolvedLinks.shared.forget(link) }
-            guard let self, !self.closed, self.playingItem?.id == it.id, self.fileLoaded else { return }
-            self.load(it)
-            self.showToast("Reconnecting…")
-        }
     }
 
     // MARK: Opening a network file (1.23.2)
@@ -4049,7 +4341,11 @@ final class PlayerModel: ObservableObject {
     /// The first picture of a network file: what mpv did to open it, from
     /// its log (OpenTimeline), in the app's log.
     private func logOpenTimelineOnce() {
-        guard !openTimelineLogged, let u = (playingItem ?? item).resolvedURL, !u.isFileURL else { return }
+        // This file's own first picture only (0.90.0): load() makes the next
+        // file's line due while the last one is still open, and a playback
+        // restart of that one still on its way wrote the line a first time,
+        // from the last file's opening, before the new file wrote its own.
+        guard !openTimelineLogged, fileLoaded, let u = (playingItem ?? item).resolvedURL, !u.isFileURL else { return }
         openTimelineLogged = true
         DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1) {
             // The log's end only (1.30.2): the whole of it was read each time.
@@ -5221,7 +5517,7 @@ final class PlayerModel: ObservableObject {
             guard let self, !Task.isCancelled, !self.closed, (self.playingItem ?? self.item).id == it.id else { return }
             guard let found else { dlog("player", "Now Playing: no picture found for \(it.displayTitle)"); return }
             self.nowPlayingArt = (it.id, found.image)
-            if self.isLoading { self.openingArt = found.image }
+            if self.isLoading, Self.labHoldOpening == nil { self.openingArt = found.image }
             dlog("player", "Now Playing picture: \(found.source), \(Int(found.image.size.width))×\(Int(found.image.size.height))")
             self.updateNowPlaying()
         }
@@ -5258,7 +5554,7 @@ final class PlayerModel: ObservableObject {
             guard let e = e as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
             self?.seek(to: e.positionTime); return .success
         }
-        add(cc.nextTrackCommand) { [weak self] _ in self?.playNext(); return .success }
+        add(cc.nextTrackCommand) { [weak self] _ in self?.playNext(by: "Next on the Lock Screen, Control Center or headphones"); return .success }
         add(cc.previousTrackCommand) { [weak self] _ in self?.playPrevious(); return .success }
     }
 
@@ -5352,33 +5648,21 @@ extension PlayerModel: MPVClientDelegate {
             onFileLoaded()
         case .endFile(let reason, let error):
             if reason == MPVEndReason.error {
-                if isLoading { isLoading = false }
-                var msg = "Playback failed: \(String(cString: mpv_error_string(error)))"
-                if let u = item.resolvedURL, u.isFileURL {
-                    let fm = FileManager.default
-                    let exists = fm.fileExists(atPath: u.path)
-                    let attrs = (try? fm.attributesOfItem(atPath: u.path)) ?? [:]
-                    let mediaCount = (try? fm.contentsOfDirectory(atPath: MPVFiles.mediaDir.path))?.count ?? -1
-                    dlog("player/error", "local file exists=\(exists) readable=\(fm.isReadableFile(atPath: u.path)) size=\(attrs[.size] ?? 0) protection=\((attrs[.protectionKey] as? FileProtectionType)?.rawValue ?? "?") mediaDirFiles=\(mediaCount) path=\(u.path)")
-                    if !exists {
-                        msg += "\n\nThis file is no longer in the library (\(u.lastPathComponent)). Add it again from Files."
-                    } else if !fm.isReadableFile(atPath: u.path) {
-                        msg += "\n\niOS didn't grant access to this file (\(u.lastPathComponent)). Open it again from Files, or copy it into Folio → Media."
-                    }
-                }
-                dlog("player/error", msg)
-                errorMessage = msg
-                // A link found for this episode (an addon's, redirected) may
-                // have expired: Try again finds it again (review, 5 Nov).
-                if queue.indices.contains(queueIndex), resolvedItems[queueIndex] != nil, queue[queueIndex].url != item.url {
-                    resolvedItems[queueIndex] = nil
-                }
-                // A download address may have expired: Try again goes back to the item's own.
-                playLinks[(playingItem ?? item).id] = nil
-                forgetAddress(of: playingItem ?? item)
-                diagnose(playingItem ?? item, reason: String(cString: mpv_error_string(error)))
+                // A file behind a link that didn't open: the link is followed
+                // again first, to another download host, before any card
+                // (0.90.0, tryAgainSilently). Only mpv's "loading failed",
+                // before the file has opened.
+                if error == MPV_ERROR_LOADING_FAILED.rawValue, !fileLoaded,
+                   askWhyThenTryAgain(playingItem ?? item, error: error) { break }
+                openFailed(error: error)
             }
         case .playbackRestart:
+            // This file's picture is up: the opening card goes, and what
+            // plays from here counts as played (0.90.0).
+            if fileLoaded {
+                firstFrameSettled()
+                played.landed()
+            }
             logAudioSessionOnce()
             logOpenTimelineOnce()
             logSeekTime()
@@ -5410,6 +5694,37 @@ extension PlayerModel: MPVClientDelegate {
         }
     }
 
+    /// mpv couldn't open the file: the card, and for a file on a server
+    /// what the server says of it (`known`: its answer, when just asked).
+    private func openFailed(error: Int32, known: (status: Int?, error: Error?, redirected: Bool, retryAfter: Double?)? = nil) {
+        if isLoading { isLoading = false }
+        if awaitingFirstFrame { awaitingFirstFrame = false }
+        var msg = "Playback failed: \(String(cString: mpv_error_string(error)))"
+        if let u = item.resolvedURL, u.isFileURL {
+            let fm = FileManager.default
+            let exists = fm.fileExists(atPath: u.path)
+            let attrs = (try? fm.attributesOfItem(atPath: u.path)) ?? [:]
+            let mediaCount = (try? fm.contentsOfDirectory(atPath: MPVFiles.mediaDir.path))?.count ?? -1
+            dlog("player/error", "local file exists=\(exists) readable=\(fm.isReadableFile(atPath: u.path)) size=\(attrs[.size] ?? 0) protection=\((attrs[.protectionKey] as? FileProtectionType)?.rawValue ?? "?") mediaDirFiles=\(mediaCount) path=\(u.path)")
+            if !exists {
+                msg += "\n\nThis file is no longer in the library (\(u.lastPathComponent)). Add it again from Files."
+            } else if !fm.isReadableFile(atPath: u.path) {
+                msg += "\n\niOS didn't grant access to this file (\(u.lastPathComponent)). Open it again from Files, or copy it into Folio → Media."
+            }
+        }
+        dlog("player/error", msg)
+        errorMessage = msg
+        // A link found for this episode (an addon's, redirected) may
+        // have expired: Try again finds it again (review, 5 Nov).
+        if queue.indices.contains(queueIndex), resolvedItems[queueIndex] != nil, queue[queueIndex].url != item.url {
+            resolvedItems[queueIndex] = nil
+        }
+        // A download address may have expired: Try again goes back to the item's own.
+        playLinks[(playingItem ?? item).id] = nil
+        forgetAddress(of: playingItem ?? item)
+        diagnose(playingItem ?? item, reason: String(cString: mpv_error_string(error)), known: known)
+    }
+
     private func handleProperty(_ name: String, _ value: MPVValue) {
         switch name {
         case "time-pos":
@@ -5425,6 +5740,11 @@ extension PlayerModel: MPVClientDelegate {
             positionFresh = true
             let before = position
             position = p
+            played.moved(from: before, to: p, now: CACurrentMediaTime())
+            if stoppedAt != nil, played.playedSince >= stoppedPlayed + 1 { stoppedAt = nil }       // it plays on
+            // Half a minute played: the file is open for good, and the
+            // tries Folio makes by itself are counted afresh (0.90.0).
+            if played.playedSince >= SilentRetry.playedToReset, !silentTries.isEmpty { silentTries = [:] }
             learnIntros(from: before, to: p)
             countWatched(from: before, to: p)
             // Publish at most ~4x per second (skips SwiftUI work per frame).
@@ -5598,10 +5918,24 @@ extension PlayerModel: MPVClientDelegate {
             dlog("player", "end of file: \(fileLoaded ? "a move to another episode is under way" : "the last file's"); not moving on from it")
             return
         }
+        // An end the playing didn't run to (0.90.0): a stream whose
+        // connection dropped, which mpv reports as the end. Judged by how far
+        // the file really played (PlayedPlace), not by mpv's position, which
+        // can sit on the last frame by then, and not while a finger scrubs
+        // (its release decides, below). 18 Nov log: S02E07 opened again at
+        // 29:10, played for 30 ms, ended, counted as watched and S02E08
+        // loaded; its place to resume from was gone.
+        let it = playingItem ?? item
+        let scrubbing = scrubSession.active || clock.scrubTime != nil
+        let reached = played.reached ?? position
+        let early = !scrubbing && it.resolvedURL.map({ !$0.isFileURL }) == true
+            && PlayedPlace.stoppedEarly(duration: duration, reached: reached, playedSince: played.playedSince, parked: played.parked)
+        // Saved under history's "finished" line, so it stays to resume.
+        if early { stoppedAt = PlayedPlace.savedPlace(stopped: reached, duration: duration); stoppedPlayed = played.playedSince }
         saveHistory(force: true)
         // A scrub took the picture to the end with the finger still down
         // (1.30.4): nothing moves on until it lifts (scrubLifted looks again).
-        if scrubSession.active || clock.scrubTime != nil {
+        if scrubbing {
             eofWhileScrubbing = true
             dlog("player", "end of file under a scrub: waiting for the finger to lift")
             return
@@ -5615,20 +5949,31 @@ extension PlayerModel: MPVClientDelegate {
         // and mpv gave up, which it reports as the end. Said so, with Try
         // again (from where it stopped) and Play next, instead of going on
         // to the next episode or closing as if it had ended (review, 5 Nov).
-        let it = playingItem ?? item
-        if let u = it.resolvedURL, !u.isFileURL, duration > 120, position < duration - max(30, duration * 0.03) {
+        if early {
             let where_ = serverName(of: it)
-            dlog("player", "the stream stopped at \(Self.format(position)) of \(Self.format(duration)): not the end")
+            dlog("player", String(format: "the stream stopped at %@ of %@: not the end (%.1f s played since it opened or a place was asked for; mpv's position %@)",
+                                  Self.format(reached), Self.format(duration), played.playedSince, Self.format(position)))
+            // Up Next doesn't count down over it and move on.
+            upNext = nil
+            stopUpNextCountdown()
             playLinks[it.id] = nil          // Try again: the item's own address, redirected afresh
+            retryAt = (it.id, reached)      // and from here, whatever Resume playback says (1.30.2)
+            // Behind a link: followed again first, to another download host
+            // (0.90.0). It was playing: mpv's pause at this end isn't yours.
+            if tryAgainSilently(it, at: reached, why: "the stream stopped at \(Self.format(reached))") {
+                advancingFromEnd = true
+                return
+            }
             forgetAddress(of: it)
-            retryAt = (it.id, position)     // and from here, whatever Resume playback says (1.30.2)
-            show(ServerProblem(kind: .stoppedEarly, title: "The stream stopped at \(Self.format(position)) of \(Self.format(duration))",
+            show(ServerProblem(kind: .stoppedEarly, title: "The stream stopped at \(Self.format(reached)) of \(Self.format(duration))",
                                detail: "The connection to \(where_.name) dropped. Try again to go on from there.", icon: "wifi.exclamationmark"), for: it)
             return
         }
         if playbackMode == "playlist", defaults.bool(forKey: SettingsKey.autoplayNext), hasNext {
             advancingFromEnd = true
-            playNext()
+            dlog("player", String(format: "end of file at %@ of %@ (played to %@, %.0f s since it opened or a place was asked for): autoplay goes on to the next episode",
+                                  Self.format(position), Self.format(duration), Self.format(reached), played.playedSince))
+            playNext(by: "the end of the file (autoplay)")
         } else {
             // The end: back to where you came from. There was a Replay / Close
             // card; playing it again is a tap on its tile (user request, 4 Nov).
@@ -5815,6 +6160,142 @@ struct ScrubSession: Equatable {
     func mayRelease(currentFile: Int) -> Bool { file == nil || file == currentFile }
 
     mutating func lift() { file = nil }
+}
+
+/// How far the open file has played (0.90.0): the last place reached by
+/// playing on, or asked for (where it was to start, a seek, a skip, a
+/// scrub), and how much has played since that was asked. mpv's own
+/// position can't say it: at an end it parks on the last frame (keep-open),
+/// with a seek of its own, so a stream that drops just after it opens or
+/// seeks looks as if it had reached its end.
+struct PlayedPlace: Equatable {
+    /// The most that playing moves the position between two reports;
+    /// anything more, or backwards, is a jump.
+    static let step: Double = 3
+    private(set) var reached: Double?
+    private(set) var playedSince: Double = 0
+    /// A place was asked for and its picture isn't up yet: positions still
+    /// coming from the old place don't count. For `landingTime` at most (mpv
+    /// has the seek within moments, and reports its target from then), so a
+    /// seek mpv never answers doesn't stop the counting.
+    private(set) var landing = false
+    static let landingTime: Double = 1
+    private var askedAt: Double = 0
+    /// Until then (CACurrentMediaTime) a jump is taken as asked for: mpv's
+    /// own keys and console commands seek without saying where to.
+    private var trustJumpsUntil: Double = 0
+    /// Where mpv last jumped to by itself, with nothing played since: where
+    /// it landed after a place was asked for, or parked at an end.
+    private(set) var parked: Double?
+
+    mutating func asked(_ place: Double, now: Double) {
+        reached = max(0, place)
+        playedSince = 0
+        landing = true
+        askedAt = now
+        parked = nil
+    }
+
+    /// The picture of the place asked for is up (mpv's playback restart).
+    mutating func landed() { landing = false }
+
+    mutating func mayJump(now: Double, for seconds: Double = 2) { trustJumpsUntil = now + seconds }
+
+    /// mpv's position went from `from` to `to`.
+    mutating func moved(from: Double, to: Double, now: Double) {
+        let d = to - from
+        if d > 0, d <= Self.step {
+            if landing, now - askedAt > Self.landingTime { landing = false }
+            guard !landing else { return }
+            reached = to
+            playedSince += d
+            parked = nil
+        } else if now <= trustJumpsUntil {
+            reached = to
+            playedSince = 0
+            parked = nil
+        } else {
+            // Any other jump is mpv's own (the last frame at an end, a loop): not played.
+            parked = to
+        }
+    }
+
+    /// An end of file with playback having got to `reached` isn't the
+    /// file's end: more than 30 s or 3% short of its length (as before
+    /// 0.90.0, then by mpv's position), or more than 10 s short with under
+    /// 3 s played since the file opened or a place was asked for. Within
+    /// the last 10 s it is the end: a skip or scrub there is asked for, and
+    /// a file's length can be a little longer than its last frame.
+    ///
+    /// Nor is it early when mpv sits behind the place asked for (`parked`):
+    /// a skip, a scrub or skipped credits to past the last frame of a file
+    /// whose stated length is too long, which mpv answers with its last
+    /// frame. A stream that drops leaves mpv at the place asked for or on
+    /// at the stated end (18 Nov), not behind.
+    static func stoppedEarly(duration: Double, reached: Double, playedSince: Double, parked: Double? = nil) -> Bool {
+        guard duration > 120 else { return false }
+        let short = duration - reached
+        if short > max(30, duration * 0.03) { return true }
+        guard short > 10, playedSince < 3 else { return false }
+        if let parked, parked < reached - 1 { return false }
+        return true
+    }
+
+    /// The place history keeps for a stream that stopped at `stopped`: under
+    /// the line history counts as watched (HistoryEntry.isFinished: past 92%,
+    /// or within 90 s of the end of ten minutes or more), so an episode
+    /// that dropped in its credits is still there to resume and isn't
+    /// "watched" in the library while no sync service was told so.
+    static func savedPlace(stopped: Double, duration: Double) -> Double {
+        guard duration > 0 else { return max(0, stopped) }
+        var most = duration * 0.92
+        if duration >= 600 { most = min(most, duration - 90) }
+        return max(0, min(stopped, most - 1))
+    }
+}
+
+/// A file behind a link that failed to open, or stopped before its end, is
+/// opened again by Folio itself before any card (0.90.0).
+enum SilentRetry {
+    /// Tries per file, until you ask for it again or it has played for
+    /// `playedToReset` seconds.
+    static let most = 2
+    static let waits: [Double] = [0.3, 1]
+    static let playedToReset: Double = 30
+
+    /// Seconds to wait before the next try, or nil when there is none: only
+    /// for an address a link led to, online, and twice at most.
+    /// For a stream that stopped while playing.
+    static func wait(tries: Int, followsLink: Bool, online: Bool) -> Double? {
+        guard followsLink, online, tries >= 0, tries < most else { return nil }
+        return waits[min(tries, waits.count - 1)]
+    }
+
+    /// No answer for these reasons is worth another try.
+    static let connectionFailures: Set<URLError.Code> = [.timedOut, .cannotConnectToHost, .networkConnectionLost, .cannotFindHost,
+                                                         .dnsLookupFailed, .secureConnectionFailed]
+
+    /// For a file behind a link that mpv couldn't open, from what the
+    /// server answers when asked why (`status`, and whether a download
+    /// host it sent Folio on to gave it: `redirected`):
+    /// - the file is sent now (2xx: the host that failed mpv was another),
+    ///   a download host fails (5xx after a redirect), or nothing answered
+    ///   for a connection's reasons: again, as a stream that stopped;
+    /// - 429, the host asking for fewer requests: once only, after the time
+    ///   it names (`retryAfter`), 2 s at least and 5 s at most;
+    /// - the file gone (404, 410), the login refused (401, 403), the
+    ///   server itself failing, anything else: never. The card says it.
+    static func waitAfterFailedOpen(tries: Int, online: Bool, status: Int?, redirected: Bool, connectionFailed: Bool,
+                                    retryAfter: Double?) -> Double? {
+        guard let quick = wait(tries: tries, followsLink: true, online: online) else { return nil }
+        guard let status else { return connectionFailed ? quick : nil }
+        switch status {
+        case 200...299: return quick
+        case 429: return tries == 0 ? min(5, max(2, retryAfter ?? 2)) : nil
+        case 500...599: return redirected ? quick : nil
+        default: return nil
+        }
+    }
 }
 
 /// When a stream that keeps waiting for data is opened again on a new

@@ -159,6 +159,9 @@ enum SettingsKey {
 
     // What's new (1.22.0): the last version whose sheet was shown.
     static let whatsNewShown = "whatsNewShown"
+    /// The version numbers started again at 0.90.0, after 1.30.6: set once
+    /// what an install remembered of 1.x is put right (WhatsNew.resetVersionLine).
+    static let versionLineReset = "versionLineReset0900"
 
     // News from Folio (1.30.3): announcements and new versions from Folio's page on GitHub (Announcements).
     static let announcements = "announcements"

@@ -63,13 +63,22 @@ enum NotifyGroup: String, CaseIterable, Identifiable, Codable {
     var essential: Bool { self == .newReleases || self == .downloads }
 
     /// At most this many a week (besides the daily maximum), so one group
-    /// can't fill every day. Nil: no weekly limit.
+    /// can't fill every day. Nil: no weekly limit. This is the limit at one
+    /// or two a day; `weeklyMax(perDay:)` is the one the planner is given.
     var weeklyMax: Int? {
         switch self {
         case .trending: return 3
         case .recommendations, .library, .fun: return 2
         default: return nil
         }
+    }
+
+    /// (0.90.0) The weekly limit grows with "Up to … a Day", so there's
+    /// enough to say on a day that has it: as it was at one or two a day,
+    /// then half the daily number times it, rounded up (trending 3, 5, 6,
+    /// 8 at 2, 3, 4, 5 a day; the others 2, 3, 4, 5).
+    func weeklyMax(perDay: Int) -> Int? {
+        weeklyMax.map { ($0 * max(2, perDay) + 1) / 2 }
     }
 
     var kinds: [NotifyKind] { NotifyKind.allCases.filter { $0.group == self } }
@@ -125,6 +134,42 @@ enum NotifyKind: String, CaseIterable, Identifiable, Codable {
             return true
         default:
             return false
+        }
+    }
+
+    /// (0.90.0) Still true enough to send a day after it was planned, when
+    /// the data it came from has moved on: something that happened (a
+    /// climb, a rating passed, titles that were new on the charts, the
+    /// month's recap) or a pick. Not the ones that say "the most popular"
+    /// (new charts name another, which gets its own), the weather (the
+    /// forecast changed), or anything about what you're watching, your
+    /// library or your habits (it went because you did something).
+    var outlivesRefresh: Bool {
+        switch self {
+        case .risingFast, .viral, .topRated, .highlyRatedSeries, .lowRatedPopular, .comeback, .ratingMilestone, .popularGenre,
+             .freshTitles, .monthlyRecap, .forYouPick, .hiddenGem:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// (0.90.0) For the ones with a moment of their own: how long after it
+    /// they're still worth sending, when the moment came while Folio was in
+    /// front and they had been taken back. Nil: no use later ("a week
+    /// away" to someone who was just in Folio, a thriller before bed the
+    /// morning after).
+    var holdsFor: TimeInterval? {
+        switch self {
+        case .paused, .cliffhanger, .filmNearlyDone, .showNearlyDone, .monthlyRecap: return 24 * 3600
+        // About today: later the same day or evening, not tomorrow.
+        case .weekendForecast, .holiday: return 8 * 3600
+        case .weeklyBriefing: return 5 * 3600
+        // Not .friday: past its hour its candidate is next week's, under
+        // another key, so there is nothing of today's to move on.
+        case .lateNight, .binge: return 4 * 3600
+        case .movieNight: return 3 * 3600
+        default: return nil
         }
     }
 
@@ -301,7 +346,7 @@ enum NotifyPrefs {
         }
     }
 
-    /// Non-essential notifications a day, 1…5.
+    /// Non-essential notifications a day at most, 1…5 (0.90.0: "Up to … a Day").
     static var maxPerDay: Int { min(5, max(1, d.integer(forKey: SettingsKey.notifyMaxPerDay))) }
 
     static var test: Bool { d.bool(forKey: SettingsKey.notifyTest) }

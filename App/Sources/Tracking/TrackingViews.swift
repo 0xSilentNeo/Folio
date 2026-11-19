@@ -244,6 +244,7 @@ struct TitleButtonRow: Layout {
 struct TrackingView: View {
     @ObservedObject private var store = TrackingStore.shared
     @State private var open: String?
+    @Environment(\.inTrackingSheet) private var inSheet
 
     var body: some View {
         TimelineView(.everyMinute) { ctx in
@@ -253,6 +254,14 @@ struct TrackingView: View {
         .navigationTitle("Tracked Shows")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $open) { TrackingDetailView(id: $0) }
+        // In the sheet (0.90.0): a button, since it has no pull to refresh there.
+        .toolbar {
+            if inSheet {
+                ToolbarItem(placement: .topBarLeading) {
+                    SheetRefreshButton { await store.refresh(force: true, reason: "refresh button") }
+                }
+            }
+        }
     }
 
     private func list(now: Date) -> some View {
@@ -290,7 +299,7 @@ struct TrackingView: View {
                 }
             }
         }
-        .refreshable { await store.refresh(force: true, reason: "pull to refresh") }
+        .pullToRefresh { await store.refresh(force: true, reason: "pull to refresh") }
     }
 }
 
@@ -398,6 +407,10 @@ struct TrackingDetailView: View {
     @ObservedObject private var store = TrackingStore.shared
     /// The show as it was, so Track brings it back after Stop Tracking.
     @State private var last: TrackedShow?
+    @Environment(\.inTrackingSheet) private var inSheet
+    /// The show's title page (0.90.0), pushed on the stack this page is in.
+    @State private var titlePage: TitlePageTarget?
+    @Namespace private var titleNS
 
     var body: some View {
         TimelineView(.everyMinute) { ctx in
@@ -412,6 +425,17 @@ struct TrackingDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { if last == nil { last = store.show(id: id) } }
         .onChange(of: store.show(id: id)) { _, s in if let s { last = s } }
+        // Open Title Page (0.90.0). The page decides on the kids profile
+        // itself, as from every other way in (MetaDetailView's verdict).
+        .navigationDestination(item: $titlePage) { $0.page.zoomDestination($0.id, in: titleNS, zoom: false) }
+        // In the sheet (0.90.0): a button, since it has no pull to refresh there.
+        .toolbar {
+            if inSheet, store.show(id: id) != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    SheetRefreshButton { await store.refresh(only: [id], reason: "refresh button") }
+                }
+            }
+        }
     }
 
     private func content(_ s: TrackedShow, tracked: Bool, now: Date) -> some View {
@@ -436,6 +460,12 @@ struct TrackingDetailView: View {
                 Section("Last aired") { episode(l, now: now) }
             }
             Section {
+                // The show's own page, on the episode out now or the last
+                // one aired (0.90.0). Only a show with an IMDb id has one.
+                if let page = TitlePageTarget(show: s, now: now) {
+                    Button { titlePage = page } label: { Label("Open Title Page", systemImage: "play.rectangle") }
+                        .accessibilityIdentifier("airingOpenTitle")
+                }
                 if let link = s.pageLink {
                     Link(destination: link.url) { Label("Open on \(link.title)", systemImage: "arrow.up.right.square") }
                 }
@@ -448,11 +478,13 @@ struct TrackingDetailView: View {
                 Text(footer(s, now: now))
             }
         }
-        .refreshable { await store.refresh(only: [s.id], reason: "pull to refresh") }
+        .pullToRefresh { await store.refresh(only: [s.id], reason: "pull to refresh") }
     }
 
     private func header(_ s: TrackedShow, tracked: Bool) -> some View {
-        HStack(alignment: .bottom, spacing: 14) {
+        // The name level with the poster's top (0.90.0): it sat at the
+        // bottom, beside a poster three times its height.
+        HStack(alignment: .top, spacing: 14) {
             TrackPoster(url: s.poster, width: 96)
             VStack(alignment: .leading, spacing: 8) {
                 Text(s.name).font(.system(.title2, design: .rounded, weight: .bold)).lineLimit(3)
@@ -461,6 +493,7 @@ struct TrackingDetailView: View {
                     if let n = s.network { chip(n) }
                 }
             }
+            .padding(.top, 2)
             Spacer(minLength: 0)
         }
     }
@@ -693,8 +726,55 @@ enum TrackingPresenter {
     private static func present(_ id: String?, over vc: UIViewController) {
         let host = UIHostingController(rootView: AnyView(EmptyView()))
         host.rootView = AnyView(TrackingSheet(id: id) { [weak host] in host?.dismiss(animated: true) }.tint(Theme.accent))
+        // The grabber (0.90.0): the sheet can be dragged down from anywhere now.
+        host.sheetPresentationController?.prefersGrabberVisible = true
         vc.present(host, animated: true)
         shown = host
+    }
+}
+
+/// Shown in TrackingPresenter's sheet (0.90.0). A list's pull to refresh
+/// takes the downward drag there, so the sheet only closed when dragged
+/// from its bar: in the sheet the lists have a Refresh button instead.
+private struct InTrackingSheetKey: EnvironmentKey { static let defaultValue = false }
+
+extension EnvironmentValues {
+    var inTrackingSheet: Bool {
+        get { self[InTrackingSheetKey.self] }
+        set { self[InTrackingSheetKey.self] = newValue }
+    }
+}
+
+private struct PullToRefresh: ViewModifier {
+    @Environment(\.inTrackingSheet) private var inSheet
+    let action: @Sendable () async -> Void
+
+    func body(content: Content) -> some View {
+        if inSheet { content } else { content.refreshable(action: action) }
+    }
+}
+
+private extension View {
+    /// Pull to refresh, except in the tracking sheet (0.90.0).
+    func pullToRefresh(_ action: @escaping @Sendable () async -> Void) -> some View { modifier(PullToRefresh(action: action)) }
+}
+
+/// The sheet's Refresh (0.90.0): a spinner in its place while it runs.
+private struct SheetRefreshButton: View {
+    let action: () async -> Void
+    @State private var running = false
+
+    var body: some View {
+        Button {
+            guard !running else { return }
+            running = true
+            Task { await action(); running = false }
+        } label: {
+            if running { ProgressView() } else { Image(systemName: "arrow.clockwise") }
+        }
+        .disabled(running)
+        .accessibilityLabel(running ? "Refreshing" : "Refresh")
+        .accessibilityIdentifier("airingRefresh")
     }
 }
 
@@ -710,7 +790,10 @@ private struct TrackingSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done", action: close).fontWeight(.semibold) }
             }
+            // A title page opened from a show (0.90.0) pushes these, as in HandoffSheet.
+            .navigationDestination(for: LibraryRoute.self) { LibraryRoute.destination($0) }
         }
+        .environment(\.inTrackingSheet, true)
         .toggleStyle(BrandSwitchStyle())
     }
 }

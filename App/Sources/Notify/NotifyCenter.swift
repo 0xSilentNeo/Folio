@@ -22,6 +22,10 @@ import UserNotifications
 enum NotifyCenter {
     static let prefix = "folio.notify."
     /// The pending ones at most outside Test (iOS keeps 64 per app; the tracker uses up to 40).
+    /// (0.90.0) Still 12 with up to five a day: they're the nearest twelve,
+    /// two and a half days of the fullest plan, and every trip away and
+    /// every background refresh plans again. More would also take longer
+    /// to add (each waits up to 4 s for its picture) in the time iOS gives.
     static let maxPending = 12
     static let categoryPlay = "folio.notify.play"
     static let categoryPlain = "folio.notify.plain"
@@ -157,7 +161,12 @@ enum NotifyCenter {
             if NotifyPrefs.test { await checkDeliveredPictures() }
             let now = Date()
             let keep = keepOutside && !NotifyPrefs.test ? await pendingKept(now: now) : []
-            settle(now: now, keep: keep)
+            // (0.90.0) Folio is in front: the ones taken back are remembered
+            // until it leaves, in case a moment of theirs comes meanwhile.
+            // Not when notifications were turned off (or the kids profile came on).
+            let hold = !asked && !KidsProfile.isOnNow
+            if !hold { saveHeld([]) }
+            settle(now: now, keep: keep, hold: hold)
             // "Tomorrow" ones go too while the kids profile is on (1.30.4).
             await removePending(keeping: Set(keep.map(\.request)), asked: asked || KidsProfile.isOnNow)
             if !keep.isEmpty { dlog("notify", "back in Folio: \(keep.count) left pending (\(keep.map(\.kind.rawValue).joined(separator: ", ")))") }
@@ -167,6 +176,9 @@ enum NotifyCenter {
     /// A notification setting changed while Folio is open: what's pending
     /// was planned with the old ones.
     static func settingsChanged() {
+        // (0.90.0) Settings' "planned for today and tomorrow" line was made
+        // with the old settings: it says so until Folio plans again.
+        UserDefaults.standard.set(true, forKey: "notifyPlanStale")
         takeBack()
     }
 
@@ -180,8 +192,17 @@ enum NotifyCenter {
 
     private static func apply(_ reason: String) async {
         let now = Date()
+        // (0.90.0) What was planned until now, before it's cleared: the ones
+        // still pending, and the ones taken back while Folio was in front.
+        let earlier = (loadScheduled().filter { !$0.test } + loadHeld()).map(\.earlier)
+        // The held ones are forgotten once this run is over, not before the
+        // new plan exists: Folio suspended and ended in between lost them.
+        // They are read again harmlessly (by key, sent ones passed over).
+        defer { saveHeld([]) }
         settle(now: now, keep: [])
         await removePending()
+        UserDefaults.standard.set(false, forKey: "notifyPlanStale")
+        savePlanTimes([])
         guard !KidsProfile.isOnNow else { return }
         guard NotifyPrefs.allOn else {
             dlog("notify", "nothing planned: notifications are off in Folio")
@@ -210,8 +231,17 @@ enum NotifyCenter {
         } else {
             UserDefaults.standard.removeObject(forKey: "notifyTestSince")
         }
-        let all = await candidates(now: now)
-        let chosen = Array(NotifyPlanner.choose(all, rules(now: now)).prefix(maxPending))
+        let (fresh, watched) = await gathered(now: now)
+        let r = rules(now: now)
+        // (0.90.0) Planned ones whose facts went on a refresh, or whose
+        // moment came while Folio was open, are looked at before the rules.
+        let recovered = NotifyPlanner.recover(fresh, earlier: earlier, now: now, sentKeys: Set(r.sent.map(\.key)), watched: watched)
+        for note in recovered.notes { dlog("notify", note) }
+        let all = recovered.candidates
+        let plan = NotifyPlanner.plan(all, r)
+        let chosen = Array(plan.chosen.prefix(maxPending))
+        // For Settings' line at once: each one below can wait 4 s for its picture.
+        savePlanTimes(chosen.map(\.fire))
         var records: [Scheduled] = []
         for ch in chosen {
             // Written down as each is added (1.30.2): each waits up to 4 s
@@ -220,16 +250,25 @@ enum NotifyCenter {
             if let r = await schedule(ch.candidate, at: ch.fire, test: false) { records.append(r); saveScheduled(records) }
         }
         saveScheduled(records)
+        savePlanTimes(records.map(\.at))
+        // (0.90.0) One line that explains the run: how many a day, what
+        // held the rest back, then each one with its time.
         let f = DateFormatter()
         f.dateFormat = "EEE d MMM HH:mm"
-        dlog("notify", "\(records.count) planned (\(reason)) of \(all.count) candidates"
+        let over = plan.chosen.count - chosen.count, failed = chosen.count - records.count
+        dlog("notify", "\(reason), up to \(r.maxPerDay) a day: " + NotifyPlanner.summary(plan, candidates: all.count, calendar: r.calendar)
+             + (over > 0 ? "; \(over) more wait for the next plan (\(maxPending) pending at most)" : "")
+             + (failed > 0 ? "; \(failed) not added" : "")
              + (chosen.isEmpty ? "" : ": " + chosen.map { "\($0.candidate.kind.rawValue) \(f.string(from: $0.fire))" }.joined(separator: ", ")))
     }
 
     static func rules(now: Date) -> NotifyPlanner.Rules {
         var r = NotifyPlanner.Rules(now: now)
         r.quiet = NotifyPrefs.quiet
-        r.maxPerDay = NotifyPrefs.maxPerDay
+        let perDay = NotifyPrefs.maxPerDay
+        r.maxPerDay = perDay
+        // (0.90.0) A group's week grows with the daily number.
+        r.weeklyMax = { $0.weeklyMax(perDay: perDay) }
         r.preferredMinute = NotifyPlanner.preferredMinute(firstHours: firstHours(), quiet: r.quiet)
         r.sent = loadSent()
         let resting = Set(memory.filter { ($0.value.restUntil ?? .distantPast) > now }.keys)
@@ -246,6 +285,13 @@ enum NotifyCenter {
 
     /// Every candidate: the watching moments and the rest.
     static func candidates(now: Date) async -> [NotifyCandidate] {
+        await gathered(now: now).candidates
+    }
+
+    /// (0.90.0) The candidates, and the titles in your history (their IMDb
+    /// ids), so one kept from an earlier plan isn't about a title you've
+    /// watched since.
+    static func gathered(now: Date) async -> (candidates: [NotifyCandidate], watched: Set<String>) {
         let watching = await EngagementState.gather(now: now)
         let moments: [NotifyCandidate] = EngagePlanner.candidates(watching, now: now).compactMap { p in
             guard let k = NotifyKind(rawValue: p.moment.rawValue) else { return nil }
@@ -253,7 +299,8 @@ enum NotifyCenter {
             return NotifyCandidate(kind: k, key: p.id, fire: p.fire, facts: p.facts, link: p.link, showKey: p.showKey,
                                    image: entry.map { .history($0) }, reason: "From what you watched")
         }
-        return moments + NotifySignals.candidates(await inputs(now: now))
+        let x = await inputs(now: now)
+        return (moments + NotifySignals.candidates(x), Set(x.watched.compactMap(\.imdbID)))
     }
 
     static func inputs(now: Date) async -> NotifySignals.Inputs {
@@ -306,6 +353,20 @@ enum NotifyCenter {
         var at: Date
         var showKey: String?
         var test: Bool
+        /// (0.90.0) What it says and opens, so it can be planned again
+        /// when the facts it came from have gone (NotifyPlanner.recover).
+        /// Nil in plans saved before 0.90.0.
+        var facts: [String: String]?
+        var link: String?
+        var image: NotifyImage?
+        var reason: String?
+        /// (0.90.0) Taken back when Folio came to the front (the held list).
+        var held: Bool?
+
+        var earlier: NotifyPlanner.Earlier {
+            .init(key: key, kind: kind, at: at, showKey: showKey, facts: facts ?? [:], link: link, image: image,
+                  reason: reason ?? "", saved: reason != nil, held: held == true)
+        }
     }
 
     /// Adds one; nil when it couldn't (no wording, or iOS refused).
@@ -338,7 +399,8 @@ enum NotifyCenter {
             return nil
         }
         appendLog(LogEntry(id: id, kind: c.kind, at: fire, title: text.title, body: text.body, reason: c.reason, test: test))
-        return Scheduled(request: id, key: c.key, kind: c.kind, at: fire, showKey: c.showKey, test: test)
+        return Scheduled(request: id, key: c.key, kind: c.kind, at: fire, showKey: c.showKey, test: test,
+                         facts: c.facts, link: c.link, image: c.image, reason: c.reason)
     }
 
     /// The text in your personality, the kind's current line. Test moves
@@ -532,8 +594,9 @@ enum NotifyCenter {
 
     /// The ones due by `now` went out (or would have): kept for the rules,
     /// and their kinds move to their next line. The rest are taken back,
-    /// except `keep` (still pending while Folio is open).
-    private static func settle(now: Date, keep: [Scheduled]) {
+    /// except `keep` (still pending while Folio is open). `hold` (0.90.0):
+    /// the ones taken back are remembered for the next plan.
+    private static func settle(now: Date, keep: [Scheduled], hold: Bool = false) {
         let scheduled = loadScheduled()
         guard !scheduled.isEmpty else { return }
         let due = scheduled.filter { $0.at <= now }
@@ -562,8 +625,16 @@ enum NotifyCenter {
             }
         }
         let kept = Set(keep.map(\.request))
-        let gone = Set(scheduled.filter { $0.at > now && !kept.contains($0.request) }.map(\.request))
+        let back = scheduled.filter { $0.at > now && !kept.contains($0.request) }
+        let gone = Set(back.map(\.request))
         if !gone.isEmpty { removeLog(gone) }
+        if hold {
+            // With the ones held from an earlier return (Folio can come to
+            // the front twice before it plans again), a day at most.
+            let new = back.filter { !$0.test }.map { s -> Scheduled in var s = s; s.held = true; return s }
+            let keys = Set(new.map(\.key))
+            saveHeld(loadHeld().filter { !keys.contains($0.key) && $0.at > now.addingTimeInterval(-86400) } + new)
+        }
         saveScheduled(keep)
     }
 
@@ -579,6 +650,28 @@ enum NotifyCenter {
     private static func loadScheduled() -> [Scheduled] { load("notifyScheduled") ?? [] }
     private static func saveScheduled(_ s: [Scheduled]) { save(s, "notifyScheduled") }
     static func loadSent() -> [NotifySent] { load("notifySent") ?? [] }
+    private static func loadHeld() -> [Scheduled] { load("notifyHeld") ?? [] }
+    private static func saveHeld(_ s: [Scheduled]) { save(s, "notifyHeld") }
+    private static func savePlanTimes(_ t: [Date]) { save(t, "notifyPlanTimes") }
+
+    /// (0.90.0) Settings' line under "Up to … a Day": how many went out
+    /// today and how many more are planned for today and tomorrow, from the
+    /// last plan (made when Folio last left the screen; the ones taken back
+    /// while it's open are counted, since they're planned again). Nil
+    /// before the first plan and while Test is on.
+    static func plannedLine(now: Date = Date(), calendar: Calendar = .autoupdatingCurrent) -> String? {
+        guard NotifyPrefs.allOn, !NotifyPrefs.test else { return nil }
+        if UserDefaults.standard.bool(forKey: "notifyPlanStale") { return "Planned again with these settings when you leave Folio." }
+        guard let times: [Date] = load("notifyPlanTimes") else { return nil }
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: now) ?? now
+        let due = loadScheduled().filter { !$0.test && $0.at <= now }.map { (key: $0.key, kind: $0.kind, at: $0.at) }
+        let sent = loadSent().map { (key: $0.key, kind: $0.kind, at: $0.at) }
+        var keys = Set<String>()
+        let sentToday = (sent + due).filter { !$0.kind.group.essential && calendar.isDate($0.at, inSameDayAs: now) && keys.insert($0.key).inserted }.count
+        return NotifyPlanner.plannedLine(sentToday: sentToday,
+                                         today: times.filter { $0 > now && calendar.isDate($0, inSameDayAs: now) }.count,
+                                         tomorrow: times.filter { calendar.isDate($0, inSameDayAs: tomorrow) }.count)
+    }
     private static func saveSent(_ s: [NotifySent]) { save(s, "notifySent") }
 
     private static func load<T: Decodable>(_ key: String) -> T? {

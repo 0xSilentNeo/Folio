@@ -11,9 +11,10 @@ import UIKit
 /// one category per area, signpost intervals for Instruments) and to app.log
 /// as "[<category>] …", so a shared report has the whole timeline.
 enum LibTrace {
-    static var on: Bool {
-        UserDefaults.standard.bool(forKey: SettingsKey.libTrace) || CommandLine.arguments.contains("-libTrace")
-    }
+    /// From TraceFlags' copy (0.90.0): this read the setting and looked
+    /// through the launch arguments on every call, and every tile drawn and
+    /// every line traced calls it.
+    static var on: Bool { TraceFlags.lib }
 
     struct Channel: Sendable {
         let name: String
@@ -26,10 +27,15 @@ enum LibTrace {
             signposter = OSSignposter(subsystem: PiPTrace.subsystem, category: name)
         }
 
+        /// To the unified log at debug level (0.90.0): nothing is done for
+        /// it unless something is reading the log live (Xcode, Console with
+        /// debug messages shown, Instruments). At info level every line was
+        /// also kept in the system's own log, a second write for each one.
+        /// app.log has every line as before.
         func log(_ message: @autoclosure () -> String) {
             guard LibTrace.on else { return }
             let line = message()
-            logger.info("\(line, privacy: .public)")
+            logger.debug("\(line, privacy: .public)")
             dlog(name, line)
         }
 
@@ -46,9 +52,43 @@ enum LibTrace {
             guard LibTrace.on else { return }
             let line = message()
             signposter.emitEvent(name, "\(line, privacy: .public)")
-            logger.info("\(line, privacy: .public)")
+            logger.debug("\(line, privacy: .public)")
             dlog(self.name, line)
         }
+    }
+
+    // MARK: A scroll, as one line
+
+    private final class Scroll {
+        var from = 0, to = 0, steps = 0
+        var start: CFTimeInterval = 0
+        var task: DispatchWorkItem?
+    }
+    @MainActor private static var scrolls: [String: Scroll] = [:]
+
+    /// A scroll view's moves as one line, written once it has rested for
+    /// 0.3 s (0.90.0): "now playing offset 0 → 1840 (212 steps in 1900 ms)".
+    /// A line a move was a line a frame for as long as a finger was on the
+    /// panel. Where it started, where it came to rest and how long it took
+    /// are what the line was for.
+    @MainActor static func scrolled(_ label: String, from old: Int, to new: Int) {
+        guard on else { return }
+        let s = scrolls[label] ?? Scroll()
+        if s.task == nil { s.from = old; s.steps = 0; s.start = CACurrentMediaTime() }
+        s.to = new
+        s.steps += 1
+        s.task?.cancel()
+        let work = DispatchWorkItem {
+            MainActor.assumeIsolated {
+                guard let s = scrolls.removeValue(forKey: label) else { return }
+                // Less the 0.3 s it waited to see the scroll had stopped.
+                let took = max(0, ms(since: s.start) - 300)
+                panel.log("\(label) offset \(s.from) → \(s.to) (\(s.steps) step\(s.steps == 1 ? "" : "s") in \(took) ms)")
+            }
+        }
+        s.task = work
+        scrolls[label] = s
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
     }
 
     /// Zoom transitions between Home and title pages: every zoom source, where
@@ -73,6 +113,95 @@ enum LibTrace {
     static func ms(since start: CFTimeInterval) -> Int { Int((CACurrentMediaTime() - start) * 1000) }
 }
 
+/// The three trace switches and whether the screen is being recorded, kept
+/// in memory (0.90.0). `LibTrace.on`, `PiPTrace.on` and `NetTrace.on` each
+/// read UserDefaults on every call: with all three left on ("keep on until
+/// I turn them off") that was a settings read for every tile drawn, every
+/// request and every line. The copy is read again when any setting changes.
+enum TraceFlags {
+    struct Values: Equatable, Sendable {
+        var lib = false
+        var net = false
+        var pip = false
+        /// The screen is being recorded or mirrored.
+        var captured = false
+    }
+
+    /// `-libTrace` at launch; the arguments don't change.
+    private static let libArgument = CommandLine.arguments.contains("-libTrace")
+
+    private static let box: OSAllocatedUnfairLock<Values> = {
+        let box = OSAllocatedUnfairLock(initialState: stored(captured: false))
+        let nc = NotificationCenter.default
+        // On the thread that wrote the setting, never the main queue: with
+        // queue .main a write from another thread waits for the main thread,
+        // which froze Folio at launch before 1.30.6 (TraceExpiry.watch).
+        // Three reads and a compare; this fires for every setting.
+        nc.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: nil) { _ in TraceFlags.refresh() }
+        // UIKit posts this on the main thread.
+        nc.addObserver(forName: UIScreen.capturedDidChangeNotification, object: nil, queue: nil) { _ in
+            if Thread.isMainThread { MainActor.assumeIsolated { TraceFlags.noteCapture() } }
+            else { DispatchQueue.main.async { MainActor.assumeIsolated { TraceFlags.noteCapture() } } }
+        }
+        // The screen's state is the main thread's to read: after this, when
+        // the first look came from another thread.
+        DispatchQueue.main.async { MainActor.assumeIsolated { TraceFlags.noteCapture() } }
+        return box
+    }()
+
+    private static func stored(captured: Bool) -> Values {
+        let d = UserDefaults.standard
+        return Values(lib: d.bool(forKey: SettingsKey.libTrace) || libArgument, net: d.bool(forKey: SettingsKey.netTrace),
+                      pip: d.bool(forKey: SettingsKey.pipTrace), captured: captured)
+    }
+
+    /// Reads the switches again. Inside the lock, so of two threads the one
+    /// that reads last also writes last; reading a setting calls nothing of Folio's.
+    static func refresh() {
+        box.withLock { v in
+            let new = stored(captured: v.captured)
+            if new != v { v = new }
+        }
+    }
+
+    static var values: Values { box.withLock { $0 } }
+    static var lib: Bool { box.withLock { $0.lib } }
+    static var net: Bool { box.withLock { $0.net } }
+    static var pip: Bool { box.withLock { $0.pip } }
+    /// The screen is being recorded or mirrored.
+    static var captured: Bool { box.withLock { $0.captured } }
+
+    /// Whether the per-tile lines are written: the library trace is on and
+    /// the screen isn't being recorded.
+    ///
+    /// Paused while recording (0.90.0): a source added or removed for every
+    /// tile that scrolls by, each tile's place in the grid, and all but the
+    /// first and last look at a zoom's sources. The recorder already takes
+    /// a good part of the phone, these are the lines that come by the
+    /// hundred while scrolling, and what they say (where each tile is, and
+    /// whether it can be seen) is what the recording shows. Everything
+    /// tied to something that happened stays: a page opening and closing
+    /// with its sources, artwork, Discover, the panel, the index, requests
+    /// and Picture in Picture.
+    static var perTile: Bool { let v = values; return v.lib && !v.captured }
+
+    @MainActor private static var paused = false
+
+    /// The screen began or stopped being recorded: kept, and said once each way.
+    @MainActor static func noteCapture() {
+        let now = UIScreen.main.isCaptured
+        box.withLock { $0.captured = now }
+        let v = values
+        let pause = now && (v.lib || v.pip)
+        guard pause != paused else { return }
+        paused = pause
+        dlog("trace", pause ? "paused while the screen is recorded: no line per tile and no frame timing; the rest goes on" : "resumed: the screen isn't recorded any more")
+    }
+
+    /// For the tests: what the screen's state is taken to be.
+    static func setCaptured(_ on: Bool) { box.withLock { $0.captured = on } }
+}
+
 /// A plain UIView behind each zoom source while the trace is on, so the log
 /// can say where every source with an id is, and whether anything hides it
 /// (a hidden list cell, a zero alpha, a transparent layer).
@@ -84,12 +213,15 @@ struct ZoomProbe: UIViewRepresentable {
 
         override func didMoveToWindow() {
             super.didMoveToWindow()
+            // Not said while the screen is recorded (0.90.0, TraceFlags.perTile):
+            // two lines for every tile that scrolls by. Still kept in
+            // `live`, so a page opening or closing lists its sources.
             if window != nil {
                 ZoomProbe.live.add(self)
-                LibTrace.zoom.log("source \(id) added at \(frameInWindow)")
+                if TraceFlags.perTile { LibTrace.zoom.log("source \(id) added at \(frameInWindow)") }
             } else {
                 ZoomProbe.live.remove(self)
-                LibTrace.zoom.log("source \(id) removed from the window")
+                if TraceFlags.perTile { LibTrace.zoom.log("source \(id) removed from the window") }
             }
         }
 
@@ -125,9 +257,15 @@ struct ZoomProbe: UIViewRepresentable {
     @MainActor static func timeline(_ id: AnyHashable, _ what: String, seconds: Double = 2.5) {
         guard LibTrace.on else { return }
         let start = CACurrentMediaTime()
-        for i in 0...Int(seconds * 4) {
+        let last = Int(seconds * 4)
+        for i in 0...last {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.25) {
-                MainActor.assumeIsolated { dump(id, "\(what) +\(LibTrace.ms(since: start)) ms") }
+                MainActor.assumeIsolated {
+                    // While the screen is recorded (0.90.0): the first and
+                    // the last look only, not all 11.
+                    guard i == 0 || i == last || !TraceFlags.captured else { return }
+                    dump(id, "\(what) +\(LibTrace.ms(since: start)) ms")
+                }
             }
         }
     }
@@ -163,6 +301,8 @@ struct GridProbe: ViewModifier {
         if LibTrace.on {
             content.onGeometryChange(for: CGRect.self, of: { $0.frame(in: inWindow ? .global : .named(GridProbe.space)).integral }) { r in
                 pending.task?.cancel()
+                // Not while the screen is recorded (0.90.0, TraceFlags.perTile).
+                guard TraceFlags.perTile else { return }
                 let name = name
                 let work = DispatchWorkItem {
                     LibTrace.layout.log("\(name) at (\(Int(r.minX)), \(Int(r.minY)), \(Int(r.width)), \(Int(r.height)))")

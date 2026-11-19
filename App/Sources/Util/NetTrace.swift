@@ -12,7 +12,7 @@ import Foundation
 /// series/tt….json"): the part in between holds the addon's settings and
 /// keys.
 enum NetTrace {
-    static var on: Bool { UserDefaults.standard.bool(forKey: SettingsKey.netTrace) }
+    static var on: Bool { TraceFlags.net }   // cached (0.90.0): this read the settings on every request
 
     /// Collects the metrics of one request (per-task delegate).
     final class Timer: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
